@@ -1,0 +1,83 @@
+'use client'
+
+import { ArrowRight } from 'lucide-react'
+import { useParams, useRouter } from 'next/navigation'
+import { Chip } from '@/components/emcn'
+import { getSubscriptionAccessState } from '@/lib/billing/client'
+import {
+  InboxEnableToggle,
+  InboxSettingsTab,
+  InboxTaskList,
+} from '@/app/workspace/[workspaceId]/settings/components/inbox/components'
+import { SettingsSection } from '@/app/workspace/[workspaceId]/settings/components/settings-section/settings-section'
+import { isBillingEnabled } from '@/app/workspace/[workspaceId]/settings/navigation'
+import { useInboxConfig } from '@/hooks/queries/inbox'
+import { useSubscriptionData } from '@/hooks/queries/subscription'
+
+export function Inbox() {
+  const params = useParams()
+  const router = useRouter()
+  const workspaceId = params.workspaceId as string
+
+  const { data: config, isLoading } = useInboxConfig(workspaceId)
+  const { data: subscriptionResponse, isLoading: isSubLoading } = useSubscriptionData({
+    enabled: isBillingEnabled,
+  })
+  const subscriptionAccess = getSubscriptionAccessState(subscriptionResponse?.data)
+
+  if (isLoading || (isBillingEnabled && isSubLoading)) {
+    return null
+  }
+
+  if (isBillingEnabled && !subscriptionAccess.hasUsableMaxAccess) {
+    return (
+      <div className='flex h-full flex-col bg-[var(--bg)]'>
+        <div className='min-h-0 flex-1 overflow-y-auto px-6 [scrollbar-gutter:stable_both-edges]'>
+          <div className='mx-auto flex max-w-[48rem] flex-col gap-4.5 pt-6 pb-6'>
+            <div className='flex flex-col items-center justify-center gap-4 py-20'>
+              <div className='text-center'>
+                <h3 className='font-medium text-[16px] text-[var(--text-primary)]'>
+                  Sim Mailer requires an active Max plan
+                </h3>
+                <p className='mt-1.5 text-[14px] text-[var(--text-muted)]'>
+                  Upgrade to Max and ensure billing is active to receive tasks via email and let Sim
+                  work on your behalf.
+                </p>
+              </div>
+              <Chip
+                variant='primary'
+                rightIcon={ArrowRight}
+                onClick={() => router.push(`/workspace/${workspaceId}/settings/billing`)}
+              >
+                Upgrade to Max
+              </Chip>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className='flex h-full flex-col bg-[var(--bg)]'>
+      <div className='min-h-0 flex-1 overflow-y-auto px-6 [scrollbar-gutter:stable_both-edges]'>
+        <div className='mx-auto flex max-w-[48rem] flex-col gap-7 pt-6 pb-6'>
+          <InboxEnableToggle />
+
+          {config?.enabled && (
+            <>
+              <InboxSettingsTab />
+
+              <SettingsSection label='Inbox'>
+                <p className='mb-3 text-[12px] text-[var(--text-muted)]'>
+                  Email tasks received by this workspace.
+                </p>
+                <InboxTaskList />
+              </SettingsSection>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

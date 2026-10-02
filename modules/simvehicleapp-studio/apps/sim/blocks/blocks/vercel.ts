@@ -1,0 +1,1296 @@
+import { VercelIcon } from '@/components/icons'
+import type { BlockConfig, BlockMeta } from '@/blocks/types'
+import { AuthMode, IntegrationType } from '@/blocks/types'
+import { getTrigger } from '@/triggers'
+
+export const VercelBlock: BlockConfig = {
+  type: 'vercel',
+  name: 'Vercel',
+  description: 'Manage Vercel deployments, projects, and infrastructure',
+  longDescription:
+    'Integrate with Vercel to manage deployments, projects, domains, DNS records, environment variables, aliases, edge configs, teams, and more.',
+  docsLink: 'https://docs.sim.ai/integrations/vercel',
+  category: 'tools',
+  integrationType: IntegrationType.DevOps,
+  bgColor: '#171717',
+  icon: VercelIcon,
+  authMode: AuthMode.ApiKey,
+  triggers: {
+    enabled: true,
+    available: [
+      'vercel_deployment_created',
+      'vercel_deployment_ready',
+      'vercel_deployment_error',
+      'vercel_deployment_canceled',
+      'vercel_project_created',
+      'vercel_project_removed',
+      'vercel_domain_created',
+      'vercel_webhook',
+    ],
+  },
+  subBlocks: [
+    {
+      id: 'operation',
+      title: 'Operation',
+      type: 'dropdown',
+      options: [
+        { label: 'List Deployments', id: 'list_deployments' },
+        { label: 'Get Deployment', id: 'get_deployment' },
+        { label: 'Create Deployment', id: 'create_deployment' },
+        { label: 'Cancel Deployment', id: 'cancel_deployment' },
+        { label: 'Delete Deployment', id: 'delete_deployment' },
+        { label: 'Get Deployment Logs', id: 'get_deployment_events' },
+        { label: 'List Deployment Files', id: 'list_deployment_files' },
+        { label: 'Promote Deployment', id: 'promote_deployment' },
+        { label: 'List Projects', id: 'list_projects' },
+        { label: 'Get Project', id: 'get_project' },
+        { label: 'Create Project', id: 'create_project' },
+        { label: 'Update Project', id: 'update_project' },
+        { label: 'Delete Project', id: 'delete_project' },
+        { label: 'Pause Project', id: 'pause_project' },
+        { label: 'Unpause Project', id: 'unpause_project' },
+        { label: 'List Project Domains', id: 'list_project_domains' },
+        { label: 'Add Project Domain', id: 'add_project_domain' },
+        { label: 'Update Project Domain', id: 'update_project_domain' },
+        { label: 'Verify Project Domain', id: 'verify_project_domain' },
+        { label: 'Remove Project Domain', id: 'remove_project_domain' },
+        { label: 'Get Environment Variables', id: 'get_env_vars' },
+        { label: 'Create Environment Variable', id: 'create_env_var' },
+        { label: 'Update Environment Variable', id: 'update_env_var' },
+        { label: 'Delete Environment Variable', id: 'delete_env_var' },
+        { label: 'List Domains', id: 'list_domains' },
+        { label: 'Get Domain', id: 'get_domain' },
+        { label: 'Add Domain', id: 'add_domain' },
+        { label: 'Delete Domain', id: 'delete_domain' },
+        { label: 'Get Domain Config', id: 'get_domain_config' },
+        { label: 'List DNS Records', id: 'list_dns_records' },
+        { label: 'Create DNS Record', id: 'create_dns_record' },
+        { label: 'Update DNS Record', id: 'update_dns_record' },
+        { label: 'Delete DNS Record', id: 'delete_dns_record' },
+        { label: 'List Aliases', id: 'list_aliases' },
+        { label: 'Get Alias', id: 'get_alias' },
+        { label: 'Create Alias', id: 'create_alias' },
+        { label: 'Delete Alias', id: 'delete_alias' },
+        { label: 'List Edge Configs', id: 'list_edge_configs' },
+        { label: 'Get Edge Config', id: 'get_edge_config' },
+        { label: 'Create Edge Config', id: 'create_edge_config' },
+        { label: 'Get Edge Config Items', id: 'get_edge_config_items' },
+        { label: 'Update Edge Config Items', id: 'update_edge_config_items' },
+        { label: 'Delete Edge Config', id: 'delete_edge_config' },
+        { label: 'List Webhooks', id: 'list_webhooks' },
+        { label: 'Get Webhook', id: 'get_webhook' },
+        { label: 'Create Webhook', id: 'create_webhook' },
+        { label: 'Delete Webhook', id: 'delete_webhook' },
+        { label: 'List Checks', id: 'list_checks' },
+        { label: 'Get Check', id: 'get_check' },
+        { label: 'Create Check', id: 'create_check' },
+        { label: 'Update Check', id: 'update_check' },
+        { label: 'Rerequest Check', id: 'rerequest_check' },
+        { label: 'List Teams', id: 'list_teams' },
+        { label: 'Get Team', id: 'get_team' },
+        { label: 'List Team Members', id: 'list_team_members' },
+        { label: 'Get User', id: 'get_user' },
+      ],
+      value: () => 'list_deployments',
+    },
+    {
+      id: 'apiKey',
+      title: 'API Key',
+      type: 'short-input',
+      placeholder: 'Enter Vercel Access Token',
+      required: true,
+      password: true,
+    },
+
+    {
+      id: 'projectId',
+      title: 'Project ID',
+      type: 'short-input',
+      placeholder: 'Filter by project ID or name (optional)',
+      condition: { field: 'operation', value: 'list_deployments' },
+      mode: 'advanced',
+    },
+    {
+      id: 'target',
+      title: 'Target',
+      type: 'dropdown',
+      options: [
+        { label: 'All', id: '' },
+        { label: 'Production', id: 'production' },
+        { label: 'Staging', id: 'staging' },
+      ],
+      condition: { field: 'operation', value: 'list_deployments' },
+      mode: 'advanced',
+    },
+    {
+      id: 'state',
+      title: 'State',
+      type: 'dropdown',
+      options: [
+        { label: 'All', id: '' },
+        { label: 'Ready', id: 'READY' },
+        { label: 'Building', id: 'BUILDING' },
+        { label: 'Error', id: 'ERROR' },
+        { label: 'Queued', id: 'QUEUED' },
+        { label: 'Canceled', id: 'CANCELED' },
+      ],
+      condition: { field: 'operation', value: 'list_deployments' },
+      mode: 'advanced',
+    },
+    {
+      id: 'deploymentId',
+      title: 'Deployment ID',
+      type: 'short-input',
+      placeholder: 'Enter deployment ID or hostname',
+      condition: {
+        field: 'operation',
+        value: [
+          'get_deployment',
+          'cancel_deployment',
+          'delete_deployment',
+          'get_deployment_events',
+          'list_deployment_files',
+          'promote_deployment',
+        ],
+      },
+      required: {
+        field: 'operation',
+        value: [
+          'get_deployment',
+          'cancel_deployment',
+          'delete_deployment',
+          'get_deployment_events',
+          'list_deployment_files',
+          'promote_deployment',
+        ],
+      },
+    },
+    {
+      id: 'name',
+      title: 'Project Name',
+      type: 'short-input',
+      placeholder: 'Project name for the deployment',
+      condition: { field: 'operation', value: 'create_deployment' },
+      required: { field: 'operation', value: 'create_deployment' },
+    },
+    {
+      id: 'project',
+      title: 'Project ID',
+      type: 'short-input',
+      placeholder: 'Project ID (optional, overrides name)',
+      condition: { field: 'operation', value: 'create_deployment' },
+      mode: 'advanced',
+    },
+    {
+      id: 'redeployId',
+      title: 'Redeploy From',
+      type: 'short-input',
+      placeholder: 'Existing deployment ID to redeploy (optional)',
+      condition: { field: 'operation', value: 'create_deployment' },
+      mode: 'advanced',
+    },
+    {
+      id: 'deployTarget',
+      title: 'Target',
+      type: 'dropdown',
+      options: [
+        { label: 'Preview', id: '' },
+        { label: 'Production', id: 'production' },
+        { label: 'Staging', id: 'staging' },
+      ],
+      condition: { field: 'operation', value: 'create_deployment' },
+      mode: 'advanced',
+    },
+
+    {
+      id: 'search',
+      title: 'Search',
+      type: 'short-input',
+      placeholder: 'Search projects by name (optional)',
+      condition: { field: 'operation', value: 'list_projects' },
+      mode: 'advanced',
+    },
+    {
+      id: 'projectId',
+      title: 'Project ID',
+      type: 'short-input',
+      placeholder: 'Enter project ID or name',
+      condition: {
+        field: 'operation',
+        value: [
+          'get_project',
+          'update_project',
+          'delete_project',
+          'pause_project',
+          'unpause_project',
+          'list_project_domains',
+          'add_project_domain',
+          'remove_project_domain',
+          'update_project_domain',
+          'verify_project_domain',
+          'promote_deployment',
+          'get_env_vars',
+          'create_env_var',
+          'update_env_var',
+          'delete_env_var',
+        ],
+      },
+      required: {
+        field: 'operation',
+        value: [
+          'get_project',
+          'update_project',
+          'delete_project',
+          'pause_project',
+          'unpause_project',
+          'list_project_domains',
+          'add_project_domain',
+          'remove_project_domain',
+          'update_project_domain',
+          'verify_project_domain',
+          'promote_deployment',
+          'get_env_vars',
+          'create_env_var',
+          'update_env_var',
+          'delete_env_var',
+        ],
+      },
+    },
+    {
+      id: 'projectName',
+      title: 'Project Name',
+      type: 'short-input',
+      placeholder: 'Name for the new project',
+      condition: { field: 'operation', value: 'create_project' },
+      required: { field: 'operation', value: 'create_project' },
+    },
+    {
+      id: 'framework',
+      title: 'Framework',
+      type: 'dropdown',
+      options: [
+        { label: 'Auto-detect', id: '' },
+        { label: 'Next.js', id: 'nextjs' },
+        { label: 'Remix', id: 'remix' },
+        { label: 'Vite', id: 'vite' },
+        { label: 'Nuxt', id: 'nuxtjs' },
+        { label: 'SvelteKit', id: 'sveltekit' },
+        { label: 'Astro', id: 'astro' },
+        { label: 'Gatsby', id: 'gatsby' },
+        { label: 'Other', id: 'other' },
+      ],
+      condition: { field: 'operation', value: ['create_project', 'update_project'] },
+      mode: 'advanced',
+    },
+    {
+      id: 'buildCommand',
+      title: 'Build Command',
+      type: 'short-input',
+      placeholder: 'Custom build command (optional)',
+      condition: { field: 'operation', value: ['create_project', 'update_project'] },
+      mode: 'advanced',
+    },
+    {
+      id: 'outputDirectory',
+      title: 'Output Directory',
+      type: 'short-input',
+      placeholder: 'Output directory (optional)',
+      condition: { field: 'operation', value: ['create_project', 'update_project'] },
+      mode: 'advanced',
+    },
+    {
+      id: 'installCommand',
+      title: 'Install Command',
+      type: 'short-input',
+      placeholder: 'Install command (optional)',
+      condition: { field: 'operation', value: ['create_project', 'update_project'] },
+      mode: 'advanced',
+    },
+
+    {
+      id: 'domainName',
+      title: 'Domain',
+      type: 'short-input',
+      placeholder: 'Enter domain name (e.g., example.com)',
+      condition: {
+        field: 'operation',
+        value: [
+          'add_project_domain',
+          'remove_project_domain',
+          'update_project_domain',
+          'verify_project_domain',
+          'get_domain',
+          'delete_domain',
+          'get_domain_config',
+          'list_dns_records',
+          'create_dns_record',
+          'delete_dns_record',
+          'add_domain',
+        ],
+      },
+      required: {
+        field: 'operation',
+        value: [
+          'add_project_domain',
+          'remove_project_domain',
+          'update_project_domain',
+          'verify_project_domain',
+          'get_domain',
+          'delete_domain',
+          'get_domain_config',
+          'list_dns_records',
+          'create_dns_record',
+          'delete_dns_record',
+          'add_domain',
+        ],
+      },
+    },
+
+    {
+      id: 'updateDomainRedirect',
+      title: 'Redirect To',
+      type: 'short-input',
+      placeholder: 'Target domain to redirect to (optional)',
+      condition: { field: 'operation', value: 'update_project_domain' },
+      mode: 'advanced',
+    },
+    {
+      id: 'updateDomainRedirectStatusCode',
+      title: 'Redirect Status Code',
+      type: 'dropdown',
+      options: [
+        { label: 'None', id: '' },
+        { label: '301 (Permanent)', id: '301' },
+        { label: '302 (Temporary)', id: '302' },
+        { label: '307 (Temporary)', id: '307' },
+        { label: '308 (Permanent)', id: '308' },
+      ],
+      condition: { field: 'operation', value: 'update_project_domain' },
+      mode: 'advanced',
+    },
+    {
+      id: 'updateDomainGitBranch',
+      title: 'Git Branch',
+      type: 'short-input',
+      placeholder: 'Git branch to link the domain to (optional)',
+      condition: { field: 'operation', value: 'update_project_domain' },
+      mode: 'advanced',
+    },
+
+    {
+      id: 'envId',
+      title: 'Env Variable ID',
+      type: 'short-input',
+      placeholder: 'Environment variable ID',
+      condition: { field: 'operation', value: ['update_env_var', 'delete_env_var'] },
+      required: { field: 'operation', value: ['update_env_var', 'delete_env_var'] },
+    },
+    {
+      id: 'envKey',
+      title: 'Key',
+      type: 'short-input',
+      placeholder: 'Variable name (e.g., DATABASE_URL)',
+      condition: { field: 'operation', value: ['create_env_var', 'update_env_var'] },
+      required: { field: 'operation', value: 'create_env_var' },
+    },
+    {
+      id: 'envValue',
+      title: 'Value',
+      type: 'short-input',
+      placeholder: 'Variable value',
+      condition: { field: 'operation', value: ['create_env_var', 'update_env_var'] },
+      required: { field: 'operation', value: 'create_env_var' },
+    },
+    {
+      id: 'envTarget',
+      title: 'Target Environments',
+      type: 'short-input',
+      placeholder: 'production,preview,development',
+      condition: { field: 'operation', value: ['create_env_var', 'update_env_var'] },
+      required: { field: 'operation', value: 'create_env_var' },
+    },
+    {
+      id: 'envType',
+      title: 'Variable Type',
+      type: 'dropdown',
+      options: [
+        { label: 'Plain', id: 'plain' },
+        { label: 'Encrypted', id: 'encrypted' },
+        { label: 'Sensitive', id: 'sensitive' },
+        { label: 'System', id: 'system' },
+      ],
+      condition: { field: 'operation', value: ['create_env_var', 'update_env_var'] },
+      mode: 'advanced',
+    },
+
+    {
+      id: 'recordName',
+      title: 'Record Name',
+      type: 'short-input',
+      placeholder: 'Subdomain (e.g., www)',
+      condition: { field: 'operation', value: 'create_dns_record' },
+      required: { field: 'operation', value: 'create_dns_record' },
+    },
+    {
+      id: 'recordType',
+      title: 'Record Type',
+      type: 'dropdown',
+      options: [
+        { label: 'A', id: 'A' },
+        { label: 'AAAA', id: 'AAAA' },
+        { label: 'CNAME', id: 'CNAME' },
+        { label: 'TXT', id: 'TXT' },
+        { label: 'MX', id: 'MX' },
+        { label: 'NS', id: 'NS' },
+        { label: 'ALIAS', id: 'ALIAS' },
+        { label: 'SRV', id: 'SRV' },
+        { label: 'CAA', id: 'CAA' },
+      ],
+      condition: { field: 'operation', value: 'create_dns_record' },
+      required: { field: 'operation', value: 'create_dns_record' },
+    },
+    {
+      id: 'recordValue',
+      title: 'Value',
+      type: 'short-input',
+      placeholder: 'Record value (e.g., IP address)',
+      condition: { field: 'operation', value: 'create_dns_record' },
+      required: { field: 'operation', value: 'create_dns_record' },
+    },
+    {
+      id: 'recordId',
+      title: 'Record ID',
+      type: 'short-input',
+      placeholder: 'DNS record ID',
+      condition: { field: 'operation', value: ['delete_dns_record', 'update_dns_record'] },
+      required: { field: 'operation', value: ['delete_dns_record', 'update_dns_record'] },
+    },
+    {
+      id: 'updateRecordName',
+      title: 'Record Name',
+      type: 'short-input',
+      placeholder: 'New subdomain (e.g., www) — leave blank to keep',
+      condition: { field: 'operation', value: 'update_dns_record' },
+    },
+    {
+      id: 'updateRecordType',
+      title: 'Record Type',
+      type: 'dropdown',
+      options: [
+        { label: 'Keep current', id: '' },
+        { label: 'A', id: 'A' },
+        { label: 'AAAA', id: 'AAAA' },
+        { label: 'CNAME', id: 'CNAME' },
+        { label: 'TXT', id: 'TXT' },
+        { label: 'MX', id: 'MX' },
+        { label: 'NS', id: 'NS' },
+        { label: 'ALIAS', id: 'ALIAS' },
+        { label: 'SRV', id: 'SRV' },
+        { label: 'CAA', id: 'CAA' },
+        { label: 'HTTPS', id: 'HTTPS' },
+      ],
+      condition: { field: 'operation', value: 'update_dns_record' },
+    },
+    {
+      id: 'updateRecordValue',
+      title: 'Value',
+      type: 'short-input',
+      placeholder: 'New record value — leave blank to keep',
+      condition: { field: 'operation', value: 'update_dns_record' },
+    },
+    {
+      id: 'updateRecordTtl',
+      title: 'TTL',
+      type: 'short-input',
+      placeholder: 'Time to live in seconds (60 to 2147483647)',
+      condition: { field: 'operation', value: 'update_dns_record' },
+      mode: 'advanced',
+    },
+    {
+      id: 'updateRecordMxPriority',
+      title: 'MX Priority',
+      type: 'short-input',
+      placeholder: 'Priority for MX records',
+      condition: { field: 'operation', value: 'update_dns_record' },
+      mode: 'advanced',
+    },
+    {
+      id: 'updateRecordComment',
+      title: 'Comment',
+      type: 'short-input',
+      placeholder: 'Context for this DNS record (max 500 chars)',
+      condition: { field: 'operation', value: 'update_dns_record' },
+      mode: 'advanced',
+    },
+
+    {
+      id: 'aliasId',
+      title: 'Alias ID',
+      type: 'short-input',
+      placeholder: 'Alias ID or hostname',
+      condition: { field: 'operation', value: ['get_alias', 'delete_alias'] },
+      required: { field: 'operation', value: ['get_alias', 'delete_alias'] },
+    },
+    {
+      id: 'aliasDeploymentId',
+      title: 'Deployment ID',
+      type: 'short-input',
+      placeholder: 'Deployment ID to assign alias to',
+      condition: { field: 'operation', value: 'create_alias' },
+      required: { field: 'operation', value: 'create_alias' },
+    },
+    {
+      id: 'aliasName',
+      title: 'Alias',
+      type: 'short-input',
+      placeholder: 'Domain or subdomain to assign (e.g., my-app.vercel.app)',
+      condition: { field: 'operation', value: 'create_alias' },
+      required: { field: 'operation', value: 'create_alias' },
+    },
+
+    {
+      id: 'edgeConfigId',
+      title: 'Edge Config ID',
+      type: 'short-input',
+      placeholder: 'Edge Config ID',
+      condition: {
+        field: 'operation',
+        value: [
+          'get_edge_config',
+          'get_edge_config_items',
+          'update_edge_config_items',
+          'delete_edge_config',
+        ],
+      },
+      required: {
+        field: 'operation',
+        value: [
+          'get_edge_config',
+          'get_edge_config_items',
+          'update_edge_config_items',
+          'delete_edge_config',
+        ],
+      },
+    },
+    {
+      id: 'edgeConfigSlug',
+      title: 'Slug',
+      type: 'short-input',
+      placeholder: 'Name/slug for the Edge Config',
+      condition: { field: 'operation', value: 'create_edge_config' },
+      required: { field: 'operation', value: 'create_edge_config' },
+    },
+    {
+      id: 'edgeConfigItems',
+      title: 'Items',
+      type: 'code',
+      placeholder: '[{"operation":"upsert","key":"my-key","value":"my-value"}]',
+      condition: { field: 'operation', value: 'update_edge_config_items' },
+      required: { field: 'operation', value: 'update_edge_config_items' },
+    },
+
+    {
+      id: 'webhookUrl',
+      title: 'Webhook URL',
+      type: 'short-input',
+      placeholder: 'https://example.com/webhook',
+      condition: { field: 'operation', value: 'create_webhook' },
+      required: { field: 'operation', value: 'create_webhook' },
+    },
+    {
+      id: 'webhookEvents',
+      title: 'Events',
+      type: 'short-input',
+      placeholder: 'deployment.created,deployment.succeeded',
+      condition: { field: 'operation', value: 'create_webhook' },
+      required: { field: 'operation', value: 'create_webhook' },
+    },
+    {
+      id: 'webhookProjectIds',
+      title: 'Project IDs',
+      type: 'short-input',
+      placeholder: 'Comma-separated project IDs (optional)',
+      condition: { field: 'operation', value: 'create_webhook' },
+      mode: 'advanced',
+    },
+    {
+      id: 'webhookId',
+      title: 'Webhook ID',
+      type: 'short-input',
+      placeholder: 'Webhook ID',
+      condition: { field: 'operation', value: ['delete_webhook', 'get_webhook'] },
+      required: { field: 'operation', value: ['delete_webhook', 'get_webhook'] },
+    },
+
+    {
+      id: 'checkDeploymentId',
+      title: 'Deployment ID',
+      type: 'short-input',
+      placeholder: 'Deployment ID',
+      condition: {
+        field: 'operation',
+        value: ['create_check', 'get_check', 'list_checks', 'update_check', 'rerequest_check'],
+      },
+      required: {
+        field: 'operation',
+        value: ['create_check', 'get_check', 'list_checks', 'update_check', 'rerequest_check'],
+      },
+    },
+    {
+      id: 'checkId',
+      title: 'Check ID',
+      type: 'short-input',
+      placeholder: 'Check ID',
+      condition: {
+        field: 'operation',
+        value: ['get_check', 'update_check', 'rerequest_check'],
+      },
+      required: {
+        field: 'operation',
+        value: ['get_check', 'update_check', 'rerequest_check'],
+      },
+    },
+    {
+      id: 'checkName',
+      title: 'Check Name',
+      type: 'short-input',
+      placeholder: 'Name of the check (max 100 chars)',
+      condition: { field: 'operation', value: ['create_check', 'update_check'] },
+      required: { field: 'operation', value: 'create_check' },
+    },
+    {
+      id: 'checkBlocking',
+      title: 'Blocking',
+      type: 'dropdown',
+      options: [
+        { label: 'Yes', id: 'true' },
+        { label: 'No', id: 'false' },
+      ],
+      condition: { field: 'operation', value: 'create_check' },
+      required: { field: 'operation', value: 'create_check' },
+    },
+    {
+      id: 'checkPath',
+      title: 'Path',
+      type: 'short-input',
+      placeholder: 'Page path being checked (optional)',
+      condition: { field: 'operation', value: ['create_check', 'update_check'] },
+      mode: 'advanced',
+    },
+    {
+      id: 'checkDetailsUrl',
+      title: 'Details URL',
+      type: 'short-input',
+      placeholder: 'URL for more details (optional)',
+      condition: { field: 'operation', value: ['create_check', 'update_check'] },
+      mode: 'advanced',
+    },
+    {
+      id: 'checkStatus',
+      title: 'Status',
+      type: 'dropdown',
+      options: [
+        { label: 'Running', id: 'running' },
+        { label: 'Completed', id: 'completed' },
+      ],
+      condition: { field: 'operation', value: 'update_check' },
+    },
+    {
+      id: 'checkConclusion',
+      title: 'Conclusion',
+      type: 'dropdown',
+      options: [
+        { label: 'Succeeded', id: 'succeeded' },
+        { label: 'Failed', id: 'failed' },
+        { label: 'Canceled', id: 'canceled' },
+        { label: 'Neutral', id: 'neutral' },
+        { label: 'Skipped', id: 'skipped' },
+      ],
+      condition: { field: 'operation', value: 'update_check' },
+    },
+
+    {
+      id: 'teamIdParam',
+      title: 'Team ID',
+      type: 'short-input',
+      placeholder: 'Team ID',
+      condition: { field: 'operation', value: ['get_team', 'list_team_members'] },
+      required: { field: 'operation', value: ['get_team', 'list_team_members'] },
+    },
+    {
+      id: 'memberRole',
+      title: 'Role Filter',
+      type: 'dropdown',
+      options: [
+        { label: 'All', id: '' },
+        { label: 'Owner', id: 'OWNER' },
+        { label: 'Member', id: 'MEMBER' },
+        { label: 'Developer', id: 'DEVELOPER' },
+        { label: 'Viewer', id: 'VIEWER' },
+        { label: 'Billing', id: 'BILLING' },
+      ],
+      condition: { field: 'operation', value: 'list_team_members' },
+      mode: 'advanced',
+    },
+
+    {
+      id: 'teamId',
+      title: 'Team ID (Scope)',
+      type: 'short-input',
+      placeholder: 'Team ID to scope request (optional)',
+      condition: {
+        field: 'operation',
+        value: [
+          'get_team',
+          'list_team_members',
+          'get_user',
+          'create_check',
+          'get_check',
+          'list_checks',
+          'update_check',
+          'rerequest_check',
+        ],
+        not: true,
+      },
+      mode: 'advanced',
+    },
+
+    ...getTrigger('vercel_deployment_created').subBlocks,
+    ...getTrigger('vercel_deployment_ready').subBlocks,
+    ...getTrigger('vercel_deployment_error').subBlocks,
+    ...getTrigger('vercel_deployment_canceled').subBlocks,
+    ...getTrigger('vercel_project_created').subBlocks,
+    ...getTrigger('vercel_project_removed').subBlocks,
+    ...getTrigger('vercel_domain_created').subBlocks,
+    ...getTrigger('vercel_webhook').subBlocks,
+  ],
+  tools: {
+    access: [
+      'vercel_list_deployments',
+      'vercel_get_deployment',
+      'vercel_create_deployment',
+      'vercel_cancel_deployment',
+      'vercel_delete_deployment',
+      'vercel_get_deployment_events',
+      'vercel_list_deployment_files',
+      'vercel_promote_deployment',
+      'vercel_list_projects',
+      'vercel_get_project',
+      'vercel_create_project',
+      'vercel_update_project',
+      'vercel_delete_project',
+      'vercel_pause_project',
+      'vercel_unpause_project',
+      'vercel_list_project_domains',
+      'vercel_add_project_domain',
+      'vercel_remove_project_domain',
+      'vercel_update_project_domain',
+      'vercel_verify_project_domain',
+      'vercel_get_env_vars',
+      'vercel_create_env_var',
+      'vercel_update_env_var',
+      'vercel_delete_env_var',
+      'vercel_list_domains',
+      'vercel_get_domain',
+      'vercel_add_domain',
+      'vercel_delete_domain',
+      'vercel_get_domain_config',
+      'vercel_list_dns_records',
+      'vercel_create_dns_record',
+      'vercel_update_dns_record',
+      'vercel_delete_dns_record',
+      'vercel_list_aliases',
+      'vercel_get_alias',
+      'vercel_create_alias',
+      'vercel_delete_alias',
+      'vercel_list_edge_configs',
+      'vercel_get_edge_config',
+      'vercel_create_edge_config',
+      'vercel_get_edge_config_items',
+      'vercel_update_edge_config_items',
+      'vercel_delete_edge_config',
+      'vercel_list_webhooks',
+      'vercel_get_webhook',
+      'vercel_create_webhook',
+      'vercel_delete_webhook',
+      'vercel_create_check',
+      'vercel_get_check',
+      'vercel_list_checks',
+      'vercel_update_check',
+      'vercel_rerequest_check',
+      'vercel_list_teams',
+      'vercel_get_team',
+      'vercel_list_team_members',
+      'vercel_get_user',
+    ],
+    config: {
+      tool: (params) => `vercel_${params.operation}`,
+      params: (params) => {
+        const {
+          apiKey,
+          operation,
+          redeployId,
+          deployTarget,
+          projectName,
+          domainName,
+          envKey,
+          envValue,
+          envTarget,
+          envType,
+          recordName,
+          recordType,
+          recordValue,
+          recordId,
+          updateRecordName,
+          updateRecordType,
+          updateRecordValue,
+          updateRecordTtl,
+          updateRecordMxPriority,
+          updateRecordComment,
+          updateDomainRedirect,
+          updateDomainRedirectStatusCode,
+          updateDomainGitBranch,
+          aliasId,
+          aliasDeploymentId,
+          aliasName,
+          edgeConfigId,
+          edgeConfigSlug,
+          edgeConfigItems,
+          webhookId,
+          webhookUrl,
+          webhookEvents,
+          webhookProjectIds,
+          checkDeploymentId,
+          checkId,
+          checkName,
+          checkBlocking,
+          checkPath,
+          checkDetailsUrl,
+          checkStatus,
+          checkConclusion,
+          teamIdParam,
+          memberRole,
+          ...rest
+        } = params
+
+        const base = { ...rest, apiKey }
+
+        switch (operation) {
+          case 'create_deployment':
+            return {
+              ...base,
+              ...(redeployId ? { deploymentId: redeployId } : {}),
+              ...(deployTarget ? { target: deployTarget } : {}),
+            }
+          case 'create_project':
+            return { ...base, name: projectName }
+          case 'update_project':
+            return base
+          case 'add_project_domain':
+          case 'remove_project_domain':
+          case 'verify_project_domain':
+            return { ...base, domain: domainName }
+          case 'update_project_domain':
+            return {
+              ...base,
+              domain: domainName,
+              ...(updateDomainRedirect ? { redirect: updateDomainRedirect } : {}),
+              ...(updateDomainRedirectStatusCode
+                ? { redirectStatusCode: updateDomainRedirectStatusCode }
+                : {}),
+              ...(updateDomainGitBranch ? { gitBranch: updateDomainGitBranch } : {}),
+            }
+          case 'get_domain':
+          case 'delete_domain':
+          case 'get_domain_config':
+            return { ...base, domain: domainName }
+          case 'add_domain':
+            return { ...base, name: domainName }
+          case 'list_dns_records':
+            return { ...base, domain: domainName }
+          case 'create_dns_record':
+            return { ...base, domain: domainName, recordName, recordType, value: recordValue }
+          case 'delete_dns_record':
+            return { ...base, domain: domainName, recordId }
+          case 'update_dns_record':
+            return {
+              ...base,
+              recordId,
+              ...(updateRecordName ? { name: updateRecordName } : {}),
+              ...(updateRecordType ? { type: updateRecordType } : {}),
+              ...(updateRecordValue ? { value: updateRecordValue } : {}),
+              ...(updateRecordTtl ? { ttl: updateRecordTtl } : {}),
+              ...(updateRecordMxPriority ? { mxPriority: updateRecordMxPriority } : {}),
+              ...(updateRecordComment ? { comment: updateRecordComment } : {}),
+            }
+          case 'create_env_var':
+            return { ...base, key: envKey, value: envValue, target: envTarget, type: envType }
+          case 'update_env_var':
+            return {
+              ...base,
+              ...(envKey ? { key: envKey } : {}),
+              ...(envValue ? { value: envValue } : {}),
+              ...(envTarget ? { target: envTarget } : {}),
+              ...(envType ? { type: envType } : {}),
+            }
+          case 'get_alias':
+          case 'delete_alias':
+            return { ...base, aliasId }
+          case 'create_alias':
+            return { ...base, deploymentId: aliasDeploymentId, alias: aliasName }
+          case 'get_edge_config':
+          case 'get_edge_config_items':
+          case 'delete_edge_config':
+            return { ...base, edgeConfigId }
+          case 'create_edge_config':
+            return { ...base, slug: edgeConfigSlug }
+          case 'update_edge_config_items':
+            return { ...base, edgeConfigId, items: edgeConfigItems }
+          case 'create_webhook':
+            return {
+              ...base,
+              url: webhookUrl,
+              events: webhookEvents,
+              ...(webhookProjectIds ? { projectIds: webhookProjectIds } : {}),
+            }
+          case 'delete_webhook':
+          case 'get_webhook':
+            return { ...base, webhookId }
+          case 'create_check':
+            return {
+              ...base,
+              deploymentId: checkDeploymentId,
+              name: checkName,
+              blocking: checkBlocking === 'true',
+              ...(checkPath ? { path: checkPath } : {}),
+              ...(checkDetailsUrl ? { detailsUrl: checkDetailsUrl } : {}),
+            }
+          case 'get_check':
+          case 'rerequest_check':
+            return { ...base, deploymentId: checkDeploymentId, checkId }
+          case 'list_checks':
+            return { ...base, deploymentId: checkDeploymentId }
+          case 'update_check':
+            return {
+              ...base,
+              deploymentId: checkDeploymentId,
+              checkId,
+              ...(checkName ? { name: checkName } : {}),
+              ...(checkStatus ? { status: checkStatus } : {}),
+              ...(checkConclusion ? { conclusion: checkConclusion } : {}),
+              ...(checkPath ? { path: checkPath } : {}),
+              ...(checkDetailsUrl ? { detailsUrl: checkDetailsUrl } : {}),
+            }
+          case 'get_team':
+            return { ...base, teamId: teamIdParam }
+          case 'list_team_members':
+            return { ...base, teamId: teamIdParam, ...(memberRole ? { role: memberRole } : {}) }
+          default:
+            return base
+        }
+      },
+    },
+  },
+  inputs: {
+    operation: { type: 'string', description: 'Operation to perform' },
+    apiKey: { type: 'string', description: 'Vercel access token' },
+    projectId: { type: 'string', description: 'Project ID or name' },
+    deploymentId: { type: 'string', description: 'Deployment ID or hostname' },
+    name: { type: 'string', description: 'Project name' },
+    projectName: { type: 'string', description: 'New project name' },
+    project: { type: 'string', description: 'Project ID override' },
+    redeployId: { type: 'string', description: 'Deployment ID to redeploy' },
+    target: { type: 'string', description: 'Target environment filter' },
+    deployTarget: { type: 'string', description: 'Deployment target environment' },
+    state: { type: 'string', description: 'Deployment state filter' },
+    search: { type: 'string', description: 'Project search query' },
+    framework: { type: 'string', description: 'Project framework' },
+    buildCommand: { type: 'string', description: 'Build command' },
+    outputDirectory: { type: 'string', description: 'Output directory' },
+    installCommand: { type: 'string', description: 'Install command' },
+    domainName: { type: 'string', description: 'Domain name' },
+    envId: { type: 'string', description: 'Environment variable ID' },
+    envKey: { type: 'string', description: 'Environment variable key' },
+    envValue: { type: 'string', description: 'Environment variable value' },
+    envTarget: { type: 'string', description: 'Target environments' },
+    envType: { type: 'string', description: 'Variable type' },
+    recordName: { type: 'string', description: 'DNS record name' },
+    recordType: { type: 'string', description: 'DNS record type' },
+    recordValue: { type: 'string', description: 'DNS record value' },
+    recordId: { type: 'string', description: 'DNS record ID' },
+    updateRecordName: { type: 'string', description: 'Updated DNS record name' },
+    updateRecordType: { type: 'string', description: 'Updated DNS record type' },
+    updateRecordValue: { type: 'string', description: 'Updated DNS record value' },
+    updateRecordTtl: { type: 'string', description: 'Updated DNS record TTL' },
+    updateRecordMxPriority: { type: 'string', description: 'Updated MX record priority' },
+    updateRecordComment: { type: 'string', description: 'Updated DNS record comment' },
+    updateDomainRedirect: { type: 'string', description: 'Project domain redirect target' },
+    updateDomainRedirectStatusCode: {
+      type: 'string',
+      description: 'Project domain redirect status code',
+    },
+    updateDomainGitBranch: { type: 'string', description: 'Project domain git branch' },
+    aliasId: { type: 'string', description: 'Alias ID' },
+    aliasDeploymentId: { type: 'string', description: 'Deployment ID for alias' },
+    aliasName: { type: 'string', description: 'Alias domain' },
+    edgeConfigId: { type: 'string', description: 'Edge Config ID' },
+    edgeConfigSlug: { type: 'string', description: 'Edge Config slug' },
+    edgeConfigItems: { type: 'string', description: 'Edge Config items JSON' },
+    teamId: { type: 'string', description: 'Team ID for scoping' },
+    teamIdParam: { type: 'string', description: 'Team ID parameter' },
+    memberRole: { type: 'string', description: 'Team member role filter' },
+    webhookId: { type: 'string', description: 'Webhook ID' },
+    webhookUrl: { type: 'string', description: 'Webhook URL' },
+    webhookEvents: { type: 'string', description: 'Comma-separated event names' },
+    webhookProjectIds: { type: 'string', description: 'Comma-separated project IDs' },
+    checkDeploymentId: { type: 'string', description: 'Deployment ID for checks' },
+    checkId: { type: 'string', description: 'Check ID' },
+    checkName: { type: 'string', description: 'Check name' },
+    checkBlocking: { type: 'string', description: 'Whether check blocks deployment' },
+    checkPath: { type: 'string', description: 'Page path being checked' },
+    checkDetailsUrl: { type: 'string', description: 'URL for check details' },
+    checkStatus: { type: 'string', description: 'Check status' },
+    checkConclusion: { type: 'string', description: 'Check conclusion' },
+  },
+  outputs: {
+    deployments: {
+      type: 'array',
+      description: 'List of deployments',
+      condition: { field: 'operation', value: 'list_deployments' },
+    },
+    projects: {
+      type: 'array',
+      description: 'List of projects',
+      condition: { field: 'operation', value: 'list_projects' },
+    },
+    domains: {
+      type: 'array',
+      description: 'List of domains',
+      condition: {
+        field: 'operation',
+        value: ['list_domains', 'list_project_domains'],
+      },
+    },
+    envs: {
+      type: 'array',
+      description: 'List of environment variables',
+      condition: { field: 'operation', value: 'get_env_vars' },
+    },
+    records: {
+      type: 'array',
+      description: 'List of DNS records',
+      condition: { field: 'operation', value: 'list_dns_records' },
+    },
+    aliases: {
+      type: 'array',
+      description: 'List of aliases',
+      condition: { field: 'operation', value: 'list_aliases' },
+    },
+    edgeConfigs: {
+      type: 'array',
+      description: 'List of edge configs',
+      condition: { field: 'operation', value: 'list_edge_configs' },
+    },
+    items: {
+      type: 'array',
+      description: 'Edge config items',
+      condition: { field: 'operation', value: 'get_edge_config_items' },
+    },
+    teams: {
+      type: 'array',
+      description: 'List of teams',
+      condition: { field: 'operation', value: 'list_teams' },
+    },
+    members: {
+      type: 'array',
+      description: 'List of team members',
+      condition: { field: 'operation', value: 'list_team_members' },
+    },
+    events: {
+      type: 'array',
+      description: 'Deployment build log events',
+      condition: { field: 'operation', value: 'get_deployment_events' },
+    },
+    files: {
+      type: 'array',
+      description: 'Deployment file tree',
+      condition: { field: 'operation', value: 'list_deployment_files' },
+    },
+    webhooks: {
+      type: 'array',
+      description: 'List of webhooks',
+      condition: { field: 'operation', value: 'list_webhooks' },
+    },
+    checks: {
+      type: 'array',
+      description: 'List of deployment checks',
+      condition: { field: 'operation', value: 'list_checks' },
+    },
+    id: {
+      type: 'string',
+      description: 'Resource ID',
+    },
+    name: {
+      type: 'string',
+      description: 'Resource name',
+    },
+    url: {
+      type: 'string',
+      description: 'Deployment URL',
+      condition: {
+        field: 'operation',
+        value: ['get_deployment', 'create_deployment', 'cancel_deployment'],
+      },
+    },
+    state: {
+      type: 'string',
+      description: 'Deployment state',
+      condition: {
+        field: 'operation',
+        value: ['get_deployment', 'create_deployment', 'cancel_deployment', 'delete_deployment'],
+      },
+    },
+    deleted: {
+      type: 'boolean',
+      description: 'Whether the resource was deleted',
+      condition: {
+        field: 'operation',
+        value: [
+          'delete_deployment',
+          'delete_project',
+          'remove_project_domain',
+          'delete_domain',
+          'delete_dns_record',
+          'delete_alias',
+          'delete_env_var',
+          'delete_webhook',
+          'delete_edge_config',
+        ],
+      },
+    },
+    verified: {
+      type: 'boolean',
+      description: 'Whether the project domain is verified',
+      condition: {
+        field: 'operation',
+        value: ['add_project_domain', 'update_project_domain', 'verify_project_domain'],
+      },
+    },
+    promoted: {
+      type: 'boolean',
+      description: 'Whether the deployment was promoted to production',
+      condition: { field: 'operation', value: 'promote_deployment' },
+    },
+    count: {
+      type: 'number',
+      description: 'Number of items returned',
+    },
+    hasMore: {
+      type: 'boolean',
+      description: 'Whether more results are available',
+    },
+  },
+}
+
+export const VercelBlockMeta = {
+  tags: ['cloud', 'ci-cd'],
+  url: 'https://vercel.com',
+  templates: [
+    {
+      icon: VercelIcon,
+      title: 'Vercel deployment monitor',
+      prompt:
+        'Build a scheduled workflow that polls Vercel for the latest deployments across my projects every five minutes, detects failed or stuck builds, fetches the build logs, summarizes the failure cause, and posts an actionable alert to Slack with a deep link to the deployment.',
+      modules: ['scheduled', 'agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'monitoring', 'engineering'],
+      alsoIntegrations: ['slack'],
+    },
+    {
+      icon: VercelIcon,
+      title: 'Preview deployment reviewer',
+      prompt:
+        'Build a workflow that watches GitHub pull requests, finds the matching Vercel preview deployment, captures the preview URL, runs a smoke check against critical pages, and posts a status comment on the pull request with the preview link and any issues found.',
+      modules: ['agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'engineering', 'automation'],
+      alsoIntegrations: ['github'],
+    },
+    {
+      icon: VercelIcon,
+      title: 'Environment variable auditor',
+      prompt:
+        'Create a scheduled weekly workflow that pulls environment variables from every Vercel project, compares them to a reference list in a table, flags drift, missing keys, and stale values, and emails a remediation report to the platform team.',
+      modules: ['scheduled', 'tables', 'agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'enterprise', 'monitoring'],
+    },
+    {
+      icon: VercelIcon,
+      title: 'Domain and DNS inventory',
+      prompt:
+        'Build a scheduled workflow that lists every domain and DNS record across my Vercel account weekly, logs them into a tracking table, and sends a Slack diff of any added, removed, or modified records so DNS changes never go unnoticed.',
+      modules: ['scheduled', 'tables', 'agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'monitoring', 'infrastructure'],
+      alsoIntegrations: ['slack'],
+    },
+    {
+      icon: VercelIcon,
+      title: 'Project pause guard',
+      prompt:
+        'Build a scheduled workflow that scans Vercel projects daily for low-traffic or stale candidates flagged in a table, pauses projects that meet the criteria, and Slacks a digest of paused and unpaused projects to the platform team for review.',
+      modules: ['scheduled', 'tables', 'agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'enterprise', 'automation'],
+      alsoIntegrations: ['slack'],
+    },
+    {
+      icon: VercelIcon,
+      title: 'Deploy log triage',
+      prompt:
+        'Create a workflow that fires after each Vercel deployment, fetches the build and runtime logs, classifies warnings and errors with an agent, groups recurring issues, and opens a Linear ticket per cluster so platform regressions get addressed early.',
+      modules: ['agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'monitoring', 'engineering'],
+      alsoIntegrations: ['linear'],
+    },
+    {
+      icon: VercelIcon,
+      title: 'Failed deployment recovery',
+      prompt:
+        'Build a workflow that watches Vercel for failed production deployments, identifies the last known good production deployment, promotes it back to production for an instant rollback, and posts a Slack incident summary with the failure cause and rollback confirmation.',
+      modules: ['agent', 'workflows'],
+      category: 'engineering',
+      tags: ['devops', 'monitoring', 'automation'],
+      alsoIntegrations: ['slack'],
+    },
+  ],
+  skills: [
+    {
+      name: 'monitor-deployments',
+      description: 'List recent Vercel deployments, surface failed builds, and pull their logs.',
+      content:
+        '# Monitor Vercel Deployments\n\nKeep an eye on builds so failures are caught fast.\n\n## Steps\n1. Use the List Deployments operation with your access token, optionally filtering by Project ID, Target (production), and State (ERROR).\n2. For any failed or stuck deployment, use Get Deployment Logs with the Deployment ID to pull the build events.\n3. Summarize the failure cause from the log events.\n4. Use Get Deployment for full detail including the deployment URL and state.\n\n## Output\nReturn the list of deployments with their state, plus a short summary of any failed build and a link to investigate.',
+    },
+    {
+      name: 'rollback-deployment',
+      description:
+        'Promote the last known good Vercel deployment to instantly roll back a bad release.',
+      content:
+        '# Roll Back a Vercel Deployment\n\nRecover production by instantly promoting a previous good deployment back to production.\n\n## Steps\n1. Use List Deployments filtered to the project, Target production, and State READY to find the last good deployment.\n2. Use the Promote Deployment operation with the Project ID and that good deployment ID to restore it to production instantly, with no rebuild.\n3. Optionally use Cancel Deployment on the broken build that is still running.\n\n## Output\nReturn the promoted deployment ID and confirmation so the rollback can be announced.',
+    },
+    {
+      name: 'manage-env-vars',
+      description: 'Read, create, or update environment variables on a Vercel project.',
+      content:
+        '# Manage Vercel Environment Variables\n\nKeep a project configuration correct across environments.\n\n## Steps\n1. Use Get Environment Variables with the Project ID to read the current variables.\n2. To add one, use Create Environment Variable with the Key, Value, Target Environments (for example production,preview), and Variable Type.\n3. To change one, use Update Environment Variable with the Env Variable ID and the new value.\n4. Use Delete Environment Variable with the Env Variable ID to remove a stale key.\n\n## Output\nReturn the resulting variable list or confirmation of the create, update, or delete so configuration changes are auditable.',
+    },
+    {
+      name: 'audit-domains-and-dns',
+      description: 'Inventory Vercel domains and DNS records and manage records for a domain.',
+      content:
+        '# Audit Vercel Domains and DNS\n\nTrack domains and DNS so changes never go unnoticed.\n\n## Steps\n1. Use List Domains for the account inventory, and List DNS Records with a Domain to see its records.\n2. To add a record, use Create DNS Record with the Domain, Record Name, Record Type (A, CNAME, TXT, etc.), and Value.\n3. To remove one, use Delete DNS Record with the Domain and Record ID.\n4. Use Get Domain Config to verify a domain is correctly configured.\n\n## Output\nReturn the domain and DNS record inventory, or confirmation of any record change, for the tracking log.',
+    },
+  ],
+} as const satisfies BlockMeta

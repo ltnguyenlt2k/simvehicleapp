@@ -1,0 +1,1139 @@
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { createLogger } from '@sim/logger'
+import { isEqual } from 'es-toolkit'
+import { useParams } from 'next/navigation'
+import { Handle, type NodeProps, Position, useUpdateNodeInternals } from 'reactflow'
+import { useStoreWithEqualityFn } from 'zustand/traditional'
+import { Badge, Tooltip } from '@/components/emcn'
+import { cn } from '@/lib/core/utils/cn'
+import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
+import { getBaseUrl } from '@/lib/core/utils/urls'
+import { createMcpToolId } from '@/lib/mcp/shared'
+import { getProviderIdFromServiceId } from '@/lib/oauth'
+import { HANDLE_POSITIONS } from '@/lib/workflows/blocks/block-dimensions'
+import { calculateWorkflowBlockDimensions } from '@/lib/workflows/blocks/deterministic-dimensions'
+import { getConditionRows, getRouterRows } from '@/lib/workflows/dynamic-handle-topology'
+import {
+  getDisplayValue,
+  resolveDropdownLabel,
+  resolveFilterFieldLabel,
+  resolveSkillsLabel,
+  resolveToolsLabel,
+  resolveVariablesLabel,
+  resolveWorkflowMultiSelectLabel,
+  resolveWorkflowSelectionLabel,
+} from '@/lib/workflows/subblocks/display'
+import {
+  buildCanonicalIndex,
+  evaluateSubBlockCondition,
+  hasAdvancedValues,
+  isSubBlockFeatureEnabled,
+  isSubBlockHidden,
+  isSubBlockVisibleForMode,
+  isTriggerModeSubBlock,
+  resolveDependencyValue,
+} from '@/lib/workflows/subblocks/visibility'
+import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
+import { ActionBar } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar'
+import {
+  useBlockProperties,
+  useChildWorkflow,
+  useWebhookInfo,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/hooks'
+import type { WorkflowBlockProps } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/types'
+import {
+  getProviderName,
+  shouldSkipBlockRender,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/utils'
+import { useBlockVisual } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks'
+import { useBlockDimensions } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks/use-block-dimensions'
+import { SELECTOR_TYPES_HYDRATION_REQUIRED, type SubBlockConfig } from '@/blocks/types'
+import { getDependsOnFields } from '@/blocks/utils'
+import { useKnowledgeBase } from '@/hooks/kb/use-knowledge'
+import { useCustomTools } from '@/hooks/queries/custom-tools'
+import { useDeployWorkflow } from '@/hooks/queries/deployments'
+import { useMcpServers, useMcpToolsQuery } from '@/hooks/queries/mcp'
+import { useCredentialName } from '@/hooks/queries/oauth/oauth-credentials'
+import { useReactivateSchedule, useScheduleInfo } from '@/hooks/queries/schedules'
+import { useSkills } from '@/hooks/queries/skills'
+import { useTablesList } from '@/hooks/queries/tables'
+import { useWorkflowMap } from '@/hooks/queries/workflows'
+import { useReactiveConditions } from '@/hooks/use-reactive-conditions'
+import { useSelectorDisplayName } from '@/hooks/use-selector-display-name'
+import { useVariablesStore } from '@/stores/variables/store'
+import { useSubBlockStore } from '@/stores/workflows/subblock/store'
+import { useWorkflowStore } from '@/stores/workflows/workflow/store'
+import { wouldCreateCycle } from '@/stores/workflows/workflow/utils'
+import { formatParameterLabel } from '@/tools/params'
+
+const logger = createLogger('WorkflowBlock')
+
+/** Stable empty object to avoid creating new references */
+const EMPTY_SUBBLOCK_VALUES = {} as Record<string, any>
+
+interface SubBlockRowProps {
+  title: string
+  value?: string
+  subBlock?: SubBlockConfig
+  rawValue?: unknown
+  workspaceId?: string
+  workflowId?: string
+  blockId?: string
+  allSubBlockValues?: Record<string, { value: unknown }>
+  displayAdvancedOptions?: boolean
+  canonicalIndex?: ReturnType<typeof buildCanonicalIndex>
+  canonicalModeOverrides?: Record<string, 'basic' | 'advanced'>
+}
+
+/**
+ * Compares SubBlockRow props for memo equality check.
+ */
+const areSubBlockRowPropsEqual = (
+  prevProps: SubBlockRowProps,
+  nextProps: SubBlockRowProps
+): boolean => {
+  const subBlockId = prevProps.subBlock?.id
+  const prevValue = subBlockId ? prevProps.allSubBlockValues?.[subBlockId]?.value : undefined
+  const nextValue = subBlockId ? nextProps.allSubBlockValues?.[subBlockId]?.value : undefined
+  const valueEqual = prevValue === nextValue || isEqual(prevValue, nextValue)
+
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.value === nextProps.value &&
+    prevProps.subBlock === nextProps.subBlock &&
+    prevProps.rawValue === nextProps.rawValue &&
+    prevProps.workspaceId === nextProps.workspaceId &&
+    prevProps.workflowId === nextProps.workflowId &&
+    prevProps.blockId === nextProps.blockId &&
+    valueEqual &&
+    prevProps.displayAdvancedOptions === nextProps.displayAdvancedOptions &&
+    prevProps.canonicalIndex === nextProps.canonicalIndex &&
+    prevProps.canonicalModeOverrides === nextProps.canonicalModeOverrides
+  )
+}
+
+/**
+ * Renders a single subblock row with title and optional value.
+ * Automatically hydrates IDs to display names for all selector types.
+ * Memoized to prevent excessive re-renders when parent components update.
+ */
+const SubBlockRow = memo(function SubBlockRow({
+  title,
+  value,
+  subBlock,
+  rawValue,
+  workspaceId,
+  workflowId,
+  blockId,
+  allSubBlockValues,
+  displayAdvancedOptions,
+  canonicalIndex,
+  canonicalModeOverrides,
+}: SubBlockRowProps) {
+  const getStringValue = useCallback(
+    (key?: string): string | undefined => {
+      if (!key || !allSubBlockValues) return undefined
+      const candidate = allSubBlockValues[key]?.value
+      return typeof candidate === 'string' && candidate.length > 0 ? candidate : undefined
+    },
+    [allSubBlockValues]
+  )
+
+  const rawValues = useMemo(() => {
+    if (!allSubBlockValues) return {}
+    return Object.entries(allSubBlockValues).reduce<Record<string, unknown>>(
+      (acc, [key, entry]) => {
+        acc[key] = entry?.value
+        return acc
+      },
+      {}
+    )
+  }, [allSubBlockValues])
+
+  const dependencyValues = useMemo(() => {
+    const fields = getDependsOnFields(subBlock?.dependsOn)
+    if (!fields.length) return {}
+    return fields.reduce<Record<string, string>>((accumulator, dependency) => {
+      const dependencyValue = resolveDependencyValue(
+        dependency,
+        rawValues,
+        canonicalIndex || buildCanonicalIndex([]),
+        canonicalModeOverrides
+      )
+      const dependencyString =
+        typeof dependencyValue === 'string' && dependencyValue.length > 0
+          ? dependencyValue
+          : undefined
+      if (dependencyString) {
+        accumulator[dependency] = dependencyString
+      }
+      return accumulator
+    }, {})
+  }, [
+    canonicalIndex,
+    canonicalModeOverrides,
+    displayAdvancedOptions,
+    rawValues,
+    subBlock?.dependsOn,
+  ])
+
+  const credentialSourceId =
+    subBlock?.type === 'oauth-input' && typeof rawValue === 'string' ? rawValue : undefined
+  const credentialProviderId = subBlock?.serviceId
+    ? getProviderIdFromServiceId(subBlock.serviceId)
+    : undefined
+  const { displayName: credentialName } = useCredentialName(
+    credentialSourceId,
+    credentialProviderId,
+    workflowId,
+    workspaceId
+  )
+
+  const knowledgeBaseId = dependencyValues.knowledgeBaseId
+
+  const dropdownLabel = useMemo(
+    () => resolveDropdownLabel(subBlock, rawValue),
+    [subBlock, rawValue]
+  )
+
+  const resolveContextValue = useCallback(
+    (key: string): string | undefined => {
+      const resolved = resolveDependencyValue(
+        key,
+        rawValues,
+        canonicalIndex || buildCanonicalIndex([]),
+        canonicalModeOverrides
+      )
+      return typeof resolved === 'string' && resolved.length > 0 ? resolved : undefined
+    },
+    [rawValues, canonicalIndex, canonicalModeOverrides]
+  )
+
+  const domainValue = resolveContextValue('domain')
+  const teamIdValue = resolveContextValue('teamId')
+  const projectIdValue = resolveContextValue('projectId')
+  const planIdValue = resolveContextValue('planId')
+  const baseIdValue = resolveContextValue('baseId')
+  const datasetIdValue = resolveContextValue('datasetId')
+  const serviceDeskIdValue = resolveContextValue('serviceDeskId')
+  const siteIdValue = resolveContextValue('siteId')
+  const collectionIdValue = resolveContextValue('collectionId')
+  const spreadsheetIdValue = resolveContextValue('spreadsheetId')
+  const fileIdValue = resolveContextValue('fileId')
+  const credentialId = dependencyValues.credential ?? resolveContextValue('oauthCredential')
+
+  const { displayName: selectorDisplayName } = useSelectorDisplayName({
+    subBlock,
+    value: rawValue,
+    workflowId,
+    oauthCredential: typeof credentialId === 'string' ? credentialId : undefined,
+    knowledgeBaseId: typeof knowledgeBaseId === 'string' ? knowledgeBaseId : undefined,
+    domain: domainValue,
+    teamId: teamIdValue,
+    projectId: projectIdValue,
+    planId: planIdValue,
+    baseId: baseIdValue,
+    datasetId: datasetIdValue,
+    serviceDeskId: serviceDeskIdValue,
+    siteId: siteIdValue,
+    collectionId: collectionIdValue,
+    spreadsheetId: spreadsheetIdValue,
+    fileId: fileIdValue,
+  })
+
+  const { knowledgeBase: kbForDisplayName } = useKnowledgeBase(
+    subBlock?.type === 'knowledge-base-selector' && typeof rawValue === 'string' ? rawValue : ''
+  )
+  const knowledgeBaseDisplayName = kbForDisplayName?.name ?? null
+
+  const {
+    data: workflowMapForLookup = {},
+    isSuccess: workflowMapLoaded,
+    isPlaceholderData: workflowMapIsPlaceholder,
+  } = useWorkflowMap(workspaceId)
+  /**
+   * Hydrates workflow-selector values and multi-select workflow dropdowns to
+   * names. Ready only on a successful, non-placeholder load — an errored or
+   * stale-placeholder map must not mislabel valid workflows as deleted.
+   */
+  const workflowSelectionName = useMemo(() => {
+    const lookup = {
+      workflowMap: workflowMapForLookup,
+      ready: workflowMapLoaded && !workflowMapIsPlaceholder,
+    }
+    return (
+      resolveWorkflowSelectionLabel(subBlock, rawValue, lookup) ??
+      resolveWorkflowMultiSelectLabel(subBlock, rawValue, lookup)
+    )
+  }, [workflowMapForLookup, workflowMapLoaded, workflowMapIsPlaceholder, subBlock, rawValue])
+
+  const { data: mcpServers = [] } = useMcpServers(workspaceId || '')
+  const mcpServerDisplayName = useMemo(() => {
+    if (subBlock?.type !== 'mcp-server-selector' || typeof rawValue !== 'string') {
+      return null
+    }
+    const server = mcpServers.find((s) => s.id === rawValue)
+    return server?.name ?? null
+  }, [subBlock?.type, rawValue, mcpServers])
+
+  const { data: mcpToolsData = [] } = useMcpToolsQuery(workspaceId || '')
+  const mcpToolDisplayName = useMemo(() => {
+    if (subBlock?.type !== 'mcp-tool-selector' || typeof rawValue !== 'string') {
+      return null
+    }
+
+    const tool = mcpToolsData.find((t) => {
+      const toolId = createMcpToolId(t.serverId, t.name)
+      return toolId === rawValue
+    })
+    return tool?.name ?? null
+  }, [subBlock?.type, rawValue, mcpToolsData])
+
+  const { data: tables = [] } = useTablesList(workspaceId || '')
+  const tableDisplayName = useMemo(() => {
+    if (subBlock?.type !== 'table-selector' || typeof rawValue !== 'string') {
+      return null
+    }
+    const table = tables.find((t) => t.id === rawValue)
+    return table?.name ?? null
+  }, [subBlock?.type, rawValue, tables])
+
+  const webhookUrlDisplayValue = useMemo(() => {
+    if (!subBlock?.id?.startsWith('webhookUrlDisplay') || !blockId) {
+      return null
+    }
+    const baseUrl = getBaseUrl()
+    const triggerPath = allSubBlockValues?.triggerPath?.value as string | undefined
+    return triggerPath
+      ? `${baseUrl}/api/webhooks/trigger/${triggerPath}`
+      : `${baseUrl}/api/webhooks/trigger/${blockId}`
+  }, [subBlock?.id, blockId, allSubBlockValues])
+
+  /**
+   * Subscribe only to variables for this workflow to avoid re-renders from other workflows.
+   * Uses isEqual for deep comparison since Object.fromEntries creates a new object each time.
+   */
+  const workflowVariables = useStoreWithEqualityFn(
+    useVariablesStore,
+    useCallback(
+      (state) => {
+        if (!workflowId) return {}
+        return Object.fromEntries(
+          Object.entries(state.variables).filter(([, v]) => v.workflowId === workflowId)
+        )
+      },
+      [workflowId]
+    ),
+    isEqual
+  )
+
+  const variablesDisplayValue = useMemo(
+    () => resolveVariablesLabel(subBlock, rawValue, Object.values(workflowVariables)),
+    [subBlock, rawValue, workflowVariables]
+  )
+
+  /** Hydrates tool references to display names. */
+  const { data: customTools = [] } = useCustomTools(workspaceId || '')
+  const toolsDisplayValue = useMemo(
+    () => resolveToolsLabel(subBlock, rawValue, customTools),
+    [subBlock, rawValue, customTools]
+  )
+
+  const filterDisplayValue = useMemo(
+    () => resolveFilterFieldLabel(subBlock, rawValue),
+    [subBlock, rawValue]
+  )
+
+  /** Hydrates skill references to display names. */
+  const { data: workspaceSkills = [] } = useSkills(workspaceId || '')
+  const skillsDisplayValue = useMemo(
+    () => resolveSkillsLabel(subBlock, rawValue, workspaceSkills),
+    [subBlock, rawValue, workspaceSkills]
+  )
+
+  const isPasswordField = subBlock?.password === true
+  const maskedValue = isPasswordField && value && value !== '-' ? '•••' : null
+  const isMonospaceField = Boolean(filterDisplayValue)
+
+  const isSelectorType = subBlock?.type && SELECTOR_TYPES_HYDRATION_REQUIRED.includes(subBlock.type)
+  const hydratedName =
+    credentialName ||
+    dropdownLabel ||
+    variablesDisplayValue ||
+    filterDisplayValue ||
+    toolsDisplayValue ||
+    skillsDisplayValue ||
+    knowledgeBaseDisplayName ||
+    workflowSelectionName ||
+    mcpServerDisplayName ||
+    mcpToolDisplayName ||
+    tableDisplayName ||
+    webhookUrlDisplayValue ||
+    selectorDisplayName
+  const displayValue = maskedValue || hydratedName || (isSelectorType && value ? '-' : value)
+
+  return (
+    <div className='flex items-center gap-2'>
+      <span
+        className='min-w-0 truncate text-[var(--text-tertiary)] text-sm capitalize'
+        title={title}
+      >
+        {title}
+      </span>
+      {displayValue !== undefined && (
+        <span
+          className={cn(
+            'flex-1 truncate text-right text-[var(--text-primary)] text-sm',
+            isMonospaceField && 'font-mono'
+          )}
+          title={displayValue}
+        >
+          {displayValue}
+        </span>
+      )}
+    </div>
+  )
+}, areSubBlockRowPropsEqual)
+
+export const WorkflowBlock = memo(function WorkflowBlock({
+  id,
+  data,
+  selected,
+}: NodeProps<WorkflowBlockProps>) {
+  const { type, config, name, isPending, isSandbox } = data
+
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  const params = useParams()
+  const workspaceId = isSandbox ? '' : (params.workspaceId as string)
+
+  const {
+    currentWorkflow,
+    activeWorkflowId,
+    isEnabled,
+    isLocked,
+    handleClick,
+    hasRing,
+    ringStyles,
+    runPathStatus,
+  } = useBlockVisual({ blockId: id, data, isPending, isSelected: selected })
+
+  const currentWorkflowId = isSandbox ? '' : (params.workflowId as string) || activeWorkflowId || ''
+
+  const currentBlock = currentWorkflow.getBlockById(id)
+
+  const { horizontalHandles, blockHeight, blockWidth, displayAdvancedMode, displayTriggerMode } =
+    useBlockProperties(
+      id,
+      currentWorkflow.isDiffMode,
+      data.isPreview ?? false,
+      data.blockState,
+      currentWorkflow.blocks
+    )
+
+  const {
+    isWebhookConfigured,
+    webhookProvider,
+    webhookPath,
+    isDisabled: isWebhookDisabled,
+    webhookId,
+    reactivateWebhook,
+  } = useWebhookInfo(id, currentWorkflowId)
+
+  const { scheduleInfo, isLoading: isLoadingScheduleInfo } = useScheduleInfo(
+    currentWorkflowId,
+    id,
+    type
+  )
+  const reactivateScheduleMutation = useReactivateSchedule()
+  const reactivateSchedule = useCallback(
+    async (scheduleId: string) => {
+      await reactivateScheduleMutation.mutateAsync({
+        scheduleId,
+        workflowId: currentWorkflowId,
+        blockId: id,
+      })
+    },
+    [reactivateScheduleMutation, currentWorkflowId, id]
+  )
+
+  const { childWorkflowId, childIsDeployed, childNeedsRedeploy } = useChildWorkflow(
+    id,
+    type,
+    data.isPreview ?? false,
+    data.subBlockValues
+  )
+
+  const { mutate: deployChildWorkflow, isPending: isDeploying } = useDeployWorkflow()
+
+  const userPermissions = useUserPermissionsContext()
+  const canEditWorkflow = userPermissions.canEdit && !data.isWorkflowLocked
+
+  const currentStoreBlock = currentWorkflow.getBlockById(id)
+
+  const isStarterBlock = type === 'starter'
+  const isWebhookTriggerBlock = type === 'webhook' || type === 'generic_webhook'
+
+  const blockSubBlockValues = useStoreWithEqualityFn(
+    useSubBlockStore,
+    useCallback(
+      (state) => {
+        if (!activeWorkflowId) return EMPTY_SUBBLOCK_VALUES
+        return state.workflowValues[activeWorkflowId]?.[id] ?? EMPTY_SUBBLOCK_VALUES
+      },
+      [activeWorkflowId, id]
+    ),
+    isEqual
+  )
+  const canonicalIndex = useMemo(() => buildCanonicalIndex(config.subBlocks), [config.subBlocks])
+  const canonicalModeOverrides = currentStoreBlock?.data?.canonicalModes
+
+  const hiddenByReactiveCondition = useReactiveConditions(
+    config.subBlocks,
+    id,
+    activeWorkflowId,
+    canonicalModeOverrides
+  )
+
+  const subBlockRowsData = useMemo(() => {
+    const rows: SubBlockConfig[][] = []
+    let currentRow: SubBlockConfig[] = []
+    let currentRowWidth = 0
+
+    /**
+     * Get the appropriate state for conditional evaluation based on the current mode.
+     * Uses preview values in preview mode, diff workflow values in diff mode,
+     * or the current block's subblock values otherwise.
+     */
+    const stateToUse: Record<string, { value: unknown }> =
+      data.isPreview && data.subBlockValues
+        ? data.subBlockValues
+        : Object.entries(blockSubBlockValues).reduce(
+            (acc, [key, value]) => {
+              acc[key] = { value }
+              return acc
+            },
+            {} as Record<string, { value: unknown }>
+          )
+
+    const rawValues = Object.entries(stateToUse).reduce<Record<string, unknown>>(
+      (acc, [key, entry]) => {
+        acc[key] = entry?.value
+        return acc
+      },
+      {}
+    )
+
+    const effectiveAdvanced = canEditWorkflow
+      ? displayAdvancedMode
+      : displayAdvancedMode || hasAdvancedValues(config.subBlocks, rawValues, canonicalIndex)
+    const effectiveTrigger = displayTriggerMode
+
+    const visibleSubBlocks = config.subBlocks.filter((block) => {
+      if (block.hidden) return false
+      if (block.hideFromPreview) return false
+      if (hiddenByReactiveCondition.has(block.id)) return false
+      if (!isSubBlockFeatureEnabled(block)) return false
+      if (isSubBlockHidden(block)) return false
+
+      const isPureTriggerBlock = config?.triggers?.enabled && config.category === 'triggers'
+
+      if (effectiveTrigger) {
+        const isValidTriggerSubblock = isPureTriggerBlock
+          ? isTriggerModeSubBlock(block) || !block.mode
+          : isTriggerModeSubBlock(block)
+
+        if (!isValidTriggerSubblock) {
+          return false
+        }
+      } else {
+        if (isTriggerModeSubBlock(block)) {
+          return false
+        }
+      }
+
+      if (
+        !isSubBlockVisibleForMode(
+          block,
+          effectiveAdvanced,
+          canonicalIndex,
+          rawValues,
+          canonicalModeOverrides
+        )
+      ) {
+        return false
+      }
+
+      if (!block.condition) return true
+
+      return evaluateSubBlockCondition(block.condition, rawValues)
+    })
+
+    visibleSubBlocks.forEach((block) => {
+      if (currentRowWidth + blockWidth > 1) {
+        if (currentRow.length > 0) {
+          rows.push([...currentRow])
+        }
+        currentRow = [block]
+        currentRowWidth = blockWidth
+      } else {
+        currentRow.push(block)
+        currentRowWidth += blockWidth
+      }
+    })
+
+    if (currentRow.length > 0) {
+      rows.push(currentRow)
+    }
+
+    return { rows, stateToUse }
+  }, [
+    config.subBlocks,
+    config.category,
+    config.triggers,
+    id,
+    displayAdvancedMode,
+    displayTriggerMode,
+    data.isPreview,
+    data.subBlockValues,
+    currentWorkflow.isDiffMode,
+    currentBlock,
+    canonicalModeOverrides,
+    canEditWorkflow,
+    canonicalIndex,
+    hiddenByReactiveCondition,
+    blockSubBlockValues,
+    activeWorkflowId,
+  ])
+
+  const subBlockRows = subBlockRowsData.rows
+  const subBlockState = subBlockRowsData.stateToUse
+  const topologySubBlocks = data.isPreview
+    ? (data.blockState?.subBlocks ?? {})
+    : (currentStoreBlock?.subBlocks ?? {})
+  const effectiveAdvanced = useMemo(() => {
+    const rawValues = Object.entries(subBlockState).reduce<Record<string, unknown>>(
+      (acc, [key, entry]) => {
+        acc[key] = entry?.value
+        return acc
+      },
+      {}
+    )
+    return canEditWorkflow
+      ? displayAdvancedMode
+      : displayAdvancedMode || hasAdvancedValues(config.subBlocks, rawValues, canonicalIndex)
+  }, [subBlockState, displayAdvancedMode, config.subBlocks, canonicalIndex, canEditWorkflow])
+
+  /**
+   * Determine if block has content below the header (subblocks or error row).
+   * Controls header border visibility and content container rendering.
+   */
+  const shouldShowDefaultHandles =
+    config.category !== 'triggers' && type !== 'starter' && !displayTriggerMode
+  const hasContentBelowHeader = subBlockRows.length > 0 || shouldShowDefaultHandles
+
+  /**
+   * Reusable styles and positioning for Handle components.
+   */
+  const getHandleClasses = (position: 'left' | 'right' | 'top' | 'bottom', isError = false) => {
+    const baseClasses = '!z-[0] !cursor-crosshair !border-none !transition-[colors] !duration-150'
+    const colorClasses = isError ? '!bg-[var(--text-error)]' : '!bg-[var(--workflow-edge)]'
+
+    const positionClasses = {
+      left: '!left-[-8px] !h-5 !w-[7px] !rounded-l-[2px] !rounded-r-none hover-hover:!left-[-11px] hover-hover:!w-[10px] hover-hover:!rounded-l-full',
+      right:
+        '!right-[-8px] !h-5 !w-[7px] !rounded-r-[2px] !rounded-l-none hover-hover:!right-[-11px] hover-hover:!w-[10px] hover-hover:!rounded-r-full',
+      top: '!top-[-8px] !h-[7px] !w-5 !rounded-t-[2px] !rounded-b-none hover-hover:!top-[-11px] hover-hover:!h-[10px] hover-hover:!rounded-t-full',
+      bottom:
+        '!bottom-[-8px] !h-[7px] !w-5 !rounded-b-[2px] !rounded-t-none hover-hover:!bottom-[-11px] hover-hover:!h-[10px] hover-hover:!rounded-b-full',
+    }
+
+    return cn(baseClasses, colorClasses, positionClasses[position])
+  }
+
+  const getHandleStyle = (position: 'horizontal' | 'vertical') => {
+    if (position === 'horizontal') {
+      return { top: `${HANDLE_POSITIONS.DEFAULT_Y_OFFSET}px`, transform: 'translateY(-50%)' }
+    }
+    return { left: '50%', transform: 'translateX(-50%)' }
+  }
+
+  /**
+   * Compute per-condition rows (title/value/id) for condition blocks so we can render
+   * one row per condition statement with its own output handle.
+   */
+  const conditionRows = useMemo(() => {
+    if (type !== 'condition') return [] as { id: string; title: string; value: string }[]
+    return getConditionRows(id, topologySubBlocks.conditions?.value)
+  }, [type, topologySubBlocks, id])
+
+  /**
+   * Compute per-route rows (id/value) for router_v2 blocks so we can render
+   * one row per route with its own output handle.
+   * Uses same structure as conditions: { id, title, value }
+   */
+  const routerRows = useMemo(() => {
+    if (type !== 'router_v2') return [] as { id: string; value: string }[]
+    return getRouterRows(id, topologySubBlocks.routes?.value)
+  }, [type, topologySubBlocks, id])
+
+  /**
+   * Total rendered row count. `mcp-dynamic-args` expands one row per parameter
+   * in the cached tool schema, so we count those properties instead of 1.
+   */
+  const totalRenderedRowCount = useMemo(() => {
+    let count = 0
+    for (const row of subBlockRows) {
+      for (const subBlock of row) {
+        if (subBlock.type === 'mcp-dynamic-args') {
+          const schema = subBlockState._toolSchema?.value as
+            | { properties?: Record<string, unknown> }
+            | undefined
+          const properties = schema?.properties
+          count += properties && typeof properties === 'object' ? Object.keys(properties).length : 0
+        } else {
+          count += 1
+        }
+      }
+    }
+    return count
+  }, [subBlockRows, subBlockState])
+
+  /**
+   * Compute and publish deterministic layout metrics for workflow blocks.
+   * This avoids ResizeObserver/animation-frame jitter and prevents initial "jump".
+   */
+  useBlockDimensions({
+    blockId: id,
+    calculateDimensions: () => {
+      return calculateWorkflowBlockDimensions({
+        blockType: type,
+        category: config.category,
+        displayTriggerMode,
+        visibleSubBlockCount: totalRenderedRowCount,
+        conditionRowCount: conditionRows.length,
+        routerRowCount: routerRows.length,
+      })
+    },
+    dependencies: [
+      type,
+      config.category,
+      displayTriggerMode,
+      totalRenderedRowCount,
+      conditionRows.length,
+      routerRows.length,
+      horizontalHandles,
+    ],
+  })
+
+  /**
+   * Notify React Flow when handle orientation changes so it can recalculate edge paths.
+   * This is necessary because toggling handles doesn't change block dimensions,
+   * so useBlockDimensions won't trigger updateNodeInternals.
+   */
+  const updateNodeInternals = useUpdateNodeInternals()
+  useEffect(() => {
+    updateNodeInternals(id)
+  }, [horizontalHandles, id, updateNodeInternals])
+
+  const showWebhookIndicator = (isStarterBlock || isWebhookTriggerBlock) && isWebhookConfigured
+  const shouldShowScheduleBadge =
+    type === 'schedule' && !isLoadingScheduleInfo && scheduleInfo !== null
+  const isWorkflowSelector = type === 'workflow' || type === 'workflow_input'
+
+  return (
+    <div className='group relative'>
+      <div
+        ref={contentRef}
+        role='button'
+        tabIndex={0}
+        onClick={handleClick}
+        onKeyDown={(event) => handleKeyboardActivation(event, handleClick)}
+        className={cn(
+          'workflow-drag-handle relative z-[20] w-[250px] cursor-grab select-none rounded-lg border border-[var(--border-1)] bg-[var(--surface-2)] [&:active]:cursor-grabbing'
+        )}
+      >
+        {isPending && (
+          <div className='-top-6 -translate-x-1/2 absolute left-1/2 z-10 transform rounded-t-md bg-amber-500 px-2 py-0.5 text-white text-xs'>
+            Next Step
+          </div>
+        )}
+
+        {!data.isPreview && !data.isEmbedded && (
+          <ActionBar blockId={id} blockType={type} disabled={!canEditWorkflow} />
+        )}
+
+        {shouldShowDefaultHandles && (
+          <Handle
+            type='target'
+            position={horizontalHandles ? Position.Left : Position.Top}
+            id='target'
+            className={getHandleClasses(horizontalHandles ? 'left' : 'top')}
+            style={getHandleStyle(horizontalHandles ? 'horizontal' : 'vertical')}
+            data-nodeid={id}
+            data-handleid='target'
+            isConnectableStart={false}
+            isConnectableEnd={true}
+            isValidConnection={(connection) => {
+              if (connection.source === id) return false
+              const edges = useWorkflowStore.getState().edges
+              return !wouldCreateCycle(edges, connection.source!, connection.target!)
+            }}
+          />
+        )}
+
+        <div
+          className={cn(
+            'flex items-center justify-between p-2',
+            hasContentBelowHeader && 'border-[var(--border-1)] border-b'
+          )}
+        >
+          <div className='relative z-10 flex min-w-0 flex-1 items-center gap-2.5'>
+            <div
+              className='flex size-[24px] flex-shrink-0 items-center justify-center rounded-md'
+              style={{
+                background: isEnabled ? config.bgColor : 'gray',
+              }}
+            >
+              <config.icon className='size-[16px] text-white' />
+            </div>
+            <span
+              className={cn(
+                'truncate font-medium text-md',
+                !isEnabled && runPathStatus !== 'success' && 'text-[var(--text-muted)]'
+              )}
+              title={name}
+            >
+              {name}
+            </span>
+          </div>
+          <div className='relative z-10 flex flex-shrink-0 items-center gap-1'>
+            {isWorkflowSelector &&
+              childWorkflowId &&
+              typeof childIsDeployed === 'boolean' &&
+              (!childIsDeployed || childNeedsRedeploy) && (
+                <Tooltip.Root>
+                  <Tooltip.Trigger asChild>
+                    <Badge
+                      variant={!childIsDeployed ? 'red' : 'amber'}
+                      className={userPermissions.canAdmin ? 'cursor-pointer' : 'cursor-not-allowed'}
+                      dot
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (childWorkflowId && !isDeploying && userPermissions.canAdmin) {
+                          deployChildWorkflow({ workflowId: childWorkflowId })
+                        }
+                      }}
+                    >
+                      {isDeploying ? 'Deploying...' : !childIsDeployed ? 'undeployed' : 'redeploy'}
+                    </Badge>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>
+                    <span className='text-sm'>
+                      {!userPermissions.canAdmin
+                        ? 'Admin permission required to deploy'
+                        : !childIsDeployed
+                          ? 'Click to deploy'
+                          : 'Click to redeploy'}
+                    </span>
+                  </Tooltip.Content>
+                </Tooltip.Root>
+              )}
+            {!isEnabled && !isLocked && <Badge variant='gray-secondary'>disabled</Badge>}
+            {isLocked && <Badge variant='gray-secondary'>locked</Badge>}
+
+            {type === 'schedule' && shouldShowScheduleBadge && scheduleInfo?.isDisabled && (
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <Badge
+                    variant='amber'
+                    className='cursor-pointer'
+                    dot
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (scheduleInfo?.id) {
+                        reactivateSchedule(scheduleInfo.id)
+                      }
+                    }}
+                  >
+                    disabled
+                  </Badge>
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <span className='text-sm'>Click to reactivate</span>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            )}
+
+            {showWebhookIndicator && (
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <Badge variant='orange' dot>
+                    Webhook
+                  </Badge>
+                </Tooltip.Trigger>
+                <Tooltip.Content side='top' className='max-w-[300px]'>
+                  {webhookProvider && webhookPath ? (
+                    <>
+                      <p className='text-sm'>{getProviderName(webhookProvider)} Webhook</p>
+                      <p className='mt-1 text-muted-foreground text-xs'>Path: {webhookPath}</p>
+                    </>
+                  ) : (
+                    <p className='text-muted-foreground text-sm'>
+                      This workflow is triggered by a webhook.
+                    </p>
+                  )}
+                </Tooltip.Content>
+              </Tooltip.Root>
+            )}
+
+            {isWebhookConfigured && isWebhookDisabled && webhookId && (
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <Badge
+                    variant='amber'
+                    className='cursor-pointer'
+                    dot
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      reactivateWebhook(webhookId)
+                    }}
+                  >
+                    disabled
+                  </Badge>
+                </Tooltip.Trigger>
+                <Tooltip.Content>
+                  <span className='text-sm'>Click to reactivate</span>
+                </Tooltip.Content>
+              </Tooltip.Root>
+            )}
+            {/* {isActive && (
+              <div className='mr-0.5 ml-2 flex size-[16px] items-center justify-center'>
+                <div
+                  className='h-full w-full animate-spin-slow rounded-full border-[2.5px] border-[rgba(255,102,0,0.25)] border-t-[var(--warning)]'
+                  aria-hidden='true'
+                />
+              </div>
+            )} */}
+          </div>
+        </div>
+
+        {hasContentBelowHeader && (
+          <div className='flex flex-col gap-2 p-2'>
+            {type === 'condition' ? (
+              conditionRows.map((cond) => (
+                <SubBlockRow key={cond.id} title={cond.title} value={getDisplayValue(cond.value)} />
+              ))
+            ) : type === 'router_v2' ? (
+              <>
+                <SubBlockRow
+                  key='context'
+                  title='Context'
+                  value={getDisplayValue(subBlockState.context?.value)}
+                />
+                {routerRows.map((route, index) => (
+                  <SubBlockRow
+                    key={route.id}
+                    title={`Route ${index + 1}`}
+                    value={getDisplayValue(route.value)}
+                  />
+                ))}
+              </>
+            ) : (
+              subBlockRows.map((row, rowIndex) =>
+                row.flatMap((subBlock) => {
+                  const rawValue = subBlockState[subBlock.id]?.value
+                  if (subBlock.type === 'mcp-dynamic-args') {
+                    const schema = subBlockState._toolSchema?.value as
+                      | { properties?: Record<string, unknown> }
+                      | undefined
+                    const properties = schema?.properties
+                    if (properties && typeof properties === 'object') {
+                      const args = (
+                        rawValue && typeof rawValue === 'object' ? rawValue : {}
+                      ) as Record<string, unknown>
+                      return Object.keys(properties).map((paramName) => (
+                        <SubBlockRow
+                          key={`${subBlock.id}-${paramName}-${rowIndex}`}
+                          title={formatParameterLabel(paramName)}
+                          value={getDisplayValue(args[paramName])}
+                        />
+                      ))
+                    }
+                    return []
+                  }
+                  return [
+                    <SubBlockRow
+                      key={`${subBlock.id}-${rowIndex}`}
+                      title={subBlock.title ?? subBlock.id}
+                      value={getDisplayValue(rawValue)}
+                      subBlock={subBlock}
+                      rawValue={rawValue}
+                      workspaceId={workspaceId}
+                      workflowId={currentWorkflowId}
+                      blockId={id}
+                      allSubBlockValues={subBlockState}
+                      displayAdvancedOptions={effectiveAdvanced}
+                      canonicalIndex={canonicalIndex}
+                      canonicalModeOverrides={canonicalModeOverrides}
+                    />,
+                  ]
+                })
+              )
+            )}
+            {shouldShowDefaultHandles && <SubBlockRow title='error' />}
+          </div>
+        )}
+
+        {type === 'condition' && (
+          <>
+            {conditionRows.map((cond, condIndex) => {
+              const topOffset =
+                HANDLE_POSITIONS.CONDITION_START_Y +
+                condIndex * HANDLE_POSITIONS.CONDITION_ROW_HEIGHT
+              return (
+                <Handle
+                  key={`handle-${cond.id}`}
+                  type='source'
+                  position={Position.Right}
+                  id={`condition-${cond.id}`}
+                  className={getHandleClasses('right')}
+                  style={{ top: `${topOffset}px`, transform: 'translateY(-50%)' }}
+                  data-nodeid={id}
+                  data-handleid={`condition-${cond.id}`}
+                  isConnectableStart={true}
+                  isConnectableEnd={false}
+                  isValidConnection={(connection) => {
+                    if (connection.target === id) return false
+                    const edges = useWorkflowStore.getState().edges
+                    return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                  }}
+                />
+              )
+            })}
+            <Handle
+              type='source'
+              position={Position.Right}
+              id='error'
+              className={getHandleClasses('right', true)}
+              style={{
+                right: '-7px',
+                top: 'auto',
+                bottom: `${HANDLE_POSITIONS.ERROR_BOTTOM_OFFSET}px`,
+                transform: 'translateY(50%)',
+              }}
+              data-nodeid={id}
+              data-handleid='error'
+              isConnectableStart={true}
+              isConnectableEnd={false}
+              isValidConnection={(connection) => {
+                if (connection.target === id) return false
+                const edges = useWorkflowStore.getState().edges
+                return !wouldCreateCycle(edges, connection.source!, connection.target!)
+              }}
+            />
+          </>
+        )}
+
+        {type === 'router_v2' && (
+          <>
+            {routerRows.map((route, routeIndex) => {
+              // +1 row offset for context row at the top
+              const topOffset =
+                HANDLE_POSITIONS.CONDITION_START_Y +
+                (routeIndex + 1) * HANDLE_POSITIONS.CONDITION_ROW_HEIGHT
+              return (
+                <Handle
+                  key={`handle-${route.id}`}
+                  type='source'
+                  position={Position.Right}
+                  id={`router-${route.id}`}
+                  className={getHandleClasses('right')}
+                  style={{ top: `${topOffset}px`, transform: 'translateY(-50%)' }}
+                  data-nodeid={id}
+                  data-handleid={`router-${route.id}`}
+                  isConnectableStart={true}
+                  isConnectableEnd={false}
+                  isValidConnection={(connection) => {
+                    if (connection.target === id) return false
+                    const edges = useWorkflowStore.getState().edges
+                    return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                  }}
+                />
+              )
+            })}
+            <Handle
+              type='source'
+              position={Position.Right}
+              id='error'
+              className={getHandleClasses('right', true)}
+              style={{
+                right: '-7px',
+                top: 'auto',
+                bottom: `${HANDLE_POSITIONS.ERROR_BOTTOM_OFFSET}px`,
+                transform: 'translateY(50%)',
+              }}
+              data-nodeid={id}
+              data-handleid='error'
+              isConnectableStart={true}
+              isConnectableEnd={false}
+              isValidConnection={(connection) => {
+                if (connection.target === id) return false
+                const edges = useWorkflowStore.getState().edges
+                return !wouldCreateCycle(edges, connection.source!, connection.target!)
+              }}
+            />
+          </>
+        )}
+
+        {type !== 'condition' && type !== 'router_v2' && type !== 'response' && (
+          <>
+            <Handle
+              type='source'
+              position={horizontalHandles ? Position.Right : Position.Bottom}
+              id='source'
+              className={getHandleClasses(horizontalHandles ? 'right' : 'bottom')}
+              style={getHandleStyle(horizontalHandles ? 'horizontal' : 'vertical')}
+              data-nodeid={id}
+              data-handleid='source'
+              isConnectableStart={true}
+              isConnectableEnd={false}
+              isValidConnection={(connection) => {
+                if (connection.target === id) return false
+                const edges = useWorkflowStore.getState().edges
+                return !wouldCreateCycle(edges, connection.source!, connection.target!)
+              }}
+            />
+
+            {shouldShowDefaultHandles && (
+              <Handle
+                type='source'
+                position={Position.Right}
+                id='error'
+                className={getHandleClasses('right', true)}
+                style={{
+                  right: '-7px',
+                  top: 'auto',
+                  bottom: `${HANDLE_POSITIONS.ERROR_BOTTOM_OFFSET}px`,
+                  transform: 'translateY(50%)',
+                }}
+                data-nodeid={id}
+                data-handleid='error'
+                isConnectableStart={true}
+                isConnectableEnd={false}
+                isValidConnection={(connection) => {
+                  if (connection.target === id) return false
+                  const edges = useWorkflowStore.getState().edges
+                  return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                }}
+              />
+            )}
+          </>
+        )}
+        {hasRing && (
+          <div className={cn('pointer-events-none absolute inset-0 z-40 rounded-lg', ringStyles)} />
+        )}
+      </div>
+    </div>
+  )
+}, shouldSkipBlockRender)

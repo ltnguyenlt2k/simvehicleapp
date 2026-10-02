@@ -1,0 +1,94 @@
+import { UPGRADE_REASON_COPY, type UpgradeReason } from '@/lib/billing/upgrade-reasons'
+import { getBrandConfig } from '@/ee/whitelabeling'
+
+/** Email subject type for all supported email templates */
+export type EmailSubjectType =
+  | 'sign-in'
+  | 'email-verification'
+  | 'change-email'
+  | 'forget-password'
+  | 'reset-password'
+  | 'existing-account'
+  | 'invitation'
+  | 'batch-invitation'
+  | 'workspace-added'
+  | 'polling-group-invitation'
+  | 'help-confirmation'
+  | 'enterprise-subscription'
+  | 'usage-threshold'
+  | 'free-tier-upgrade'
+  | 'plan-welcome-pro'
+  | 'plan-welcome-team'
+  | 'credit-purchase'
+  | 'abandoned-checkout'
+  | 'free-tier-exhausted'
+  | 'onboarding-followup'
+  | 'welcome'
+
+/**
+ * Returns the email subject line for a given email type.
+ * @param type - The type of email being sent
+ * @returns The subject line for the email
+ */
+export function getEmailSubject(type: EmailSubjectType): string {
+  const brandName = getBrandConfig().name
+
+  switch (type) {
+    case 'sign-in':
+      return `Sign in to ${brandName}`
+    case 'email-verification':
+      return `Verify your email for ${brandName}`
+    case 'change-email':
+      return `Verify your new email for ${brandName}`
+    case 'forget-password':
+      return `Reset your ${brandName} password`
+    case 'reset-password':
+      return `Reset your ${brandName} password`
+    case 'existing-account':
+      return `Sign-up attempt with your ${brandName} email`
+    case 'invitation':
+      return `You've been invited to join a team on ${brandName}`
+    case 'batch-invitation':
+      return `You've been invited to join a team and workspaces on ${brandName}`
+    case 'workspace-added':
+      return `You've been added to a workspace on ${brandName}`
+    case 'polling-group-invitation':
+      return `You've been invited to join an email polling group on ${brandName}`
+    case 'help-confirmation':
+      return 'Your request has been received'
+    case 'enterprise-subscription':
+      return `Your Enterprise Plan is now active on ${brandName}`
+    case 'usage-threshold':
+      return `You're nearing your monthly budget on ${brandName}`
+    case 'free-tier-upgrade':
+      return `You're at 80% of your free credits on ${brandName}`
+    case 'plan-welcome-pro':
+      return `Your Pro plan is now active on ${brandName}`
+    case 'plan-welcome-team':
+      return `Your Team plan is now active on ${brandName}`
+    case 'credit-purchase':
+      return `Credits added to your ${brandName} account`
+    case 'abandoned-checkout':
+      return `Quick question`
+    case 'free-tier-exhausted':
+      return `You've run out of free credits on ${brandName}`
+    case 'onboarding-followup':
+      return `Quick question about ${brandName}`
+    case 'welcome':
+      return `Welcome to ${brandName}`
+    default:
+      return brandName
+  }
+}
+
+/**
+ * Subject line for a per-category usage-limit email. Reuses the shared
+ * {@link UPGRADE_REASON_COPY} so the subject matches the email body and the
+ * upgrade-page header the user lands on.
+ */
+export function getLimitEmailSubject(reason: UpgradeReason, kind: 'warning' | 'reached'): string {
+  const brandName = getBrandConfig().name
+  const copy = UPGRADE_REASON_COPY[reason]
+  const subject = kind === 'reached' ? copy.reachedSubject : copy.warningSubject
+  return `${subject} on ${brandName}`
+}

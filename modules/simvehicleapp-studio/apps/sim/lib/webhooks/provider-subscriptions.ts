@@ -1,0 +1,150 @@
+import { createLogger } from '@sim/logger'
+import { toError } from '@sim/utils/errors'
+import type { NextRequest } from 'next/server'
+import { getProviderHandler } from '@/lib/webhooks/providers'
+
+const logger = createLogger('WebhookProviderSubscriptions')
+
+type ExternalSubscriptionResult = {
+  updatedProviderConfig: Record<string, unknown>
+  externalSubscriptionCreated: boolean
+}
+
+type RecreateCheckInput = {
+  previousProvider: string
+  nextProvider: string
+  previousConfig: Record<string, unknown>
+  nextConfig: Record<string, unknown>
+}
+
+/** System-managed fields that shouldn't trigger recreation */
+const SYSTEM_MANAGED_FIELDS = new Set([
+  'externalId',
+  'externalSubscriptionId',
+  'eventTypes',
+  'webhookTag',
+  'webhookSecret',
+  'signingSecret',
+  'secretToken',
+  'historyId',
+  'lastCheckedTimestamp',
+  'setupCompleted',
+  'userId',
+])
+
+/**
+ * Determine whether a webhook with provider-managed registration should be
+ * recreated after its persisted provider config changes.
+ *
+ * Only user-controlled fields are considered; provider-managed fields such as
+ * external IDs and generated secrets are ignored.
+ */
+export function shouldRecreateExternalWebhookSubscription({
+  previousProvider,
+  nextProvider,
+  previousConfig,
+  nextConfig,
+}: RecreateCheckInput): boolean {
+  const hasSubscription = (provider: string) => {
+    const handler = getProviderHandler(provider)
+    return Boolean(handler.createSubscription)
+  }
+
+  if (previousProvider !== nextProvider) {
+    return hasSubscription(previousProvider) || hasSubscription(nextProvider)
+  }
+
+  if (!hasSubscription(nextProvider)) {
+    return false
+  }
+
+  const allKeys = new Set([...Object.keys(previousConfig), ...Object.keys(nextConfig)])
+
+  for (const key of allKeys) {
+    if (SYSTEM_MANAGED_FIELDS.has(key)) continue
+
+    const prevVal = previousConfig[key]
+    const nextVal = nextConfig[key]
+
+    const prevStr = typeof prevVal === 'object' ? JSON.stringify(prevVal ?? null) : prevVal
+    const nextStr = typeof nextVal === 'object' ? JSON.stringify(nextVal ?? null) : nextVal
+
+    if (prevStr !== nextStr) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Ask the provider handler to create an external webhook subscription, if that
+ * provider supports automatic registration.
+ *
+ * The returned provider-managed fields are merged back into `providerConfig`
+ * by the caller.
+ */
+export async function createExternalWebhookSubscription(
+  request: NextRequest,
+  webhookData: Record<string, unknown>,
+  workflow: Record<string, unknown>,
+  userId: string,
+  requestId: string
+): Promise<ExternalSubscriptionResult> {
+  const provider = webhookData.provider as string
+  const providerConfig = (webhookData.providerConfig as Record<string, unknown>) || {}
+  const handler = getProviderHandler(provider)
+
+  if (!handler.createSubscription) {
+    return { updatedProviderConfig: providerConfig, externalSubscriptionCreated: false }
+  }
+
+  const result = await handler.createSubscription({
+    webhook: webhookData,
+    workflow,
+    userId,
+    requestId,
+    request,
+  })
+
+  if (!result) {
+    return { updatedProviderConfig: providerConfig, externalSubscriptionCreated: false }
+  }
+
+  return {
+    updatedProviderConfig: { ...providerConfig, ...result.providerConfigUpdates },
+    externalSubscriptionCreated: true,
+  }
+}
+
+/**
+ * Clean up external webhook subscriptions for a webhook.
+ * By default, cleanup failure is logged but non-fatal for legacy best-effort callers.
+ * Deployment outbox cleanup passes `throwOnError` so provider failures stay retryable.
+ */
+export async function cleanupExternalWebhook(
+  webhook: Record<string, unknown>,
+  workflow: Record<string, unknown>,
+  requestId: string,
+  options: { throwOnError?: boolean } = {}
+): Promise<void> {
+  const provider = webhook.provider as string
+  const handler = getProviderHandler(provider)
+
+  if (!handler.deleteSubscription) {
+    return
+  }
+
+  try {
+    await handler.deleteSubscription({ webhook, workflow, requestId, strict: options.throwOnError })
+  } catch (error) {
+    logger.warn(`[${requestId}] Error cleaning up external webhook (non-fatal)`, {
+      provider,
+      webhookId: webhook.id,
+      error: toError(error).message,
+    })
+    if (options.throwOnError) {
+      throw error
+    }
+  }
+}

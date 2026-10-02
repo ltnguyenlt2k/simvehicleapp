@@ -1,0 +1,316 @@
+/**
+ * POST /api/v1/admin/workspaces/[id]/import
+ *
+ * Import workflows into a workspace from a ZIP file or JSON.
+ *
+ * Content-Type:
+ *   - application/zip or multipart/form-data (with 'file' field) for ZIP upload
+ *   - application/json for JSON payload
+ *
+ * JSON Body:
+ *   {
+ *     workflows: Array<{
+ *       content: string | object,  // Workflow JSON
+ *       name?: string,             // Override name
+ *       folderPath?: string[]      // Folder path to create
+ *     }>
+ *   }
+ *
+ * Query Parameters:
+ *   - createFolders: 'true' (default) or 'false'
+ *   - rootFolderName: optional name for root import folder
+ *
+ * Response: WorkspaceImportResponse
+ */
+
+import { db } from '@sim/db'
+import { workflow, workflowFolder } from '@sim/db/schema'
+import { createLogger } from '@sim/logger'
+import { getErrorMessage } from '@sim/utils/errors'
+import { generateId } from '@sim/utils/id'
+import { eq } from 'drizzle-orm'
+import { NextResponse } from 'next/server'
+import {
+  adminV1ImportWorkspaceContract,
+  adminV1WorkspaceImportBodySchema,
+} from '@/lib/api/contracts/v1/admin'
+import { parseJsonBody, parseRequest } from '@/lib/api/server'
+import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import {
+  extractWorkflowName,
+  extractWorkflowsFromZip,
+  parseWorkflowJson,
+} from '@/lib/workflows/operations/import-export'
+import { saveWorkflowToNormalizedTables } from '@/lib/workflows/persistence/utils'
+import { deduplicateWorkflowName } from '@/lib/workflows/utils'
+import { getWorkspaceWithOwner } from '@/lib/workspaces/permissions/utils'
+import { withAdminAuthParams } from '@/app/api/v1/admin/middleware'
+import {
+  badRequestResponse,
+  internalErrorResponse,
+  notFoundResponse,
+} from '@/app/api/v1/admin/responses'
+import type {
+  ImportResult,
+  WorkflowVariable,
+  WorkspaceImportRequest,
+  WorkspaceImportResponse,
+} from '@/app/api/v1/admin/types'
+
+const logger = createLogger('AdminWorkspaceImportAPI')
+
+/**
+ * Body cap for admin bulk workflow imports, which can carry many serialized
+ * workflows and legitimately exceed the default contract-route limit.
+ */
+const ADMIN_IMPORT_MAX_BODY_BYTES = 100 * 1024 * 1024
+
+interface RouteParams {
+  id: string
+}
+
+interface ParsedWorkflow {
+  content: string
+  name: string
+  folderPath: string[]
+}
+
+export const POST = withRouteHandler(
+  withAdminAuthParams<RouteParams>(async (request, context) => {
+    const parsed = await parseRequest(adminV1ImportWorkspaceContract, request, context)
+    if (!parsed.success) return parsed.response
+
+    const { id: workspaceId } = parsed.data.params
+    const { createFolders, rootFolderName } = parsed.data.query
+
+    try {
+      const workspaceData = await getWorkspaceWithOwner(workspaceId)
+
+      if (!workspaceData) {
+        return notFoundResponse('Workspace')
+      }
+
+      const contentType = request.headers.get('content-type') || ''
+      let workflowsToImport: ParsedWorkflow[] = []
+
+      if (contentType.includes('application/json')) {
+        const rawBody = await parseJsonBody(request, 'response', ADMIN_IMPORT_MAX_BODY_BYTES)
+
+        if (!rawBody.success) {
+          // Preserve the 413 for an oversized body; only invalid JSON maps to 400.
+          return rawBody.reason === 'too_large'
+            ? rawBody.response
+            : badRequestResponse('Invalid JSON body. Expected { workflows: [...] }')
+        }
+
+        const validation = adminV1WorkspaceImportBodySchema.safeParse(rawBody.data)
+        if (!validation.success) {
+          return badRequestResponse('Invalid JSON body. Expected { workflows: [...] }')
+        }
+
+        const body = validation.data as WorkspaceImportRequest
+        workflowsToImport = body.workflows.map((w) => ({
+          content: typeof w.content === 'string' ? w.content : JSON.stringify(w.content),
+          name: w.name || 'Imported Workflow',
+          folderPath: w.folderPath || [],
+        }))
+      } else if (
+        contentType.includes('application/zip') ||
+        contentType.includes('multipart/form-data')
+      ) {
+        let zipBuffer: ArrayBuffer
+
+        if (contentType.includes('multipart/form-data')) {
+          const formData = await request.formData()
+          const file = formData.get('file') as File | null
+
+          if (!file) {
+            return badRequestResponse('No file provided in form data. Use field name "file".')
+          }
+
+          zipBuffer = await file.arrayBuffer()
+        } else {
+          zipBuffer = await request.arrayBuffer()
+        }
+
+        const blob = new Blob([zipBuffer], { type: 'application/zip' })
+        const file = new File([blob], 'import.zip', { type: 'application/zip' })
+
+        const { workflows } = await extractWorkflowsFromZip(file)
+        workflowsToImport = workflows
+      } else {
+        return badRequestResponse(
+          'Unsupported Content-Type. Use application/json or application/zip.'
+        )
+      }
+
+      if (workflowsToImport.length === 0) {
+        return badRequestResponse('No workflows found to import')
+      }
+
+      let rootFolderId: string | undefined
+      if (rootFolderName && createFolders) {
+        rootFolderId = generateId()
+        await db.insert(workflowFolder).values({
+          id: rootFolderId,
+          name: rootFolderName,
+          userId: workspaceData.ownerId,
+          workspaceId,
+          parentId: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      }
+
+      const folderMap = new Map<string, string>()
+      const results: ImportResult[] = []
+
+      for (const wf of workflowsToImport) {
+        const result = await importSingleWorkflow(
+          wf,
+          workspaceId,
+          workspaceData.ownerId,
+          createFolders,
+          rootFolderId,
+          folderMap
+        )
+        results.push(result)
+
+        if (result.success) {
+          logger.info(`Admin API: Imported workflow ${result.workflowId} (${result.name})`)
+        } else {
+          logger.warn(`Admin API: Failed to import workflow ${result.name}: ${result.error}`)
+        }
+      }
+
+      const imported = results.filter((r) => r.success).length
+      const failed = results.filter((r) => !r.success).length
+
+      logger.info(`Admin API: Import complete - ${imported} succeeded, ${failed} failed`)
+
+      const response: WorkspaceImportResponse = { imported, failed, results }
+      return NextResponse.json(response)
+    } catch (error) {
+      logger.error('Admin API: Failed to import into workspace', { error, workspaceId })
+      return internalErrorResponse('Failed to import workflows')
+    }
+  })
+)
+
+async function importSingleWorkflow(
+  wf: ParsedWorkflow,
+  workspaceId: string,
+  ownerId: string,
+  createFolders: boolean,
+  rootFolderId: string | undefined,
+  folderMap: Map<string, string>
+): Promise<ImportResult> {
+  try {
+    const { data: workflowData, errors } = parseWorkflowJson(wf.content)
+
+    if (!workflowData || errors.length > 0) {
+      return {
+        workflowId: '',
+        name: wf.name,
+        success: false,
+        error: `Parse error: ${errors.join(', ')}`,
+      }
+    }
+
+    const workflowName = extractWorkflowName(wf.content, wf.name)
+    let targetFolderId: string | null = rootFolderId || null
+
+    if (createFolders && wf.folderPath.length > 0) {
+      let parentId = rootFolderId || null
+
+      for (let i = 0; i < wf.folderPath.length; i++) {
+        const pathSegment = wf.folderPath.slice(0, i + 1).join('/')
+        const fullPath = rootFolderId ? `root/${pathSegment}` : pathSegment
+
+        if (!folderMap.has(fullPath)) {
+          const folderId = generateId()
+          await db.insert(workflowFolder).values({
+            id: folderId,
+            name: wf.folderPath[i],
+            userId: ownerId,
+            workspaceId,
+            parentId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          folderMap.set(fullPath, folderId)
+          parentId = folderId
+        } else {
+          parentId = folderMap.get(fullPath)!
+        }
+      }
+
+      const fullFolderPath = rootFolderId
+        ? `root/${wf.folderPath.join('/')}`
+        : wf.folderPath.join('/')
+      targetFolderId = folderMap.get(fullFolderPath) || parentId
+    }
+
+    const workflowId = generateId()
+    const now = new Date()
+    const dedupedName = await deduplicateWorkflowName(workflowName, workspaceId, targetFolderId)
+
+    await db.insert(workflow).values({
+      id: workflowId,
+      userId: ownerId,
+      workspaceId,
+      folderId: targetFolderId,
+      name: dedupedName,
+      description: workflowData.metadata?.description || 'Imported via Admin API',
+      lastSynced: now,
+      createdAt: now,
+      updatedAt: now,
+      isDeployed: false,
+      runCount: 0,
+      variables: {},
+    })
+
+    const saveResult = await saveWorkflowToNormalizedTables(workflowId, workflowData)
+
+    if (!saveResult.success) {
+      await db.delete(workflow).where(eq(workflow.id, workflowId))
+      return {
+        workflowId: '',
+        name: dedupedName,
+        success: false,
+        error: `Failed to save state: ${saveResult.error}`,
+      }
+    }
+
+    if (workflowData.variables && Array.isArray(workflowData.variables)) {
+      const variablesRecord: Record<string, WorkflowVariable> = {}
+      workflowData.variables.forEach((v) => {
+        const varId = v.id || generateId()
+        variablesRecord[varId] = {
+          id: varId,
+          name: v.name,
+          type: v.type || 'string',
+          value: v.value,
+        }
+      })
+
+      await db
+        .update(workflow)
+        .set({ variables: variablesRecord, updatedAt: new Date() })
+        .where(eq(workflow.id, workflowId))
+    }
+
+    return {
+      workflowId,
+      name: dedupedName,
+      success: true,
+    }
+  } catch (error) {
+    return {
+      workflowId: '',
+      name: wf.name,
+      success: false,
+      error: getErrorMessage(error, 'Unknown error'),
+    }
+  }
+}

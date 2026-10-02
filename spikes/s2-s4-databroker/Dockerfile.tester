@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+RUN pip install --no-cache-dir grpcio==1.64.1 grpcio-tools==1.64.1 "kuksa-client==0.4.3"
+COPY proto /proto
+RUN python -m grpc_tools.protoc -I/proto --python_out=/gen --grpc_python_out=/gen /proto/sdv/databroker/v1/*.proto 2>/dev/null || (mkdir -p /gen && python -m grpc_tools.protoc -I/proto --python_out=/gen --grpc_python_out=/gen /proto/sdv/databroker/v1/broker.proto /proto/sdv/databroker/v1/types.proto /proto/sdv/databroker/v1/collector.proto)
+ENV PYTHONPATH=/gen
+COPY test_set_semantics.py /test.py
+ENTRYPOINT ["python", "-u", "/test.py"]

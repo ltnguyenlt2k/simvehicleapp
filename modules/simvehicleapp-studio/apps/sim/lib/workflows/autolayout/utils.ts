@@ -1,0 +1,748 @@
+import {
+  AUTO_LAYOUT_EXCLUDED_TYPES,
+  CONTAINER_BLOCK_TYPES,
+  CONTAINER_PADDING,
+  CONTAINER_PADDING_X,
+  CONTAINER_PADDING_Y,
+  NOTE_BLOCK_TYPE,
+  ROOT_PADDING_X,
+  ROOT_PADDING_Y,
+} from '@/lib/workflows/autolayout/constants'
+import type { BlockMetrics, BoundingBox, Edge, GraphNode } from '@/lib/workflows/autolayout/types'
+import { BLOCK_DIMENSIONS, CONTAINER_DIMENSIONS } from '@/lib/workflows/blocks/block-dimensions'
+import { calculateWorkflowBlockDimensions } from '@/lib/workflows/blocks/deterministic-dimensions'
+import { getConditionRows, getRouterRows } from '@/lib/workflows/dynamic-handle-topology'
+import {
+  buildCanonicalIndex,
+  buildSubBlockValues,
+  type CanonicalModeOverrides,
+  evaluateSubBlockCondition,
+  isSubBlockFeatureEnabled,
+  isSubBlockHidden,
+  isSubBlockVisibleForMode,
+  isTriggerModeSubBlock,
+} from '@/lib/workflows/subblocks/visibility'
+import { getBlock } from '@/blocks'
+import type { BlockState } from '@/stores/workflows/workflow/types'
+
+/**
+ * Resolves a potentially undefined numeric value to a fallback
+ */
+function resolveNumeric(value: number | undefined, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+/**
+ * Snaps a single coordinate value to the nearest grid position
+ */
+function snapToGrid(value: number, gridSize: number): number {
+  return Math.round(value / gridSize) * gridSize
+}
+
+/**
+ * Snaps a position to the nearest grid point.
+ * Returns the original position if gridSize is 0 or not provided.
+ */
+export function snapPositionToGrid(
+  position: { x: number; y: number },
+  gridSize: number | undefined
+): { x: number; y: number } {
+  if (!gridSize || gridSize <= 0) {
+    return position
+  }
+  return {
+    x: snapToGrid(position.x, gridSize),
+    y: snapToGrid(position.y, gridSize),
+  }
+}
+
+/**
+ * Snaps all node positions in a graph to grid positions and returns updated dimensions.
+ * Returns null if gridSize is not set or no snapping was needed.
+ */
+export function snapNodesToGrid(
+  nodes: Map<string, GraphNode>,
+  gridSize: number | undefined
+): { width: number; height: number } | null {
+  if (!gridSize || gridSize <= 0 || nodes.size === 0) {
+    return null
+  }
+
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+
+  for (const node of nodes.values()) {
+    node.position = snapPositionToGrid(node.position, gridSize)
+    minX = Math.min(minX, node.position.x)
+    minY = Math.min(minY, node.position.y)
+    maxX = Math.max(maxX, node.position.x + node.metrics.width)
+    maxY = Math.max(maxY, node.position.y + node.metrics.height)
+  }
+
+  return {
+    width: maxX - minX + CONTAINER_PADDING * 2,
+    height: maxY - minY + CONTAINER_PADDING * 2,
+  }
+}
+
+/**
+ * Checks if a block type is a container (loop or parallel)
+ */
+export function isContainerType(blockType: string): boolean {
+  return CONTAINER_BLOCK_TYPES.has(blockType)
+}
+
+/**
+ * Checks if a block should be excluded from autolayout
+ */
+export function shouldSkipAutoLayout(block?: BlockState): boolean {
+  if (!block) return true
+  return AUTO_LAYOUT_EXCLUDED_TYPES.has(block.type)
+}
+
+/**
+ * Filters block IDs to only include those eligible for layout
+ */
+export function filterLayoutEligibleBlockIds(
+  blockIds: string[],
+  blocks: Record<string, BlockState>
+): string[] {
+  return blockIds.filter((id) => {
+    const block = blocks[id]
+    if (!block) return false
+    return !shouldSkipAutoLayout(block)
+  })
+}
+
+/**
+ * Gets metrics for a container block
+ */
+function getContainerMetrics(block: BlockState): BlockMetrics {
+  const measuredWidth = block.layout?.measuredWidth
+  const measuredHeight = block.layout?.measuredHeight
+
+  const containerWidth = Math.max(
+    measuredWidth ?? 0,
+    resolveNumeric(block.data?.width, CONTAINER_DIMENSIONS.DEFAULT_WIDTH)
+  )
+  const containerHeight = Math.max(
+    measuredHeight ?? 0,
+    resolveNumeric(block.data?.height, CONTAINER_DIMENSIONS.DEFAULT_HEIGHT)
+  )
+
+  return {
+    width: containerWidth,
+    height: containerHeight,
+    minWidth: CONTAINER_DIMENSIONS.DEFAULT_WIDTH,
+    minHeight: CONTAINER_DIMENSIONS.DEFAULT_HEIGHT,
+    paddingTop: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+    paddingBottom: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+    paddingLeft: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+    paddingRight: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+  }
+}
+
+/**
+ * Counts visible preview subblocks using the same visibility rules as the
+ * workflow block preview when no DOM measurements are available.
+ */
+function getVisiblePreviewSubBlockCount(block: BlockState): number {
+  const blockConfig = getBlock(block.type)
+  if (!blockConfig?.subBlocks?.length) {
+    return Object.values(block.subBlocks || {}).filter((subBlock) => subBlock != null).length
+  }
+
+  const rawValues = buildSubBlockValues(block.subBlocks || {})
+  const canonicalModeOverrides =
+    typeof block.data?.canonicalModes === 'object' && block.data.canonicalModes !== null
+      ? (block.data.canonicalModes as CanonicalModeOverrides)
+      : undefined
+
+  if (canonicalModeOverrides) {
+    rawValues.__canonicalModes = canonicalModeOverrides
+  }
+
+  const canonicalIndex = buildCanonicalIndex(blockConfig.subBlocks)
+  const effectiveAdvanced = Boolean(block.advancedMode)
+  const effectiveTrigger = Boolean(block.triggerMode)
+  const isPureTriggerBlock = blockConfig.triggers?.enabled && blockConfig.category === 'triggers'
+
+  return blockConfig.subBlocks.filter((subBlock) => {
+    if (subBlock.hidden || subBlock.hideFromPreview) return false
+    if (!isSubBlockFeatureEnabled(subBlock)) return false
+    if (isSubBlockHidden(subBlock)) return false
+
+    if (effectiveTrigger) {
+      const isValidTriggerSubblock = isPureTriggerBlock
+        ? isTriggerModeSubBlock(subBlock) || !subBlock.mode
+        : isTriggerModeSubBlock(subBlock)
+
+      if (!isValidTriggerSubblock) {
+        return false
+      }
+    } else if (isTriggerModeSubBlock(subBlock)) {
+      return false
+    }
+
+    if (
+      !isSubBlockVisibleForMode(
+        subBlock,
+        effectiveAdvanced,
+        canonicalIndex,
+        rawValues,
+        canonicalModeOverrides
+      )
+    ) {
+      return false
+    }
+
+    if (!subBlock.condition) return true
+    return evaluateSubBlockCondition(subBlock.condition, rawValues)
+  }).length
+}
+
+/**
+ * Estimates workflow block dimensions using the same deterministic row-based
+ * formula used by the canvas block renderer.
+ */
+function estimateWorkflowBlockDimensions(block: BlockState): { width: number; height: number } {
+  const blockConfig = getBlock(block.type)
+  const visibleCount = getVisiblePreviewSubBlockCount(block)
+
+  if (!blockConfig) {
+    return {
+      width: BLOCK_DIMENSIONS.FIXED_WIDTH,
+      height: Math.max(
+        BLOCK_DIMENSIONS.HEADER_HEIGHT +
+          BLOCK_DIMENSIONS.WORKFLOW_CONTENT_PADDING +
+          visibleCount * BLOCK_DIMENSIONS.WORKFLOW_ROW_HEIGHT,
+        BLOCK_DIMENSIONS.MIN_HEIGHT
+      ),
+    }
+  }
+
+  return calculateWorkflowBlockDimensions({
+    blockType: block.type,
+    category: blockConfig.category,
+    displayTriggerMode: Boolean(block.triggerMode),
+    visibleSubBlockCount: visibleCount,
+    conditionRowCount:
+      block.type === 'condition'
+        ? getConditionRows(block.id, block.subBlocks?.conditions?.value).length
+        : 0,
+    routerRowCount:
+      block.type === 'router_v2'
+        ? getRouterRows(block.id, block.subBlocks?.routes?.value).length
+        : 0,
+  })
+}
+
+/**
+ * Gets metrics for a regular (non-container) block.
+ * Falls back to subblock-based height estimation when no measurement exists,
+ * which prevents overlaps for newly added blocks that haven't been rendered.
+ */
+function getRegularBlockMetrics(block: BlockState): BlockMetrics {
+  const minWidth = BLOCK_DIMENSIONS.FIXED_WIDTH
+  const minHeight = BLOCK_DIMENSIONS.MIN_HEIGHT
+  const measuredH = block.layout?.measuredHeight ?? block.height
+  const measuredW = block.layout?.measuredWidth
+  const estimatedDimensions = estimateWorkflowBlockDimensions(block)
+  const estimatedHeight = estimatedDimensions.height
+
+  const hasMeasurement = typeof measuredH === 'number' && measuredH > 0
+  const height = hasMeasurement ? Math.max(measuredH, estimatedHeight, minHeight) : estimatedHeight
+  const width = Math.max(measuredW ?? estimatedDimensions.width, minWidth)
+
+  return {
+    width,
+    height,
+    minWidth,
+    minHeight,
+    paddingTop: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+    paddingBottom: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+    paddingLeft: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+    paddingRight: BLOCK_DIMENSIONS.HEADER_HEIGHT,
+  }
+}
+
+/**
+ * Gets the dimensions and metrics for a block
+ */
+export function getBlockMetrics(block: BlockState): BlockMetrics {
+  if (isContainerType(block.type)) {
+    return getContainerMetrics(block)
+  }
+
+  return getRegularBlockMetrics(block)
+}
+
+/**
+ * Prepares metrics for all nodes in a graph
+ */
+export function prepareBlockMetrics(nodes: Map<string, GraphNode>): void {
+  for (const node of nodes.values()) {
+    node.metrics = getBlockMetrics(node.block)
+  }
+}
+
+/**
+ * Creates a bounding box from position and dimensions
+ */
+export function createBoundingBox(
+  position: { x: number; y: number },
+  dimensions: Pick<BlockMetrics, 'width' | 'height'>
+): BoundingBox {
+  return {
+    x: position.x,
+    y: position.y,
+    width: dimensions.width,
+    height: dimensions.height,
+  }
+}
+
+/**
+ * Checks if two bounding boxes overlap (with optional margin)
+ */
+export function boxesOverlap(box1: BoundingBox, box2: BoundingBox, margin = 0): boolean {
+  return !(
+    box1.x + box1.width + margin <= box2.x ||
+    box2.x + box2.width + margin <= box1.x ||
+    box1.y + box1.height + margin <= box2.y ||
+    box2.y + box2.height + margin <= box1.y
+  )
+}
+
+/**
+ * Resolves the on-canvas dimensions of a note block.
+ * Notes are fixed-width and use a deterministic height, but fall back to any
+ * stored measurement or data override when present.
+ */
+function getNoteDimensions(block: BlockState): { width: number; height: number } {
+  const width = Math.max(
+    resolveNumeric(block.data?.width, 0),
+    block.layout?.measuredWidth ?? 0,
+    BLOCK_DIMENSIONS.FIXED_WIDTH
+  )
+
+  const defaultHeight =
+    BLOCK_DIMENSIONS.HEADER_HEIGHT +
+    BLOCK_DIMENSIONS.NOTE_CONTENT_PADDING +
+    BLOCK_DIMENSIONS.NOTE_BASE_CONTENT_HEIGHT
+
+  const height = Math.max(
+    resolveNumeric(block.data?.height, 0),
+    block.layout?.measuredHeight ?? 0,
+    block.height ?? 0,
+    defaultHeight
+  )
+
+  return { width, height }
+}
+
+/**
+ * Checks if a block has a valid, finite position.
+ * Returns false for missing, undefined, NaN, or Infinity coordinates.
+ */
+export function hasFinitePosition(block: BlockState): boolean {
+  return Number.isFinite(block.position?.x) && Number.isFinite(block.position?.y)
+}
+
+/**
+ * Determines whether a note and a block overlapped at their pre-layout
+ * positions. Used by targeted layout to distinguish overlaps introduced by the
+ * current pass from arrangements that already existed.
+ */
+function noteOverlappedBlockBefore(
+  previousBlocks: Record<string, BlockState>,
+  noteId: string,
+  blockId: string
+): boolean {
+  const previousNote = previousBlocks[noteId]
+  const previousBlock = previousBlocks[blockId]
+  if (!previousNote || !previousBlock) return false
+
+  // A block without a finite prior position was not yet placed on the canvas,
+  // so it could not have overlapped anything before this pass.
+  if (!hasFinitePosition(previousNote) || !hasFinitePosition(previousBlock)) return false
+
+  // Derive dimensions from the prior blocks so a resize between passes does not
+  // pair new dimensions with the old position.
+  const noteBox = createBoundingBox(previousNote.position, getNoteDimensions(previousNote))
+  const blockBox = createBoundingBox(previousBlock.position, getBlockMetrics(previousBlock))
+  return boxesOverlap(blockBox, noteBox)
+}
+
+export interface ResolveNoteOverlapsOptions {
+  /**
+   * Pre-layout block snapshot. When provided, only notes whose overlap with a
+   * block was *introduced* by the current pass are relocated (i.e. they overlap
+   * now but did not at these positions). Targeted layout passes this so that
+   * pre-existing note arrangements are preserved. When omitted (full
+   * auto-layout), any note overlapping a block is relocated.
+   */
+  previousBlocks?: Record<string, BlockState>
+}
+
+/**
+ * Relocates note blocks that overlap the laid-out workflow blocks.
+ *
+ * Notes are excluded from the topological layout because they are free-form
+ * annotations, but repositioned workflow blocks can land on top of them. This
+ * pass keeps notes that already sit in clear space and stacks any relocated
+ * notes in a column beneath their parent group's blocks, preserving the notes'
+ * relative reading order. Notes are grouped by parent so notes inside a
+ * container are resolved against that container's children only.
+ *
+ * Placement is always computed against the full set of blocks and notes in the
+ * group, so a relocated note never collides with anything regardless of which
+ * overlaps triggered the relocation.
+ */
+export function resolveNoteOverlaps(
+  blocks: Record<string, BlockState>,
+  verticalSpacing: number,
+  options: ResolveNoteOverlapsOptions = {}
+): void {
+  const { previousBlocks } = options
+  const { root, children } = getBlocksByParent(blocks)
+  const groups: string[][] = [root, ...Array.from(children.values())]
+
+  for (const groupIds of groups) {
+    const obstacles: Array<{ id: string; box: BoundingBox }> = []
+    const noteIds: string[] = []
+    let maxBottom = Number.NEGATIVE_INFINITY
+    let minX = Number.POSITIVE_INFINITY
+
+    for (const id of groupIds) {
+      const block = blocks[id]
+      // Skip non-finite positions so corrupted coordinates never propagate into
+      // minX / maxBottom (and therefore into relocated note positions).
+      if (!block || !hasFinitePosition(block)) continue
+
+      if (block.type === NOTE_BLOCK_TYPE) {
+        noteIds.push(id)
+        const { height } = getNoteDimensions(block)
+        maxBottom = Math.max(maxBottom, block.position.y + height)
+        continue
+      }
+
+      if (shouldSkipAutoLayout(block)) continue
+
+      const box = createBoundingBox(block.position, getBlockMetrics(block))
+      obstacles.push({ id, box })
+      maxBottom = Math.max(maxBottom, box.y + box.height)
+      minX = Math.min(minX, box.x)
+    }
+
+    if (noteIds.length === 0 || obstacles.length === 0) continue
+
+    noteIds.sort((a, b) => {
+      const posA = blocks[a].position
+      const posB = blocks[b].position
+      return posA.y - posB.y || posA.x - posB.x
+    })
+
+    let stackY = maxBottom + verticalSpacing
+
+    for (const id of noteIds) {
+      const note = blocks[id]
+      const dimensions = getNoteDimensions(note)
+      const noteBox = createBoundingBox(note.position, dimensions)
+
+      const needsRelocation = obstacles.some(({ id: blockId, box }) => {
+        if (!boxesOverlap(box, noteBox)) return false
+        if (previousBlocks) {
+          return !noteOverlappedBlockBefore(previousBlocks, id, blockId)
+        }
+        return true
+      })
+
+      if (!needsRelocation) continue
+
+      note.position = { x: minX, y: stackY }
+      stackY += dimensions.height + verticalSpacing
+    }
+  }
+}
+
+/**
+ * Groups blocks by their parent container
+ */
+export function getBlocksByParent(blocks: Record<string, BlockState>): {
+  root: string[]
+  children: Map<string, string[]>
+} {
+  const root: string[] = []
+  const children = new Map<string, string[]>()
+
+  for (const [id, block] of Object.entries(blocks)) {
+    const parentId = block.data?.parentId
+
+    if (!parentId) {
+      root.push(id)
+    } else {
+      if (!children.has(parentId)) {
+        children.set(parentId, [])
+      }
+      children.get(parentId)!.push(id)
+    }
+  }
+
+  return { root, children }
+}
+
+/**
+ * Normalizes node positions to start from a given padding offset.
+ * Returns the bounding box dimensions of the normalized layout.
+ */
+export function normalizePositions(
+  nodes: Map<string, GraphNode>,
+  options: { isContainer: boolean }
+): { width: number; height: number } {
+  if (nodes.size === 0) {
+    return { width: 0, height: 0 }
+  }
+
+  let minX = Number.POSITIVE_INFINITY
+  let minY = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let maxY = Number.NEGATIVE_INFINITY
+
+  for (const node of nodes.values()) {
+    minX = Math.min(minX, node.position.x)
+    minY = Math.min(minY, node.position.y)
+    maxX = Math.max(maxX, node.position.x + node.metrics.width)
+    maxY = Math.max(maxY, node.position.y + node.metrics.height)
+  }
+
+  const paddingX = options.isContainer ? CONTAINER_PADDING_X : ROOT_PADDING_X
+  const paddingY = options.isContainer ? CONTAINER_PADDING_Y : ROOT_PADDING_Y
+
+  const xOffset = paddingX - minX
+  const yOffset = paddingY - minY
+
+  for (const node of nodes.values()) {
+    node.position = {
+      x: node.position.x + xOffset,
+      y: node.position.y + yOffset,
+    }
+  }
+
+  const width = maxX - minX + CONTAINER_PADDING * 2
+  const height = maxY - minY + CONTAINER_PADDING * 2
+
+  return { width, height }
+}
+
+/**
+ * Transfers block height measurements from source blocks to target blocks.
+ * Matches blocks by type:name key.
+ */
+export function transferBlockHeights(
+  sourceBlocks: Record<string, BlockState>,
+  targetBlocks: Record<string, BlockState>
+): void {
+  // Build a map of block type+name to heights from source
+  const heightMap = new Map<string, { height: number; width: number }>()
+
+  for (const block of Object.values(sourceBlocks)) {
+    const key = `${block.type}:${block.name}`
+    heightMap.set(key, {
+      height: block.height || BLOCK_DIMENSIONS.MIN_HEIGHT,
+      width: block.layout?.measuredWidth || BLOCK_DIMENSIONS.FIXED_WIDTH,
+    })
+  }
+
+  // Transfer heights to target blocks
+  for (const block of Object.values(targetBlocks)) {
+    const key = `${block.type}:${block.name}`
+    const measurements = heightMap.get(key)
+
+    if (measurements) {
+      block.height = measurements.height
+
+      if (!block.layout) {
+        block.layout = {}
+      }
+      block.layout.measuredHeight = measurements.height
+      block.layout.measuredWidth = measurements.width
+    }
+  }
+}
+
+/**
+ * Calculates the internal depth (max layer count) for each subflow container.
+ * Used to properly position blocks that connect after a subflow ends.
+ *
+ * @param blocks - All blocks in the workflow
+ * @param edges - All edges in the workflow
+ * @param assignLayersFn - Function to assign layers to blocks
+ * @returns Map of container block IDs to their internal layer depth
+ */
+export function calculateSubflowDepths(
+  blocks: Record<string, BlockState>,
+  edges: Edge[],
+  assignLayersFn: (blocks: Record<string, BlockState>, edges: Edge[]) => Map<string, GraphNode>
+): Map<string, number> {
+  const depths = new Map<string, number>()
+  const { children } = getBlocksByParent(blocks)
+
+  for (const [containerId, childIds] of children.entries()) {
+    if (childIds.length === 0) {
+      depths.set(containerId, 1)
+      continue
+    }
+
+    const childBlocks: Record<string, BlockState> = {}
+    const layoutChildIds = filterLayoutEligibleBlockIds(childIds, blocks)
+    for (const childId of layoutChildIds) {
+      childBlocks[childId] = blocks[childId]
+    }
+
+    const childEdges = edges.filter(
+      (edge) => layoutChildIds.includes(edge.source) && layoutChildIds.includes(edge.target)
+    )
+
+    if (Object.keys(childBlocks).length === 0) {
+      depths.set(containerId, 1)
+      continue
+    }
+
+    const childNodes = assignLayersFn(childBlocks, childEdges)
+    let maxLayer = 0
+    for (const node of childNodes.values()) {
+      maxLayer = Math.max(maxLayer, node.layer)
+    }
+
+    depths.set(containerId, Math.max(maxLayer + 1, 1))
+  }
+
+  return depths
+}
+
+/**
+ * Layout function type for preparing container dimensions.
+ * Returns laid out nodes and bounding dimensions.
+ */
+export type LayoutFunction = (
+  blocks: Record<string, BlockState>,
+  edges: Edge[],
+  options: {
+    isContainer: boolean
+    layoutOptions?: {
+      horizontalSpacing?: number
+      verticalSpacing?: number
+      padding?: { x: number; y: number }
+      gridSize?: number
+    }
+    subflowDepths?: Map<string, number>
+  }
+) => { nodes: Map<string, GraphNode>; dimensions: { width: number; height: number } }
+
+/**
+ * Pre-calculates container dimensions by laying out their children.
+ * Processes containers bottom-up to handle nested subflows correctly.
+ * This ensures accurate width/height values before root-level layout.
+ *
+ * @param blocks - All blocks in the workflow (will be mutated with updated dimensions)
+ * @param edges - All edges in the workflow
+ * @param layoutFn - The layout function to use for calculating dimensions
+ * @param horizontalSpacing - Horizontal spacing between blocks
+ * @param verticalSpacing - Vertical spacing between blocks
+ * @param gridSize - Optional grid size for snap-to-grid
+ */
+export function prepareContainerDimensions(
+  blocks: Record<string, BlockState>,
+  edges: Edge[],
+  layoutFn: LayoutFunction,
+  horizontalSpacing: number,
+  verticalSpacing: number,
+  gridSize?: number
+): void {
+  const { children } = getBlocksByParent(blocks)
+
+  // Build dependency graph to process nested containers bottom-up
+  const containerIds = Array.from(children.keys())
+  const containerDepth = new Map<string, number>()
+
+  // Calculate nesting depth for each container
+  for (const containerId of containerIds) {
+    let depth = 0
+    let currentId: string | undefined = containerId
+    while (currentId) {
+      const block: BlockState | undefined = blocks[currentId]
+      const parentId: string | undefined = block?.data?.parentId
+      currentId = parentId
+      if (currentId) depth++
+    }
+    containerDepth.set(containerId, depth)
+  }
+
+  // Sort containers by depth (deepest first) for bottom-up processing
+  const sortedContainerIds = containerIds.sort((a, b) => {
+    const depthA = containerDepth.get(a) ?? 0
+    const depthB = containerDepth.get(b) ?? 0
+    return depthB - depthA
+  })
+
+  // Process each container, laying out its children to determine dimensions
+  for (const containerId of sortedContainerIds) {
+    const container = blocks[containerId]
+    if (!container) continue
+
+    const childIds = children.get(containerId) ?? []
+    const layoutChildIds = filterLayoutEligibleBlockIds(childIds, blocks)
+
+    if (layoutChildIds.length === 0) {
+      // Empty container - use default dimensions
+      container.data = {
+        ...container.data,
+        width: CONTAINER_DIMENSIONS.DEFAULT_WIDTH,
+        height: CONTAINER_DIMENSIONS.DEFAULT_HEIGHT,
+      }
+      container.layout = {
+        ...container.layout,
+        measuredWidth: CONTAINER_DIMENSIONS.DEFAULT_WIDTH,
+        measuredHeight: CONTAINER_DIMENSIONS.DEFAULT_HEIGHT,
+      }
+      continue
+    }
+
+    // Build subset of blocks and edges for this container's children
+    const childBlocks: Record<string, BlockState> = {}
+    for (const childId of layoutChildIds) {
+      childBlocks[childId] = blocks[childId]
+    }
+
+    const childEdges = edges.filter(
+      (edge) => layoutChildIds.includes(edge.source) && layoutChildIds.includes(edge.target)
+    )
+
+    // Layout children to get dimensions
+    const { dimensions } = layoutFn(childBlocks, childEdges, {
+      isContainer: true,
+      layoutOptions: {
+        horizontalSpacing: horizontalSpacing * 0.85,
+        verticalSpacing,
+        gridSize,
+      },
+    })
+
+    // Update container with calculated dimensions
+    const calculatedWidth = Math.max(dimensions.width, CONTAINER_DIMENSIONS.DEFAULT_WIDTH)
+    const calculatedHeight = Math.max(dimensions.height, CONTAINER_DIMENSIONS.DEFAULT_HEIGHT)
+
+    container.data = {
+      ...container.data,
+      width: calculatedWidth,
+      height: calculatedHeight,
+    }
+    container.layout = {
+      ...container.layout,
+      measuredWidth: calculatedWidth,
+      measuredHeight: calculatedHeight,
+    }
+  }
+}

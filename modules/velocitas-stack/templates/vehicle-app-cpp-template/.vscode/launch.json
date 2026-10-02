@@ -1,0 +1,47 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "VehicleApp - Debug (Native)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/app",
+            "args": [ ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "SDV_MIDDLEWARE_TYPE",
+                    "value": "native"
+                },
+                {
+                    "name": "SDV_VEHICLEDATABROKER_ADDRESS",
+                    "value": "127.0.0.1:55555"
+                },
+                {
+                    "name": "SDV_MQTT_ADDRESS",
+                    "value": "127.0.0.1:1883"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [ ],
+        },
+        {
+            "name": "VehicleApp - Unit Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/app_utests",
+            "args": [ ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [ ],
+            "preLaunchTask": "CMake: build",
+        }
+    ]
+}

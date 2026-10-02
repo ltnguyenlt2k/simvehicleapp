@@ -1,0 +1,110 @@
+{{- if .Values.copilot.enabled }}
+{{- include "sim.copilot.validate" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sim.fullname" . }}-copilot
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sim.labels" . | nindent 4 }}
+    app.kubernetes.io/component: copilot
+spec:
+  type: {{ .Values.copilot.server.service.type }}
+  ports:
+    - port: {{ .Values.copilot.server.service.port }}
+      targetPort: {{ .Values.copilot.server.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "sim.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: copilot
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sim.fullname" . }}-copilot
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sim.labels" . | nindent 4 }}
+    app.kubernetes.io/component: copilot
+spec:
+  replicas: {{ .Values.copilot.server.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sim.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: copilot
+  template:
+    metadata:
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets-copilot.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        app.kubernetes.io/name: {{ include "sim.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: copilot
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sim.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- include "sim.podSecurityContext" .Values.copilot.server | nindent 6 }}
+      {{- with .Values.copilot.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: copilot
+          image: {{ include "sim.image" (dict "imageRoot" .Values.copilot.server.image "global" .Values.global "chartAppVersion" .Chart.AppVersion) }}
+          imagePullPolicy: {{ .Values.copilot.server.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.copilot.server.service.targetPort }}
+              protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "sim.copilot.envSecretName" . }}
+            - secretRef:
+                name: {{ include "sim.copilot.databaseSecretName" . }}
+            {{- with .Values.copilot.server.extraEnvFrom }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.copilot.server.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.copilot.server.startupProbe }}
+          startupProbe:
+            {{- toYaml .Values.copilot.server.startupProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.copilot.server.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.copilot.server.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.copilot.server.readinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.copilot.server.readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- with .Values.copilot.server.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- include "sim.containerSecurityContext" .Values.copilot.server | nindent 10 }}
+{{- end }}
+

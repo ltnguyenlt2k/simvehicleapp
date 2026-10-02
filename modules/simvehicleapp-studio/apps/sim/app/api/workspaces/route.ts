@@ -1,0 +1,450 @@
+import { AuditAction, AuditResourceType, recordAudit } from '@sim/audit'
+import { db } from '@sim/db'
+import { permissions, settings, type WorkspaceMode, workflow, workspace } from '@sim/db/schema'
+import { createLogger } from '@sim/logger'
+import { generateId } from '@sim/utils/id'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
+import { listWorkspacesQuerySchema } from '@/lib/api/contracts'
+import { createWorkspaceContract } from '@/lib/api/contracts/workspaces'
+import { parseRequest } from '@/lib/api/server'
+import { getSession } from '@/lib/auth'
+import type { PlanCategory } from '@/lib/billing/plan-helpers'
+import { PlatformEvents } from '@/lib/core/telemetry'
+import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import { captureServerEvent } from '@/lib/posthog/server'
+import { buildDefaultWorkflowArtifacts } from '@/lib/workflows/defaults'
+import { saveWorkflowToNormalizedTables } from '@/lib/workflows/persistence/utils'
+import { getRandomWorkspaceColor } from '@/lib/workspaces/colors'
+import {
+  CONTACT_OWNER_TO_UPGRADE_REASON,
+  evaluateWorkspaceInvitePolicy,
+  getInvitePlanCategoryForOrganization,
+  getInvitePlanCategoryForUser,
+  getWorkspaceCreationPolicy,
+  getWorkspaceInvitePolicy,
+  UPGRADE_TO_INVITE_REASON,
+  WORKSPACE_MODE,
+} from '@/lib/workspaces/policy'
+import { listAccessibleWorkspaceRowsForUser } from '@/lib/workspaces/utils'
+
+const logger = createLogger('Workspaces')
+
+// Get all workspaces for the current user
+export const GET = withRouteHandler(async (request: Request) => {
+  const session = await getSession()
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const activeOrganizationId =
+    (session.session as { activeOrganizationId?: string } | null)?.activeOrganizationId ?? null
+  const creationPolicy = await getWorkspaceCreationPolicy({
+    userId: session.user.id,
+    activeOrganizationId,
+  })
+
+  const scopeResult = listWorkspacesQuerySchema.safeParse(
+    Object.fromEntries(new URL(request.url).searchParams.entries())
+  )
+  if (!scopeResult.success) {
+    return NextResponse.json(
+      { error: 'Invalid query parameters', details: scopeResult.error.issues },
+      { status: 400 }
+    )
+  }
+  const { scope } = scopeResult.data
+
+  const settingsQuery = db
+    .select({ lastActiveWorkspaceId: settings.lastActiveWorkspaceId })
+    .from(settings)
+    .where(eq(settings.userId, session.user.id))
+    .limit(1)
+
+  const [userWorkspaces, userSettings] = await Promise.all([
+    listAccessibleWorkspaceRowsForUser(session.user.id, scope),
+    settingsQuery,
+  ])
+
+  const lastActiveWorkspaceId = userSettings[0]?.lastActiveWorkspaceId ?? null
+
+  if (scope === 'active' && userWorkspaces.length === 0) {
+    if (!creationPolicy.canCreate) {
+      return NextResponse.json({ workspaces: [], lastActiveWorkspaceId, creationPolicy })
+    }
+
+    const defaultWorkspace = await createDefaultWorkspace(
+      session.user.id,
+      session.user.name,
+      creationPolicy
+    )
+
+    await migrateExistingWorkflows(session.user.id, defaultWorkspace.id)
+
+    const refreshedCreationPolicy = await getWorkspaceCreationPolicy({
+      userId: session.user.id,
+      activeOrganizationId,
+    })
+
+    return NextResponse.json({
+      workspaces: [defaultWorkspace],
+      lastActiveWorkspaceId,
+      creationPolicy: refreshedCreationPolicy,
+    })
+  }
+
+  if (scope === 'active') {
+    await ensureWorkflowsHaveWorkspace(session.user.id, userWorkspaces[0].workspace.id)
+  }
+
+  const nonOrgBilledUserIds = [
+    ...new Set(
+      userWorkspaces
+        .filter(({ workspace: ws }) => ws.workspaceMode !== WORKSPACE_MODE.ORGANIZATION)
+        .map(({ workspace: ws }) => ws.billedAccountUserId)
+    ),
+  ]
+  const orgIds = [
+    ...new Set(
+      userWorkspaces
+        .filter(
+          ({ workspace: ws }) =>
+            ws.workspaceMode === WORKSPACE_MODE.ORGANIZATION && ws.organizationId
+        )
+        .map(({ workspace: ws }) => ws.organizationId as string)
+    ),
+  ]
+  const planCategoryByBilledUser = new Map<string, PlanCategory>()
+  const planCategoryByOrg = new Map<string, PlanCategory>()
+  await Promise.all([
+    ...nonOrgBilledUserIds.map(async (userId) => {
+      planCategoryByBilledUser.set(userId, await getInvitePlanCategoryForUser(userId))
+    }),
+    ...orgIds.map(async (orgId) => {
+      planCategoryByOrg.set(orgId, await getInvitePlanCategoryForOrganization(orgId))
+    }),
+  ])
+
+  const workspacesWithPermissions = userWorkspaces.map(
+    ({ workspace: workspaceDetails, permissionType }) => {
+      const billedPlanCategory: PlanCategory =
+        workspaceDetails.workspaceMode === WORKSPACE_MODE.ORGANIZATION
+          ? workspaceDetails.organizationId
+            ? (planCategoryByOrg.get(workspaceDetails.organizationId) ?? 'free')
+            : 'free'
+          : (planCategoryByBilledUser.get(workspaceDetails.billedAccountUserId) ?? 'free')
+      const invitePolicy = evaluateWorkspaceInvitePolicy(workspaceDetails, { billedPlanCategory })
+      const callerIsBilledUser = workspaceDetails.billedAccountUserId === session.user.id
+
+      const canActOnUpgrade = invitePolicy.upgradeRequired && callerIsBilledUser
+      const inviteDisabledReason = invitePolicy.allowed
+        ? null
+        : callerIsBilledUser
+          ? (invitePolicy.reason ?? UPGRADE_TO_INVITE_REASON)
+          : CONTACT_OWNER_TO_UPGRADE_REASON
+
+      return {
+        ...workspaceDetails,
+        role:
+          workspaceDetails.ownerId === session.user.id
+            ? 'owner'
+            : permissionType === 'admin'
+              ? 'admin'
+              : 'member',
+        permissions: permissionType,
+        inviteMembersEnabled: invitePolicy.allowed,
+        inviteDisabledReason,
+        inviteUpgradeRequired: canActOnUpgrade,
+      }
+    }
+  )
+
+  return NextResponse.json({
+    workspaces: workspacesWithPermissions,
+    lastActiveWorkspaceId,
+    creationPolicy,
+  })
+})
+
+// POST /api/workspaces - Create a new workspace
+export const POST = withRouteHandler(async (req: NextRequest) => {
+  const session = await getSession()
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const parsed = await parseRequest(createWorkspaceContract, req, {})
+    if (!parsed.success) return parsed.response
+    const { name, color, skipDefaultWorkflow } = parsed.data.body
+    const activeOrganizationId =
+      (session.session as { activeOrganizationId?: string } | null)?.activeOrganizationId ?? null
+    const creationPolicy = await getWorkspaceCreationPolicy({
+      userId: session.user.id,
+      activeOrganizationId,
+    })
+
+    if (!creationPolicy.canCreate) {
+      return NextResponse.json(
+        { error: creationPolicy.reason || 'Workspace creation is not available.' },
+        { status: creationPolicy.status }
+      )
+    }
+
+    const newWorkspace = await createWorkspace({
+      userId: session.user.id,
+      name,
+      skipDefaultWorkflow,
+      explicitColor: color,
+      organizationId: creationPolicy.organizationId,
+      workspaceMode: creationPolicy.workspaceMode,
+      billedAccountUserId: creationPolicy.billedAccountUserId,
+    })
+
+    captureServerEvent(
+      session.user.id,
+      'workspace_created',
+      {
+        workspace_id: newWorkspace.id,
+        name: newWorkspace.name,
+        workspace_mode: newWorkspace.workspaceMode,
+        organization_id: newWorkspace.organizationId,
+      },
+      {
+        groups: { workspace: newWorkspace.id },
+        setOnce: { first_workspace_created_at: new Date().toISOString() },
+      }
+    )
+
+    recordAudit({
+      workspaceId: newWorkspace.id,
+      actorId: session.user.id,
+      actorName: session.user.name,
+      actorEmail: session.user.email,
+      action: AuditAction.WORKSPACE_CREATED,
+      resourceType: AuditResourceType.WORKSPACE,
+      resourceId: newWorkspace.id,
+      resourceName: newWorkspace.name,
+      description: `Created workspace "${newWorkspace.name}"`,
+      metadata: {
+        name: newWorkspace.name,
+        color: newWorkspace.color,
+        workspaceMode: newWorkspace.workspaceMode,
+        organizationId: newWorkspace.organizationId,
+      },
+      request: req,
+    })
+
+    return NextResponse.json({ workspace: newWorkspace })
+  } catch (error) {
+    logger.error('Error creating workspace:', error)
+    return NextResponse.json({ error: 'Failed to create workspace' }, { status: 500 })
+  }
+})
+
+async function createDefaultWorkspace(
+  userId: string,
+  userName: string | null | undefined,
+  creationPolicy: {
+    organizationId: string | null
+    workspaceMode: WorkspaceMode
+    billedAccountUserId: string
+  }
+) {
+  const firstName = userName?.split(' ')[0] || null
+  const workspaceName = firstName ? `${firstName}'s Workspace` : 'My Workspace'
+  return createWorkspace({
+    userId,
+    name: workspaceName,
+    organizationId: creationPolicy.organizationId,
+    workspaceMode: creationPolicy.workspaceMode,
+    billedAccountUserId: creationPolicy.billedAccountUserId,
+  })
+}
+
+interface CreateWorkspaceParams {
+  userId: string
+  name: string
+  skipDefaultWorkflow?: boolean
+  explicitColor?: string
+  organizationId: string | null
+  workspaceMode: WorkspaceMode
+  billedAccountUserId: string
+}
+
+async function createWorkspace({
+  userId,
+  name,
+  skipDefaultWorkflow = false,
+  explicitColor,
+  organizationId,
+  workspaceMode,
+  billedAccountUserId,
+}: CreateWorkspaceParams) {
+  const workspaceId = generateId()
+  const workflowId = generateId()
+  const now = new Date()
+  const color = explicitColor || getRandomWorkspaceColor()
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.insert(workspace).values({
+        id: workspaceId,
+        name,
+        color,
+        ownerId: userId,
+        organizationId,
+        workspaceMode,
+        billedAccountUserId,
+        allowPersonalApiKeys: true,
+        createdAt: now,
+        updatedAt: now,
+      })
+
+      const permissionRows = [
+        {
+          id: generateId(),
+          entityType: 'workspace' as const,
+          entityId: workspaceId,
+          userId,
+          permissionType: 'admin' as const,
+          createdAt: now,
+          updatedAt: now,
+        },
+      ]
+
+      if (
+        workspaceMode === WORKSPACE_MODE.ORGANIZATION &&
+        billedAccountUserId &&
+        billedAccountUserId !== userId
+      ) {
+        permissionRows.push({
+          id: generateId(),
+          entityType: 'workspace' as const,
+          entityId: workspaceId,
+          userId: billedAccountUserId,
+          permissionType: 'admin' as const,
+          createdAt: now,
+          updatedAt: now,
+        })
+      }
+
+      await tx.insert(permissions).values(permissionRows)
+
+      if (!skipDefaultWorkflow) {
+        await tx.insert(workflow).values({
+          id: workflowId,
+          userId,
+          workspaceId,
+          folderId: null,
+          name: 'default-agent',
+          description: 'Your first workflow - start building here!',
+          lastSynced: now,
+          createdAt: now,
+          updatedAt: now,
+          isDeployed: false,
+          runCount: 0,
+          variables: {},
+        })
+
+        const { workflowState } = buildDefaultWorkflowArtifacts()
+        await saveWorkflowToNormalizedTables(workflowId, workflowState, tx)
+      }
+
+      logger.info(
+        skipDefaultWorkflow
+          ? `Created ${workspaceMode} workspace ${workspaceId} for user ${userId}`
+          : `Created ${workspaceMode} workspace ${workspaceId} with initial workflow ${workflowId} for user ${userId}`
+      )
+    })
+  } catch (error) {
+    logger.error(`Failed to create workspace ${workspaceId}:`, error)
+    throw error
+  }
+
+  try {
+    PlatformEvents.workspaceCreated({
+      workspaceId,
+      userId,
+      name,
+    })
+  } catch {
+    // Telemetry should not fail the operation
+  }
+
+  const invitePolicy = await getWorkspaceInvitePolicy({
+    organizationId,
+    workspaceMode,
+    billedAccountUserId,
+    ownerId: userId,
+  })
+  const callerIsBilledUser = billedAccountUserId === userId
+  const canActOnUpgrade = invitePolicy.upgradeRequired && callerIsBilledUser
+  const inviteDisabledReason = invitePolicy.allowed
+    ? null
+    : callerIsBilledUser
+      ? (invitePolicy.reason ?? UPGRADE_TO_INVITE_REASON)
+      : CONTACT_OWNER_TO_UPGRADE_REASON
+
+  return {
+    id: workspaceId,
+    name,
+    color,
+    ownerId: userId,
+    organizationId,
+    workspaceMode,
+    billedAccountUserId,
+    allowPersonalApiKeys: true,
+    createdAt: now,
+    updatedAt: now,
+    role: 'owner',
+    permissions: 'admin',
+    inviteMembersEnabled: invitePolicy.allowed,
+    inviteDisabledReason,
+    inviteUpgradeRequired: canActOnUpgrade,
+  }
+}
+
+async function migrateExistingWorkflows(userId: string, workspaceId: string) {
+  const orphanedWorkflows = await db
+    .select({ id: workflow.id })
+    .from(workflow)
+    .where(and(eq(workflow.userId, userId), isNull(workflow.workspaceId)))
+
+  if (orphanedWorkflows.length === 0) {
+    return // No orphaned workflows to migrate
+  }
+
+  logger.info(
+    `Migrating ${orphanedWorkflows.length} workflows to workspace ${workspaceId} for user ${userId}`
+  )
+
+  await db
+    .update(workflow)
+    .set({
+      workspaceId: workspaceId,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(workflow.userId, userId), isNull(workflow.workspaceId)))
+}
+
+async function ensureWorkflowsHaveWorkspace(userId: string, defaultWorkspaceId: string) {
+  const orphanedWorkflows = await db
+    .select()
+    .from(workflow)
+    .where(and(eq(workflow.userId, userId), isNull(workflow.workspaceId)))
+
+  if (orphanedWorkflows.length > 0) {
+    await db
+      .update(workflow)
+      .set({
+        workspaceId: defaultWorkspaceId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(workflow.userId, userId), isNull(workflow.workspaceId)))
+
+    logger.info(`Fixed ${orphanedWorkflows.length} orphaned workflows for user ${userId}`)
+  }
+}

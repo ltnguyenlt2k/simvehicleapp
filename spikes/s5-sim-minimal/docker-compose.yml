@@ -1,0 +1,47 @@
+# Spike S-5: minimal Sim v0.7.13 (prebuilt upstream images) — no Trigger.dev, no Redis, no pii, no copilot.
+name: sv-spike-sim
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: simstudio
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U postgres"], interval: 5s, retries: 20 }
+  migrations:
+    image: ghcr.io/simstudioai/migrations:v0.7.13
+    working_dir: /app/packages/db
+    command: ["bun", "run", "db:migrate"]
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/simstudio
+    depends_on: { db: { condition: service_healthy } }
+  realtime:
+    image: ghcr.io/simstudioai/realtime:v0.7.13
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/simstudio
+      NEXT_PUBLIC_APP_URL: http://localhost:${SV_STUDIO_PORT:-3300}
+      BETTER_AUTH_URL: http://localhost:${SV_STUDIO_PORT:-3300}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+    ports: ["127.0.0.1:3002:3002"]
+    depends_on: { migrations: { condition: service_completed_successfully } }   # realtime preflight checks schema
+  simstudio:
+    image: ghcr.io/simstudioai/simstudio:v0.7.13
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/simstudio
+      BETTER_AUTH_URL: http://localhost:${SV_STUDIO_PORT:-3300}
+      NEXT_PUBLIC_APP_URL: http://localhost:${SV_STUDIO_PORT:-3300}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+      SOCKET_SERVER_URL: http://realtime:3002
+    ports: ["127.0.0.1:${SV_STUDIO_PORT:-3300}:3000"]
+    depends_on:
+      migrations: { condition: service_completed_successfully }
+      realtime: { condition: service_started }
+volumes:
+  pgdata:

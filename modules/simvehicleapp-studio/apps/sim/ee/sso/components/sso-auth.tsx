@@ -1,0 +1,175 @@
+'use client'
+
+import { type KeyboardEvent, useState } from 'react'
+import { createLogger } from '@sim/logger'
+import { useRouter } from 'next/navigation'
+import { Input, Label, Loader } from '@/components/emcn'
+import { ApiClientError } from '@/lib/api/client/errors'
+import { requestJson } from '@/lib/api/client/request'
+import { chatSSOContract } from '@/lib/api/contracts/chats'
+import { cn } from '@/lib/core/utils/cn'
+import { quickValidateEmail } from '@/lib/messaging/email/validation'
+import AuthBackground from '@/app/(auth)/components/auth-background'
+import { AUTH_SUBMIT_BTN } from '@/app/(auth)/components/auth-button-classes'
+import { SupportFooter } from '@/app/(auth)/components/support-footer'
+import Navbar from '@/app/(landing)/components/navbar/navbar'
+
+const logger = createLogger('SSOAuth')
+
+interface SSOAuthProps {
+  identifier: string
+}
+
+const validateEmailField = (emailValue: string): string[] => {
+  const errors: string[] = []
+
+  if (!emailValue || !emailValue.trim()) {
+    errors.push('Email is required.')
+    return errors
+  }
+
+  const validation = quickValidateEmail(emailValue.trim().toLowerCase())
+  if (!validation.isValid) {
+    errors.push(validation.reason || 'Please enter a valid email address.')
+  }
+
+  return errors
+}
+
+export default function SSOAuth({ identifier }: SSOAuthProps) {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [emailErrors, setEmailErrors] = useState<string[]>([])
+  const [showEmailValidationError, setShowEmailValidationError] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAuthenticate()
+    }
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value
+    setEmail(newEmail)
+    setShowEmailValidationError(false)
+    setEmailErrors([])
+  }
+
+  const handleAuthenticate = async () => {
+    const emailValidationErrors = validateEmailField(email)
+    setEmailErrors(emailValidationErrors)
+    setShowEmailValidationError(emailValidationErrors.length > 0)
+
+    if (emailValidationErrors.length > 0) {
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const { eligible } = await requestJson(chatSSOContract, {
+        params: { identifier },
+        body: { email },
+      })
+
+      if (!eligible) {
+        setEmailErrors(['Email not authorized for this chat'])
+        setShowEmailValidationError(true)
+        setIsLoading(false)
+        return
+      }
+
+      const callbackUrl = `/chat/${identifier}`
+      const ssoUrl = `/sso?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      router.push(ssoUrl)
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        setEmailErrors([error.message || 'Email not authorized for this chat'])
+        setShowEmailValidationError(true)
+        setIsLoading(false)
+        return
+      }
+      logger.error('SSO authentication error:', error)
+      setEmailErrors(['An error occurred during authentication'])
+      setShowEmailValidationError(true)
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <AuthBackground className='dark font-[430] font-season'>
+      <main className='relative flex min-h-full flex-col text-[var(--landing-text)]'>
+        <header className='shrink-0 bg-[var(--landing-bg)]'>
+          <Navbar logoOnly />
+        </header>
+        <div className='relative z-30 flex flex-1 items-center justify-center px-4 pb-24'>
+          <div className='w-full max-w-lg px-4'>
+            <div className='flex flex-col items-center justify-center'>
+              <div className='space-y-1 text-center'>
+                <h1 className='text-balance font-[430] font-season text-[40px] text-white leading-[110%] tracking-[-0.02em]'>
+                  SSO Authentication
+                </h1>
+                <p className='font-[430] font-season text-[color-mix(in_srgb,var(--landing-text-subtle)_60%,transparent)] text-lg leading-[125%] tracking-[0.02em]'>
+                  This chat requires SSO authentication
+                </p>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  handleAuthenticate()
+                }}
+                className='mt-8 w-full max-w-[410px] space-y-6'
+              >
+                <div className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <Label htmlFor='email'>Work Email</Label>
+                  </div>
+                  <Input
+                    id='email'
+                    name='email'
+                    required
+                    type='email'
+                    autoCapitalize='none'
+                    autoComplete='email'
+                    autoCorrect='off'
+                    placeholder='Enter your work email'
+                    value={email}
+                    onChange={handleEmailChange}
+                    onKeyDown={handleKeyDown}
+                    className={cn(
+                      showEmailValidationError &&
+                        emailErrors.length > 0 &&
+                        'border-red-500 focus:border-red-500'
+                    )}
+                  />
+                  {showEmailValidationError && emailErrors.length > 0 && (
+                    <div className='mt-1 space-y-1 text-red-400 text-xs'>
+                      {emailErrors.map((error) => (
+                        <p key={error}>{error}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <button type='submit' disabled={isLoading} className={AUTH_SUBMIT_BTN}>
+                  {isLoading ? (
+                    <span className='flex items-center gap-2'>
+                      <Loader className='size-4' animate />
+                      Redirecting to SSO…
+                    </span>
+                  ) : (
+                    'Continue with SSO'
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <SupportFooter position='absolute' />
+      </main>
+    </AuthBackground>
+  )
+}

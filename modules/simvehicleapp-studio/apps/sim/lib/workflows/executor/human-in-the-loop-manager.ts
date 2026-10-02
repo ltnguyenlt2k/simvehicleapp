@@ -1,0 +1,2316 @@
+import { db } from '@sim/db'
+import { pausedExecutions, resumeQueue, workflowExecutionLogs } from '@sim/db/schema'
+import { createLogger } from '@sim/logger'
+import { toError } from '@sim/utils/errors'
+import { generateId } from '@sim/utils/id'
+import { and, asc, desc, eq, inArray, lt, type SQL, sql } from 'drizzle-orm'
+import type { Edge } from 'reactflow'
+import { createTimeoutAbortController, getTimeoutErrorMessage } from '@/lib/core/execution-limits'
+import {
+  createExecutionEventWriter,
+  flushExecutionStreamReplayBuffer,
+  initializeExecutionStreamMeta,
+  resetExecutionStreamBuffer,
+  type TerminalExecutionStreamStatus,
+} from '@/lib/execution/event-buffer'
+import {
+  collectLargeValueReferenceKeys,
+  replaceLargeValueReferenceKeysWithClient,
+} from '@/lib/execution/payloads/large-value-metadata'
+import { compactBlockLogs, compactExecutionPayload } from '@/lib/execution/payloads/serializer'
+import { preprocessExecution } from '@/lib/execution/preprocessing'
+import { LoggingSession } from '@/lib/logs/execution/logging-session'
+import { cleanupExecutionBase64Cache } from '@/lib/uploads/utils/user-file-base64.server'
+import { executeWorkflowCore } from '@/lib/workflows/executor/execution-core'
+import type { ExecutionEvent } from '@/lib/workflows/executor/execution-events'
+import { ExecutionSnapshot } from '@/executor/execution/snapshot'
+import type {
+  ChildWorkflowContext,
+  ExecutionCallbacks,
+  IterationContext,
+  SerializableExecutionState,
+} from '@/executor/execution/types'
+import type {
+  BlockLog,
+  ExecutionResult,
+  PauseKind,
+  PausePoint,
+  SerializedSnapshot,
+  StreamingExecution,
+} from '@/executor/types'
+import { hasExecutionResult } from '@/executor/utils/errors'
+import { filterOutputForLog } from '@/executor/utils/output-filter'
+import type { SerializedConnection } from '@/serializer/types'
+
+const logger = createLogger('HumanInTheLoopManager')
+const RUN_BUFFER_UNAVAILABLE_ERROR = 'Run buffer temporarily unavailable'
+const TERMINAL_PUBLISH_ERROR = 'Run buffer terminal event publish failed'
+const RESUMABLE_PAUSED_STATUSES = ['paused', 'partially_resumed'] as const
+const CANCELLABLE_PAUSED_STATUSES = ['paused', 'partially_resumed'] as const
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isPausedOutputForContext(output: unknown, contextId: string): boolean {
+  if (!isRecord(output)) return false
+  const metadata = output._pauseMetadata
+  return isRecord(metadata) && metadata.contextId === contextId
+}
+
+export function updateResumeOutputInAggregationBuffers(
+  state: SerializableExecutionState,
+  stateBlockKey: string,
+  pauseBlockId: string,
+  contextId: string,
+  mergedOutput: Record<string, unknown>
+): void {
+  for (const scope of Object.values(state.loopExecutions ?? {})) {
+    if (!isRecord(scope) || !isRecord(scope.currentIterationOutputs)) continue
+
+    const outputs = scope.currentIterationOutputs
+    const pausedEntry =
+      outputs[stateBlockKey] !== undefined
+        ? stateBlockKey
+        : outputs[pauseBlockId] !== undefined
+          ? pauseBlockId
+          : undefined
+
+    if (pausedEntry !== undefined && isPausedOutputForContext(outputs[pausedEntry], contextId)) {
+      if (pausedEntry !== stateBlockKey) {
+        delete outputs[pausedEntry]
+      }
+      outputs[stateBlockKey] = mergedOutput
+    }
+  }
+
+  for (const scope of Object.values(state.parallelExecutions ?? {})) {
+    if (!isRecord(scope) || !isRecord(scope.branchOutputs)) continue
+
+    for (const [branchIndex, branchOutputs] of Object.entries(scope.branchOutputs)) {
+      if (!Array.isArray(branchOutputs)) continue
+
+      const outputIndex = branchOutputs.findIndex((output) =>
+        isPausedOutputForContext(output, contextId)
+      )
+      if (outputIndex !== -1) {
+        scope.branchOutputs[branchIndex] = [
+          ...branchOutputs.slice(0, outputIndex),
+          mergedOutput,
+          ...branchOutputs.slice(outputIndex + 1),
+        ]
+      }
+    }
+  }
+}
+
+function parseSnapshotForReferenceTracking(snapshotSeed: SerializedSnapshot): unknown {
+  try {
+    return { ...snapshotSeed, snapshot: JSON.parse(snapshotSeed.snapshot) }
+  } catch {
+    return snapshotSeed
+  }
+}
+
+function getSnapshotWorkspaceId(snapshotValue: unknown): string | undefined {
+  if (!isRecord(snapshotValue)) return undefined
+  const metadata = snapshotValue.metadata
+  if (!isRecord(metadata)) return undefined
+  return typeof metadata.workspaceId === 'string' ? metadata.workspaceId : undefined
+}
+
+function isResumablePausedStatus(status: string): boolean {
+  return RESUMABLE_PAUSED_STATUSES.includes(status as (typeof RESUMABLE_PAUSED_STATUSES)[number])
+}
+
+interface ResumeQueueEntrySummary {
+  id: string
+  pausedExecutionId: string
+  parentExecutionId: string
+  newExecutionId: string
+  contextId: string
+  resumeInput: unknown
+  status: string
+  queuedAt: string | null
+  claimedAt: string | null
+  completedAt: string | null
+  failureReason: string | null
+}
+
+interface PausePointWithQueue extends PausePoint {
+  queuePosition?: number | null
+  latestResumeEntry?: ResumeQueueEntrySummary | null
+}
+
+interface PausedExecutionSummary {
+  id: string
+  workflowId: string
+  executionId: string
+  status: string
+  totalPauseCount: number
+  resumedCount: number
+  pausedAt: string | null
+  updatedAt: string | null
+  expiresAt: string | null
+  metadata: Record<string, any> | null
+  triggerIds: string[]
+  pausePoints: PausePointWithQueue[]
+}
+
+interface PausedExecutionDetail extends PausedExecutionSummary {
+  executionSnapshot: SerializedSnapshot
+  queue: ResumeQueueEntrySummary[]
+}
+
+interface PauseContextDetail {
+  execution: PausedExecutionSummary
+  pausePoint: PausePointWithQueue
+  queue: ResumeQueueEntrySummary[]
+  activeResumeEntry?: ResumeQueueEntrySummary | null
+}
+
+interface PersistPauseResultArgs {
+  workflowId: string
+  executionId: string
+  pausePoints: PausePoint[]
+  snapshotSeed: SerializedSnapshot
+  executorUserId?: string
+}
+
+interface EnqueueResumeArgs {
+  executionId: string
+  workflowId: string
+  contextId: string
+  resumeInput: unknown
+  userId: string
+  /** Restrict which `pauseKind`s are eligible to resume. Defaults to allowing any. */
+  allowedPauseKinds?: PauseKind[]
+}
+
+type EnqueueResumeResult =
+  | {
+      status: 'queued'
+      resumeExecutionId: string
+      queuePosition: number
+    }
+  | {
+      status: 'starting'
+      resumeExecutionId: string
+      resumeEntryId: string
+      pausedExecution: typeof pausedExecutions.$inferSelect
+      contextId: string
+      resumeInput: unknown
+      userId: string
+    }
+
+interface StartResumeExecutionArgs {
+  resumeEntryId: string
+  resumeExecutionId: string
+  pausedExecution: typeof pausedExecutions.$inferSelect
+  contextId: string
+  resumeInput: unknown
+  userId: string
+  sendEvent?: (event: ExecutionEvent) => void
+  onStream?: (streamingExec: StreamingExecution) => Promise<void>
+  onBlockComplete?: (blockId: string, output: unknown) => Promise<void>
+  abortSignal?: AbortSignal
+}
+
+/**
+ * Returns the earliest `resumeAt` across `pauseKind: 'time'` pause points whose
+ * `resumeAt` is a valid date and (when `after` is provided) strictly later than it.
+ * Returns `null` when no candidate exists.
+ */
+export function computeEarliestResumeAt(
+  points: Iterable<Pick<PausePoint, 'pauseKind' | 'resumeAt'>>,
+  options: { after?: Date } = {}
+): Date | null {
+  const { after } = options
+  let earliest: Date | null = null
+  for (const point of points) {
+    if (point.pauseKind !== 'time' || !point.resumeAt) continue
+    const candidate = new Date(point.resumeAt)
+    if (Number.isNaN(candidate.getTime())) continue
+    if (after && candidate <= after) continue
+    if (!earliest || candidate < earliest) earliest = candidate
+  }
+  return earliest
+}
+
+export class PauseResumeManager {
+  static async persistPauseResult(args: PersistPauseResultArgs): Promise<void> {
+    const { workflowId, executionId, pausePoints, snapshotSeed, executorUserId } = args
+    const snapshotReferenceValue = parseSnapshotForReferenceTracking(snapshotSeed)
+    const snapshotWorkspaceId = getSnapshotWorkspaceId(
+      isRecord(snapshotReferenceValue) ? snapshotReferenceValue.snapshot : undefined
+    )
+    const snapshotReferenceKeys = snapshotWorkspaceId
+      ? collectLargeValueReferenceKeys(snapshotReferenceValue, snapshotWorkspaceId)
+      : []
+
+    const pausePointsRecord = pausePoints.reduce<Record<string, any>>((acc, point) => {
+      acc[point.contextId] = {
+        contextId: point.contextId,
+        blockId: PauseResumeManager.normalizePauseBlockId(point.blockId ?? point.contextId),
+        response: point.response,
+        resumeStatus: point.resumeStatus,
+        snapshotReady: point.snapshotReady,
+        registeredAt: point.registeredAt,
+        parallelScope: point.parallelScope,
+        loopScope: point.loopScope,
+        resumeLinks: point.resumeLinks,
+        pauseKind: point.pauseKind,
+        resumeAt: point.resumeAt,
+      }
+      return acc
+    }, {})
+
+    const nextResumeAt = computeEarliestResumeAt(pausePoints)
+
+    const now = new Date()
+    const metadata = {
+      pauseScope: 'execution',
+      triggerIds: snapshotSeed.triggerIds,
+      executorUserId: executorUserId ?? null,
+    }
+
+    await db.transaction(async (tx) => {
+      const existing = await tx
+        .select()
+        .from(pausedExecutions)
+        .where(eq(pausedExecutions.executionId, executionId))
+        .for('update')
+        .limit(1)
+        .then((rows) => rows[0])
+
+      if (!existing) {
+        await tx.insert(pausedExecutions).values({
+          id: generateId(),
+          workflowId,
+          executionId,
+          executionSnapshot: snapshotSeed,
+          pausePoints: pausePointsRecord,
+          totalPauseCount: pausePoints.length,
+          resumedCount: 0,
+          status: 'paused',
+          metadata,
+          pausedAt: now,
+          updatedAt: now,
+          nextResumeAt,
+        })
+        if (snapshotWorkspaceId) {
+          await replaceLargeValueReferenceKeysWithClient(
+            tx,
+            {
+              workspaceId: snapshotWorkspaceId,
+              workflowId,
+              executionId,
+              source: 'paused_snapshot',
+            },
+            snapshotReferenceKeys
+          )
+        }
+        return
+      }
+
+      const existingPausePoints = (existing.pausePoints as Record<string, any>) ?? {}
+      const mergedPausePoints = Object.fromEntries(
+        Object.entries(existingPausePoints).map(([contextId, point]) => [
+          contextId,
+          point?.resumeStatus === 'resuming'
+            ? { ...point, resumeStatus: 'resumed', resumedAt: now.toISOString() }
+            : point,
+        ])
+      )
+
+      for (const [contextId, point] of Object.entries(pausePointsRecord)) {
+        mergedPausePoints[contextId] = point
+      }
+
+      const mergedPoints = Object.values(mergedPausePoints)
+      const resumedCount = mergedPoints.filter((point) => point?.resumeStatus === 'resumed').length
+      const totalPauseCount = mergedPoints.length
+      const mergedNextResumeAt = computeEarliestResumeAt(mergedPoints as PausePoint[])
+      const nextStatus =
+        existing.status === 'cancelling'
+          ? 'cancelling'
+          : totalPauseCount > 0 && resumedCount >= totalPauseCount
+            ? 'fully_resumed'
+            : resumedCount > 0
+              ? 'partially_resumed'
+              : 'paused'
+
+      await tx
+        .update(pausedExecutions)
+        .set({
+          workflowId,
+          executionSnapshot: snapshotSeed,
+          pausePoints: mergedPausePoints,
+          totalPauseCount,
+          resumedCount,
+          status: nextStatus,
+          // Merge rather than replace: foreign keys like `cellContext` (stashed
+          // by the table cell task) live on the same metadata column and must
+          // survive a re-pause so chained-wait resumes can still write the row back.
+          metadata: { ...((existing.metadata as Record<string, unknown>) ?? {}), ...metadata },
+          updatedAt: now,
+          nextResumeAt: mergedNextResumeAt,
+        })
+        .where(eq(pausedExecutions.id, existing.id))
+
+      if (snapshotWorkspaceId) {
+        await replaceLargeValueReferenceKeysWithClient(
+          tx,
+          {
+            workspaceId: snapshotWorkspaceId,
+            workflowId,
+            executionId,
+            source: 'paused_snapshot',
+          },
+          snapshotReferenceKeys
+        )
+      }
+    })
+
+    await PauseResumeManager.processQueuedResumes(executionId, workflowId)
+  }
+
+  static async enqueueOrStartResume(args: EnqueueResumeArgs): Promise<EnqueueResumeResult> {
+    const { executionId, workflowId, contextId, resumeInput, userId, allowedPauseKinds } = args
+
+    return await db.transaction(async (tx) => {
+      const pausedExecution = await tx
+        .select()
+        .from(pausedExecutions)
+        .where(
+          and(
+            eq(pausedExecutions.executionId, executionId),
+            eq(pausedExecutions.workflowId, workflowId)
+          )
+        )
+        .for('update')
+        .limit(1)
+        .then((rows) => rows[0])
+
+      if (!pausedExecution) {
+        throw new Error('Paused execution not found or already resumed')
+      }
+
+      if (!isResumablePausedStatus(pausedExecution.status)) {
+        throw new Error('Paused execution is not resumable')
+      }
+
+      const pausePoints = pausedExecution.pausePoints as Record<string, any>
+      const pausePoint = pausePoints?.[contextId]
+      if (!pausePoint) {
+        throw new Error('Pause point not found for execution')
+      }
+      if (pausePoint.resumeStatus !== 'paused') {
+        throw new Error('Pause point already resumed or in progress')
+      }
+      if (!pausePoint.snapshotReady) {
+        throw new Error('Snapshot not ready; execution still finalizing pause')
+      }
+
+      const pauseKind: PauseKind = pausePoint.pauseKind ?? 'human'
+      if (allowedPauseKinds && !allowedPauseKinds.includes(pauseKind)) {
+        throw new Error(
+          `Pause kind '${pauseKind}' is not allowed for this resume endpoint (allowed: ${allowedPauseKinds.join(', ')})`
+        )
+      }
+
+      const activeResume = await tx
+        .select({ id: resumeQueue.id })
+        .from(resumeQueue)
+        .where(
+          and(
+            eq(resumeQueue.parentExecutionId, executionId),
+            inArray(resumeQueue.status, ['claimed'] as const)
+          )
+        )
+        .limit(1)
+        .then((rows) => rows[0])
+
+      const resumeExecutionId = executionId
+      const now = new Date()
+
+      if (activeResume) {
+        const [entry] = await tx
+          .insert(resumeQueue)
+          .values({
+            id: generateId(),
+            pausedExecutionId: pausedExecution.id,
+            parentExecutionId: executionId,
+            newExecutionId: resumeExecutionId,
+            contextId,
+            resumeInput: resumeInput ?? null,
+            status: 'pending',
+            queuedAt: now,
+          })
+          .returning({ id: resumeQueue.id, queuedAt: resumeQueue.queuedAt })
+
+        await tx
+          .update(pausedExecutions)
+          .set({
+            pausePoints: sql`jsonb_set(pause_points, ARRAY[${contextId}, 'resumeStatus'], '"queued"'::jsonb)`,
+          })
+          .where(eq(pausedExecutions.id, pausedExecution.id))
+
+        pausePoint.resumeStatus = 'queued'
+
+        const [positionRow = { position: 0 }] = await tx
+          .select({ position: sql<number>`count(*)` })
+          .from(resumeQueue)
+          .where(
+            and(
+              eq(resumeQueue.parentExecutionId, executionId),
+              eq(resumeQueue.status, 'pending'),
+              lt(resumeQueue.queuedAt, entry.queuedAt)
+            )
+          )
+
+        return {
+          status: 'queued',
+          resumeExecutionId,
+          queuePosition: Number(positionRow.position ?? 0) + 1,
+        }
+      }
+
+      const resumeEntryId = generateId()
+      await tx.insert(resumeQueue).values({
+        id: resumeEntryId,
+        pausedExecutionId: pausedExecution.id,
+        parentExecutionId: executionId,
+        newExecutionId: resumeExecutionId,
+        contextId,
+        resumeInput: resumeInput ?? null,
+        status: 'claimed',
+        queuedAt: now,
+        claimedAt: now,
+      })
+
+      await tx
+        .update(pausedExecutions)
+        .set({
+          pausePoints: sql`jsonb_set(pause_points, ARRAY[${contextId}, 'resumeStatus'], '"resuming"'::jsonb)`,
+        })
+        .where(eq(pausedExecutions.id, pausedExecution.id))
+
+      pausePoint.resumeStatus = 'resuming'
+
+      return {
+        status: 'starting',
+        resumeExecutionId,
+        resumeEntryId,
+        pausedExecution,
+        contextId,
+        resumeInput,
+        userId,
+      }
+    })
+  }
+
+  static async startResumeExecution(args: StartResumeExecutionArgs): Promise<ExecutionResult> {
+    const {
+      resumeEntryId,
+      resumeExecutionId,
+      pausedExecution,
+      contextId,
+      resumeInput,
+      userId,
+      sendEvent,
+      onStream,
+      onBlockComplete,
+      abortSignal,
+    } = args
+
+    const pausePointsRecord = pausedExecution.pausePoints as Record<string, any>
+    const pausePointForContext = pausePointsRecord?.[contextId]
+    const pauseBlockId = PauseResumeManager.normalizePauseBlockId(
+      pausePointForContext?.blockId ?? pausePointForContext?.contextId ?? contextId
+    )
+
+    try {
+      const result = await PauseResumeManager.runResumeExecution({
+        resumeExecutionId,
+        pausedExecution,
+        contextId,
+        resumeInput,
+        userId,
+        sendEvent,
+        onStream,
+        onBlockComplete,
+        abortSignal,
+      })
+
+      if (result.status === 'paused') {
+        const effectiveExecutionId = result.metadata?.executionId ?? resumeExecutionId
+        if (!result.snapshotSeed) {
+          logger.error('Missing snapshot seed for paused resume execution', {
+            resumeExecutionId,
+          })
+          await LoggingSession.markExecutionAsFailed(
+            effectiveExecutionId,
+            'Missing snapshot seed for paused execution',
+            undefined,
+            pausedExecution.workflowId
+          )
+        } else {
+          try {
+            await PauseResumeManager.persistPauseResult({
+              workflowId: pausedExecution.workflowId,
+              executionId: effectiveExecutionId,
+              pausePoints: result.pausePoints || [],
+              snapshotSeed: result.snapshotSeed,
+              executorUserId: result.metadata?.userId,
+            })
+          } catch (pauseError) {
+            logger.error('Failed to persist pause result for resumed execution', {
+              resumeExecutionId,
+              error: toError(pauseError).message,
+            })
+            await LoggingSession.markExecutionAsFailed(
+              effectiveExecutionId,
+              `Failed to persist pause state: ${toError(pauseError).message}`,
+              undefined,
+              pausedExecution.workflowId
+            )
+          }
+        }
+      } else {
+        if (result.status === 'cancelled') {
+          await PauseResumeManager.markResumeAttemptFailed({
+            resumeEntryId,
+            pausedExecutionId: pausedExecution.id,
+            parentExecutionId: pausedExecution.executionId,
+            contextId,
+            failureReason: 'Resume execution cancelled',
+          })
+          const pausedCancellationStatus = await PauseResumeManager.getPausedCancellationStatus(
+            pausedExecution.executionId,
+            pausedExecution.workflowId
+          )
+          if (pausedCancellationStatus === 'cancelling') {
+            await PauseResumeManager.completePausedCancellation(
+              pausedExecution.executionId,
+              pausedExecution.workflowId
+            )
+          }
+        } else {
+          await PauseResumeManager.updateSnapshotAfterResume({
+            pausedExecutionId: pausedExecution.id,
+            contextId,
+            pauseBlockId: pauseBlockId,
+            executionState: result.executionState,
+          })
+          await PauseResumeManager.markResumeCompleted({
+            resumeEntryId,
+            pausedExecutionId: pausedExecution.id,
+            parentExecutionId: pausedExecution.executionId,
+            contextId,
+          })
+        }
+      }
+
+      if (result.status === 'paused') {
+        await PauseResumeManager.markResumeCompleted({
+          resumeEntryId,
+        })
+      }
+
+      await PauseResumeManager.processQueuedResumes(
+        pausedExecution.executionId,
+        pausedExecution.workflowId
+      )
+
+      return result
+    } catch (error) {
+      const message = toError(error).message
+      if (message === RUN_BUFFER_UNAVAILABLE_ERROR || message === TERMINAL_PUBLISH_ERROR) {
+        await PauseResumeManager.markResumeAttemptFailed({
+          resumeEntryId,
+          pausedExecutionId: pausedExecution.id,
+          parentExecutionId: pausedExecution.executionId,
+          contextId,
+          failureReason: message,
+        })
+      } else {
+        await PauseResumeManager.markResumeFailed({
+          resumeEntryId,
+          pausedExecutionId: pausedExecution.id,
+          parentExecutionId: pausedExecution.executionId,
+          contextId,
+          failureReason: message,
+        })
+      }
+      logger.error('Resume execution failed', {
+        parentExecutionId: pausedExecution.executionId,
+        resumeExecutionId,
+        contextId,
+        error,
+      })
+      await PauseResumeManager.processQueuedResumes(
+        pausedExecution.executionId,
+        pausedExecution.workflowId
+      )
+      throw error
+    }
+  }
+
+  private static async runResumeExecution(args: {
+    resumeExecutionId: string
+    pausedExecution: typeof pausedExecutions.$inferSelect
+    contextId: string
+    resumeInput: unknown
+    userId: string
+    sendEvent?: (event: ExecutionEvent) => void
+    onStream?: (streamingExec: StreamingExecution) => Promise<void>
+    onBlockComplete?: (blockId: string, output: unknown) => Promise<void>
+    abortSignal?: AbortSignal
+  }): Promise<ExecutionResult> {
+    const {
+      resumeExecutionId,
+      pausedExecution,
+      contextId,
+      resumeInput,
+      userId,
+      sendEvent,
+      onStream: externalOnStream,
+      onBlockComplete: externalOnBlockComplete,
+      abortSignal: externalAbortSignal,
+    } = args
+    const parentExecutionId = pausedExecution.executionId
+
+    await db
+      .update(workflowExecutionLogs)
+      .set({ status: 'running' })
+      .where(eq(workflowExecutionLogs.executionId, parentExecutionId))
+
+    logger.info('Starting resume execution', {
+      resumeExecutionId,
+      parentExecutionId: pausedExecution.executionId,
+      contextId,
+      hasResumeInput: !!resumeInput,
+    })
+
+    const serializedSnapshot = pausedExecution.executionSnapshot as SerializedSnapshot
+    const baseSnapshot = ExecutionSnapshot.fromJSON(serializedSnapshot.snapshot)
+
+    logger.info('Loaded snapshot from paused execution', {
+      workflowId: baseSnapshot.workflow?.version,
+      workflowBlockCount: baseSnapshot.workflow?.blocks?.length,
+      hasState: !!baseSnapshot.state,
+      snapshotMetadata: baseSnapshot.metadata,
+    })
+
+    const pausePoints = pausedExecution.pausePoints as Record<string, any>
+    const pausePoint = pausePoints?.[contextId]
+    if (!pausePoint) {
+      throw new Error('Pause point not found for resume execution')
+    }
+
+    logger.info('Resume pause point identified', {
+      contextId,
+      pausePointKeys: Object.keys(pausePoints),
+    })
+
+    // Find the blocks downstream of the pause block
+    const rawPauseBlockId = pausePoint.blockId ?? contextId
+    const pauseBlockId = PauseResumeManager.normalizePauseBlockId(rawPauseBlockId)
+
+    const dagIncomingEdgesFromSnapshot: Record<string, string[]> | undefined =
+      baseSnapshot.state?.dagIncomingEdges
+
+    const downstreamBlocks = dagIncomingEdgesFromSnapshot
+      ? Object.entries(dagIncomingEdgesFromSnapshot)
+          .filter(
+            ([, incoming]) =>
+              Array.isArray(incoming) &&
+              incoming.some(
+                (sourceId) => PauseResumeManager.normalizePauseBlockId(sourceId) === pauseBlockId
+              )
+          )
+          .map(([nodeId]) => nodeId)
+      : baseSnapshot.workflow.connections
+          .filter(
+            (conn: SerializedConnection) =>
+              PauseResumeManager.normalizePauseBlockId(conn.source) === pauseBlockId
+          )
+          .map((conn: SerializedConnection) => conn.target)
+
+    logger.info('Found downstream blocks', {
+      pauseBlockId,
+      downstreamBlocks,
+    })
+
+    const stateCopy = baseSnapshot.state
+      ? {
+          ...baseSnapshot.state,
+          blockStates: { ...baseSnapshot.state.blockStates },
+        }
+      : undefined
+
+    logger.info('Preparing resume state', {
+      hasStateCopy: !!stateCopy,
+      existingBlockStatesCount: stateCopy ? Object.keys(stateCopy.blockStates).length : 0,
+      executedBlocksCount: stateCopy?.executedBlocks?.length ?? 0,
+    })
+
+    let terminalResumeOutput: Record<string, any> | undefined
+
+    if (stateCopy) {
+      const dagIncomingEdges: Record<string, string[]> | undefined =
+        stateCopy.dagIncomingEdges || dagIncomingEdgesFromSnapshot
+
+      // Calculate the pause duration (time from pause to resume)
+      const pauseDurationMs = pausedExecution.pausedAt
+        ? Date.now() - new Date(pausedExecution.pausedAt).getTime()
+        : 0
+
+      logger.info('Calculated pause duration', {
+        pauseBlockId,
+        pauseDurationMs,
+        pausedAt: pausedExecution.pausedAt,
+        resumedAt: new Date().toISOString(),
+      })
+
+      // Set the pause block as completed with the resume input
+      const existingBlockState =
+        stateCopy.blockStates[pauseBlockId] ?? stateCopy.blockStates[contextId]
+
+      const stateBlockKey = rawPauseBlockId
+
+      const existingBlockStateWithRaw = stateCopy.blockStates[stateBlockKey] ?? existingBlockState
+
+      const pauseBlockState = existingBlockStateWithRaw ?? {
+        output: {},
+        executed: true,
+        executionTime: 0,
+      }
+      const normalizedResumeInputRaw = (() => {
+        if (!resumeInput) return {}
+        if (typeof resumeInput === 'string') {
+          try {
+            return JSON.parse(resumeInput)
+          } catch {
+            return { value: resumeInput }
+          }
+        }
+        if (typeof resumeInput === 'object' && !Array.isArray(resumeInput)) {
+          return resumeInput
+        }
+        return { value: resumeInput }
+      })()
+
+      const submissionPayload =
+        normalizedResumeInputRaw &&
+        typeof normalizedResumeInputRaw === 'object' &&
+        !Array.isArray(normalizedResumeInputRaw) &&
+        normalizedResumeInputRaw.submission &&
+        typeof normalizedResumeInputRaw.submission === 'object' &&
+        !Array.isArray(normalizedResumeInputRaw.submission)
+          ? (normalizedResumeInputRaw.submission as Record<string, any>)
+          : (normalizedResumeInputRaw as Record<string, any>)
+
+      const existingOutput = pauseBlockState.output || {}
+      const existingResponse = existingOutput.response || {}
+      const existingResponseData =
+        existingResponse &&
+        typeof existingResponse.data === 'object' &&
+        !Array.isArray(existingResponse.data)
+          ? existingResponse.data
+          : {}
+
+      const submittedAt = new Date().toISOString()
+
+      const mergedResponseData = {
+        ...existingResponseData,
+        submission: submissionPayload,
+        submittedAt,
+      }
+
+      const mergedResponse = {
+        ...existingResponse,
+        data: mergedResponseData,
+        status: existingResponse.status ?? 200,
+        headers: existingResponse.headers ?? { 'Content-Type': 'application/json' },
+        resume: existingResponse.resume ?? existingOutput.resume,
+      }
+
+      const mergedOutput: Record<string, unknown> = {
+        ...existingOutput,
+        response: mergedResponse,
+        submission: submissionPayload,
+        resumeInput: normalizedResumeInputRaw,
+        submittedAt,
+        _resumed: true,
+        _resumedFrom: pausedExecution.executionId,
+        _pauseDurationMs: pauseDurationMs,
+      }
+
+      if (pausePoint.pauseKind === 'time') {
+        mergedOutput.status = 'completed'
+      }
+
+      mergedOutput.resume = mergedOutput.resume ?? mergedResponse.resume
+
+      // Preserve url and resumeEndpoint from resume links
+      const resumeLinks = mergedOutput.resume ?? mergedResponse.resume
+      if (resumeLinks && typeof resumeLinks === 'object') {
+        if (resumeLinks.uiUrl) {
+          mergedOutput.url = resumeLinks.uiUrl
+        }
+        if (resumeLinks.apiUrl) {
+          mergedOutput.resumeEndpoint = resumeLinks.apiUrl
+        }
+      }
+
+      for (const [key, value] of Object.entries(submissionPayload)) {
+        mergedOutput[key] = value
+      }
+
+      pauseBlockState.output = mergedOutput
+      terminalResumeOutput = mergedOutput
+      pauseBlockState.executed = true
+      pauseBlockState.executionTime = pauseDurationMs
+      if (stateBlockKey !== pauseBlockId && stateCopy.blockStates[pauseBlockId]) {
+        delete stateCopy.blockStates[pauseBlockId]
+      }
+
+      if (stateBlockKey !== contextId && stateCopy.blockStates[contextId]) {
+        delete stateCopy.blockStates[contextId]
+      }
+
+      stateCopy.blockStates[stateBlockKey] = pauseBlockState
+      updateResumeOutputInAggregationBuffers(
+        stateCopy,
+        stateBlockKey,
+        pauseBlockId,
+        contextId,
+        mergedOutput
+      )
+
+      // Update the block log entry with the merged output so logs show the submission data
+      if (Array.isArray(stateCopy.blockLogs)) {
+        const blockLogIndex = stateCopy.blockLogs.findIndex(
+          (log: { blockId: string }) =>
+            log.blockId === stateBlockKey ||
+            log.blockId === pauseBlockId ||
+            log.blockId === contextId
+        )
+        if (blockLogIndex !== -1) {
+          // Filter output for logging using shared utility
+          // 'resume' is redundant with url/resumeEndpoint so we filter it out
+          const filteredOutput = filterOutputForLog('human_in_the_loop', mergedOutput, {
+            additionalHiddenKeys: ['resume'],
+          })
+          stateCopy.blockLogs[blockLogIndex] = {
+            ...stateCopy.blockLogs[blockLogIndex],
+            blockId: stateBlockKey,
+            output: filteredOutput,
+            durationMs: pauseDurationMs,
+            endedAt: new Date().toISOString(),
+          }
+        }
+      }
+
+      if (Array.isArray(stateCopy.executedBlocks)) {
+        const filtered = stateCopy.executedBlocks.filter(
+          (id: string) => id !== pauseBlockId && id !== contextId
+        )
+        if (!filtered.includes(stateBlockKey)) {
+          filtered.push(stateBlockKey)
+        }
+        stateCopy.executedBlocks = filtered
+      }
+
+      // Track all pause contexts that have already been resumed
+      const completedPauseContexts = new Set<string>(
+        (stateCopy.completedPauseContexts ?? []).map((id: string) =>
+          PauseResumeManager.normalizePauseBlockId(id)
+        )
+      )
+      completedPauseContexts.add(pauseBlockId)
+
+      // Store edges to remove (all edges FROM any completed pause block)
+      let edgesToRemove: Edge[]
+
+      if (dagIncomingEdges) {
+        const seen = new Set<string>()
+        edgesToRemove = []
+
+        for (const [targetNodeId, incomingEdges] of Object.entries(dagIncomingEdges)) {
+          if (!Array.isArray(incomingEdges)) continue
+
+          for (const sourceNodeId of incomingEdges) {
+            const normalizedSource = PauseResumeManager.normalizePauseBlockId(sourceNodeId)
+            if (!completedPauseContexts.has(normalizedSource)) {
+              continue
+            }
+
+            const key = `${sourceNodeId}→${targetNodeId}`
+            if (seen.has(key)) {
+              continue
+            }
+            seen.add(key)
+
+            edgesToRemove.push({
+              id: key,
+              source: sourceNodeId,
+              target: targetNodeId,
+            })
+          }
+        }
+
+        // If we didn't find any edges via the DAG snapshot, fall back to workflow connections
+        if (edgesToRemove.length === 0 && baseSnapshot.workflow.connections?.length) {
+          edgesToRemove = baseSnapshot.workflow.connections
+            .filter((conn: SerializedConnection) =>
+              completedPauseContexts.has(PauseResumeManager.normalizePauseBlockId(conn.source))
+            )
+            .map((conn: SerializedConnection) => ({
+              id: `${conn.source}→${conn.target}`,
+              source: conn.source,
+              target: conn.target,
+              sourceHandle: conn.sourceHandle,
+              targetHandle: conn.targetHandle,
+            }))
+        }
+      } else {
+        edgesToRemove = baseSnapshot.workflow.connections
+          .filter((conn: SerializedConnection) =>
+            completedPauseContexts.has(PauseResumeManager.normalizePauseBlockId(conn.source))
+          )
+          .map((conn: SerializedConnection) => ({
+            id: `${conn.source}→${conn.target}`,
+            source: conn.source,
+            target: conn.target,
+            sourceHandle: conn.sourceHandle,
+            targetHandle: conn.targetHandle,
+          }))
+      }
+
+      // Persist state updates
+      stateCopy.completedPauseContexts = Array.from(completedPauseContexts)
+      stateCopy.remainingEdges = edgesToRemove
+      stateCopy.pendingQueue = [] // Let the engine determine what's ready after removing edges
+      stateCopy.resumeTerminalNoop = edgesToRemove.length === 0
+
+      logger.info('Updated pause block state for resume', {
+        pauseBlockId,
+        downstreamBlocks,
+        edgesToRemove: edgesToRemove.length,
+        completedPauseContexts: stateCopy.completedPauseContexts,
+        pauseBlockOutput: pauseBlockState.output,
+      })
+    }
+
+    const metadata = {
+      ...baseSnapshot.metadata,
+      executionId: resumeExecutionId,
+      requestId: baseSnapshot.metadata.requestId,
+      startTime: new Date().toISOString(),
+      userId,
+      sessionUserId: baseSnapshot.metadata.sessionUserId,
+      workflowUserId: baseSnapshot.metadata.workflowUserId,
+      useDraftState: baseSnapshot.metadata.useDraftState,
+      isClientSession: baseSnapshot.metadata.isClientSession,
+      resumeFromSnapshot: true,
+      resumeTerminalNoop: stateCopy?.resumeTerminalNoop === true,
+    }
+
+    const resumeSnapshot = new ExecutionSnapshot(
+      metadata,
+      baseSnapshot.workflow,
+      resumeInput ?? {},
+      baseSnapshot.workflowVariables || {},
+      baseSnapshot.selectedOutputs || [],
+      stateCopy
+    )
+
+    logger.info('Created resume snapshot', {
+      metadata,
+      hasWorkflow: !!baseSnapshot.workflow,
+      hasState: !!stateCopy,
+      pendingQueue: stateCopy?.pendingQueue,
+    })
+
+    const triggerType =
+      (metadata.triggerType as 'api' | 'webhook' | 'schedule' | 'manual' | 'chat' | undefined) ??
+      'manual'
+    const loggingSession = new LoggingSession(
+      metadata.workflowId,
+      parentExecutionId,
+      triggerType,
+      metadata.requestId
+    )
+
+    logger.info('Running preprocessing checks for resume', {
+      resumeExecutionId,
+      workflowId: pausedExecution.workflowId,
+      userId,
+    })
+
+    const preprocessingResult = await preprocessExecution({
+      workflowId: pausedExecution.workflowId,
+      userId,
+      triggerType: 'manual', // Resume is manual
+      executionId: resumeExecutionId,
+      requestId: metadata.requestId,
+      checkRateLimit: false, // Manual actions bypass rate limits
+      checkDeployment: false, // Resuming existing execution
+      skipUsageLimits: true, // Resume is continuation of authorized execution - don't recheck limits
+      workspaceId: baseSnapshot.metadata.workspaceId,
+      loggingSession,
+    })
+
+    if (!preprocessingResult.success) {
+      const errorMessage =
+        preprocessingResult.error?.message || 'Preprocessing check failed for resume execution'
+      logger.error('Resume preprocessing failed', {
+        resumeExecutionId,
+        workflowId: pausedExecution.workflowId,
+        userId,
+        error: errorMessage,
+      })
+
+      throw new Error(errorMessage)
+    }
+
+    logger.info('Preprocessing checks passed for resume', {
+      resumeExecutionId,
+      actorUserId: preprocessingResult.actorUserId,
+    })
+
+    if (preprocessingResult.actorUserId) {
+      metadata.userId = preprocessingResult.actorUserId
+    }
+
+    logger.info('Invoking executeWorkflowCore for resume', {
+      resumeExecutionId,
+      triggerType,
+      useDraftState: metadata.useDraftState,
+      resumeFromSnapshot: metadata.resumeFromSnapshot,
+      actorUserId: metadata.userId,
+    })
+
+    const workflowId = pausedExecution.workflowId
+    const bufferReset = await resetExecutionStreamBuffer(resumeExecutionId)
+    if (!bufferReset) {
+      throw new Error(RUN_BUFFER_UNAVAILABLE_ERROR)
+    }
+
+    const eventWriter = createExecutionEventWriter(resumeExecutionId, {
+      workspaceId: metadata.workspaceId,
+      workflowId,
+      userId: metadata.userId,
+      preserveUserFileBase64: true,
+    })
+    const metaInitialized = await initializeExecutionStreamMeta(resumeExecutionId, {
+      userId: metadata.userId,
+      workflowId,
+    })
+    if (!metaInitialized) {
+      throw new Error(RUN_BUFFER_UNAVAILABLE_ERROR)
+    }
+
+    let terminalEventPublished = false
+    const writeBufferedEvent = async (
+      event: ExecutionEvent,
+      terminalStatus?: TerminalExecutionStreamStatus
+    ) => {
+      const isBuffered = event.type !== 'stream:chunk' && event.type !== 'stream:done'
+      if (isBuffered) {
+        const entry = terminalStatus
+          ? await eventWriter.writeTerminal(event, terminalStatus).catch((error) => {
+              logger.warn('Failed to publish resume terminal event', {
+                resumeExecutionId,
+                status: terminalStatus,
+                error: toError(error).message,
+              })
+              throw new Error(TERMINAL_PUBLISH_ERROR)
+            })
+          : await eventWriter.write(event)
+        event.eventId = entry.eventId
+        terminalEventPublished ||= Boolean(terminalStatus)
+      }
+      sendEvent?.(event)
+    }
+
+    await writeBufferedEvent({
+      type: 'execution:started',
+      timestamp: new Date().toISOString(),
+      executionId: resumeExecutionId,
+      workflowId,
+      data: { startTime: new Date().toISOString() },
+    } as ExecutionEvent)
+
+    const callbacks: ExecutionCallbacks = {
+      onBlockStart: async (
+        blockId: string,
+        blockName: string,
+        blockType: string,
+        executionOrder: number,
+        iterationContext?: IterationContext,
+        childWorkflowContext?: ChildWorkflowContext
+      ) => {
+        await writeBufferedEvent({
+          type: 'block:started',
+          timestamp: new Date().toISOString(),
+          executionId: resumeExecutionId,
+          workflowId,
+          data: {
+            blockId,
+            blockName,
+            blockType,
+            executionOrder,
+            ...(iterationContext && {
+              iterationCurrent: iterationContext.iterationCurrent,
+              iterationTotal: iterationContext.iterationTotal,
+              iterationType: iterationContext.iterationType,
+              iterationContainerId: iterationContext.iterationContainerId,
+              ...(iterationContext.parentIterations?.length && {
+                parentIterations: iterationContext.parentIterations,
+              }),
+            }),
+            ...(childWorkflowContext && {
+              childWorkflowBlockId: childWorkflowContext.parentBlockId,
+              childWorkflowName: childWorkflowContext.workflowName,
+            }),
+          },
+        } as ExecutionEvent)
+      },
+      onBlockComplete: async (
+        blockId: string,
+        blockName: string,
+        blockType: string,
+        callbackData: Record<string, unknown>,
+        iterationContext?: IterationContext,
+        childWorkflowContext?: ChildWorkflowContext
+      ) => {
+        const output = callbackData.output as Record<string, unknown> | undefined
+        const hasError = output?.error
+        const sharedData = {
+          blockId,
+          blockName,
+          blockType,
+          input: callbackData.input,
+          durationMs: (callbackData.executionTime as number) || 0,
+          startedAt: callbackData.startedAt,
+          executionOrder: callbackData.executionOrder,
+          endedAt: callbackData.endedAt,
+          ...(iterationContext && {
+            iterationCurrent: iterationContext.iterationCurrent,
+            iterationTotal: iterationContext.iterationTotal,
+            iterationType: iterationContext.iterationType,
+            iterationContainerId: iterationContext.iterationContainerId,
+            ...(iterationContext.parentIterations?.length && {
+              parentIterations: iterationContext.parentIterations,
+            }),
+          }),
+          ...(childWorkflowContext && {
+            childWorkflowBlockId: childWorkflowContext.parentBlockId,
+            childWorkflowName: childWorkflowContext.workflowName,
+          }),
+          ...(callbackData.childWorkflowInstanceId
+            ? { childWorkflowInstanceId: callbackData.childWorkflowInstanceId }
+            : {}),
+        }
+
+        await writeBufferedEvent({
+          type: hasError ? 'block:error' : 'block:completed',
+          timestamp: new Date().toISOString(),
+          executionId: resumeExecutionId,
+          workflowId,
+          data: hasError ? { ...sharedData, error: output?.error } : { ...sharedData, output },
+        } as ExecutionEvent)
+
+        if (externalOnBlockComplete) {
+          await externalOnBlockComplete(blockId, callbackData.output)
+        }
+      },
+      onChildWorkflowInstanceReady: async (
+        blockId: string,
+        childWorkflowInstanceId: string,
+        iterationContext?: IterationContext,
+        executionOrder?: number
+      ) => {
+        await writeBufferedEvent({
+          type: 'block:childWorkflowStarted',
+          timestamp: new Date().toISOString(),
+          executionId: resumeExecutionId,
+          workflowId,
+          data: {
+            blockId,
+            childWorkflowInstanceId,
+            ...(iterationContext && {
+              iterationCurrent: iterationContext.iterationCurrent,
+              iterationContainerId: iterationContext.iterationContainerId,
+            }),
+            ...(executionOrder !== undefined && { executionOrder }),
+          },
+        } as ExecutionEvent)
+      },
+      onStream: async (streamingExec: StreamingExecution) => {
+        if (externalOnStream) {
+          await externalOnStream(streamingExec)
+          return
+        }
+
+        const blockIdValue = isRecord(streamingExec.execution)
+          ? streamingExec.execution.blockId
+          : undefined
+        const blockId = typeof blockIdValue === 'string' ? blockIdValue : ''
+        const reader = streamingExec.stream.getReader()
+        const decoder = new TextDecoder()
+        try {
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            const chunk = decoder.decode(value, { stream: true })
+            await writeBufferedEvent({
+              type: 'stream:chunk',
+              timestamp: new Date().toISOString(),
+              executionId: resumeExecutionId,
+              workflowId,
+              data: { blockId, chunk },
+            } as ExecutionEvent)
+          }
+          await writeBufferedEvent({
+            type: 'stream:done',
+            timestamp: new Date().toISOString(),
+            executionId: resumeExecutionId,
+            workflowId,
+            data: { blockId },
+          } as ExecutionEvent)
+        } catch (streamError) {
+          logger.error('Error streaming block content during resume', {
+            resumeExecutionId,
+            blockId,
+            error: toError(streamError).message,
+          })
+        } finally {
+          try {
+            await reader.cancel().catch(() => {})
+          } catch {}
+        }
+      },
+    }
+
+    const timeoutController = externalAbortSignal
+      ? null
+      : createTimeoutAbortController(preprocessingResult.executionTimeout?.async)
+
+    let result: ExecutionResult | undefined
+    let finalMetaStatus: TerminalExecutionStreamStatus = 'complete'
+    let executionError: unknown
+    try {
+      result = await executeWorkflowCore({
+        snapshot: resumeSnapshot,
+        callbacks,
+        loggingSession,
+        skipLogCreation: true,
+        includeFileBase64: true,
+        base64MaxBytes: undefined,
+        abortSignal: externalAbortSignal ?? timeoutController?.signal,
+      })
+
+      if (resumeSnapshot.metadata.resumeTerminalNoop === true && result.status !== 'cancelled') {
+        result = {
+          ...result,
+          output: terminalResumeOutput ?? result.output,
+        }
+      }
+
+      const compactResultLogs = await compactBlockLogs(result.logs, {
+        workspaceId: baseSnapshot.metadata.workspaceId,
+        workflowId,
+        executionId: resumeExecutionId,
+        userId: metadata.userId,
+        requireDurable: true,
+      })
+      const compactResultOutput = await compactExecutionPayload(result.output, {
+        workspaceId: baseSnapshot.metadata.workspaceId,
+        workflowId,
+        executionId: resumeExecutionId,
+        userId: metadata.userId,
+        preserveUserFileBase64: true,
+        preserveRoot: true,
+        requireDurable: true,
+      })
+
+      if (
+        result.status === 'cancelled' &&
+        timeoutController?.isTimedOut() &&
+        timeoutController?.timeoutMs
+      ) {
+        const timeoutErrorMessage = getTimeoutErrorMessage(null, timeoutController!.timeoutMs)
+        logger.info('Resume execution timed out', {
+          resumeExecutionId,
+          timeoutMs: timeoutController.timeoutMs,
+        })
+        await loggingSession.markAsFailed(timeoutErrorMessage)
+
+        finalMetaStatus = 'error'
+        await writeBufferedEvent(
+          {
+            type: 'execution:error',
+            timestamp: new Date().toISOString(),
+            executionId: resumeExecutionId,
+            workflowId,
+            data: {
+              error: timeoutErrorMessage,
+              duration: result.metadata?.duration || 0,
+              finalBlockLogs: compactResultLogs,
+            },
+          },
+          'error'
+        )
+      } else if (result.status === 'cancelled') {
+        finalMetaStatus = 'cancelled'
+        await writeBufferedEvent(
+          {
+            type: 'execution:cancelled',
+            timestamp: new Date().toISOString(),
+            executionId: resumeExecutionId,
+            workflowId,
+            data: {
+              duration: result.metadata?.duration || 0,
+              finalBlockLogs: compactResultLogs,
+            },
+          },
+          'cancelled'
+        )
+      } else if (result.status === 'paused') {
+        finalMetaStatus = 'complete'
+        await writeBufferedEvent(
+          {
+            type: 'execution:paused',
+            timestamp: new Date().toISOString(),
+            executionId: resumeExecutionId,
+            workflowId,
+            data: {
+              output: compactResultOutput,
+              duration: result.metadata?.duration || 0,
+              startTime: result.metadata?.startTime || new Date().toISOString(),
+              endTime: result.metadata?.endTime || new Date().toISOString(),
+              finalBlockLogs: compactResultLogs,
+            },
+          },
+          'complete'
+        )
+      } else {
+        finalMetaStatus = 'complete'
+        await writeBufferedEvent(
+          {
+            type: 'execution:completed',
+            timestamp: new Date().toISOString(),
+            executionId: resumeExecutionId,
+            workflowId,
+            data: {
+              success: result.success,
+              output: compactResultOutput,
+              duration: result.metadata?.duration || 0,
+              startTime: result.metadata?.startTime || new Date().toISOString(),
+              endTime: result.metadata?.endTime || new Date().toISOString(),
+              finalBlockLogs: compactResultLogs,
+            },
+          },
+          'complete'
+        )
+      }
+    } catch (execError) {
+      executionError = execError
+      const execErrorResult = hasExecutionResult(execError) ? execError.executionResult : undefined
+      let compactErrorLogs: BlockLog[] | undefined
+      try {
+        compactErrorLogs = execErrorResult?.logs
+          ? await compactBlockLogs(execErrorResult.logs, {
+              workspaceId: baseSnapshot.metadata.workspaceId,
+              workflowId,
+              executionId: resumeExecutionId,
+              userId: metadata.userId,
+              requireDurable: true,
+            })
+          : undefined
+      } catch (compactionError) {
+        logger.warn('Failed to compact resume error logs, omitting oversized error details', {
+          resumeExecutionId,
+          error: toError(compactionError).message,
+        })
+      }
+      finalMetaStatus = 'error'
+      await writeBufferedEvent(
+        {
+          type: 'execution:error',
+          timestamp: new Date().toISOString(),
+          executionId: resumeExecutionId,
+          workflowId,
+          data: {
+            error: toError(execError).message,
+            duration: 0,
+            finalBlockLogs: compactErrorLogs,
+          },
+        },
+        'error'
+      )
+    } finally {
+      timeoutController?.cleanup()
+      if (!terminalEventPublished) {
+        const replayBufferFlushed = await flushExecutionStreamReplayBuffer(
+          resumeExecutionId,
+          eventWriter
+        )
+        logger.warn('Failed to publish resume terminal event durably', {
+          resumeExecutionId,
+          status: finalMetaStatus,
+          replayBufferFlushed,
+        })
+        if (!executionError) {
+          executionError = new Error(TERMINAL_PUBLISH_ERROR)
+        }
+      } else {
+        await eventWriter.close().catch((error) => {
+          logger.warn('Failed to close resume event writer after terminal publish', {
+            resumeExecutionId,
+            error: toError(error).message,
+          })
+        })
+      }
+      void cleanupExecutionBase64Cache(resumeExecutionId)
+    }
+
+    if (executionError || !result) {
+      throw executionError ?? new Error('Resume execution did not produce a result')
+    }
+
+    return result
+  }
+
+  private static async markResumeCompleted(args: {
+    resumeEntryId: string
+    pausedExecutionId?: string
+    parentExecutionId?: string
+    contextId?: string
+  }): Promise<void> {
+    const { resumeEntryId, pausedExecutionId, parentExecutionId, contextId } = args
+    const now = new Date()
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(resumeQueue)
+        .set({ status: 'completed', completedAt: now, failureReason: null })
+        .where(eq(resumeQueue.id, resumeEntryId))
+
+      if (!pausedExecutionId || !parentExecutionId || !contextId) {
+        return
+      }
+
+      await tx
+        .update(pausedExecutions)
+        .set({
+          pausePoints: sql`jsonb_set(jsonb_set(pause_points, ARRAY[${contextId}, 'resumeStatus'], '"resumed"'::jsonb), ARRAY[${contextId}, 'resumedAt'], ${JSON.stringify(now.toISOString())}::jsonb)`,
+          resumedCount: sql`resumed_count + 1`,
+          status: sql`CASE WHEN status = 'cancelling' THEN 'cancelling' WHEN resumed_count + 1 >= total_pause_count THEN 'fully_resumed' ELSE 'partially_resumed' END`,
+          updatedAt: now,
+        })
+        .where(eq(pausedExecutions.id, pausedExecutionId))
+
+      const [{ remaining }] = await tx
+        .select({ remaining: sql<number>`total_pause_count - resumed_count` })
+        .from(pausedExecutions)
+        .where(eq(pausedExecutions.executionId, parentExecutionId))
+
+      if (Number(remaining) <= 0) {
+        await tx
+          .update(pausedExecutions)
+          .set({
+            status: sql`CASE WHEN status = 'cancelling' THEN 'cancelling' ELSE 'fully_resumed' END`,
+            updatedAt: now,
+          })
+          .where(eq(pausedExecutions.executionId, parentExecutionId))
+      } else {
+        await tx
+          .update(workflowExecutionLogs)
+          .set({ status: 'pending' })
+          .where(
+            and(
+              eq(workflowExecutionLogs.executionId, parentExecutionId),
+              sql`${workflowExecutionLogs.status} != 'cancelled'`,
+              sql`NOT EXISTS (
+                SELECT 1 FROM ${pausedExecutions}
+                WHERE ${pausedExecutions.executionId} = ${parentExecutionId}
+                  AND ${pausedExecutions.status} = 'cancelling'
+              )`
+            )
+          )
+      }
+    })
+  }
+
+  private static async markResumeFailed(args: {
+    resumeEntryId: string
+    pausedExecutionId: string
+    parentExecutionId: string
+    contextId: string
+    failureReason: string
+  }): Promise<void> {
+    const now = new Date()
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(resumeQueue)
+        .set({ status: 'failed', failureReason: args.failureReason, completedAt: now })
+        .where(eq(resumeQueue.id, args.resumeEntryId))
+
+      await tx
+        .update(pausedExecutions)
+        .set({
+          pausePoints: sql`jsonb_set(pause_points, ARRAY[${args.contextId}, 'resumeStatus'], '"failed"'::jsonb)`,
+        })
+        .where(eq(pausedExecutions.id, args.pausedExecutionId))
+
+      await tx
+        .update(workflowExecutionLogs)
+        .set({ status: 'failed' })
+        .where(eq(workflowExecutionLogs.executionId, args.parentExecutionId))
+    })
+  }
+
+  static async markResumeAttemptFailed(args: {
+    resumeEntryId: string
+    pausedExecutionId: string
+    parentExecutionId: string
+    contextId: string
+    failureReason: string
+  }): Promise<void> {
+    const now = new Date()
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(resumeQueue)
+        .set({ status: 'failed', failureReason: args.failureReason, completedAt: now })
+        .where(eq(resumeQueue.id, args.resumeEntryId))
+
+      await tx
+        .update(pausedExecutions)
+        .set({
+          pausePoints: sql`jsonb_set(pause_points, ARRAY[${args.contextId}, 'resumeStatus'], '"paused"'::jsonb)`,
+          status: sql`CASE WHEN status = 'cancelling' THEN 'cancelling' ELSE status END`,
+          updatedAt: now,
+        })
+        .where(eq(pausedExecutions.id, args.pausedExecutionId))
+
+      await tx
+        .update(workflowExecutionLogs)
+        .set({ status: sql`CASE WHEN status = 'cancelled' THEN 'cancelled' ELSE 'paused' END` })
+        .where(
+          and(
+            eq(workflowExecutionLogs.executionId, args.parentExecutionId),
+            sql`NOT EXISTS (
+              SELECT 1 FROM ${pausedExecutions}
+              WHERE ${pausedExecutions.id} = ${args.pausedExecutionId}
+                AND ${pausedExecutions.status} = 'cancelling'
+            )`
+          )
+        )
+    })
+  }
+
+  private static async updateSnapshotAfterResume(args: {
+    pausedExecutionId: string
+    contextId: string
+    pauseBlockId: string
+    executionState?: SerializableExecutionState
+  }): Promise<void> {
+    const { pausedExecutionId, contextId, pauseBlockId, executionState } = args
+
+    const pausedExecution = await db
+      .select()
+      .from(pausedExecutions)
+      .where(eq(pausedExecutions.id, pausedExecutionId))
+      .limit(1)
+      .then((rows) => rows[0])
+
+    if (!pausedExecution) {
+      logger.error('Paused execution not found when updating snapshot', { pausedExecutionId })
+      return
+    }
+
+    const currentSnapshot = pausedExecution.executionSnapshot as SerializedSnapshot
+    const snapshotData = JSON.parse(currentSnapshot.snapshot)
+    if (executionState) {
+      snapshotData.state = executionState
+    }
+
+    if (snapshotData.state) {
+      const completedPauseContexts = new Set<string>(
+        (snapshotData.state.completedPauseContexts ?? []).map((id: string) =>
+          PauseResumeManager.normalizePauseBlockId(id)
+        )
+      )
+      completedPauseContexts.add(pauseBlockId)
+      snapshotData.state.completedPauseContexts = Array.from(completedPauseContexts)
+
+      const dagIncomingEdges = snapshotData.state.dagIncomingEdges
+
+      if (dagIncomingEdges) {
+        const workflowData = snapshotData.workflow
+        const connections = workflowData.connections || []
+
+        for (const conn of connections) {
+          if (conn.source === pauseBlockId) {
+            const targetId = conn.target
+            if (dagIncomingEdges[targetId]) {
+              dagIncomingEdges[targetId] = dagIncomingEdges[targetId].filter(
+                (sourceId: string) => sourceId !== pauseBlockId
+              )
+
+              logger.debug('Updated DAG incoming edges in snapshot', {
+                removedSource: pauseBlockId,
+                target: targetId,
+                remainingIncoming: dagIncomingEdges[targetId].length,
+              })
+            }
+          }
+        }
+      }
+    }
+
+    const updatedSnapshot: SerializedSnapshot = {
+      snapshot: JSON.stringify(snapshotData),
+      triggerIds: currentSnapshot.triggerIds,
+    }
+    const snapshotWorkspaceId = getSnapshotWorkspaceId(snapshotData)
+    const snapshotReferenceValue = { ...updatedSnapshot, snapshot: snapshotData }
+    const snapshotReferenceKeys = snapshotWorkspaceId
+      ? collectLargeValueReferenceKeys(snapshotReferenceValue, snapshotWorkspaceId)
+      : []
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(pausedExecutions)
+        .set({
+          executionSnapshot: updatedSnapshot,
+          updatedAt: new Date(),
+        })
+        .where(eq(pausedExecutions.id, pausedExecutionId))
+
+      if (snapshotWorkspaceId) {
+        await replaceLargeValueReferenceKeysWithClient(
+          tx,
+          {
+            workspaceId: snapshotWorkspaceId,
+            workflowId: pausedExecution.workflowId,
+            executionId: pausedExecution.executionId,
+            source: 'paused_snapshot',
+          },
+          snapshotReferenceKeys
+        )
+      }
+    })
+
+    logger.info('Updated snapshot after resume', {
+      pausedExecutionId,
+      contextId,
+    })
+  }
+
+  static async beginPausedCancellation(executionId: string, workflowId: string): Promise<boolean> {
+    const now = new Date()
+
+    return await db.transaction(async (tx) => {
+      const pausedExecution = await tx
+        .select({ id: pausedExecutions.id })
+        .from(pausedExecutions)
+        .where(
+          and(
+            eq(pausedExecutions.executionId, executionId),
+            eq(pausedExecutions.workflowId, workflowId),
+            inArray(pausedExecutions.status, [...CANCELLABLE_PAUSED_STATUSES, 'cancelling'])
+          )
+        )
+        .for('update')
+        .limit(1)
+        .then((rows) => rows[0])
+
+      if (!pausedExecution) {
+        return false
+      }
+
+      const activeResume = await tx
+        .select({ id: resumeQueue.id })
+        .from(resumeQueue)
+        .where(
+          and(eq(resumeQueue.parentExecutionId, executionId), eq(resumeQueue.status, 'claimed'))
+        )
+        .limit(1)
+        .then((rows) => rows[0])
+
+      if (activeResume) {
+        await tx
+          .update(pausedExecutions)
+          .set({ status: 'cancelling', updatedAt: now })
+          .where(eq(pausedExecutions.id, pausedExecution.id))
+        return false
+      }
+
+      await tx
+        .update(pausedExecutions)
+        .set({ status: 'cancelling', updatedAt: now })
+        .where(eq(pausedExecutions.id, pausedExecution.id))
+
+      return true
+    })
+  }
+
+  static async completePausedCancellation(
+    executionId: string,
+    workflowId: string
+  ): Promise<boolean> {
+    const now = new Date()
+
+    return await db.transaction(async (tx) => {
+      const pausedExecution = await tx
+        .select({ id: pausedExecutions.id, status: pausedExecutions.status })
+        .from(pausedExecutions)
+        .where(
+          and(
+            eq(pausedExecutions.executionId, executionId),
+            eq(pausedExecutions.workflowId, workflowId)
+          )
+        )
+        .for('update')
+        .limit(1)
+        .then((rows) => rows[0])
+
+      if (!pausedExecution || pausedExecution.status !== 'cancelling') {
+        if (pausedExecution?.status === 'cancelled') {
+          return true
+        }
+        return false
+      }
+
+      await tx
+        .update(pausedExecutions)
+        .set({ status: 'cancelled', updatedAt: now })
+        .where(eq(pausedExecutions.id, pausedExecution.id))
+
+      await tx
+        .update(workflowExecutionLogs)
+        .set({ status: 'cancelled', endedAt: now })
+        .where(eq(workflowExecutionLogs.executionId, executionId))
+
+      return true
+    })
+  }
+
+  static async blockQueuedResumesForCancellation(
+    executionId: string,
+    workflowId: string
+  ): Promise<boolean> {
+    const now = new Date()
+
+    return await db.transaction(async (tx) => {
+      const pausedExecution = await tx
+        .select({ id: pausedExecutions.id })
+        .from(pausedExecutions)
+        .where(
+          and(
+            eq(pausedExecutions.executionId, executionId),
+            eq(pausedExecutions.workflowId, workflowId),
+            inArray(pausedExecutions.status, [...CANCELLABLE_PAUSED_STATUSES, 'cancelling'])
+          )
+        )
+        .for('update')
+        .limit(1)
+        .then((rows) => rows[0])
+
+      if (!pausedExecution) {
+        return false
+      }
+
+      await tx
+        .update(pausedExecutions)
+        .set({ status: 'cancelling', updatedAt: now })
+        .where(eq(pausedExecutions.id, pausedExecution.id))
+
+      await tx
+        .update(resumeQueue)
+        .set({
+          status: 'failed',
+          completedAt: now,
+          failureReason: 'Paused execution cancellation requested',
+        })
+        .where(
+          and(eq(resumeQueue.parentExecutionId, executionId), eq(resumeQueue.status, 'pending'))
+        )
+
+      return true
+    })
+  }
+
+  static async clearPausedCancellationIntent(
+    executionId: string,
+    workflowId: string
+  ): Promise<void> {
+    const now = new Date()
+    await db
+      .update(pausedExecutions)
+      .set({
+        status: sql`CASE WHEN resumed_count > 0 THEN 'partially_resumed' ELSE 'paused' END`,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(pausedExecutions.executionId, executionId),
+          eq(pausedExecutions.workflowId, workflowId),
+          eq(pausedExecutions.status, 'cancelling')
+        )
+      )
+    await PauseResumeManager.processQueuedResumes(executionId, workflowId)
+  }
+
+  static async getPausedCancellationStatus(
+    executionId: string,
+    workflowId: string
+  ): Promise<'cancelling' | 'cancelled' | null> {
+    const activeResume = await db
+      .select({ id: resumeQueue.id })
+      .from(resumeQueue)
+      .where(and(eq(resumeQueue.parentExecutionId, executionId), eq(resumeQueue.status, 'claimed')))
+      .limit(1)
+      .then((rows) => rows[0])
+
+    if (activeResume) {
+      return null
+    }
+
+    const pausedExecution = await db
+      .select({ status: pausedExecutions.status })
+      .from(pausedExecutions)
+      .where(
+        and(
+          eq(pausedExecutions.executionId, executionId),
+          eq(pausedExecutions.workflowId, workflowId)
+        )
+      )
+      .limit(1)
+      .then((rows) => rows[0])
+
+    if (pausedExecution?.status === 'cancelling' || pausedExecution?.status === 'cancelled') {
+      return pausedExecution.status
+    }
+    return null
+  }
+
+  /**
+   * Updates `next_resume_at` only when the row is still in a poll-eligible state.
+   * Guard prevents the cron poller from clobbering a freshly-written value when a
+   * concurrent manual resume has already advanced the row's state. `partially_resumed`
+   * rows must also be writable so the cron poller can null out their `nextResumeAt`
+   * after dispatch; otherwise the row keeps reappearing in every poll batch.
+   */
+  static async setNextResumeAt(args: {
+    pausedExecutionId: string
+    nextResumeAt: Date | null
+  }): Promise<void> {
+    await db
+      .update(pausedExecutions)
+      .set({ nextResumeAt: args.nextResumeAt })
+      .where(
+        and(
+          eq(pausedExecutions.id, args.pausedExecutionId),
+          inArray(pausedExecutions.status, ['paused', 'partially_resumed'])
+        )
+      )
+  }
+
+  static async listPausedExecutions(options: {
+    workflowId: string
+    status?: string | string[]
+  }): Promise<PausedExecutionSummary[]> {
+    const { workflowId, status } = options
+
+    let whereClause: SQL<unknown> | undefined = eq(pausedExecutions.workflowId, workflowId)
+
+    if (status) {
+      const statuses = Array.isArray(status)
+        ? status
+        : String(status)
+            .split(',')
+            .map((s) => s.trim())
+      if (statuses.length === 1) {
+        whereClause = and(whereClause, eq(pausedExecutions.status, statuses[0]))
+      } else if (statuses.length > 1) {
+        whereClause = and(whereClause, inArray(pausedExecutions.status, statuses))
+      }
+    }
+
+    const rows = await db
+      .select()
+      .from(pausedExecutions)
+      .where(whereClause)
+      .orderBy(desc(pausedExecutions.pausedAt))
+
+    return rows.flatMap((row) => {
+      const humanPoints = PauseResumeManager.mapPausePoints(row.pausePoints).filter(
+        (point) => point.pauseKind !== 'time'
+      )
+      if (humanPoints.length === 0) return []
+      return [PauseResumeManager.normalizePausedExecution(row, humanPoints)]
+    })
+  }
+
+  static async getPausedExecutionById(
+    id: string
+  ): Promise<typeof pausedExecutions.$inferSelect | null> {
+    const rows = await db
+      .select()
+      .from(pausedExecutions)
+      .where(eq(pausedExecutions.id, id))
+      .limit(1)
+    return rows[0] ?? null
+  }
+
+  static async getPausedExecutionDetail(options: {
+    workflowId: string
+    executionId: string
+  }): Promise<PausedExecutionDetail | null> {
+    const { workflowId, executionId } = options
+
+    const row = await db
+      .select()
+      .from(pausedExecutions)
+      .where(
+        and(
+          eq(pausedExecutions.workflowId, workflowId),
+          eq(pausedExecutions.executionId, executionId)
+        )
+      )
+      .limit(1)
+      .then((rows) => rows[0])
+
+    if (!row) {
+      return null
+    }
+
+    const queueEntries = await db
+      .select()
+      .from(resumeQueue)
+      .where(eq(resumeQueue.parentExecutionId, executionId))
+      .orderBy(asc(resumeQueue.queuedAt))
+
+    const normalizedQueue = queueEntries.map((entry) =>
+      PauseResumeManager.normalizeQueueEntry(entry)
+    )
+    const queuePositions = PauseResumeManager.computeQueuePositions(normalizedQueue)
+    const latestEntries = PauseResumeManager.computeLatestEntriesByContext(normalizedQueue)
+
+    const pausePoints = PauseResumeManager.mapPausePoints(
+      row.pausePoints,
+      queuePositions,
+      latestEntries
+    ).filter((point) => point.pauseKind !== 'time')
+
+    if (pausePoints.length === 0) {
+      return null
+    }
+
+    const executionSummary = PauseResumeManager.normalizePausedExecution(row, pausePoints)
+
+    return {
+      ...executionSummary,
+      executionSnapshot: row.executionSnapshot as SerializedSnapshot,
+      queue: normalizedQueue,
+    }
+  }
+
+  static async getPauseContextDetail(options: {
+    workflowId: string
+    executionId: string
+    contextId: string
+  }): Promise<PauseContextDetail | null> {
+    const { workflowId, executionId, contextId } = options
+    const detail = await PauseResumeManager.getPausedExecutionDetail({ workflowId, executionId })
+
+    if (!detail) {
+      return null
+    }
+
+    const pausePoint = detail.pausePoints.find((point) => point.contextId === contextId)
+    if (!pausePoint) {
+      return null
+    }
+
+    const activeResumeEntry = detail.queue.find(
+      (entry) =>
+        entry.contextId === contextId && (entry.status === 'claimed' || entry.status === 'pending')
+    )
+
+    return {
+      execution: detail,
+      pausePoint,
+      queue: detail.queue,
+      activeResumeEntry,
+    }
+  }
+
+  static async processQueuedResumes(parentExecutionId: string, workflowId: string): Promise<void> {
+    let pendingEntry: {
+      entry: typeof resumeQueue.$inferSelect
+      pausedExecution: typeof pausedExecutions.$inferSelect
+    } | null = null
+
+    while (!pendingEntry) {
+      const selection = await db.transaction(async (tx) => {
+        const pausedExecution = await tx
+          .select()
+          .from(pausedExecutions)
+          .where(
+            and(
+              eq(pausedExecutions.executionId, parentExecutionId),
+              eq(pausedExecutions.workflowId, workflowId)
+            )
+          )
+          .for('update')
+          .limit(1)
+          .then((rows) => rows[0])
+
+        if (!pausedExecution || !isResumablePausedStatus(pausedExecution.status)) {
+          return { action: 'empty' as const }
+        }
+
+        const activeResume = await tx
+          .select({ id: resumeQueue.id })
+          .from(resumeQueue)
+          .where(
+            and(
+              eq(resumeQueue.parentExecutionId, parentExecutionId),
+              eq(resumeQueue.status, 'claimed')
+            )
+          )
+          .limit(1)
+          .then((rows) => rows[0])
+
+        if (activeResume) {
+          return { action: 'active' as const }
+        }
+
+        const entry = await tx
+          .select()
+          .from(resumeQueue)
+          .where(
+            and(
+              eq(resumeQueue.parentExecutionId, parentExecutionId),
+              eq(resumeQueue.status, 'pending')
+            )
+          )
+          .orderBy(asc(resumeQueue.queuedAt))
+          .limit(1)
+          .for('update')
+          .then((rows) => rows[0])
+
+        if (!entry) {
+          return { action: 'empty' as const }
+        }
+
+        const pausePoints = pausedExecution.pausePoints as Record<string, any>
+        const pausePoint = pausePoints?.[entry.contextId]
+        if (!pausePoint || pausePoint.resumeStatus !== 'queued') {
+          await tx
+            .update(resumeQueue)
+            .set({
+              status: 'failed',
+              completedAt: new Date(),
+              failureReason: 'Pause point is no longer queued',
+            })
+            .where(eq(resumeQueue.id, entry.id))
+          return { action: 'continue' as const }
+        }
+
+        await tx
+          .update(resumeQueue)
+          .set({ status: 'claimed', claimedAt: new Date() })
+          .where(eq(resumeQueue.id, entry.id))
+
+        await tx
+          .update(pausedExecutions)
+          .set({
+            pausePoints: sql`jsonb_set(pause_points, ARRAY[${entry.contextId}, 'resumeStatus'], '"resuming"'::jsonb)`,
+          })
+          .where(eq(pausedExecutions.id, pausedExecution.id))
+
+        return { action: 'claimed' as const, entry, pausedExecution }
+      })
+
+      if (selection.action === 'empty') {
+        return
+      }
+      if (selection.action === 'active') {
+        return
+      }
+      if (selection.action === 'claimed') {
+        pendingEntry = {
+          entry: selection.entry,
+          pausedExecution: selection.pausedExecution,
+        }
+      }
+    }
+
+    const { entry, pausedExecution } = pendingEntry
+
+    const pausedMetadata = (pausedExecution.metadata as Record<string, any>) || {}
+
+    PauseResumeManager.startResumeExecution({
+      resumeEntryId: entry.id,
+      resumeExecutionId: entry.newExecutionId,
+      pausedExecution,
+      contextId: entry.contextId,
+      resumeInput: entry.resumeInput,
+      userId: pausedMetadata.executorUserId ?? '',
+    }).catch((error) => {
+      logger.error('Failed to start queued resume execution', {
+        parentExecutionId,
+        resumeEntryId: entry.id,
+        error,
+      })
+    })
+  }
+
+  private static normalizeQueueEntry(
+    entry: typeof resumeQueue.$inferSelect
+  ): ResumeQueueEntrySummary {
+    return {
+      id: entry.id,
+      pausedExecutionId: entry.pausedExecutionId,
+      parentExecutionId: entry.parentExecutionId,
+      newExecutionId: entry.newExecutionId,
+      contextId: entry.contextId,
+      resumeInput: entry.resumeInput,
+      status: entry.status,
+      queuedAt: entry.queuedAt ? entry.queuedAt.toISOString() : null,
+      claimedAt: entry.claimedAt ? entry.claimedAt.toISOString() : null,
+      completedAt: entry.completedAt ? entry.completedAt.toISOString() : null,
+      failureReason: entry.failureReason ?? null,
+    }
+  }
+
+  private static normalizePausedExecution(
+    row: typeof pausedExecutions.$inferSelect,
+    pausePoints: PausePointWithQueue[]
+  ): PausedExecutionSummary {
+    return {
+      id: row.id,
+      workflowId: row.workflowId,
+      executionId: row.executionId,
+      status: row.status,
+      totalPauseCount: pausePoints.length,
+      resumedCount: pausePoints.filter((point) => point.resumeStatus === 'resumed').length,
+      pausedAt: row.pausedAt ? row.pausedAt.toISOString() : null,
+      updatedAt: row.updatedAt ? row.updatedAt.toISOString() : null,
+      expiresAt: row.expiresAt ? row.expiresAt.toISOString() : null,
+      metadata: row.metadata as Record<string, any>,
+      triggerIds: (row.executionSnapshot as SerializedSnapshot)?.triggerIds || [],
+      pausePoints,
+    }
+  }
+
+  private static mapPausePoints(
+    pausePoints: unknown,
+    queuePositions?: Map<string, number | null>,
+    latestEntries?: Map<string, ResumeQueueEntrySummary>
+  ): PausePointWithQueue[] {
+    const record = pausePoints as Record<string, PausePoint> | null
+    if (!record) {
+      return []
+    }
+
+    return Object.values(record).map((point: PausePoint) => {
+      const queuePosition = queuePositions?.get(point.contextId ?? '') ?? null
+      const latestEntry = latestEntries?.get(point.contextId ?? '')
+
+      const blockId = PauseResumeManager.normalizePauseBlockId(point.blockId ?? point.contextId)
+
+      const resumeLinks = point.resumeLinks
+        ? {
+            ...point.resumeLinks,
+            uiUrl:
+              typeof point.resumeLinks.uiUrl === 'string'
+                ? point.resumeLinks.uiUrl.split('?')[0]
+                : point.resumeLinks.uiUrl,
+          }
+        : undefined
+
+      return {
+        contextId: point.contextId,
+        blockId,
+        response: point.response,
+        registeredAt: point.registeredAt,
+        resumeStatus: point.resumeStatus || 'paused',
+        snapshotReady: Boolean(point.snapshotReady),
+        parallelScope: point.parallelScope,
+        loopScope: point.loopScope,
+        resumeLinks,
+        pauseKind: point.pauseKind ?? 'human',
+        resumeAt: point.resumeAt,
+        queuePosition,
+        latestResumeEntry: latestEntry ?? null,
+      }
+    })
+  }
+
+  private static computeQueuePositions(
+    queueEntries: ResumeQueueEntrySummary[]
+  ): Map<string, number | null> {
+    const pendingEntries = queueEntries
+      .filter((entry) => entry.status === 'pending')
+      .sort((a, b) => {
+        const aTime = a.queuedAt ? Date.parse(a.queuedAt) : 0
+        const bTime = b.queuedAt ? Date.parse(b.queuedAt) : 0
+        return aTime - bTime
+      })
+
+    const positions = new Map<string, number | null>()
+    pendingEntries.forEach((entry, index) => {
+      if (!positions.has(entry.contextId)) {
+        positions.set(entry.contextId, index + 1)
+      }
+    })
+
+    return positions
+  }
+
+  private static computeLatestEntriesByContext(
+    queueEntries: ResumeQueueEntrySummary[]
+  ): Map<string, ResumeQueueEntrySummary> {
+    const latestEntries = new Map<string, ResumeQueueEntrySummary>()
+
+    queueEntries.forEach((entry) => {
+      const existing = latestEntries.get(entry.contextId)
+      if (!existing) {
+        latestEntries.set(entry.contextId, entry)
+        return
+      }
+
+      const existingTime = existing.queuedAt ? Date.parse(existing.queuedAt) : 0
+      const currentTime = entry.queuedAt ? Date.parse(entry.queuedAt) : 0
+
+      if (currentTime >= existingTime) {
+        latestEntries.set(entry.contextId, entry)
+      }
+    })
+
+    return latestEntries
+  }
+
+  private static normalizePauseBlockId(id?: string | null): string {
+    if (!id) {
+      return ''
+    }
+
+    const normalized = id.replace(/_loop\d+/g, '')
+
+    return normalized || id
+  }
+}

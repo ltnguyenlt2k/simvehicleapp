@@ -1,0 +1,390 @@
+import { db } from '@sim/db'
+import { environment, workspaceEnvironment } from '@sim/db/schema'
+import { createLogger } from '@sim/logger'
+import { getErrorMessage } from '@sim/utils/errors'
+import { generateId } from '@sim/utils/id'
+import { eq, inArray } from 'drizzle-orm'
+import { LRUCache } from 'lru-cache'
+import { decryptSecret, encryptSecret } from '@/lib/core/security/encryption'
+import {
+  createWorkspaceEnvCredentials,
+  getAccessibleEnvCredentials,
+  syncPersonalEnvCredentialsForUser,
+} from '@/lib/credentials/environment'
+import { checkWorkspaceAccess, type WorkspaceAccess } from '@/lib/workspaces/permissions/utils'
+
+const logger = createLogger('EnvironmentUtils')
+const EFFECTIVE_DECRYPTED_ENV_CACHE_TTL_MS = 2_000
+const EFFECTIVE_DECRYPTED_ENV_CACHE_MAX_ENTRIES = 1_000
+
+interface EffectiveDecryptedEnvCacheEntry {
+  userId: string
+  workspaceId?: string
+  promise: Promise<Record<string, string>>
+}
+
+const effectiveDecryptedEnvCache = new LRUCache<string, EffectiveDecryptedEnvCacheEntry>({
+  max: EFFECTIVE_DECRYPTED_ENV_CACHE_MAX_ENTRIES,
+  ttl: EFFECTIVE_DECRYPTED_ENV_CACHE_TTL_MS,
+})
+
+function getEffectiveDecryptedEnvCacheKey(userId: string, workspaceId?: string): string {
+  return JSON.stringify([userId, workspaceId ?? null])
+}
+
+function cloneEnvVars(envVars: Record<string, string>): Record<string, string> {
+  return { ...envVars }
+}
+
+export function invalidateEffectiveDecryptedEnvCache(input: {
+  userId?: string
+  workspaceId?: string
+}): void {
+  const { userId, workspaceId } = input
+  if (!userId && !workspaceId) return
+
+  effectiveDecryptedEnvCache.forEach((entry, cacheKey) => {
+    if (userId && entry.userId === userId) {
+      effectiveDecryptedEnvCache.delete(cacheKey)
+      return
+    }
+    if (workspaceId && entry.workspaceId === workspaceId) {
+      effectiveDecryptedEnvCache.delete(cacheKey)
+    }
+  })
+}
+
+/**
+ * Get environment variable keys for a user
+ * Returns only the variable names, not their values
+ */
+export async function getEnvironmentVariableKeys(userId: string): Promise<{
+  variableNames: string[]
+  count: number
+}> {
+  try {
+    const result = await db
+      .select()
+      .from(environment)
+      .where(eq(environment.userId, userId))
+      .limit(1)
+
+    if (!result.length || !result[0].variables) {
+      return {
+        variableNames: [],
+        count: 0,
+      }
+    }
+
+    // Get the keys (variable names) without decrypting values
+    const encryptedVariables = result[0].variables as Record<string, string>
+    const variableNames = Object.keys(encryptedVariables)
+
+    return {
+      variableNames,
+      count: variableNames.length,
+    }
+  } catch (error) {
+    logger.error('Error getting environment variable keys:', error)
+    throw new Error('Failed to get environment variables')
+  }
+}
+
+export async function getPersonalAndWorkspaceEnv(
+  userId: string,
+  workspaceId?: string,
+  options?: { workspaceAccess?: WorkspaceAccess }
+): Promise<{
+  personalEncrypted: Record<string, string>
+  workspaceEncrypted: Record<string, string>
+  personalDecrypted: Record<string, string>
+  workspaceDecrypted: Record<string, string>
+  conflicts: string[]
+  decryptionFailures: string[]
+}> {
+  let workspaceCanAdmin = false
+  if (workspaceId) {
+    const access = options?.workspaceAccess ?? (await checkWorkspaceAccess(workspaceId, userId))
+    if (!access.hasAccess) {
+      throw new Error(`Access denied to workspace ${workspaceId}`)
+    }
+    workspaceCanAdmin = access.canAdmin
+  }
+
+  const [personalRows, workspaceRows, accessibleEnvCredentials] = await Promise.all([
+    db.select().from(environment).where(eq(environment.userId, userId)).limit(1),
+    workspaceId
+      ? db
+          .select()
+          .from(workspaceEnvironment)
+          .where(eq(workspaceEnvironment.workspaceId, workspaceId))
+          .limit(1)
+      : Promise.resolve([] as any[]),
+    workspaceId
+      ? getAccessibleEnvCredentials(workspaceId, userId, { isWorkspaceAdmin: workspaceCanAdmin })
+      : Promise.resolve([]),
+  ])
+
+  const ownPersonalEncrypted: Record<string, string> = (personalRows[0]?.variables as any) || {}
+  const allWorkspaceEncrypted: Record<string, string> = (workspaceRows[0]?.variables as any) || {}
+
+  const hasCredentialFiltering = Boolean(workspaceId) && accessibleEnvCredentials.length > 0
+  const workspaceCredentialKeys = new Set(
+    accessibleEnvCredentials.filter((row) => row.type === 'env_workspace').map((row) => row.envKey)
+  )
+
+  const personalCredentialRows = accessibleEnvCredentials
+    .filter((row) => row.type === 'env_personal' && row.envOwnerUserId)
+    .sort((a, b) => {
+      const aIsRequester = a.envOwnerUserId === userId
+      const bIsRequester = b.envOwnerUserId === userId
+      if (aIsRequester && !bIsRequester) return -1
+      if (!aIsRequester && bIsRequester) return 1
+      return b.updatedAt.getTime() - a.updatedAt.getTime()
+    })
+
+  const selectedPersonalOwners = new Map<string, string>()
+  for (const row of personalCredentialRows) {
+    if (!selectedPersonalOwners.has(row.envKey) && row.envOwnerUserId) {
+      selectedPersonalOwners.set(row.envKey, row.envOwnerUserId)
+    }
+  }
+
+  const ownerUserIds = Array.from(new Set(selectedPersonalOwners.values()))
+  const ownerEnvironmentRows =
+    ownerUserIds.length > 0
+      ? await db
+          .select({
+            userId: environment.userId,
+            variables: environment.variables,
+          })
+          .from(environment)
+          .where(inArray(environment.userId, ownerUserIds))
+      : []
+
+  const ownerVariablesByUserId = new Map<string, Record<string, string>>(
+    ownerEnvironmentRows.map((row) => [row.userId, (row.variables as Record<string, string>) || {}])
+  )
+
+  let personalEncrypted: Record<string, string> = ownPersonalEncrypted
+  let workspaceEncrypted: Record<string, string> = allWorkspaceEncrypted
+
+  if (hasCredentialFiltering) {
+    personalEncrypted = { ...ownPersonalEncrypted }
+    for (const [envKey, ownerUserId] of selectedPersonalOwners.entries()) {
+      const ownerVariables = ownerVariablesByUserId.get(ownerUserId)
+      const encryptedValue = ownerVariables?.[envKey]
+      if (encryptedValue) {
+        personalEncrypted[envKey] = encryptedValue
+      }
+    }
+
+    workspaceEncrypted = Object.fromEntries(
+      Object.entries(allWorkspaceEncrypted).filter(([envKey]) =>
+        workspaceCredentialKeys.has(envKey)
+      )
+    )
+  }
+
+  const decryptionFailures: string[] = []
+
+  const decryptAll = async (src: Record<string, string>, source: 'personal' | 'workspace') => {
+    const entries = Object.entries(src)
+    const results = await Promise.all(
+      entries.map(async ([k, v]) => {
+        try {
+          const { decrypted } = await decryptSecret(v)
+          return [k, decrypted] as const
+        } catch (error) {
+          logger.error(`Failed to decrypt ${source} environment variable "${k}"`, {
+            userId,
+            workspaceId,
+            source,
+            error: getErrorMessage(error, 'Unknown error'),
+          })
+          decryptionFailures.push(k)
+          return [k, ''] as const
+        }
+      })
+    )
+    return Object.fromEntries(results)
+  }
+
+  const [personalDecrypted, workspaceDecrypted] = await Promise.all([
+    decryptAll(personalEncrypted, 'personal'),
+    decryptAll(workspaceEncrypted, 'workspace'),
+  ])
+
+  const conflicts = Object.keys(personalEncrypted).filter((k) => k in workspaceEncrypted)
+
+  if (decryptionFailures.length > 0) {
+    logger.warn('Some environment variables failed to decrypt', {
+      userId,
+      workspaceId,
+      failedKeys: decryptionFailures,
+      failedCount: decryptionFailures.length,
+    })
+  }
+
+  return {
+    personalEncrypted,
+    workspaceEncrypted,
+    personalDecrypted,
+    workspaceDecrypted,
+    conflicts,
+    decryptionFailures,
+  }
+}
+
+export interface EnvUpsertResult {
+  added: string[]
+  updated: string[]
+}
+
+/**
+ * Encrypts and upserts personal environment variables, merging with existing.
+ * Only overwrites keys whose decrypted value has actually changed.
+ */
+export async function upsertPersonalEnvVars(
+  userId: string,
+  newVars: Record<string, string>
+): Promise<EnvUpsertResult> {
+  const added: string[] = []
+  const updated: string[] = []
+  if (Object.keys(newVars).length === 0) return { added, updated }
+
+  const existingData = await db
+    .select()
+    .from(environment)
+    .where(eq(environment.userId, userId))
+    .limit(1)
+  const existingEncrypted = (existingData[0]?.variables as Record<string, string>) || {}
+
+  const toEncrypt: Record<string, string> = {}
+  for (const [key, newVal] of Object.entries(newVars)) {
+    if (!(key in existingEncrypted)) {
+      toEncrypt[key] = newVal
+      added.push(key)
+    } else {
+      try {
+        const { decrypted } = await decryptSecret(existingEncrypted[key])
+        if (decrypted !== newVal) {
+          toEncrypt[key] = newVal
+          updated.push(key)
+        }
+      } catch {
+        toEncrypt[key] = newVal
+        updated.push(key)
+      }
+    }
+  }
+
+  const newlyEncrypted: Record<string, string> = {}
+  for (const [key, val] of Object.entries(toEncrypt)) {
+    const { encrypted } = await encryptSecret(val)
+    newlyEncrypted[key] = encrypted
+  }
+
+  const finalEncrypted = { ...existingEncrypted, ...newlyEncrypted }
+
+  await db
+    .insert(environment)
+    .values({
+      id: generateId(),
+      userId,
+      variables: finalEncrypted,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [environment.userId],
+      set: { variables: finalEncrypted, updatedAt: new Date() },
+    })
+
+  invalidateEffectiveDecryptedEnvCache({ userId })
+  await syncPersonalEnvCredentialsForUser({
+    userId,
+    envKeys: Object.keys(finalEncrypted),
+  })
+
+  return { added, updated }
+}
+
+/**
+ * Encrypts and upserts workspace environment variables, merging with existing.
+ */
+export async function upsertWorkspaceEnvVars(
+  workspaceId: string,
+  newVars: Record<string, string>,
+  actingUserId: string
+): Promise<string[]> {
+  const updatedKeys: string[] = []
+  if (Object.keys(newVars).length === 0) return updatedKeys
+
+  const wsRows = await db
+    .select()
+    .from(workspaceEnvironment)
+    .where(eq(workspaceEnvironment.workspaceId, workspaceId))
+    .limit(1)
+  const existingWsEncrypted = (wsRows[0]?.variables as Record<string, string>) || {}
+
+  const newlyEncrypted: Record<string, string> = {}
+  for (const [key, val] of Object.entries(newVars)) {
+    const { encrypted } = await encryptSecret(val)
+    newlyEncrypted[key] = encrypted
+    updatedKeys.push(key)
+  }
+
+  const merged = { ...existingWsEncrypted, ...newlyEncrypted }
+
+  await db
+    .insert(workspaceEnvironment)
+    .values({
+      id: generateId(),
+      workspaceId,
+      variables: merged,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: [workspaceEnvironment.workspaceId],
+      set: { variables: merged, updatedAt: new Date() },
+    })
+
+  invalidateEffectiveDecryptedEnvCache({ workspaceId })
+  const newKeys = Object.keys(newVars).filter((k) => !(k in existingWsEncrypted))
+  await createWorkspaceEnvCredentials({ workspaceId, newKeys, actingUserId })
+
+  return updatedKeys
+}
+
+/**
+ * Returns a merged decrypted env map for webhook/copilot/MCP config resolution.
+ */
+export async function getEffectiveDecryptedEnv(
+  userId: string,
+  workspaceId?: string
+): Promise<Record<string, string>> {
+  const cacheKey = getEffectiveDecryptedEnvCacheKey(userId, workspaceId)
+  const cached = effectiveDecryptedEnvCache.get(cacheKey)
+  if (cached) {
+    return cloneEnvVars(await cached.promise)
+  }
+
+  const promise = getPersonalAndWorkspaceEnv(userId, workspaceId)
+    .then(({ personalDecrypted, workspaceDecrypted }) => ({
+      ...personalDecrypted,
+      ...workspaceDecrypted,
+    }))
+    .catch((error) => {
+      effectiveDecryptedEnvCache.delete(cacheKey)
+      throw error
+    })
+
+  effectiveDecryptedEnvCache.set(cacheKey, {
+    userId,
+    workspaceId,
+    promise,
+  })
+
+  return cloneEnvVars(await promise)
+}

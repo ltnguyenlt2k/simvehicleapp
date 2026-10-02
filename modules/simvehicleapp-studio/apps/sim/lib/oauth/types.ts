@@ -1,0 +1,164 @@
+import type { ReactNode } from 'react'
+
+/**
+ * Stable identifier for the Atlassian service account provider. Used as the
+ * `providerId` on credential rows and as the `serviceAccountProviderId` on
+ * Jira/Confluence service configs.
+ */
+export const ATLASSIAN_SERVICE_ACCOUNT_PROVIDER_ID = 'atlassian-service-account' as const
+
+/**
+ * Discriminator stored inside the encrypted Atlassian service account secret blob.
+ */
+export const ATLASSIAN_SERVICE_ACCOUNT_SECRET_TYPE = 'atlassian_service_account' as const
+
+export type OAuthProvider =
+  | 'google'
+  | 'google-email'
+  | 'google-drive'
+  | 'google-docs'
+  | 'google-sheets'
+  | 'google-calendar'
+  | 'google-contacts'
+  | 'google-ads'
+  | 'google-bigquery'
+  | 'google-tasks'
+  | 'google-vault'
+  | 'google-forms'
+  | 'google-groups'
+  | 'google-meet'
+  | 'vertex-ai'
+  | 'x'
+  | 'confluence'
+  | 'airtable'
+  | 'notion'
+  | 'jira'
+  | 'atlassian-service-account'
+  | 'box'
+  | 'dropbox'
+  | 'microsoft'
+  | 'microsoft-ad'
+  | 'microsoft-dataverse'
+  | 'microsoft-excel'
+  | 'microsoft-planner'
+  | 'microsoft-teams'
+  | 'outlook'
+  | 'onedrive'
+  | 'sharepoint'
+  | 'linear'
+  | 'slack'
+  | 'reddit'
+  | 'trello'
+  | 'wealthbox'
+  | 'webflow'
+  | 'asana'
+  | 'attio'
+  | 'pipedrive'
+  | 'hubspot'
+  | 'salesforce'
+  | 'linkedin'
+  | 'shopify'
+  | 'zoom'
+  | 'wordpress'
+  | 'spotify'
+  | 'calcom'
+  | 'docusign'
+
+export type OAuthService =
+  | 'google'
+  | 'google-email'
+  | 'google-drive'
+  | 'google-docs'
+  | 'google-sheets'
+  | 'google-calendar'
+  | 'google-contacts'
+  | 'google-ads'
+  | 'google-bigquery'
+  | 'google-tasks'
+  | 'google-vault'
+  | 'google-forms'
+  | 'google-groups'
+  | 'google-meet'
+  | 'vertex-ai'
+  | 'x'
+  | 'confluence'
+  | 'airtable'
+  | 'notion'
+  | 'jira'
+  | 'atlassian-service-account'
+  | 'box'
+  | 'dropbox'
+  | 'microsoft-ad'
+  | 'microsoft-dataverse'
+  | 'microsoft-excel'
+  | 'microsoft-teams'
+  | 'microsoft-planner'
+  | 'sharepoint'
+  | 'outlook'
+  | 'linear'
+  | 'slack'
+  | 'reddit'
+  | 'wealthbox'
+  | 'onedrive'
+  | 'webflow'
+  | 'trello'
+  | 'asana'
+  | 'attio'
+  | 'pipedrive'
+  | 'hubspot'
+  | 'salesforce'
+  | 'linkedin'
+  | 'shopify'
+  | 'zoom'
+  | 'wordpress'
+  | 'spotify'
+  | 'calcom'
+  | 'docusign'
+  | 'github'
+  | 'monday'
+
+export interface OAuthProviderConfig {
+  name: string
+  icon: (props: { className?: string }) => ReactNode
+  services: Record<string, OAuthServiceConfig>
+  defaultService: string
+}
+
+export type OAuthAuthType = 'oauth' | 'service_account'
+
+export interface OAuthServiceConfig {
+  name: string
+  description: string
+  providerId: string
+  icon: (props: { className?: string }) => ReactNode
+  baseProviderIcon: (props: { className?: string }) => ReactNode
+  scopes: string[]
+  authType?: OAuthAuthType
+  serviceAccountProviderId?: string
+}
+
+/**
+ * Service metadata without React components - safe for server-side use
+ */
+export interface OAuthServiceMetadata {
+  providerId: string
+  name: string
+  description: string
+  baseProvider: string
+}
+
+export interface Credential {
+  id: string
+  name: string
+  provider: OAuthProvider
+  type?: 'oauth' | 'service_account'
+  serviceId?: string
+  lastUsed?: string
+  isDefault?: boolean
+  scopes?: string[]
+}
+
+export interface ProviderConfig {
+  baseProvider: string
+  featureType: string
+}

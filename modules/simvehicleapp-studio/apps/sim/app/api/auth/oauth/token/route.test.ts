@@ -1,0 +1,443 @@
+/**
+ * Tests for OAuth token API routes
+ *
+ * @vitest-environment node
+ */
+import {
+  authOAuthUtilsMock,
+  authOAuthUtilsMockFns,
+  createMockRequest,
+  hybridAuthMockFns,
+} from '@sim/testing'
+import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const { mockAuthorizeCredentialUse } = vi.hoisted(() => ({
+  mockAuthorizeCredentialUse: vi.fn(),
+}))
+
+vi.mock('@/app/api/auth/oauth/utils', () => authOAuthUtilsMock)
+
+vi.mock('@/lib/auth/credential-access', () => ({
+  authorizeCredentialUse: mockAuthorizeCredentialUse,
+}))
+
+import { GET, POST } from '@/app/api/auth/oauth/token/route'
+
+describe('OAuth Token API Routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    authOAuthUtilsMockFns.mockResolveOAuthAccountId.mockResolvedValue(null)
+  })
+
+  /**
+   * POST route tests
+   */
+  describe('POST handler', () => {
+    it('should return access token successfully', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'owner-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce({
+        id: 'credential-id',
+        accessToken: 'test-token',
+        refreshToken: 'refresh-token',
+        accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+        providerId: 'google',
+      })
+      authOAuthUtilsMockFns.mockRefreshTokenIfNeeded.mockResolvedValueOnce({
+        accessToken: 'fresh-token',
+        refreshed: false,
+      })
+
+      const req = createMockRequest('POST', {
+        credentialId: 'credential-id',
+      })
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toHaveProperty('accessToken', 'fresh-token')
+
+      expect(mockAuthorizeCredentialUse).toHaveBeenCalled()
+      expect(authOAuthUtilsMockFns.mockGetCredential).toHaveBeenCalled()
+      expect(authOAuthUtilsMockFns.mockRefreshTokenIfNeeded).toHaveBeenCalled()
+    })
+
+    it('should handle workflowId for server-side authentication', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'internal_jwt',
+        requesterUserId: 'workflow-owner-id',
+        credentialOwnerUserId: 'workflow-owner-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce({
+        id: 'credential-id',
+        accessToken: 'test-token',
+        refreshToken: 'refresh-token',
+        accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+        providerId: 'google',
+      })
+      authOAuthUtilsMockFns.mockRefreshTokenIfNeeded.mockResolvedValueOnce({
+        accessToken: 'fresh-token',
+        refreshed: false,
+      })
+
+      const req = createMockRequest('POST', {
+        credentialId: 'credential-id',
+        workflowId: 'workflow-id',
+      })
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toHaveProperty('accessToken', 'fresh-token')
+
+      expect(mockAuthorizeCredentialUse).toHaveBeenCalled()
+      expect(authOAuthUtilsMockFns.mockGetCredential).toHaveBeenCalled()
+    })
+
+    it('should handle missing credentialId', async () => {
+      const req = createMockRequest('POST', {})
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data).toHaveProperty(
+        'error',
+        'Either credentialId or (credentialAccountUserId + providerId) is required'
+      )
+    })
+
+    it('should handle authentication failure', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: false,
+        error: 'Authentication required',
+      })
+
+      const req = createMockRequest('POST', {
+        credentialId: 'credential-id',
+      })
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data).toHaveProperty('error')
+    })
+
+    it('should handle workflow not found', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({ ok: false, error: 'Workflow not found' })
+
+      const req = createMockRequest('POST', {
+        credentialId: 'credential-id',
+        workflowId: 'nonexistent-workflow-id',
+      })
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+    })
+
+    it('should handle credential not found', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'owner-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce(undefined)
+
+      const req = createMockRequest('POST', {
+        credentialId: 'nonexistent-credential-id',
+      })
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data).toHaveProperty('error')
+    })
+
+    it('should handle token refresh failure', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'owner-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce({
+        id: 'credential-id',
+        accessToken: 'test-token',
+        refreshToken: 'refresh-token',
+        accessTokenExpiresAt: new Date(Date.now() - 3600 * 1000), // Expired
+        providerId: 'google',
+      })
+      authOAuthUtilsMockFns.mockRefreshTokenIfNeeded.mockRejectedValueOnce(
+        new Error('Refresh failure')
+      )
+
+      const req = createMockRequest('POST', {
+        credentialId: 'credential-id',
+      })
+
+      const response = await POST(req)
+      const data = await response.json()
+
+      expect(response.status).toBe(401)
+      expect(data).toHaveProperty('error', 'Failed to refresh access token')
+    })
+
+    describe('credentialAccountUserId + providerId path', () => {
+      it('should reject unauthenticated requests', async () => {
+        hybridAuthMockFns.mockCheckSessionOrInternalAuth.mockResolvedValueOnce({
+          success: false,
+          error: 'Authentication required',
+        })
+
+        const req = createMockRequest('POST', {
+          credentialAccountUserId: 'target-user-id',
+          providerId: 'google',
+        })
+
+        const response = await POST(req)
+        const data = await response.json()
+
+        expect(response.status).toBe(401)
+        expect(data).toHaveProperty('error', 'User not authenticated')
+        expect(authOAuthUtilsMockFns.mockGetOAuthToken).not.toHaveBeenCalled()
+      })
+
+      it('should reject internal JWT authentication', async () => {
+        hybridAuthMockFns.mockCheckSessionOrInternalAuth.mockResolvedValueOnce({
+          success: true,
+          authType: 'internal_jwt',
+          userId: 'test-user-id',
+        })
+
+        const req = createMockRequest('POST', {
+          credentialAccountUserId: 'test-user-id',
+          providerId: 'google',
+        })
+
+        const response = await POST(req)
+        const data = await response.json()
+
+        expect(response.status).toBe(401)
+        expect(data).toHaveProperty('error', 'User not authenticated')
+        expect(authOAuthUtilsMockFns.mockGetOAuthToken).not.toHaveBeenCalled()
+      })
+
+      it('should reject requests for other users credentials', async () => {
+        hybridAuthMockFns.mockCheckSessionOrInternalAuth.mockResolvedValueOnce({
+          success: true,
+          authType: 'session',
+          userId: 'attacker-user-id',
+        })
+
+        const req = createMockRequest('POST', {
+          credentialAccountUserId: 'victim-user-id',
+          providerId: 'google',
+        })
+
+        const response = await POST(req)
+        const data = await response.json()
+
+        expect(response.status).toBe(403)
+        expect(data).toHaveProperty('error', 'Unauthorized')
+        expect(authOAuthUtilsMockFns.mockGetOAuthToken).not.toHaveBeenCalled()
+      })
+
+      it('should allow session-authenticated users to access their own credentials', async () => {
+        hybridAuthMockFns.mockCheckSessionOrInternalAuth.mockResolvedValueOnce({
+          success: true,
+          authType: 'session',
+          userId: 'test-user-id',
+        })
+        authOAuthUtilsMockFns.mockGetOAuthToken.mockResolvedValueOnce('valid-access-token')
+
+        const req = createMockRequest('POST', {
+          credentialAccountUserId: 'test-user-id',
+          providerId: 'google',
+        })
+
+        const response = await POST(req)
+        const data = await response.json()
+
+        expect(response.status).toBe(200)
+        expect(data).toHaveProperty('accessToken', 'valid-access-token')
+        expect(authOAuthUtilsMockFns.mockGetOAuthToken).toHaveBeenCalledWith(
+          'test-user-id',
+          'google'
+        )
+      })
+
+      it('should return 404 when credential not found for user', async () => {
+        hybridAuthMockFns.mockCheckSessionOrInternalAuth.mockResolvedValueOnce({
+          success: true,
+          authType: 'session',
+          userId: 'test-user-id',
+        })
+        authOAuthUtilsMockFns.mockGetOAuthToken.mockResolvedValueOnce(null)
+
+        const req = createMockRequest('POST', {
+          credentialAccountUserId: 'test-user-id',
+          providerId: 'nonexistent-provider',
+        })
+
+        const response = await POST(req)
+        const data = await response.json()
+
+        expect(response.status).toBe(404)
+        expect(data.error).toContain('No credential found')
+      })
+    })
+  })
+
+  /**
+   * GET route tests
+   */
+  describe('GET handler', () => {
+    it('should return access token successfully', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'test-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce({
+        id: 'credential-id',
+        accessToken: 'test-token',
+        refreshToken: 'refresh-token',
+        accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000),
+        providerId: 'google',
+      })
+      authOAuthUtilsMockFns.mockRefreshTokenIfNeeded.mockResolvedValueOnce({
+        accessToken: 'fresh-token',
+        refreshed: false,
+      })
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/oauth/token?credentialId=credential-id'
+      )
+
+      const response = await GET(req as any)
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data).toHaveProperty('accessToken', 'fresh-token')
+
+      expect(mockAuthorizeCredentialUse).toHaveBeenCalled()
+      expect(authOAuthUtilsMockFns.mockGetCredential).toHaveBeenCalled()
+      expect(authOAuthUtilsMockFns.mockRefreshTokenIfNeeded).toHaveBeenCalled()
+    })
+
+    it('should handle missing credentialId', async () => {
+      const req = new NextRequest('http://localhost:3000/api/auth/oauth/token')
+
+      const response = await GET(req as any)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data).toHaveProperty('error', 'Credential ID is required')
+    })
+
+    it('should handle authentication failure', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: false,
+        error: 'Authentication required',
+      })
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/oauth/token?credentialId=credential-id'
+      )
+
+      const response = await GET(req as any)
+      const data = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(data).toHaveProperty('error')
+    })
+
+    it('should handle credential not found', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'test-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce(undefined)
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/oauth/token?credentialId=nonexistent-credential-id'
+      )
+
+      const response = await GET(req as any)
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data).toHaveProperty('error')
+    })
+
+    it('should handle missing access token', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'test-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce({
+        id: 'credential-id',
+        accessToken: null,
+        refreshToken: 'refresh-token',
+        providerId: 'google',
+      })
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/oauth/token?credentialId=credential-id'
+      )
+
+      const response = await GET(req as any)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data).toHaveProperty('error')
+    })
+
+    it('should handle token refresh failure', async () => {
+      mockAuthorizeCredentialUse.mockResolvedValueOnce({
+        ok: true,
+        authType: 'session',
+        requesterUserId: 'test-user-id',
+        credentialOwnerUserId: 'test-user-id',
+      })
+      authOAuthUtilsMockFns.mockGetCredential.mockResolvedValueOnce({
+        id: 'credential-id',
+        accessToken: 'test-token',
+        refreshToken: 'refresh-token',
+        accessTokenExpiresAt: new Date(Date.now() - 3600 * 1000), // Expired
+        providerId: 'google',
+      })
+      authOAuthUtilsMockFns.mockRefreshTokenIfNeeded.mockRejectedValueOnce(
+        new Error('Refresh failure')
+      )
+
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/oauth/token?credentialId=credential-id'
+      )
+
+      const response = await GET(req as any)
+      const data = await response.json()
+
+      expect(response.status).toBe(401)
+      expect(data).toHaveProperty('error')
+    })
+  })
+})

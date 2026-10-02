@@ -1,0 +1,8 @@
+# id                                      # license
+llvm-vs-code-extensions.vscode-clangd     # MIT  (C/C++ language server; replaces ms-vscode.cpptools)
+ms-vscode.cmake-tools                     # MIT
+twxs.cmake                                # MIT
+xaver.clang-format                        # MIT
+rpdswtk.vsmqtt                            # MIT  (MQTT client, same as Velocitas devcontainer)
+bierner.markdown-mermaid                  # MIT
+webfreak.debug                            # Unlicense (gdb)

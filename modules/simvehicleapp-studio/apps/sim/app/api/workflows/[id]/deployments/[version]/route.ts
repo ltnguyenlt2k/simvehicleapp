@@ -1,0 +1,188 @@
+import { db, workflowDeploymentVersion } from '@sim/db'
+import { createLogger } from '@sim/logger'
+import { and, eq } from 'drizzle-orm'
+import type { NextRequest } from 'next/server'
+import { updateDeploymentVersionMetadataContract } from '@/lib/api/contracts/deployments'
+import { getValidationErrorMessage, parseRequest } from '@/lib/api/server'
+import { generateRequestId } from '@/lib/core/utils/request'
+import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import { captureServerEvent } from '@/lib/posthog/server'
+import { performActivateVersion } from '@/lib/workflows/orchestration'
+import { statusForOrchestrationError } from '@/lib/workflows/orchestration/types'
+import {
+  getWorkflowDeploymentVersion,
+  updateDeploymentVersionMetadata,
+} from '@/lib/workflows/persistence/utils'
+import { validateWorkflowPermissions } from '@/lib/workflows/utils'
+import { createErrorResponse, createSuccessResponse } from '@/app/api/workflows/utils'
+
+const logger = createLogger('WorkflowDeploymentVersionAPI')
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+export const maxDuration = 120
+
+export const GET = withRouteHandler(
+  async (
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string; version: string }> }
+  ) => {
+    const requestId = generateRequestId()
+    const { id, version } = await params
+
+    try {
+      const { error } = await validateWorkflowPermissions(id, requestId, 'read')
+      if (error) {
+        return createErrorResponse(error.message, error.status)
+      }
+
+      const versionNum = Number(version)
+      if (!Number.isFinite(versionNum)) {
+        return createErrorResponse('Invalid version', 400)
+      }
+
+      const row = await getWorkflowDeploymentVersion(id, versionNum)
+      if (!row?.state) {
+        return createErrorResponse('Deployment version not found', 404)
+      }
+
+      return createSuccessResponse({ deployedState: row.state })
+    } catch (error: any) {
+      logger.error(
+        `[${requestId}] Error fetching deployment version ${version} for workflow ${id}`,
+        error
+      )
+      return createErrorResponse(error.message || 'Failed to fetch deployment version', 500)
+    }
+  }
+)
+
+export const PATCH = withRouteHandler(
+  async (request: NextRequest, context: { params: Promise<{ id: string; version: string }> }) => {
+    const requestId = generateRequestId()
+
+    try {
+      const parsed = await parseRequest(updateDeploymentVersionMetadataContract, request, context, {
+        validationErrorResponse: (error) =>
+          createErrorResponse(getValidationErrorMessage(error, 'Invalid request body'), 400),
+      })
+      if (!parsed.success) return parsed.response
+
+      const { id, version } = parsed.data.params
+      const { name, description, isActive } = parsed.data.body
+
+      // Activation requires admin permission, other updates require write
+      const requiredPermission = isActive ? 'admin' : 'write'
+      const {
+        error,
+        session,
+        workflow: workflowData,
+      } = await validateWorkflowPermissions(id, requestId, requiredPermission)
+      if (error) {
+        return createErrorResponse(error.message, error.status)
+      }
+
+      const versionNum = version
+
+      // Handle activation
+      if (isActive) {
+        const actorUserId = session?.user?.id
+        if (!actorUserId) {
+          logger.warn(
+            `[${requestId}] Unable to resolve actor user for deployment activation: ${id}`
+          )
+          return createErrorResponse('Unable to determine activating user', 400)
+        }
+
+        const activateResult = await performActivateVersion({
+          workflowId: id,
+          version: versionNum,
+          userId: actorUserId,
+          workflow: workflowData as Record<string, unknown>,
+          requestId,
+          request,
+        })
+
+        if (!activateResult.success) {
+          return createErrorResponse(
+            activateResult.error || 'Failed to activate deployment',
+            statusForOrchestrationError(activateResult.errorCode)
+          )
+        }
+
+        let updatedName: string | null | undefined
+        let updatedDescription: string | null | undefined
+        if (name !== undefined || description !== undefined) {
+          const activationUpdateData: { name?: string; description?: string | null } = {}
+          if (name !== undefined) {
+            activationUpdateData.name = name
+          }
+          if (description !== undefined) {
+            activationUpdateData.description = description
+          }
+
+          const [updated] = await db
+            .update(workflowDeploymentVersion)
+            .set(activationUpdateData)
+            .where(
+              and(
+                eq(workflowDeploymentVersion.workflowId, id),
+                eq(workflowDeploymentVersion.version, versionNum)
+              )
+            )
+            .returning({
+              name: workflowDeploymentVersion.name,
+              description: workflowDeploymentVersion.description,
+            })
+
+          if (updated) {
+            updatedName = updated.name
+            updatedDescription = updated.description
+            logger.info(
+              `[${requestId}] Updated deployment version ${version} metadata during activation`,
+              { name: activationUpdateData.name, description: activationUpdateData.description }
+            )
+          }
+        }
+
+        const wsId = (workflowData as { workspaceId?: string } | null)?.workspaceId
+        captureServerEvent(
+          actorUserId,
+          'deployment_version_activated',
+          { workflow_id: id, workspace_id: wsId ?? '', version: versionNum },
+          wsId ? { groups: { workspace: wsId } } : undefined
+        )
+
+        return createSuccessResponse({
+          success: true,
+          deployedAt: activateResult.deployedAt,
+          warnings: activateResult.warnings,
+          ...(updatedName !== undefined && { name: updatedName }),
+          ...(updatedDescription !== undefined && { description: updatedDescription }),
+        })
+      }
+
+      // Handle name/description updates (shared with the update_deployment_version copilot tool)
+      const updated = await updateDeploymentVersionMetadata({
+        workflowId: id,
+        version: versionNum,
+        name,
+        description,
+      })
+
+      if (!updated) {
+        return createErrorResponse('Deployment version not found', 404)
+      }
+
+      logger.info(`[${requestId}] Updated deployment version ${version} for workflow ${id}`, {
+        name,
+        description,
+      })
+
+      return createSuccessResponse({ name: updated.name, description: updated.description })
+    } catch (error: any) {
+      logger.error(`[${requestId}] Error updating deployment version`, error)
+      return createErrorResponse(error.message || 'Failed to update deployment version', 500)
+    }
+  }
+)

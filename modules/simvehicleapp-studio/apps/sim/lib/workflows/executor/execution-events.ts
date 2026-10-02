@@ -1,0 +1,503 @@
+import type {
+  ChildWorkflowContext,
+  IterationContext,
+  ParentIteration,
+} from '@/executor/execution/types'
+import type { BlockLog } from '@/executor/types'
+import type { SubflowType } from '@/stores/workflows/workflow/types'
+
+export type ExecutionEventType =
+  | 'execution:started'
+  | 'execution:completed'
+  | 'execution:paused'
+  | 'execution:error'
+  | 'execution:cancelled'
+  | 'block:started'
+  | 'block:completed'
+  | 'block:error'
+  | 'block:childWorkflowStarted'
+  | 'stream:chunk'
+  | 'stream:done'
+
+/**
+ * Base event structure for SSE
+ */
+interface BaseExecutionEvent {
+  type: ExecutionEventType
+  timestamp: string
+  executionId: string
+  eventId?: number
+}
+
+/**
+ * Execution started event
+ */
+interface ExecutionStartedEvent extends BaseExecutionEvent {
+  type: 'execution:started'
+  workflowId: string
+  data: {
+    startTime: string
+  }
+}
+
+/**
+ * Execution completed event
+ */
+interface ExecutionCompletedEvent extends BaseExecutionEvent {
+  type: 'execution:completed'
+  workflowId: string
+  data: {
+    success: boolean
+    output: any
+    duration: number
+    startTime: string
+    endTime: string
+    /** Authoritative per-block terminal states from the server's blockLogs. */
+    finalBlockLogs?: BlockLog[]
+  }
+}
+
+/**
+ * Execution paused event (HITL block waiting for human input)
+ */
+interface ExecutionPausedEvent extends BaseExecutionEvent {
+  type: 'execution:paused'
+  workflowId: string
+  data: {
+    output: any
+    duration: number
+    startTime: string
+    endTime: string
+    /** Authoritative per-block terminal states from the server's blockLogs. */
+    finalBlockLogs?: BlockLog[]
+  }
+}
+
+/**
+ * Execution error event
+ */
+interface ExecutionErrorEvent extends BaseExecutionEvent {
+  type: 'execution:error'
+  workflowId: string
+  data: {
+    error: string
+    duration: number
+    /** Authoritative per-block terminal states from the server's blockLogs. */
+    finalBlockLogs?: BlockLog[]
+  }
+}
+
+interface ExecutionCancelledEvent extends BaseExecutionEvent {
+  type: 'execution:cancelled'
+  workflowId: string
+  data: {
+    duration: number
+    /** Authoritative per-block terminal states from the server's blockLogs. */
+    finalBlockLogs?: BlockLog[]
+  }
+}
+
+/**
+ * Block started event
+ */
+interface BlockStartedEvent extends BaseExecutionEvent {
+  type: 'block:started'
+  workflowId: string
+  data: {
+    blockId: string
+    blockName: string
+    blockType: string
+    executionOrder: number
+    iterationCurrent?: number
+    iterationTotal?: number
+    iterationType?: SubflowType
+    iterationContainerId?: string
+    parentIterations?: ParentIteration[]
+    childWorkflowBlockId?: string
+    childWorkflowName?: string
+  }
+}
+
+/**
+ * Block completed event
+ */
+interface BlockCompletedEvent extends BaseExecutionEvent {
+  type: 'block:completed'
+  workflowId: string
+  data: {
+    blockId: string
+    blockName: string
+    blockType: string
+    input?: any
+    output: any
+    durationMs: number
+    startedAt: string
+    executionOrder: number
+    endedAt: string
+    iterationCurrent?: number
+    iterationTotal?: number
+    iterationType?: SubflowType
+    iterationContainerId?: string
+    parentIterations?: ParentIteration[]
+    childWorkflowBlockId?: string
+    childWorkflowName?: string
+    /** Per-invocation unique ID for correlating child block events with this workflow block. */
+    childWorkflowInstanceId?: string
+  }
+}
+
+/**
+ * Block error event
+ */
+interface BlockErrorEvent extends BaseExecutionEvent {
+  type: 'block:error'
+  workflowId: string
+  data: {
+    blockId: string
+    blockName: string
+    blockType: string
+    input?: any
+    error: string
+    durationMs: number
+    startedAt: string
+    executionOrder: number
+    endedAt: string
+    iterationCurrent?: number
+    iterationTotal?: number
+    iterationType?: SubflowType
+    iterationContainerId?: string
+    parentIterations?: ParentIteration[]
+    childWorkflowBlockId?: string
+    childWorkflowName?: string
+    /** Per-invocation unique ID for correlating child block events with this workflow block. */
+    childWorkflowInstanceId?: string
+  }
+}
+
+/**
+ * Block child workflow started event — fires when a workflow block generates its instanceId,
+ * before child execution begins. Allows clients to pre-associate the running entry with
+ * the instanceId so child block events can be correlated in real-time.
+ */
+interface BlockChildWorkflowStartedEvent extends BaseExecutionEvent {
+  type: 'block:childWorkflowStarted'
+  workflowId: string
+  data: {
+    blockId: string
+    childWorkflowInstanceId: string
+    iterationCurrent?: number
+    iterationTotal?: number
+    iterationType?: SubflowType
+    iterationContainerId?: string
+    parentIterations?: ParentIteration[]
+    childWorkflowBlockId?: string
+    childWorkflowName?: string
+    executionOrder?: number
+  }
+}
+
+/**
+ * Stream chunk event (for agent blocks)
+ */
+interface StreamChunkEvent extends BaseExecutionEvent {
+  type: 'stream:chunk'
+  workflowId: string
+  data: {
+    blockId: string
+    chunk: string
+  }
+}
+
+/**
+ * Stream done event
+ */
+interface StreamDoneEvent extends BaseExecutionEvent {
+  type: 'stream:done'
+  workflowId: string
+  data: {
+    blockId: string
+  }
+}
+
+/**
+ * Union type of all execution events
+ */
+export type ExecutionEvent =
+  | ExecutionStartedEvent
+  | ExecutionCompletedEvent
+  | ExecutionPausedEvent
+  | ExecutionErrorEvent
+  | ExecutionCancelledEvent
+  | BlockStartedEvent
+  | BlockCompletedEvent
+  | BlockErrorEvent
+  | BlockChildWorkflowStartedEvent
+  | StreamChunkEvent
+  | StreamDoneEvent
+
+export type ExecutionStartedData = ExecutionStartedEvent['data']
+export type ExecutionCompletedData = ExecutionCompletedEvent['data']
+export type ExecutionPausedData = ExecutionPausedEvent['data']
+export type ExecutionErrorData = ExecutionErrorEvent['data']
+export type ExecutionCancelledData = ExecutionCancelledEvent['data']
+export type BlockStartedData = BlockStartedEvent['data']
+export type BlockCompletedData = BlockCompletedEvent['data']
+export type BlockErrorData = BlockErrorEvent['data']
+export type BlockChildWorkflowStartedData = BlockChildWorkflowStartedEvent['data']
+export type StreamChunkData = StreamChunkEvent['data']
+export type StreamDoneData = StreamDoneEvent['data']
+
+/**
+ * Helper to create SSE formatted message
+ */
+export function formatSSEEvent(event: ExecutionEvent): string {
+  return `data: ${JSON.stringify(event)}\n\n`
+}
+
+/**
+ * Helper to encode SSE event as Uint8Array
+ */
+export function encodeSSEEvent(event: ExecutionEvent): Uint8Array {
+  return new TextEncoder().encode(formatSSEEvent(event))
+}
+
+/**
+ * Options for creating SSE execution callbacks
+ */
+interface SSECallbackOptions {
+  executionId: string
+  workflowId: string
+  controller: ReadableStreamDefaultController<Uint8Array>
+  isStreamClosed: () => boolean
+  setStreamClosed: () => void
+}
+
+/**
+ * Creates execution callbacks using a provided event sink.
+ */
+export function createExecutionCallbacks(options: {
+  executionId: string
+  workflowId: string
+  sendEvent: (event: ExecutionEvent) => void | Promise<void>
+}) {
+  const { executionId, workflowId, sendEvent } = options
+
+  const sendBufferedEvent = async (event: ExecutionEvent) => {
+    await sendEvent(event)
+  }
+
+  const onBlockStart = async (
+    blockId: string,
+    blockName: string,
+    blockType: string,
+    executionOrder: number,
+    iterationContext?: IterationContext,
+    childWorkflowContext?: ChildWorkflowContext
+  ) => {
+    await sendBufferedEvent({
+      type: 'block:started',
+      timestamp: new Date().toISOString(),
+      executionId,
+      workflowId,
+      data: {
+        blockId,
+        blockName,
+        blockType,
+        executionOrder,
+        ...(iterationContext && {
+          iterationCurrent: iterationContext.iterationCurrent,
+          iterationTotal: iterationContext.iterationTotal,
+          iterationType: iterationContext.iterationType,
+          iterationContainerId: iterationContext.iterationContainerId,
+          ...(iterationContext.parentIterations?.length && {
+            parentIterations: iterationContext.parentIterations,
+          }),
+        }),
+        ...(childWorkflowContext && {
+          childWorkflowBlockId: childWorkflowContext.parentBlockId,
+          childWorkflowName: childWorkflowContext.workflowName,
+        }),
+      },
+    })
+  }
+
+  const onBlockComplete = async (
+    blockId: string,
+    blockName: string,
+    blockType: string,
+    callbackData: {
+      input?: unknown
+      output: any
+      executionTime: number
+      startedAt: string
+      executionOrder: number
+      endedAt: string
+      childWorkflowInstanceId?: string
+    },
+    iterationContext?: IterationContext,
+    childWorkflowContext?: ChildWorkflowContext
+  ) => {
+    const hasError = callbackData.output?.error
+    const iterationData = iterationContext
+      ? {
+          iterationCurrent: iterationContext.iterationCurrent,
+          iterationTotal: iterationContext.iterationTotal,
+          iterationType: iterationContext.iterationType,
+          iterationContainerId: iterationContext.iterationContainerId,
+          ...(iterationContext.parentIterations?.length && {
+            parentIterations: iterationContext.parentIterations,
+          }),
+        }
+      : {}
+    const childWorkflowData = childWorkflowContext
+      ? {
+          childWorkflowBlockId: childWorkflowContext.parentBlockId,
+          childWorkflowName: childWorkflowContext.workflowName,
+        }
+      : {}
+
+    const instanceData = callbackData.childWorkflowInstanceId
+      ? { childWorkflowInstanceId: callbackData.childWorkflowInstanceId }
+      : {}
+
+    if (hasError) {
+      await sendBufferedEvent({
+        type: 'block:error',
+        timestamp: new Date().toISOString(),
+        executionId,
+        workflowId,
+        data: {
+          blockId,
+          blockName,
+          blockType,
+          input: callbackData.input,
+          error: callbackData.output.error,
+          durationMs: callbackData.executionTime || 0,
+          startedAt: callbackData.startedAt,
+          executionOrder: callbackData.executionOrder,
+          endedAt: callbackData.endedAt,
+          ...iterationData,
+          ...childWorkflowData,
+          ...instanceData,
+        },
+      })
+    } else {
+      await sendBufferedEvent({
+        type: 'block:completed',
+        timestamp: new Date().toISOString(),
+        executionId,
+        workflowId,
+        data: {
+          blockId,
+          blockName,
+          blockType,
+          input: callbackData.input,
+          output: callbackData.output,
+          durationMs: callbackData.executionTime || 0,
+          startedAt: callbackData.startedAt,
+          executionOrder: callbackData.executionOrder,
+          endedAt: callbackData.endedAt,
+          ...iterationData,
+          ...childWorkflowData,
+          ...instanceData,
+        },
+      })
+    }
+  }
+
+  const onStream = async (streamingExecution: unknown) => {
+    const streamingExec = streamingExecution as { stream: ReadableStream; execution: any }
+    const blockId = streamingExec.execution?.blockId
+    const reader = streamingExec.stream.getReader()
+    const decoder = new TextDecoder()
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        await sendBufferedEvent({
+          type: 'stream:chunk',
+          timestamp: new Date().toISOString(),
+          executionId,
+          workflowId,
+          data: { blockId, chunk },
+        })
+      }
+      await sendBufferedEvent({
+        type: 'stream:done',
+        timestamp: new Date().toISOString(),
+        executionId,
+        workflowId,
+        data: { blockId },
+      })
+    } finally {
+      try {
+        reader.releaseLock()
+      } catch {}
+    }
+  }
+
+  const onChildWorkflowInstanceReady = async (
+    blockId: string,
+    childWorkflowInstanceId: string,
+    iterationContext?: IterationContext,
+    executionOrder?: number,
+    childWorkflowContext?: ChildWorkflowContext
+  ) => {
+    await sendBufferedEvent({
+      type: 'block:childWorkflowStarted',
+      timestamp: new Date().toISOString(),
+      executionId,
+      workflowId,
+      data: {
+        blockId,
+        childWorkflowInstanceId,
+        ...(iterationContext && {
+          iterationCurrent: iterationContext.iterationCurrent,
+          iterationTotal: iterationContext.iterationTotal,
+          iterationType: iterationContext.iterationType,
+          iterationContainerId: iterationContext.iterationContainerId,
+          ...(iterationContext.parentIterations?.length && {
+            parentIterations: iterationContext.parentIterations,
+          }),
+        }),
+        ...(childWorkflowContext && {
+          childWorkflowBlockId: childWorkflowContext.parentBlockId,
+          childWorkflowName: childWorkflowContext.workflowName,
+        }),
+        ...(executionOrder !== undefined && { executionOrder }),
+      },
+    })
+  }
+
+  return {
+    sendEvent: sendBufferedEvent,
+    onBlockStart,
+    onBlockComplete,
+    onStream,
+    onChildWorkflowInstanceReady,
+  }
+}
+
+/**
+ * Creates SSE callbacks for workflow execution streaming
+ */
+export function createSSECallbacks(options: SSECallbackOptions) {
+  const { executionId, workflowId, controller, isStreamClosed, setStreamClosed } = options
+
+  const sendEvent = (event: ExecutionEvent) => {
+    if (isStreamClosed()) return
+    try {
+      controller.enqueue(encodeSSEEvent(event))
+    } catch {
+      setStreamClosed()
+    }
+  }
+
+  return createExecutionCallbacks({
+    executionId,
+    workflowId,
+    sendEvent,
+  })
+}

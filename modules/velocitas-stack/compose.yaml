@@ -1,0 +1,76 @@
+# velocitas-stack — self-contained compose fragment.
+#   standalone:  docker compose -f modules/velocitas-stack/compose.yaml up -d
+#   in system :  included by the root docker-compose.yml
+# Paths are relative to THIS file (compose `include` semantics).
+services:
+  # The template's own devcontainer image, built exactly like VS Code Dev Containers does.
+  devcontainer-cpp:
+    image: simvehicleapp/devcontainer-cpp:dev
+    build:
+      context: ./templates/vehicle-app-cpp-template/.devcontainer
+    command: ["true"]            # build-stage service: exits immediately, exists so toolchain-cpp can FROM it
+    restart: "no"
+
+  toolchain-cpp:
+    image: simvehicleapp/toolchain-cpp:dev
+    build:
+      context: .
+      dockerfile: toolchain/cpp/Dockerfile
+      additional_contexts:
+        devcontainer: service:devcontainer-cpp
+      args:
+        CONAN_JOBS: ${SV_CONAN_JOBS:-8}
+    environment:
+      SDV_MIDDLEWARE_TYPE: native
+      SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+      VELOCITAS_OFFLINE: "1"
+    volumes:
+      - sv-workspace:/workspace
+      - sv-ccache:/home/vscode/.ccache
+      # Shared with toolchain/IDE (same image, same uid 4000) so a model generated or a package
+      # exported in one container is visible in the other. Docker seeds new volumes from the image.
+      # After rebuilding the toolchain image:  docker compose down && docker volume rm simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas
+      - sv-conan2:/home/vscode/.conan2
+      - sv-velocitas:/home/vscode/.velocitas
+    networks: [sv-internal, sv-edge]
+    depends_on: [databroker, mqtt]
+
+  databroker:
+    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
+    # VSS 4.0 metadata: the image default is identical, we mount our pinned copy explicitly.
+    command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss/vss_rel_4.0.json"]
+    volumes:
+      - ./vss:/vss:ro
+    ports: ["127.0.0.1:${SV_DATABROKER_PORT:-55555}:55555"]
+    networks: [sv-internal]
+
+  mqtt:
+    image: eclipse-mosquitto:2.0.14
+    command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
+    volumes:
+      - ./runtime/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "127.0.0.1:${SV_MQTT_PORT:-1883}:1883"
+      - "127.0.0.1:${SV_MQTT_WS_PORT:-9001}:9001"
+    networks: [sv-internal]
+
+  mock-provider:
+    image: ghcr.io/eclipse-kuksa/kuksa-mock-provider/mock-provider:0.4.1
+    profiles: ["mock"]
+    environment:
+      VDB_ADDRESS: databroker:55555
+    volumes:
+      - ./runtime/mock/mock.py:/mock/mock.py:ro
+    networks: [sv-internal]
+    depends_on: [databroker]
+
+volumes:
+  sv-workspace:
+  sv-ccache:
+  sv-conan2:
+  sv-velocitas:
+
+networks:
+  sv-internal:
+  sv-edge:

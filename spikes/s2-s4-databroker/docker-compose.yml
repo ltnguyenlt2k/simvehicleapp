@@ -1,0 +1,29 @@
+# Spike S-2/S-3/S-4
+#   no provider : docker compose up --build --abort-on-container-exit --exit-code-from tester databroker tester
+#   with mock   : EXPECT_MIRROR=1 docker compose --profile mock up --build --abort-on-container-exit --exit-code-from tester
+name: sv-spike-databroker
+services:
+  databroker:
+    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
+    # VSS 4.0 is embedded in the image (KUKSA_DATABROKER_METADATA_FILE=vss_release_4.0.json)
+    command:
+      - --insecure
+      - --enable-databroker-v1
+  mock-provider:
+    image: ghcr.io/eclipse-kuksa/kuksa-mock-provider/mock-provider:0.4.1
+    profiles:
+      - mock
+    environment:
+      VDB_ADDRESS: databroker:55555
+    volumes:
+      - ./mock.py:/mock/mock.py:ro
+    depends_on:
+      - databroker
+  tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.tester
+    environment:
+      EXPECT_MIRROR: "${EXPECT_MIRROR:-0}"
+    depends_on:
+      - databroker

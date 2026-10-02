@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# SimVehicleApp dev helper (dev phase: one folder per module, aggregated by docker-compose.yml)
+#   scripts/sv build            build all images in dependency order
+#   scripts/sv up               start everything (runtime + toolchain + ide + studio)
+#   scripts/sv down [-v]        stop (−v also removes volumes)
+#   scripts/sv smoke            S-1/S-2 smoke: new project offline build + run app + MQTT check
+#   scripts/sv reset-caches     drop conan/velocitas volumes after rebuilding the toolchain image
+set -euo pipefail
+cd "$(dirname "$0")/.."
+DC="docker compose"
+case "${1:-}" in
+  build)
+    $DC build devcontainer-cpp toolchain-cpp      # base layers first (ide FROMs the toolchain image)
+    $DC build ;;
+  up)    $DC up -d "${@:2}" ;;
+  down)  $DC down "${@:2}" ;;
+  reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache ;;
+  smoke) exec spikes/smoke.sh ;;
+  *) sed -n '2,8p' "$0"; exit 1 ;;
+esac

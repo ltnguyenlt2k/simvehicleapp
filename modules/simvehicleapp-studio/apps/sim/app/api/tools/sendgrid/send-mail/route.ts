@@ -1,0 +1,173 @@
+import { createLogger } from '@sim/logger'
+import { getErrorMessage } from '@sim/utils/errors'
+import { type NextRequest, NextResponse } from 'next/server'
+import { sendGridSendMailContract } from '@/lib/api/contracts/tools/communication/email'
+import { parseRequest } from '@/lib/api/server'
+import { checkInternalAuth } from '@/lib/auth/hybrid'
+import { generateRequestId } from '@/lib/core/utils/request'
+import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import { processFilesToUserFiles } from '@/lib/uploads/utils/file-utils'
+import { downloadFileFromStorage } from '@/lib/uploads/utils/file-utils.server'
+import { assertToolFileAccess } from '@/app/api/files/authorization'
+
+export const dynamic = 'force-dynamic'
+
+const logger = createLogger('SendGridSendMailAPI')
+
+export const POST = withRouteHandler(async (request: NextRequest) => {
+  const requestId = generateRequestId()
+
+  try {
+    const authResult = await checkInternalAuth(request, { requireWorkflowId: false })
+
+    if (!authResult.success || !authResult.userId) {
+      logger.warn(`[${requestId}] Unauthorized SendGrid send attempt: ${authResult.error}`)
+      return NextResponse.json(
+        { success: false, error: authResult.error || 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    const userId = authResult.userId
+    logger.info(`[${requestId}] Authenticated SendGrid send request via ${authResult.authType}`)
+
+    const parsed = await parseRequest(sendGridSendMailContract, request, {})
+    if (!parsed.success) return parsed.response
+    const validatedData = parsed.data.body
+
+    logger.info(`[${requestId}] Sending SendGrid email`, {
+      to: validatedData.to,
+      subject: validatedData.subject || '(template)',
+      hasAttachments: !!(validatedData.attachments && validatedData.attachments.length > 0),
+      attachmentCount: validatedData.attachments?.length || 0,
+    })
+
+    // Build personalizations
+    const personalizations: Record<string, unknown> = {
+      to: [
+        { email: validatedData.to, ...(validatedData.toName && { name: validatedData.toName }) },
+      ],
+    }
+
+    if (validatedData.cc) {
+      personalizations.cc = [{ email: validatedData.cc }]
+    }
+
+    if (validatedData.bcc) {
+      personalizations.bcc = [{ email: validatedData.bcc }]
+    }
+
+    if (validatedData.templateId && validatedData.dynamicTemplateData) {
+      personalizations.dynamic_template_data =
+        typeof validatedData.dynamicTemplateData === 'string'
+          ? JSON.parse(validatedData.dynamicTemplateData)
+          : validatedData.dynamicTemplateData
+    }
+
+    // Build mail body
+    const mailBody: Record<string, unknown> = {
+      personalizations: [personalizations],
+      from: {
+        email: validatedData.from,
+        ...(validatedData.fromName && { name: validatedData.fromName }),
+      },
+      subject: validatedData.subject,
+    }
+
+    if (validatedData.templateId) {
+      mailBody.template_id = validatedData.templateId
+    } else {
+      mailBody.content = [
+        {
+          type: validatedData.contentType || 'text/plain',
+          value: validatedData.content,
+        },
+      ]
+    }
+
+    if (validatedData.replyTo) {
+      mailBody.reply_to = {
+        email: validatedData.replyTo,
+        ...(validatedData.replyToName && { name: validatedData.replyToName }),
+      }
+    }
+
+    // Process attachments from UserFile objects
+    if (validatedData.attachments && validatedData.attachments.length > 0) {
+      const rawAttachments = validatedData.attachments
+      logger.info(`[${requestId}] Processing ${rawAttachments.length} attachment(s)`)
+
+      const userFiles = processFilesToUserFiles(rawAttachments, requestId, logger)
+
+      if (userFiles.length > 0) {
+        const accessResults = await Promise.all(
+          userFiles.map((file) => assertToolFileAccess(file.key, userId, requestId, logger))
+        )
+        const denied = accessResults.find((r) => r !== null)
+        if (denied) return denied
+
+        const buffers = await Promise.all(
+          userFiles.map(async (file) => {
+            try {
+              logger.info(
+                `[${requestId}] Downloading attachment: ${file.name} (${file.size} bytes)`
+              )
+              return await downloadFileFromStorage(file, requestId, logger)
+            } catch (error) {
+              logger.error(`[${requestId}] Failed to download attachment ${file.name}:`, error)
+              throw new Error(
+                `Failed to download attachment "${file.name}": ${getErrorMessage(error, 'Unknown error')}`
+              )
+            }
+          })
+        )
+
+        const sendGridAttachments = userFiles.map((file, i) => ({
+          content: buffers[i].toString('base64'),
+          filename: file.name,
+          type: file.type || 'application/octet-stream',
+          disposition: 'attachment',
+        }))
+
+        mailBody.attachments = sendGridAttachments
+      }
+    }
+
+    // Send to SendGrid
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${validatedData.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mailBody),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const errorMessage =
+        errorData.errors?.[0]?.message || errorData.message || 'Failed to send email'
+      logger.error(`[${requestId}] SendGrid API error:`, { status: response.status, errorData })
+      return NextResponse.json({ success: false, error: errorMessage }, { status: response.status })
+    }
+
+    const messageId = response.headers.get('X-Message-Id')
+    logger.info(`[${requestId}] Email sent successfully`, { messageId })
+
+    return NextResponse.json({
+      success: true,
+      output: {
+        success: true,
+        messageId: messageId || undefined,
+        to: validatedData.to,
+        subject: validatedData.subject || '',
+      },
+    })
+  } catch (error) {
+    logger.error(`[${requestId}] Unexpected error:`, error)
+    return NextResponse.json(
+      { success: false, error: getErrorMessage(error, 'Unknown error') },
+      { status: 500 }
+    )
+  }
+})

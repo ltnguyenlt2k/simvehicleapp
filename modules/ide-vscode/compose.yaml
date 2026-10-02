@@ -1,0 +1,35 @@
+# ide-vscode — self-contained compose fragment. Building it needs image simvehicleapp/toolchain-cpp:dev (from velocitas-stack).
+services:
+  ide-cpp:
+    image: simvehicleapp/ide-cpp:dev
+    build:
+      context: .
+      dockerfile: cpp/Dockerfile
+      additional_contexts:
+        # standalone-capable: uses the locally built (or pulled) toolchain image; `scripts/sv build` builds it first
+        toolchain: docker-image://${SV_TOOLCHAIN_IMAGE:-simvehicleapp/toolchain-cpp:dev}
+    environment:
+      PASSWORD: ${SV_IDE_PASSWORD:-simvehicleapp}
+      SDV_MIDDLEWARE_TYPE: native
+      SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+    ports: ["127.0.0.1:${SV_IDE_PORT:-8080}:8080"]
+    volumes:
+      - sv-workspace:/workspace
+      - sv-ccache:/home/vscode/.ccache
+      # Shared with toolchain/IDE (same image, same uid 4000) so a model generated or a package
+      # exported in one container is visible in the other. Docker seeds new volumes from the image.
+      # After rebuilding the toolchain image:  docker compose down && docker volume rm simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas
+      - sv-conan2:/home/vscode/.conan2
+      - sv-velocitas:/home/vscode/.velocitas
+    networks: [sv-internal, sv-edge]
+
+volumes:
+  sv-workspace:
+  sv-ccache:
+  sv-conan2:
+  sv-velocitas:
+
+networks:
+  sv-internal:
+  sv-edge:

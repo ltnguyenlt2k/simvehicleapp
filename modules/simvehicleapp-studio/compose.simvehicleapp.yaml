@@ -1,0 +1,67 @@
+# simvehicleapp-studio — compose fragment (dev). Built from THIS source tree (Sim v0.7.13 snapshot)
+# with upstream's own Dockerfiles. Minimal set verified by spike S-5: db + migrations + realtime + studio
+# (no Trigger.dev, no Redis, no pii, no copilot backend).
+services:
+  studio-db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: simvehicleapp
+    volumes: [sv-pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U postgres"], interval: 5s, retries: 20 }
+    networks: [sv-internal]
+
+  studio-migrations:
+    image: simvehicleapp/studio-migrations:dev
+    build: { context: ., dockerfile: docker/db.Dockerfile }
+    working_dir: /app/packages/db
+    command: ["bun", "run", "db:migrate"]
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
+    depends_on: { studio-db: { condition: service_healthy } }
+    restart: "no"
+    networks: [sv-internal]
+
+  studio-realtime:
+    image: simvehicleapp/studio-realtime:dev
+    build: { context: ., dockerfile: docker/realtime.Dockerfile }
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
+      NEXT_PUBLIC_APP_URL: ${SV_STUDIO_URL:-http://localhost:3000}
+      BETTER_AUTH_URL: ${SV_STUDIO_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set in .env}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+    ports: ["127.0.0.1:${SV_REALTIME_PORT:-3002}:3002"]
+    # realtime runs a schema preflight at boot → must start after migrations (spike S-5)
+    depends_on: { studio-migrations: { condition: service_completed_successfully } }
+    networks: [sv-internal, sv-edge]
+
+  studio:
+    image: simvehicleapp/studio:dev
+    build:
+      context: .
+      dockerfile: docker/app.Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
+      NEXT_PUBLIC_APP_URL: ${SV_STUDIO_URL:-http://localhost:3000}
+      BETTER_AUTH_URL: ${SV_STUDIO_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set in .env}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set in .env}
+      API_ENCRYPTION_KEY: ${API_ENCRYPTION_KEY:?set in .env}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SOCKET_SERVER_URL: http://studio-realtime:3002
+    ports: ["127.0.0.1:${SV_STUDIO_PORT:-3000}:3000"]
+    depends_on:
+      studio-migrations: { condition: service_completed_successfully }
+      studio-realtime: { condition: service_started }
+    networks: [sv-internal, sv-edge]
+
+volumes:
+  sv-pgdata:
+
+networks:
+  sv-internal:
+  sv-edge:

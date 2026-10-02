@@ -1,0 +1,7 @@
+.env
+**/node_modules/
+**/build/
+**/build-linux-*/
+**/.next/
+**/.turbo/
+spikes/**/.env

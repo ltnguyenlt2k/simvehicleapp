@@ -1,0 +1,932 @@
+---
+name: add-block
+description: Create or update a Sim integration block with correct subBlocks, conditions, dependsOn, modes, canonicalParamId usage, outputs, and tool wiring. Use when working on `apps/sim/blocks/blocks/{service}.ts` or aligning a block with its tools.
+---
+
+# Add Block Skill
+
+You are an expert at creating block configurations for Sim. You understand the serializer, subBlock types, conditions, dependsOn, modes, and all UI patterns.
+
+## Your Task
+
+When the user asks you to create a block:
+1. Create the block file in `apps/sim/blocks/blocks/{service}.ts`
+2. Configure all subBlocks with proper types, conditions, and dependencies
+3. Wire up tools correctly
+
+## Hard Rule: No Guessed Tool Outputs
+
+Blocks depend on tool outputs. If the underlying tool response schema is not documented or live-verified, you MUST tell the user instead of guessing block outputs.
+
+- Do NOT invent block outputs for undocumented tool responses
+- Do NOT describe unknown JSON shapes as if they were confirmed
+- Do NOT wire fields into the block just because they seem likely to exist
+
+If the tool outputs are not known, do one of these instead:
+1. Ask the user for sample tool responses
+2. Ask the user for test credentials so the tool responses can be verified
+3. Limit the block to operations whose outputs are documented
+4. Leave uncertain outputs out and explicitly tell the user what remains unknown
+
+## Block Configuration Structure
+
+```typescript
+import { {ServiceName}Icon } from '@/components/icons'
+import type { BlockConfig } from '@/blocks/types'
+import { AuthMode, IntegrationType } from '@/blocks/types'
+import { getScopesForService } from '@/lib/oauth/utils'
+
+export const {ServiceName}Block: BlockConfig = {
+  type: '{service}',                    // snake_case identifier
+  name: '{Service Name}',               // Human readable
+  description: 'Brief description',     // One sentence
+  longDescription: 'Detailed description for docs',
+  docsLink: 'https://docs.sim.ai/integrations/{service}',
+  category: 'tools',                    // 'tools' | 'blocks' | 'triggers'
+  integrationType: IntegrationType.X,   // Primary category (see IntegrationType enum)
+  tags: ['oauth', 'api'],              // Cross-cutting tags (see IntegrationTag type)
+  bgColor: '#HEXCOLOR',                 // Brand color
+  icon: {ServiceName}Icon,
+
+  // Auth mode
+  authMode: AuthMode.OAuth,             // or AuthMode.ApiKey
+
+  subBlocks: [
+    // Define all UI fields here
+  ],
+
+  tools: {
+    access: ['tool_id_1', 'tool_id_2'], // Array of tool IDs this block can use
+    config: {
+      tool: (params) => `{service}_${params.operation}`,  // Tool selector function
+      params: (params) => ({
+        // Transform subBlock values to tool params
+      }),
+    },
+  },
+
+  inputs: {
+    // Optional: define expected inputs from other blocks
+  },
+
+  outputs: {
+    // Define outputs available to downstream blocks
+  },
+}
+```
+
+## SubBlock Types Reference
+
+**Critical:** Every subblock `id` must be unique within the block. Duplicate IDs cause conflicts even with different conditions.
+
+### Text Inputs
+```typescript
+// Single-line input
+{ id: 'field', title: 'Label', type: 'short-input', placeholder: '...' }
+
+// Multi-line input
+{ id: 'field', title: 'Label', type: 'long-input', placeholder: '...', rows: 6 }
+
+// Password input
+{ id: 'apiKey', title: 'API Key', type: 'short-input', password: true }
+```
+
+### Selection Inputs
+```typescript
+// Dropdown (static options)
+{
+  id: 'operation',
+  title: 'Operation',
+  type: 'dropdown',
+  options: [
+    { label: 'Create', id: 'create' },
+    { label: 'Update', id: 'update' },
+  ],
+  value: () => 'create',  // Default value function
+}
+
+// Combobox (searchable dropdown)
+{
+  id: 'field',
+  title: 'Label',
+  type: 'combobox',
+  options: [...],
+  searchable: true,
+}
+```
+
+### Code/JSON Inputs
+```typescript
+{
+  id: 'code',
+  title: 'Code',
+  type: 'code',
+  language: 'javascript',  // 'javascript' | 'json' | 'python'
+  placeholder: '// Enter code...',
+}
+```
+
+### OAuth/Credentials
+```typescript
+{
+  id: 'credential',
+  title: 'Account',
+  type: 'oauth-input',
+  serviceId: '{service}',  // Must match OAuth provider service key
+  requiredScopes: getScopesForService('{service}'),  // Import from @/lib/oauth/utils
+  placeholder: 'Select account',
+  required: true,
+}
+```
+
+**Scopes:** Always use `getScopesForService(serviceId)` from `@/lib/oauth/utils` for `requiredScopes`. Never hardcode scope arrays — the single source of truth is `OAUTH_PROVIDERS` in `lib/oauth/oauth.ts`.
+
+**Scope descriptions:** When adding a new OAuth provider, also add human-readable descriptions for all scopes in `SCOPE_DESCRIPTIONS` within `lib/oauth/utils.ts`.
+
+### Selectors (with dynamic options)
+```typescript
+// Channel selector (Slack, Discord, etc.)
+{
+  id: 'channel',
+  title: 'Channel',
+  type: 'channel-selector',
+  serviceId: '{service}',
+  placeholder: 'Select channel',
+  dependsOn: ['credential'],
+}
+
+// Project selector (Jira, etc.)
+{
+  id: 'project',
+  title: 'Project',
+  type: 'project-selector',
+  serviceId: '{service}',
+  dependsOn: ['credential'],
+}
+
+// File selector (Google Drive, etc.)
+{
+  id: 'file',
+  title: 'File',
+  type: 'file-selector',
+  serviceId: '{service}',
+  mimeType: 'application/pdf',
+  dependsOn: ['credential'],
+}
+
+// User selector
+{
+  id: 'user',
+  title: 'User',
+  type: 'user-selector',
+  serviceId: '{service}',
+  dependsOn: ['credential'],
+}
+```
+
+### Other Types
+```typescript
+// Switch/toggle
+{ id: 'enabled', type: 'switch' }
+
+// Slider
+{ id: 'temperature', title: 'Temperature', type: 'slider', min: 0, max: 2, step: 0.1 }
+
+// Table (key-value pairs)
+{ id: 'headers', title: 'Headers', type: 'table', columns: ['Key', 'Value'] }
+
+// File upload
+{
+  id: 'files',
+  title: 'Attachments',
+  type: 'file-upload',
+  multiple: true,
+  acceptedTypes: 'image/*,application/pdf',
+}
+```
+
+## File Input Handling
+
+When your block accepts file uploads, use the basic/advanced mode pattern with `normalizeFileInput`.
+
+### Basic/Advanced File Pattern
+
+```typescript
+// Basic mode: Visual file upload
+{
+  id: 'uploadFile',
+  title: 'File',
+  type: 'file-upload',
+  canonicalParamId: 'file',  // Both map to 'file' param
+  placeholder: 'Upload file',
+  mode: 'basic',
+  multiple: false,
+  required: true,
+  condition: { field: 'operation', value: 'upload' },
+},
+// Advanced mode: Reference from other blocks
+{
+  id: 'fileRef',
+  title: 'File',
+  type: 'short-input',
+  canonicalParamId: 'file',  // Both map to 'file' param
+  placeholder: 'Reference file (e.g., {{file_block.output}})',
+  mode: 'advanced',
+  required: true,
+  condition: { field: 'operation', value: 'upload' },
+},
+```
+
+**Critical constraints:**
+- `canonicalParamId` must NOT match any subblock's `id` in the same block
+- Values are stored under subblock `id`, not `canonicalParamId`
+
+### Normalizing File Input in tools.config
+
+Use `normalizeFileInput` to handle all input variants:
+
+```typescript
+import { normalizeFileInput } from '@/blocks/utils'
+
+tools: {
+  access: ['service_upload'],
+  config: {
+    tool: (params) => {
+      // Check all field IDs: uploadFile (basic), fileRef (advanced), fileContent (legacy)
+      const normalizedFile = normalizeFileInput(
+        params.uploadFile || params.fileRef || params.fileContent,
+        { single: true }
+      )
+      if (normalizedFile) {
+        params.file = normalizedFile
+      }
+      return `service_${params.operation}`
+    },
+  },
+}
+```
+
+**Why this pattern?**
+- Values come through as `params.uploadFile` or `params.fileRef` (the subblock IDs)
+- `canonicalParamId` only controls UI/schema mapping, not runtime values
+- `normalizeFileInput` handles JSON strings from advanced mode template resolution
+
+### File Input Types in `inputs`
+
+Use `type: 'json'` for file inputs:
+
+```typescript
+inputs: {
+  uploadFile: { type: 'json', description: 'Uploaded file (UserFile)' },
+  fileRef: { type: 'json', description: 'File reference from previous block' },
+  // Legacy field for backwards compatibility
+  fileContent: { type: 'string', description: 'Legacy: base64 encoded content' },
+}
+```
+
+### Multiple Files
+
+For multiple file uploads:
+
+```typescript
+{
+  id: 'attachments',
+  title: 'Attachments',
+  type: 'file-upload',
+  multiple: true,  // Allow multiple files
+  maxSize: 25,     // Max size in MB per file
+  acceptedTypes: 'image/*,application/pdf,.doc,.docx',
+}
+
+// In tools.config:
+const normalizedFiles = normalizeFileInput(
+  params.attachments || params.attachmentRefs,
+  // No { single: true } - returns array
+)
+if (normalizedFiles) {
+  params.files = normalizedFiles
+}
+```
+
+## Condition Syntax
+
+Controls when a field is shown based on other field values.
+
+### Simple Condition
+```typescript
+condition: { field: 'operation', value: 'create' }
+// Shows when operation === 'create'
+```
+
+### Multiple Values (OR)
+```typescript
+condition: { field: 'operation', value: ['create', 'update'] }
+// Shows when operation is 'create' OR 'update'
+```
+
+### Negation
+```typescript
+condition: { field: 'operation', value: 'delete', not: true }
+// Shows when operation !== 'delete'
+```
+
+### Compound (AND)
+```typescript
+condition: {
+  field: 'operation',
+  value: 'send',
+  and: {
+    field: 'type',
+    value: 'dm',
+    not: true,
+  }
+}
+// Shows when operation === 'send' AND type !== 'dm'
+```
+
+### Complex Example
+```typescript
+condition: {
+  field: 'operation',
+  value: ['list', 'search'],
+  not: true,
+  and: {
+    field: 'authMethod',
+    value: 'oauth',
+  }
+}
+// Shows when operation NOT in ['list', 'search'] AND authMethod === 'oauth'
+```
+
+## DependsOn Pattern
+
+Controls when a field is enabled and when its options are refetched.
+
+### Simple Array (all must be set)
+```typescript
+dependsOn: ['credential']
+// Enabled only when credential has a value
+// Options refetch when credential changes
+
+dependsOn: ['credential', 'projectId']
+// Enabled only when BOTH have values
+```
+
+### Complex (all + any)
+```typescript
+dependsOn: {
+  all: ['authMethod'],           // All must be set
+  any: ['credential', 'apiKey']  // At least one must be set
+}
+// Enabled when authMethod is set AND (credential OR apiKey is set)
+```
+
+## Required Pattern
+
+Can be boolean or condition-based.
+
+### Simple Boolean
+```typescript
+required: true
+required: false
+```
+
+### Conditional Required
+```typescript
+required: { field: 'operation', value: 'create' }
+// Required only when operation === 'create'
+
+required: { field: 'operation', value: ['create', 'update'] }
+// Required when operation is 'create' OR 'update'
+```
+
+## Mode Pattern (Basic vs Advanced)
+
+Controls which UI view shows the field.
+
+### Mode Options
+- `'basic'` - Only in basic view (default UI)
+- `'advanced'` - Only in advanced view
+- `'both'` - Both views (default if not specified)
+- `'trigger'` - Only in trigger configuration
+
+### canonicalParamId Pattern
+
+Maps multiple UI fields to a single serialized parameter:
+
+```typescript
+// Basic mode: Visual selector
+{
+  id: 'channel',
+  title: 'Channel',
+  type: 'channel-selector',
+  mode: 'basic',
+  canonicalParamId: 'channel',  // Both map to 'channel' param
+  dependsOn: ['credential'],
+}
+
+// Advanced mode: Manual input
+{
+  id: 'channelId',
+  title: 'Channel ID',
+  type: 'short-input',
+  mode: 'advanced',
+  canonicalParamId: 'channel',  // Both map to 'channel' param
+  placeholder: 'Enter channel ID manually',
+}
+```
+
+**How it works:**
+- In basic mode: `channel` selector value → `params.channel`
+- In advanced mode: `channelId` input value → `params.channel`
+- The serializer consolidates based on current mode
+
+**Critical constraints:**
+- `canonicalParamId` must NOT match any other subblock's `id` in the same block (causes conflicts)
+- `canonicalParamId` must be unique per block (only one basic/advanced pair per canonicalParamId)
+- ONLY use `canonicalParamId` to link basic/advanced mode alternatives for the same logical parameter
+- Do NOT use it for any other purpose
+
+## WandConfig Pattern
+
+Enables AI-assisted field generation.
+
+```typescript
+{
+  id: 'query',
+  title: 'Query',
+  type: 'code',
+  language: 'json',
+  wandConfig: {
+    enabled: true,
+    prompt: 'Generate a query based on the user request. Return ONLY the JSON.',
+    placeholder: 'Describe what you want to query...',
+    generationType: 'json-object',  // Optional: affects AI behavior
+    maintainHistory: true,          // Optional: keeps conversation context
+  },
+}
+```
+
+### Generation Types
+- `'javascript-function-body'` - JS code generation
+- `'json-object'` - Raw JSON (adds "no markdown" instruction)
+- `'json-schema'` - JSON Schema definitions
+- `'sql-query'` - SQL statements
+- `'timestamp'` - Adds current date/time context
+
+## Tools Configuration
+
+**Important:** `tools.config.tool` runs during serialization before variable resolution. Put `Number()` and other type coercions in `tools.config.params` instead, which runs at execution time after variables are resolved.
+
+**Preferred:** Use tool names directly as dropdown option IDs to avoid switch cases:
+```typescript
+// Dropdown options use tool IDs directly
+options: [
+  { label: 'Create', id: 'service_create' },
+  { label: 'Read', id: 'service_read' },
+]
+
+// Tool selector just returns the operation value
+tool: (params) => params.operation,
+```
+
+### With Parameter Transformation
+```typescript
+tools: {
+  access: ['service_action'],
+  config: {
+    tool: (params) => 'service_action',
+    params: (params) => ({
+      id: params.resourceId,
+      data: typeof params.data === 'string' ? JSON.parse(params.data) : params.data,
+    }),
+  },
+}
+```
+
+### V2 Versioned Tool Selector
+```typescript
+import { createVersionedToolSelector } from '@/blocks/utils'
+
+tools: {
+  access: [
+    'service_create_v2',
+    'service_read_v2',
+    'service_update_v2',
+  ],
+  config: {
+    tool: createVersionedToolSelector({
+      baseToolSelector: (params) => `service_${params.operation}`,
+      suffix: '_v2',
+      fallbackToolId: 'service_create_v2',
+    }),
+  },
+}
+```
+
+## Outputs Definition
+
+**IMPORTANT:** Block outputs have a simpler schema than tool outputs. Block outputs do NOT support:
+- `optional: true` - This is only for tool outputs
+- `items` property - This is only for tool outputs with array types
+
+Block outputs only support:
+- `type` - The data type ('string', 'number', 'boolean', 'json', 'array')
+- `description` - Human readable description
+- Nested object structure (for complex types)
+
+```typescript
+outputs: {
+  // Simple outputs
+  id: { type: 'string', description: 'Resource ID' },
+  success: { type: 'boolean', description: 'Whether operation succeeded' },
+
+  // Use type: 'json' for complex objects or arrays (NOT type: 'array' with items)
+  items: { type: 'json', description: 'List of items' },
+  metadata: { type: 'json', description: 'Response metadata' },
+
+  // Nested outputs (for structured data)
+  user: {
+    id: { type: 'string', description: 'User ID' },
+    name: { type: 'string', description: 'User name' },
+    email: { type: 'string', description: 'User email' },
+  },
+}
+```
+
+### Typed JSON Outputs
+
+When using `type: 'json'` and you know the object shape in advance, **describe the inner fields in the description** so downstream blocks know what properties are available. For well-known, stable objects, use nested output definitions instead:
+
+```typescript
+outputs: {
+  // BAD: Opaque json with no info about what's inside
+  plan: { type: 'json', description: 'Zone plan information' },
+
+  // GOOD: Describe the known fields in the description
+  plan: {
+    type: 'json',
+    description: 'Zone plan information (id, name, price, currency, frequency, is_subscribed)',
+  },
+
+  // BEST: Use nested output definition when the shape is stable and well-known
+  plan: {
+    id: { type: 'string', description: 'Plan identifier' },
+    name: { type: 'string', description: 'Plan name' },
+    price: { type: 'number', description: 'Plan price' },
+    currency: { type: 'string', description: 'Price currency' },
+  },
+}
+```
+
+Use the nested pattern when:
+- The object has a small, stable set of fields (< 10)
+- Downstream blocks will commonly access specific properties
+- The API response shape is well-documented and unlikely to change
+
+Use `type: 'json'` with a descriptive string when:
+- The object has many fields or a dynamic shape
+- It represents a list/array of items
+- The shape varies by operation
+
+If the output shape is unknown because the underlying tool response is undocumented, you MUST tell the user and stop. Unknown is not the same as variable. Never guess block outputs.
+
+## V2 Block Pattern
+
+When creating V2 blocks (alongside legacy V1):
+
+```typescript
+// V1 Block - mark as legacy
+export const ServiceBlock: BlockConfig = {
+  type: 'service',
+  name: 'Service (Legacy)',
+  hideFromToolbar: true,  // Hide from toolbar
+  // ... rest of config
+}
+
+// V2 Block - visible, uses V2 tools
+export const ServiceV2Block: BlockConfig = {
+  type: 'service_v2',
+  name: 'Service',              // Clean name
+  hideFromToolbar: false,       // Visible
+  subBlocks: ServiceBlock.subBlocks,  // Reuse UI
+  tools: {
+    access: ServiceBlock.tools?.access?.map(id => `${id}_v2`) || [],
+    config: {
+      tool: createVersionedToolSelector({
+        baseToolSelector: (params) => (ServiceBlock.tools?.config as any)?.tool(params),
+        suffix: '_v2',
+        fallbackToolId: 'service_default_v2',
+      }),
+      params: ServiceBlock.tools?.config?.params,
+    },
+  },
+  outputs: {
+    // Flat, API-aligned outputs (not wrapped in content/metadata)
+  },
+}
+```
+
+## Block Metadata (BlockMeta)
+
+Every integration block **must** export a `{Service}BlockMeta` object at the bottom of the block file. This metadata drives the integration catalog, tag filters, and workflow template suggestions shown to users.
+
+### Structure
+
+```typescript
+import type { BlockConfig, BlockMeta } from '@/blocks/types'
+
+// ... block definition above ...
+
+export const {Service}BlockMeta = {
+  tags: ['messaging', 'automation'],   // Same tags as the block's tags field
+  url: 'https://{service}.com',         // Canonical homepage of the external service
+  templates: [                          // Optional but strongly encouraged
+    {
+      icon: {Service}Icon,
+      title: '{Service} use-case title',
+      prompt: 'Build a workflow that ...',
+      modules: ['agent', 'workflows'],  // Modules the template uses
+      category: 'productivity',         // Template category
+      tags: ['automation'],             // Template-level tags
+      alsoIntegrations: ['slack'],      // Other blocks referenced in the prompt (optional)
+    },
+  ],
+  skills: [                             // Optional but strongly encouraged
+    {
+      name: 'summarize-thread',         // kebab-case, becomes the created skill's name
+      description: 'One line: what it does and when to use it.',
+      content:
+        '# Summarize Thread\n\n...\n\n## Steps\n1. ...\n\n## Output\n...',  // markdown
+    },
+  ],
+} as const satisfies BlockMeta
+```
+
+### Rules
+
+- **Import `BlockMeta`** from `@/blocks/types` alongside `BlockConfig`
+- **`tags`** must match the `tags` array on the block config exactly
+- **`url`** is the canonical homepage of the external service the block integrates with (e.g. `'https://exa.ai'`, `'https://salesforce.com'`) — the catalog "link back to the tool". It is distinct from `BlockConfig.docsLink`, which points at Sim's own integration docs on `docs.sim.ai`. Use the service's real root domain over `https` (verify it actually resolves), no tracking params, no trailing slash. Omit `url` only for first-party/built-in blocks that have no external service (e.g. `agent`, `function`, `condition`, `api`, `response`)
+- **Templates are optional** but should be added for any integration that has a recognizable use case — aim for 2–4 templates per block
+- **Template `prompt`** should start with "Build a workflow that..." or "Create a workflow that..." and be concrete enough to generate a real workflow in Mothership
+- **Template `modules`** lists the Sim modules the template relies on: `'knowledge-base' | 'tables' | 'files' | 'workflows' | 'scheduled' | 'agent'`
+- **Template `category`** is one of: `'popular' | 'sales' | 'support' | 'engineering' | 'marketing' | 'productivity' | 'operations'`
+- **`alsoIntegrations`** names other block types (e.g. `'slack'`, `'linear'`) referenced in the template prompt — helps the catalog surface this template when those blocks are selected
+- Place the export **after** the main `{Service}Block` export, at the very bottom of the file
+
+#### `skills` — curated, ready-to-add agent skills
+
+`skills` is an optional array of `SuggestedSkill` (`{ name, description, content }`) shown on the integration's detail page; users click **Add** to create the skill in their workspace. Aim for 3–5 skills for mainstream services, 2–3 for niche/low-level ones.
+
+- **`name`** — kebab-case, lowercase letters/numbers/hyphens, ≤ 64 chars, unique within the integration, verb-led (e.g. `summarize-thread`).
+- **`description`** — one line, ≤ 1024 chars: what it does and when to use it.
+- **`content`** — markdown instructions for the agent (literal `\n` for newlines): a `# Title`, then `## Steps` and an output/guidance section. Keep ~600–2000 chars.
+- **Ground every skill in operations the block actually exposes.** Cross-check each skill's steps against the block's `tools.access` list — never describe an action the integration cannot perform (e.g. "receive messages" when the block only sends).
+- **Skills MUST be derived from real, popular use cases found online — never invented.** Before adding a skill, web-search the service's documented use cases (vendor use-case/solutions pages, official docs describing the workflow, reputable "top automations for X" articles). If you cannot source a use case as something people genuinely do with the service, do not add it. Do not hallucinate skills.
+
+### Register in the blocksMeta object
+
+After adding `{Service}BlockMeta` to the block file, register it in `apps/sim/blocks/registry.ts`:
+
+```typescript
+// Add import (alongside the block import, alphabetically)
+import { ServiceBlock, ServiceBlockMeta } from '@/blocks/blocks/service'
+
+// Add to blocksMeta object (alphabetically)
+export const blocksMeta = {
+  // ... existing entries ...
+  service: ServiceBlockMeta,
+}
+```
+
+## Registering Blocks
+
+After creating the block, remind the user to:
+1. Import `{Service}Block` and `{Service}BlockMeta` in `apps/sim/blocks/registry.ts`
+2. Add to the `registry` object (alphabetically):
+3. Add to the `blocksMeta` object (alphabetically):
+
+```typescript
+import { ServiceBlock, ServiceBlockMeta } from '@/blocks/blocks/service'
+
+export const registry: Record<string, BlockConfig> = {
+  // ... existing blocks ...
+  service: ServiceBlock,
+}
+
+export const blocksMeta = {
+  // ... existing entries ...
+  service: ServiceBlockMeta,
+}
+```
+
+## Complete Example
+
+```typescript
+import { ServiceIcon } from '@/components/icons'
+import type { BlockConfig } from '@/blocks/types'
+import { AuthMode, IntegrationType } from '@/blocks/types'
+import { getScopesForService } from '@/lib/oauth/utils'
+
+export const ServiceBlock: BlockConfig = {
+  type: 'service',
+  name: 'Service',
+  description: 'Integrate with Service API',
+  longDescription: 'Full description for documentation...',
+  docsLink: 'https://docs.sim.ai/integrations/service',
+  category: 'tools',
+  integrationType: IntegrationType.DeveloperTools,
+  tags: ['oauth', 'api'],
+  bgColor: '#FF6B6B',
+  icon: ServiceIcon,
+  authMode: AuthMode.OAuth,
+
+  subBlocks: [
+    {
+      id: 'operation',
+      title: 'Operation',
+      type: 'dropdown',
+      options: [
+        { label: 'Create', id: 'create' },
+        { label: 'Read', id: 'read' },
+        { label: 'Update', id: 'update' },
+        { label: 'Delete', id: 'delete' },
+      ],
+      value: () => 'create',
+    },
+    {
+      id: 'credential',
+      title: 'Service Account',
+      type: 'oauth-input',
+      serviceId: 'service',
+      requiredScopes: getScopesForService('service'),
+      placeholder: 'Select account',
+      required: true,
+    },
+    {
+      id: 'resourceId',
+      title: 'Resource ID',
+      type: 'short-input',
+      placeholder: 'Enter resource ID',
+      condition: { field: 'operation', value: ['read', 'update', 'delete'] },
+      required: { field: 'operation', value: ['read', 'update', 'delete'] },
+    },
+    {
+      id: 'name',
+      title: 'Name',
+      type: 'short-input',
+      placeholder: 'Resource name',
+      condition: { field: 'operation', value: ['create', 'update'] },
+      required: { field: 'operation', value: 'create' },
+    },
+  ],
+
+  tools: {
+    access: ['service_create', 'service_read', 'service_update', 'service_delete'],
+    config: {
+      tool: (params) => `service_${params.operation}`,
+    },
+  },
+
+  outputs: {
+    id: { type: 'string', description: 'Resource ID' },
+    name: { type: 'string', description: 'Resource name' },
+    createdAt: { type: 'string', description: 'Creation timestamp' },
+  },
+}
+```
+
+## Connecting Blocks with Triggers
+
+If the service supports webhooks, connect the block to its triggers.
+
+```typescript
+import { getTrigger } from '@/triggers'
+
+export const ServiceBlock: BlockConfig = {
+  // ... basic config ...
+
+  triggers: {
+    enabled: true,
+    available: ['service_event_a', 'service_event_b', 'service_webhook'],
+  },
+
+  subBlocks: [
+    // Tool subBlocks first...
+    { id: 'operation', /* ... */ },
+
+    // Then spread trigger subBlocks
+    ...getTrigger('service_event_a').subBlocks,
+    ...getTrigger('service_event_b').subBlocks,
+    ...getTrigger('service_webhook').subBlocks,
+  ],
+}
+```
+
+See the `/add-trigger` skill for creating triggers.
+
+## Icon Requirement
+
+If the icon doesn't already exist in `@/components/icons.tsx`, **do NOT search for it yourself**. After completing the block, ask the user to provide the SVG:
+
+```
+The block is complete, but I need an icon for {Service}.
+Please provide the SVG and I'll convert it to a React component.
+
+You can usually find this in the service's brand/press kit page, or copy it from their website.
+```
+
+## Advanced Mode for Optional Fields
+
+Optional fields that are rarely used should be set to `mode: 'advanced'` so they don't clutter the basic UI. This includes:
+- Pagination tokens
+- Time range filters (start/end time)
+- Sort order options
+- Reply settings
+- Rarely used IDs (e.g., reply-to tweet ID, quote tweet ID)
+- Max results / limits
+
+```typescript
+{
+  id: 'startTime',
+  title: 'Start Time',
+  type: 'short-input',
+  placeholder: 'ISO 8601 timestamp',
+  condition: { field: 'operation', value: ['search', 'list'] },
+  mode: 'advanced',  // Rarely used, hide from basic view
+}
+```
+
+## WandConfig for Complex Inputs
+
+Use `wandConfig` for fields that are hard to fill out manually, such as timestamps, comma-separated lists, and complex query strings. This gives users an AI-assisted input experience.
+
+```typescript
+// Timestamps - use generationType: 'timestamp' to inject current date context
+{
+  id: 'startTime',
+  title: 'Start Time',
+  type: 'short-input',
+  mode: 'advanced',
+  wandConfig: {
+    enabled: true,
+    prompt: 'Generate an ISO 8601 timestamp based on the user description. Return ONLY the timestamp string.',
+    generationType: 'timestamp',
+  },
+}
+
+// Comma-separated lists - simple prompt without generationType
+{
+  id: 'mediaIds',
+  title: 'Media IDs',
+  type: 'short-input',
+  mode: 'advanced',
+  wandConfig: {
+    enabled: true,
+    prompt: 'Generate a comma-separated list of media IDs. Return ONLY the comma-separated values.',
+  },
+}
+```
+
+## Naming Convention
+
+All tool IDs referenced in `tools.access` and returned by `tools.config.tool` MUST use `snake_case` (e.g., `x_create_tweet`, `slack_send_message`). Never use camelCase or PascalCase.
+
+## Checklist Before Finishing
+
+- [ ] `integrationType` is set to the correct `IntegrationType` enum value
+- [ ] `tags` array includes all applicable `IntegrationTag` values
+- [ ] All subBlocks have `id`, `title` (except switch), and `type`
+- [ ] Conditions use correct syntax (field, value, not, and)
+- [ ] DependsOn set for fields that need other values
+- [ ] Required fields marked correctly (boolean or condition)
+- [ ] OAuth inputs have correct `serviceId` and `requiredScopes: getScopesForService(serviceId)`
+- [ ] Scope descriptions added to `SCOPE_DESCRIPTIONS` in `lib/oauth/utils.ts` for any new scopes
+- [ ] Tools.access lists all tool IDs (snake_case)
+- [ ] Tools.config.tool returns correct tool ID (snake_case)
+- [ ] Outputs match tool outputs
+- [ ] Block registered in `registry.ts` blocks object (alphabetically)
+- [ ] `{Service}BlockMeta` exported at bottom of block file with `tags` and `templates`
+- [ ] `url` set on `{Service}BlockMeta` to the external service's verified homepage (omit only for first-party blocks with no external service)
+- [ ] `skills` added to `{Service}BlockMeta`, each grounded in the block's `tools.access` and derived from a real online-sourced use case (not invented)
+- [ ] `BlockMeta` imported from `@/blocks/types` alongside `BlockConfig`
+- [ ] Block meta registered in `registry.ts` blocksMeta object (alphabetically)
+- [ ] If icon missing: asked user to provide SVG
+- [ ] If triggers exist: `triggers` config set, trigger subBlocks spread
+- [ ] Optional/rarely-used fields set to `mode: 'advanced'`
+- [ ] Timestamps and complex inputs have `wandConfig` enabled
+
+## Final Validation (Required)
+
+After creating the block, you MUST validate it against every tool it references:
+
+1. **Read every tool definition** that appears in `tools.access` — do not skip any
+2. **For each tool, verify the block has correct:**
+   - SubBlock inputs that cover all required tool params (with correct `condition` to show for that operation)
+   - SubBlock input types that match the tool param types (e.g., dropdown for enums, short-input for strings)
+   - `tools.config.params` correctly maps subBlock IDs to tool param names (if they differ)
+   - Type coercions in `tools.config.params` for any params that need conversion (Number(), Boolean(), JSON.parse())
+3. **Verify block outputs** cover the key fields returned by all tools
+4. **Verify conditions** — each subBlock should only show for the operations that actually use it
+5. **If any tool outputs are still unknown**, explicitly tell the user instead of guessing block outputs

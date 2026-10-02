@@ -1,0 +1,9 @@
+# SimVehicleApp — root compose (dev phase). Each module owns its compose fragment; this file only aggregates.
+#   docker compose up -d                      # runtime stack + toolchain (+ ide)
+#   docker compose --profile mock up -d       # + kuksa mock-provider
+# Build order is resolved by compose: devcontainer-cpp → toolchain-cpp → ide-cpp (service: build contexts).
+name: simvehicleapp
+include:
+  - modules/velocitas-stack/compose.yaml
+  - modules/ide-vscode/compose.yaml
+  - modules/simvehicleapp-studio/compose.simvehicleapp.yaml
