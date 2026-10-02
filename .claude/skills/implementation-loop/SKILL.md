@@ -21,6 +21,7 @@ Bổ sung cho `simvehicleapp-phase-execution` (gate ở mức milestone/task) �
 6. **Implement lại** đúng theo doc vừa cập nhật.
 7. **Test toàn diện** trước khi coi task xong: unit + contract + golden/parity liên quan + type-check/lint + build thật của đúng module (không giả định "sẽ pass" — phải thấy output thật). Nếu đụng compose: `docker compose -f modules/<m>/compose.yaml config -q` phải valid độc lập.
 8. **Lỗi** → sửa tại root cause (không try/catch rỗng, không nới dung sai test, không workaround che dấu hiệu). Nếu lỗi lộ ra thêm gap trong doc → quay lại bước 5, lặp đến khi hết mismatch.
+9. **Tracking**: đổi dòng feature tương ứng trong `docs/ROADMAP.md` thành `✔` + bằng chứng (commit/PR/test output) + ngày — chỉ sau khi bước 7 đã pass thật. Đây là bước bắt buộc của mỗi task, không phải việc "làm sau nếu nhớ".
 
 ## Checklist "production-ready" trước khi đánh dấu task xong
 - **Determinism**: chạy lại 2 lần cùng input ⇒ cùng bytes (không timestamp/random lọt vào IR hay file sinh).

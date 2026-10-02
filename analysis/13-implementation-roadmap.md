@@ -2,6 +2,7 @@
 
 > Kế hoạch tổng: 15 milestone (M0–M14), mỗi milestone có file chi tiết trong [phases/](phases/README.md) gồm: mục tiêu → ADR cần Accepted trước → task (mỗi task ≤ 1–2 ngày) → file/contract → test → DoD → **Acceptance Gate**.
 > Luật vận hành: **không bắt đầu milestone phụ thuộc khi gate trước FAIL** (Master Plan Part 15). Báo cáo cuối mỗi milestone theo [template](phases/REPORT_TEMPLATE.md).
+> File này **ít đổi** (kế hoạch). Tiến độ thật, theo dõi theo từng feature, cập nhật liên tục khi code: [`docs/ROADMAP.md`](../docs/ROADMAP.md).
 
 ---
 

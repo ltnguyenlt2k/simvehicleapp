@@ -8,6 +8,7 @@
 3. [analysis/02-layers-and-modules.md](analysis/02-layers-and-modules.md) — tầng, repo con, ma trận phụ thuộc.
 4. ADR của milestone đang làm: [analysis/adr/README.md](analysis/adr/README.md).
 5. File phase: [analysis/phases/](analysis/phases/README.md) — làm **đúng thứ tự task**, đúng gate.
+6. [docs/ROADMAP.md](docs/ROADMAP.md) — **bảng tracking sống**: trước khi làm 1 feature, kiểm trạng thái hiện tại ở đây; làm xong phải tự cập nhật (xem skill `implementation-loop` + mục 1 của file).
 `vehicle_no_code_studio_master_plan_v2.md` là tài liệu gốc; khi mâu thuẫn, **analysis/ + ADR thắng** (đã hiệu chỉnh theo research 2026-09-30); khi analysis mâu thuẫn source thật ⇒ source thật thắng + ghi ADR.
 
 ## 2. Luật cứng (vi phạm = revert)
@@ -48,7 +49,7 @@ Vòng lặp chi tiết (review doc → research → implement → mismatch → �
 3. Implement trong đúng repo con (branch `feat/M<nn>-T<nn>-<slug>`).
 4. Chạy test module + contract test; nếu chạm contract → bump + ADR.
 5. PR ở repo con; sau merge → PR meta-repo bump lock (`scripts/modules.sh bump <module>`).
-6. Cập nhật checklist DoD của phase.
+6. Cập nhật checklist DoD của phase **và** đổi trạng thái feature tương ứng trong [docs/ROADMAP.md](docs/ROADMAP.md) (`☐`→`🔄` lúc bắt đầu, `🔄`→`✔` kèm bằng chứng lúc xong).
 
 ## 5. Lệnh thường dùng (dev phase — ADR-0009)
 ```bash

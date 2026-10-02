@@ -1,0 +1,321 @@
+# ROADMAP.md — Theo dõi tiến độ SimVehicleApp (nguồn: 34 ADR + `analysis/phases/*`)
+
+> File này là **bảng tracking sống** (cập nhật liên tục khi code), khác với [`analysis/13-implementation-roadmap.md`](../analysis/13-implementation-roadmap.md) (kế hoạch tổng, ít đổi) và `analysis/phases/M<nn>-*.md` (chi tiết task/DoD/Gate từng milestone, ít đổi). Khi một **feature** dưới đây hoàn thành thật (có test/bằng chứng, không phải "nghĩ là xong"), đổi trạng thái ngay trong PR đóng task đó.
+>
+> Sinh ngày 2026-10-02 từ: 34 ADR (`analysis/adr/ADR-0001`…`0042`) + 15 file `analysis/phases/M00`…`M14`. Mỗi dòng feature = 1 cụm task (ID task gốc ghi trong cột cuối) để không phải tick 150+ ô task rời.
+
+## 1. Vòng đời cập nhật file này (bắt buộc)
+
+1. Bắt đầu làm 1 feature → đổi `☐` thành `🔄`, ghi tên người/agent + ngày bắt đầu vào cột Ghi chú.
+2. Thực hiện đúng skill `implementation-loop`: đọc ADR liên quan → research upstream nếu cần → viết test trước → implement → nếu phát hiện ADR/doc sai thì xử lý mismatch (sửa ADR/doc) **trước khi** tiếp tục code, không âm thầm lệch.
+3. Chỉ đổi `🔄` thành `✔` khi: test thật pass (unit/golden/contract tương ứng) **và** Definition of Done của milestone (trong `phases/M<nn>-*.md`) cho phần đó đã đạt. Ghi bằng chứng (commit SHA ngắn, hoặc link PR, hoặc file report) + ngày vào cột Ghi chú.
+4. Khi **toàn bộ** feature của 1 milestone đã `✔` → chạy Acceptance Gate của milestone đó → viết `docs/reports/M<nn>.md` theo `analysis/phases/REPORT_TEMPLATE.md` → cập nhật dòng tổng quan ở §3 → **chỉ sau đó** milestone kế tiếp mới được bắt đầu (luật cứng AGENTS.md §2 #7, không bỏ qua gate).
+5. Một feature không được `✔` nếu ADR nguồn của nó còn `Proposed` khi milestone yêu cầu `Accepted` (xem cột ADR ở §3 và `analysis/adr/README.md` §2) — trừ khi milestone đó tự làm công việc Accept (ví dụ M0 với spike).
+6. Mục M14 (backlog) **không** tick `✔` khi chưa có ADR riêng cho hạng mục đó — đúng quy tắc "mỗi mục cần ADR riêng trước khi làm" trong `phases/M14-*.md`.
+
+## 2. Quy ước trạng thái
+
+| Ký hiệu | Nghĩa |
+|---|---|
+| ☐ | Chưa bắt đầu |
+| 🔄 | Đang làm |
+| ✔ | Xong — có test/bằng chứng thật |
+| ✘ | Blocked / FAIL — ghi rõ lý do, không được coi milestone xong |
+| ↷ | Dời sang milestone/giai đoạn khác (ghi rõ lý do + ADR) |
+
+## 3. Tổng quan milestone (đường găng: M0→M1→M2→M3→M4→M6→M7→M8→M11; chi tiết song song hoá ở [13 §1](../analysis/13-implementation-roadmap.md#1-đồ-thị-phụ-thuộc))
+
+| M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
+|---|---|---|---|---|
+| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | 🔄 | 7/9 |
+| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ☐ | 0/12 |
+| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
+| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
+| [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
+| [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
+| [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
+| [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ☐ | 0/19 |
+| [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ☐ | 0/10 |
+| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ☐ | 0/8 |
+| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ☐ | 0/10 |
+| [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
+| [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
+| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
+| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
+
+**MVP v1.0 = M0→M11, 157 feature.** Đã xong 7/157 (~4%) — chỉ mới hoàn thành phần hạ tầng/spike của M0; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai/contracts` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
+
+---
+
+## M0 — Foundations
+ADR: [0001](../analysis/adr/ADR-0001-record-architecture-decisions.md)–[0007](../analysis/adr/ADR-0007-service-decomposition-and-contracts.md), [0009](../analysis/adr/ADR-0009-dev-phase-module-folders.md) · Chi tiết: [phases/M00](../analysis/phases/M00-foundations.md)
+
+| Feature | ADR | Trạng thái | Ghi chú (bằng chứng) | Task |
+|---|---|---|---|---|
+| Meta-repo skeleton (README/AGENTS/CLAUDE/.gitignore/docs/scripts) | 0001,0009 | ✔ | Push `github.com/ltnguyenlt2k/simvehicleapp` 2026-10-02 | T01 |
+| Module folders dev-phase | 0009 | ✔ (dạng dev) | 10 thư mục `modules/*`; code thật: `velocitas-stack`, `ide-vscode`, `simvehicleapp-studio` (snapshot); còn lại placeholder | T02 |
+| Lock + `scripts/modules.sh` quản lý submodule | 0002 | ↷ | Dời tới release theo ADR-0009; dev dùng `scripts/sv` | T03 |
+| `docs/BASELINE.md` (SHA/digest pin) | 0003 | ✔ | File có đủ SHA Sim/template/SDK + digest image | T04 |
+| Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | ☐ | **Chưa làm** — đầu việc đầu tiên khi mở M1 | T05–T06 |
+| Compose skeleton root (`docker-compose.yml` include 3 fragment) | 0005,0009 | ✔ | `scripts/sv` + `docker-compose.yml` | T07 |
+| CI chung (license scan, contract-only-deps, compose lint) | 0004,0005 | ☐ | **Chưa có CI** — cần khi repo đã lên GitHub (đã lên, có thể làm ngay) | T08 |
+| Spike S-1..S-6 + E-1 (toolchain offline, databroker+MQTT, `set()` semantics, mock-provider, Sim minimal, code-server clangd, devcontainer export) | 0006,0024,0025,0028 | ✔ PASS cả 7 | `docs/spikes/M0-spikes-report.md` | T09–T14 |
+| Cập nhật ADR theo kết quả spike | 0023,0024,0025,0028 | ✔ | 0024/0025/0028 Accepted, 0023 có Notes, 0009 ra đời | T15 |
+
+**Mở còn lại trước khi coi M0 xong hẳn:** T05/T06 (contracts alpha) và T08 (CI) — không chặn M1 bắt đầu nhưng nên làm song song đầu M1 theo ghi chú trong `phases/M00-foundations.md`.
+
+## M1 — Studio shell
+ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [0004](../analysis/adr/ADR-0004-license-compliance.md), [0008](../analysis/adr/ADR-0008-sim-refactor-strategy.md) · Phụ thuộc: M0 · Chi tiết: [phases/M01](../analysis/phases/M01-studio-shell.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Fork + tag `baseline-v0.7.13` + `UPSTREAM_SYNC.md` | 0003 | ☐ | | T01 |
+| Clean-room gỡ `ee/` (spec Apache + `lib/sv/oss/*` + codemod + xoá `apps/sim/ee/`) | 0004 | ☐ | Theo bảng symbol [11a §2](../analysis/11a-ee-clean-room-replacement.md) | T02a–c |
+| Gỡ copilot (`lib/copilot/**`, routes, panel placeholder) | 0004 | ☐ | | T03 |
+| Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | ☐ | | T04 |
+| Toolbar allowlist `sv_*` (ẩn 268 block cũ) | 0008 | ☐ | Theo [11b](../analysis/11b-block-inventory-and-migration.md) | T05 |
+| Rebrand (brand.ts, metadata, NOTICE) | 0003 | ☐ | | T06 |
+| Tắt telemetry mặc định | 0004 | ☐ | | T07 |
+| Dockerfiles compose meta (app/realtime/migrations) | 0005 | ☐ | | T08 |
+| BFF skeleton `/api/sv/health` | 0007 | ☐ | | T09 |
+| Layout editor: action bar + bottom dock + banner an toàn | 0008 | ☐ | | T10 |
+| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | ☐ | Dùng [scratch-opcode-denylist.md](../analysis/adr/scratch-opcode-denylist.md) | T11 |
+| i18n check (Q8) | — | ☐ | | T12 |
+
+## M2 — VSS catalog & vehicle blocks
+ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR-0011-block-model-on-canvas.md) · Phụ thuộc: M1 · Chi tiết: [phases/M02](../analysis/phases/M02-vss-catalog-and-vehicle-blocks.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| `packages/vss` (parse/classify/normalize/hash) | 0010 | ☐ | Fixture ≥20 path (counts 287/425/379/106) | T01 |
+| VSS sources (LocalFile seed v4.0/v4.2 + Http cache pin tag) | 0010 | ☐ | | T02 |
+| Search index (fuzzy, filter kind) | 0010 | ☐ | | T03 |
+| Service `vss-catalog` + ETag + OpenAPI | 0010 | ☐ | `:4010` | T04 |
+| BlockSpec 4 block vehicle (`sv_read_signal/read_attribute/set_actuator/on_signal_changed`) | 0011 | ☐ | | T05 |
+| `GET /blocks` skeleton (compiler service) | 0011 | ☐ | | T06 |
+| SubBlock `vss-path-selector` | 0011 | ☐ | | T07 |
+| SubBlock `sv-typed-value`, `sv-enum` | 0011,0018 | ☐ | Theo full datatype list ADR-0018 | T08 |
+| BlockConfig UI 4 block vehicle + đăng ký | 0011 | ☐ | `block-parity.test.ts` | T09 |
+| Panel Vehicle (toolbar cây VSS + drag→menu) | 0011 | ☐ | | T10 |
+| Project settings chọn VSS release | 0010 | ☐ | | T11 |
+| BFF proxy `/api/sv/catalog/*` | 0007 | ☐ | | T12 |
+
+## M3 — Logic/Flow/State/Comm blocks
+ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis/adr/ADR-0013-dataflow-and-expression-language.md), [0018](../analysis/adr/ADR-0018-vss-array-and-full-datatype-coverage.md) · Phụ thuộc: M2 · Chi tiết: [phases/M03](../analysis/phases/M03-logic-flow-blocks.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| `packages/expr` (lexer + Pratt parser + AST) | 0013 | ☐ | 200 case + fuzz 10 phút | T01 |
+| Reference `<…>` + resolver interface | 0013 | ☐ | | T02 |
+| Template string `"…{<ref>}…"` | 0013 | ☐ | | T03 |
+| BlockSpec Logic & Math (14 block, gồm `sv_array_length/at/contains` ADR-0018) | 0013,0018 | ☐ | | T04 |
+| BlockSpec Flow Control (9 block, dùng subflow container Sim cho `sv_repeat/while/parallel`) | 0012 | ☐ | | T05 |
+| BlockSpec State/Comm (5 block) | 0012 | ☐ | | T06 |
+| UI BlockConfig + handles (`then/else`, `ok/timeout`,…) | 0011 | ☐ | block-parity | T07 |
+| SubBlock `sv-expression` (Monaco) + `sv-duration` | 0013 | ☐ | | T08 |
+| Panel Variables | 0012 | ☐ | | T09 |
+| Map subflow `parallel`/`loop` Sim → `sv_parallel/sv_repeat/sv_while` | 0011,0012 | ☐ | | T10 |
+| `POST /lint` realtime (S0–S3 + một phần S6) | 0016 | ☐ | debounce 300 ms | T11 |
+| Conformance scenarios ≥30 cho ADR-0012 | 0012 | ☐ | | T12 |
+| 7 golden workflow dựng trên canvas | — | ☐ | export `sim-state.json` | T13 |
+| Clean-room review checklist | 0004 | ☐ | | T14 |
+
+## M4 — Compiler & IR
+ADR: [0014](../analysis/adr/ADR-0014-ir-v1.md), [0015](../analysis/adr/ADR-0015-type-and-unit-system.md), [0016](../analysis/adr/ADR-0016-diagnostics-catalog.md), [0018](../analysis/adr/ADR-0018-vss-array-and-full-datatype-coverage.md) · Phụ thuộc: M3 · Chi tiết: [phases/M04](../analysis/phases/M04-compiler-ir.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| `graph-adapter.ts` (Sim state → WorkflowGraph v1) | 0014 | ☐ | Golden GW-A..G | T01 |
+| `packages/types` + `packages/units` | 0015 | ☐ | ≥100 case type; bảng conversion | T02 |
+| S0 parse/limits, S1 structural, S2 block config+migration | 0014 | ☐ | Case cố ý sai mỗi mã | T03 |
+| S3 vehicle model (qua `VehicleModelProvider`) | 0010,0014 | ☐ | | T04 |
+| S4 types + S5 units (chèn `unit.convert`) | 0015 | ☐ | | T05 |
+| S6 control flow (cycle/dominator/reachability/loop guard) | 0012,0014 | ☐ | | T06 |
+| S7 backend capability | 0020 | ☐ | | T07 |
+| IR builder + canonicalize + `irHash` | 0014,0018 | ☐ | Determinism 2 lần | T08 |
+| Diagnostics catalog v1 (gồm 4 mã array mới ADR-0018) | 0016,0018 | ☐ | `docs/DIAGNOSTICS_CATALOG.md` tự sinh | T09 |
+| Service `compiler` `/compile` (lint/verify/build) | 0014 | ☐ | Perf 200 block < 300 ms | T10 |
+| UI Verify + Problems panel + quick-fix `Convert` | 0016 | ☐ | | T11 |
+| `docs/IR_SPEC.md` tự sinh | 0014 | ☐ | | T12 |
+
+## M5 — Simulator
+ADR: [0017](../analysis/adr/ADR-0017-simulator.md) · Phụ thuộc: M4 · Chi tiết: [phases/M05](../analysis/phases/M05-simulator.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| VirtualClock + Strand giả lập + scheduler tất định | 0017 | ☐ | | T01 |
+| Interpreter opcode P0 | 0017 | ☐ | Conformance | T02 |
+| Concurrency policies (restart/ignore/queue/parallel) | 0012,0017 | ☐ | | T03 |
+| Opcode P1 (switch/wait_until/repeat/while/parallel/condition/write_many) | 0017 | ☐ | | T04 |
+| MockVehicle + MockMqtt | 0017 | ☐ | | T05 |
+| Tracer TraceEvent v1 + ScenarioPlayer | 0017,0027 | ☐ | Cùng format runtime thật | T06 |
+| `POST /simulate` + giới hạn (24h ảo, 1e6 event) | 0017 | ☐ | Perf 10' ảo < 1s | T07 |
+| Simulator Web Worker (tuỳ chọn) | 0017 | ☐ | | T08 |
+| UI Scenario editor | 0017 | ☐ | | T09 |
+| UI Simulation timeline + Replay overlay (`TraceOverlay`, dùng lại ở M8) | 0017,0027 | ☐ | | T10 |
+| `expected.trace/writes` GW-A..G đóng băng | 0042 | ☐ | | T11 |
+
+## M6 — C++ backend & runtime
+ADR: [0020](../analysis/adr/ADR-0020-backend-plugin-contract.md), [0021](../analysis/adr/ADR-0021-cpp-runtime-library.md), [0022](../analysis/adr/ADR-0022-cpp-codegen-strategy.md) · Phụ thuộc: M0 (song song), M4 · Chi tiết: [phases/M06](../analysis/phases/M06-cpp-backend-and-runtime.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| CMake/Conan package runtime (SDK 0.7.1) | 0021 | ☐ | Có thể bắt đầu ngay sau M0 | T01 |
+| `IClock`/`SteadyClock`/`VirtualClock` + `Strand` | 0021 | ☐ | gtest + TSAN | T02 |
+| `IVehicleAccess` + `VelocitasVehicleAccess` | 0021 | ☐ | Integration databroker nightly | T03 |
+| `testing::MockVehicle` | 0021 | ☐ | | T04 |
+| `Runtime` (signal registry, onX handlers, policies, cancel) | 0012,0021 | ☐ | Conformance | T05 |
+| `Ctx` API (read/write/wait/publish/log/trace/stop) | 0021 | ☐ | | T06 |
+| `StateVar<T>` + loop helpers | 0021 | ☐ | | T07 |
+| `Tracer` (SVTRACE) + `AppBase` | 0021,0027 | ☐ | Golden trace | T08 |
+| Conformance runner C++ | 0042 | ☐ | 100% scenario | T09 |
+| `docs/RUNTIME_API.md` | 0021 | ☐ | | T10 |
+| Server `/capabilities /generate /runtime/files` + `backend.yaml` | 0020 | ☐ | Contract test | T11 |
+| `CodeWriter` + `sanitizeIdent` | 0022 | ☐ | | T12 |
+| Naming tất định (VSS path→member, type map) | 0022 | ☐ | Đã đóng spike keyword/clang-format trước M6 | T13 |
+| Emitters P0 (trigger/vehicle/control/state/comm/`$expr`) | 0022 | ☐ | Golden GW-A,B,E | T14 |
+| Emitters P1 (switch/wait_until/repeat/while/parallel/condition) | 0022 | ☐ | Golden GW-C,D,F,G | T15 |
+| Project files (`SimVehicleApp.*`, `Main.cpp`, manifest fragment, sourcemap) | 0022,0023 | ☐ | Golden | T16 |
+| Template overlay (xoá SampleApp, `UserHooks.*`) | 0022,0023 | ☐ | Build thật | T17 |
+| Tests sinh kèm (`*_test.cpp` từ scenario) | 0042 | ☐ | ctest | T18 |
+| Manifest fragment builder | 0023 | ☐ | | T19 |
+| Determinism test (2 lần, 2 OS) | 0006 | ☐ | CI | T20 |
+
+## M7 — Workspace/Toolchain/SynCode
+ADR: [0023](../analysis/adr/ADR-0023-velocitas-project-layout-and-manifest.md), [0025](../analysis/adr/ADR-0025-headless-velocitas-toolchain.md), [0026](../analysis/adr/ADR-0026-workspace-service.md) · Phụ thuộc: M6, M0 (song song) · Chi tiết: [phases/M07](../analysis/phases/M07-workspace-toolchain-syncode.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Vendor template C++ @275e858 + `UPSTREAM.md` | 0003,0025 | ☐ | Có thể bắt đầu ngay sau M0 | T01 |
+| `toolchain/cpp/Dockerfile` (theo S-1) | 0025 | ☐ | Offline build test | T02 |
+| toolchain-agent jobs (init/deps/build/test/run/…) + SSE | 0025 | ☐ | Contract test | T03 |
+| `GET /templates?lang=cpp` | 0025 | ☐ | | T04 |
+| Auto `generate-model` khi đổi VSS release | 0025 | ☐ | | T05 |
+| Path policy an toàn (ownedRoots, no symlink escape) | 0026 | ☐ | Security test | T06 |
+| Init project (template+overlay+runtime→staging→rename) | 0026 | ☐ | | T07 |
+| Commit atomic + Generation Manifest + recovery | 0026 | ☐ | Fault injection | T08 |
+| AppManifest merge v3 | 0023 | ☐ | Idempotency test | T09 |
+| `GENERATED_FILE_MODIFIED` detection | 0026 | ☐ | | T10 |
+| Rollback 10 generation gần nhất | 0026 | ☐ | | T11 |
+| Schema `sv` (Drizzle) + migration | 0007 | ☐ | | T12 |
+| Project API | 0007 | ☐ | | T13 |
+| GenerationPipeline + job queue + SSE `/events` | 0026 | ☐ | | T14 |
+| Error mapping (GCC/Clang→sourcemap→diagnostic block) | 0022,0026 | ☐ | | T15 |
+| Response format chuẩn | 0007 | ☐ | | T16 |
+| Studio: Project page | 0007 | ☐ | | T17 |
+| Nút SynCode + progress SSE + Build log + diagnostics map | 0026 | ☐ | Playwright pass/fail | T18 |
+| Generated files viewer (diff với generation trước) | 0026 | ☐ | | T19 |
+
+## M8 — Live Run & Observability
+ADR: [0024](../analysis/adr/ADR-0024-databroker-api-and-runtime-stack.md), [0027](../analysis/adr/ADR-0027-live-run-logs-and-trace.md) · Phụ thuộc: M7, M5 · Chi tiết: [phases/M08](../analysis/phases/M08-live-run-observability.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Compose runtime (databroker/mosquitto/mock-provider theo project) | 0024 | ☐ | Compose smoke | T01 |
+| Nhiều VSS release → nhiều databroker (profile) | 0024 | ☐ | Test 2 release | T02 |
+| RunManager + state machine | 0027 | ☐ | | T03 |
+| toolchain `run` job (SSE stdout/stderr, exit code) | 0025,0027 | ☐ | | T04 |
+| TraceIngest (SVTRACE parse) + run_event ring buffer | 0027 | ☐ | Load test 2k ev/s | T05 |
+| signal-gateway (kuksa.val.v1 WS, allowlist từ catalog) | 0024 | ☐ | Integration | T06 |
+| Scenario player trên databroker thật | 0017,0024 | ☐ | | T07 |
+| UI Run console + Signals panel + Trace overlay | 0027 | ☐ | Playwright | T08 |
+| "Record scenario from Signals" | 0017,0027 | ☐ | | T09 |
+| `scripts/smoke.sh` đầy đủ GW-A live | — | ☐ | CI nightly | T10 |
+
+## M9 — IDE & Export & License
+ADR: [0028](../analysis/adr/ADR-0028-ide-code-server.md), [0031](../analysis/adr/ADR-0031-export-and-licensing.md) · Phụ thuộc: M7 · Chi tiết: [phases/M09](../analysis/phases/M09-ide-export-license.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| `ide-vscode/cpp` Dockerfile (code-server 4.139.1 + extension whitelist) | 0028 | ☐ | Smoke | T01 |
+| settings/tasks/launch overlay + clangd | 0028 | ☐ | | T02 |
+| Compose `ide-cpp` | 0028 | ☐ | | T03 |
+| `editor.url` trong response SynCode + nút Open IDE | 0028 | ☐ | E2E | T04 |
+| Cảnh báo IDE chạy song song Live Run | 0028 | ☐ | | T05 |
+| Export zip (`.svexportignore`, NOTICE, THIRD-PARTY-NOTICES) | 0031 | ☐ | Build lại trên máy sạch | T06 |
+| EntitlementService + license PDP (gắn export/IDE/SynCode/AI) | 0031,0032 | ☐ | Unit PDP | T07 |
+| Import lại project (round-trip `.graph.json`) | 0031 | ☐ | | T08 |
+
+## M10 — AI Assistant & MCP
+ADR: [0030](../analysis/adr/ADR-0030-ai-assistant-mcp.md) · Phụ thuộc: M4, M5, M8 · Chi tiết: [phases/M10](../analysis/phases/M10-ai-assistant-mcp.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Quyết định kiến trúc provider (spike 1 ngày) | 0030 | ☐ | Ghi ADR-0030 Notes | T01 |
+| Provider adapter (anthropic/openai/gemini/ollama) + streaming/tool-calling | 0030 | ☐ | Mock HTTP | T02 |
+| Tool registry + MCP server (12 tool v1, SAFE/SENSITIVE) | 0030 | ☐ | MCP Inspector | T03 |
+| Agent loop (max 6 step, confirmation gate) + SSE `/chat` | 0030 | ☐ | Scripted-LLM test | T04 |
+| WorkflowPatch v1 (apply-on-draft, validate, auto-fix) | 0030 | ☐ | | T05 |
+| MCP client (`ext.*` namespace, confirmation mặc định) | 0030 | ☐ | | T06 |
+| Store `sv_ai` + retention | 0030 | ☐ | | T07 |
+| Studio Assistant panel (patch preview diff, confirmation card) | 0030 | ☐ | Playwright | T08 |
+| System prompt + eval set 20 prompt (VI/EN) | 0030 | ☐ | ≥80% patch valid | T09 |
+| Bảo mật AI (no key xuống browser, rate limit, redact) | 0030 | ☐ | Review | T10 |
+
+## M11 — Hardening → Release v1.0
+ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/adr/ADR-0033-observability.md), [0042](../analysis/adr/ADR-0042-semantic-parity-testing.md) · Phụ thuộc: M8, M9, M10 · Chi tiết: [phases/M11](../analysis/phases/M11-hardening-release.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Parity P3 (binary thật) GW-A..G, nightly dashboard | 0042 | ☐ | 100% | T01 |
+| Playwright E2E đầy đủ (tutorial, 7 golden, IDE, export, AI giả) | 0042 | ☐ | Nightly xanh 3 ngày | T02 |
+| Cleanup Sim đợt 3 (knip, dependency thừa) | 0008 | ☐ | Đo bundle/build time | T03 |
+| Auth/tenancy BFF permissions | 0032 | ☐ | | T04 |
+| Observability (`/metrics`, log correlation, status page) | 0033 | ☐ | | T05 |
+| Security checklist + fuzz + osv-scanner | — | ☐ | | T06 |
+| Performance benchmark (validate/compile/simulate/SynCode) | — | ☐ | NFR-02 | T07 |
+| Docs đầy đủ (user guide + dev docs) | — | ☐ | | T08 |
+| Usability test 5 người (tutorial < 10') | — | ☐ | | T09 |
+| Release v1.0.0 (tag, lock, images, CHANGELOG) | — | ☐ | | T10 |
+
+**Exit checklist v1.0 (đủ cả 6 mới coi MVP xong):**
+- [ ] 7 golden workflow: simulate ✔, SynCode build ✔, generated tests ✔, live run ✔ trên databroker thật, parity ✔.
+- [ ] Tutorial "Overspeed warning" < 10 phút (5 người).
+- [ ] `scripts/bootstrap.sh`/`scripts/sv` từ máy sạch → UI chạy < 30 phút lần đầu, < 2 phút lần sau.
+- [ ] Không còn `ee/`, copilot, pii, block AI cũ trong codebase; license scan sạch.
+- [ ] Security checklist pass.
+- [ ] Tài liệu dev đầy đủ (BLOCK_SDK, ADD_NEW_BLOCK, IR_SPEC, DIAGNOSTICS_CATALOG, RUNTIME_API, BACKEND_PLUGIN).
+
+## M12 — Python backend
+ADR: [0040](../analysis/adr/ADR-0040-python-backend.md) · Phụ thuộc: M11 · Chi tiết: [phases/M12](../analysis/phases/M12-python-backend.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Vendor template python @e7082f7 + toolchain Dockerfile | 0040 | ☐ | Offline build | T01 |
+| Agent jobs python (pip/pytest/ruff) | 0040 | ☐ | Contract | T02 |
+| Runtime `simvehicleapp_runtime` (asyncio) + conformance | 0040,0042 | ☐ | 100% | T03 |
+| Generator emitters Python | 0040 | ☐ | Golden GW-A..G | T04 |
+| `compose.lang-python.yaml` + ide-python | 0040 | ☐ | Smoke | T05 |
+| UI language=python | 0040 | ☐ | E2E | T06 |
+
+## M13 — Rust backend (feasibility)
+ADR: [0041](../analysis/adr/ADR-0041-rust-backend-feasibility.md) · Phụ thuộc: M11 · Chi tiết: [phases/M13](../analysis/phases/M13-rust-backend.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Template `vehicle-app-rust-template` | 0041 | ☐ | | T01 |
+| Runtime `simvehicleapp-runtime-rs` + conformance | 0041,0042 | ☐ | | T02 |
+| Client `kuksa-rust-sdk 0.2.2` | 0041 | ☐ | | T03 |
+| Generator emitters P0 → GW-A | 0041 | ☐ | | T04 |
+| toolchain-rust (cargo vendor offline) | 0041 | ☐ | | T05 |
+| Báo cáo feasibility (Go/No-go) | 0041 | ☐ | | T06 |
+
+## M14 — Mở rộng sau v1.0 (backlog)
+Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). **Mỗi dòng cần viết ADR riêng trước khi bắt đầu** — chưa có ADR nào trong nhóm này được viết; cột trạng thái dùng `☐ chưa có ADR` thay cho task cụ thể.
+
+| # | Hạng mục | ADR dự kiến | Trạng thái |
+|---|---|---|---|
+| 1 | Curated multi-VSS blocks (Battery/Door/Climate Status) | 0045 | ☐ chưa có ADR |
+| 2 | gRPC service interface | 0043 | ☐ chưa có ADR |
+| 3 | Standalone service apps | 0044 | ☐ chưa có ADR |
+| 4 | Per-run runtime stack & multi-user workspaces | 0046 | ☐ chưa có ADR |
+| 5 | Migrate `kuksa.val.v2` | 0047 | ☐ chưa có ADR |
+| 6 | Quick Run interpreter app | 0048 | ☐ chưa có ADR (chỉ nếu nhu cầu thực tế) |
+| 7 | Sub-workflow/function, state machine block, filters | — | ☐ chưa có ADR |
+| 8 | Kanto deployment | — | ☐ chưa có ADR |
+| 9 | Reverse proxy + SSO forward-auth cho IDE | — | ☐ chưa có ADR |
+| 10 | VSS overlay OEM (vss-tools pipeline) | — | ☐ chưa có ADR |
+
+---
+
+*Cập nhật lần cuối: 2026-10-02. Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem `implementation-loop`).*

@@ -2,6 +2,7 @@
 
 > Thứ tự & phụ thuộc: [13-implementation-roadmap](../13-implementation-roadmap.md). Mỗi file có: Mục tiêu · Input/ADR · Tasks (ID, module, file, kết quả, test) · DoD · Acceptance Gate · Rủi ro.
 > Quy ước ID task: `M<nn>-T<nn>`. Mỗi task ≤ 2 ngày; lớn hơn phải tách. Khi xong milestone: viết report theo [REPORT_TEMPLATE.md](REPORT_TEMPLATE.md) vào `docs/reports/M<nn>.md` của meta-repo.
+> **Tracking tiến độ từng feature (cập nhật khi code xong, không phải khi lập kế hoạch):** [`docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 | File | Milestone |
 |---|---|

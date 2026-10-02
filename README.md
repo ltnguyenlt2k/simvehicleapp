@@ -87,7 +87,7 @@ flowchart TB
 | **Dev environment** | Docker Compose only — no VS Code Dev Container is required to run the studio or build vehicle apps (though an *exported* project still works with one). A `toolchain-cpp` image replays what the Velocitas devcontainer would do, with an offline-capable wheel/Conan/SDK cache. |
 | **IDE** | Optional `code-server` (web VS Code) built `FROM` the same toolchain image — open it only when you want to hand-edit generated code or debug. |
 | **AI assistant** | A chat panel (not the old Copilot) wired to your own LLM key from `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) plus an MCP server/client — it proposes workflow patches, it does not write production C++. |
-| **Architecture record** | 33 ADRs (`analysis/adr/`), each re-verified against real upstream source (GitHub, npm registry, actual `.clang-format`/schema files) rather than assumption — see the 2026-10-01 review log in the ADR index. |
+| **Architecture record** | 34 ADRs (`analysis/adr/`), each re-verified against real upstream source (GitHub, npm registry, actual `.clang-format`/schema files) rather than assumption — see the 2026-10-01 review log in the ADR index. |
 | **Status (2026-10-02)** | Planning + M0 foundations complete: all 6 technical spikes (headless offline build, databroker↔MQTT wiring, actuator set-semantics, mock-provider, minimal Sim stack, code-server+clangd) **passed against real running containers**, evidence in [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (studio refactor) has not started yet. |
 | **License** | SimVehicleApp's own code: Apache-2.0. Built on Apache-2.0 upstream (Sim, Eclipse Velocitas, Eclipse KUKSA) and MPL-2.0 (COVESA VSS data). The Sim Enterprise (`ee/`) surface and anything AGPL (Scratch) are explicitly excluded — see [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
@@ -108,7 +108,7 @@ flowchart TB
 | **Môi trường dev** | Chỉ Docker Compose — không cần VS Code Dev Container để chạy studio hay build vehicle app (dù project **export ra** vẫn mở được bằng devcontainer). Image `toolchain-cpp` tái hiện đúng những gì devcontainer Velocitas làm, có cache offline (wheel/Conan/SDK). |
 | **IDE** | `code-server` (VS Code chạy trên web) tuỳ chọn, build `FROM` cùng image toolchain — chỉ mở khi cần sửa tay code đã sinh hoặc debug. |
 | **AI assistant** | Khung chat (thay Copilot cũ) gắn API key LLM riêng từ `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) cộng MCP server/client — chỉ đề xuất patch workflow, không viết C++ production. |
-| **Hồ sơ kiến trúc** | 33 ADR (`analysis/adr/`), mỗi cái đã verify lại bằng source thật (GitHub, npm registry, file `.clang-format`/schema thật) thay vì suy đoán — xem log review 2026-10-01 trong mục lục ADR. |
+| **Hồ sơ kiến trúc** | 34 ADR (`analysis/adr/`), mỗi cái đã verify lại bằng source thật (GitHub, npm registry, file `.clang-format`/schema thật) thay vì suy đoán — xem log review 2026-10-01 trong mục lục ADR. |
 | **Trạng thái (2026-10-02)** | Đã xong giai đoạn phân tích + nền tảng M0: cả 6 spike kỹ thuật (build offline không devcontainer, app nối databroker/MQTT, hành vi set() actuator, mock-provider, Sim chạy tối giản, code-server+clangd) **đã PASS trên container chạy thật**, bằng chứng ở [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (refactor studio) chưa bắt đầu. |
 | **License** | Code riêng của SimVehicleApp: Apache-2.0. Dựa trên upstream Apache-2.0 (Sim, Eclipse Velocitas, Eclipse KUKSA) và MPL-2.0 (dữ liệu COVESA VSS). Bề mặt Sim Enterprise (`ee/`) và mọi thứ AGPL (Scratch) đều bị loại trừ tường minh — xem [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
@@ -120,7 +120,7 @@ flowchart TB
 .
 ├── README.md  AGENTS.md  CLAUDE.md          # anh/chị đang đọc file này; AGENTS.md = luật cho AI coding agent
 ├── .claude/skills/                          # 14 skill chuyên biệt cho agent (xem AGENTS.md §3)
-├── analysis/                                # 83 file: nghiên cứu, kiến trúc, 33 ADR, kế hoạch 15 milestone
+├── analysis/                                # 83 file: nghiên cứu, kiến trúc, 34 ADR, kế hoạch 15 milestone
 │   ├── 00…16-*.md                           # research → requirements → architecture → … → roadmap → risks
 │   ├── 11b-block-inventory-and-migration.md # kiểm kê 268 block Sim thật, giữ/xoá/tham khảo
 │   ├── adr/ADR-0001…0042-*.md               # quyết định kiến trúc, mỗi cái có Context/Decision/Verification
@@ -157,7 +157,8 @@ scripts/sv smoke                # S-1/S-2/S-3: tạo project offline → build �
 |---|---|
 | Muốn hiểu toàn bộ hệ thống | [`analysis/README.md`](analysis/README.md) — bản đồ 83 tài liệu |
 | Muốn xem kế hoạch triển khai | [`analysis/13-implementation-roadmap.md`](analysis/13-implementation-roadmap.md) — M0→M14 |
-| Muốn xem mọi quyết định kiến trúc | [`analysis/adr/README.md`](analysis/adr/README.md) — 33 ADR + cây phụ thuộc |
+| Muốn xem **tiến độ thật** (tracking, cập nhật liên tục) | [`docs/ROADMAP.md`](docs/ROADMAP.md) — từng feature ☐/🔄/✔ theo milestone + ADR |
+| Muốn xem mọi quyết định kiến trúc | [`analysis/adr/README.md`](analysis/adr/README.md) — 34 ADR + cây phụ thuộc |
 | AI coding agent | [`AGENTS.md`](AGENTS.md) — luật cứng + quy trình + skill |
 
 ## 8. License
