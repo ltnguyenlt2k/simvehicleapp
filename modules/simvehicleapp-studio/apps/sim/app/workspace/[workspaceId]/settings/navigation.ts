@@ -1,11 +1,9 @@
 import {
   ClipboardList,
-  HexSimple,
   Key,
   KeySquare,
   Lock,
   Mail,
-  Send,
   Server,
   Settings,
   TerminalWindow,
@@ -72,7 +70,6 @@ export interface NavigationItem {
 const isSSOEnabled = isTruthy(getEnv('NEXT_PUBLIC_SSO_ENABLED'))
 const isCredentialSetsEnabled = isTruthy(getEnv('NEXT_PUBLIC_CREDENTIAL_SETS_ENABLED'))
 const isAccessControlEnabled = isTruthy(getEnv('NEXT_PUBLIC_ACCESS_CONTROL_ENABLED'))
-const isInboxEnabled = isTruthy(getEnv('NEXT_PUBLIC_INBOX_ENABLED'))
 const isWhitelabelingEnabled = isTruthy(getEnv('NEXT_PUBLIC_WHITELABELING_ENABLED'))
 const isAuditLogsEnabled = isTruthy(getEnv('NEXT_PUBLIC_AUDIT_LOGS_ENABLED'))
 const isDataRetentionEnabled = isTruthy(getEnv('NEXT_PUBLIC_DATA_RETENTION_ENABLED'))
@@ -89,6 +86,7 @@ export const sectionConfig: { key: NavigationSection; title: string }[] = [
   { key: 'superuser', title: 'Superuser' },
 ]
 
+// SV: copilot (Chat keys), inbox (Sim mailer), mothership items removed with copilot (M01-T03).
 // SV: Enterprise items (access control, audit logs, SSO, data retention, data drains, whitelabeling) removed with apps/sim/ee.
 export const allNavigationItems: NavigationItem[] = [
   { id: 'general', label: 'General', icon: Settings, section: 'account' },
@@ -126,23 +124,6 @@ export const allNavigationItems: NavigationItem[] = [
     section: 'system',
     requiresHosted: true,
   },
-  {
-    id: 'copilot',
-    label: 'Chat keys',
-    icon: HexSimple,
-    section: 'system',
-    requiresHosted: true,
-  },
-  {
-    id: 'inbox',
-    label: 'Sim mailer',
-    icon: Send,
-    section: 'system',
-    requiresMax: true,
-    requiresHosted: true,
-    selfHostedOverride: isInboxEnabled,
-    showWhenLocked: true,
-  },
   ...(isCredentialSetsEnabled
     ? [
         {
@@ -158,13 +139,6 @@ export const allNavigationItems: NavigationItem[] = [
     id: 'admin',
     label: 'Admin',
     icon: Lock,
-    section: 'superuser',
-    requiresAdminRole: true,
-  },
-  {
-    id: 'mothership',
-    label: 'Mothership',
-    icon: Server,
     section: 'superuser',
     requiresAdminRole: true,
   },

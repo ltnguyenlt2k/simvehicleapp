@@ -2,7 +2,6 @@ export { ConversationListItem } from './conversation-list-item'
 export type { ErrorBoundaryProps, ErrorStateProps } from './error'
 export { ErrorShell, ErrorState } from './error'
 export { InlineRenameInput } from './inline-rename-input'
-export { MessageActions } from './message-actions'
 export { FloatingOverflowText } from './resource/components/floating-overflow-text'
 export { ownerCell } from './resource/components/owner-cell'
 export {

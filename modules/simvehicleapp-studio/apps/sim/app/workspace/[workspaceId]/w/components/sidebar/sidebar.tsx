@@ -2,8 +2,7 @@
 
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createLogger } from '@sim/logger'
-import { MoreHorizontal, Pin } from 'lucide-react'
-import Link from 'next/link'
+import { MoreHorizontal } from 'lucide-react'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import {
@@ -16,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   FolderPlus,
-  Home,
   Library,
   Loader,
   Skeleton,
@@ -25,7 +23,6 @@ import {
 } from '@/components/emcn'
 import {
   BookOpen,
-  Calendar,
   Database,
   Files,
   HelpCircle,
@@ -35,11 +32,9 @@ import {
   Search,
   Settings,
   Table,
-  Task,
   Workflow,
 } from '@/components/emcn/icons'
 import { useSession } from '@/lib/auth/auth-client'
-import { SIM_RESOURCES_DRAG_TYPE } from '@/lib/copilot/resource-types'
 import { cn } from '@/lib/core/utils/cn'
 import { isMacPlatform } from '@/lib/core/utils/platform'
 import { buildFolderTree, getFolderPath } from '@/lib/folders/tree'
@@ -48,7 +43,6 @@ import { useRegisterGlobalCommands } from '@/app/workspace/[workspaceId]/provide
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { createCommands } from '@/app/workspace/[workspaceId]/utils/commands-utils'
 import {
-  CollapsedChatFlyoutItem,
   CollapsedFolderItems,
   CollapsedSidebarMenu,
   CollapsedWorkflowFlyoutItem,
@@ -63,14 +57,11 @@ import {
   buildConnectedAccountSearchItems,
   buildIntegrationSearchItems,
 } from '@/app/workspace/[workspaceId]/w/components/sidebar/components/search-modal/integration-search-items'
-import { ContextMenu } from '@/app/workspace/[workspaceId]/w/components/sidebar/components/workflow-list/components/context-menu/context-menu'
-import { DeleteModal } from '@/app/workspace/[workspaceId]/w/components/sidebar/components/workflow-list/components/delete-modal/delete-modal'
 import {
   SIDEBAR_ITEM_GAP_CLASS,
   SIDEBAR_SECTION_GAP_CLASS,
 } from '@/app/workspace/[workspaceId]/w/components/sidebar/constants'
 import {
-  useChatSelection,
   useContextMenu,
   useFlyoutInlineRename,
   useFolderOperations,
@@ -82,27 +73,16 @@ import {
 } from '@/app/workspace/[workspaceId]/w/components/sidebar/hooks'
 import {
   compareByOrder,
-  createSidebarDragGhost,
   groupWorkflowsByFolder,
 } from '@/app/workspace/[workspaceId]/w/components/sidebar/utils'
 import { useImportWorkflow } from '@/app/workspace/[workspaceId]/w/hooks'
 import { useWorkspaceCredentials } from '@/hooks/queries/credentials'
 import { useFolderMap, useFolders } from '@/hooks/queries/folders'
 import { useKnowledgeBasesQuery } from '@/hooks/queries/kb/knowledge'
-import {
-  useDeleteMothershipChat,
-  useDeleteMothershipChats,
-  useMarkMothershipChatRead,
-  useMarkMothershipChatUnread,
-  useMothershipChats,
-  useRenameMothershipChat,
-  useSetMothershipChatPinned,
-} from '@/hooks/queries/mothership-chats'
 import { useTablesList } from '@/hooks/queries/tables'
 import { useUpdateWorkflow } from '@/hooks/queries/workflows'
 import type { Workspace } from '@/hooks/queries/workspace'
 import { useWorkspaceFiles } from '@/hooks/queries/workspace-files'
-import { useMothershipChatEvents } from '@/hooks/use-mothership-chat-events'
 import { usePermissionConfig } from '@/hooks/use-permission-config'
 import { useSettingsNavigation } from '@/hooks/use-settings-navigation'
 import { SIDEBAR_WIDTH } from '@/stores/constants'
@@ -142,120 +122,6 @@ function SidebarItemSkeleton() {
     </div>
   )
 }
-
-const SidebarChatItem = memo(function SidebarChatItem({
-  chat,
-  isCurrentRoute,
-  isSelected,
-  isActive,
-  isUnread,
-  isPinned,
-  isMenuOpen,
-  showCollapsedTooltips,
-  onMultiSelectClick,
-  onContextMenu,
-  onMorePointerDown,
-  onMoreClick,
-}: {
-  chat: { id: string; href: string; name: string }
-  isCurrentRoute: boolean
-  isSelected: boolean
-  isActive: boolean
-  isUnread: boolean
-  isPinned: boolean
-  isMenuOpen: boolean
-  showCollapsedTooltips: boolean
-  onMultiSelectClick: (chatId: string, shiftKey: boolean) => void
-  onContextMenu: (e: React.MouseEvent, chatId: string) => void
-  onMorePointerDown: () => void
-  onMoreClick: (e: React.MouseEvent<HTMLButtonElement>, chatId: string) => void
-}) {
-  const dragGhostRef = useRef<HTMLElement | null>(null)
-
-  function handleDragStart(e: React.DragEvent) {
-    e.dataTransfer.effectAllowed = 'copyMove'
-    e.dataTransfer.setData(
-      SIM_RESOURCES_DRAG_TYPE,
-      JSON.stringify([{ type: 'task', id: chat.id, title: chat.name }])
-    )
-    const ghost = createSidebarDragGhost(chat.name, { kind: 'task' })
-    void ghost.offsetHeight
-    e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2)
-    dragGhostRef.current = ghost
-  }
-
-  function handleDragEnd() {
-    if (dragGhostRef.current) {
-      dragGhostRef.current.remove()
-      dragGhostRef.current = null
-    }
-  }
-
-  return (
-    <SidebarTooltip label={chat.name} enabled={showCollapsedTooltips}>
-      <Link
-        href={chat.href}
-        className={chipVariants({
-          active: isCurrentRoute || isSelected || isMenuOpen,
-          fullWidth: true,
-        })}
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey) return
-          if (e.shiftKey) {
-            e.preventDefault()
-            onMultiSelectClick(chat.id, true)
-          } else {
-            useFolderStore.getState().selectChatOnly(chat.id)
-          }
-        }}
-        onContextMenu={(e) => onContextMenu(e, chat.id)}
-        draggable
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        <div className='min-w-0 flex-1 truncate text-[var(--text-body)]'>{chat.name}</div>
-        {chat.id !== 'new' && (
-          <div className='relative flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center'>
-            {(isActive || (!isCurrentRoute && isUnread)) && (
-              <span
-                aria-hidden='true'
-                className={cn(
-                  'h-[6px] w-[6px] rounded-full transition-opacity',
-                  isMenuOpen ? 'opacity-0' : 'group-hover:opacity-0'
-                )}
-                style={{
-                  backgroundColor: isActive ? '#EAB308' : 'var(--brand-accent)',
-                }}
-              />
-            )}
-            {!isActive && !isUnread && isPinned && !isCurrentRoute && !isMenuOpen && (
-              <Pin
-                aria-hidden='true'
-                className='absolute size-[12px] text-[var(--text-icon)] group-hover:hidden'
-              />
-            )}
-            <button
-              type='button'
-              aria-label='Chat options'
-              onPointerDown={onMorePointerDown}
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                onMoreClick(e, chat.id)
-              }}
-              className={cn(
-                'absolute inset-0 flex items-center justify-center rounded-sm opacity-0 transition-opacity group-hover:opacity-100',
-                isMenuOpen && 'opacity-100'
-              )}
-            >
-              <MoreHorizontal className='h-[16px] w-[16px] text-[var(--text-icon)]' />
-            </button>
-          </div>
-        )}
-      </Link>
-    </SidebarTooltip>
-  )
-})
 
 interface SidebarNavItemData {
   id: string
@@ -595,89 +461,7 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     }
   }, [activeNavItemHref])
 
-  const deleteChatMutation = useDeleteMothershipChat(workspaceId)
-  const deleteChatsMutation = useDeleteMothershipChats(workspaceId)
-  const markChatReadMutation = useMarkMothershipChatRead(workspaceId)
-  const markChatUnreadMutation = useMarkMothershipChatUnread(workspaceId)
-  const renameChatMutation = useRenameMothershipChat(workspaceId)
-  const setChatPinnedMutation = useSetMothershipChatPinned(workspaceId)
-  const chatsHover = useHoverMenu()
   const workflowsHover = useHoverMenu()
-
-  const {
-    isOpen: isChatContextMenuOpen,
-    position: chatContextMenuPosition,
-    menuRef: chatMenuRef,
-    handleContextMenu: handleChatContextMenuBase,
-    closeMenu: closeChatContextMenu,
-    preventDismiss: preventChatDismiss,
-  } = useContextMenu()
-
-  const contextMenuSelectionRef = useRef<{ chatIds: string[]; names: string[] }>({
-    chatIds: [],
-    names: [],
-  })
-  const [menuOpenChatId, setMenuOpenChatId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isChatContextMenuOpen) setMenuOpenChatId(null)
-  }, [isChatContextMenuOpen])
-
-  const captureChatSelection = useCallback((chatId: string) => {
-    const { selectedChats, selectChatOnly } = useFolderStore.getState()
-    if (selectedChats.size > 0 && selectedChats.has(chatId)) {
-      contextMenuSelectionRef.current = {
-        chatIds: Array.from(selectedChats),
-        names: [],
-      }
-    } else {
-      selectChatOnly(chatId)
-      contextMenuSelectionRef.current = { chatIds: [chatId], names: [] }
-    }
-  }, [])
-
-  const handleChatContextMenu = useCallback(
-    (e: React.MouseEvent, chatId: string) => {
-      captureChatSelection(chatId)
-      setMenuOpenChatId(chatId)
-      chatsHover.setLocked(true)
-      preventChatDismiss()
-      handleChatContextMenuBase(e)
-    },
-    [captureChatSelection, handleChatContextMenuBase, preventChatDismiss, chatsHover]
-  )
-
-  const handleChatMorePointerDown = useCallback(() => {
-    if (isChatContextMenuOpen) {
-      preventChatDismiss()
-    }
-  }, [isChatContextMenuOpen, preventChatDismiss])
-
-  const handleChatMoreClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, chatId: string) => {
-      if (isChatContextMenuOpen) {
-        closeChatContextMenu()
-        return
-      }
-      chatsHover.setLocked(true)
-      captureChatSelection(chatId)
-      setMenuOpenChatId(chatId)
-      const rect = e.currentTarget.getBoundingClientRect()
-      handleChatContextMenuBase({
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        clientX: rect.right,
-        clientY: rect.top,
-      } as React.MouseEvent)
-    },
-    [
-      isChatContextMenuOpen,
-      closeChatContextMenu,
-      captureChatSelection,
-      handleChatContextMenuBase,
-      chatsHover,
-    ]
-  )
 
   const searchModalWorkflows = useMemo(
     () =>
@@ -710,12 +494,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
   const topNavItems = useMemo(
     () =>
       [
-        {
-          id: 'home',
-          label: 'New chat',
-          icon: Home,
-          href: `/workspace/${workspaceId}/home`,
-        },
         {
           id: 'search',
           label: 'Search',
@@ -759,12 +537,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
           hidden: permissionConfig.hideKnowledgeBaseTab,
         },
         {
-          id: 'scheduled-tasks',
-          label: 'Scheduled tasks',
-          icon: Calendar,
-          href: `/workspace/${workspaceId}/scheduled-tasks`,
-        },
-        {
           id: 'logs',
           label: 'Logs',
           icon: Library,
@@ -795,21 +567,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
       },
     ],
     [navigateToSettings, getSettingsHref, setSidebarWidth]
-  )
-
-  const { data: fetchedChats = [], isLoading: chatsLoading } = useMothershipChats(workspaceId)
-
-  useMothershipChatEvents(workspaceId)
-
-  const chats = useMemo(
-    () =>
-      fetchedChats
-        ? fetchedChats.map((t) => ({
-            ...t,
-            href: `/workspace/${workspaceId}/chat/${t.id}`,
-          }))
-        : [],
-    [fetchedChats, workspaceId]
   )
 
   const { data: fetchedTables = [] } = useTablesList(workspaceId)
@@ -853,27 +610,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     [fetchedKnowledgeBases, workspaceId, permissionConfig.hideKnowledgeBaseTab]
   )
 
-  const chatIds = useMemo(() => chats.map((t) => t.id), [chats])
-
-  const { selectedChats, handleChatClick } = useChatSelection({ chatIds })
-  const hasChatMultiSelection = selectedChats.size > 1
-
-  const isMultiChatContextMenu = contextMenuSelectionRef.current.chatIds.length > 1
-  const activeChatContextMenuItem =
-    !isMultiChatContextMenu && contextMenuSelectionRef.current.chatIds.length === 1
-      ? chats.find((chat) => chat.id === contextMenuSelectionRef.current.chatIds[0])
-      : null
-
-  const [isChatDeleteModalOpen, setIsChatDeleteModalOpen] = useState(false)
-
-  const handleDeleteChat = useCallback(() => {
-    const { chatIds: ids } = contextMenuSelectionRef.current
-    if (ids.length === 0) return
-    const names = ids.map((id) => chats.find((t) => t.id === id)?.name).filter(Boolean) as string[]
-    contextMenuSelectionRef.current = { chatIds: ids, names }
-    setIsChatDeleteModalOpen(true)
-  }, [chats])
-
   const navigateToPage = useCallback(
     (path: string) => {
       if (!isCollapsedRef.current) {
@@ -883,38 +619,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     },
     [setSidebarWidth, router]
   )
-
-  const handleConfirmDeleteChats = () => {
-    const { chatIds: chatIdsToDelete } = contextMenuSelectionRef.current
-    if (chatIdsToDelete.length === 0) return
-
-    const currentPath = pathname ?? ''
-    const isViewingDeletedChat = chatIdsToDelete.some(
-      (id) => currentPath === `/workspace/${workspaceId}/chat/${id}`
-    )
-
-    const onDeleteSuccess = () => {
-      useFolderStore.getState().clearChatSelection()
-      if (isViewingDeletedChat) {
-        navigateToPage(`/workspace/${workspaceId}/home`)
-      }
-    }
-
-    if (chatIdsToDelete.length === 1) {
-      deleteChatMutation.mutate(chatIdsToDelete[0], { onSuccess: onDeleteSuccess })
-    } else {
-      deleteChatsMutation.mutate(chatIdsToDelete, { onSuccess: onDeleteSuccess })
-    }
-    setIsChatDeleteModalOpen(false)
-  }
-
-  const [visibleChatCount, setVisibleChatCount] = useState(5)
-  const chatFlyoutRename = useFlyoutInlineRename({
-    itemType: 'task',
-    onSave: async (chatId, name) => {
-      await renameChatMutation.mutateAsync({ chatId: chatId, title: name })
-    },
-  })
 
   const workflowFlyoutRename = useFlyoutInlineRename({
     itemType: 'workflow',
@@ -928,49 +632,8 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
   })
 
   useEffect(() => {
-    chatsHover.setLocked(isChatContextMenuOpen || !!chatFlyoutRename.editingId)
-  }, [isChatContextMenuOpen, chatFlyoutRename.editingId, chatsHover.setLocked])
-
-  useEffect(() => {
     workflowsHover.setLocked(!!workflowFlyoutRename.editingId)
   }, [workflowFlyoutRename.editingId, workflowsHover.setLocked])
-
-  const handleChatOpenInNewTab = useCallback(() => {
-    const { chatIds: ids } = contextMenuSelectionRef.current
-    if (ids.length !== 1) return
-    window.open(`/workspace/${workspaceId}/chat/${ids[0]}`, '_blank', 'noopener,noreferrer')
-  }, [workspaceId])
-
-  const handleMarkChatAsRead = useCallback(() => {
-    const { chatIds: ids } = contextMenuSelectionRef.current
-    if (ids.length !== 1) return
-    markChatReadMutation.mutate(ids[0])
-  }, [])
-
-  const handleMarkChatAsUnread = useCallback(() => {
-    const { chatIds: ids } = contextMenuSelectionRef.current
-    if (ids.length !== 1) return
-    markChatUnreadMutation.mutate(ids[0])
-  }, [])
-
-  const handleStartChatRename = useCallback(() => {
-    const { chatIds: ids } = contextMenuSelectionRef.current
-    if (ids.length !== 1) return
-    const chatId = ids[0]
-    const chat = chats.find((t) => t.id === chatId)
-    if (!chat) return
-    chatsHover.setLocked(true)
-    chatFlyoutRename.startRename({ id: chatId, name: chat.name })
-  }, [chatFlyoutRename, chats, chatsHover])
-
-  const handleToggleChatPin = useCallback(() => {
-    const { chatIds: ids } = contextMenuSelectionRef.current
-    if (ids.length !== 1) return
-    const chatId = ids[0]
-    const chat = chats.find((t) => t.id === chatId)
-    if (!chat) return
-    setChatPinnedMutation.mutate({ chatId: chatId, pinned: !chat.isPinned })
-  }, [chats, setChatPinnedMutation])
 
   const handleCollapsedWorkflowOpenInNewTab = useCallback(
     (workflow: { id: string }) => {
@@ -1127,8 +790,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     [workspaces, handleLeaveWorkspace]
   )
 
-  const chatsCollapsedIcon = <Task className='size-[16px] flex-shrink-0 text-[var(--text-icon)]' />
-
   const workflowsCollapsedIcon = (
     <Workflow className='size-[16px] flex-shrink-0 text-[var(--text-icon)]' />
   )
@@ -1137,11 +798,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     label: 'New workflow',
     onSelect: handleCreateWorkflow,
   }
-
-  const handleSeeMoreChats = useCallback(() => setVisibleChatCount((prev) => prev + 5), [])
-  const handleSeeLessChats = useCallback(() => setVisibleChatCount(5), [])
-
-  const handleCloseChatDeleteModal = useCallback(() => setIsChatDeleteModalOpen(false), [])
 
   const handleEdgeKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -1159,11 +815,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     window.open('https://docs.sim.ai', '_blank', 'noopener,noreferrer')
     captureEvent(posthog, 'docs_opened', { source: 'help_menu' })
   }, [posthog])
-
-  const handleChatRenameBlur = useCallback(
-    () => void chatFlyoutRename.saveRename(),
-    [chatFlyoutRename.saveRename]
-  )
 
   const handleWorkflowRenameBlur = useCallback(
     () => void workflowFlyoutRename.saveRename(),
@@ -1325,127 +976,7 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
                   )}
                 >
                   <div ref={scrollContentRef} className='flex flex-col'>
-                    <div className='chats-section flex flex-shrink-0 flex-col'>
-                      <div className='flex h-[18px] flex-shrink-0 items-center justify-between px-4'>
-                        <div className='text-[var(--text-muted)] text-small'>Chats</div>
-                      </div>
-                      {isCollapsed ? (
-                        <CollapsedSidebarMenu
-                          icon={chatsCollapsedIcon}
-                          hover={chatsHover}
-                          ariaLabel='Chats'
-                          className='mt-2'
-                        >
-                          {chatsLoading ? (
-                            <DropdownMenuItem disabled>
-                              <Loader className='h-[14px] w-[14px]' animate />
-                              Loading...
-                            </DropdownMenuItem>
-                          ) : chats.length === 0 ? (
-                            <DropdownMenuItem disabled>No chats yet</DropdownMenuItem>
-                          ) : (
-                            chats.map((chat) => (
-                              <CollapsedChatFlyoutItem
-                                key={chat.id}
-                                chat={chat}
-                                isCurrentRoute={pathname === chat.href}
-                                isMenuOpen={menuOpenChatId === chat.id}
-                                isEditing={chat.id === chatFlyoutRename.editingId}
-                                editValue={chatFlyoutRename.value}
-                                inputRef={chatFlyoutRename.inputRef}
-                                isRenaming={chatFlyoutRename.isSaving}
-                                onEditValueChange={chatFlyoutRename.setValue}
-                                onEditKeyDown={chatFlyoutRename.handleKeyDown}
-                                onEditBlur={handleChatRenameBlur}
-                                onContextMenu={handleChatContextMenu}
-                                onMorePointerDown={handleChatMorePointerDown}
-                                onMoreClick={handleChatMoreClick}
-                              />
-                            ))
-                          )}
-                        </CollapsedSidebarMenu>
-                      ) : (
-                        <div className={cn(SIDEBAR_ITEM_GAP_CLASS, 'mt-2 flex flex-col px-2')}>
-                          {chatsLoading ? (
-                            <SidebarItemSkeleton />
-                          ) : (
-                            <>
-                              {chats.length === 0 ? (
-                                <div className='flex h-[30px] items-center px-2 text-[var(--text-muted)] text-small'>
-                                  No chats yet
-                                </div>
-                              ) : null}
-                              {/* `selectChatOnly` populates `selectedChats` on every click, so
-                                  a single entry just means "last clicked" — already conveyed by
-                                  `isCurrentRoute`. Highlight from selection only for explicit
-                                  multi-selection (size > 1), otherwise it lingers after navigating
-                                  away from a chat. */}
-                              {chats.slice(0, visibleChatCount).map((chat) => {
-                                const isCurrentRoute = pathname === chat.href
-                                const isRenaming = chatFlyoutRename.editingId === chat.id
-                                const isSelected =
-                                  chat.id !== 'new' &&
-                                  hasChatMultiSelection &&
-                                  selectedChats.has(chat.id)
-
-                                if (isRenaming) {
-                                  return (
-                                    <div
-                                      key={chat.id}
-                                      className={chipVariants({ active: true, fullWidth: true })}
-                                    >
-                                      <input
-                                        ref={chatFlyoutRename.inputRef}
-                                        value={chatFlyoutRename.value}
-                                        onChange={(e) => chatFlyoutRename.setValue(e.target.value)}
-                                        onKeyDown={chatFlyoutRename.handleKeyDown}
-                                        onBlur={handleChatRenameBlur}
-                                        className='min-w-0 flex-1 border-none bg-transparent text-[14px] text-[var(--text-body)] outline-none'
-                                      />
-                                    </div>
-                                  )
-                                }
-
-                                return (
-                                  <SidebarChatItem
-                                    key={chat.id}
-                                    chat={chat}
-                                    isCurrentRoute={isCurrentRoute}
-                                    isSelected={isSelected}
-                                    isActive={!!chat.isActive}
-                                    isUnread={!!chat.isUnread}
-                                    isPinned={!!chat.isPinned}
-                                    isMenuOpen={menuOpenChatId === chat.id}
-                                    showCollapsedTooltips={showCollapsedTooltips}
-                                    onMultiSelectClick={handleChatClick}
-                                    onContextMenu={handleChatContextMenu}
-                                    onMorePointerDown={handleChatMorePointerDown}
-                                    onMoreClick={handleChatMoreClick}
-                                  />
-                                )
-                              })}
-                              {chats.length > 5 && (
-                                <button
-                                  type='button'
-                                  onClick={
-                                    chats.length > visibleChatCount
-                                      ? handleSeeMoreChats
-                                      : handleSeeLessChats
-                                  }
-                                  className={cn(
-                                    chipVariants({ fullWidth: true }),
-                                    'text-[var(--text-muted)] text-small'
-                                  )}
-                                >
-                                  {chats.length > visibleChatCount ? 'See more' : 'See less'}
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
+                    {/* SV: Mothership chats section removed with copilot (M01-T03). */}
                     <div className={cn(SIDEBAR_SECTION_GAP_CLASS, 'flex flex-shrink-0 flex-col')}>
                       <div className='px-4 pb-2'>
                         <div className='text-[var(--text-muted)] text-small'>Workspace</div>
@@ -1675,41 +1206,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
                   onOpenInNewTab={handleNavOpenInNewTab}
                   onCopyLink={handleNavCopyLink}
                 />
-
-                <ContextMenu
-                  isOpen={isChatContextMenuOpen}
-                  position={chatContextMenuPosition}
-                  menuRef={chatMenuRef}
-                  onClose={closeChatContextMenu}
-                  onOpenInNewTab={handleChatOpenInNewTab}
-                  onMarkAsRead={handleMarkChatAsRead}
-                  onMarkAsUnread={handleMarkChatAsUnread}
-                  onTogglePin={handleToggleChatPin}
-                  onRename={handleStartChatRename}
-                  onDelete={handleDeleteChat}
-                  showOpenInNewTab={!isMultiChatContextMenu}
-                  showMarkAsRead={!isMultiChatContextMenu && !!activeChatContextMenuItem?.isUnread}
-                  showMarkAsUnread={
-                    !isMultiChatContextMenu &&
-                    !!activeChatContextMenuItem &&
-                    !activeChatContextMenuItem.isUnread
-                  }
-                  showPin={!isMultiChatContextMenu && !!activeChatContextMenuItem}
-                  isPinned={!!activeChatContextMenuItem?.isPinned}
-                  showRename={!isMultiChatContextMenu}
-                  showDuplicate={false}
-                  disableRename={!canEdit}
-                  disableDelete={!canEdit}
-                />
-
-                <DeleteModal
-                  isOpen={isChatDeleteModalOpen}
-                  onClose={handleCloseChatDeleteModal}
-                  onConfirm={handleConfirmDeleteChats}
-                  isDeleting={deleteChatMutation.isPending || deleteChatsMutation.isPending}
-                  itemType='task'
-                  itemName={contextMenuSelectionRef.current.names}
-                />
               </>
             )}
           </div>
@@ -1735,7 +1231,6 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
         onOpenChange={setIsSearchModalOpen}
         workflows={searchModalWorkflows}
         workspaces={searchModalWorkspaces}
-        chats={chats}
         tables={searchModalTables}
         files={searchModalFiles}
         knowledgeBases={searchModalKnowledgeBases}

@@ -23,7 +23,6 @@ import type {
 import { getBareIconStyle, type StyleableIcon } from '@/blocks/icon-color'
 import { knowledgeKeys } from '@/hooks/queries/kb/knowledge'
 import { logKeys } from '@/hooks/queries/logs'
-import { mothershipChatKeys } from '@/hooks/queries/mothership-chats'
 import { scheduleKeys } from '@/hooks/queries/schedules'
 import { tableKeys } from '@/hooks/queries/tables'
 import { folderKeys } from '@/hooks/queries/utils/folder-keys'
@@ -249,8 +248,8 @@ const RESOURCE_INVALIDATORS: Record<
   filefolder: (qc, wId) => {
     qc.invalidateQueries({ queryKey: workspaceFileFolderKeys.workspaceLists(wId) })
   },
-  task: (qc, wId) => {
-    qc.invalidateQueries({ queryKey: mothershipChatKeys.list(wId) })
+  task: () => {
+    // SV: Mothership chats (tasks) were removed with copilot (M01-T03); nothing to invalidate.
   },
   scheduledtask: (qc, wId) => {
     qc.invalidateQueries({ queryKey: scheduleKeys.list(wId) })

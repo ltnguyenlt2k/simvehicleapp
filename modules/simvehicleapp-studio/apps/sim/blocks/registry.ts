@@ -203,7 +203,7 @@ import {
 } from '@/blocks/blocks/mistral_parse'
 import { MondayBlock, MondayBlockMeta } from '@/blocks/blocks/monday'
 import { MongoDBBlock, MongoDBBlockMeta } from '@/blocks/blocks/mongodb'
-import { MothershipBlock } from '@/blocks/blocks/mothership'
+// SV: mothership block removed (proprietary copilot backend, M01-T03)
 import { MySQLBlock } from '@/blocks/blocks/mysql'
 import { Neo4jBlock, Neo4jBlockMeta } from '@/blocks/blocks/neo4j'
 import { NeverBounceBlock, NeverBounceBlockMeta } from '@/blocks/blocks/neverbounce'
@@ -513,7 +513,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   mistral_parse_v3: MistralParseV3Block,
   monday: MondayBlock,
   mongodb: MongoDBBlock,
-  mothership: MothershipBlock,
   mysql: MySQLBlock,
   neo4j: Neo4jBlock,
   new_relic: NewRelicBlock,

@@ -3,14 +3,11 @@ import { copilotMessages, workspaceFiles } from '@sim/db/schema'
 import { createLogger } from '@sim/logger'
 import { and, inArray, isNull } from 'drizzle-orm'
 import { chunkArray } from '@/lib/cleanup/batch-delete'
-import { SIM_AGENT_API_URL } from '@/lib/copilot/constants'
-import { env } from '@/lib/core/config/env'
 import type { StorageContext } from '@/lib/uploads'
 import { isUsingCloudStorage, StorageService } from '@/lib/uploads'
 
 const logger = createLogger('ChatCleanup')
 
-const COPILOT_CLEANUP_BATCH_SIZE = 1000
 /** Bounds how many chats' `copilot_messages` rows are scanned per query. */
 const CHAT_FILE_COLLECT_CHUNK_SIZE = 500
 
@@ -120,61 +117,8 @@ export async function deleteStorageFiles(
 }
 
 /**
- * Call the copilot backend to delete chat data (memory_files, checkpoints, task_chains, etc.)
- * Chunked at 1000 per request.
- */
-export async function cleanupCopilotBackend(
-  chatIds: string[],
-  label: string
-): Promise<{ deleted: number; failed: number }> {
-  const stats = { deleted: 0, failed: 0 }
-
-  if (chatIds.length === 0 || !env.COPILOT_API_KEY) {
-    if (!env.COPILOT_API_KEY) {
-      logger.warn(`[${label}] COPILOT_API_KEY not set, skipping copilot backend cleanup`)
-    }
-    return stats
-  }
-
-  for (let i = 0; i < chatIds.length; i += COPILOT_CLEANUP_BATCH_SIZE) {
-    const chunk = chatIds.slice(i, i + COPILOT_CLEANUP_BATCH_SIZE)
-    try {
-      const response = await fetch(`${SIM_AGENT_API_URL}/api/tasks/cleanup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': env.COPILOT_API_KEY,
-        },
-        body: JSON.stringify({ chatIds: chunk }),
-      })
-
-      if (!response.ok) {
-        const errorBody = await response.text().catch(() => '')
-        logger.error(`[${label}] Copilot backend cleanup failed: ${response.status}`, {
-          errorBody,
-          chatCount: chunk.length,
-        })
-        stats.failed += chunk.length
-        continue
-      }
-
-      const result = await response.json()
-      stats.deleted += result.deleted ?? 0
-      logger.info(
-        `[${label}] Copilot backend cleanup: ${result.deleted} chats deleted (batch ${Math.floor(i / COPILOT_CLEANUP_BATCH_SIZE) + 1})`
-      )
-    } catch (error) {
-      stats.failed += chunk.length
-      logger.error(`[${label}] Copilot backend cleanup request failed:`, { error })
-    }
-  }
-
-  return stats
-}
-
-/**
  * Full chat cleanup: collect file refs, then (after DB deletion by caller)
- * call copilot backend and delete storage files.
+ * delete storage files.
  *
  * Usage:
  *   const cleanup = await prepareChatCleanup(chatIds, label)
@@ -195,14 +139,7 @@ export async function prepareChatCleanup(
 
   return {
     execute: async () => {
-      // Call copilot backend
-      if (chatIds.length > 0) {
-        const copilotResult = await cleanupCopilotBackend(chatIds, label)
-        logger.info(
-          `[${label}] Copilot backend: ${copilotResult.deleted} deleted, ${copilotResult.failed} failed`
-        )
-      }
-
+      // SV: no remote copilot backend cleanup — the proprietary copilot service was removed (M01-T03).
       // Delete storage files with correct context per file
       if (files.length > 0) {
         const fileStats = await deleteStorageFiles(files, label)

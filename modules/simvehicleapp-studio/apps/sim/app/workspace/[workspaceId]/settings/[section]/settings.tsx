@@ -23,9 +23,6 @@ const ApiKeys = dynamic(() =>
 const BYOK = dynamic(() =>
   import('@/app/workspace/[workspaceId]/settings/components/byok/byok').then((m) => m.BYOK)
 )
-const Copilot = dynamic(() =>
-  import('@/app/workspace/[workspaceId]/settings/components/copilot/copilot').then((m) => m.Copilot)
-)
 const CredentialSets = dynamic(() =>
   import('@/app/workspace/[workspaceId]/settings/components/credential-sets/credential-sets').then(
     (m) => m.CredentialSets
@@ -39,16 +36,8 @@ const CustomTools = dynamic(() =>
     (m) => m.CustomTools
   )
 )
-const Inbox = dynamic(() =>
-  import('@/app/workspace/[workspaceId]/settings/components/inbox/inbox').then((m) => m.Inbox)
-)
 const MCP = dynamic(() =>
   import('@/app/workspace/[workspaceId]/settings/components/mcp/mcp').then((m) => m.MCP)
-)
-const Mothership = dynamic(() =>
-  import('@/app/workspace/[workspaceId]/settings/components/mothership/mothership').then(
-    (m) => m.Mothership
-  )
 )
 const RecentlyDeleted = dynamic(() =>
   import(
@@ -73,6 +62,7 @@ const WorkflowMcpServers = dynamic(() =>
     '@/app/workspace/[workspaceId]/settings/components/workflow-mcp-servers/workflow-mcp-servers'
   ).then((m) => m.WorkflowMcpServers)
 )
+// SV: copilot (Chat keys), inbox (Sim mailer) and mothership sections removed with copilot (M01-T03).
 // SV: Enterprise settings sections (access control, audit logs, SSO, data retention, data drains, whitelabeling) removed with apps/sim/ee.
 
 interface SettingsPageProps {
@@ -113,14 +103,11 @@ export function SettingsPage({ section }: SettingsPageProps) {
       {effectiveSection === 'teammates' && <Teammates />}
       {isBillingEnabled && effectiveSection === 'organization' && <TeamManagement />}
       {effectiveSection === 'byok' && <BYOK />}
-      {effectiveSection === 'copilot' && <Copilot />}
       {effectiveSection === 'mcp' && <MCP />}
       {effectiveSection === 'custom-tools' && <CustomTools />}
       {effectiveSection === 'workflow-mcp-servers' && <WorkflowMcpServers />}
-      {effectiveSection === 'inbox' && <Inbox />}
       {effectiveSection === 'recently-deleted' && <RecentlyDeleted />}
       {effectiveSection === 'admin' && <Admin />}
-      {effectiveSection === 'mothership' && <Mothership />}
     </div>
   )
 }

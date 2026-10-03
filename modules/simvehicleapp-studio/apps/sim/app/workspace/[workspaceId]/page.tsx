@@ -6,5 +6,6 @@ export default async function WorkspacePage({
   params: Promise<{ workspaceId: string }>
 }) {
   const { workspaceId } = await params
-  redirect(`/workspace/${workspaceId}/home`)
+  // SV: the Mothership chat home was removed with copilot (M01-T03); land on the workflows list.
+  redirect(`/workspace/${workspaceId}/w`)
 }
