@@ -69,4 +69,4 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T15 cập nhật ADR | ✔ | 0024/0025/0028 Accepted, 0023 Notes, 0009 mới |
 | (thêm) E-1 export → devcontainer | ✔ PASS | `devcontainer up` + build + runtime-local + run app |
 
-**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn run CI T08 trên GitHub (local PASS 2026-10-03) và ADR-0004/0006/0007 đang Proposed (T05–T06 xong 2026-10-03). Chưa có completion report M00. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
+**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn run CI T08 trên GitHub (local PASS 2026-10-03) và ADR-0004/0006/0007 đang Proposed (T05–T06 xong 2026-10-03). Report tiến độ `docs/reports/M00.md` (2026-10-03) ghi gate chưa đạt và từng tiêu chí; DoD "Report" chỉ tick khi gate PASS. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
