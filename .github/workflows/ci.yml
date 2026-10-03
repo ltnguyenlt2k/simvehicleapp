@@ -89,7 +89,7 @@ jobs:
         run: bun run test
 
   studio-image:
-    name: studio image builds from source
+    name: studio image builds from source + E2E
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -108,6 +108,32 @@ jobs:
         run: >-
           docker build --file modules/simvehicleapp-studio/docker/app.Dockerfile
           --tag simvehicleapp/studio:dev modules/simvehicleapp-studio
+      - name: Build migrations and realtime images from source
+        run: docker compose -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml --env-file scripts/ci/ci.env build studio-migrations studio-realtime
+      - name: Start the studio stack (fresh random secrets)
+        run: |
+          {
+            for k in BETTER_AUTH_SECRET ENCRYPTION_KEY API_ENCRYPTION_KEY INTERNAL_API_SECRET; do echo "$k=$(openssl rand -hex 32)"; done
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "SV_STUDIO_URL=http://localhost:3000"
+          } > "$RUNNER_TEMP/studio.env"
+          docker compose -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml --env-file "$RUNNER_TEMP/studio.env" \
+            up -d --no-build --wait --wait-timeout 240 studio-db studio-migrations studio-realtime studio
+      - name: E2E — M1 acceptance gate (Playwright 1.63.0)
+        run: |
+          docker run --rm --network host -e CI=1 -e SV_STUDIO_URL=http://localhost:3000 \
+            -v "$PWD/modules/simvehicleapp-studio/e2e":/e2e -w /e2e mcr.microsoft.com/playwright:v1.63.0-noble \
+            bash -c "npm install --no-audit --no-fund --silent && npx playwright test"
+      - name: Studio logs on failure
+        if: failure()
+        run: docker compose -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml --env-file "$RUNNER_TEMP/studio.env" logs --tail 200
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: e2e-report
+          path: modules/simvehicleapp-studio/e2e/playwright-report
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Export image for local verification (main only, 3 days)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker save simvehicleapp/studio:dev | gzip -1 > studio-image.tar.gz && ls -lh studio-image.tar.gz
@@ -131,6 +157,7 @@ jobs:
         run: |
           bun install --frozen-lockfile --cwd modules/simvehicleapp-contracts
           bun install --frozen-lockfile --cwd modules/simvehicleapp-studio
+          bun install --frozen-lockfile --cwd modules/simvehicleapp-studio/e2e
       - run: scripts/license/scan.sh
 
   contracts:
