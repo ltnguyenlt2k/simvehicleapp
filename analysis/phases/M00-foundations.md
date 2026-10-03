@@ -25,7 +25,7 @@
 
 ## DoD
 - [ ] Clone repo dev + cấu hình `.env` + `scripts/sv build/up` → stack đã hiện thực chạy; ghi riêng giới hạn build studio từ source và bằng chứng S-5 prebuilt.
-- [ ] Contracts alpha publish (local registry hoặc `bun link`).
+- [x] Contracts alpha publish (local registry hoặc `bun link`) — `bun link` `@simvehicleapp/contracts` + `@simvehicleapp/service-kit`, consumer import/validate GW-A OK (2026-10-03, commit `598d470`).
 - [ ] 6 spike có report + quyết định.
 - [ ] CI T08 PASS: license scan theo phạm vi phase, contract-only-deps, compose lint; có case vi phạm bị từ chối. Gỡ EE/Copilot và gate license sản phẩm thuộc M1.
 - [ ] ADR 0001–0007, 0009 Accepted (0002 áp dụng release; 0009 điều chỉnh dev).
@@ -57,7 +57,7 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T02 module folders | ✔ (dev form) | 10 thư mục `modules/*`; có code thật: `velocitas-stack`, `ide-vscode`, `simvehicleapp-studio` (snapshot Sim v0.7.13); còn lại placeholder README |
 | T03 lock + scripts | ↷ dời | lock/submodule chỉ ở release (ADR-0009); `scripts/sv` thay cho bootstrap trong dev |
 | T04 BASELINE | ✔ | `docs/BASELINE.md` (SHA + digest) |
-| T05/T06 contracts alpha + fixtures | 🔄 | 2026-10-03: schemas/validator/types + fixture VSS/GW-A xong, `bun test` 43/43 PASS (`modules/simvehicleapp-contracts`); còn OpenAPI, generation-manifest/license, Python types, service-kit, publish |
+| T05/T06 contracts alpha + fixtures | ✔ | 2026-10-03: `modules/simvehicleapp-contracts` — 17 schema, OpenAPI 8 service, TS types, service-kit, fixture VSS/GW-A; `bun test` 89/89, `bun run check` PASS; commits `8d11a9a` `4a7600d` `07d8d90` `faa2878` `f35ff2a` `48da339` `598d470`. Gate item 5 còn chờ T08 + ADR Accepted |
 | T07 compose skeleton | ✔ | root include 3 fragment; mỗi fragment `config -q` độc lập |
 | T08 CI chung | ☐ | chưa có CI root; repo đã có git |
 | T09 S-1 | ✔ PASS | offline new project: init 26 s / deps 2 s / build 10 s |
@@ -69,4 +69,4 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T15 cập nhật ADR | ✔ | 0024/0025/0028 Accepted, 0023 Notes, 0009 mới |
 | (thêm) E-1 export → devcontainer | ✔ PASS | `devcontainer up` + build + runtime-local + run app |
 
-**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn contracts/fixtures T05–T06, CI T08 và ADR-0004/0006/0007 đang Proposed. Chưa có completion report M00. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
+**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn CI T08 và ADR-0004/0006/0007 đang Proposed (T05–T06 xong 2026-10-03). Chưa có completion report M00. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
