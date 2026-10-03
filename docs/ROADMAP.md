@@ -7,7 +7,7 @@
 ## 1. Vòng đời cập nhật file này (bắt buộc)
 
 1. Bắt đầu làm 1 feature → đổi `☐` thành `🔄`, ghi tên người/agent + ngày bắt đầu vào cột Ghi chú.
-2. Thực hiện đúng skill `implementation-loop`: đọc ADR liên quan → research upstream nếu cần → viết test trước → implement → nếu phát hiện ADR/doc sai thì xử lý mismatch (sửa ADR/doc) **trước khi** tiếp tục code, không âm thầm lệch.
+2. Thực hiện đúng skill `simvehicleapp-phase-execution`: đọc ADR liên quan → research upstream nếu cần → viết test trước → implement → nếu phát hiện ADR/doc sai thì xử lý mismatch (sửa ADR/doc) **trước khi** tiếp tục code, không âm thầm lệch.
 3. Chỉ đổi `🔄` thành `✔` khi: test thật pass (unit/golden/contract tương ứng) **và** Definition of Done của milestone (trong `phases/M<nn>-*.md`) cho phần đó đã đạt. Ghi bằng chứng (commit SHA ngắn, hoặc link PR, hoặc file report) + ngày vào cột Ghi chú.
 4. Khi **toàn bộ** feature của 1 milestone đã `✔` → chạy Acceptance Gate của milestone đó → viết `docs/reports/M<nn>.md` theo `analysis/phases/REPORT_TEMPLATE.md` → cập nhật dòng tổng quan ở §3 → **chỉ sau đó** milestone kế tiếp mới được bắt đầu (luật cứng AGENTS.md §2 #7, không bỏ qua gate).
 5. Một feature không được `✔` nếu ADR nguồn của nó còn `Proposed` khi milestone yêu cầu `Accepted` (xem cột ADR ở §3 và `analysis/adr/README.md` §2) — trừ khi milestone đó tự làm công việc Accept (ví dụ M0 với spike).
@@ -318,4 +318,4 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 
 ---
 
-*Cập nhật lần cuối: 2026-10-02. Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem `implementation-loop`).*
+*Cập nhật lần cuối: 2026-10-03. Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*

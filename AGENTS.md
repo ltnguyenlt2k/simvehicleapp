@@ -8,7 +8,7 @@
 3. [analysis/02-layers-and-modules.md](analysis/02-layers-and-modules.md) — tầng, repo con, ma trận phụ thuộc.
 4. ADR của milestone đang làm: [analysis/adr/README.md](analysis/adr/README.md).
 5. File phase: [analysis/phases/](analysis/phases/README.md) — làm **đúng thứ tự task**, đúng gate.
-6. [docs/ROADMAP.md](docs/ROADMAP.md) — **bảng tracking sống**: trước khi làm 1 feature, kiểm trạng thái hiện tại ở đây; làm xong phải tự cập nhật (xem skill `implementation-loop` + mục 1 của file).
+6. [docs/ROADMAP.md](docs/ROADMAP.md) — **bảng tracking sống**: trước khi làm 1 feature, kiểm trạng thái hiện tại ở đây; làm xong phải tự cập nhật (xem skill `simvehicleapp-phase-execution` + mục 1 của file).
 `vehicle_no_code_studio_master_plan_v2.md` là tài liệu gốc; khi mâu thuẫn, **analysis/ + ADR thắng** (đã hiệu chỉnh theo research 2026-09-30); khi analysis mâu thuẫn source thật ⇒ source thật thắng + ghi ADR.
 
 ## 2. Luật cứng (vi phạm = revert)
@@ -26,8 +26,7 @@
 ## 3. Skills có sẵn (`.claude/skills/`)
 | Skill | Dùng khi |
 |---|---|
-| `simvehicleapp-phase-execution` | Bắt đầu/kết thúc một milestone/task, viết report |
-| `implementation-loop` | **Viết code thật** cho bất kỳ task (sau ADR Accepted) — vòng lặp review doc → research → implement → xử lý mismatch → đồng bộ doc → test → sửa lỗi, tới khi production-ready |
+| `simvehicleapp-phase-execution` | Bắt đầu/kết thúc milestone/task **và** viết code thật cho task đó (vòng lặp research→test→implement→mismatch→track) |
 | `multi-repo-modules` | Làm việc với submodule, bump lock, tạo repo con |
 | `upstream-verify` | Trước khi dùng version/API của Sim, Velocitas, KUKSA, VSS, code-server, MCP |
 | `sim-fork-refactor` | Sửa `simvehicleapp-studio` (fork Sim v0.7.13) |
@@ -43,7 +42,7 @@
 | `adr-writing` | Viết/cập nhật ADR |
 
 ## 4. Quy trình mỗi task
-Vòng lặp chi tiết (review doc → research → implement → mismatch → đồng bộ doc → test → sửa lỗi, checklist production-ready): skill `implementation-loop`. Tóm tắt:
+Vòng lặp chi tiết (review doc → research → implement → mismatch → đồng bộ doc → test → sửa lỗi, checklist production-ready, tracking): skill `simvehicleapp-phase-execution`. Tóm tắt:
 1. Đọc task trong phase file → ADR liên quan → CONTRACT.md của module.
 2. Viết test trước (unit/golden/contract) khi có thể.
 3. Implement trong đúng repo con (branch `feat/M<nn>-T<nn>-<slug>`).
