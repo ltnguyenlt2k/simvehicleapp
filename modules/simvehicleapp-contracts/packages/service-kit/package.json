@@ -13,7 +13,7 @@
   "scripts": {
     "test": "bun test"
   },
-  "dependencies": {
-    "@simvehicleapp/contracts": "file:../.."
+  "peerDependencies": {
+    "@simvehicleapp/contracts": "1.0.0-alpha.1"
   }
 }

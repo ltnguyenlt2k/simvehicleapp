@@ -4,7 +4,7 @@ Source of truth for every schema/API between modules plus shared fixtures (ADR-0
 Package: `@simvehicleapp/contracts@1.0.0-alpha.1` (M00-T05/T06, in progress).
 
 ```bash
-bun run setup     # installs the contracts package and packages/service-kit
+bun install
 bun test          # validates fixtures + positive/negative cases for every schema
 bun run gen       # regenerate packages/ts/src/types/index.ts from schemas/
 bun run check     # generated types up to date + tsc

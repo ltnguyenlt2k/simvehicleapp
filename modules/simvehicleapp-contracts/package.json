@@ -23,8 +23,7 @@
   "scripts": {
     "gen": "bun tools/gen-types.ts",
     "check": "bun tools/gen-types.ts --check && tsc --noEmit -p .",
-    "test": "bun test",
-    "setup": "bun install && cd packages/service-kit && bun install"
+    "test": "bun test"
   },
   "dependencies": {
     "ajv": "8.17.1"

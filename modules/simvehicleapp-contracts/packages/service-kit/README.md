@@ -1,7 +1,7 @@
 # @simvehicleapp/service-kit
 
-Infrastructure helpers every SimVehicleApp service uses (ADR-0007 §5–7). No business logic, no dependencies besides
-`@simvehicleapp/contracts` (dev phase: `file:../..`; release pins a semver range per ADR-0009).
+Infrastructure helpers every SimVehicleApp service uses (ADR-0007 §5–7). No business logic and no dependencies; it needs the
+`@simvehicleapp/contracts` peer (inside this module it resolves through `tsconfig.json` `paths`).
 
 ```ts
 import { createService } from "@simvehicleapp/service-kit";
