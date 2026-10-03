@@ -28,7 +28,7 @@
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
-| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 4/12 ✔ (T01, T03, T04, T08); T02a, T05, T06, T07 đang làm |
+| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 8/12 ✔ (T01, T03, T04, T07, T08, T09, T11, T12); T02a (PO ký), T05/T10 (Playwright), T06 đang làm |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
@@ -75,12 +75,12 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 | Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | ✔ | Claude Code 2026-10-03 (`6716e5e`): xoá pii/docs/.devcontainer/helm/compose cũ (1.677 file), `bun.lock` cập nhật bằng bun 1.3.13 (chỉ hoisting). Trigger.dev: xác minh luồng còn giữ chạy backend `database` khi `TRIGGER_DEV_ENABLED` tắt (analysis/11 §57), giữ SDK tới M11. Build: CI [37127484709](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37127484709) 9/9 gồm image từ source | T04 |
 | Toolbar allowlist `sv_*` (ẩn 268 block cũ) | 0008 | 🔄 | Claude Code 2026-10-03 (`5378173`): `NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST` (tiền tố NEXT_PUBLIC_ vì chạy client; mặc định `sv_*,note`) trong `filterBlocks`; test với registry thật: chỉ còn `note`; route integrations/skills/upgrade + trang marketing redirect. CI [37127484709](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37127484709) PASS. **Còn:** UI snapshot toolbar (làm cùng Playwright ở T10) | T05 |
 | Rebrand (brand.ts, metadata, NOTICE) | 0003 | 🔄 | Claude Code 2026-10-03, **làm trước thứ tự theo yêu cầu PO**. Xong: brand kit từ bảng logo PO + thay 60 logo/favicon/icon Sim tại chỗ + NOTICE (commits `7847389` `2206638`; build tất định). Tên/metadata/màu qua `lib/sv/oss/brand` đã kiểm trên image build từ source (2026-10-03). **Còn:** 6 file còn chuỗi "Sim Studio" (user-agent integration, structured-data landing), kiểm email templates; visual check trên trình duyệt | T06 |
-| Tắt telemetry mặc định | 0004 | 🔄 | Claude Code 2026-10-03 (`0c00217`): bỏ collector mặc định `telemetry.simstudio.ai` (server OTel + relay `/api/telemetry`) — chỉ gửi khi cấu hình `TELEMETRY_ENDPOINT`/`OTEL_EXPORTER_OTLP_ENDPOINT`; GTM/GA/Profound chặn bởi `isHosted`, PostHog cần cờ + key. Test relay + defaults. Chờ CI | T07 |
+| Tắt telemetry mặc định | 0004 | ✔ | Claude Code 2026-10-03 (`0c00217`): bỏ collector mặc định `telemetry.simstudio.ai` (server OTel + relay `/api/telemetry`) — chỉ gửi khi cấu hình `TELEMETRY_ENDPOINT`/`OTEL_EXPORTER_OTLP_ENDPOINT`; test relay không gọi `fetch` khi không có endpoint; GTM/GA/Profound chặn bởi `isHosted`, PostHog cần cờ + key. CI [37128081909](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37128081909) 9/9 | T07 |
 | Dockerfiles compose meta (app/realtime/migrations) | 0005 | ✔ | 2026-10-03: dùng Dockerfile upstream `docker/{app,realtime,db}.Dockerfile` (migrations = `db.Dockerfile`), fragment `compose.simvehicleapp.yaml` build từ module. Bằng chứng compose up với image build từ source: realtime/migrations build local, app build CI (artifact run 37123511051) → `up --wait` healthy, migrations exit 0, title SimVehicleApp | T08 |
-| BFF skeleton `/api/sv/health` | 0007 | ☐ | | T09 |
-| Layout editor: action bar + bottom dock + banner an toàn | 0008 | ☐ | | T10 |
-| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | ☐ | Dùng [scratch-opcode-denylist.md](../analysis/adr/scratch-opcode-denylist.md) | T11 |
-| i18n check (Q8) | — | ☐ | | T12 |
+| BFF skeleton `/api/sv/health` | 0007 | ✔ | Claude Code 2026-10-03 (`98079c8`): `lib/sv/api-client` (`SV_*_URL`, `x-sv-internal`, `x-sv-request-id`, timeout 2 s), route qua `svHealthContract`, cần session; 7 test; `check:api-validation` PASS (thêm vào CI). CI [37128686717](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37128686717) 9/9 | T09 |
+| Layout editor: action bar + bottom dock + banner an toàn | 0008 | 🔄 | Claude Code 2026-10-03 (`a3217a1`): `components/sv` — action bar 7 nút disabled (ghi milestone), dock 5 tab rỗng thay terminal executor (ADR-0006), banner NFR-10; DOM test 3. **Còn:** Playwright snapshot (dựng cùng E2E gate M1) | T10 |
+| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | ✔ | Claude Code 2026-10-03: `scripts/ci/scratch_denylist.py` + `analysis/adr/scratch-opcode-denylist.grep` (khớp nguyên literal trong code SimVehicleApp), `studio_guards.py` (`ee/`, `@/ee/`, copilot service); self-test có case vi phạm. CI [37128686717](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37128686717) | T11 |
+| i18n check (Q8) | — | ✔ | 2026-10-03 [docs/reports/M01-T12-i18n.md](reports/M01-T12-i18n.md): Sim không có i18n UI ⇒ EN mặc định; tiếng Việt cần ADR riêng | T12 |
 
 ## M2 — VSS catalog & vehicle blocks
 ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR-0011-block-model-on-canvas.md) · Phụ thuộc: M1 · Chi tiết: [phases/M02](../analysis/phases/M02-vss-catalog-and-vehicle-blocks.md)
