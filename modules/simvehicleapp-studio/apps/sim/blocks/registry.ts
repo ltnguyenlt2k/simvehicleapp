@@ -282,7 +282,6 @@ import { StartTriggerBlock } from '@/blocks/blocks/start_trigger'
 import { StarterBlock } from '@/blocks/blocks/starter'
 import { StripeBlock, StripeBlockMeta } from '@/blocks/blocks/stripe'
 import { STSBlock, STSBlockMeta } from '@/blocks/blocks/sts'
-import { SttBlock, SttV2Block } from '@/blocks/blocks/stt'
 import { SupabaseBlock, SupabaseBlockMeta } from '@/blocks/blocks/supabase'
 import { TableBlock } from '@/blocks/blocks/table'
 import { TailscaleBlock, TailscaleBlockMeta } from '@/blocks/blocks/tailscale'
@@ -590,8 +589,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   starter: StarterBlock,
   stripe: StripeBlock,
   sts: STSBlock,
-  stt: SttBlock,
-  stt_v2: SttV2Block,
   supabase: SupabaseBlock,
   table: TableBlock,
   tailscale: TailscaleBlock,

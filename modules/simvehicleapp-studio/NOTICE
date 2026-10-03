@@ -6,6 +6,12 @@ This product is a modified version of Sim (https://github.com/simstudioai/sim), 
 Modifications by SimVehicleApp include rebranding: the Sim logos, favicons and icons under
 apps/sim/public were replaced by SimVehicleApp brand assets (see brand/README.md).
 
+Third-party components with notable license terms (license scan, 2026-10-03):
+- @img/sharp-libvips-* : libvips, LGPL-3.0-or-later, shipped unmodified and loaded dynamically by sharp
+  (Next.js image optimisation). Source: https://github.com/libvips/libvips — you may replace the shared
+  library with a compatible build.
+- caniuse-lite : browser support data, CC-BY-4.0, © caniuse.com contributors (https://caniuse.com).
+
 Original NOTICE of Sim:
 
 Sim Studio

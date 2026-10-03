@@ -186,3 +186,15 @@ apps/sim/lib/api/contracts/index.ts
 # M01-T10 — vehicle editor chrome: action bar, bottom dock (replaces executor terminal), safety banner
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/sv/*
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/workflow.tsx
+
+# License (M1, ADR-0004): GPL ffmpeg-static + Speech-to-Text feature removed; NOTICE third-party terms
+apps/sim/app/api/tools/stt/*
+apps/sim/tools/stt/*
+apps/sim/blocks/blocks/stt.ts
+apps/sim/lib/media/ffmpeg.ts
+apps/sim/lib/audio/*
+apps/sim/lib/api/contracts/tools/media/stt.ts
+apps/sim/lib/api/contracts/tools/media/index.ts
+apps/sim/tools/registry.ts
+apps/sim/next.config.ts
+apps/sim/package.json

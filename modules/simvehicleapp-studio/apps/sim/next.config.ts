@@ -78,8 +78,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     '@1password/sdk',
     'unpdf',
-    'ffmpeg-static',
-    'fluent-ffmpeg',
     'ws',
     'isolated-vm',
     '@e2b/code-interpreter',
