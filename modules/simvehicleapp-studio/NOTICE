@@ -1,3 +1,13 @@
+SimVehicleApp Studio
+Copyright 2026 SimVehicleApp contributors
+
+This product is a modified version of Sim (https://github.com/simstudioai/sim), tag v0.7.13
+(commit ad0b8678b5dc4b6d5703481d567f29c9facc6f67), licensed under the Apache License, Version 2.0.
+Modifications by SimVehicleApp include rebranding: the Sim logos, favicons and icons under
+apps/sim/public were replaced by SimVehicleApp brand assets (see brand/README.md).
+
+Original NOTICE of Sim:
+
 Sim Studio
 Copyright 2026 Sim Studio
 
