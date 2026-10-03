@@ -37,8 +37,17 @@ test.describe.serial('M1 gate', () => {
     await page.locator('button[type="submit"]').click()
     await page.waitForURL(/\/workspace\//, { timeout: 60_000 })
 
-    await page.getByRole('button', { name: 'New workflow' }).first().click()
     await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
+    const before = new URL(page.url()).pathname
+
+    // The sidebar '+' is icon-only; create through the command palette like a keyboard user.
+    await page.getByRole('button', { name: 'Search' }).click()
+    const palette = page.getByRole('dialog')
+    await palette.locator('input').first().fill('Create workflow')
+    await page.keyboard.press('Enter')
+    await page.waitForURL((url) => /\/w\/[^/?]+$/.test(url.pathname) && url.pathname !== before, {
+      timeout: 60_000,
+    })
     workflowUrl = page.url()
     const workflowId = new URL(workflowUrl).pathname.split('/').pop()
 
