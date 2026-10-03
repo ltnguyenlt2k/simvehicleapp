@@ -5,3 +5,5 @@
 **/.next/
 **/.turbo/
 spikes/**/.env
+__pycache__/
+*.pyc
