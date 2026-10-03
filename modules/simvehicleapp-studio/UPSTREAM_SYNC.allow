@@ -182,3 +182,7 @@ apps/sim/instrumentation-node.ts
 apps/sim/app/api/sv/*
 apps/sim/lib/api/contracts/sv.ts
 apps/sim/lib/api/contracts/index.ts
+
+# M01-T10 — vehicle editor chrome: action bar, bottom dock (replaces executor terminal), safety banner
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/sv/*
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/workflow.tsx

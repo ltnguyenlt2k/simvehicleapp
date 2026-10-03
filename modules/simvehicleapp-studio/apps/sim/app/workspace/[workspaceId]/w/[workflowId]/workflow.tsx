@@ -29,7 +29,6 @@ import {
   CommandList,
   DiffControls,
   Panel,
-  Terminal,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components'
 import { BlockMenu } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/block-menu'
 import { CanvasMenu } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/canvas-menu'
@@ -37,6 +36,11 @@ import { Cursors } from '@/app/workspace/[workspaceId]/w/[workflowId]/components
 import { ErrorBoundary } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/error/index'
 import { WorkflowSearchReplace } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/search-replace/workflow-search-replace'
 import type { SubflowNodeData } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/subflow-node'
+import {
+  SvActionBar,
+  SvBottomDock,
+  SvSafetyBanner,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 import { WorkflowControls } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-controls/workflow-controls'
 import {
   useAutoLayout,
@@ -4034,6 +4038,9 @@ const WorkflowContent = React.memo(
     return (
       <div className='flex h-full w-full overflow-hidden'>
         <div className='flex min-w-0 flex-1 flex-col'>
+          {/* SV: vehicle editor chrome — safety notice (NFR-10) and action bar (M01-T10). */}
+          {!embedded && <SvSafetyBanner />}
+          {!embedded && <SvActionBar />}
           <div ref={canvasContainerRef} className='relative flex-1 overflow-hidden'>
             {!isWorkflowReady && (
               <div className='absolute inset-0 z-[5] flex items-center justify-center bg-[var(--bg)]'>
@@ -4224,7 +4231,8 @@ const WorkflowContent = React.memo(
             {!embedded && <DiffControls />}
           </div>
 
-          <Terminal />
+          {/* SV: vehicle bottom dock replaces Sim's executor terminal (ADR-0006, M01-T10). */}
+          {!embedded && <SvBottomDock />}
         </div>
 
         {(!embedded || sandbox) && <Panel workspaceId={sandbox ? workspaceId : undefined} />}
