@@ -26,7 +26,6 @@ import {
   Database,
   Files,
   HelpCircle,
-  Integration,
   PanelLeft,
   Plus,
   Search,
@@ -491,25 +490,17 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
     [workspaces, workspaceId]
   )
 
-  const topNavItems = useMemo(
-    () =>
-      [
-        {
-          id: 'search',
-          label: 'Search',
-          icon: Search,
-          onClick: openSearchModal,
-        },
-        {
-          id: 'integrations',
-          label: 'Integrations',
-          icon: Integration,
-          href: `/workspace/${workspaceId}/integrations`,
-          additionalActivePaths: [`/workspace/${workspaceId}/skills`],
-          hidden: permissionConfig.hideIntegrationsTab,
-        },
-      ].filter((item) => !item.hidden),
-    [workspaceId, openSearchModal, permissionConfig.hideIntegrationsTab]
+  // SV: 'New chat' (copilot, M01-T03) and 'Integrations' (M01-T05) entries removed.
+  const topNavItems = useMemo<SidebarNavItemData[]>(
+    () => [
+      {
+        id: 'search',
+        label: 'Search',
+        icon: Search,
+        onClick: openSearchModal,
+      },
+    ],
+    [openSearchModal]
   )
 
   const workspaceNavItems = useMemo(

@@ -152,3 +152,7 @@ docker-compose.ollama.yml
 docker-compose.prod.yml
 docker/pii.Dockerfile
 bun.lock
+
+# M01-T05 — toolbar/search allowlist (NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST, default sv_*,note) and hidden routes
+apps/sim/proxy.ts
+apps/sim/hooks/use-permission-config.ts

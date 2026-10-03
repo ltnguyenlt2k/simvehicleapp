@@ -6,6 +6,7 @@ import { getEnv } from './lib/core/config/env'
 import { isAuthDisabled, isHosted } from './lib/core/config/env-flags'
 import { generateRuntimeCSP } from './lib/core/security/csp'
 import { getClientIp } from './lib/core/utils/request'
+import { getHiddenRouteRedirect } from './lib/sv/hidden-routes'
 
 const logger = createLogger('Proxy')
 
@@ -240,6 +241,10 @@ export async function proxy(request: NextRequest) {
     applyCorsHeaders(response, policy)
     return response
   }
+
+  // SV: routes SimVehicleApp does not offer (landing, integrations, skills, billing) — M01-T05.
+  const hiddenTarget = getHiddenRouteRedirect(url.pathname)
+  if (hiddenTarget) return track(request, NextResponse.redirect(new URL(hiddenTarget, request.url)))
 
   const sessionCookie = getSessionCookie(request)
   const hasActiveSession = isAuthDisabled || !!sessionCookie

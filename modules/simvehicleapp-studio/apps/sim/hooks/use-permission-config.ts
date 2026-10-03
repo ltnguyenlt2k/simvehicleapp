@@ -13,6 +13,7 @@ import {
   type PermissionGroupConfig,
 } from '@/lib/permission-groups/types'
 import { useUserPermissionConfig } from '@/lib/sv/oss/access-control/hooks'
+import { getToolbarAllowlist, isToolbarBlockAllowed } from '@/lib/sv/toolbar-allowlist'
 
 export interface PermissionConfigResult {
   config: PermissionGroupConfig
@@ -114,9 +115,12 @@ export function usePermissionConfig(): PermissionConfigResult {
   }, [config.deniedModels])
 
   const filterBlocks = useMemo(() => {
+    // SV: toolbar/search only offer SimVehicleApp blocks (NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST, M01-T05).
+    const toolbarAllowlist = getToolbarAllowlist()
     return <T extends { type: string }>(blocks: T[]): T[] => {
-      if (mergedAllowedIntegrations === null) return blocks
-      return blocks.filter(
+      const offered = blocks.filter((block) => isToolbarBlockAllowed(block.type, toolbarAllowlist))
+      if (mergedAllowedIntegrations === null) return offered
+      return offered.filter(
         (block) =>
           isBlockTypeAccessControlExempt(block.type) ||
           mergedAllowedIntegrations.includes(block.type.toLowerCase())
