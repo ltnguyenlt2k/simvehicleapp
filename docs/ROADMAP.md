@@ -28,7 +28,7 @@
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
-| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 1/12 ✔ (T01); T02a–c, T06 đang làm |
+| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 2/12 ✔ (T01, T03); T02a, T04, T05, T06 đang làm |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
@@ -71,9 +71,9 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 |---|---|---|---|---|
 | Fork + tag `baseline-v0.7.13` + `UPSTREAM_SYNC.md` | 0003 | ✔ | Claude Code 2026-10-03: dev một repo (ADR-0009) ⇒ tag `studio/baseline-v0.7.13` @ `68f7f9a`; "merge-base check" = `scripts/upstream_tree_check.py` so tree với `ad0b867`: 12.226/12.226 file giống từng byte, thay đổi cục bộ phải khai báo trong `UPSTREAM_SYNC.allow` → PASS; CI job `vendored-trees` (commits `4a9418d` `ac0f165` `1cec4e2`). Phát hiện kèm: import mất bit thực thi + template C++ thiếu `build.sh` (đã khôi phục) | T01 |
 | Clean-room gỡ `ee/` (spec Apache + `lib/sv/oss/*` + codemod + xoá `apps/sim/ee/`) | 0004 | 🔄 | Claude Code 2026-10-03. **T02a** spec [docs/specs/M01-T02a-oss-clean-room-spec.md](specs/M01-T02a-oss-clean-room-spec.md) — chờ PO review/ký clean-room (11a §3.6). **T02b ✔** `lib/sv/oss/*` + 15 contract test (`5af31ae`). **T02c ✔** xoá `apps/sim/ee`, codemod 70 file (`a06dee1`): CI run [37123511051](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37123511051) 9/9 PASS — studio tsc + 9.356 test, `studio-guards`, **image build từ source** (`studio-image`); image đó chạy local: title "Log In \| SimVehicleApp", `--brand-accent:#0FC0FF`, không còn `sim.ai` ở /login, `/sso` → /login | T02a–c |
-| Gỡ copilot (`lib/copilot/**`, routes, panel placeholder) | 0004 | ☐ | | T03 |
-| Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | ☐ | | T04 |
-| Toolbar allowlist `sv_*` (ẩn 268 block cũ) | 0008 | ☐ | Theo [11b](../analysis/11b-block-inventory-and-migration.md) | T05 |
+| Gỡ copilot (`lib/copilot/**`, routes, panel placeholder) | 0004 | ✔ | Claude Code 2026-10-03 (`0224245` `760f434`): copilot thực tế là cả Chat/Mothership ⇒ gỡ 494 file (service layer, routes, Chat home, scheduled tasks, inbox, settings Chat keys/Sim mailer/Mothership); panel → "Assistant — Coming in M10"; giữ 45 helper cục bộ không gọi mạng (khai báo `UPSTREAM_SYNC.allow`, ghi ở analysis/11). Không còn `copilot.sim.ai`/`SIM_AGENT_API_URL` (guard CI). tsc 0, vitest 571/8.451, CI [37126936973](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37126936973) 9/9 gồm image từ source | T03 |
+| Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | 🔄 | Claude Code 2026-10-03 (`6716e5e`): xoá pii/docs/.devcontainer/helm/compose cũ, `bun.lock` cập nhật bằng bun 1.3.13. Trigger.dev: xác minh luồng còn giữ chạy backend `database` khi `TRIGGER_DEV_ENABLED` tắt (analysis/11 §57) — giữ SDK, gỡ ở M11. Chờ CI (build) | T04 |
+| Toolbar allowlist `sv_*` (ẩn 268 block cũ) | 0008 | 🔄 | Claude Code 2026-10-03 (`5378173`): `NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST` (cần tiền tố NEXT_PUBLIC_ vì chạy client; mặc định `sv_*,note`) trong `filterBlocks`; test với registry thật: chỉ còn `note`. Route integrations/skills/upgrade + trang marketing redirect. tsc 0, vitest 573/8.480. Chờ CI; UI snapshot test toolbar làm cùng T10 (Playwright) | T05 |
 | Rebrand (brand.ts, metadata, NOTICE) | 0003 | 🔄 | Claude Code 2026-10-03, **làm trước thứ tự theo yêu cầu PO**. Xong: brand kit từ bảng logo PO + thay 60 logo/favicon/icon Sim tại chỗ + NOTICE (commits `7847389` `2206638`; build tất định). Tên/metadata/màu qua `lib/sv/oss/brand` đã kiểm trên image build từ source (2026-10-03). **Còn:** 6 file còn chuỗi "Sim Studio" (user-agent integration, structured-data landing), kiểm email templates; visual check trên trình duyệt | T06 |
 | Tắt telemetry mặc định | 0004 | ☐ | | T07 |
 | Dockerfiles compose meta (app/realtime/migrations) | 0005 | ☐ | | T08 |
