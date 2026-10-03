@@ -33,3 +33,12 @@ Luồng PO có 6 "ô" phải độc lập, dễ bảo trì. Master Plan Part 10 
 
 ## Verification
 Contract test ở mỗi module; dependency lint; chaos test: tắt 1 service → UI báo lỗi rõ, không crash.
+
+## Notes / Deviations (2026-10-03 — M00-T05, chưa đổi Status)
+Bằng chứng implement M0: `modules/simvehicleapp-contracts` (`@simvehicleapp/contracts@1.0.0-alpha.1`), 17 JSON Schema 2020-12 + OpenAPI 3.1 cho 8 service + TS types + `@simvehicleapp/service-kit`; 89 test; CI `contracts` + `contract-only-deps` PASS (GitHub Actions run 37115615196). Điểm cần PO xác nhận khi Accept:
+1. `$id` dạng URN `urn:simvehicleapp:contracts:<name>:<semver>` (không phụ thuộc domain).
+2. Mục 3 "proto + sinh types TS/Python/Rust": M0 chỉ sinh TS; Python (M12), Rust (M13), proto KUKSA (vendored ở orchestrator, M8) thêm khi có module tiêu thụ.
+3. Mục 7 `/version`: schema `service-info` cho phép field bổ sung (vd toolchain ghi version CLI/SDK); `/healthz` trả `{status: ok|degraded, checks?}`, 503 khi degraded; hai endpoint này không cần `x-sv-internal`.
+4. `service-kit` là package riêng trong module contracts, khai báo `@simvehicleapp/contracts` là peer dependency (dev resolve qua tsconfig paths — tránh vòng `file:../..`).
+5. API orchestrator: `POST /projects/{id}/generations` nhận `graphs[]` (studio sở hữu graph theo mục 4, orchestrator không gọi ngược L1) thay cho `workflowIds[]` ở sơ đồ analysis/03 §5 — chốt khi M7 khoá API.
+Danh sách đầy đủ: `modules/simvehicleapp-contracts/CONTRACT.md` §Alpha decisions.
