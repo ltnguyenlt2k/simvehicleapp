@@ -59,7 +59,7 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T04 BASELINE | ✔ | `docs/BASELINE.md` (SHA + digest) |
 | T05/T06 contracts alpha + fixtures | ✔ | 2026-10-03: `modules/simvehicleapp-contracts` — 17 schema, OpenAPI 8 service, TS types, service-kit, fixture VSS/GW-A; `bun test` 89/89, `bun run check` PASS; commits `8d11a9a` `4a7600d` `07d8d90` `faa2878` `f35ff2a` `48da339` `598d470`. Gate item 5 còn chờ T08 + ADR Accepted |
 | T07 compose skeleton | ✔ | root include 3 fragment; mỗi fragment `config -q` độc lập |
-| T08 CI chung | ☐ | chưa có CI root; repo đã có git |
+| T08 CI chung | 🔄 | 2026-10-03: `.github/workflows/ci.yml` + `scripts/ci`, `scripts/license`; local PASS (self-test 19/19 gồm case vi phạm, compose-lint, contract-only-deps, license-scan); chờ run GitHub Actions sau push |
 | T09 S-1 | ✔ PASS | offline new project: init 26 s / deps 2 s / build 10 s |
 | T10 S-2 | ✔ PASS | SampleApp ↔ databroker:55555 ↔ MQTT |
 | T11 S-3 | ✔ PASS | set() = actuator **target** only |
@@ -69,4 +69,4 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T15 cập nhật ADR | ✔ | 0024/0025/0028 Accepted, 0023 Notes, 0009 mới |
 | (thêm) E-1 export → devcontainer | ✔ PASS | `devcontainer up` + build + runtime-local + run app |
 
-**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn CI T08 và ADR-0004/0006/0007 đang Proposed (T05–T06 xong 2026-10-03). Chưa có completion report M00. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
+**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn run CI T08 trên GitHub (local PASS 2026-10-03) và ADR-0004/0006/0007 đang Proposed (T05–T06 xong 2026-10-03). Chưa có completion report M00. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
