@@ -234,3 +234,27 @@ class AllowlistGlobTest(unittest.TestCase):
         self.assertTrue(upstream_tree_check.declared(path, "apps/sim/app/workspace/[workspaceId]/*"))
         self.assertFalse(upstream_tree_check.declared("apps/sim/app/workspace/w/layout.tsx", "apps/sim/app/workspace/[workspaceId]/*"))
         self.assertFalse(upstream_tree_check.declared("apps/sim/a.ts", "apps/sim/a.tsx"))
+
+
+import scratch_denylist  # noqa: E402
+
+
+class ScratchDenylistTest(TempRepo):
+    def setUp(self):
+        super().setUp()
+        self.write("analysis/adr/scratch-opcode-denylist.grep", (HERE.parents[2] / "analysis/adr/scratch-opcode-denylist.grep").read_text())
+
+    def test_simvehicleapp_names_pass(self):
+        self.write("modules/simvehicleapp-core/src/ops.ts", "const ops = ['event.app_start', 'control.wait', 'sv_wait', 'vehicle.read']\n")
+        self.write("modules/simvehicleapp-studio/apps/sim/lib/sv/a.ts", "export const t = 'sv_on_signal_changed'\n")
+        self.assertEqual(scratch_denylist.run(self.root), [])
+
+    def test_scratch_opcodes_rejected_in_owned_code(self):
+        self.write("modules/simvehicleapp-core/src/ops.ts", "const op = 'control_wait'\n")
+        self.write("modules/simvehicleapp-contracts/schemas/x.json", '{"enum": ["event_whenflagclicked"]}\n')
+        self.write("modules/simvehicleapp-studio/apps/sim/app/w/components/sv/b.tsx", "const t = `motion_movesteps`\n")
+        self.assertEqual(len(scratch_denylist.run(self.root)), 3)
+
+    def test_upstream_sim_code_is_out_of_scope(self):
+        self.write("modules/simvehicleapp-studio/apps/sim/lib/db/x.ts", "const c = 'event_type'\n")
+        self.assertEqual(scratch_denylist.run(self.root), [])

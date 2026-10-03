@@ -59,11 +59,13 @@ jobs:
           --commit e7082f75d1831489462f6672b6858f7ea7708256 --path modules/velocitas-stack/templates/vehicle-app-python-template
 
   studio-guards:
-    name: studio license guards (no apps/sim/ee, no @/ee/)
+    name: studio license guards (no apps/sim/ee, no @/ee/, no Scratch opcodes)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 scripts/ci/studio_guards.py
+      - name: Scratch opcode denylist (ADR-0004 clean-room)
+        run: python3 scripts/ci/scratch_denylist.py
 
   studio:
     name: simvehicleapp-studio type-check + tests
