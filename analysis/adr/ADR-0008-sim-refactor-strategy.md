@@ -29,3 +29,12 @@ Xem [phases/M01](../phases/M01-studio-shell.md) và [phases/M11](../phases/M11-h
 
 ## Verification
 Toolbar chỉ hiện nhóm vehicle; `grep -ri "copilot.sim.ai\|sim.ai" apps` rỗng (trừ NOTICE); build & test xanh.
+
+## Notes / Deviations (2026-10-03 — M1 implemented, chưa đổi Status)
+Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đổi so với Sim v0.7.13 khai báo trong `modules/simvehicleapp-studio/UPSTREAM_SYNC.allow` và kiểm bằng CI `vendored-trees`.
+1. **Copilot = cả module Chat/Mothership** (trang chủ workspace, chat, scheduled tasks, inbox, settings) ⇒ gỡ toàn bộ ở đợt 1; giữ 45 helper cục bộ không gọi mạng trong `lib/copilot` (Files, telemetry). Route `home`/`chat` cũ chuyển hướng về `/w` ở proxy.
+2. **Terminal executor của Sim** được thay bằng bottom dock SimVehicleApp trong editor (khớp ADR-0006: không dùng executor Sim cho vehicle workflow).
+3. **Trigger.dev** giữ ở trạng thái ngủ (backend `database` khi tắt cờ), gỡ SDK ở đợt 3 (M11).
+4. **License-driven** (ADR-0004): gỡ tool Speech-to-Text + `ffmpeg-static` (GPL) ở M1 thay vì M11.
+5. Toolbar allowlist qua `NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST` (cần tiền tố public vì chạy client) thay cho `SV_TOOLBAR_ALLOWLIST`.
+6. Fragment compose cần `NEXT_PUBLIC_SOCKET_URL` (CSP production) để collaboration realtime hoạt động.
