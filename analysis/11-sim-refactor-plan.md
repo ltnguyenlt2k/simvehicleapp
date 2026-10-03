@@ -10,7 +10,7 @@
 | Khu vực (v0.7.13) | Quyết định | Khi | Ghi chú |
 |---|---|---|---|
 | `apps/sim/ee/**` | **GỠ NGAY** + stub | M1 | Sim Enterprise License. Tìm mọi `from '@/ee/…'` → thay stub no-op hoặc xoá tính năng (SSO, access-control, audit-logs, data-drains, data-retention, whitelabeling) |
-| `apps/sim/lib/copilot/**`, `app/api/copilot/**`, hooks `copilot-*`, UI copilot panel | **GỠ** (thay bằng Assistant panel gọi `simvehicleapp-ai`) | M1 (flag off) → M10 (thay) | Gọi `copilot.sim.ai` độc quyền |
+| `apps/sim/lib/copilot/**`, `app/api/copilot/**`, hooks `copilot-*`, UI copilot panel | **GỠ** (thay bằng Assistant panel gọi `simvehicleapp-ai`) | M1 (flag off) → M10 (thay) | Gọi `copilot.sim.ai` độc quyền. **Thực tế v0.7.13 (M01-T03, 2026-10-03):** copilot = cả module Chat/Mothership (trang chủ workspace, chat routes, scheduled tasks, inbox email→agent, mục settings Chat keys/Sim mailer/Mothership) ⇒ gỡ toàn bộ; giữ 45 file helper cục bộ không gọi mạng trong `lib/copilot` (vfs, doc-compile, hằng trace) và 9 file hiển thị trong `home/` vì Files/telemetry/workflow chat tester dùng — byte-identical upstream, khai báo trong `UPSTREAM_SYNC.allow`. |
 | `apps/pii`, `docker/pii.Dockerfile` | GỠ | M1 | Presidio sidecar không cần |
 | `apps/docs` | GỠ (tài liệu riêng ở meta-repo) | M1 | |
 | `.devcontainer/`, `helm/`, `docker-compose.ollama.yml` | GỠ | M1 | FR-PLT-02 |
