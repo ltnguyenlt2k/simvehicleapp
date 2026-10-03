@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { type Browser, expect, type Page, test } from '@playwright/test'
 
 /**
  * M1 acceptance gate (analysis/phases/M01-studio-shell.md): sign up → create a workflow → reload and
@@ -10,6 +10,22 @@ const user = {
   name: 'Playwright Tester',
   email: `e2e-${run}@example.com`,
   password: `E2e-${run}-Password!`,
+}
+
+async function logIn(page: Page) {
+  await page.goto('/login')
+  await page.locator('#email').fill(user.email)
+  await page.locator('#password').fill(user.password)
+  await page.locator('button[type="submit"]').click()
+  await page.waitForURL(/\/workspace\//, { timeout: 60_000 })
+}
+
+async function openEditor(browser: Browser, url: string): Promise<Page> {
+  const page = await (await browser.newContext()).newPage()
+  await logIn(page)
+  await page.goto(url)
+  await expect(page.locator('.react-flow__renderer')).toBeVisible()
+  return page
 }
 
 async function signUp(page: Page) {
@@ -97,5 +113,22 @@ test.describe.serial('M1 gate', () => {
     await expect(toolbar.getByText('Agent', { exact: true })).toHaveCount(0)
     await expect(toolbar.getByText('Slack', { exact: true })).toHaveCount(0)
     await expect(toolbar.getByText('Loop', { exact: true })).toHaveCount(0)
+  })
+
+  test('realtime collaboration: a block added in one session appears in another', async ({
+    browser,
+  }) => {
+    test.skip(!workflowUrl, 'needs the workflow from the previous test')
+    const a = await openEditor(browser, workflowUrl)
+    const b = await openEditor(browser, workflowUrl)
+    const nodesInB = b.locator('.react-flow__node')
+    const before = await nodesInB.count()
+
+    await a.locator('[data-tab-button="toolbar"]').click()
+    await a.locator('[data-tab-content="toolbar"]').getByText('Note', { exact: true }).click()
+
+    await expect(nodesInB).toHaveCount(before + 1, { timeout: 30_000 })
+    await a.context().close()
+    await b.context().close()
   })
 })
