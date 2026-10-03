@@ -1,0 +1,230 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp Orchestrator API
+  version: 1.0.0-alpha.1
+  description: "Projects, SynCode generations, runs and the event stream (ADR-0020, ADR-0026, ADR-0027). Data owner of schema `sv`. Skeleton: resource bodies are locked in M7/M8."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://orchestrator:4030
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Projects.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [projects]
+                properties:
+                  projects: { type: array, items: { $ref: "#/components/schemas/Project" } }
+    post:
+      operationId: createProject
+      tags: [projects]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, name, language, vssRelease]
+              properties:
+                slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
+                name: { type: string, minLength: 1, maxLength: 200 }
+                language: { enum: [cpp, python, rust] }
+                vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "403": { description: "Denied by EntitlementService (LICENSE_FEATURE_DENIED)." }
+  /projects/{id}:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    get:
+      operationId: getProject
+      tags: [projects]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Project.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "404": { description: "Unknown project." }
+  /projects/{id}/generations:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    post:
+      operationId: startGeneration
+      tags: [generations]
+      description: "SynCode pipeline: ir → codegen → write → deps? → build → format-check → test. Progress on /events."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [graphs]
+              properties:
+                graphs: { type: array, minItems: 1, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }, description: "Workflow graphs exported by the studio adapter." }
+      responses:
+        "202":
+          description: Generation queued.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Generation" }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+  /projects/{id}/generations/{gid}:
+    parameters:
+      - { $ref: "#/components/parameters/ProjectId" }
+      - { name: gid, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+    get:
+      operationId: getGeneration
+      tags: [generations]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Generation.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Generation" }
+  /projects/{id}/runs:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    post:
+      operationId: startRun
+      tags: [runs]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [generationId]
+              properties:
+                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+      responses:
+        "202":
+          description: Run starting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "409": { description: "Another run is active (one shared runtime stack, ADR-0024 §6)." }
+  /runs/{rid}/stop:
+    parameters:
+      - { name: rid, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+    post:
+      operationId: stopRun
+      tags: [runs]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Stop requested (SIGINT, SIGKILL after 5 s).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+  /events:
+    get:
+      operationId: streamEvents
+      tags: [runs]
+      description: "SSE of TraceEvent v1 (`event: trace`) and LogLine v1 (`event: log`) for a run or generation; `id` = seq, resume with Last-Event-ID."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: runId, in: query, required: false, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+        - { name: generationId, in: query, required: false, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+        - { name: Last-Event-ID, in: header, required: false, schema: { type: string, pattern: "^[0-9]+$" } }
+      responses:
+        "200":
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema: { type: string }
+              x-sv-event-data:
+                oneOf:
+                  - { $ref: "urn:simvehicleapp:contracts:trace-event:1.0.0-alpha.1" }
+                  - { $ref: "urn:simvehicleapp:contracts:log-line:1.0.0-alpha.1" }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+    ProjectId:
+      name: id
+      in: path
+      required: true
+      schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+  responses:
+    Diagnostics:
+      description: Request understood but rejected; see diagnostics (ADR-0016).
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+  schemas:
+    Project:
+      type: object
+      required: [id, slug, name, language, vssRelease]
+      properties:
+        id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
+        name: { type: string }
+        language: { enum: [cpp, python, rust] }
+        vssRelease: { type: string }
+    Generation:
+      type: object
+      required: [id, projectId, state]
+      properties:
+        id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        projectId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        state: { enum: [queued, running, succeeded, failed, cancelled] }
+        stage: { enum: [ir, codegen, write, deps, build, format-check, test] }
+        manifest: { $ref: "urn:simvehicleapp:contracts:generation-manifest:1.0.0-alpha.1" }
+        diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+    Run:
+      type: object
+      required: [id, generationId, state]
+      properties:
+        id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        state: { enum: [starting, running, stopping, stopped, crashed] }
+        diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }

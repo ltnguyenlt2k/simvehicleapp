@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp Toolchain Agent API
+  version: 1.0.0-alpha.1
+  description: "Headless Velocitas toolchain (ADR-0025). One build job and one run at a time per toolchain."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://toolchain-cpp:4210
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /jobs:
+    post:
+      operationId: createJob
+      tags: [jobs]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "urn:simvehicleapp:contracts:toolchain-job:1.0.0-alpha.1#/$defs/request" }
+      responses:
+        "202": { $ref: "#/components/responses/Job" }
+        "409": { description: "A conflicting job is already running (build lock / single run)." }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+  /jobs/{id}:
+    parameters: [{ $ref: "#/components/parameters/JobId" }]
+    get:
+      operationId: getJob
+      tags: [jobs]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/Job" }
+        "404": { description: "Unknown job." }
+  /jobs/{id}/stream:
+    parameters: [{ $ref: "#/components/parameters/JobId" }]
+    get:
+      operationId: streamJob
+      tags: [jobs]
+      description: "SSE; each event `data` is one LogLine v1, `id` = seq. Resume with Last-Event-ID."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: Last-Event-ID, in: header, required: false, schema: { type: string, pattern: "^[0-9]+$" } }
+      responses:
+        "200":
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema: { type: string }
+              x-sv-event-data: { $ref: "urn:simvehicleapp:contracts:log-line:1.0.0-alpha.1" }
+  /jobs/{id}/cancel:
+    parameters: [{ $ref: "#/components/parameters/JobId" }]
+    post:
+      operationId: cancelJob
+      tags: [jobs]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200": { $ref: "#/components/responses/Job" }
+        "404": { description: "Unknown job." }
+  /templates:
+    get:
+      operationId: getTemplate
+      tags: [templates]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: lang, in: query, required: true, schema: { enum: [cpp, python] } }
+      responses:
+        "200":
+          description: Template tar (vendored template + seeded Velocitas state).
+          content:
+            application/x-tar:
+              schema: { type: string, contentMediaType: application/x-tar }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+    JobId:
+      name: id
+      in: path
+      required: true
+      schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+  responses:
+    Diagnostics:
+      description: Request understood but rejected; see diagnostics (ADR-0016).
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+    Job:
+      description: Job resource.
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:toolchain-job:1.0.0-alpha.1" }

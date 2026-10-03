@@ -1,0 +1,169 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp AI Assistant API
+  version: 1.0.0-alpha.1
+  description: "Chat, MCP server and pending-action confirmation (ADR-0030). Receives userId from the studio BFF. Only proposes WorkflowPatch v1; never emits target-language code."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://ai-assistant:4300
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /chat:
+    post:
+      operationId: chat
+      tags: [chat]
+      description: "One chat turn, streamed as SSE. Sensitive tool calls end the turn with a `pending_action` event."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/UserId" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                conversationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                projectId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                workflowId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                message: { type: string, minLength: 1, maxLength: 20000 }
+      responses:
+        "200":
+          description: "SSE events: text, tool, proposal (WorkflowPatch v1 + diagnostics), pending_action, done."
+          content:
+            text/event-stream:
+              schema: { type: string }
+              x-sv-proposal: { $ref: "urn:simvehicleapp:contracts:workflow-patch:1.0.0-alpha.1" }
+        "409": { description: "A pending action must be confirmed or cancelled first." }
+        "429": { description: "Per-user rate limit (SV_AI_RATE_LIMIT_PER_MINUTE)." }
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [chat]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/UserId" }
+      responses:
+        "200":
+          description: Conversations of the user.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [conversations]
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      type: object
+                      required: [id]
+                      properties:
+                        id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                        title: { type: string }
+  /conversations/{id}/actions/{actionId}/confirm:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }, { $ref: "#/components/parameters/ActionId" }]
+    post:
+      operationId: confirmAction
+      tags: [actions]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/UserId" }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                editedInput: { type: object, description: "Always overrides the input proposed by the LLM." }
+      responses:
+        "200": { description: "Tool executed; continue reading the turn stream." }
+        "404": { description: "Unknown or expired action (TTL)." }
+  /conversations/{id}/actions/{actionId}/cancel:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }, { $ref: "#/components/parameters/ActionId" }]
+    post:
+      operationId: cancelAction
+      tags: [actions]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/UserId" }
+      responses:
+        "200": { description: "Cancelled." }
+        "404": { description: "Unknown or expired action." }
+  /mcp:
+    post:
+      operationId: mcp
+      tags: [mcp]
+      description: MCP Streamable HTTP endpoint (MCP SDK v1.x); bearer token, tool schemas defined by the MCP server.
+      security: [{ mcpBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, description: "JSON-RPC 2.0 message." }
+      responses:
+        "200": { description: "JSON-RPC response or SSE stream." }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+    mcpBearer:
+      type: http
+      scheme: bearer
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+    UserId:
+      name: x-sv-user-id
+      in: header
+      required: true
+      description: Authenticated user id forwarded by the BFF (ADR-0032 §5).
+      schema: { type: string, minLength: 1 }
+    ConversationId:
+      name: id
+      in: path
+      required: true
+      schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+    ActionId:
+      name: actionId
+      in: path
+      required: true
+      schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+  responses:
+    Diagnostics:
+      description: Request understood but rejected; see diagnostics (ADR-0016).
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }

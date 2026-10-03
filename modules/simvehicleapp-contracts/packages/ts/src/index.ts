@@ -40,6 +40,15 @@ export class ContractValidator {
     if (!valid) throw new Error(`${ref}: ${this.ajv.errorsText(errors, { separator: "\n" })}`);
   }
 
+  /** True when `uri` (schema `$id`, optionally with a `#/...` fragment) resolves to a registered schema. */
+  resolves(uri: string): boolean {
+    try {
+      return this.ajv.getSchema(uri) !== undefined;
+    } catch {
+      return false;
+    }
+  }
+
   private compile(ref: string): ValidateFunction {
     let fn = this.cache.get(ref);
     if (!fn) {

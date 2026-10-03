@@ -1,0 +1,163 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp Compiler API
+  version: 1.0.0-alpha.1
+  description: "Pure Graph→IR compiler, linter and simulator (analysis/06 §3, ADR-0017). No file or network I/O except the catalog."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://compiler:4020
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /compile:
+    post:
+      operationId: compile
+      tags: [compiler]
+      description: "`lint` = S0–S3 + part of S6; `verify` = S0–S7; `build` = verify + IR."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [graph, mode]
+              properties:
+                graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
+                mode: { enum: [lint, verify, build] }
+                target: { type: string, pattern: "^[a-z][a-z0-9-]*$", description: "Backend id for S7 (e.g. cpp). Required for verify/build." }
+      responses:
+        "200":
+          description: Compilation result; `ir` present only for mode=build without errors.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [diagnostics]
+                properties:
+                  ir: { $ref: "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1" }
+                  diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+        "413": { description: "Graph exceeds limits (GRAPH_TOO_LARGE in diagnostics)." }
+  /lint:
+    post:
+      operationId: lint
+      tags: [compiler]
+      description: Realtime canvas lint (debounced by studio, analysis/05 §4).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [graph]
+              properties:
+                graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
+      responses:
+        "200":
+          description: Lint diagnostics.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+  /simulate:
+    post:
+      operationId: simulate
+      tags: [simulator]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ir, scenario]
+              properties:
+                ir: { $ref: "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1" }
+                scenario: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1" }
+      responses:
+        "200":
+          description: Simulated trace (same format as live runs) and vehicle writes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [trace, writes, diagnostics]
+                properties:
+                  trace: { type: array, items: { $ref: "urn:simvehicleapp:contracts:trace-event:1.0.0-alpha.1" } }
+                  writes: { type: array, items: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1#/$defs/write" } }
+                  diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+  /blocks:
+    get:
+      operationId: listBlocks
+      tags: [blocks]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: All BlockSpecs (ADR-0011 §4).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [blocks]
+                properties:
+                  blocks: { type: array, items: { $ref: "urn:simvehicleapp:contracts:block-spec:1.0.0-alpha.1" } }
+  /opcodes:
+    get:
+      operationId: listOpcodes
+      tags: [blocks]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: IR opcodes known to this compiler.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [irVersion, opcodes]
+                properties:
+                  irVersion: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" }
+                  opcodes: { type: array, items: { type: string } }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+  responses:
+    Diagnostics:
+      description: Request understood but rejected; see diagnostics (ADR-0016).
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }

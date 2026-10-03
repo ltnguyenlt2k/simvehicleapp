@@ -347,7 +347,7 @@ erDiagram
 |---|---|---|
 | vss-catalog | `GET /releases`, `GET /tree?release=&prefix=&depth=`, `GET /search?q=&type=`, `GET /nodes?paths=`, `GET /model-hash?release=` | Toolbar & validator dùng chung |
 | compiler | `POST /compile`, `POST /simulate`, `POST /lint`, `GET /blocks` (catalog block definitions), `GET /opcodes` | thuần |
-| codegen-* | `GET /capabilities`, `POST /generate`, `GET /runtime/version` | Backend Plugin contract |
+| codegen-* | `GET /capabilities`, `POST /generate`, `GET /runtime/files`, `GET /template-overlay/files` | Backend Plugin contract (ADR-0020 §2) |
 | workspace | `POST /projects` (init từ template), `POST /projects/:slug/commits`, `GET /projects/:slug/tree`, `POST /projects/:slug/export`, `POST /projects/:slug/rollback` | single writer |
 | toolchain-* | `POST /jobs`, `GET /jobs/:id`, `GET /jobs/:id/stream`, `POST /jobs/:id/cancel` | build/test/run |
 | orchestrator | `/projects`, `/projects/:id/generations`, `/projects/:id/runs`, `/events` (SSE) | ứng dụng |

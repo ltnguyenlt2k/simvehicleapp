@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp VSS Catalog API
+  version: 1.0.0-alpha.1
+  description: "Single source of VSS data for toolbar and compiler (ADR-0010). Responses carry an ETag; clients may send If-None-Match."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://vss-catalog:4010
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /releases:
+    get:
+      operationId: listReleases
+      tags: [catalog]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Seeded/cached VSS releases.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [releases]
+                properties:
+                  releases:
+                    type: array
+                    items:
+                      type: object
+                      required: [release]
+                      properties:
+                        release: { $ref: "#/components/schemas/Release" }
+                        default: { type: boolean }
+  /tree:
+    get:
+      operationId: getTree
+      tags: [catalog]
+      description: Lazy tree for the toolbar.
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/ReleaseQuery" }
+        - { name: prefix, in: query, required: false, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+        - { name: depth, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 16, default: 1 } }
+      responses:
+        "200": { $ref: "#/components/responses/Nodes" }
+        "304": { description: "Not modified (ETag)." }
+        "404": { description: "Unknown release or prefix." }
+  /search:
+    get:
+      operationId: search
+      tags: [catalog]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/ReleaseQuery" }
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 200 } }
+        - { name: type, in: query, required: false, schema: { $ref: "#/components/schemas/NodeKind" } }
+      responses:
+        "200": { $ref: "#/components/responses/Nodes" }
+  /nodes:
+    get:
+      operationId: getNodes
+      tags: [catalog]
+      description: Batch lookup used by the compiler (stage S3).
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/ReleaseQuery" }
+        - name: paths
+          in: query
+          required: true
+          style: form
+          explode: false
+          schema: { type: array, minItems: 1, maxItems: 2000, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+      responses:
+        "200": { $ref: "#/components/responses/Nodes" }
+  /model-hash:
+    get:
+      operationId: getModelHash
+      tags: [catalog]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/ReleaseQuery" }
+      responses:
+        "200":
+          description: sha256 of the canonical (sorted-keys) model JSON (ADR-0010 §3).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [release, modelHash]
+                properties:
+                  release: { $ref: "#/components/schemas/Release" }
+                  modelHash: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256" }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+    ReleaseQuery:
+      name: release
+      in: query
+      required: false
+      description: Defaults to the catalog default release.
+      schema: { $ref: "#/components/schemas/Release" }
+  responses:
+    Nodes:
+      description: Catalog nodes.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [release, nodes]
+            properties:
+              release: { $ref: "#/components/schemas/Release" }
+              nodes: { type: array, items: { $ref: "#/components/schemas/VssNode" } }
+  schemas:
+    Release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+    NodeKind: { enum: [branch, sensor, actuator, attribute] }
+    VssNode:
+      description: ADR-0010 §5. `deprecation` is a free-text string, not a boolean.
+      type: object
+      required: [path, name, kind]
+      properties:
+        path: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" }
+        name: { type: string }
+        kind: { $ref: "#/components/schemas/NodeKind" }
+        datatype: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssDataType" }
+        unit: { type: string }
+        min: { type: number }
+        max: { type: number }
+        allowed: { type: array, items: { type: [string, number] } }
+        default: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+        description: { type: string }
+        comment: { type: string }
+        deprecation: { type: string }
+        uuid: { type: string }
+        hasChildren: { type: boolean, description: "Branch has children not included at this depth." }

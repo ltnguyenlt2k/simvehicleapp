@@ -1,0 +1,90 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp Signal Gateway API
+  version: 1.0.0-alpha.1
+  description: "Bridge to KUKSA databroker via kuksa.val.v1 (ADR-0024 §4, analysis/08 §4). Inject only paths present in the catalog, dev runs only."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://signal-gateway:4050
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /signals:
+    get:
+      operationId: signalsWebSocket
+      tags: [signals]
+      description: "WebSocket upgrade. Client sends SignalClientMessage (subscribe/unsubscribe/set); server pushes SignalUpdate v1."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: release, in: query, required: true, schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }, description: "Selects the databroker for this VSS release (SV_DATABROKERS)." }
+      responses:
+        "101":
+          description: Switching protocols.
+          x-sv-client-message: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1#/$defs/clientMessage" }
+          x-sv-server-message: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1" }
+  /snapshot:
+    get:
+      operationId: snapshot
+      tags: [signals]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: release, in: query, required: true, schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" } }
+        - name: paths
+          in: query
+          required: true
+          style: form
+          explode: false
+          schema: { type: array, minItems: 1, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+      responses:
+        "200":
+          description: Current values (and actuator targets).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updates]
+                properties:
+                  updates: { type: array, items: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1" } }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+  responses:
+    Diagnostics:
+      description: Request understood but rejected; see diagnostics (ADR-0016).
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }

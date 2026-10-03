@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp Workspace API
+  version: 1.0.0-alpha.1
+  description: "Single writer of /workspace/projects/** (ADR-0026). Validates every path, writes via staging + atomic swap with journal."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://workspace:4040
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /projects:
+    post:
+      operationId: initProject
+      tags: [projects]
+      description: Init from toolchain template + backend overlay + runtime files, staged then renamed atomically.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slug, language, appName, vssRelease]
+              additionalProperties: false
+              properties:
+                slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
+                language: { enum: [cpp, python, rust] }
+                appName: { type: string, pattern: "^[A-Z][A-Za-z0-9]*$" }
+                vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+      responses:
+        "201": { description: "Project created." }
+        "409": { description: "Slug already exists." }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+  /projects/{slug}/commits:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    post:
+      operationId: commitGeneration
+      tags: [generations]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [generationId, fileset]
+              additionalProperties: false
+              properties:
+                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                fileset: { $ref: "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1" }
+                overwriteModified: { type: boolean, default: false, description: "Proceed when owned files were edited (backup kept in .sv/backup)." }
+      responses:
+        "200":
+          description: Committed; workspace generation record.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:generation-manifest:1.0.0-alpha.1" }
+        "409":
+          description: Owned files modified outside SimVehicleApp (GENERATED_FILE_MODIFIED); resend with overwriteModified.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+  /projects/{slug}/tree:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    get:
+      operationId: getTree
+      tags: [projects]
+      description: Read-only listing for the UI.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Files of the project (excluding build outputs).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [files]
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      required: [path, size]
+                      properties:
+                        path: { $ref: "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/filePath" }
+                        size: { type: integer, minimum: 0 }
+                        owned: { type: boolean, description: "Inside an owned root (generated)." }
+  /projects/{slug}/export:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    post:
+      operationId: exportProject
+      tags: [export]
+      description: Zip stream honoring .svexportignore (ADR-0031). Entitlement is checked by the orchestrator before calling.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [generationId]
+              properties:
+                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+      responses:
+        "200":
+          description: Project zip.
+          content:
+            application/zip:
+              schema: { type: string, contentMediaType: application/zip }
+  /projects/{slug}/rollback:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    post:
+      operationId: rollback
+      tags: [generations]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [generationId]
+              properties:
+                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+      responses:
+        "200":
+          description: Re-committed file set of that generation.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:generation-manifest:1.0.0-alpha.1" }
+        "404": { description: "Generation not retained (last 10 are kept)." }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5). Only the studio BFF faces the browser.
+  parameters:
+    RequestId:
+      name: x-sv-request-id
+      in: header
+      required: false
+      description: Correlation id propagated across services (ADR-0007 §6).
+      schema: { type: string, maxLength: 128 }
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
+  responses:
+    Diagnostics:
+      description: Request understood but rejected; see diagnostics (ADR-0016).
+      content:
+        application/json:
+          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }

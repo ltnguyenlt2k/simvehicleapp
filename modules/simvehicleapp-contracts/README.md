@@ -17,5 +17,5 @@ new ContractValidator().assert("ir", ir);                     // whole schema
 new ContractValidator().validate("toolchain-job#/$defs/request", body); // a $defs body
 ```
 
-Layout: `schemas/` (JSON Schema 2020-12, `$id = urn:simvehicleapp:contracts:<name>:<version>`), `fixtures/` (VSS seed + golden),
+Layout: `schemas/` (JSON Schema 2020-12, `$id = urn:simvehicleapp:contracts:<name>:<version>`), `openapi/` (OpenAPI 3.1 per service), `fixtures/` (VSS seed + golden),
 `packages/ts/src/` (validator + generated types), `tools/` (generators). What is provided and the alpha decisions: [CONTRACT.md](CONTRACT.md).

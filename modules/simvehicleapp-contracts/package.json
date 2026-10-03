@@ -9,9 +9,15 @@
   "exports": {
     ".": "./packages/ts/src/index.ts",
     "./schemas/*": "./schemas/*",
-    "./fixtures/*": "./fixtures/*"
+    "./fixtures/*": "./fixtures/*",
+    "./openapi/*": "./openapi/*"
   },
-  "files": ["schemas", "fixtures", "packages/ts/src"],
+  "files": [
+    "schemas",
+    "openapi",
+    "fixtures",
+    "packages/ts/src"
+  ],
   "scripts": {
     "gen": "bun tools/gen-types.ts",
     "check": "bun tools/gen-types.ts --check && tsc --noEmit -p .",

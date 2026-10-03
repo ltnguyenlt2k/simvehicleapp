@@ -26,6 +26,7 @@ export const SCHEMA_NAMES = [
 export type SchemaName = (typeof SCHEMA_NAMES)[number];
 
 export const schemasDir = fileURLToPath(new URL("../../../schemas/", import.meta.url));
+export const openapiDir = fileURLToPath(new URL("../../../openapi/", import.meta.url));
 export const fixturesDir = fileURLToPath(new URL("../../../fixtures/", import.meta.url));
 
 export function schemaId(name: SchemaName): string {
