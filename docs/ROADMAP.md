@@ -27,7 +27,7 @@
 
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
-| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | 🔄 | 8/9 ✔; 1 ↷; 0 ☐ (gate chờ ADR Accepted) |
+| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ☐ | 0/12 |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
@@ -62,7 +62,7 @@ ADR: [0001](../analysis/adr/ADR-0001-record-architecture-decisions.md)–[0007](
 | Spike S-1..S-6 + E-1 (toolchain offline, databroker+MQTT, `set()` semantics, mock-provider, Sim minimal, code-server clangd, devcontainer export) | 0006,0024,0025,0028 | ✔ PASS cả 7 | `docs/spikes/M0-spikes-report.md` | T09–T14 |
 | Cập nhật ADR theo kết quả spike | 0023,0024,0025,0028 | ✔ | 0024/0025/0028 Accepted, 0023 có Notes, 0009 ra đời | T15 |
 
-**M0 chưa qua gate; chưa mở M1.** Còn: review/Accepted ADR-0004/0006/0007 (stack up 19,7 s + `scripts/sv smoke` OK đo lại 2026-10-03). Report tiến độ: [`docs/reports/M00.md`](reports/M00.md) — gate FAIL/chưa đạt (T05/T06 xong 2026-10-03). Sau đó hoàn tất DoD và report `docs/reports/M00.md` theo [phase M0](../analysis/phases/M00-foundations.md). Spike PASS chỉ chứng minh phần spike. Xem [review 2026-10-03](reports/2026-10-03-documentation-review.md) về bằng chứng và thứ tự tiếp theo.
+**M0 gate PASS (2026-10-03)** — bằng chứng từng tiêu chí: [`docs/reports/M00.md`](reports/M00.md) (stack up 19,7 s + smoke OK, CI run 37115615196, contracts 89/89, ADR 0001–0007/0009 Accepted). **M1 được phép bắt đầu**; lưu ý build studio từ source cần máy/CI ≥ 16 GB RAM trước M1-T02c.
 
 ## M1 — Studio shell
 ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [0004](../analysis/adr/ADR-0004-license-compliance.md), [0008](../analysis/adr/ADR-0008-sim-refactor-strategy.md) · Phụ thuộc: M0 · Chi tiết: [phases/M01](../analysis/phases/M01-studio-shell.md)

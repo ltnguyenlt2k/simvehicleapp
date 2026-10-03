@@ -26,10 +26,10 @@
 ## DoD
 - [x] Clone repo dev + cấu hình `.env` + `scripts/sv build/up` → stack đã hiện thực chạy; ghi riêng giới hạn build studio từ source và bằng chứng S-5 prebuilt. — 2026-10-03: build 524 s (trừ studio app), `up --wait` 19,7 s, smoke OK; studio dùng prebuilt v0.7.13 vì máy 11 GB RAM (docs/reports/M00.md).
 - [x] Contracts alpha publish (local registry hoặc `bun link`) — `bun link` `@simvehicleapp/contracts` + `@simvehicleapp/service-kit`, consumer import/validate GW-A OK (2026-10-03, commit `598d470`).
-- [ ] 6 spike có report + quyết định.
+- [x] 6 spike có report + quyết định. — `docs/spikes/M0-spikes-report.md` (S-1..S-6 + E-1, quyết định + cập nhật ADR 0023/0024/0025/0028, T15).
 - [x] CI T08 PASS: license scan theo phạm vi phase, contract-only-deps, compose lint; có case vi phạm bị từ chối. Gỡ EE/Copilot và gate license sản phẩm thuộc M1. — GitHub Actions run #1 https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37115615196 @ `4f39bae`, 5/5 job success (2026-10-03).
-- [ ] ADR 0001–0007, 0009 Accepted (0002 áp dụng release; 0009 điều chỉnh dev).
-- [ ] Report `docs/reports/M00.md` ghi từng tiêu chí và bằng chứng; không dùng spike report thay report milestone.
+- [x] ADR 0001–0007, 0009 Accepted (0002 áp dụng release; 0009 điều chỉnh dev). — 0004/0006/0007 PO chấp thuận 2026-10-03.
+- [x] Report `docs/reports/M00.md` ghi từng tiêu chí và bằng chứng; không dùng spike report thay report milestone.
 
 ## Acceptance Gate
 Chỉ PASS khi **toàn bộ DoD** và các kiểm tra sau đạt:
@@ -69,4 +69,4 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T15 cập nhật ADR | ✔ | 0024/0025/0028 Accepted, 0023 Notes, 0009 mới |
 | (thêm) E-1 export → devcontainer | ✔ PASS | `devcontainer up` + build + runtime-local + run app |
 
-**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn ADR-0004/0006/0007 đang Proposed; CI T08 PASS trên GitHub, stack up 19,7 s + smoke OK (2026-10-03) (T05–T06 xong 2026-10-03). Report tiến độ `docs/reports/M00.md` (2026-10-03) ghi gate chưa đạt và từng tiêu chí; DoD "Report" chỉ tick khi gate PASS. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
+**Gate M0: PASS (2026-10-03).** Toàn bộ DoD và 5 tiêu chí gate có bằng chứng trong [`docs/reports/M00.md`](../../docs/reports/M00.md): compose config, stack up 19,7 s + smoke OK, spike S-1..S-6, contracts 89/89, CI GitHub Actions run 37115615196, ADR 0001–0007/0009 Accepted. M1 (và nhánh M6a/M7a phụ thuộc M0) được phép bắt đầu.
