@@ -4,7 +4,7 @@ Source of truth for every schema/API between modules plus shared fixtures (ADR-0
 Package: `@simvehicleapp/contracts@1.0.0-alpha.1` (M00-T05/T06, in progress).
 
 ```bash
-bun install
+bun run setup     # installs the contracts package and packages/service-kit
 bun test          # validates fixtures + positive/negative cases for every schema
 bun run gen       # regenerate packages/ts/src/types/index.ts from schemas/
 bun run check     # generated types up to date + tsc
@@ -18,4 +18,4 @@ new ContractValidator().validate("toolchain-job#/$defs/request", body); // a $de
 ```
 
 Layout: `schemas/` (JSON Schema 2020-12, `$id = urn:simvehicleapp:contracts:<name>:<version>`), `openapi/` (OpenAPI 3.1 per service), `fixtures/` (VSS seed + golden),
-`packages/ts/src/` (validator + generated types), `tools/` (generators). What is provided and the alpha decisions: [CONTRACT.md](CONTRACT.md).
+`packages/ts/src/` (validator + generated types), `packages/service-kit/` (separate package), `tools/` (generators). What is provided and the alpha decisions: [CONTRACT.md](CONTRACT.md).

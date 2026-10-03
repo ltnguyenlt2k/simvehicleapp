@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "types": ["bun"]
   },
-  "include": ["packages/ts/src/**/*.ts", "tools/**/*.ts"]
+  "include": ["packages/ts/src/**/*.ts", "packages/service-kit/src/**/*.ts", "tools/**/*.ts"]
 }

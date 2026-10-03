@@ -31,7 +31,10 @@ ADRs cited in each `info.description`. Every document has `/healthz` + `/version
 `x-sv-request-id` parameter. Bodies reference contract schemas by `$id` (URN); tests validate each document against the vendored
 OAS 3.1 meta-schema and resolve every `$ref`. SSE/WebSocket message shapes are given by `x-sv-*` extensions until AsyncAPI exists.
 
-Not yet provided (rest of T05): AsyncAPI, Python types, `service-kit`.
+## service-kit (`packages/service-kit`, `@simvehicleapp/service-kit`)
+Separate package in this module (ADR-0007 Implementation): `/healthz`, `/version`, internal auth, request ids, JSON line logs. See its README.
+
+Not yet provided (rest of T05): AsyncAPI, Python types.
 
 ## Invariants enforced by schema
 - int64/uint64 values (constants, variable/state initial, typed values, arrays of them) are decimal strings (ADR-0018 §7).
