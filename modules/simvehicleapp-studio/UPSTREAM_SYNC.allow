@@ -198,3 +198,6 @@ apps/sim/lib/api/contracts/tools/media/index.ts
 apps/sim/tools/registry.ts
 apps/sim/next.config.ts
 apps/sim/package.json
+
+# M1 acceptance gate — Playwright E2E (own package, not a Sim workspace)
+e2e/*
