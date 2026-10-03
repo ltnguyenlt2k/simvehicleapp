@@ -1,0 +1,20 @@
+# GW-A Stable Overspeed Warning — hand-written (M00-T06). Times are virtual ms.
+# Expectations are derived by hand from analysis/05 §3 (restart policy, stable_for);
+# the M5 simulator must reproduce them before ir.json / expected.trace.json are added.
+scenarioVersion: 1.0.0
+name: GW-A stable overspeed
+vss:
+  release: v4.0
+until: 8000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: Vehicle.Speed, value: 100 }   # below limit: stable_for condition false
+  - { t: 2000, path: Vehicle.Speed, value: 130 }   # restart: stable window opens
+  - { t: 3000, path: Vehicle.Speed, value: 135 }   # restart again: window restarts at 3000
+  - { t: 6000, path: Vehicle.Speed, value: 105 }   # crosses below 110: hazard off
+expect:
+  writes:
+    - { t: 5000, path: Vehicle.Body.Lights.Hazard.IsSignaling, value: true }
+    - { t: 6000, path: Vehicle.Body.Lights.Hazard.IsSignaling, value: false }
