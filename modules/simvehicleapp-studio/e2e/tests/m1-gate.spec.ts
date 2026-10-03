@@ -43,11 +43,13 @@ test.describe.serial('M1 gate', () => {
     // The sidebar '+' is icon-only; create through the command palette like a keyboard user.
     await page.getByRole('button', { name: 'Search' }).click()
     const palette = page.getByRole('dialog')
-    await palette.locator('input').first().fill('Create workflow')
-    await page.keyboard.press('Enter')
-    await page.waitForURL((url) => /\/w\/[^/?]+$/.test(url.pathname) && url.pathname !== before, {
-      timeout: 60_000,
-    })
+    await palette.getByRole('combobox').fill('Create workflow')
+    await palette.getByRole('option', { name: 'Create workflow' }).click()
+    // Client-side navigation: poll the URL instead of waiting for a 'load' event.
+    await expect(page).toHaveURL(
+      (url) => /\/w\/[^/?]+$/.test(url.pathname) && url.pathname !== before,
+      { timeout: 60_000 }
+    )
     workflowUrl = page.url()
     const workflowId = new URL(workflowUrl).pathname.split('/').pop()
 
