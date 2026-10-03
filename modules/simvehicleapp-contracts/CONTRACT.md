@@ -1,0 +1,40 @@
+# CONTRACT — simvehicleapp-contracts 1.0.0-alpha.1
+
+Status: **alpha draft** (M0). ADR-0007 is still Proposed; schemas lock per consuming milestone (graph/blocks M2–M3, IR/diagnostics M4,
+scenario/trace M5, fileset/capabilities M6, toolchain/log M7, signal M8, patch M10). Until locked, changes are allowed but must keep
+fixtures and tests green and be listed in CHANGELOG.md. After lock: breaking ⇒ major + ADR.
+
+## Provided schemas (`schemas/*.v1.schema.json`)
+| Schema | Source of truth | Main consumer/producer |
+|---|---|---|
+| `common` | ADR-0015, ADR-0018 | all (datatypes, int64 strings, paths, hashes) |
+| `workflow-graph` | analysis/06 §1.1, ADR-0013 | studio → compiler |
+| `ir` (+ `#/$defs/expr`) | ADR-0014, analysis/06 §2 | compiler → backends, simulator |
+| `diagnostics` (+ `#/$defs/list`), `diagnostics-catalog` + `diagnostics-catalog.v1.json` | ADR-0016, ADR-0018 §4 | all |
+| `block-spec` | ADR-0011 §4, analysis/05 §2 | core → studio/compiler/simulator |
+| `generated-fileset` (+ `#/$defs/generateRequest`) | ADR-0020, analysis/07 §2 | backends → orchestrator → workspace |
+| `backend-capabilities` | ADR-0020, analysis/07 §1 | backends → compiler S7 |
+| `toolchain-job` (+ `#/$defs/request`) | ADR-0025 §2–4 | orchestrator ↔ toolchain agent |
+| `trace-event` (+ `#/$defs/runtimeLine`) | ADR-0027, analysis/08 §3 | runtime/simulator → orchestrator → studio |
+| `log-line` | analysis/08 §3.1 | toolchain/orchestrator → studio |
+| `signal-update` (+ `#/$defs/clientMessage`) | analysis/08 §4, ADR-0024 | signal-gateway ↔ studio |
+| `scenario` | ADR-0017 §3–5 | simulator, conformance, parity |
+| `workflow-patch` | ADR-0030 §5, analysis/09 §5 | ai-assistant → studio |
+
+Not yet provided (rest of T05): OpenAPI skeletons per service, `generation-manifest`, `license`, AsyncAPI, Python types, `service-kit`.
+
+## Invariants enforced by schema
+- int64/uint64 values (constants, variable/state initial, typed values, arrays of them) are decimal strings (ADR-0018 §7).
+- IR has no timestamp/metadata fields (`additionalProperties: false`, NFR-01); compiler-inserted nodes carry `src.reason`.
+- Generated file paths are relative, normalized, without `..`/`.`/`//`/backslash; owned roots end with `/` (workspace re-checks, ADR-0026).
+- Diagnostic codes match `^[A-Z][A-Z0-9_]*$`; catalog codes are unique and sorted; never removed (ADR-0016 §2).
+
+## Alpha decisions (not spelled out in analysis/ADR — revisit when the consuming milestone locks)
+1. `$id` uses URNs (`urn:simvehicleapp:contracts:<name>:<semver>`), no hosted domain.
+2. IR expression form `$state: "v<n>"` for `<var.name>` references (analysis/06 §2.1 updated).
+3. IR `name` is PascalCase (backend identifier); ids are `s<n>/t<n>/v<n>/n<n>`.
+4. Diagnostic stage `runtime` added for `ARRAY_INDEX_OUT_OF_RANGE` (ADR-0018 §4); `build`/`test` are separate stages.
+5. WorkflowPatch has only the four ops in analysis/09 §5 (`add_block`, `connect`, `set_props`, `remove_block`); new ops = minor.
+6. Scenario `expect` has only `writes` and `trace` (ADR-0017 §3); Scenario adds optional `vss.release`.
+7. `manifestFragment` and BlockSpec prop/handle details are loosely typed until M2/M6 define them.
+8. int64 strings are checked for format/digit count only; numeric range is enforced by the compiler.
