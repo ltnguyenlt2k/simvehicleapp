@@ -15,7 +15,8 @@ const HIDDEN_SITE_PREFIXES = [
   '/playground',
 ] as const
 
-const HIDDEN_WORKSPACE_SECTIONS = ['integrations', 'skills', 'upgrade'] as const
+/** `home` and `chat` were the copilot (Mothership) chat, removed in M01-T03; Sim still links to them in many places. */
+const HIDDEN_WORKSPACE_SECTIONS = ['chat', 'home', 'integrations', 'skills', 'upgrade'] as const
 
 const WORKSPACE_SECTION = /^\/workspace\/([^/]+)\/([^/]+)(?:\/.*)?$/
 

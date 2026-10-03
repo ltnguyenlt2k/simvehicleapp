@@ -10,6 +10,8 @@ describe('hidden routes (M01-T05)', () => {
     ['/workspace/ws1/integrations/slack', '/workspace/ws1/w'],
     ['/workspace/ws1/skills', '/workspace/ws1/w'],
     ['/workspace/ws1/upgrade', '/workspace/ws1/w'],
+    ['/workspace/ws1/home', '/workspace/ws1/w'],
+    ['/workspace/ws1/chat/abc', '/workspace/ws1/w'],
     ['/blog', '/'],
     ['/blog/copilot', '/'],
     ['/integrations/slack', '/'],
