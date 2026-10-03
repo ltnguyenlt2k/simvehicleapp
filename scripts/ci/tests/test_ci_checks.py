@@ -163,6 +163,20 @@ class LicenseScanTest(TempRepo):
         self.write("modules/m/bun.lock", "{}")
         self.assertTrue(any("not installed" in e for e in self.scan()))
 
+    def test_dual_license_with_allowed_alternative_passes(self):
+        self.setup_module("(BSD-3-Clause OR GPL-2.0)", "(MIT OR GPL-3.0-or-later)")
+        self.assertEqual(self.scan(), [])
+
+    def test_workspace_member_dependencies_are_production(self):
+        m = "modules/w"
+        self.write(f"{m}/package.json", json.dumps({"name": "root", "workspaces": ["apps/*"], "devDependencies": {"tool": "1"}}))
+        self.write(f"{m}/bun.lock", "{}")
+        self.write(f"{m}/apps/web/package.json", json.dumps({"name": "web", "dependencies": {"lib": "1"}}))
+        self.pkg(f"{m}/node_modules/lib", "lib", "1.0.0", "Python-2.0")
+        self.pkg(f"{m}/node_modules/tool", "tool", "1.0.0", "MIT")
+        errors = self.scan("modules/w\tlib@1.0.0\tPython-2.0\treason\n")
+        self.assertTrue(any("lib@1.0.0 (prod)" in e for e in errors))
+
     def test_forbidden_ide_extension_rejected(self):
         self.setup_module("MIT", "MIT", "llvm-vs-code-extensions.vscode-clangd\nms-vscode.cpptools@1.2.3\n")
         self.assertTrue(any("ms-vscode.cpptools" in e for e in self.scan()))

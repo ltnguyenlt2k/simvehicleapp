@@ -77,9 +77,25 @@ def resolve(name: str, from_dir: Path, stop: Path) -> Path | None:
         d = d.parent
 
 
+def workspace_dirs(pkg_dir: Path, pkg: dict) -> list[Path]:
+    """Workspace member packages (`workspaces: ["apps/*", ...]` or `{packages: [...]}`)."""
+    patterns = pkg.get("workspaces") or []
+    if isinstance(patterns, dict):
+        patterns = patterns.get("packages") or []
+    dirs = []
+    for pattern in patterns:
+        for d in sorted(pkg_dir.glob(pattern)):
+            if (d / "package.json").is_file() and "node_modules" not in d.parts:
+                dirs.append(d)
+    return dirs
+
+
 def prod_closure(pkg_dir: Path) -> set[Path]:
+    """Production dependency closure of a package and, for a monorepo root, of every workspace member."""
     seen: set[Path] = set()
-    stack = [(pkg_dir, json.loads((pkg_dir / "package.json").read_text()))]
+    root_pkg = json.loads((pkg_dir / "package.json").read_text())
+    stack = [(pkg_dir, root_pkg)]
+    stack += [(d, json.loads((d / "package.json").read_text())) for d in workspace_dirs(pkg_dir, root_pkg)]
     while stack:
         d, pkg = stack.pop()
         deps = {**(pkg.get("dependencies") or {}), **(pkg.get("optionalDependencies") or {})}
@@ -119,9 +135,11 @@ def scan_js(root: Path, whitelist: set[str], exceptions: set[tuple[str, str]]) -
                 continue
             seen.add((ident, lic))
             scope = "prod" if d.resolve() in prod else "dev"
+            if allowed(lic, whitelist):
+                continue
             if DENY.search(lic):
                 errors.append(f"{rel}: {ident} ({scope}) license {lic} is denylisted (ADR-0004)")
-            elif not allowed(lic, whitelist):
+            else:
                 if scope == "dev" and (rel, ident) in exceptions:
                     continue
                 hint = "" if scope == "prod" else " — add a reviewed entry to license-exceptions.txt if acceptable"
