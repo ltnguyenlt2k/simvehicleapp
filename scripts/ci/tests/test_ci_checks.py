@@ -221,6 +221,11 @@ class StudioGuardsTest(TempRepo):
         self.write("modules/simvehicleapp-studio/apps/sim/app/c.tsx", "const m = import(`@/ee/x`)\n")
         self.assertEqual(len(studio_guards.run(self.root)), 3)
 
+    def test_copilot_service_references_rejected(self):
+        self.write("modules/simvehicleapp-studio/apps/sim/lib/a.ts", "const u = 'https://www.copilot.sim.ai'\n")
+        self.write("modules/simvehicleapp-studio/apps/sim/lib/b.ts", "env.SIM_AGENT_API_URL; env.COPILOT_API_KEY\n")
+        self.assertEqual(len(studio_guards.run(self.root)), 3)
+
 
 class AllowlistGlobTest(unittest.TestCase):
     def test_brackets_are_literal(self):

@@ -3,7 +3,9 @@
 
 Fails when the Sim Enterprise code comes back:
   - the path modules/simvehicleapp-studio/apps/sim/ee exists, or
-  - any source file of the studio imports `@/ee/` (static or dynamic import, vi.mock path).
+  - any source file of the studio imports `@/ee/` (static or dynamic import, vi.mock path);
+and when the proprietary Sim copilot service comes back (M01-T03): `copilot.sim.ai`, `SIM_AGENT_API_URL`
+or `COPILOT_API_KEY` in studio source code.
 """
 from __future__ import annotations
 
@@ -18,6 +20,7 @@ STUDIO = Path("modules/simvehicleapp-studio")
 SKIP_DIRS = {"node_modules", ".next", ".turbo", ".git", "dist", "build"}
 SOURCE_EXT = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"}
 EE_IMPORT = re.compile(r"""['"`]@/ee/""")
+COPILOT_SERVICE = re.compile(r"copilot\.sim\.ai|\bSIM_AGENT_API_URL\b|\bCOPILOT_API_KEY\b")
 
 
 def run(root: Path) -> list[str]:
@@ -39,6 +42,9 @@ def run(root: Path) -> list[str]:
             for m in EE_IMPORT.finditer(text):
                 line = text.count("\n", 0, m.start()) + 1
                 errors.append(f"{path.relative_to(root)}:{line}: references @/ee/ — use @/lib/sv/oss/* (clean-room)")
+            for m in COPILOT_SERVICE.finditer(text):
+                line = text.count("\n", 0, m.start()) + 1
+                errors.append(f"{path.relative_to(root)}:{line}: proprietary copilot service reference '{m.group(0)}' (M01-T03)")
     return errors
 
 
