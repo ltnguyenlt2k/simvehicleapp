@@ -133,7 +133,7 @@ vi.mock('@/lib/workspaces/policy', () => ({
   isOrganizationWorkspace: vi.fn().mockReturnValue(true),
 }))
 
-vi.mock('@/ee/access-control/utils/permission-check', () => ({
+vi.mock('@/lib/sv/oss/access-control/permission-check', () => ({
   InvitationsNotAllowedError: class InvitationsNotAllowedError extends Error {},
   validateInvitationsAllowed: mockValidateInvitationsAllowed,
 }))

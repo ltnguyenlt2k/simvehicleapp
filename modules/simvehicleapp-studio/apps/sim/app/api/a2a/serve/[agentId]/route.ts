@@ -37,6 +37,7 @@ import { SSE_HEADERS } from '@/lib/core/utils/sse'
 import { getBaseUrl } from '@/lib/core/utils/urls'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
 import { markExecutionCancelled } from '@/lib/execution/cancellation'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 import { checkWorkspaceAccess } from '@/lib/workspaces/permissions/utils'
 import { getWorkspaceBilledAccountUserId } from '@/lib/workspaces/utils'
 import {
@@ -50,7 +51,6 @@ import {
   formatTaskResponse,
   generateTaskId,
 } from '@/app/api/a2a/serve/[agentId]/utils'
-import { getBrandConfig } from '@/ee/whitelabeling'
 
 const logger = createLogger('A2AServeAPI')
 

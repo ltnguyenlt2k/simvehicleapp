@@ -9,12 +9,12 @@ import {
   validateAuthToken,
 } from '@/lib/core/security/deployment'
 import { resolveActiveShareByToken } from '@/lib/public-shares/share-manager'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 import { PublicFileAuth } from '@/app/f/[token]/public-file-auth'
 import { PublicFileEmailAuth } from '@/app/f/[token]/public-file-email-auth'
 import { PublicFileSSOAuth } from '@/app/f/[token]/public-file-sso-auth'
 import { PublicFileView } from '@/app/f/[token]/public-file-view'
 import { buildProvenance } from '@/app/f/[token]/utils'
-import { getBrandConfig } from '@/ee/whitelabeling'
 
 export const dynamic = 'force-dynamic'
 

@@ -21,7 +21,6 @@ import {
   SIDEBAR_SECTION_GAP_CLASS,
 } from '@/app/workspace/[workspaceId]/w/components/sidebar/constants'
 import { SidebarTooltip } from '@/app/workspace/[workspaceId]/w/components/sidebar/sidebar'
-import { useSSOProviders } from '@/ee/sso/hooks/sso'
 import { prefetchWorkspaceCredentials } from '@/hooks/queries/credentials'
 import { prefetchGeneralSettings, useGeneralSettings } from '@/hooks/queries/general-settings'
 import { useOrganizations } from '@/hooks/queries/organization'
@@ -64,15 +63,11 @@ export function SettingsSidebar({
     enabled: isBillingEnabled,
     staleTime: 5 * 60 * 1000,
   })
-  const { data: ssoProvidersData, isLoading: isLoadingSSO } = useSSOProviders({
-    enabled: !isHosted,
-  })
 
   const activeOrganization = organizationsData?.activeOrganization
   const { config: permissionConfig } = usePermissionConfig()
 
   const userEmail = session?.user?.email
-  const userId = session?.user?.id
 
   const userRole = getUserRole(activeOrganization, userEmail)
   const isOwner = userRole === 'owner'
@@ -85,12 +80,7 @@ export function SettingsSidebar({
 
   const isSuperUser = session?.user?.role === 'admin'
 
-  const isSSOProviderOwner = useMemo(() => {
-    if (isHosted) return null
-    if (!userId || isLoadingSSO) return null
-    return ssoProvidersData?.providers?.some((p) => p.userId === userId) || false
-  }, [userId, ssoProvidersData?.providers, isLoadingSSO])
-
+  // SV: SSO provider lookup removed with the Enterprise SSO UI (apps/sim/ee); the SSO item is gone from navigation.
   const navigationItems = useMemo(() => {
     return allNavigationItems.filter((item) => {
       if (item.hideWhenBillingDisabled && !isBillingEnabled) {
@@ -118,10 +108,6 @@ export function SettingsSidebar({
       }
 
       if (item.selfHostedOverride && !isHosted) {
-        if (item.id === 'sso') {
-          const hasProviders = (ssoProvidersData?.providers?.length ?? 0) > 0
-          return !hasProviders || isSSOProviderOwner === true
-        }
         return true
       }
 
@@ -163,8 +149,6 @@ export function SettingsSidebar({
     isEnterprisePlan,
     subscriptionAccess.hasUsableMaxAccess,
     isOrgAdminOrOwner,
-    isSSOProviderOwner,
-    ssoProvidersData?.providers?.length,
     permissionConfig,
     isSuperUser,
     generalSettings?.superUserModeEnabled,

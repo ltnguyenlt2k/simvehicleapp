@@ -25,7 +25,7 @@ import { categorizeError, createMcpErrorResponse, createMcpSuccessResponse } fro
 import {
   assertPermissionsAllowed,
   McpToolsNotAllowedError,
-} from '@/ee/access-control/utils/permission-check'
+} from '@/lib/sv/oss/access-control/permission-check'
 
 const logger = createLogger('McpToolExecutionAPI')
 

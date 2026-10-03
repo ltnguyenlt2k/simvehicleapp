@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { GithubOutlineIcon } from '@/components/icons'
 import { cn } from '@/lib/core/utils/cn'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 import { SessionContext } from '@/app/_shell/providers/session-provider'
 import {
   BlogDropdown,
@@ -14,7 +15,6 @@ import {
 import { DocsDropdown } from '@/app/(landing)/components/navbar/components/docs-dropdown'
 import { GitHubStars } from '@/app/(landing)/components/navbar/components/github-stars'
 import { trackLandingCta } from '@/app/(landing)/landing-analytics'
-import { getBrandConfig } from '@/ee/whitelabeling'
 
 const AuthModal = dynamic(
   () => import('@/app/(landing)/components/auth-modal/auth-modal').then((m) => m.AuthModal),

@@ -17,7 +17,6 @@ import {
 } from '@/app/chat/components'
 import { CHAT_ERROR_MESSAGES, CHAT_REQUEST_TIMEOUT_MS } from '@/app/chat/constants'
 import { useAudioStreaming, useChatStreaming } from '@/app/chat/hooks'
-import SSOAuth from '@/ee/sso/components/sso-auth'
 import { useDeployedChatConfig } from '@/hooks/queries/chats'
 import { useGitHubStars } from '@/hooks/queries/github-stars'
 import { useVoiceSettings } from '@/hooks/queries/voice-settings'
@@ -396,8 +395,9 @@ export default function ChatClient({ identifier }: { identifier: string }) {
     if (authRequired === 'email') {
       return <EmailAuth identifier={identifier} />
     }
+    // SV: SSO-protected chats need the Enterprise SSO UI (removed); clean-room version in M11 (ADR-0032).
     if (authRequired === 'sso') {
-      return <SSOAuth identifier={identifier} />
+      return <ChatErrorState error='Single sign-on is not available for this chat.' />
     }
   }
 

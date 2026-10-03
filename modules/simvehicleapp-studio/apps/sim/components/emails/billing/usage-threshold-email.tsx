@@ -2,7 +2,7 @@ import { Link, Section, Text } from '@react-email/components'
 import { baseStyles } from '@/components/emails/_styles'
 import { EmailLayout } from '@/components/emails/components'
 import { dollarsToCredits } from '@/lib/billing/credits/conversion'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 interface UsageThresholdEmailProps {
   userName?: string

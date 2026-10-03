@@ -31,7 +31,7 @@ vi.mock('@/lib/public-shares/share-manager', () => {
   }
 })
 
-vi.mock('@/ee/access-control/utils/permission-check', () => {
+vi.mock('@/lib/sv/oss/access-control/permission-check', () => {
   class PublicFileSharingNotAllowedError extends Error {
     constructor() {
       super('Public file sharing is not allowed based on your permission group settings')
@@ -142,7 +142,7 @@ describe('share route', () => {
 
     it('returns 403 when org access-control disables public sharing (enable)', async () => {
       const { PublicFileSharingNotAllowedError } = await import(
-        '@/ee/access-control/utils/permission-check'
+        '@/lib/sv/oss/access-control/permission-check'
       )
       mockValidateSharing.mockRejectedValueOnce(new PublicFileSharingNotAllowedError())
       const res = await PUT(putRequest({ isActive: true }), params())

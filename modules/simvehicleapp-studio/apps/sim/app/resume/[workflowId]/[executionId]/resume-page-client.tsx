@@ -26,8 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useBrandConfig } from '@/lib/sv/oss/brand'
 import Navbar from '@/app/(landing)/components/navbar/navbar'
-import { useBrandConfig } from '@/ee/whitelabeling'
 import {
   type PauseContextDetail,
   type PausedExecutionDetail,

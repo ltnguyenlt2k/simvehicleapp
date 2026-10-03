@@ -5,10 +5,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Chip } from '@/components/emcn'
 import { Download } from '@/components/emcn/icons'
+import { useBrandConfig } from '@/lib/sv/oss/brand'
 import type { WorkspaceFileRecord } from '@/lib/uploads/contexts/workspace'
 import { buildProvenance } from '@/app/f/[token]/utils'
 import { FileViewer } from '@/app/workspace/[workspaceId]/files/components/file-viewer'
-import { useBrandConfig } from '@/ee/whitelabeling'
 import { type FileContentSource, FileContentSourceProvider } from '@/hooks/use-file-content-source'
 
 interface PublicFileViewProps {

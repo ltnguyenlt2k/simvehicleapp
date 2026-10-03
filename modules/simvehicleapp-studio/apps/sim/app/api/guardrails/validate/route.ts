@@ -15,7 +15,7 @@ import {
   assertPermissionsAllowed,
   ModelNotAllowedError,
   ProviderNotAllowedError,
-} from '@/ee/access-control/utils/permission-check'
+} from '@/lib/sv/oss/access-control/permission-check'
 
 const logger = createLogger('GuardrailsValidateAPI')
 

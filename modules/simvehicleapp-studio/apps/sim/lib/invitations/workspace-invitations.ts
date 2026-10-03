@@ -18,6 +18,7 @@ import {
   sendInvitationEmail,
 } from '@/lib/invitations/send'
 import { captureServerEvent } from '@/lib/posthog/server'
+import { validateInvitationsAllowed } from '@/lib/sv/oss/access-control/permission-check'
 import {
   getWorkspaceWithOwner,
   hasWorkspaceAdminAccess,
@@ -25,7 +26,6 @@ import {
   type WorkspaceWithOwner,
 } from '@/lib/workspaces/permissions/utils'
 import { getWorkspaceInvitePolicy, type WorkspaceInvitePolicy } from '@/lib/workspaces/policy'
-import { validateInvitationsAllowed } from '@/ee/access-control/utils/permission-check'
 
 export interface WorkspaceInvitationContext {
   workspaceId: string

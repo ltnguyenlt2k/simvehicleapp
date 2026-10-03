@@ -1,7 +1,7 @@
 import { Link, Text } from '@react-email/components'
 import { baseStyles } from '@/components/emails/_styles'
 import { EmailLayout } from '@/components/emails/components'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 interface WorkspaceAddedEmailProps {
   /** Name of the workspace the recipient was added to. */

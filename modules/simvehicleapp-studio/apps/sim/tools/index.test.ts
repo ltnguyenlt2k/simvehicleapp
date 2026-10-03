@@ -79,7 +79,7 @@ vi.mock('@/lib/auth/internal', () => ({
   generateInternalToken: (...args: unknown[]) => mockGenerateInternalToken(...args),
 }))
 
-vi.mock('@/ee/access-control/utils/permission-check', () => ({
+vi.mock('@/lib/sv/oss/access-control/permission-check', () => ({
   assertPermissionsAllowed: vi.fn().mockResolvedValue(undefined),
   validateBlockType: vi.fn().mockResolvedValue(undefined),
   validateMcpToolsAllowed: vi.fn().mockResolvedValue(undefined),

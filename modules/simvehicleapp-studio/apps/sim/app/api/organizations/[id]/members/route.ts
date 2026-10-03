@@ -31,7 +31,7 @@ import { quickValidateEmail } from '@/lib/messaging/email/validation'
 import {
   InvitationsNotAllowedError,
   validateInvitationsAllowed,
-} from '@/ee/access-control/utils/permission-check'
+} from '@/lib/sv/oss/access-control/permission-check'
 
 const logger = createLogger('OrganizationMembersAPI')
 

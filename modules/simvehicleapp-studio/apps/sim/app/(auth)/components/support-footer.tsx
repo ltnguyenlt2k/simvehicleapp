@@ -1,6 +1,6 @@
 'use client'
 
-import { useBrandConfig } from '@/ee/whitelabeling'
+import { useBrandConfig } from '@/lib/sv/oss/brand'
 
 export interface SupportFooterProps {
   position?: 'fixed' | 'absolute'

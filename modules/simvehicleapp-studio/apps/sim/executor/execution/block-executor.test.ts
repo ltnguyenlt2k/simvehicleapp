@@ -16,7 +16,7 @@ const { mockUploadFile } = vi.hoisted(() => ({
   mockUploadFile: vi.fn(),
 }))
 
-vi.mock('@/ee/access-control/utils/permission-check', () => ({
+vi.mock('@/lib/sv/oss/access-control/permission-check', () => ({
   validateBlockType: vi.fn(),
 }))
 

@@ -2,7 +2,7 @@ import { Link, Text } from '@react-email/components'
 import { baseStyles } from '@/components/emails/_styles'
 import { EmailLayout } from '@/components/emails/components'
 import { getBaseUrl } from '@/lib/core/utils/urls'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 interface PlanWelcomeEmailProps {
   planName: string

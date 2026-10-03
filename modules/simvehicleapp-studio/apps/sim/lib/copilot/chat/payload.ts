@@ -160,7 +160,7 @@ async function buildIntegrationToolSchemasUncached(
     if (workspaceId) {
       try {
         const [{ getUserPermissionConfig }, { getAllBlocks }] = await Promise.all([
-          import('@/ee/access-control/utils/permission-check'),
+          import('@/lib/sv/oss/access-control/permission-check'),
           import('@/blocks/registry'),
         ])
         const permissionConfig = await getUserPermissionConfig(userId, workspaceId)

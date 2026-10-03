@@ -12,12 +12,12 @@ import {
   ShareValidationError,
   upsertFileShare,
 } from '@/lib/public-shares/share-manager'
-import { getWorkspaceFile } from '@/lib/uploads/contexts/workspace'
-import { getUserEntityPermissions } from '@/lib/workspaces/permissions/utils'
 import {
   PublicFileSharingNotAllowedError,
   validatePublicFileSharing,
-} from '@/ee/access-control/utils/permission-check'
+} from '@/lib/sv/oss/access-control/permission-check'
+import { getWorkspaceFile } from '@/lib/uploads/contexts/workspace'
+import { getUserEntityPermissions } from '@/lib/workspaces/permissions/utils'
 
 export const dynamic = 'force-dynamic'
 

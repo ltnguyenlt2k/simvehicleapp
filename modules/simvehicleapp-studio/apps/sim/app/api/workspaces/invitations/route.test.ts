@@ -88,7 +88,7 @@ vi.mock('@/lib/invitations/core', () => ({
   listInvitationsForWorkspaces: vi.fn().mockResolvedValue([]),
 }))
 
-vi.mock('@/ee/access-control/utils/permission-check', () => ({
+vi.mock('@/lib/sv/oss/access-control/permission-check', () => ({
   validateInvitationsAllowed: mockValidateInvitationsAllowed,
   InvitationsNotAllowedError: class InvitationsNotAllowedError extends Error {},
 }))

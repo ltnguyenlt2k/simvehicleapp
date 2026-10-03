@@ -9,6 +9,10 @@ import { parseRequest } from '@/lib/api/server'
 import { generateRequestId } from '@/lib/core/utils/request'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
 import { captureServerEvent } from '@/lib/posthog/server'
+import {
+  PublicApiNotAllowedError,
+  validatePublicApiAllowed,
+} from '@/lib/sv/oss/access-control/permission-check'
 import { performFullDeploy, performFullUndeploy } from '@/lib/workflows/orchestration'
 import { statusForOrchestrationError } from '@/lib/workflows/orchestration/types'
 import { validateWorkflowPermissions } from '@/lib/workflows/utils'
@@ -17,10 +21,6 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from '@/app/api/workflows/utils'
-import {
-  PublicApiNotAllowedError,
-  validatePublicApiAllowed,
-} from '@/ee/access-control/utils/permission-check'
 
 const logger = createLogger('WorkflowDeployAPI')
 

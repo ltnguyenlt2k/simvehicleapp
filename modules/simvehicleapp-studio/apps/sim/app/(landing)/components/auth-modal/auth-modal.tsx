@@ -21,7 +21,7 @@ import { client } from '@/lib/auth/auth-client'
 import { getEnv, isFalsy, isTruthy } from '@/lib/core/config/env'
 import { captureClientEvent } from '@/lib/posthog/client'
 import type { PostHogEventMap } from '@/lib/posthog/events'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 const logger = createLogger('AuthModal')
 

@@ -2,8 +2,8 @@ import { createLogger } from '@sim/logger'
 import { z } from 'zod'
 import type { BaseServerTool } from '@/lib/copilot/tools/server/base-tool'
 import { getAllowedIntegrationsFromEnv } from '@/lib/core/config/env-flags'
+import { getUserPermissionConfig } from '@/lib/sv/oss/access-control/permission-check'
 import { getAllBlocks } from '@/blocks/registry'
-import { getUserPermissionConfig } from '@/ee/access-control/utils/permission-check'
 
 export const GetTriggerBlocksInput = z.object({})
 export const GetTriggerBlocksResult = z.object({

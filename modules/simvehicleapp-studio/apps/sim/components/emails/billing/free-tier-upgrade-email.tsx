@@ -3,7 +3,7 @@ import { baseStyles, colors, typography } from '@/components/emails/_styles'
 import { proFeatures } from '@/components/emails/billing/constants'
 import { EmailLayout } from '@/components/emails/components'
 import { dollarsToCredits } from '@/lib/billing/credits/conversion'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 interface FreeTierUpgradeEmailProps {
   userName?: string

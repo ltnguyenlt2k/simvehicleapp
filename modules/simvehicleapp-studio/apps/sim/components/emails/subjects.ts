@@ -1,5 +1,5 @@
 import { UPGRADE_REASON_COPY, type UpgradeReason } from '@/lib/billing/upgrade-reasons'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 /** Email subject type for all supported email templates */
 export type EmailSubjectType =

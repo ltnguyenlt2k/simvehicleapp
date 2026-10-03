@@ -6,19 +6,19 @@ import { sleep } from '@sim/utils/helpers'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { normalizeStringRecord, normalizeWorkflowVariables } from '@/lib/core/utils/records'
 import { createMcpToolId } from '@/lib/mcp/utils'
-import { processFilesToUserFiles, type RawFileInput } from '@/lib/uploads/utils/file-utils'
-import { hydrateUserFilesWithBase64 } from '@/lib/uploads/utils/user-file-base64.server'
-import { getCustomToolById } from '@/lib/workflows/custom-tools/operations'
-import { getAllBlocks } from '@/blocks'
-import type { BlockOutput } from '@/blocks/types'
-import { normalizeFileInput } from '@/blocks/utils'
 import {
   validateBlockType,
   validateCustomToolsAllowed,
   validateMcpToolsAllowed,
   validateModelProvider,
   validateSkillsAllowed,
-} from '@/ee/access-control/utils/permission-check'
+} from '@/lib/sv/oss/access-control/permission-check'
+import { processFilesToUserFiles, type RawFileInput } from '@/lib/uploads/utils/file-utils'
+import { hydrateUserFilesWithBase64 } from '@/lib/uploads/utils/user-file-base64.server'
+import { getCustomToolById } from '@/lib/workflows/custom-tools/operations'
+import { getAllBlocks } from '@/blocks'
+import type { BlockOutput } from '@/blocks/types'
+import { normalizeFileInput } from '@/blocks/utils'
 import { AGENT, BlockType, DEFAULTS, stripCustomToolPrefix } from '@/executor/constants'
 import { memoryService } from '@/executor/handlers/agent/memory'
 import {

@@ -58,6 +58,10 @@ import {
   MCP_TOOL_BRIDGE_HEADER,
 } from '@/lib/mcp/constants'
 import {
+  PublicApiNotAllowedError,
+  validatePublicApiAllowed,
+} from '@/lib/sv/oss/access-control/permission-check'
+import {
   cleanupExecutionBase64Cache,
   hydrateUserFilesWithBase64,
 } from '@/lib/uploads/utils/user-file-base64.server'
@@ -72,10 +76,6 @@ import {
 import { createStreamingResponse } from '@/lib/workflows/streaming/streaming'
 import { createHttpResponseFromBlock, workflowHasResponseBlock } from '@/lib/workflows/utils'
 import { executeWorkflowJob, type WorkflowExecutionPayload } from '@/background/workflow-execution'
-import {
-  PublicApiNotAllowedError,
-  validatePublicApiAllowed,
-} from '@/ee/access-control/utils/permission-check'
 import { normalizeName } from '@/executor/constants'
 import { ExecutionSnapshot } from '@/executor/execution/snapshot'
 import type {

@@ -1,8 +1,8 @@
 import { createLogger } from '@sim/logger'
 import { getInternalApiBaseUrl } from '@/lib/core/utils/urls'
+import { validateModelProvider } from '@/lib/sv/oss/access-control/permission-check'
 import { generateRouterPrompt, generateRouterV2Prompt } from '@/blocks/blocks/router'
 import type { BlockOutput } from '@/blocks/types'
-import { validateModelProvider } from '@/ee/access-control/utils/permission-check'
 import {
   BlockType,
   DEFAULTS,

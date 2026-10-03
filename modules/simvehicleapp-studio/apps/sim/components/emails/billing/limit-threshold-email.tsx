@@ -2,7 +2,7 @@ import { Link, Section, Text } from '@react-email/components'
 import { baseStyles } from '@/components/emails/_styles'
 import { EmailLayout } from '@/components/emails/components'
 import { UPGRADE_REASON_COPY, type UpgradeReason } from '@/lib/billing/upgrade-reasons'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 interface LimitThresholdEmailProps {
   /** `warning` = approaching the limit (~80%); `reached` = at/over the limit. */

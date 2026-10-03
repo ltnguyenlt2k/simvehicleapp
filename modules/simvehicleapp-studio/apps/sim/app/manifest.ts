@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 export const dynamic = 'force-dynamic'
 

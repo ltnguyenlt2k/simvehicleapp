@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { GithubIcon } from '@/components/icons'
-import { useBrandConfig } from '@/ee/whitelabeling'
+import { useBrandConfig } from '@/lib/sv/oss/brand'
 
 interface ChatHeaderProps {
   chatConfig: {

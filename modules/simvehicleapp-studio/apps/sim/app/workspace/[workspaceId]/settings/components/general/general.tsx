@@ -29,9 +29,9 @@ import { isHosted } from '@/lib/core/config/env-flags'
 import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
 import { getBrowserTimezone, getTimezoneOptions } from '@/lib/core/utils/timezone'
 import { getBaseUrl } from '@/lib/core/utils/urls'
+import { useBrandConfig } from '@/lib/sv/oss/brand'
 import { SettingsSection } from '@/app/workspace/[workspaceId]/settings/components/settings-section/settings-section'
 import { useProfilePictureUpload } from '@/app/workspace/[workspaceId]/settings/hooks/use-profile-picture-upload'
-import { useBrandConfig } from '@/ee/whitelabeling'
 import { useGeneralSettings, useUpdateGeneralSetting } from '@/hooks/queries/general-settings'
 import {
   useResetPassword,

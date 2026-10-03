@@ -599,7 +599,7 @@ export async function sendPlanWelcomeEmail(subscription: any): Promise<void> {
         const displayName = getDisplayPlanName(subPlan)
         await sendEmail({
           to: users[0].email,
-          subject: `Your ${displayName} plan is now active on ${(await import('@/ee/whitelabeling')).getBrandConfig().name}`,
+          subject: `Your ${displayName} plan is now active on ${(await import('@/lib/sv/oss/brand')).getBrandConfig().name}`,
           html,
           emailType: 'updates',
         })

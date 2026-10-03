@@ -18,13 +18,13 @@ import {
   encodeVfsSegment,
 } from '@/lib/copilot/vfs/path-utils'
 import { getAllowedIntegrationsFromEnv } from '@/lib/core/config/env-flags'
+import { getUserPermissionConfig } from '@/lib/sv/oss/access-control/permission-check'
 import { getTableById } from '@/lib/table/service'
 import { getWorkspaceFileFolderPath } from '@/lib/uploads/contexts/workspace/workspace-file-folder-manager'
 import { getWorkspaceFile } from '@/lib/uploads/contexts/workspace/workspace-file-manager'
 import { getSkillById } from '@/lib/workflows/skills/operations'
 import { listFolders } from '@/lib/workflows/utils'
 import { checkKnowledgeBaseAccess } from '@/app/api/knowledge/utils'
-import { getUserPermissionConfig } from '@/ee/access-control/utils/permission-check'
 import { escapeRegExp } from '@/executor/constants'
 import type { ChatContext } from '@/stores/panel'
 

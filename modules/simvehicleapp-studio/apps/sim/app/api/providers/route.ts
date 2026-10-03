@@ -10,18 +10,18 @@ import { authorizeCredentialUse } from '@/lib/auth/credential-access'
 import { checkInternalAuth } from '@/lib/auth/hybrid'
 import { generateRequestId } from '@/lib/core/utils/request'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import {
+  assertPermissionsAllowed,
+  IntegrationNotAllowedError,
+  ModelNotAllowedError,
+  ProviderNotAllowedError,
+} from '@/lib/sv/oss/access-control/permission-check'
 import { checkWorkspaceAccess } from '@/lib/workspaces/permissions/utils'
 import {
   getServiceAccountToken,
   refreshTokenIfNeeded,
   resolveOAuthAccountId,
 } from '@/app/api/auth/oauth/utils'
-import {
-  assertPermissionsAllowed,
-  IntegrationNotAllowedError,
-  ModelNotAllowedError,
-  ProviderNotAllowedError,
-} from '@/ee/access-control/utils/permission-check'
 import type { StreamingExecution } from '@/executor/types'
 import { executeProviderRequest } from '@/providers'
 

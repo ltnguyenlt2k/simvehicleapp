@@ -34,12 +34,12 @@ import {
   sendInvitationEmail,
 } from '@/lib/invitations/send'
 import { quickValidateEmail } from '@/lib/messaging/email/validation'
-import { hasWorkspaceAdminAccess } from '@/lib/workspaces/permissions/utils'
-import { isOrganizationWorkspace } from '@/lib/workspaces/policy'
 import {
   InvitationsNotAllowedError,
   validateInvitationsAllowed,
-} from '@/ee/access-control/utils/permission-check'
+} from '@/lib/sv/oss/access-control/permission-check'
+import { hasWorkspaceAdminAccess } from '@/lib/workspaces/permissions/utils'
+import { isOrganizationWorkspace } from '@/lib/workspaces/policy'
 
 const logger = createLogger('OrganizationInvitations')
 

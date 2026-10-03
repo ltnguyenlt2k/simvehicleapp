@@ -3,7 +3,7 @@ import { baseStyles, colors } from '@/components/emails/_styles'
 import { EmailLayout } from '@/components/emails/components'
 import { dollarsToCredits } from '@/lib/billing/credits/conversion'
 import { getBaseUrl } from '@/lib/core/utils/urls'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 interface CreditPurchaseEmailProps {
   userName?: string

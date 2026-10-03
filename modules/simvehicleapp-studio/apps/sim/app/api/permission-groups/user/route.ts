@@ -3,11 +3,11 @@ import { userPermissionConfigQuerySchema } from '@/lib/api/contracts/permission-
 import { getSession } from '@/lib/auth'
 import { isOrganizationOnEnterprisePlan } from '@/lib/billing'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import { resolveWorkspaceGroup } from '@/lib/sv/oss/access-control/permission-check'
 import {
   checkWorkspaceAccess,
   isOrganizationAdminOrOwner,
 } from '@/lib/workspaces/permissions/utils'
-import { resolveWorkspaceGroup } from '@/ee/access-control/utils/permission-check'
 
 export const GET = withRouteHandler(async (req: Request) => {
   const session = await getSession()

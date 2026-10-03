@@ -22,7 +22,7 @@ import { getBaseUrl } from '@/lib/core/utils/urls'
 import { computeInvitationExpiry } from '@/lib/invitations/core'
 import { sendEmail } from '@/lib/messaging/email/mailer'
 import { getFromEmailAddress } from '@/lib/messaging/email/utils'
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 const logger = createLogger('InvitationSend')
 

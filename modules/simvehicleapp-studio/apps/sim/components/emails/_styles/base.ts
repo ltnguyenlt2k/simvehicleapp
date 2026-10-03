@@ -3,7 +3,7 @@
  * Colors are derived from globals.css light mode tokens.
  */
 
-import { getBrandConfig } from '@/ee/whitelabeling'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 /** Color tokens from globals.css (light mode), brand-aware for whitelabeled instances */
 function buildColors() {

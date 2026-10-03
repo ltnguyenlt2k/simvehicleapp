@@ -70,7 +70,7 @@ vi.mock('@/lib/workspaces/policy', () => ({
   getWorkspaceInvitePolicy: vi.fn(),
 }))
 
-vi.mock('@/ee/access-control/utils/permission-check', () => ({
+vi.mock('@/lib/sv/oss/access-control/permission-check', () => ({
   validateInvitationsAllowed: vi.fn(),
 }))
 

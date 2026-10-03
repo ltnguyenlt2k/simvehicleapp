@@ -11,7 +11,7 @@ import {
   WorkspaceInvitationError,
   type WorkspaceInvitationResult,
 } from '@/lib/invitations/workspace-invitations'
-import { InvitationsNotAllowedError } from '@/ee/access-control/utils/permission-check'
+import { InvitationsNotAllowedError } from '@/lib/sv/oss/access-control/permission-check'
 
 export const dynamic = 'force-dynamic'
 

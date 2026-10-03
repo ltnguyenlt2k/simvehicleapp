@@ -73,28 +73,7 @@ const WorkflowMcpServers = dynamic(() =>
     '@/app/workspace/[workspaceId]/settings/components/workflow-mcp-servers/workflow-mcp-servers'
   ).then((m) => m.WorkflowMcpServers)
 )
-const AccessControl = dynamic(() =>
-  import('@/ee/access-control/components/access-control').then((m) => m.AccessControl)
-)
-const AuditLogs = dynamic(() =>
-  import('@/ee/audit-logs/components/audit-logs').then((m) => m.AuditLogs)
-)
-const SSO = dynamic(() => import('@/ee/sso/components/sso-settings').then((m) => m.SSO))
-const DataRetentionSettings = dynamic(() =>
-  import('@/ee/data-retention/components/data-retention-settings').then(
-    (m) => m.DataRetentionSettings
-  )
-)
-const DataDrainsSettings = dynamic(() =>
-  import('@/ee/data-drains/components/data-drains-settings').then((m) => m.DataDrainsSettings)
-)
-const WhitelabelingSettings = dynamic(
-  () =>
-    import('@/ee/whitelabeling/components/whitelabeling-settings').then(
-      (m) => m.WhitelabelingSettings
-    ),
-  { ssr: false }
-)
+// SV: Enterprise settings sections (access control, audit logs, SSO, data retention, data drains, whitelabeling) removed with apps/sim/ee.
 
 interface SettingsPageProps {
   section: SettingsSection
@@ -129,16 +108,10 @@ export function SettingsPage({ section }: SettingsPageProps) {
       {effectiveSection === 'general' && <General />}
       {effectiveSection === 'secrets' && <Secrets />}
       {effectiveSection === 'credential-sets' && <CredentialSets />}
-      {effectiveSection === 'access-control' && <AccessControl />}
-      {effectiveSection === 'audit-logs' && <AuditLogs />}
       {effectiveSection === 'apikeys' && <ApiKeys />}
       {isBillingEnabled && effectiveSection === 'billing' && <Billing />}
       {effectiveSection === 'teammates' && <Teammates />}
       {isBillingEnabled && effectiveSection === 'organization' && <TeamManagement />}
-      {effectiveSection === 'sso' && <SSO />}
-      {effectiveSection === 'data-retention' && <DataRetentionSettings />}
-      {effectiveSection === 'data-drains' && <DataDrainsSettings />}
-      {effectiveSection === 'whitelabeling' && <WhitelabelingSettings />}
       {effectiveSection === 'byok' && <BYOK />}
       {effectiveSection === 'copilot' && <Copilot />}
       {effectiveSection === 'mcp' && <MCP />}

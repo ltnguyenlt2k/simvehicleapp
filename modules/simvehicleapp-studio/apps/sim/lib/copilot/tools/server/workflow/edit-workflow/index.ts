@@ -15,6 +15,7 @@ import {
 } from '@/lib/copilot/tools/server/base-tool'
 import { env } from '@/lib/core/config/env'
 import { getSocketServerUrl } from '@/lib/core/utils/urls'
+import { getUserPermissionConfig } from '@/lib/sv/oss/access-control/permission-check'
 import {
   applyTargetedLayout,
   getTargetedLayoutImpact,
@@ -30,7 +31,6 @@ import {
   saveWorkflowToNormalizedTables,
 } from '@/lib/workflows/persistence/utils'
 import { validateWorkflowState } from '@/lib/workflows/sanitization/validation'
-import { getUserPermissionConfig } from '@/ee/access-control/utils/permission-check'
 import { generateLoopBlocks, generateParallelBlocks } from '@/stores/workflows/workflow/utils'
 import { normalizeWorkflowState } from '@/stores/workflows/workflow/validation'
 import { applyOperationsToWorkflowState } from './engine'

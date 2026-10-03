@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ToastProvider } from '@/components/emcn'
 import { getSession } from '@/lib/auth'
+import { BrandingProvider, getOrgWhitelabelSettings } from '@/lib/sv/oss/brand'
 import { getQueryClient } from '@/app/_shell/providers/get-query-client'
 import { ImpersonationBanner } from '@/app/workspace/[workspaceId]/components/impersonation-banner'
 import { WorkspaceChrome } from '@/app/workspace/[workspaceId]/components/workspace-chrome'
@@ -12,8 +13,6 @@ import { ProviderModelsLoader } from '@/app/workspace/[workspaceId]/providers/pr
 import { SettingsLoader } from '@/app/workspace/[workspaceId]/providers/settings-loader'
 import { WorkspacePermissionsProvider } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { WorkspaceScopeSync } from '@/app/workspace/[workspaceId]/providers/workspace-scope-sync'
-import { BrandingProvider } from '@/ee/whitelabeling/components/branding-provider'
-import { getOrgWhitelabelSettings } from '@/ee/whitelabeling/org-branding'
 
 export default async function WorkspaceLayout({
   children,

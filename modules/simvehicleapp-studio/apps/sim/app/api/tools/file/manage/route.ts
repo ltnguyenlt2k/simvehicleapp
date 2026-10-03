@@ -21,6 +21,10 @@ import {
   ShareValidationError,
   upsertFileShare,
 } from '@/lib/public-shares/share-manager'
+import {
+  PublicFileSharingNotAllowedError,
+  validatePublicFileSharing,
+} from '@/lib/sv/oss/access-control/permission-check'
 import { ensureWorkspaceFileFolderPath } from '@/lib/uploads/contexts/workspace/workspace-file-folder-manager'
 import {
   fetchWorkspaceFileBuffer,
@@ -39,10 +43,6 @@ import {
   isWorkspaceAccessDeniedError,
 } from '@/lib/workspaces/permissions/utils'
 import { assertToolFileAccess } from '@/app/api/files/authorization'
-import {
-  PublicFileSharingNotAllowedError,
-  validatePublicFileSharing,
-} from '@/ee/access-control/utils/permission-check'
 import type { UserFile } from '@/executor/types'
 
 export const dynamic = 'force-dynamic'

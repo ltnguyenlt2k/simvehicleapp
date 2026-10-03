@@ -4,12 +4,12 @@ import { redactApiKeys } from '@/lib/core/security/redaction'
 import { normalizeStringArray } from '@/lib/core/utils/arrays'
 import { getBaseUrl } from '@/lib/core/utils/urls'
 import { compactExecutionPayload } from '@/lib/execution/payloads/serializer'
+import { validateBlockType } from '@/lib/sv/oss/access-control/permission-check'
 import {
   containsUserFileWithMetadata,
   hydrateUserFilesWithBase64,
 } from '@/lib/uploads/utils/user-file-base64.server'
 import { sanitizeInputFormat, sanitizeTools } from '@/lib/workflows/comparison/normalize'
-import { validateBlockType } from '@/ee/access-control/utils/permission-check'
 import {
   BlockType,
   buildResumeApiUrl,
