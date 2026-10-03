@@ -201,3 +201,31 @@ class UpstreamTreeCheckTest(unittest.TestCase):
         index = upstream_tree_check.local_tree("INDEX", path)["compose_lint.py"]
         self.assertEqual(head, index)
         self.assertRegex(head[1], r"^[0-9a-f]{40}$")
+
+
+import studio_guards  # noqa: E402
+
+
+class StudioGuardsTest(TempRepo):
+    def test_clean_studio_passes(self):
+        self.write("modules/simvehicleapp-studio/apps/sim/lib/sv/oss/brand/index.ts", "export {}\n")
+        self.assertEqual(studio_guards.run(self.root), [])
+
+    def test_ee_directory_rejected(self):
+        self.write("modules/simvehicleapp-studio/apps/sim/ee/whitelabeling/index.ts", "export {}\n")
+        self.assertTrue(any("must not be shipped" in e for e in studio_guards.run(self.root)))
+
+    def test_ee_imports_rejected(self):
+        self.write("modules/simvehicleapp-studio/apps/sim/app/a.tsx", "import { x } from '@/ee/whitelabeling'\n")
+        self.write("modules/simvehicleapp-studio/apps/sim/app/b.test.ts", "vi.mock(\"@/ee/sso/constants\", () => ({}))\n")
+        self.write("modules/simvehicleapp-studio/apps/sim/app/c.tsx", "const m = import(`@/ee/x`)\n")
+        self.assertEqual(len(studio_guards.run(self.root)), 3)
+
+
+class AllowlistGlobTest(unittest.TestCase):
+    def test_brackets_are_literal(self):
+        path = "apps/sim/app/workspace/[workspaceId]/layout.tsx"
+        self.assertTrue(upstream_tree_check.declared(path, path))
+        self.assertTrue(upstream_tree_check.declared(path, "apps/sim/app/workspace/[workspaceId]/*"))
+        self.assertFalse(upstream_tree_check.declared("apps/sim/app/workspace/w/layout.tsx", "apps/sim/app/workspace/[workspaceId]/*"))
+        self.assertFalse(upstream_tree_check.declared("apps/sim/a.ts", "apps/sim/a.tsx"))

@@ -58,6 +58,42 @@ jobs:
           python3 scripts/upstream_tree_check.py --repo eclipse-velocitas/vehicle-app-python-template
           --commit e7082f75d1831489462f6672b6858f7ea7708256 --path modules/velocitas-stack/templates/vehicle-app-python-template
 
+  studio-guards:
+    name: studio license guards (no apps/sim/ee, no @/ee/)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: python3 scripts/ci/studio_guards.py
+
+  studio:
+    name: simvehicleapp-studio type-check + tests
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: modules/simvehicleapp-studio
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.13 # packageManager of the Sim snapshot
+      - run: bun install --frozen-lockfile
+      - name: Type-check apps/sim
+        working-directory: modules/simvehicleapp-studio/apps/sim
+        run: bun run type-check
+      - name: Unit tests apps/sim
+        working-directory: modules/simvehicleapp-studio/apps/sim
+        run: bun run test
+
+  studio-image:
+    name: studio image builds from source
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: docker build (app.Dockerfile, not pushed)
+        run: >-
+          docker build --file modules/simvehicleapp-studio/docker/app.Dockerfile
+          --tag simvehicleapp/studio:ci modules/simvehicleapp-studio
+
   license-scan:
     name: license scan
     runs-on: ubuntu-24.04

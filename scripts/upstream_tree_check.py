@@ -86,8 +86,15 @@ def compare(up: dict[str, tuple[str, str]], lo: dict[str, tuple[str, str]]) -> t
     return changes, mode_only
 
 
+def declared(path: str, glob: str) -> bool:
+    """Exact match unless the line has * or ?; `[` is always literal (Next.js paths like `[workspaceId]`)."""
+    if "*" not in glob and "?" not in glob:
+        return path == glob
+    return fnmatch.fnmatchcase(path, glob.replace("[", "[[]"))
+
+
 def undeclared_changes(changes: list[Change], allow: list[str]) -> list[Change]:
-    return [(k, p) for k, p in changes if not any(fnmatch.fnmatchcase(p, g) for g in allow)]
+    return [(k, p) for k, p in changes if not any(declared(p, g) for g in allow)]
 
 
 def main() -> int:

@@ -11,3 +11,4 @@ Run by `.github/workflows/ci.yml`; all are plain Python 3 (stdlib only) and runn
 
 `ci.env` holds dummy values for compose variables declared `:?required`; it is never used at runtime.
 | vendored trees | `python3 scripts/upstream_tree_check.py --repo … --commit … --path … [--allow …]` | Sim snapshot and Velocitas templates match their pinned upstream trees; studio changes must be declared in `modules/simvehicleapp-studio/UPSTREAM_SYNC.allow` (ADR-0003, ADR-0008) |
+| studio guards | `python3 scripts/ci/studio_guards.py` | no `apps/sim/ee` path and no `@/ee/` reference in the studio (ADR-0004, M01-T02c; Scratch denylist added in M01-T11) |
