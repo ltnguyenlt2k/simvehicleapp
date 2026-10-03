@@ -18,3 +18,6 @@ apps/sim/public/logo/*
 apps/sim/public/favicon/*
 apps/sim/public/icon.svg
 apps/sim/public/email/broadcast/v0.5/logo.png
+
+# M01-T02b — clean-room OSS replacements (docs/specs/M01-T02a-oss-clean-room-spec.md)
+apps/sim/lib/sv/*
