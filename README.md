@@ -68,7 +68,7 @@ flowchart TB
   CONTRACTS -. dùng bởi mọi tầng .- L1 & L2 & L3 & L4 & L5
 ```
 
-**Nguyên tắc cốt lõi:** mỗi khối ở trên là **một repo con độc lập** (`modules/<tên>`), chỉ phụ thuộc `@simvehicleapp/contracts`, giao tiếp qua HTTP/SSE/WS — không import code chéo module. Đổi ngôn ngữ sinh code = đổi 1 module `compiler-code-<lang>`, không đụng tới studio/core/orchestrator. Chi tiết: [analysis/02-layers-and-modules.md](analysis/02-layers-and-modules.md).
+**Nguyên tắc cốt lõi:** mỗi khối ở trên là **một module độc lập** (`modules/<tên>`; thư mục trong dev, tách repo khi release theo ADR-0009), chỉ phụ thuộc `@simvehicleapp/contracts`, giao tiếp qua HTTP/SSE/WS — không import code chéo module. Đổi ngôn ngữ sinh code = đổi 1 module `compiler-code-<lang>`, không đụng tới studio/core/orchestrator. Chi tiết: [analysis/02-layers-and-modules.md](analysis/02-layers-and-modules.md).
 
 ---
 
@@ -88,7 +88,7 @@ flowchart TB
 | **IDE** | Optional `code-server` (web VS Code) built `FROM` the same toolchain image — open it only when you want to hand-edit generated code or debug. |
 | **AI assistant** | A chat panel (not the old Copilot) wired to your own LLM key from `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) plus an MCP server/client — it proposes workflow patches, it does not write production C++. |
 | **Architecture record** | 34 ADRs (`analysis/adr/`), each re-verified against real upstream source (GitHub, npm registry, actual `.clang-format`/schema files) rather than assumption — see the 2026-10-01 review log in the ADR index. |
-| **Status (2026-10-02)** | Planning + M0 foundations complete: all 6 technical spikes (headless offline build, databroker↔MQTT wiring, actuator set-semantics, mock-provider, minimal Sim stack, code-server+clangd) **passed against real running containers**, evidence in [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (studio refactor) has not started yet. |
+| **Status (2026-10-03)** | M0 in progress: contracts/fixtures, root CI and required ADR reviews remain open. The M0 gate has not passed. Historical spike evidence: all 6 technical spikes (headless offline build, databroker↔MQTT wiring, actuator set-semantics, mock-provider, minimal Sim stack, code-server+clangd) **passed against real running containers**, evidence in [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (studio refactor) has not started yet. |
 | **License** | SimVehicleApp's own code: Apache-2.0. Built on Apache-2.0 upstream (Sim, Eclipse Velocitas, Eclipse KUKSA) and MPL-2.0 (COVESA VSS data). The Sim Enterprise (`ee/`) surface and anything AGPL (Scratch) are explicitly excluded — see [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
 ---
@@ -109,7 +109,7 @@ flowchart TB
 | **IDE** | `code-server` (VS Code chạy trên web) tuỳ chọn, build `FROM` cùng image toolchain — chỉ mở khi cần sửa tay code đã sinh hoặc debug. |
 | **AI assistant** | Khung chat (thay Copilot cũ) gắn API key LLM riêng từ `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) cộng MCP server/client — chỉ đề xuất patch workflow, không viết C++ production. |
 | **Hồ sơ kiến trúc** | 34 ADR (`analysis/adr/`), mỗi cái đã verify lại bằng source thật (GitHub, npm registry, file `.clang-format`/schema thật) thay vì suy đoán — xem log review 2026-10-01 trong mục lục ADR. |
-| **Trạng thái (2026-10-02)** | Đã xong giai đoạn phân tích + nền tảng M0: cả 6 spike kỹ thuật (build offline không devcontainer, app nối databroker/MQTT, hành vi set() actuator, mock-provider, Sim chạy tối giản, code-server+clangd) **đã PASS trên container chạy thật**, bằng chứng ở [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (refactor studio) chưa bắt đầu. |
+| **Trạng thái (2026-10-03)** | M0 đang làm: còn contracts/fixtures, CI root và review ADR bắt buộc; gate M0 chưa PASS. Bằng chứng spike lịch sử: cả 6 spike kỹ thuật (build offline không devcontainer, app nối databroker/MQTT, hành vi set() actuator, mock-provider, Sim chạy tối giản, code-server+clangd) **đã PASS trên container chạy thật**, bằng chứng ở [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (refactor studio) chưa bắt đầu. |
 | **License** | Code riêng của SimVehicleApp: Apache-2.0. Dựa trên upstream Apache-2.0 (Sim, Eclipse Velocitas, Eclipse KUKSA) và MPL-2.0 (dữ liệu COVESA VSS). Bề mặt Sim Enterprise (`ee/`) và mọi thứ AGPL (Scratch) đều bị loại trừ tường minh — xem [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
 ---
@@ -119,7 +119,8 @@ flowchart TB
 ```
 .
 ├── README.md  AGENTS.md  CLAUDE.md          # anh/chị đang đọc file này; AGENTS.md = luật cho AI coding agent
-├── .claude/skills/                          # 14 skill chuyên biệt cho agent (xem AGENTS.md §3)
+├── .claude/skills/                          # nguồn chung 14 skill (xem AGENTS.md §3)
+├── .agents/skills/                          # Codex: symlink tới cùng skill, không copy
 ├── analysis/                                # 83 file: nghiên cứu, kiến trúc, 34 ADR, kế hoạch 15 milestone
 │   ├── 00…16-*.md                           # research → requirements → architecture → … → roadmap → risks
 │   ├── 11b-block-inventory-and-migration.md # kiểm kê 268 block Sim thật, giữ/xoá/tham khảo
@@ -128,6 +129,7 @@ flowchart TB
 │   └── phases/M00…M14-*.md                  # task chi tiết + acceptance gate mỗi milestone
 ├── docs/
 │   ├── BASELINE.md                          # SHA/digest mọi thành phần upstream đã pin
+│   ├── ROADMAP.md                           # tracking sống theo feature/milestone
 │   └── spikes/M0-spikes-report.md           # kết quả 6 spike kỹ thuật đã verify thật
 ├── docker-compose.yml                       # entrypoint duy nhất — chỉ include fragment từng module
 ├── modules/                                 # mỗi thư mục = 1 "repo" độc lập (xem ADR-0009)

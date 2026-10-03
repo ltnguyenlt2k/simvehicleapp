@@ -45,3 +45,7 @@ flowchart LR
 
 ## Verification (M0)
 `docker compose config` ở root ✔; từng fragment `config -q` độc lập ✔; `scripts/sv smoke` ✔.
+
+## Notes / Deviations
+
+2026-10-03 — Review tài liệu trên checkout `a5f22f4` (có thay đổi chưa commit): root Compose include đúng 3 fragment; `scripts/sv` có thật, contracts chỉ có README placeholder, chưa có CI root hay scripts submodule/lock. Đây là trạng thái dev của Decision 1–5, không phải toàn bộ M0 đã hoàn tất. Đồng bộ analysis 02/12/13, spec meta, phase M0/M11 và ROADMAP; đưa việc split/lock/bootstrap vào M11-T10 theo Decision 5. Bằng chứng chi tiết và phần còn thiếu: [documentation review](../../docs/reports/2026-10-03-documentation-review.md). Giữ nguyên Decision và trạng thái ADR; không chạy lại spike trong review prose này.

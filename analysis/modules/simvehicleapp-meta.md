@@ -1,14 +1,16 @@
 # Module: `simvehicleapp` (meta-repo)
 
-**Tầng:** hạ tầng/tích hợp · **ADR:** 0002, 0005, 0007 · **Milestone:** M0 (tạo), mọi M (bump lock)
+**Tầng:** hạ tầng/tích hợp · **ADR:** 0002, 0005, 0007, 0009 · **Milestone:** M0 (tạo), M11 (split repo + lock)
 
 ## Trách nhiệm
-Gom mọi repo con (submodule), khoá version (`simvehicleapp.lock.yaml`), định nghĩa compose, `.env.example`, tài liệu hệ thống (docs, analysis, ADR Accepted), E2E xuyên module, scripts vận hành. **Không chứa code sản phẩm.**
+Dev: một repo chứa các thư mục module, root `docker-compose.yml` include fragment từng module, `.env.example`, tài liệu và scripts vận hành. Code sản phẩm thuộc module sở hữu. Release: tách repo/submodule và khoá SHA/image trong `simvehicleapp.lock.yaml` theo ADR-0009.
 
 ## Cấu trúc
 Xem [02 §5](../02-layers-and-modules.md#5-cấu-trúc-meta-repo-simvehicleapp).
 
 ## Scripts
+
+Hiện có `scripts/sv build|up|down|smoke|reset-caches`; `smoke` gọi `spikes/smoke.sh` cho M0. Bảng dưới là thiết kế đích: script submodule/lock/bootstrap thuộc M11-T10; smoke GW-A thuộc M8-T10. Kiểm script tồn tại trước khi gọi.
 | Script | Việc |
 |---|---|
 | `scripts/bootstrap.sh` | kiểm tra docker/compose version → `git submodule update --init` → `lock-verify` → build image theo thứ tự (contracts → toolchain → ide → phần còn lại) → `compose up -d` → `smoke.sh` |
@@ -22,4 +24,4 @@ Xem [02 §5](../02-layers-and-modules.md#5-cấu-trúc-meta-repo-simvehicleapp).
 `tests/e2e/` (Playwright + API): tutorial flow, GW-A..G, IDE open, export build, AI patch (LLM giả).
 
 ## CI
-PR: lock-verify, compose config lint (không docker.sock, bind localhost), smoke. Nightly: full E2E + parity + compile.
+Dev: CI root M00-T08 kiểm license theo phase, contract-only-deps và compose lint; thêm test module/tích hợp theo milestone. Release mới có lock-verify. Nightly full E2E + parity + compile khi pipeline đã hiện thực. Hiện chưa có CI root; xem [ROADMAP](../../docs/ROADMAP.md).

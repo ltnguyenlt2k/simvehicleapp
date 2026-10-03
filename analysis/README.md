@@ -19,7 +19,7 @@ flowchart TB
   R03 --> R10["10 IDE, export, licensing"]
   R02 --> R11["11 Sim refactor plan"]
   R02 --> R12["12 Docker compose & infra"]
-  R01 & R02 & R03 --> ADR["adr/ (32 ADR, L0→L2)"]
+  R01 & R02 & R03 --> ADR["adr/ (34 ADR, L0→L2)"]
   ADR --> R13["13 Roadmap (M0–M14)"]
   R13 --> PH["phases/ (task chi tiết + gate)"]
   R02 --> MOD["modules/ (spec từng repo con)"]
@@ -61,13 +61,13 @@ flowchart TB
 | [14-testing-strategy.md](14-testing-strategy.md) | Kim tự tháp test, golden, parity, CI gates, security checklist |
 | [15-risks-and-open-questions.md](15-risks-and-open-questions.md) | R1–R21, câu hỏi mở + mặc định |
 | [16-glossary.md](16-glossary.md) | Thuật ngữ |
-| [adr/](adr/README.md) | 32 ADR + template + cây quyết định |
+| [adr/](adr/README.md) | 34 ADR + template + cây quyết định |
 | [modules/](modules/README.md) | Spec từng repo con |
 | [phases/](phases/README.md) | Kế hoạch task chi tiết M0–M14 + report template |
 
 ## 4. Tóm tắt quyết định chính
 1. **Hybrid compile-first**: IR là nguồn ngữ nghĩa duy nhất → Simulator (giây) + Codegen → Velocitas app thật (build/run headless trên KUKSA) + parity test. Không dùng executor của Sim ([ADR-0006](adr/ADR-0006-compile-first-execution-model.md)).
-2. **Multi-repo trong meta-repo**: 10 repo con độc lập (submodule + lock); chỉ phụ thuộc contracts; `compiler-code-<lang>`, `velocitas-stack`, `ide-vscode` tách riêng ([ADR-0002](adr/ADR-0002-meta-repo-and-submodules.md), [ADR-0007](adr/ADR-0007-service-decomposition-and-contracts.md)).
+2. **Dev một repo, release multi-repo** theo [ADR-0009](adr/ADR-0009-dev-phase-module-folders.md): 10 thư mục module độc lập trong dev; submodule + lock khi release; chỉ phụ thuộc contracts; `compiler-code-<lang>`, `velocitas-stack`, `ide-vscode` tách riêng ([ADR-0002](adr/ADR-0002-meta-repo-and-submodules.md), [ADR-0007](adr/ADR-0007-service-decomposition-and-contracts.md)).
 3. **Sim v0.7.13**, gỡ ngay `ee/` (license) và copilot (độc quyền); block vehicle là block generic tham số hoá VSS path, **không** dùng custom-blocks (EE) ([ADR-0003](adr/ADR-0003-upstream-baseline-and-fork-policy.md), [ADR-0004](adr/ADR-0004-license-compliance.md), [ADR-0011](adr/ADR-0011-block-model-on-canvas.md)).
 4. **Velocitas không devcontainer**: toolchain image FROM `devcontainer-base-images/cpp:v0.4` với cache bake sẵn; runtime-local thay bằng services compose (databroker 0.5.0 `--enable-databroker-v1`, mosquitto 2.0.14) ([ADR-0024](adr/ADR-0024-databroker-api-and-runtime-stack.md), [ADR-0025](adr/ADR-0025-headless-velocitas-toolchain.md)).
 5. **Runtime viết tay + code sinh nhỏ**: strand 1 luồng, policies, trace `SVTRACE` map về block ([ADR-0021](adr/ADR-0021-cpp-runtime-library.md)).

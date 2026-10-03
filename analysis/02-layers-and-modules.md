@@ -1,15 +1,15 @@
 # 02 — Kiến trúc phân tầng & Module độc lập (multi-repo trong 1 hệ thống)
 
 > Trả lời yêu cầu FR-PLT-03/04/05: *backend nhiều tầng, mỗi tầng/khối (`compiler-code-<lang>`, VS Code IDE, Velocitas…) là **repo con độc lập** nhưng **có đầy đủ trong hệ thống***.
-> Quyết định chính thức: [ADR-0002](adr/ADR-0002-meta-repo-and-submodules.md), [ADR-0007](adr/ADR-0007-service-decomposition-and-contracts.md).
+> Quyết định dev hiện hành: [ADR-0009](adr/ADR-0009-dev-phase-module-folders.md); release: [ADR-0002](adr/ADR-0002-meta-repo-and-submodules.md), [ADR-0007](adr/ADR-0007-service-decomposition-and-contracts.md).
 > Chi tiết từng module: thư mục [modules/](modules/README.md).
 
 ---
 
 ## 1. Nguyên tắc
 
-1. **Một module = một repo git** (có thể phát triển, version, release, test độc lập).
-2. **Meta-repo `simvehicleapp`** gom tất cả module bằng **git submodule** pin SHA + file `simvehicleapp.lock.yaml` (version + image digest). `docker compose up` ở meta-repo dựng *toàn bộ* hệ thống.
+1. **Một module = một ranh giới độc lập**. Dev: thư mục `modules/<m>` trong một repo; release: tách repo git theo ADR-0009.
+2. **Root `docker-compose.yml`** include fragment của module đã hiện thực. Release thêm **git submodule** pin SHA + `simvehicleapp.lock.yaml`; hiện chưa có lock/scripts release. Module placeholder chưa phải service chạy được.
 3. **Module chỉ phụ thuộc vào contract, không phụ thuộc code của nhau.** Contract nằm ở module `simvehicleapp-contracts` (JSON Schema + OpenAPI + proto + generated types). Mỗi module khai báo version contract nó hỗ trợ.
 4. **Giao tiếp runtime qua mạng** (HTTP/JSON, SSE/WebSocket, gRPC tới KUKSA), không qua import thư viện chéo module.
 5. **Phụ thuộc chỉ đi xuống** theo tầng (L1 → L6). Không có phụ thuộc ngược.
@@ -106,7 +106,7 @@ Enforce: mỗi repo có CI job `contract-only-deps` kiểm tra `package.json`/`C
 
 ## 5. Cấu trúc meta-repo `simvehicleapp`
 
-> **Cập nhật 2026-10-01 ([ADR-0009](adr/ADR-0009-dev-phase-module-folders.md)):** trong giai đoạn dev, `modules/*` là **thư mục thường** trong một repo (không submodule), mỗi module có compose fragment riêng; compose gốc là **`docker-compose.yml`** ở root (thay cho thư mục `compose/`). Cấu trúc submodule + lock dưới đây là đích **release v1.0**.
+> **Cập nhật 2026-10-01 ([ADR-0009](adr/ADR-0009-dev-phase-module-folders.md)):** trong giai đoạn dev, `modules/*` là **thư mục thường** trong một repo (không submodule), mỗi module có compose fragment riêng; compose gốc là **`docker-compose.yml`** ở root (thay cho thư mục `compose/`). Submodule + lock bên dưới là đích **release v1.0**; Compose tiếp tục dùng root include fragment do từng module sở hữu theo ADR-0009.
 
 ```
 simvehicleapp/                         # = thư mục hiện tại (vehicle-no-code-studio)
@@ -115,14 +115,8 @@ simvehicleapp/                         # = thư mục hiện tại (vehicle-no-c
 ├── analysis/                       # bộ phân tích & kế hoạch (tài liệu này)
 ├── docs/                           # BASELINE.md, ADR đã chấp nhận (copy từ analysis/adr khi Accepted), runbooks
 ├── simvehicleapp.lock.yaml            # version + git SHA + image digest của mọi module
-├── compose/
-│   ├── compose.yaml                # entry: include các file dưới
-│   ├── compose.core.yaml           # db, redis, studio, realtime, migrations, vss-catalog, compiler, orchestrator, workspace
-│   ├── compose.runtime.yaml        # databroker, mqtt, mock-provider, signal-gateway
-│   ├── compose.lang-cpp.yaml       # codegen-cpp, toolchain-cpp, ide-cpp
-│   ├── compose.lang-python.yaml    # codegen-python, toolchain-python, ide-python  (profile)
-│   ├── compose.ai.yaml             # ai-assistant
-│   └── config/ (mosquitto.conf, vss/, mock/)
+├── docker-compose.yml             # include fragment của từng module
+│                                  # config runtime nằm trong module sở hữu
 ├── .env.example
 ├── modules/                        # git submodules (mỗi thư mục là 1 repo độc lập)
 │   ├── simvehicleapp-contracts/

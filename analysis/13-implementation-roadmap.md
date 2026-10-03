@@ -37,19 +37,21 @@ flowchart LR
 **Đường găng (critical path):** M0 → M1 → M2 → M3 → M4 → M6 → M7 → M8 → M11.
 **Song song hoá:** M6a (runtime C++ thuần, chỉ cần SDK) và M7a (toolchain image) bắt đầu ngay sau M0; M5 song song M6; M9 song song M8.
 
+"Sau M0" nghĩa là gate M0 và DoD đã PASS, có report; không suy ra từ spike PASS. Hiện M0 còn contracts/fixtures, CI và review ADR bắt buộc (xem [tracking](../docs/ROADMAP.md)). Các nhánh song song vẫn cần ADR của task được Accepted.
+
 ---
 
 ## 2. Bảng milestone
 
 | M | Tên | Kết quả chính | ADR phải Accepted | Ánh xạ Master Plan Phase | Ước lượng (người-tuần) |
 |---|---|---|---|---|---|
-| [M0](phases/M00-foundations.md) | Foundations | Meta-repo + 10 repo con skeleton, contracts v1 draft, BASELINE.md, spikes S-1..S-6 | 0001–0007 | 0, 1 | 3 |
+| [M0](phases/M00-foundations.md) | Foundations | Repo dev + 10 thư mục module (ADR-0009), contracts v1 draft, BASELINE.md, spikes S-1..S-6 | 0001–0007, 0009 | 0, 1 | 3 |
 | [M1](phases/M01-studio-shell.md) | Studio shell | Sim fork chạy trong compose, không `ee/`, không copilot, rebrand, toolbar trống vehicle | 0003, 0004, 0008 | 2 | 3 |
 | [M2](phases/M02-vss-catalog-and-vehicle-blocks.md) | VSS & vehicle blocks | Catalog service, cây VSS trong toolbar, Read/Set/SignalChanged/Attribute blocks, `vss-path-selector` | 0010, 0011 | 3–7 | 4 |
-| [M3](phases/M03-logic-flow-blocks.md) | Logic/Flow blocks | Toàn bộ block P0 (+P1 chọn lọc), expression editor, lint realtime | 0012, 0013 | 8, 9 | 4 |
-| [M4](phases/M04-compiler-ir.md) | Compiler & IR | WorkflowGraph adapter, S0–S7, IR v1 + JSON Schema, diagnostics P0, golden IR GW-A..G | 0014, 0015, 0016 | 10–12 | 4 |
+| [M3](phases/M03-logic-flow-blocks.md) | Logic/Flow blocks | Toàn bộ block P0 (+P1 chọn lọc), expression editor, lint realtime | 0012, 0013, 0018 | 8, 9 | 4 |
+| [M4](phases/M04-compiler-ir.md) | Compiler & IR | WorkflowGraph adapter, S0–S7, IR v1 + JSON Schema, diagnostics P0, golden IR GW-A..G | 0014, 0015, 0016, 0018 | 10–12 | 4 |
 | [M5](phases/M05-simulator.md) | Simulator | Simulator IR + virtual clock, scenario editor, timeline, replay overlay | 0017 | 13 | 3 |
-| [M6](phases/M06-cpp-backend-and-runtime.md) | C++ backend | runtime-cpp (strand, policies, trace, mock), codegen-cpp, golden C++ GW-A..E | 0020, 0021, 0022 | 14, 15 | 6 |
+| [M6](phases/M06-cpp-backend-and-runtime.md) | C++ backend | runtime-cpp (strand, policies, trace, mock), codegen-cpp, golden C++ GW-A..G | 0020, 0021, 0022 | 14, 15 | 6 |
 | [M7](phases/M07-workspace-toolchain-syncode.md) | SynCode E2E | workspace-service, AppManifest merge, toolchain-cpp agent, orchestrator pipeline, SynCode UI | 0023, 0025, 0026 | 16–20 | 5 |
 | [M8](phases/M08-live-run-observability.md) | Live Run | runtime stack compose, run manager, signal-gateway, Run console, Signals panel, trace overlay | 0024, 0027 | 26 (một phần) | 4 |
 | [M9](phases/M09-ide-export-license.md) | IDE & Export | ide-cpp image, tasks overlay, Open IDE, export zip, entitlement hooks | 0028, 0031 | 21 | 3 |
@@ -59,7 +61,7 @@ flowchart LR
 | [M13](phases/M13-rust-backend.md) | Rust feasibility | báo cáo + prototype GW-A | 0041 | 30 | 3 |
 | [M14](phases/M14-services-curated-multiuser.md) | Mở rộng | gRPC service block, standalone mode, curated multi-VSS blocks, multi-user workspaces, kuksa.val.v2 | 0043+ | 23–25 | 6+ |
 
-**MVP (v1.0) = M0 → M11** ≈ 48 người-tuần; với đội 4 dev (1 FE, 2 BE/TS, 1 C++/Velocitas) ≈ 4–5 tháng lịch có song song.
+**MVP (v1.0) = M0 → M11** ≈ 48 người-tuần; với đội 4 dev (1 FE, 2 BE/TS, 1 C++/Velocitas) ≈ 4–5 tháng lịch có song song. Đây là ước lượng kế hoạch, cần cập nhật theo throughput và thời gian build thực tế; Python/Rust và M14 nằm sau v1.0.
 
 ---
 
@@ -89,3 +91,17 @@ Kết quả spike ghi vào `docs/spikes/S-x.md` và cập nhật ADR liên quan 
 - [ ] Không còn `ee/`, copilot, pii, block AI trong codebase; license scan sạch; NOTICE đủ.
 - [ ] Security checklist ([14 §5](14-testing-strategy.md#5-security-checklist)) pass.
 - [ ] Tài liệu người dùng + tài liệu dev (BLOCK_SDK, ADD_NEW_BLOCK, IR_SPEC, DIAGNOSTICS_CATALOG, RUNTIME_API, BACKEND_PLUGIN) hoàn chỉnh.
+
+### Bằng chứng đóng chuỗi sản phẩm
+
+Mỗi hàng cần report của milestone tương ứng, ghi revision code, pin image/toolchain, lệnh và kết quả. Checklist trên không thay cho các gate phase (nightly 3 ngày, performance, release…).
+
+| Kết quả người dùng cần | Milestone / bằng chứng |
+|---|---|
+| Vẽ workflow VSS, lưu/reload và thấy lỗi tại block | M1–M4: UI E2E, graph fixtures, diagnostics và IR golden |
+| Simulate logic trước khi build | M5: GW-A..G, virtual clock và expected trace/writes |
+| SynCode tạo app C++ Velocitas build/test được, lặp lại ra cùng bytes | M6–M7: generated file golden, determinism, build thật offline sau bake cache, rollback/fault injection |
+| Live Run và xem log/trace/tín hiệu về canvas | M8: GW-A live smoke; M11: GW-A..G binary parity với simulator |
+| Mở IDE đúng project, export rồi build lại | M9: E2E và export build trên môi trường sạch |
+| Chat đề xuất patch có preview/xác nhận | M10: provider giả + MCP/patch tests; pipeline compile vẫn chạy không cần LLM |
+| Cài từ máy sạch và phát hành tái lập được | M11-T10: split repo, lock, images, bootstrap và smoke từ clone sạch theo ADR-0009 |

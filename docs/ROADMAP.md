@@ -27,7 +27,7 @@
 
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
-| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | 🔄 | 7/9 |
+| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | 🔄 | 6/9 ✔; 1 ↷; 2 ☐ |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ☐ | 0/12 |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
@@ -43,7 +43,7 @@
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
 
-**MVP v1.0 = M0→M11, 157 feature.** Đã xong 7/157 (~4%) — chỉ mới hoàn thành phần hạ tầng/spike của M0; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai/contracts` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
+**MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 6/147 dòng (~4%) — chỉ mới hoàn thành phần hạ tầng/spike của M0; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai/contracts` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
 
 ---
 
@@ -56,13 +56,13 @@ ADR: [0001](../analysis/adr/ADR-0001-record-architecture-decisions.md)–[0007](
 | Module folders dev-phase | 0009 | ✔ (dạng dev) | 10 thư mục `modules/*`; code thật: `velocitas-stack`, `ide-vscode`, `simvehicleapp-studio` (snapshot); còn lại placeholder | T02 |
 | Lock + `scripts/modules.sh` quản lý submodule | 0002 | ↷ | Dời tới release theo ADR-0009; dev dùng `scripts/sv` | T03 |
 | `docs/BASELINE.md` (SHA/digest pin) | 0003 | ✔ | File có đủ SHA Sim/template/SDK + digest image | T04 |
-| Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | ☐ | **Chưa làm** — đầu việc đầu tiên khi mở M1 | T05–T06 |
+| Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | ☐ | **Chưa làm** — hoàn tất trong M0 trước khi mở M1 | T05–T06 |
 | Compose skeleton root (`docker-compose.yml` include 3 fragment) | 0005,0009 | ✔ | `scripts/sv` + `docker-compose.yml` | T07 |
 | CI chung (license scan, contract-only-deps, compose lint) | 0004,0005 | ☐ | **Chưa có CI** — cần khi repo đã lên GitHub (đã lên, có thể làm ngay) | T08 |
 | Spike S-1..S-6 + E-1 (toolchain offline, databroker+MQTT, `set()` semantics, mock-provider, Sim minimal, code-server clangd, devcontainer export) | 0006,0024,0025,0028 | ✔ PASS cả 7 | `docs/spikes/M0-spikes-report.md` | T09–T14 |
 | Cập nhật ADR theo kết quả spike | 0023,0024,0025,0028 | ✔ | 0024/0025/0028 Accepted, 0023 có Notes, 0009 ra đời | T15 |
 
-**Mở còn lại trước khi coi M0 xong hẳn:** T05/T06 (contracts alpha) và T08 (CI) — không chặn M1 bắt đầu nhưng nên làm song song đầu M1 theo ghi chú trong `phases/M00-foundations.md`.
+**M0 chưa qua gate; chưa mở M1.** Còn T05/T06 (contracts alpha + fixtures), T08 (CI), và review/Accepted ADR-0004/0006/0007. Sau đó hoàn tất DoD và report `docs/reports/M00.md` theo [phase M0](../analysis/phases/M00-foundations.md). Spike PASS chỉ chứng minh phần spike. Xem [review 2026-10-03](reports/2026-10-03-documentation-review.md) về bằng chứng và thứ tự tiếp theo.
 
 ## M1 — Studio shell
 ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [0004](../analysis/adr/ADR-0004-license-compliance.md), [0008](../analysis/adr/ADR-0008-sim-refactor-strategy.md) · Phụ thuộc: M0 · Chi tiết: [phases/M01](../analysis/phases/M01-studio-shell.md)
@@ -266,7 +266,7 @@ ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/ad
 | Performance benchmark (validate/compile/simulate/SynCode) | — | ☐ | NFR-02 | T07 |
 | Docs đầy đủ (user guide + dev docs) | — | ☐ | | T08 |
 | Usability test 5 người (tutorial < 10') | — | ☐ | | T09 |
-| Release v1.0.0 (tag, lock, images, CHANGELOG) | — | ☐ | | T10 |
+| Release v1.0.0 (split repo, bootstrap, tag, lock, images, CHANGELOG) | 0002,0009 | ☐ | Nhận M00-T03; `release-split.sh`, `modules.sh`, `lock-verify.sh`, bootstrap + clone sạch | T10 |
 
 **Exit checklist v1.0 (đủ cả 6 mới coi MVP xong):**
 - [ ] 7 golden workflow: simulate ✔, SynCode build ✔, generated tests ✔, live run ✔ trên databroker thật, parity ✔.

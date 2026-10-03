@@ -42,9 +42,12 @@ Mọi module dùng chung fixture qua package contracts ⇒ không lệch.
 | Gate | Điều kiện merge |
 |---|---|
 | PR (module) | lint + unit + contract + golden + determinism + license scan + `contract-only-deps` |
+| PR dev (một repo, ADR-0009) | test theo module bị ảnh hưởng + contract; root/từng fragment compose lint nếu chạm Compose; M0 smoke theo phạm vi, GW-A E2E từ M8; không yêu cầu lock chưa tồn tại |
 | PR (meta-repo bump lock) | lock-verify + compose up + smoke GW-A (Simulate + SynCode + 10 s run) |
 | Nightly | compile + integration + parity + E2E + perf |
 | Release | Nightly xanh 3 ngày liên tiếp + checklist [13 §5](13-implementation-roadmap.md#5-định-nghĩa-product-ready-v10-exit-m11) |
+
+Bảng là các gate cần xây theo phase; trạng thái triển khai ở ROADMAP. Hàng bump lock áp dụng sau khi chuyển sang submodule tại M11. Không bỏ qua test/gate bắt buộc của phase vì một smoke hẹp hơn đã PASS.
 
 ## 5. Security checklist
 - [ ] Workspace: mọi path resolve realpath nằm trong `/workspace/projects/<slug>`; từ chối `..`, symlink ra ngoài, tên file chứa ký tự điều khiển; chỉ ghi `ownedRoots` + AppManifest merge.

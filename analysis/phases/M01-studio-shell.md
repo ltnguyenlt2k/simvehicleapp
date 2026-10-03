@@ -3,6 +3,8 @@
 **Mục tiêu:** `simvehicleapp-studio` chạy trong compose, sạch license, không copilot, toolbar chỉ còn khung nhóm vehicle (rỗng), có BFF skeleton.
 **ADR:** 0003, 0004, 0008 · **Phụ thuộc:** M0 · **Tham chiếu:** [11-sim-refactor-plan](../11-sim-refactor-plan.md)
 
+**Điều kiện bắt đầu:** gate M0 PASS và ADR trên Accepted. Trước khi xác nhận M01-T02c, phải build/test image từ source đã sửa. S-5 dùng prebuilt chỉ là bằng chứng baseline; [spike report §8](../../docs/spikes/M0-spikes-report.md#8-sim-from-source) ghi source build chưa thành công trên host thử nghiệm, nguyên nhân lần treo chưa xác minh. Đo lại có scope hoặc dùng máy/CI đủ tài nguyên; không dùng image upstream để chứng minh bản refactor.
+
 ## Tasks
 | ID | Task | Kết quả / vị trí | Test |
 |---|---|---|---|

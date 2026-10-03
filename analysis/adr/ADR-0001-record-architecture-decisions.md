@@ -30,3 +30,7 @@ Hệ thống gồm ~10 repo con, nhiều AI agent và dev cùng triển khai. Up
 
 ## Verification
 PR template có ô "ADR liên quan"; CI fail nếu schema major bump không kèm ADR.
+
+## Notes / Deviations
+
+2026-10-03 — Checkout hiện giữ ADR tại `analysis/adr/`, chưa có bản copy `docs/adr/` nêu trong Decision 2. Khi review phải đọc Status trong từng ADR ở `analysis/adr/`; không suy ra Accepted từ bảng index hoặc spike PASS. Phần đồng bộ ADR Accepted và CI/PR template còn phải đối chiếu khi đóng M0. Ghi nhận trạng thái thực tế này không bãi bỏ Decision 2 hoặc tự chuyển trạng thái ADR.

@@ -15,7 +15,9 @@
 | M11-T07 | Performance: validate/compile/simulate/SynCode incremental benchmark | NFR-02 |
 | M11-T08 | Docs: user guide (tutorial, block reference sinh từ BlockSpec semantics.md), dev docs (BLOCK_SDK, ADD_NEW_BLOCK, IR_SPEC, DIAGNOSTICS_CATALOG, RUNTIME_API, BACKEND_PLUGIN, OPERATIONS) | review |
 | M11-T09 | Usability test 5 người (tutorial < 10 phút) | report |
-| M11-T10 | Release: tag mọi repo, lock v1.0.0, images publish, CHANGELOG | |
+| M11-T10 | Release theo ADR-0009: nhận M00-T03; viết `scripts/release-split.sh`, `scripts/modules.sh`, `scripts/lock-verify.sh`, `scripts/bootstrap.sh`; tách module giữ lịch sử, tag repo, lock v1.0.0, images publish, CHANGELOG | dry-run split; lock-verify PASS và từ chối SHA sai; clone sạch + bootstrap + smoke |
 
 ## Gate
 Checklist v1.0 đầy đủ, ký bởi lead.
+
+Report phải dẫn kết quả T01–T10 và từng hàng [bằng chứng chuỗi sản phẩm](../13-implementation-roadmap.md#bằng-chứng-đóng-chuỗi-sản-phẩm).

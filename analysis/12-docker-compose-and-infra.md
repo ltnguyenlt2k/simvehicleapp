@@ -155,7 +155,7 @@ services:
     networks: [internal, edge]
     profiles: [cpp]
 ```
-> Lưu ý: `ide-cpp` build `FROM` image `toolchain-cpp` ⇒ compose cần build toolchain trước (`docker compose build toolchain-cpp ide-cpp` theo thứ tự, hoặc dùng `additional_contexts`/bake). Script `scripts/bootstrap.sh` xử lý.
+> Lưu ý: `ide-cpp` dùng image toolchain ⇒ dev dùng `scripts/sv build` để build base/toolchain trước các image còn lại. `scripts/bootstrap.sh` là đầu việc release M11-T10, hiện chưa có.
 
 ## 3. `.env.example` (đầy đủ)
 ```dotenv
@@ -196,6 +196,19 @@ SV_MCP_CLIENTS=[]
 ```
 
 ## 4. Bootstrap
+
+Lệnh dev hiện có (sau khi clone repo):
+
+```bash
+cp .env.example .env
+scripts/sv build
+scripts/sv up
+scripts/sv smoke
+```
+
+Chỉnh `.env` theo môi trường; URL theo port đã cấu hình. `scripts/sv smoke` gọi `spikes/smoke.sh` (M0), chưa kiểm chuỗi vehicle UI/SynCode. Source build studio còn giới hạn ghi ở [spike report §8](../docs/spikes/M0-spikes-report.md#8-sim-from-source).
+
+Quy trình **release dự kiến** dưới đây phụ thuộc scripts M11-T10, chưa phải lệnh chạy được trong checkout dev:
 ```bash
 git clone --recurse-submodules <meta-repo> simvehicleapp && cd simvehicleapp
 cp .env.example .env && scripts/gen-secrets.sh >> .env
