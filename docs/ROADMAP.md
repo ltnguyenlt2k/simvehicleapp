@@ -28,7 +28,7 @@
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
-| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ☐ | 0/12 |
+| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 0/12 (T06 asset đang làm) |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
@@ -74,7 +74,7 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 | Gỡ copilot (`lib/copilot/**`, routes, panel placeholder) | 0004 | ☐ | | T03 |
 | Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | ☐ | | T04 |
 | Toolbar allowlist `sv_*` (ẩn 268 block cũ) | 0008 | ☐ | Theo [11b](../analysis/11b-block-inventory-and-migration.md) | T05 |
-| Rebrand (brand.ts, metadata, NOTICE) | 0003 | ☐ | | T06 |
+| Rebrand (brand.ts, metadata, NOTICE) | 0003 | 🔄 | Claude Code 2026-10-03, **làm trước thứ tự theo yêu cầu PO**. Xong: brand kit từ bảng logo PO + thay 60 logo/favicon/icon Sim tại chỗ + NOTICE (commits `7847389` `2206638`; build tất định). **Còn:** tên/metadata/email "Sim" qua `lib/sv/oss/brand` (phụ thuộc T02b/T02c, ADR-0004); visual check trên studio build từ source (cần ≥ 16 GB RAM); grep "Sim Studio" chỉ còn NOTICE | T06 |
 | Tắt telemetry mặc định | 0004 | ☐ | | T07 |
 | Dockerfiles compose meta (app/realtime/migrations) | 0005 | ☐ | | T08 |
 | BFF skeleton `/api/sv/health` | 0007 | ☐ | | T09 |
