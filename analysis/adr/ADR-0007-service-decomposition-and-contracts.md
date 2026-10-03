@@ -1,6 +1,6 @@
 # ADR-0007: Phân rã service theo tầng & giao tiếp qua contract có version
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L0
+- **Status:** Accepted (2026-10-03 — PO chấp thuận cùng Notes 2026-10-03; contracts 1.0.0-alpha.1 + service-kit, CI PASS run 37115615196) · **Date:** 2026-09-30 · **Level:** L0
 - **Related:** FR-PLT-04/05, NFR-06; [02](../02-layers-and-modules.md), [03](../03-system-architecture.md); Master Plan Part 10
 
 ## Context
@@ -34,7 +34,7 @@ Luồng PO có 6 "ô" phải độc lập, dễ bảo trì. Master Plan Part 10 
 ## Verification
 Contract test ở mỗi module; dependency lint; chaos test: tắt 1 service → UI báo lỗi rõ, không crash.
 
-## Notes / Deviations (2026-10-03 — M00-T05, chưa đổi Status)
+## Notes / Deviations (2026-10-03 — M00-T05; PO chấp thuận cùng ADR)
 Bằng chứng implement M0: `modules/simvehicleapp-contracts` (`@simvehicleapp/contracts@1.0.0-alpha.1`), 17 JSON Schema 2020-12 + OpenAPI 3.1 cho 8 service + TS types + `@simvehicleapp/service-kit`; 89 test; CI `contracts` + `contract-only-deps` PASS (GitHub Actions run 37115615196). Điểm cần PO xác nhận khi Accept:
 1. `$id` dạng URN `urn:simvehicleapp:contracts:<name>:<semver>` (không phụ thuộc domain).
 2. Mục 3 "proto + sinh types TS/Python/Rust": M0 chỉ sinh TS; Python (M12), Rust (M13), proto KUKSA (vendored ở orchestrator, M8) thêm khi có module tiêu thụ.

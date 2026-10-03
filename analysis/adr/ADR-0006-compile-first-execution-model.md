@@ -1,6 +1,6 @@
 # ADR-0006: Mô hình thực thi hybrid "compile-first" (IR → Simulator + Native Velocitas app)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L0
+- **Status:** Accepted (2026-10-03 — PO chấp thuận; triển khai simulator M5, backend M6, parity M11) · **Date:** 2026-09-30 · **Level:** L0
 - **Related:** FR-RUN-01..07, FR-CG-07; [08 §1](../08-run-debug-observe.md#1-các-phương-án-đã-phân-tích); Master Plan Part 3
 
 ## Context

@@ -1,6 +1,6 @@
 # ADR-0004: Tuân thủ license — gỡ Sim Enterprise, clean-room Scratch, extension hợp lệ
 
-- **Status:** Proposed (cấu trúc quyết định đã chốt; Scratch denylist đã cụ thể hoá 2026-10-01 — xem Notes) · **Date:** 2026-09-30 · **Level:** L0
+- **Status:** Accepted (2026-10-03 — PO chấp thuận cùng Notes 2026-10-03: scan + whitelist + chính sách ngoại lệ dev-only, CI `license-scan` PASS run 37115615196) · **Date:** 2026-09-30 · **Level:** L0
 - **Related:** NFR-07, R11, R12, R16; [00 §1, §4, §6](../00-research-findings.md)
 
 ## Context
@@ -49,7 +49,7 @@
 - **Không chỉ ee/ cần xử lý — còn `better-auth`/`@better-auth/sso` (MIT, pin `1.6.11` trong `apps/sim/package.json`) là plugin bên thứ ba độc lập với `ee/`**: `lib/auth/auth.ts` chỉ import duy nhất hằng số `SSO_TRUSTED_PROVIDERS` từ `@/ee/sso/constants` (một mảng tên provider, không phải logic) để truyền vào `sso({...})` của plugin MIT này. Nghĩa là **backend SSO không nằm trong `ee/`**, chỉ UI cấu hình/đăng nhập (`ee/sso/components/*`) mới cần viết lại clean-room — xem sửa tương ứng ở [ADR-0032](ADR-0032-auth-and-tenancy.md) và [11a §4](../11a-ee-clean-room-replacement.md). Tương tự, bảng `audit_log` đã có sẵn trong `packages/db/schema.ts` (Apache), không phải EE-only.
 - **Dependency license cho backend khác (M12/M13)**: `velocitas-sdk` (PyPI, cần kiểm `whitelisted-licenses.txt` khi M12) và crate Rust `kuksa-rust-sdk`/`tonic`/`tokio` (M13) chưa có bước scan license cụ thể trong Implementation — bổ sung task "license scan Python/Rust deps" vào M12-T0x / M13-T0x khi viết phase chi tiết (hiện Implementation chỉ liệt kê `scripts/license/scan.sh` chung chung, cần mở rộng sang `pip-licenses`/`cargo-license` ở M12/M13).
 
-## Notes / Deviations (2026-10-03 — M00-T08, chưa đổi Status)
+## Notes / Deviations (2026-10-03 — M00-T08; PO chấp thuận cùng ADR)
 - Task M0 "`scripts/license/scan.sh` + whitelist; CI job" đã có: `scripts/license/{scan.sh,license_scan.py,whitelisted-licenses.txt,license-exceptions.txt}`, job `license-scan` trong `.github/workflows/ci.yml` (run 37115615196 PASS). Whitelist upstream Velocitas (`whitelisted-licenses.txt` của template) **rỗng** nên repo dùng danh sách riêng theo skill `license-compliance`.
 - Chính sách ngoại lệ (mới, cần PO xác nhận khi Accept): license ngoài whitelist chỉ được chấp nhận cho dependency **dev-only** (ngoài closure production) qua dòng có lý do trong `license-exceptions.txt`; denylist (GPL family, SSPL, BUSL, Commons-Clause) không ngoại lệ. Ngoại lệ hiện có: `argparse@2.0.1` (Python-2.0/PSF, transitive của `json-schema-to-typescript`).
 - Phạm vi scan M0: package JS của module tự viết; snapshot studio ngoài phạm vi tới M1 (gỡ EE/Copilot). Kiểm extension IDE cấm (`ms-vscode.cpptools*`, Pylance) có trong cùng script. Python/Rust deps: M12/M13 như Notes 2026-10-01.
