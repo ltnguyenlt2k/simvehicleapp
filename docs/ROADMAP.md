@@ -28,7 +28,7 @@
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
-| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 0/12 (T06 asset đang làm) |
+| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 1/12 ✔ (T01); T06 asset đang làm |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
@@ -69,7 +69,7 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Fork + tag `baseline-v0.7.13` + `UPSTREAM_SYNC.md` | 0003 | ☐ | | T01 |
+| Fork + tag `baseline-v0.7.13` + `UPSTREAM_SYNC.md` | 0003 | ✔ | Claude Code 2026-10-03: dev một repo (ADR-0009) ⇒ tag `studio/baseline-v0.7.13` @ `68f7f9a`; "merge-base check" = `scripts/upstream_tree_check.py` so tree với `ad0b867`: 12.226/12.226 file giống từng byte, thay đổi cục bộ phải khai báo trong `UPSTREAM_SYNC.allow` → PASS; CI job `vendored-trees` (commits `4a9418d` `ac0f165` `1cec4e2`). Phát hiện kèm: import mất bit thực thi + template C++ thiếu `build.sh` (đã khôi phục) | T01 |
 | Clean-room gỡ `ee/` (spec Apache + `lib/sv/oss/*` + codemod + xoá `apps/sim/ee/`) | 0004 | ☐ | Theo bảng symbol [11a §2](../analysis/11a-ee-clean-room-replacement.md) | T02a–c |
 | Gỡ copilot (`lib/copilot/**`, routes, panel placeholder) | 0004 | ☐ | | T03 |
 | Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | ☐ | | T04 |

@@ -23,4 +23,4 @@
 Ubuntu 22.04.5 · gcc 11.4 · CMake 3.22.1 · Conan 2.24.0 · Python 3.10.12 · velocitas-cli 0.13.2 · user `vscode` **uid/gid 4000**.
 
 Local build artifacts (not reproducible digests, rebuilt by `scripts/sv build`): `simvehicleapp/devcontainer-cpp:dev`, `simvehicleapp/toolchain-cpp:dev` (3.59 GB), `simvehicleapp/ide-cpp:dev` (4.37 GB).
-Upstream drift policy: ADR-0003. Spike evidence: `docs/spikes/M0-spikes-report.md`.
+Upstream drift policy: ADR-0003. Integrity (2026-10-03): `scripts/upstream_tree_check.py` (CI job `vendored-trees`) — both templates match their pins exactly (content + mode); the studio matches v0.7.13 except changes declared in `modules/simvehicleapp-studio/UPSTREAM_SYNC.allow`. Import fixes: exec bits restored and template files dropped by its own `build*` ignore re-added (commit `ac0f165`). Spike evidence: `docs/spikes/M0-spikes-report.md`.
