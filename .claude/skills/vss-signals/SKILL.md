@@ -1,6 +1,6 @@
 ---
 name: vss-signals
-description: Use when working with COVESA VSS signals — parsing VSS JSON, sensor/actuator/attribute rules, datatypes, units, allowed enums, choosing real signal paths for examples/tests, or the vss-catalog service API.
+description: Work with VSS catalogs, real signal paths, access rules, datatypes, units and constraints.
 ---
 
 # VSS signals trong SimVehicleApp

@@ -1,6 +1,6 @@
 ---
 name: velocitas-vehicle-app
-description: Use when generating, reviewing, building, or running Eclipse Velocitas vehicle app code (C++ SDK 0.7.1 / Python SDK 0.15.7) — template layout, AppManifest v3, velocitas CLI commands, databroker env vars, subscribe/get/set/setMany/pubsub patterns, and headless (no devcontainer) usage.
+description: Implement or validate Velocitas app generation, manifests, SDK adapters and headless build or run behavior.
 ---
 
 # Velocitas Vehicle App — kiến thức thực hành
@@ -16,7 +16,7 @@ velocitas init -f -v && velocitas sync
 ./install_dependencies.sh [-r]        # velocitas exec build-system install
 ./build.sh [-r] [-t app] [--static]   # velocitas exec build-system build → build/bin/app
 velocitas exec vehicle-signal-interface download-vspec && velocitas exec vehicle-signal-interface generate-model
-ctest --test-dir build --output-on-failure
+./build/bin/app_utests --gtest_output=xml  # pinned template: ctest có thể không discover test
 ```
 Headless (không devcontainer): chuỗi trong `app/Dockerfile` của template trên `ghcr.io/eclipse-velocitas/devcontainer-base-images/cpp:v0.4`; `VELOCITAS_OFFLINE=1` khi cache đã bake.
 
@@ -43,6 +43,8 @@ class App : public velocitas::VehicleApp {
   vehicle::Vehicle Vehicle;   // generated model
 };
 ```
+Kiểm `build/bin/app` thực tồn tại: build.sh có thể exit 0 khi CMake fail (M0 report). Chạy các lệnh build/run trong service Compose phù hợp.
+
 Callback chạy trên thread SDK ⇒ trong SimVehicleApp **chỉ post vào strand của runtime**, không `->await()` trên strand.
 
 ## Python SDK 0.15.7

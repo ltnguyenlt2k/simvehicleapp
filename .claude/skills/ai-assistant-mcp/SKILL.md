@@ -1,6 +1,6 @@
 ---
 name: ai-assistant-mcp
-description: Use when working on simvehicleapp-ai — LLM provider configuration from .env, the chat agent loop, MCP server tools exposed by SimVehicleApp, MCP client connections to external servers, WorkflowPatch generation/validation, or the Assistant panel in studio.
+description: Implement SimVehicleApp AI chat, providers, MCP tools or WorkflowPatch validation and confirmation; excludes deterministic codegen.
 ---
 
 # AI Assistant & MCP
@@ -18,19 +18,14 @@ Tham chiếu: `analysis/09-ai-assistant-mcp.md` (§4a cơ chế xác nhận chi 
 - Kết quả tool có hệ quả cụ thể phải trả `structuredContent` máy đọc được (vd `run_start` → `{runId, editorUrl}`), không chỉ text.
 - `MAX_TOOL_ITERATIONS` mặc định 6 (`SV_AI_MAX_TOOL_STEPS`). Reasoning/"extended thinking" mặc định **tắt** trong vòng tool-use (`SV_AI_THINK=false`) — đã quan sát thực tế làm chậm & hỏng kết quả ở vòng lặp có tool; chỉ cân nhắc bật cho tác vụ một-lượt không có tool.
 
-## Provider — canonical format & lưu ý từng provider
-- Canonical nội bộ = **content-block shape của Anthropic** (`text`/`tool_use`/`tool_result`); provider khác dịch response của mình về shape này, không có schema trung gian thứ hai.
-- `anthropic`: gọi thẳng `@anthropic-ai/sdk`.
-- `openai-compatible`: `POST {OPENAI_COMPAT_BASE_URL}/chat/completions` — dùng cho OpenAI/Azure/OpenRouter **hoặc server tự host/tunnel** (Ollama/LiteLLM/vLLM); đổi provider/key sau URL đó không cần sửa code.
-- `gemini`: **bắt buộc native API** (`generativelanguage.googleapis.com/.../streamGenerateContent`, header `x-goog-api-key`) — **không** qua endpoint OpenAI-compatible của Google (key mới `AQ.` bị endpoint đó từ chối, key cũ `AIzaSy...` ngừng hoạt động ~2026-09).
-- MCP client (nội bộ lẫn `ext.*`) mở theo từng lượt chat, header mang danh tính user đang chat, đóng ngay sau lượt — không pool dùng chung nhiều user.
-- Rate limit theo user/session (`SV_AI_RATE_LIMIT_PER_MINUTE`, mặc định 20) — không theo IP, không dùng chung.
+## Provider / MCP lifecycle
+Chỉ khi sửa provider hoặc kết nối MCP, đọc [references/providers.md](references/providers.md) và ADR-0030 liên quan. Xác minh API hosted tại lúc implement; không dùng lịch sử key/provider như sự thật vĩnh viễn.
 
 ## Thêm tool MCP
 1. Định nghĩa zod schema input/output + mô tả rõ cho LLM. 2. Handler gọi service qua client contract (không truy cập DB/fs trực tiếp). 3. Xếp vào đúng 1 trong 2 tập `SAFE_TOOL_NAMES`/`SENSITIVE_TOOL_NAMES`; nếu sensitive, định nghĩa `structuredContent`. 4. Test với scripted-LLM + MCP Inspector (bao gồm case thiếu field bắt buộc). 5. Cập nhật bảng tool §4/§4a trong `analysis/09`.
 
 ## Test
-Scripted LLM (tool call cố định) cho agent loop; eval 20 prompt đo % patch valid (mục tiêu ≥ 80%); test riêng cơ chế xác nhận (thiếu field, 1 pending/hội thoại, editedInput thắng, rate-limit theo user).
+Scripted LLM (tool call cố định) cho agent loop; Eval milestone theo phase (không chạy LLM trả phí mặc định mỗi task): 20 prompt đo % patch valid (mục tiêu ≥ 80%); test riêng cơ chế xác nhận (thiếu field, 1 pending/hội thoại, editedInput thắng, rate-limit theo user).
 
 ## Mở rộng sau này (P2)
 Nếu thêm bề mặt chat khác (Slack/Zalo/Teams…): làm "relay mỏng" — mint token theo đúng quyền user, gọi lại chính API `/chat` SSE hiện có — **không** tạo bản sao agent loop thứ hai.

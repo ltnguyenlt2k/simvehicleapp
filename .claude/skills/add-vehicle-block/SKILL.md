@@ -1,6 +1,6 @@
 ---
 name: add-vehicle-block
-description: Use when adding or changing a SimVehicleApp block (trigger, sensor, actuator, logic, flow, state, communication, composite) — covers BlockSpec in core, BlockConfig UI in studio, lowering to IR, simulator behavior, runtime/codegen support, migrations, and tests.
+description: Add or change a vehicle block across spec, lowering, simulator, studio UI and supported backends, including migrations and parity.
 ---
 
 # Thêm / sửa block
@@ -10,7 +10,9 @@ Tham chiếu: `analysis/05-blocks-and-execution-model.md`, ADR-0011/0012/0013/00
 ## Block chạm VSS kiểu mảng (`T[]`) — ADR-0018
 Mảng luôn **read-only** (0 actuator kiểu mảng trong VSS thật) ⇒ không viết editor "set mảng", `sv_set_actuator` không bao giờ nhận path mảng. Đọc/dùng giá trị mảng chỉ qua 3 block có sẵn `sv_array_length`/`sv_array_at`/`sv_array_contains` (nhóm Logic & Math) — không tạo props kiểu mảng tuỳ biến trong block mới; nếu cần phần tử ⇒ gọi `array.at` trong lowering, không viết `arr[0]` trực tiếp. `int64`/`uint64` (kể cả dạng mảng) luôn string-encode trong spec/IR JSON.
 
-## Các nơi phải chạm (theo thứ tự)
+## Các điểm cần kiểm (theo thứ tự)
+
+Path dưới đây là layout thiết kế; đối chiếu source/spec/task trước khi tạo file. Chỉ sửa điểm bị thay đổi; tái dùng opcode/runtime có sẵn, không thêm đủ mọi file cho một sửa UI.
 1. **Semantics trước**: viết `simvehicleapp-core/packages/blocks/<name>/semantics.md` (input, output, handle ra, yield?, side-effect, edge cases, concurrency).
 2. **BlockSpec** `spec.json` (validate bằng `block-spec.v1.schema.json`): `type` (`sv_*`), `version`, `category`, `props` (id, kind, type, required, default, constraints), `outputs` (typed), `handles`, `opcode` hoặc `lowering`.
 3. **Lowering** `lowering.ts`: block → IR node(s)/expr. Logic thuần ⇒ inline `$expr`, không tạo node.

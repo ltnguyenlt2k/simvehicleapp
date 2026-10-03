@@ -1,6 +1,6 @@
 ---
 name: sim-fork-refactor
-description: Use when modifying simvehicleapp-studio (the fork of simstudioai/sim v0.7.13) — removing ee/copilot, rebranding, adding vehicle blocks/subblocks/panels, BFF routes, or graph adapter. Knows where Sim code lives and the minimal-diff rules.
+description: Modify the pinned Sim studio fork, vehicle canvas integration, graph adapter, BFF, rebranding or EE and Copilot removal.
 ---
 
 # Refactor fork Sim (`simvehicleapp-studio`)
@@ -27,4 +27,4 @@ Tham chiếu: `analysis/11-sim-refactor-plan.md`, ADR-0003/0004/0008/0011, `anal
 - BlockConfig `sv_*` phải khớp BlockSpec trong core (`block-parity.test.ts`).
 
 ## Kiểm tra
-`bun run lint && bun run test && bun run build`; CI guard: không path `apps/sim/ee`, không chuỗi `copilot.sim.ai`, không opcode Scratch.
+Đọc package scripts và instruction local, chạy lint/test/build thực có trong service Compose (không đoán lệnh `bun run test`). CI guard theo scope M1: không path `apps/sim/ee`, không chuỗi `copilot.sim.ai`, không opcode Scratch.

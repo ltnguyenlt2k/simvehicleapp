@@ -1,6 +1,6 @@
 ---
 name: ir-compiler-diagnostics
-description: Use when working on simvehicleapp-core compiler — WorkflowGraph normalization, stages S0–S7, IR v1 schema/canonicalization/hash, SVX expression language, type and unit checking, or diagnostic codes.
+description: Implement Graph-to-IR compiler stages, expressions, type and unit checks, canonicalization or public diagnostics.
 ---
 
 # Compiler, IR & diagnostics

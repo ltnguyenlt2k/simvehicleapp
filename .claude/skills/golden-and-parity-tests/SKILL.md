@@ -1,6 +1,6 @@
 ---
 name: golden-and-parity-tests
-description: Use when adding or updating golden workflow fixtures (GW-A..G), snapshot tests for IR or generated code, runtime conformance scenarios, or simulator-vs-binary semantic parity tests.
+description: Change golden workflows, generated snapshots, runtime conformance or simulator versus binary parity tests.
 ---
 
 # Golden, conformance & parity
@@ -11,7 +11,7 @@ Tham chiếu: `analysis/14-testing-strategy.md`, ADR-0042, `analysis/05-blocks-a
 `sim-state.json` → `graph.json` → `ir.json`; `scenario.yaml`; `expected.trace.json`; `expected.writes.json`. Snapshot code sinh nằm trong repo backend (`test/golden/GW-X/`).
 
 ## Cập nhật snapshot
-- Chỉ bằng lệnh `--update-golden` và **luôn review diff**; PR phải giải thích vì sao output đổi (đổi semantics ⇒ ADR).
+- Dùng script update snapshot thực của module (chỉ dùng `--update-golden` nếu script hỗ trợ) và **luôn review diff**; PR phải giải thích vì sao output đổi (đổi semantics ⇒ ADR).
 - Không sửa tay file expected để "cho test xanh".
 
 ## Conformance scenario (executable spec của ADR-0012)
@@ -22,3 +22,5 @@ Binary thật + databroker thật + scenario player; chuẩn hoá trace (bỏ ts
 
 ## Khi test đỏ
 Báo đúng output lỗi; tìm nguyên nhân ở module gây lệch (simulator vs runtime), không nới dung sai trừ khi có ADR.
+
+Task thông thường chạy scenario bị ảnh hưởng; toàn conformance/parity ở gate/CI theo phase. Không build lại mọi binary/golden cho sửa prose. Check PASS không chạy lặp khi input chưa đổi.

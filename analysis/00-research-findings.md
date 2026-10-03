@@ -1,7 +1,7 @@
 # 00 — Research Findings (đã verify ngày 2026-09-30)
 
 > Tài liệu nền. Mọi quyết định trong [ADR](adr/README.md) và [roadmap](13-implementation-roadmap.md) dựa trên các dữ kiện dưới đây.
-> Tất cả dữ kiện được lấy trực tiếp từ GitHub API / raw source tại ngày 2026-09-30. Khi implement, agent **phải re-verify** (xem skill `.claude/skills/upstream-verify`).
+> Tất cả dữ kiện được lấy trực tiếp từ GitHub API / raw source tại ngày 2026-09-30. Khi implement, agent **phải xác minh đúng pin** (skill `.claude/skills/upstream-verify`): source local có provenance đúng SHA/digest là bằng chứng hợp lệ; thiếu bằng chứng, thay pin hoặc thông tin động thì kiểm nguồn chính thức online. Không tải lại cùng source bất biến mỗi task.
 > Liên quan: [01-requirements](01-requirements.md) · [03-system-architecture](03-system-architecture.md) · [04-velocitas-deep-dive](04-velocitas-deep-dive.md)
 
 ---

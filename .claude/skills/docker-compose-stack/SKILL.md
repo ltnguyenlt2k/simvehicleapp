@@ -1,6 +1,6 @@
 ---
 name: docker-compose-stack
-description: Use when editing compose files, Dockerfiles, the Velocitas toolchain image, the KUKSA databroker/mosquitto runtime stack, volumes/networks, .env variables, bootstrap/smoke scripts, or debugging why a SimVehicleApp container is unhealthy.
+description: Edit or diagnose SimVehicleApp Compose fragments, Dockerfiles, toolchain images, runtime services and bootstrap scripts.
 ---
 
 # Docker Compose stack
@@ -15,7 +15,7 @@ Tham chiếu: `analysis/12-docker-compose-and-infra.md`, ADR-0005/0024/0025/0028
 - Image upstream pin tag + digest (xem `docs/BASELINE.md`): devcontainer-base cpp:v0.4, kuksa-databroker 0.5.0, mosquitto 2.0.14, mock-provider 0.4.1, code-server 4.139.1.
 
 ## Thứ tự build
-devcontainer-cpp (template `.devcontainer`) → toolchain-cpp → ide-cpp (`docker-image://` toolchain) → phần còn lại: `scripts/sv build`. Sau khi rebuild toolchain: `scripts/sv reset-caches` (volume conan/velocitas được seed từ image lần đầu).
+devcontainer-cpp (template `.devcontainer`) → toolchain-cpp → ide-cpp (`docker-image://` toolchain) → phần còn lại: `scripts/sv build`. Sau khi rebuild toolchain, cache cũ có thể cần reseed; `scripts/sv reset-caches` **xoá volume cache và dừng stack**, chỉ chạy khi cần và việc xoá đã được cho phép. Không reset mặc định.
 
 ## Bẫy đã gặp (M0)
 - `./build.sh` trả 0 khi CMake fail → kiểm `build/bin/app`.
@@ -30,7 +30,7 @@ databroker `--insecure --enable-databroker-v1 --vss /vss/<release>.json` (1 data
 ## Debug nhanh
 ```bash
 docker compose ps
-docker compose logs -f <service>
+docker compose logs --tail 100 <service>
 docker compose exec toolchain-cpp bash -lc 'cd /workspace/projects/<slug> && ./build.sh'
 curl -s localhost:3000/api/sv/health | jq
 ```

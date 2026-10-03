@@ -1,6 +1,6 @@
 ---
 name: backend-plugin
-description: Use when implementing or modifying a compiler-code-<lang> repo (cpp, python, rust) — the IR-to-source generator service, the language runtime library, template overlay, source maps, determinism rules, and adding a new target language.
+description: Implement a SimVehicleApp language backend generator, runtime, template overlay or new target language.
 ---
 
 # `compiler-code-<lang>` — generator + runtime
