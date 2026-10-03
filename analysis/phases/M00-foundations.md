@@ -57,7 +57,7 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T02 module folders | ✔ (dev form) | 10 thư mục `modules/*`; có code thật: `velocitas-stack`, `ide-vscode`, `simvehicleapp-studio` (snapshot Sim v0.7.13); còn lại placeholder README |
 | T03 lock + scripts | ↷ dời | lock/submodule chỉ ở release (ADR-0009); `scripts/sv` thay cho bootstrap trong dev |
 | T04 BASELINE | ✔ | `docs/BASELINE.md` (SHA + digest) |
-| T05/T06 contracts alpha + fixtures | ☐ | chưa làm — hoàn tất trong M0, không chặn các spike độc lập |
+| T05/T06 contracts alpha + fixtures | 🔄 | 2026-10-03: schemas/validator/types + fixture VSS/GW-A xong, `bun test` 43/43 PASS (`modules/simvehicleapp-contracts`); còn OpenAPI, generation-manifest/license, Python types, service-kit, publish |
 | T07 compose skeleton | ✔ | root include 3 fragment; mỗi fragment `config -q` độc lập |
 | T08 CI chung | ☐ | chưa có CI root; repo đã có git |
 | T09 S-1 | ✔ PASS | offline new project: init 26 s / deps 2 s / build 10 s |

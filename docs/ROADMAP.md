@@ -56,7 +56,7 @@ ADR: [0001](../analysis/adr/ADR-0001-record-architecture-decisions.md)–[0007](
 | Module folders dev-phase | 0009 | ✔ (dạng dev) | 10 thư mục `modules/*`; code thật: `velocitas-stack`, `ide-vscode`, `simvehicleapp-studio` (snapshot); còn lại placeholder | T02 |
 | Lock + `scripts/modules.sh` quản lý submodule | 0002 | ↷ | Dời tới release theo ADR-0009; dev dùng `scripts/sv` | T03 |
 | `docs/BASELINE.md` (SHA/digest pin) | 0003 | ✔ | File có đủ SHA Sim/template/SDK + digest image | T04 |
-| Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | ☐ | **Chưa làm** — hoàn tất trong M0 trước khi mở M1 | T05–T06 |
+| Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | 🔄 | Claude Code bắt đầu 2026-10-03. **Xong (2026-10-03):** 14 JSON Schema + catalog 50 mã, validator Ajv + TS types sinh tự động, fixture VSS 4.0 + units.yaml (pin `249dc03`), GW-A `graph.json`/`scenario.yaml` — `bun test` 43/43 PASS, `bun run check` PASS (modules/simvehicleapp-contracts). **Còn:** OpenAPI skeleton mọi service, `generation-manifest`/`license` schema, Python types, `service-kit`, publish (`bun link`); ADR-0007 còn Proposed | T05–T06 |
 | Compose skeleton root (`docker-compose.yml` include 3 fragment) | 0005,0009 | ✔ | `scripts/sv` + `docker-compose.yml` | T07 |
 | CI chung (license scan, contract-only-deps, compose lint) | 0004,0005 | ☐ | **Chưa có CI** — cần khi repo đã lên GitHub (đã lên, có thể làm ngay) | T08 |
 | Spike S-1..S-6 + E-1 (toolchain offline, databroker+MQTT, `set()` semantics, mock-provider, Sim minimal, code-server clangd, devcontainer export) | 0006,0024,0025,0028 | ✔ PASS cả 7 | `docs/spikes/M0-spikes-report.md` | T09–T14 |
