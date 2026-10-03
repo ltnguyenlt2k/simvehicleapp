@@ -18,6 +18,9 @@ export const SCHEMA_NAMES = [
   "signal-update",
   "scenario",
   "workflow-patch",
+  "generation-manifest",
+  "license",
+  "service-info",
 ] as const;
 
 export type SchemaName = (typeof SCHEMA_NAMES)[number];

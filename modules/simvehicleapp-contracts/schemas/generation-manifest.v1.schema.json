@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:generation-manifest:1.0.0-alpha.1",
+  "title": "GenerationManifest v1",
+  "description": "What one SynCode generation wrote (ADR-0026 §3.6, analysis/07 §3). The copy shipped inside generated code (`simvehicleapp.gen.json`) must be deterministic: it omits `generationId`/`project`, which only the workspace record (`.sv/generations/<slug>/<gid>.json`) carries. Used to detect GENERATED_FILE_MODIFIED.",
+  "type": "object",
+  "required": ["manifestVersion", "backend", "runtimeVersion", "contracts", "workflows", "ownedRoots", "files"],
+  "additionalProperties": false,
+  "properties": {
+    "manifestVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "generationId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "project": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" },
+    "backend": { "$ref": "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/properties/backend" },
+    "runtimeVersion": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+    "contracts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+    "workflows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "title": "GenerationWorkflow",
+        "type": "object",
+        "required": ["workflowId", "revision", "irHash"],
+        "additionalProperties": false,
+        "properties": {
+          "workflowId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+          "revision": { "type": "integer", "minimum": 0 },
+          "irHash": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256" }
+        }
+      }
+    },
+    "ownedRoots": { "$ref": "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/properties/ownedRoots" },
+    "files": {
+      "type": "array",
+      "items": {
+        "title": "GenerationFileEntry",
+        "type": "object",
+        "required": ["path", "sha256"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "$ref": "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/filePath" },
+          "sha256": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256Hex" },
+          "role": { "$ref": "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/file/properties/role" }
+        }
+      }
+    }
+  }
+}

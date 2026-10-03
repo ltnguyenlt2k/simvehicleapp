@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:license:1.0.0-alpha.1",
+  "title": "License v1",
+  "description": "Signed entitlement document (ADR-0031 §3–4): `SV_LICENSE_KEY` content and the `.simvehicleapp/license.json` shipped in exports. `signature` is base64 Ed25519 over the canonical JSON (sorted keys) of the document without `signature`. The orchestrator EntitlementService is the only decision point.",
+  "type": "object",
+  "required": ["licenseVersion", "edition", "licensee", "features", "limits", "expiry", "signature"],
+  "additionalProperties": false,
+  "properties": {
+    "licenseVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "edition": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "e.g. `full` (MVP), `community`." },
+    "licensee": { "type": "string", "minLength": 1 },
+    "features": {
+      "title": "LicenseFeatures",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "export.source": { "type": "boolean" },
+        "export.runtimeSource": { "type": "boolean", "description": "false ⇒ runtime exported as prebuilt static lib + headers." },
+        "ai.assistant": { "type": "boolean" },
+        "ide.access": { "type": "boolean" },
+        "syncode": { "type": "boolean" },
+        "languages": { "type": "array", "uniqueItems": true, "items": { "enum": ["cpp", "python", "rust"] } }
+      }
+    },
+    "limits": {
+      "title": "LicenseLimits",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxProjects": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "expiry": {
+      "description": "Last valid day (UTC, YYYY-MM-DD) or null for no expiry.",
+      "anyOf": [
+        { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$" },
+        { "type": "null" }
+      ]
+    },
+    "signature": { "type": "string", "pattern": "^[A-Za-z0-9+/]{86}==$", "description": "64-byte Ed25519 signature, base64." }
+  }
+}

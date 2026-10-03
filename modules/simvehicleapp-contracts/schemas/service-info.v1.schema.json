@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1",
+  "title": "ServiceInfo v1",
+  "description": "Body of `GET /version` that every service exposes (ADR-0007 §7). Health body: `#/$defs/health`.",
+  "type": "object",
+  "required": ["name", "version", "commit", "contracts"],
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "version": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+    "commit": { "type": "string", "pattern": "^([0-9a-f]{7,40}|unknown)$" },
+    "contracts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" }
+  },
+  "additionalProperties": {
+    "description": "Service-specific extras, e.g. toolchain: velocitas CLI/SDK/conan versions, template SHA.",
+    "type": ["string", "number", "boolean"]
+  },
+  "$defs": {
+    "health": {
+      "title": "ServiceHealth",
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "enum": ["ok", "degraded"] },
+        "checks": {
+          "type": "object",
+          "additionalProperties": { "enum": ["ok", "fail"] }
+        }
+      }
+    }
+  }
+}

@@ -342,3 +342,51 @@ describe("scenario v1", () => {
     v.assert("scenario", { ...base, inputs: [{ t: 0, path: "Vehicle.OBD.PidsA", value: ["01", "02"] }] });
   });
 });
+
+describe("GenerationManifest v1", () => {
+  const m = {
+    manifestVersion: "1.0.0",
+    backend: "cpp@0.1.0",
+    runtimeVersion: "0.1.0",
+    contracts: "1.0.0-alpha.1",
+    workflows: [{ workflowId: "gw_a", revision: 1, irHash: H("c") }],
+    ownedRoots: ["app/src/generated/"],
+    files: [{ path: "app/src/generated/Main.cpp", sha256: "e".repeat(64), role: "source" }],
+  };
+  test("deterministic in-tree copy (no generationId) and workspace record", () => {
+    v.assert("generation-manifest", m);
+    v.assert("generation-manifest", { ...m, generationId: "g_1", project: "comfort-app" });
+  });
+  test("rejects timestamps and unsafe paths", () => {
+    expect(v.validate("generation-manifest", { ...m, generatedAt: 1 }).valid).toBe(false);
+    expect(v.validate("generation-manifest", { ...m, files: [{ path: "../x", sha256: "e".repeat(64) }] }).valid).toBe(false);
+  });
+});
+
+describe("License v1", () => {
+  const { generateKeyPairSync, sign } = require("node:crypto") as typeof import("node:crypto");
+  const { privateKey } = generateKeyPairSync("ed25519");
+  const body = {
+    licenseVersion: "1.0.0",
+    edition: "full",
+    licensee: "local",
+    features: { "export.source": true, "ai.assistant": true, languages: ["cpp"] },
+    limits: {},
+    expiry: null,
+  };
+  const signature = sign(null, Buffer.from(JSON.stringify(body)), privateKey).toString("base64");
+  test("valid with a real Ed25519 signature", () => v.assert("license", { ...body, signature }));
+  test("rejects unknown feature and bad expiry", () => {
+    expect(v.validate("license", { ...body, signature, features: { "ee.sso": true } }).valid).toBe(false);
+    expect(v.validate("license", { ...body, signature, expiry: "2026-13-01" }).valid).toBe(false);
+  });
+});
+
+describe("ServiceInfo v1", () => {
+  test("version + health bodies", () => {
+    v.assert("service-info", { name: "compiler", version: "0.1.0", commit: "8d11a9a", contracts: "1.0.0-alpha.1" });
+    v.assert("service-info", { name: "toolchain-cpp", version: "0.1.0", commit: "unknown", contracts: "1.0.0-alpha.1", velocitasCli: "0.13.2" });
+    v.assert("service-info#/$defs/health", { status: "ok" });
+    expect(v.validate("service-info", { name: "compiler", version: "0.1" }).valid).toBe(false);
+  });
+});

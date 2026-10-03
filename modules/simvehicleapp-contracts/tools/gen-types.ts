@@ -44,6 +44,7 @@ const EXTRA_DEFS = [
   "toolchain-job#/$defs/request",
   "trace-event#/$defs/runtimeLine",
   "signal-update#/$defs/clientMessage",
+  "service-info#/$defs/health",
 ];
 
 const toPascal = (s: string) => s.replace(/(^|-)([a-z])/g, (_, __, c: string) => c.toUpperCase());

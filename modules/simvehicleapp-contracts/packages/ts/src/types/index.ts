@@ -6,6 +6,17 @@
 export type IrArgValue =
   IrExpr | string | number | boolean | null | IrArgValue[] | {[k: string]: IrArgValue} | undefined;
 /**
+ * @minItems 1
+ */
+export type OwnedRoots = [
+  string & {
+    [k: string]: unknown | undefined;
+  },
+  ...(string & {
+    [k: string]: unknown | undefined;
+  })[]
+];
+/**
  * Any JSON value. Producers MUST encode int64/uint64 as decimal strings.
  */
 export type JsonValue = string | number | boolean | null | unknown[] | {};
@@ -103,12 +114,16 @@ export interface ContractsRoot {
   SignalUpdate?: SignalUpdateV1;
   Scenario?: ScenarioV1;
   WorkflowPatch?: WorkflowPatchV1;
+  GenerationManifest?: GenerationManifestV1;
+  License?: LicenseV1;
+  ServiceInfo?: ServiceInfoV1;
   DiagnosticsList?: DiagnosticList;
   IrExpr?: IrExpr;
   GeneratedFilesetGenerateRequest?: GenerateRequest;
   ToolchainJobRequest?: ToolchainJobRequest;
   TraceEventRuntimeLine?: TraceRuntimeLine;
   SignalUpdateClientMessage?: SignalClientMessage;
+  ServiceInfoHealth?: ServiceHealth;
 }
 /**
  * One diagnostic (ADR-0016 §1). `code` is public API: never renamed or removed. `message` is rendered from `code` + `data`.
@@ -648,17 +663,7 @@ export interface GeneratedFileSetV1 {
   backend: string;
   runtimeVersion: string;
   files: GeneratedFile[];
-  /**
-   * @minItems 1
-   */
-  ownedRoots: [
-    string & {
-      [k: string]: unknown | undefined;
-    },
-    ...(string & {
-      [k: string]: unknown | undefined;
-    })[]
-  ];
+  ownedRoots: OwnedRoots;
   /**
    * AppManifest fragment merged by the workspace (ADR-0023); shape owned by velocitas-stack and locked in M6/M7.
    */
@@ -898,6 +903,90 @@ export interface WorkflowPatchV1 {
   rationale?: string;
 }
 /**
+ * What one SynCode generation wrote (ADR-0026 §3.6, analysis/07 §3). The copy shipped inside generated code (`simvehicleapp.gen.json`) must be deterministic: it omits `generationId`/`project`, which only the workspace record (`.sv/generations/<slug>/<gid>.json`) carries. Used to detect GENERATED_FILE_MODIFIED.
+ */
+export interface GenerationManifestV1 {
+  manifestVersion: string & {
+    [k: string]: unknown | undefined;
+  };
+  generationId?: string;
+  project?: string;
+  backend: string;
+  runtimeVersion: string;
+  contracts: string;
+  /**
+   * @minItems 1
+   */
+  workflows: [GenerationWorkflow, ...GenerationWorkflow[]];
+  ownedRoots: OwnedRoots;
+  files: GenerationFileEntry[];
+}
+export interface GenerationWorkflow {
+  workflowId: string;
+  revision: number;
+  /**
+   * Prefixed content hash.
+   */
+  irHash: string;
+}
+export interface GenerationFileEntry {
+  path: string & {
+    [k: string]: unknown | undefined;
+  };
+  sha256: string;
+  role?: "source" | "header" | "test" | "build" | "config" | "doc";
+}
+/**
+ * Signed entitlement document (ADR-0031 §3–4): `SV_LICENSE_KEY` content and the `.simvehicleapp/license.json` shipped in exports. `signature` is base64 Ed25519 over the canonical JSON (sorted keys) of the document without `signature`. The orchestrator EntitlementService is the only decision point.
+ */
+export interface LicenseV1 {
+  licenseVersion: string & {
+    [k: string]: unknown | undefined;
+  };
+  /**
+   * e.g. `full` (MVP), `community`.
+   */
+  edition: string;
+  licensee: string;
+  features: LicenseFeatures;
+  limits: LicenseLimits;
+  /**
+   * Last valid day (UTC, YYYY-MM-DD) or null for no expiry.
+   */
+  expiry: string | null;
+  /**
+   * 64-byte Ed25519 signature, base64.
+   */
+  signature: string;
+}
+export interface LicenseFeatures {
+  "export.source"?: boolean;
+  /**
+   * false ⇒ runtime exported as prebuilt static lib + headers.
+   */
+  "export.runtimeSource"?: boolean;
+  "ai.assistant"?: boolean;
+  "ide.access"?: boolean;
+  syncode?: boolean;
+  languages?: ("cpp" | "python" | "rust")[];
+}
+export interface LicenseLimits {
+  maxProjects?: number;
+}
+/**
+ * Body of `GET /version` that every service exposes (ADR-0007 §7). Health body: `#/$defs/health`.
+ */
+export interface ServiceInfoV1 {
+  name: string;
+  version: string;
+  commit: string;
+  contracts: string;
+  /**
+   * Service-specific extras, e.g. toolchain: velocitas CLI/SDK/conan versions, template SHA.
+   */
+  [k: string]: (string | number | boolean) | undefined;
+}
+/**
  * Response body for 422 and embedded diagnostic arrays.
  */
 export interface DiagnosticList {
@@ -1012,4 +1101,10 @@ export interface TraceRuntimeLine {
     | ("trigger" | "enter" | "exit" | "value" | "write" | "error" | "cancel")
     | ("app.started" | "app.stopping" | "vdb.connected" | "vdb.disconnected");
   data?: {};
+}
+export interface ServiceHealth {
+  status: "ok" | "degraded";
+  checks?: {
+    [k: string]: ("ok" | "fail") | undefined;
+  };
 }
