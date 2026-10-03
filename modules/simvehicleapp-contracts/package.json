@@ -16,7 +16,9 @@
     "schemas",
     "openapi",
     "fixtures",
-    "packages/ts/src"
+    "packages/ts/src",
+    "!packages/ts/src/**/*.test.ts",
+    "NOTICE"
   ],
   "scripts": {
     "gen": "bun tools/gen-types.ts",

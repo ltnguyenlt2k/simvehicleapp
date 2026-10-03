@@ -34,7 +34,8 @@ OAS 3.1 meta-schema and resolve every `$ref`. SSE/WebSocket message shapes are g
 ## service-kit (`packages/service-kit`, `@simvehicleapp/service-kit`)
 Separate package in this module (ADR-0007 Implementation): `/healthz`, `/version`, internal auth, request ids, JSON line logs. See its README.
 
-Not yet provided (rest of T05): AsyncAPI, Python types.
+Out of M00-T05 scope (module spec items, added when first consumed): AsyncAPI documents (signal-gateway WS, SSE — M8),
+Python types via datamodel-codegen (`packages/py` — M12), Rust crate (M13), `tools/check-breaking.ts` (with CI, T08/M11).
 
 ## Invariants enforced by schema
 - int64/uint64 values (constants, variable/state initial, typed values, arrays of them) are decimal strings (ADR-0018 §7).

@@ -10,7 +10,8 @@ bun run gen       # regenerate packages/ts/src/types/index.ts from schemas/
 bun run check     # generated types up to date + tsc
 ```
 
-Consumers (other modules) depend only on this package, e.g. `bun link` / `bun add file:../simvehicleapp-contracts`:
+Publish (dev phase, M0 DoD): `bun link` here and in `packages/service-kit`, then in a consumer `bun link @simvehicleapp/contracts`
+(or `bun add file:../simvehicleapp-contracts`). Release publishing to a registry is M11. Consumers depend only on these packages:
 ```ts
 import { ContractValidator, type IRV1 } from "@simvehicleapp/contracts";
 new ContractValidator().assert("ir", ir);                     // whole schema

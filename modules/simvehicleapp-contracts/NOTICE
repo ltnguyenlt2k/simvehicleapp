@@ -1,0 +1,7 @@
+SimVehicleApp contracts
+Copyright 2026 SimVehicleApp contributors
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This package includes third-party material:
+- fixtures/vss/vss_rel_4.0.json, fixtures/vss/units.yaml — COVESA Vehicle Signal Specification v4.0,
+  Mozilla Public License 2.0 (fixtures/vss/LICENSE.VSS), unmodified; provenance in fixtures/vss/PROVENANCE.md.
