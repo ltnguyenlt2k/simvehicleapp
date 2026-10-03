@@ -37,6 +37,8 @@ Core gọi vào `ee/` từ **61 file Apache**, qua đúng các symbol sau (lấy
 | `data-retention/hooks` | `useOrganizationRetention`, `useUpdateOrganizationRetention` |
 | `components/*` | `InfoNote`, `SettingRow` |
 
+> **Đính chính 2026-10-03 (M01-T02a):** đếm lại từ file Apache — chỉ `whitelabeling` (36), `permission-check` (21 + 1 import động), `useUserPermissionConfig` (1) và 4 symbol SSO được import; `InfoNote`/`SettingRow`, hooks audit-logs/data-drains/data-retention và một số symbol whitelabeling/permission-groups trong bảng trên chỉ dùng nội bộ `ee/`. 6 component settings được import động trong `settings.tsx`. Spec chi tiết: [docs/specs/M01-T02a-oss-clean-room-spec.md](../docs/specs/M01-T02a-oss-clean-room-spec.md).
+
 Hợp đồng chi tiết (tham số, kiểu trả về) được suy ra **chỉ** từ: cách 61 file Apache gọi các symbol trên, request/response của API routes Apache, schema DB, và tài liệu công khai.
 
 ## 3. Có làm được không? — Có, theo quy trình clean-room
