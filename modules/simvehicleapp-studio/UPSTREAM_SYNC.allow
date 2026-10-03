@@ -141,3 +141,14 @@ apps/sim/lib/api/contracts/v1/index.ts
 apps/sim/lib/cleanup/chat-cleanup.ts
 apps/sim/lib/core/config/env.ts
 apps/sim/stores/index.ts
+
+# M01-T04 — removed apps/pii, apps/docs, devcontainer, helm, old compose files (ADR-0005/0008); lockfile pruned with bun 1.3.13
+apps/pii/*
+apps/docs/*
+.devcontainer/*
+helm/*
+docker-compose.local.yml
+docker-compose.ollama.yml
+docker-compose.prod.yml
+docker/pii.Dockerfile
+bun.lock
