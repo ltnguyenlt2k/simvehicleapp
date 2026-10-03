@@ -1,0 +1,20 @@
+# Declared local changes of modules/simvehicleapp-studio vs simstudioai/sim@ad0b8678 (v0.7.13).
+# Globs are relative to the module folder; checked by scripts/upstream_tree_check.py in CI (job vendored-trees).
+# Add a glob in the same commit as the change, grouped by task. Anything not listed here fails CI.
+
+# M0 — dev integration (ADR-0009)
+SIMVEHICLEAPP.md
+compose.simvehicleapp.yaml
+UPSTREAM_SYNC.md
+UPSTREAM_SYNC.allow
+
+# M01-T06 — rebrand assets (brand/README.md)
+NOTICE
+brand/*
+apps/sim/public/brand/simvehicleapp/*
+apps/sim/public/brand/color/email/*
+apps/sim/public/brandbook/*
+apps/sim/public/logo/*
+apps/sim/public/favicon/*
+apps/sim/public/icon.svg
+apps/sim/public/email/broadcast/v0.5/logo.png

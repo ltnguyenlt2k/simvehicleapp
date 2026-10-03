@@ -37,6 +37,27 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 scripts/ci/contract_only_deps.py
 
+  vendored-trees:
+    name: vendored trees match upstream pins
+    runs-on: ubuntu-24.04
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Sim v0.7.13 (declared changes only, UPSTREAM_SYNC.allow)
+        run: >-
+          python3 scripts/upstream_tree_check.py --repo simstudioai/sim
+          --commit ad0b8678b5dc4b6d5703481d567f29c9facc6f67 --path modules/simvehicleapp-studio
+          --allow modules/simvehicleapp-studio/UPSTREAM_SYNC.allow
+      - name: Velocitas C++ template (unmodified)
+        run: >-
+          python3 scripts/upstream_tree_check.py --repo eclipse-velocitas/vehicle-app-cpp-template
+          --commit 275e858e3de8f43d6b4c71a389e358dffe73b42b --path modules/velocitas-stack/templates/vehicle-app-cpp-template
+      - name: Velocitas Python template (unmodified)
+        run: >-
+          python3 scripts/upstream_tree_check.py --repo eclipse-velocitas/vehicle-app-python-template
+          --commit e7082f75d1831489462f6672b6858f7ea7708256 --path modules/velocitas-stack/templates/vehicle-app-python-template
+
   license-scan:
     name: license scan
     runs-on: ubuntu-24.04

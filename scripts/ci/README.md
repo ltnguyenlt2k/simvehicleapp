@@ -10,3 +10,4 @@ Run by `.github/workflows/ci.yml`; all are plain Python 3 (stdlib only) and runn
 | self-test | `python3 -m unittest discover -s scripts/ci/tests` | every rule rejects a violating fixture and accepts a compliant one |
 
 `ci.env` holds dummy values for compose variables declared `:?required`; it is never used at runtime.
+| vendored trees | `python3 scripts/upstream_tree_check.py --repo … --commit … --path … [--allow …]` | Sim snapshot and Velocitas templates match their pinned upstream trees; studio changes must be declared in `modules/simvehicleapp-studio/UPSTREAM_SYNC.allow` (ADR-0003, ADR-0008) |

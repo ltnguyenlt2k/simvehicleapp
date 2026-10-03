@@ -50,7 +50,8 @@ def local_tree(rev: str, path: str) -> dict[str, tuple[str, str]]:
     for rec in out.decode().split("\0"):
         if rec:
             meta, name = rec.split("\t", 1)
-            mode, sha = meta.split()[0], meta.split()[1]
+            f = meta.split()  # ls-tree: "mode type sha"; ls-files -s: "mode sha stage"
+            mode, sha = f[0], (f[1] if rev == "INDEX" else f[2])
             entries[name[len(prefix):]] = (mode, sha)
     return entries
 
@@ -60,6 +61,33 @@ def load_allow(path: str | None) -> list[str]:
         return []
     with open(path) as f:
         return [l.split("#", 1)[0].strip() for l in f if l.split("#", 1)[0].strip()]
+
+
+Change = tuple[str, str]  # (kind, path)
+
+
+def compare(up: dict[str, tuple[str, str]], lo: dict[str, tuple[str, str]]) -> tuple[list[Change], list[Change]]:
+    """Changes of `lo` relative to `up`, plus (path, expected mode) for files that differ only by mode."""
+    changes: list[Change] = []
+    mode_only: list[Change] = []
+    for p in sorted(set(up) | set(lo)):
+        u, l = up.get(p), lo.get(p)
+        if u == l:
+            continue
+        if u is None:
+            changes.append(("added", p))
+        elif l is None:
+            changes.append(("deleted", p))
+        elif u[1] != l[1]:
+            changes.append(("modified", p))
+        else:
+            mode_only.append((p, u[0]))
+            changes.append((f"mode {l[0]}->{u[0]} expected", p))
+    return changes, mode_only
+
+
+def undeclared_changes(changes: list[Change], allow: list[str]) -> list[Change]:
+    return [(k, p) for k, p in changes if not any(fnmatch.fnmatchcase(p, g) for g in allow)]
 
 
 def main() -> int:
@@ -75,21 +103,7 @@ def main() -> int:
 
     up, lo = upstream_tree(a.repo, a.commit), local_tree(a.rev, a.path)
     allow = load_allow(a.allow)
-    changes: list[tuple[str, str]] = []
-    mode_only: list[tuple[str, str]] = []
-    for p in sorted(set(up) | set(lo)):
-        u, l = up.get(p), lo.get(p)
-        if u == l:
-            continue
-        if u is None:
-            changes.append(("added", p))
-        elif l is None:
-            changes.append(("deleted", p))
-        elif u[1] != l[1]:
-            changes.append(("modified", p))
-        else:
-            mode_only.append((p, u[0]))
-            changes.append((f"mode {l[0]}->{u[0]} expected", p))
+    changes, mode_only = compare(up, lo)
 
     if a.fix_modes and mode_only:
         for p, mode in mode_only:
@@ -101,7 +115,7 @@ def main() -> int:
         print(f"fixed modes of {len(mode_only)} file(s) (staged)")
         changes = [c for c in changes if not c[0].startswith("mode ")]
 
-    undeclared = [(k, p) for k, p in changes if not any(fnmatch.fnmatchcase(p, g) for g in allow)]
+    undeclared = undeclared_changes(changes, allow)
     for kind, p in changes if a.list else undeclared:
         print(f"{kind:28s} {p}")
     total = {k: sum(1 for c in changes if c[0].split()[0] == k) for k in ("added", "deleted", "modified", "mode")}

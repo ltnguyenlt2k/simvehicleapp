@@ -170,3 +170,34 @@ class LicenseScanTest(TempRepo):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+sys.path.insert(0, str(HERE.parents[1]))
+import upstream_tree_check  # noqa: E402
+
+
+class UpstreamTreeCheckTest(unittest.TestCase):
+    UP = {"a.ts": ("100644", "1"), "run.sh": ("100755", "2"), "gone.md": ("100644", "3")}
+
+    def test_identical_tree_has_no_changes(self):
+        self.assertEqual(upstream_tree_check.compare(self.UP, dict(self.UP)), ([], []))
+
+    def test_classifies_and_rejects_undeclared_changes(self):
+        lo = {"a.ts": ("100644", "9"), "run.sh": ("100644", "2"), "new/x.ts": ("100644", "4")}
+        changes, mode_only = upstream_tree_check.compare(self.UP, lo)
+        kinds = {p: k for k, p in changes}
+        self.assertEqual(kinds["a.ts"], "modified")
+        self.assertEqual(kinds["gone.md"], "deleted")
+        self.assertEqual(kinds["new/x.ts"], "added")
+        self.assertTrue(kinds["run.sh"].startswith("mode 100644->100755"))
+        self.assertEqual(mode_only, [("run.sh", "100755")])
+        undeclared = upstream_tree_check.undeclared_changes(changes, ["new/*", "a.ts"])
+        self.assertEqual(sorted(p for _, p in undeclared), ["gone.md", "run.sh"])
+
+    def test_head_and_index_listings_agree(self):
+        path = "scripts/ci"
+        self.assertEqual(upstream_tree_check.local_tree("HEAD", path).keys() >= {"compose_lint.py"}, True)
+        head = upstream_tree_check.local_tree("HEAD", path)["compose_lint.py"]
+        index = upstream_tree_check.local_tree("INDEX", path)["compose_lint.py"]
+        self.assertEqual(head, index)
+        self.assertRegex(head[1], r"^[0-9a-f]{40}$")
