@@ -37,6 +37,10 @@ export const env = createEnv({
     API_ENCRYPTION_KEY:                    z.string().min(32).optional(),          // Dedicated key for encrypting API keys (optional for OSS)
     INTERNAL_API_SECRET:                   z.string().min(32),                     // Secret for internal API authentication
     INTERNAL_JWT_SECRET:                   z.string().min(32).optional(),          // Dedicated signing key for internal JWTs (falls back to INTERNAL_API_SECRET); separating limits blast radius if one leaks
+    SV_CATALOG_URL:                        z.string().url().optional(),            // SV: vss-catalog service base URL (ADR-0007, e.g. http://vss-catalog:4010)
+    SV_COMPILER_URL:                       z.string().url().optional(),            // SV: compiler service base URL (http://compiler:4020)
+    SV_ORCHESTRATOR_URL:                   z.string().url().optional(),            // SV: orchestrator service base URL (http://orchestrator:4030)
+    SV_AI_URL:                             z.string().url().optional(),            // SV: ai-assistant service base URL (http://ai-assistant:4300)
 
     // Copilot
     COPILOT_SOURCE_ENV:                    z.enum(['dev', 'staging', 'prod']).optional(), // Source Sim environment sent to mothership for callbacks

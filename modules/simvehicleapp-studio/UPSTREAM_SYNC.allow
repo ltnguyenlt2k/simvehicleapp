@@ -177,3 +177,8 @@ apps/sim/app/api/telemetry/route.ts
 apps/sim/app/api/telemetry/route.test.ts
 apps/sim/telemetry.config.ts
 apps/sim/instrumentation-node.ts
+
+# M01-T09 — BFF skeleton /api/sv/health (lib/sv/api-client, contracts/sv, SV_*_URL env)
+apps/sim/app/api/sv/*
+apps/sim/lib/api/contracts/sv.ts
+apps/sim/lib/api/contracts/index.ts
