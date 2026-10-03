@@ -1,4 +1,7 @@
-# Explicit, reviewed exceptions for NON-whitelisted licenses. Only valid for dev-only dependencies
-# (never shipped in a package or image). Denylisted licenses (GPL family, SSPL, BUSL, Commons-Clause) cannot be excepted.
-# Format: <module-relative package dir> <TAB> <name>@<version> <TAB> <SPDX> <TAB> <reason>
-modules/simvehicleapp-contracts	argparse@2.0.1	Python-2.0	dev-only: transitive of json-schema-to-typescript (js-yaml) used by tools/gen-types.ts; PSF-style permissive. Approved by PO 2026-10-03.
+# Explicit, reviewed exceptions for NON-whitelisted licenses. Valid for dev-only dependencies; a production
+# dependency needs a 5th column `prod` and a PO decision recorded in the reason. Denylisted licenses (GPL family, SSPL, BUSL, Commons-Clause) cannot be excepted.
+# Format: <module-relative package dir> <TAB> <name>@<version> <TAB> <SPDX> <TAB> <reason> [<TAB> prod]
+modules/simvehicleapp-studio	@img/sharp-libvips-linux-x64@1.2.0	LGPL-3.0-or-later	PO-approved 2026-10-03: unmodified native libvips loaded dynamically by sharp (Next.js image optimisation); LGPL obligations noted in studio NOTICE	prod
+modules/simvehicleapp-studio	@img/sharp-libvips-linuxmusl-x64@1.2.0	LGPL-3.0-or-later	PO-approved 2026-10-03: unmodified native libvips loaded dynamically by sharp (Next.js image optimisation); LGPL obligations noted in studio NOTICE	prod
+modules/simvehicleapp-studio	@img/sharp-libvips-linux-x64@1.2.4	LGPL-3.0-or-later	PO-approved 2026-10-03: unmodified native libvips loaded dynamically by sharp (Next.js image optimisation); LGPL obligations noted in studio NOTICE	prod
+modules/simvehicleapp-studio	@img/sharp-libvips-linuxmusl-x64@1.2.4	LGPL-3.0-or-later	PO-approved 2026-10-03: unmodified native libvips loaded dynamically by sharp (Next.js image optimisation); LGPL obligations noted in studio NOTICE	prod

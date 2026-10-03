@@ -145,14 +145,14 @@ class LicenseScanTest(TempRepo):
         self.assertTrue(any("denylisted" in e for e in self.scan()))
 
     def test_non_whitelisted_prod_rejected_even_with_exception(self):
-        self.setup_module("Python-2.0", "MIT")
-        errors = self.scan("modules/m\tlib@1.0.0\tPython-2.0\treason\n")
+        self.setup_module("WTFPL", "MIT")
+        errors = self.scan("modules/m\tlib@1.0.0\tWTFPL\treason\n")
         self.assertTrue(any("lib@1.0.0 (prod)" in e for e in errors))
 
     def test_non_whitelisted_dev_needs_exception(self):
-        self.setup_module("MIT", "Python-2.0")
+        self.setup_module("MIT", "WTFPL")
         self.assertTrue(any("tool@1.0.0 (dev)" in e for e in self.scan()))
-        self.assertEqual(self.scan("modules/m\ttool@1.0.0\tPython-2.0\treason\n"), [])
+        self.assertEqual(self.scan("modules/m\ttool@1.0.0\tWTFPL\treason\n"), [])
 
     def test_denylisted_exception_entry_rejected(self):
         self.setup_module("MIT", "MIT")
@@ -172,10 +172,22 @@ class LicenseScanTest(TempRepo):
         self.write(f"{m}/package.json", json.dumps({"name": "root", "workspaces": ["apps/*"], "devDependencies": {"tool": "1"}}))
         self.write(f"{m}/bun.lock", "{}")
         self.write(f"{m}/apps/web/package.json", json.dumps({"name": "web", "dependencies": {"lib": "1"}}))
-        self.pkg(f"{m}/node_modules/lib", "lib", "1.0.0", "Python-2.0")
+        self.pkg(f"{m}/node_modules/lib", "lib", "1.0.0", "WTFPL")
         self.pkg(f"{m}/node_modules/tool", "tool", "1.0.0", "MIT")
-        errors = self.scan("modules/w\tlib@1.0.0\tPython-2.0\treason\n")
+        errors = self.scan("modules/w\tlib@1.0.0\tWTFPL\treason\n")
         self.assertTrue(any("lib@1.0.0 (prod)" in e for e in errors))
+
+    def test_prod_exception_requires_prod_column(self):
+        self.setup_module("LGPL-3.0-or-later", "MIT")
+        dev_only = "modules/m\tlib@1.0.0\tLGPL-3.0-or-later\treason\n"
+        self.assertTrue(any("lib@1.0.0 (prod)" in e for e in self.scan(dev_only)))
+        self.assertEqual(self.scan(dev_only.rstrip("\n") + "\tprod\n"), [])
+
+    def test_overrides_and_aliases_fix_declared_licenses(self):
+        self.setup_module("UNKNOWN", "MIT License")
+        overrides = self.write("overrides.txt", "lib@1.0.0\tApache-2.0\tLICENSE file\n")
+        exc = self.write("exceptions.txt", "")
+        self.assertEqual(license_scan.run(self.root, LICENSE_DIR / "whitelisted-licenses.txt", exc, overrides), [])
 
     def test_forbidden_ide_extension_rejected(self):
         self.setup_module("MIT", "MIT", "llvm-vs-code-extensions.vscode-clangd\nms-vscode.cpptools@1.2.3\n")

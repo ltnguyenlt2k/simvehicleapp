@@ -53,3 +53,10 @@
 - Task M0 "`scripts/license/scan.sh` + whitelist; CI job" đã có: `scripts/license/{scan.sh,license_scan.py,whitelisted-licenses.txt,license-exceptions.txt}`, job `license-scan` trong `.github/workflows/ci.yml` (run 37115615196 PASS). Whitelist upstream Velocitas (`whitelisted-licenses.txt` của template) **rỗng** nên repo dùng danh sách riêng theo skill `license-compliance`.
 - Chính sách ngoại lệ (mới, cần PO xác nhận khi Accept): license ngoài whitelist chỉ được chấp nhận cho dependency **dev-only** (ngoài closure production) qua dòng có lý do trong `license-exceptions.txt`; denylist (GPL family, SSPL, BUSL, Commons-Clause) không ngoại lệ. Ngoại lệ hiện có: `argparse@2.0.1` (Python-2.0/PSF, transitive của `json-schema-to-typescript`).
 - Phạm vi scan M0: package JS của module tự viết; snapshot studio ngoài phạm vi tới M1 (gỡ EE/Copilot). Kiểm extension IDE cấm (`ms-vscode.cpptools*`, Pylance) có trong cùng script. Python/Rust deps: M12/M13 như Notes 2026-10-01.
+
+## Notes (2026-10-03 — M1 studio license scan, PO decisions)
+- Scan mở rộng cho studio (workspace-aware: tính dependency production của `apps/*`, `packages/*`).
+- Whitelist thêm license permissive: 0BSD, BlueOak-1.0.0, MIT-0, Unlicense, CC-BY-4.0 (chỉ cho dữ liệu, ghi công trong NOTICE), Python-2.0.
+- LGPL không còn bị cấm cứng: cho phép **từng gói** qua `license-exceptions.txt` cột `prod` khi PO duyệt — hiện chỉ `@img/sharp-libvips-*` (libvips không sửa, nạp động bởi sharp); nghĩa vụ LGPL ghi trong NOTICE studio.
+- GPL `ffmpeg-static` (tool Speech-to-Text của Sim) **đã gỡ** cùng route/tool/block STT.
+- `license-overrides.txt` sửa license khai báo thiếu/mơ hồ sau khi đọc file LICENSE thật của gói.

@@ -12,3 +12,10 @@ BSL-1.0
 Unicode-DFS-2016
 Unicode-3.0
 CC0-1.0
+# Added 2026-10-03 (PO decision, M1 studio scan): permissive; CC-BY-4.0 only for data packages (attribution in NOTICE)
+0BSD
+BlueOak-1.0.0
+MIT-0
+Unlicense
+CC-BY-4.0
+Python-2.0

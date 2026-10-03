@@ -8,8 +8,9 @@ For every JS package of a module (package.json + bun.lock/package-lock.json, dep
   - denylisted licenses (GPL family, SSPL, BUSL, Commons-Clause) are always rejected.
 Also rejects forbidden IDE extensions (ms-vscode.cpptools*, Pylance — AGENTS §2.4).
 
-Scope M0: modules with our own packages. The Sim snapshot (modules/simvehicleapp-studio) is excluded until
-M1 (EE/Copilot removal and the product license gate belong to M1 — phase M00 DoD).
+Scope: every module with a JS lockfile, the Sim studio included since M1. Declared licenses that are missing or
+ambiguous are corrected in license-overrides.txt (verified against the package's LICENSE file); approved
+production exceptions carry a 5th column `prod` in license-exceptions.txt.
 """
 from __future__ import annotations
 
@@ -22,8 +23,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-EXCLUDED_MODULES = {"simvehicleapp-studio"}  # until M1
-DENY = re.compile(r"\b(A?GPL|LGPL|SSPL|BUSL|BSL-1\.1)|Commons[- ]Clause", re.I)
+EXCLUDED_MODULES: set[str] = set()  # studio included since M1 (2026-10-03)
+DENY = re.compile(r"\b(A?GPL|SSPL|BUSL|BSL-1\.1)|Commons[- ]Clause", re.I)  # LGPL: per-package exception (ADR-0004 Notes)
 FORBIDDEN_EXTENSIONS = re.compile(r"^(ms-vscode\.cpptools.*|ms-python\.vscode-pylance)$", re.I)
 SKIP_DIRS = {"node_modules", ".git", ".next", ".turbo", "build", "dist"}
 
@@ -32,7 +33,18 @@ def read_list(path: Path) -> list[str]:
     return [l.strip() for l in path.read_text().splitlines() if l.strip() and not l.lstrip().startswith("#")]
 
 
-def license_of(pkg: dict) -> str:
+ALIASES = {"MIT License": "MIT", "The MIT License": "MIT", "Apache 2.0": "Apache-2.0", "Apache License 2.0": "Apache-2.0"}
+
+
+def license_of(pkg: dict, overrides: dict[str, str] | None = None) -> str:
+    ident = f"{pkg.get('name')}@{pkg.get('version')}"
+    if overrides and ident in overrides:
+        return overrides[ident]
+    lic = _declared_license(pkg)
+    return ALIASES.get(lic, lic)
+
+
+def _declared_license(pkg: dict) -> str:
     lic = pkg.get("license")
     if isinstance(lic, dict):
         lic = lic.get("type")
@@ -118,7 +130,13 @@ def js_package_dirs(root: Path):
                 yield Path(dirpath)
 
 
-def scan_js(root: Path, whitelist: set[str], exceptions: set[tuple[str, str]]) -> list[str]:
+def scan_js(
+    root: Path,
+    whitelist: set[str],
+    exceptions: set[tuple[str, str]],
+    overrides: dict[str, str] | None = None,
+    prod_exceptions: set[tuple[str, str]] | None = None,
+) -> list[str]:
     errors = []
     for pkg_dir in js_package_dirs(root):
         rel = str(pkg_dir.relative_to(root))
@@ -130,7 +148,7 @@ def scan_js(root: Path, whitelist: set[str], exceptions: set[tuple[str, str]]) -
         seen: set[tuple[str, str]] = set()
         for d, pkg in installed_packages(nm):
             ident = f"{pkg['name']}@{pkg['version']}"
-            lic = license_of(pkg)
+            lic = license_of(pkg, overrides)
             if (ident, lic) in seen:
                 continue
             seen.add((ident, lic))
@@ -141,6 +159,8 @@ def scan_js(root: Path, whitelist: set[str], exceptions: set[tuple[str, str]]) -
                 errors.append(f"{rel}: {ident} ({scope}) license {lic} is denylisted (ADR-0004)")
             else:
                 if scope == "dev" and (rel, ident) in exceptions:
+                    continue
+                if scope == "prod" and (rel, ident) in (prod_exceptions or set()):
                     continue
                 hint = "" if scope == "prod" else " — add a reviewed entry to license-exceptions.txt if acceptable"
                 errors.append(f"{rel}: {ident} ({scope}) license {lic} is not whitelisted{hint}")
@@ -157,15 +177,26 @@ def scan_ide_extensions(root: Path) -> list[str]:
     return errors
 
 
-def run(root: Path, whitelist_file: Path, exceptions_file: Path) -> list[str]:
+def run(root: Path, whitelist_file: Path, exceptions_file: Path, overrides_file: Path | None = None) -> list[str]:
     whitelist = set(read_list(whitelist_file))
-    exceptions = set()
+    exceptions: set[tuple[str, str]] = set()
+    prod_exceptions: set[tuple[str, str]] = set()
     for line in read_list(exceptions_file):
         parts = line.split("\t")
         if len(parts) < 4 or DENY.search(parts[2]):
             return [f"{exceptions_file.name}: invalid or denylisted entry: {line}"]
-        exceptions.add((parts[0], parts[1]))
-    return scan_js(root, whitelist, exceptions) + scan_ide_extensions(root)
+        if len(parts) >= 5 and parts[4].strip() == "prod":
+            prod_exceptions.add((parts[0], parts[1]))
+        else:
+            exceptions.add((parts[0], parts[1]))
+    overrides: dict[str, str] = {}
+    if overrides_file and overrides_file.exists():
+        for line in read_list(overrides_file):
+            parts = line.split("\t")
+            if len(parts) < 3:
+                return [f"{overrides_file.name}: entry needs <name@version> <TAB> <SPDX> <TAB> <evidence>: {line}"]
+            overrides[parts[0]] = parts[1]
+    return scan_js(root, whitelist, exceptions, overrides, prod_exceptions) + scan_ide_extensions(root)
 
 
 def main() -> int:
@@ -173,8 +204,9 @@ def main() -> int:
     ap.add_argument("--root", type=Path, default=ROOT)
     ap.add_argument("--whitelist", type=Path, default=HERE / "whitelisted-licenses.txt")
     ap.add_argument("--exceptions", type=Path, default=HERE / "license-exceptions.txt")
+    ap.add_argument("--overrides", type=Path, default=HERE / "license-overrides.txt")
     a = ap.parse_args()
-    errors = run(a.root.resolve(), a.whitelist, a.exceptions)
+    errors = run(a.root.resolve(), a.whitelist, a.exceptions, a.overrides)
     for e in errors:
         print(f"license-scan: {e}")
     print(f"license-scan: {'FAIL' if errors else 'PASS'} ({len(errors)} violation(s))")
