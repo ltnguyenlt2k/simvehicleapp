@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:block-spec:1.0.0-alpha.1",
+  "title": "BlockSpec v1",
+  "description": "Semantic block definition used by compiler, simulator and studio parity tests (ADR-0011 §4, analysis/05 §2). UI config lives in the studio and must match this spec.",
+  "type": "object",
+  "required": ["specVersion", "type", "version", "category", "title", "opcode", "props", "outputs", "handles"],
+  "additionalProperties": false,
+  "properties": {
+    "specVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "type": { "type": "string", "pattern": "^sv_[a-z0-9_]+$" },
+    "version": { "type": "integer", "minimum": 1, "description": "blockVersion; bumped with a migration." },
+    "category": { "enum": ["triggers", "sensors", "actuators", "attributes", "logic", "flow", "state", "comm", "composite"] },
+    "title": { "type": "string", "minLength": 1 },
+    "priority": { "enum": ["P0", "P1", "P2"] },
+    "opcode": {
+      "description": "IR opcode this block lowers to, or `expr` for blocks inlined into expression trees (ADR-0014 §5).",
+      "type": "string",
+      "pattern": "^(expr|const|[a-z]+\\.[a-z_]+)$"
+    },
+    "vssKinds": {
+      "description": "Allowed VSS kinds for the `path` prop (e.g. only actuator for sv_set_actuator).",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssKind" }
+    },
+    "container": { "type": "boolean", "default": false },
+    "concurrencyDefault": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/concurrencyPolicy" },
+    "props": { "type": "array", "items": { "$ref": "#/$defs/prop" } },
+    "outputs": { "type": "array", "items": { "$ref": "#/$defs/output" } },
+    "handles": {
+      "type": "object",
+      "required": ["in", "out"],
+      "additionalProperties": false,
+      "properties": {
+        "in": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/handleName" } },
+        "out": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/handleName" } }
+      }
+    },
+    "migrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "from": { "type": "integer", "minimum": 1 },
+          "to": { "type": "integer", "minimum": 2 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "handleName": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "prop": {
+      "title": "BlockSpecProp",
+      "type": "object",
+      "required": ["name", "kind", "required"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+        "kind": {
+          "description": "Editor/semantic kind; maps to studio subBlock types (ADR-0011 §5).",
+          "enum": ["vss-path", "expression", "template", "duration", "enum", "typed-value", "integer", "number", "boolean", "string", "list"]
+        },
+        "required": { "type": "boolean" },
+        "default": true,
+        "enum": { "type": "array", "minItems": 1, "items": { "type": ["string", "number", "boolean"] } },
+        "valueType": {
+          "description": "Expected value type; `$signal` = datatype of the selected VSS path.",
+          "anyOf": [
+            { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/valueType" },
+            { "const": "$signal" }
+          ]
+        },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/prop" }, "description": "Record shape for kind=list." }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "const": "enum" } } }, "then": { "required": ["enum"] } },
+        { "if": { "properties": { "kind": { "const": "list" } } }, "then": { "required": ["items"] } }
+      ]
+    },
+    "output": {
+      "title": "BlockSpecOutput",
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+        "type": {
+          "description": "`$signal` = selected path datatype; `$element` = element type of the `array` prop; `$inferred` = typed by the expression.",
+          "anyOf": [
+            { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/valueType" },
+            { "enum": ["$signal", "$element", "$inferred"] }
+          ]
+        },
+        "unit": { "type": ["string", "null"], "description": "`$signal` = unit of the selected path." }
+      }
+    }
+  }
+}

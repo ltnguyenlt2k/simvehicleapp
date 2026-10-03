@@ -71,7 +71,7 @@ Sinh ra bởi `studio` adapter `toWorkflowGraph(BlockState[], Edge[])` — **hà
 ```
 
 ### 2.1 Quy tắc IR
-- **Control-flow là đồ thị có hướng** qua trường `next` (mỗi handle ra ↦ node id | null). Không có `edges[]` data riêng: data là **biểu thức cây** (`$expr`, `$ref`, `$const`, `$template`, `$signal`) → backend sinh biểu thức trực tiếp.
+- **Control-flow là đồ thị có hướng** qua trường `next` (mỗi handle ra ↦ node id | null). Không có `edges[]` data riêng: data là **biểu thức cây** (`$expr`, `$ref`, `$const`, `$template`, `$signal`, `$state` — `$state` cho tham chiếu `<var.name>`, chốt trong contracts `ir.v1` alpha) → backend sinh biểu thức trực tiếp.
 - `$ref` chỉ trỏ tới output của trigger/node **dominate** node hiện tại (đã kiểm ở S6).
 - Container (`control.parallel`, `control.repeat`, `control.while`) có `body: { entry: nodeId }` + `next`.
 - Mọi node có `src.blockId` (traceability); node do compiler chèn có `src.inserted: true` + `src.reason` (vd `unit-conversion`).

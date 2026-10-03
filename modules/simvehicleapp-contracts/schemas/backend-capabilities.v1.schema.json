@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:backend-capabilities:1.0.0-alpha.1",
+  "title": "BackendCapabilities v1",
+  "description": "Backend `GET /capabilities` = `backend.yaml` as JSON (ADR-0020, analysis/07 §1). Used by compiler stage S7.",
+  "type": "object",
+  "required": ["id", "name", "version", "language", "irVersions", "contracts", "opcodes", "features", "runtime", "toolchain"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "name": { "type": "string", "pattern": "^compiler-code-[a-z0-9-]+$" },
+    "version": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+    "language": { "enum": ["cpp", "python", "rust"] },
+    "irVersions": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semverRange" },
+    "contracts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semverRange" },
+    "opcodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "anyOf": [
+          { "$ref": "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1#/$defs/triggerOpcode" },
+          { "$ref": "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1#/$defs/nodeOpcode" }
+        ]
+      }
+    },
+    "features": {
+      "type": "object",
+      "required": ["concurrencyPolicies", "trace", "sourceMaps"],
+      "additionalProperties": false,
+      "properties": {
+        "concurrencyPolicies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/concurrencyPolicy" }
+        },
+        "trace": { "type": "boolean" },
+        "sourceMaps": { "type": "boolean" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["name", "version", "vendorPath"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        "vendorPath": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/relativePath" }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "required": ["id", "template", "templateSha"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^toolchain-[a-z0-9-]+$" },
+        "template": { "type": "string", "minLength": 1 },
+        "templateSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    }
+  }
+}

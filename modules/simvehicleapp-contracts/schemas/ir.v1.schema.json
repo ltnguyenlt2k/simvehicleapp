@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1",
+  "title": "IR v1",
+  "description": "Canonical IR v1 (ADR-0014, analysis/06 §2): control graph via `next` + expression trees. No timestamps. irHash = sha256(canonical(IR without irHash)). Adding an opcode is a minor bump.",
+  "type": "object",
+  "required": ["irVersion", "compilerVersion", "workflowId", "workflowRevision", "name", "modelHash", "sourceGraphHash", "irHash", "signals", "topics", "state", "triggers", "nodes", "diagnostics"],
+  "additionalProperties": false,
+  "properties": {
+    "irVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "compilerVersion": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+    "workflowId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "workflowRevision": { "type": "integer", "minimum": 0 },
+    "name": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$", "description": "PascalCase identifier usable by every backend." },
+    "modelHash": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256" },
+    "sourceGraphHash": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256" },
+    "irHash": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256" },
+    "signals": { "type": "array", "items": { "$ref": "#/$defs/signal" } },
+    "topics": { "type": "array", "items": { "$ref": "#/$defs/topic" } },
+    "state": { "type": "array", "items": { "$ref": "#/$defs/stateVar" } },
+    "triggers": { "type": "array", "items": { "$ref": "#/$defs/trigger" } },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "diagnostics": { "type": "array", "items": { "$ref": "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+  },
+  "$defs": {
+    "signalId": { "type": "string", "pattern": "^s[0-9]+$" },
+    "topicId": { "type": "string", "pattern": "^t[0-9]+$" },
+    "stateId": { "type": "string", "pattern": "^v[0-9]+$" },
+    "nodeId": { "type": "string", "pattern": "^n[0-9]+$" },
+    "nodeRef": { "anyOf": [{ "$ref": "#/$defs/nodeId" }, { "type": "null" }] },
+    "outputRef": { "type": "string", "pattern": "^n[0-9]+\\.[A-Za-z_][A-Za-z0-9_]*$" },
+    "signal": {
+      "title": "IrSignal",
+      "type": "object",
+      "required": ["id", "path", "vssType", "dataType", "unit", "access"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/signalId" },
+        "path": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
+        "vssType": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssKind" },
+        "dataType": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssDataType" },
+        "unit": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/unit" },
+        "access": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["read", "subscribe", "write"] }
+        }
+      }
+    },
+    "topic": {
+      "title": "IrTopic",
+      "type": "object",
+      "required": ["id", "topic", "direction"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/topicId" },
+        "topic": { "type": "string", "minLength": 1, "pattern": "^[^#+]+$" },
+        "direction": { "enum": ["read", "write"] }
+      }
+    },
+    "stateVar": {
+      "title": "IrStateVar",
+      "type": "object",
+      "required": ["id", "name", "type", "initial"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/stateId" },
+        "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$" },
+        "type": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/valueType" },
+        "initial": true
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "int64" } } }, "then": { "properties": { "initial": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/int64String" } } } },
+        { "if": { "properties": { "type": { "const": "uint64" } } }, "then": { "properties": { "initial": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/uint64String" } } } }
+      ]
+    },
+    "outputSpec": {
+      "title": "IrOutputSpec",
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/valueType" },
+        "unit": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/unit" }
+      }
+    },
+    "outputs": {
+      "title": "IrOutputs",
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/outputSpec" }
+    },
+    "src": {
+      "title": "IrSrc",
+      "type": "object",
+      "required": ["blockId"],
+      "additionalProperties": false,
+      "properties": {
+        "blockId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+        "inserted": { "type": "boolean" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "if": { "properties": { "inserted": { "const": true } }, "required": ["inserted"] },
+      "then": { "required": ["reason"] }
+    },
+    "triggerOpcode": {
+      "enum": ["event.app_start", "event.signal_changed", "event.timer", "event.condition", "event.mqtt_message"]
+    },
+    "nodeOpcode": {
+      "anyOf": [
+        {
+          "enum": [
+            "vehicle.read", "vehicle.read_attribute", "vehicle.write", "vehicle.write_many",
+            "control.branch", "control.switch", "control.wait", "control.wait_until", "control.stable_for",
+            "control.repeat", "control.while", "control.parallel", "control.stop", "control.throttle",
+            "state.get", "state.set", "state.counter", "state.filter", "state.rate",
+            "unit.convert", "type.cast",
+            "comm.log", "comm.mqtt_publish",
+            "service.grpc_call"
+          ]
+        },
+        { "type": "string", "pattern": "^(logic|math|array)\\.[a-z_]+$" }
+      ]
+    },
+    "concurrency": {
+      "title": "IrConcurrency",
+      "type": "object",
+      "required": ["policy"],
+      "additionalProperties": false,
+      "properties": {
+        "policy": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/concurrencyPolicy" },
+        "queueMax": { "type": "integer", "minimum": 1 },
+        "maxRuns": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "trigger": {
+      "title": "IrTrigger",
+      "type": "object",
+      "required": ["id", "opcode", "props", "outputs", "entry", "src"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nodeId" },
+        "opcode": { "$ref": "#/$defs/triggerOpcode" },
+        "signal": { "$ref": "#/$defs/signalId" },
+        "topic": { "$ref": "#/$defs/topicId" },
+        "props": { "type": "object", "additionalProperties": { "$ref": "#/$defs/argValue" } },
+        "concurrency": { "$ref": "#/$defs/concurrency" },
+        "outputs": { "$ref": "#/$defs/outputs" },
+        "entry": { "$ref": "#/$defs/nodeRef" },
+        "src": { "$ref": "#/$defs/src" }
+      },
+      "allOf": [
+        { "if": { "properties": { "opcode": { "const": "event.signal_changed" } } }, "then": { "required": ["signal", "concurrency"] } },
+        { "if": { "properties": { "opcode": { "const": "event.mqtt_message" } } }, "then": { "required": ["topic", "concurrency"] } },
+        { "if": { "properties": { "opcode": { "enum": ["event.timer", "event.condition"] } } }, "then": { "required": ["concurrency"] } },
+        { "if": { "properties": { "opcode": { "const": "event.app_start" } } }, "then": { "not": { "required": ["concurrency"] } } }
+      ]
+    },
+    "node": {
+      "title": "IrNode",
+      "type": "object",
+      "required": ["id", "opcode", "args", "next", "src"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nodeId" },
+        "opcode": { "$ref": "#/$defs/nodeOpcode" },
+        "args": { "type": "object", "additionalProperties": { "$ref": "#/$defs/argValue" } },
+        "next": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+          "additionalProperties": { "$ref": "#/$defs/nodeRef" }
+        },
+        "body": {
+          "type": "object",
+          "required": ["entry"],
+          "additionalProperties": false,
+          "properties": { "entry": { "$ref": "#/$defs/nodeRef" } }
+        },
+        "outputs": { "$ref": "#/$defs/outputs" },
+        "src": { "$ref": "#/$defs/src" }
+      },
+      "if": { "properties": { "opcode": { "enum": ["control.repeat", "control.while"] } } },
+      "then": { "required": ["body"] }
+    },
+    "argValue": {
+      "title": "IrArgValue",
+      "description": "An expression tree, an IR id (signal/topic/state/node), a plain literal, or a list/record of argValues. Plain records must not use `$`-prefixed keys (those are reserved for expressions).",
+      "anyOf": [
+        { "$ref": "#/$defs/expr" },
+        { "type": ["string", "number", "boolean", "null"] },
+        { "type": "array", "items": { "$ref": "#/$defs/argValue" } },
+        {
+          "type": "object",
+          "propertyNames": { "pattern": "^[^$]" },
+          "additionalProperties": { "$ref": "#/$defs/argValue" }
+        }
+      ]
+    },
+    "expr": {
+      "title": "IrExpr",
+      "oneOf": [
+        { "$ref": "#/$defs/exprConst" },
+        { "$ref": "#/$defs/exprRef" },
+        { "$ref": "#/$defs/exprSignal" },
+        { "$ref": "#/$defs/exprState" },
+        { "$ref": "#/$defs/exprTemplate" },
+        { "$ref": "#/$defs/exprOp" }
+      ]
+    },
+    "exprConst": {
+      "title": "IrExprConst",
+      "type": "object",
+      "required": ["$const", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "$const": true,
+        "type": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/valueType" },
+        "unit": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/unit" }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "boolean" } } }, "then": { "properties": { "$const": { "type": "boolean" } } } },
+        { "if": { "properties": { "type": { "const": "string" } } }, "then": { "properties": { "$const": { "type": "string" } } } },
+        { "if": { "properties": { "type": { "enum": ["int8", "int16", "int32", "uint8", "uint16", "uint32"] } } }, "then": { "properties": { "$const": { "type": "integer" } } } },
+        { "if": { "properties": { "type": { "enum": ["float", "double", "duration", "timestamp"] } } }, "then": { "properties": { "$const": { "type": "number" } } } },
+        { "if": { "properties": { "type": { "const": "int64" } } }, "then": { "properties": { "$const": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/int64String" } } } },
+        { "if": { "properties": { "type": { "const": "uint64" } } }, "then": { "properties": { "$const": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/uint64String" } } } }
+      ]
+    },
+    "exprRef": {
+      "title": "IrExprRef",
+      "description": "Output of a dominating trigger/node, e.g. `n1.value`.",
+      "type": "object",
+      "required": ["$ref"],
+      "additionalProperties": false,
+      "properties": { "$ref": { "$ref": "#/$defs/outputRef" } }
+    },
+    "exprSignal": {
+      "title": "IrExprSignal",
+      "description": "Latest cached value of a signal (`<Vehicle.Path>` reference).",
+      "type": "object",
+      "required": ["$signal"],
+      "additionalProperties": false,
+      "properties": { "$signal": { "$ref": "#/$defs/signalId" } }
+    },
+    "exprState": {
+      "title": "IrExprState",
+      "description": "Workflow variable (`<var.name>` reference).",
+      "type": "object",
+      "required": ["$state"],
+      "additionalProperties": false,
+      "properties": { "$state": { "$ref": "#/$defs/stateId" } }
+    },
+    "exprTemplate": {
+      "title": "IrExprTemplate",
+      "type": "object",
+      "required": ["$template"],
+      "additionalProperties": false,
+      "properties": {
+        "$template": {
+          "type": "array",
+          "items": { "anyOf": [{ "type": "string" }, { "$ref": "#/$defs/expr" }] }
+        }
+      }
+    },
+    "exprOp": {
+      "title": "IrExprOp",
+      "description": "Operator/function application. Operand keys are op-specific (l/r, a, cond/then/else, args, value/index/default); `to`/`type` may be plain strings for unit.convert/type.cast.",
+      "type": "object",
+      "required": ["$expr"],
+      "additionalProperties": false,
+      "properties": {
+        "$expr": {
+          "type": "object",
+          "required": ["op"],
+          "properties": { "op": { "type": "string", "minLength": 1 } },
+          "additionalProperties": {
+            "anyOf": [
+              { "$ref": "#/$defs/expr" },
+              { "type": "array", "items": { "$ref": "#/$defs/expr" } },
+              { "type": "string" }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:log-line:1.0.0-alpha.1",
+  "title": "LogLine v1",
+  "description": "One log line of a job/run stream (analysis/08 §3.1, ADR-0025, ADR-0027). `runId` is the run or toolchain job id; `seq` is monotonic per stream (SSE Last-Event-ID).",
+  "type": "object",
+  "required": ["runId", "seq", "ts", "stream", "level", "msg"],
+  "additionalProperties": false,
+  "properties": {
+    "runId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "ts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
+    "stream": { "enum": ["stdout", "stderr", "system"] },
+    "level": { "enum": ["debug", "info", "warn", "error"] },
+    "msg": { "type": "string" },
+    "raw": { "type": "string" }
+  }
+}

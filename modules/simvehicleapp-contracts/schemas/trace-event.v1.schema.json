@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:trace-event:1.0.0-alpha.1",
+  "title": "TraceEvent v1",
+  "description": "Trace event as streamed to the studio (analysis/08 §3.1, ADR-0027). Produced identically by the simulator and by orchestrator TraceIngest from runtime `SVTRACE {…}` lines (`#/$defs/runtimeLine`).",
+  "type": "object",
+  "required": ["runId", "seq", "ts", "ev"],
+  "additionalProperties": false,
+  "properties": {
+    "runId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "ts": { "type": "integer", "minimum": 0, "description": "ms; epoch for live runs, virtual clock for simulation." },
+    "wf": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "run": { "type": "integer", "minimum": 0, "description": "Run instance number within the app." },
+    "node": { "type": "string", "pattern": "^n[0-9]+$" },
+    "blockId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "ev": { "$ref": "#/$defs/eventKind" },
+    "data": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "ev": { "$ref": "#/$defs/nodeEventKind" } } },
+      "then": { "required": ["wf", "run", "node"] }
+    }
+  ],
+  "$defs": {
+    "nodeEventKind": { "enum": ["trigger", "enter", "exit", "value", "write", "error", "cancel"] },
+    "systemEventKind": { "enum": ["app.started", "app.stopping", "vdb.connected", "vdb.disconnected"] },
+    "eventKind": { "anyOf": [{ "$ref": "#/$defs/nodeEventKind" }, { "$ref": "#/$defs/systemEventKind" }] },
+    "runtimeLine": {
+      "title": "TraceRuntimeLine",
+      "description": "JSON payload after the `SVTRACE ` prefix on one stdout line (ADR-0027 §3).",
+      "type": "object",
+      "required": ["v", "ts", "app", "ev"],
+      "additionalProperties": false,
+      "properties": {
+        "v": { "const": 1 },
+        "ts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
+        "app": { "type": "string", "minLength": 1 },
+        "wf": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+        "run": { "type": "integer", "minimum": 0 },
+        "node": { "type": "string", "pattern": "^n[0-9]+$" },
+        "ev": { "$ref": "#/$defs/eventKind" },
+        "data": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "ev": { "$ref": "#/$defs/nodeEventKind" } } },
+          "then": { "required": ["wf", "run", "node"] }
+        }
+      ]
+    }
+  }
+}

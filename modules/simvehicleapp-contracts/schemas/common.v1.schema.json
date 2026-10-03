@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1",
+  "title": "Common definitions v1",
+  "description": "Shared building blocks for SimVehicleApp contracts (ADR-0007, ADR-0015, ADR-0018).",
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "semverRange": {
+      "description": "npm-style semver range, e.g. \">=1.0.0 <2.0.0\".",
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "description": "Prefixed content hash.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.:-]{0,127}$"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "vssPath": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+$"
+    },
+    "vssKind": {
+      "enum": ["sensor", "actuator", "attribute"]
+    },
+    "vssScalarType": {
+      "description": "The 12 COVESA VSS scalar datatypes (ADR-0018 §1).",
+      "enum": ["boolean", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64", "float", "double", "string"]
+    },
+    "vssDataType": {
+      "description": "A VSS scalar type or its variable-length array form `T[]`.",
+      "enum": [
+        "boolean", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64", "float", "double", "string",
+        "boolean[]", "int8[]", "int16[]", "int32[]", "int64[]", "uint8[]", "uint16[]", "uint32[]", "uint64[]", "float[]", "double[]", "string[]"
+      ]
+    },
+    "valueType": {
+      "description": "VSS datatypes plus internal types (ADR-0015 §1).",
+      "anyOf": [
+        { "$ref": "#/$defs/vssDataType" },
+        { "enum": ["duration", "timestamp", "json"] }
+      ]
+    },
+    "unit": {
+      "description": "VSS unit symbol (units.yaml key); null = dimensionless.",
+      "type": ["string", "null"]
+    },
+    "int64String": {
+      "description": "int64 encoded as a decimal string (ADR-0018 §7).",
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]{0,18})$"
+    },
+    "uint64String": {
+      "description": "uint64 encoded as a decimal string (ADR-0018 §7).",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,19})$"
+    },
+    "typedValue": {
+      "description": "Object carrying `type` and `value`; `value` must match `type`. int64/uint64 (and their arrays) are decimal strings.",
+      "type": "object",
+      "required": ["type"],
+      "properties": { "type": { "$ref": "#/$defs/valueType" } },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "boolean" } } }, "then": { "properties": { "value": { "type": "boolean" } } } },
+        { "if": { "properties": { "type": { "const": "string" } } }, "then": { "properties": { "value": { "type": "string" } } } },
+        { "if": { "properties": { "type": { "enum": ["int8", "int16", "int32", "uint8", "uint16", "uint32"] } } }, "then": { "properties": { "value": { "type": "integer" } } } },
+        { "if": { "properties": { "type": { "enum": ["float", "double", "duration", "timestamp"] } } }, "then": { "properties": { "value": { "type": "number" } } } },
+        { "if": { "properties": { "type": { "const": "int64" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/int64String" } } } },
+        { "if": { "properties": { "type": { "const": "uint64" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/uint64String" } } } },
+        { "if": { "properties": { "type": { "const": "boolean[]" } } }, "then": { "properties": { "value": { "type": "array", "items": { "type": "boolean" } } } } },
+        { "if": { "properties": { "type": { "const": "string[]" } } }, "then": { "properties": { "value": { "type": "array", "items": { "type": "string" } } } } },
+        { "if": { "properties": { "type": { "enum": ["int8[]", "int16[]", "int32[]", "uint8[]", "uint16[]", "uint32[]"] } } }, "then": { "properties": { "value": { "type": "array", "items": { "type": "integer" } } } } },
+        { "if": { "properties": { "type": { "enum": ["float[]", "double[]"] } } }, "then": { "properties": { "value": { "type": "array", "items": { "type": "number" } } } } },
+        { "if": { "properties": { "type": { "const": "int64[]" } } }, "then": { "properties": { "value": { "type": "array", "items": { "$ref": "#/$defs/int64String" } } } } },
+        { "if": { "properties": { "type": { "const": "uint64[]" } } }, "then": { "properties": { "value": { "type": "array", "items": { "$ref": "#/$defs/uint64String" } } } } }
+      ]
+    },
+    "jsonValue": {
+      "description": "Any JSON value. Producers MUST encode int64/uint64 as decimal strings.",
+      "type": ["string", "number", "boolean", "null", "array", "object"]
+    },
+    "concurrencyPolicy": {
+      "enum": ["restart", "ignore", "queue", "parallel"]
+    },
+    "relativePath": {
+      "description": "Normalized POSIX path relative to the project root: no leading '/', no '..' or '.' segments, no backslash, no empty segment.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))(?!.*//)[^\\\\\\u0000]+$"
+    },
+    "epochMs": {
+      "description": "Wall-clock milliseconds since Unix epoch (logs/traces only, never inside IR or generated files).",
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

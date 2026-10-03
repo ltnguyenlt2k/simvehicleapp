@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1",
+  "title": "Diagnostic v1",
+  "description": "One diagnostic (ADR-0016 §1). `code` is public API: never renamed or removed. `message` is rendered from `code` + `data`.",
+  "type": "object",
+  "required": ["code", "severity", "stage", "message", "docs"],
+  "additionalProperties": false,
+  "properties": {
+    "code": { "$ref": "#/$defs/code" },
+    "severity": { "$ref": "#/$defs/severity" },
+    "stage": { "$ref": "#/$defs/stage" },
+    "blockId": { "type": "string", "minLength": 1 },
+    "field": { "type": "string", "minLength": 1 },
+    "nodeId": { "type": "string", "minLength": 1 },
+    "workflowId": { "type": "string", "minLength": 1 },
+    "message": { "type": "string", "minLength": 1 },
+    "suggestion": { "type": "string" },
+    "docs": { "type": "string", "pattern": "^diagnostics#[A-Z][A-Z0-9_]*$" },
+    "data": { "type": "object" }
+  },
+  "$defs": {
+    "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+    "severity": { "enum": ["error", "warning", "info"] },
+    "stage": {
+      "enum": [
+        "parse", "structural", "block-config", "vehicle-model", "types", "units", "control-flow", "lint",
+        "backend", "codegen", "workspace", "build", "test", "run", "runtime", "license"
+      ]
+    },
+    "list": {
+      "title": "DiagnosticList",
+      "description": "Response body for 422 and embedded diagnostic arrays.",
+      "type": "object",
+      "required": ["diagnostics"],
+      "additionalProperties": false,
+      "properties": { "diagnostics": { "type": "array", "items": { "$ref": "#" } } }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:workflow-patch:1.0.0-alpha.1",
+  "title": "WorkflowPatch v1",
+  "description": "The only way the AI assistant changes a workflow (ADR-0030 §5, analysis/09 §5). `ref` is a temporary id mapped by the studio on apply; a stale `baseRevision` is rebased or rejected.",
+  "type": "object",
+  "required": ["patchVersion", "workflowId", "baseRevision", "ops"],
+  "additionalProperties": false,
+  "properties": {
+    "patchVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "workflowId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "baseRevision": { "type": "integer", "minimum": 0 },
+    "ops": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/op" } },
+    "rationale": { "type": "string" }
+  },
+  "$defs": {
+    "blockRef": {
+      "description": "Existing block id or a `ref` introduced by an earlier add_block in the same patch.",
+      "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id"
+    },
+    "handle": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "op": {
+      "title": "WorkflowPatchOp",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["op", "ref", "type", "props"],
+          "additionalProperties": false,
+          "properties": {
+            "op": { "const": "add_block" },
+            "ref": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+            "type": { "type": "string", "pattern": "^sv_[a-z0-9_]+$" },
+            "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+            "props": { "type": "object" },
+            "parentId": { "$ref": "#/$defs/blockRef" },
+            "position": {
+              "anyOf": [
+                { "const": "auto" },
+                {
+                  "type": "object",
+                  "required": ["x", "y"],
+                  "additionalProperties": false,
+                  "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["op", "from", "fromHandle", "to"],
+          "additionalProperties": false,
+          "properties": {
+            "op": { "const": "connect" },
+            "from": { "$ref": "#/$defs/blockRef" },
+            "fromHandle": { "$ref": "#/$defs/handle" },
+            "to": { "$ref": "#/$defs/blockRef" },
+            "toHandle": { "$ref": "#/$defs/handle" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["op", "block", "props"],
+          "additionalProperties": false,
+          "properties": {
+            "op": { "const": "set_props" },
+            "block": { "$ref": "#/$defs/blockRef" },
+            "props": { "type": "object", "minProperties": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["op", "block"],
+          "additionalProperties": false,
+          "properties": {
+            "op": { "const": "remove_block" },
+            "block": { "$ref": "#/$defs/blockRef" }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:toolchain-job:1.0.0-alpha.1",
+  "title": "ToolchainJob v1",
+  "description": "Toolchain Agent job resource (`GET /jobs/:id`), ADR-0025 §2–4. Request body is `#/$defs/request`; stream lines are LogLine v1.",
+  "type": "object",
+  "required": ["id", "kind", "project", "state"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "kind": { "$ref": "#/$defs/kind" },
+    "project": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" },
+    "options": { "$ref": "#/$defs/options" },
+    "state": { "enum": ["queued", "running", "succeeded", "failed", "cancelled"] },
+    "exitCode": { "type": ["integer", "null"] },
+    "createdAt": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
+    "startedAt": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
+    "finishedAt": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
+    "diagnostics": { "type": "array", "items": { "$ref": "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+  },
+  "$defs": {
+    "kind": { "enum": ["init", "deps", "build", "test", "format-check", "run", "stop", "generate-model"] },
+    "options": {
+      "title": "ToolchainJobOptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "release": { "type": "boolean", "description": "build: `./build.sh -r`." },
+        "env": {
+          "description": "run: extra environment (keys are validated by the agent allowlist).",
+          "type": "object",
+          "propertyNames": { "pattern": "^[A-Z][A-Z0-9_]*$" },
+          "additionalProperties": { "type": "string" }
+        },
+        "runJobId": { "type": "string", "description": "stop: job id of the run to stop." }
+      }
+    },
+    "request": {
+      "title": "ToolchainJobRequest",
+      "type": "object",
+      "required": ["kind", "project"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "$ref": "#/$defs/kind" },
+        "project": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" },
+        "options": { "$ref": "#/$defs/options" }
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1",
+  "title": "WorkflowGraph v1",
+  "description": "Canonical, Sim-agnostic workflow graph: compiler input (analysis/06 §1.1, ADR-0013). Edges are control flow only; data flows through `<…>` references inside props. Size limits (GRAPH_TOO_LARGE) are enforced by the compiler, not here.",
+  "type": "object",
+  "required": ["graphVersion", "workflowId", "revision", "name", "vss", "variables", "blocks", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "graphVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "workflowId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "vss": {
+      "type": "object",
+      "required": ["release"],
+      "additionalProperties": false,
+      "properties": {
+        "release": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+$" },
+        "modelHash": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256" }
+      }
+    },
+    "variables": { "type": "array", "items": { "$ref": "#/$defs/variable" } },
+    "blocks": { "type": "array", "items": { "$ref": "#/$defs/block" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } }
+  },
+  "$defs": {
+    "variable": {
+      "title": "GraphVariable",
+      "type": "object",
+      "required": ["name", "type", "initial"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$" },
+        "type": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/valueType" },
+        "initial": true
+      },
+      "$comment": "`initial` must match `type`; int64/uint64 are decimal strings (ADR-0018 §7).",
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "enum": ["int64"] } } },
+          "then": { "properties": { "initial": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/int64String" } } }
+        },
+        {
+          "if": { "properties": { "type": { "enum": ["uint64"] } } },
+          "then": { "properties": { "initial": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/uint64String" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "boolean" } } },
+          "then": { "properties": { "initial": { "type": "boolean" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "string" } } },
+          "then": { "properties": { "initial": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "enum": ["int8", "int16", "int32", "uint8", "uint16", "uint32"] } } },
+          "then": { "properties": { "initial": { "type": "integer" } } }
+        },
+        {
+          "if": { "properties": { "type": { "enum": ["float", "double", "duration", "timestamp"] } } },
+          "then": { "properties": { "initial": { "type": "number" } } }
+        }
+      ]
+    },
+    "block": {
+      "title": "GraphBlock",
+      "type": "object",
+      "required": ["id", "type", "name", "props"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+        "type": { "type": "string", "pattern": "^sv_[a-z0-9_]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "props": {
+          "type": "object",
+          "description": "Block properties keyed by BlockSpec prop name. Values are literals or SVX expression strings; int64/uint64 literals are decimal strings."
+        },
+        "parentId": {
+          "description": "Container block id (repeat/while/parallel) or null for top level.",
+          "anyOf": [{ "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }, { "type": "null" }]
+        },
+        "blockVersion": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "edge": {
+      "title": "GraphEdge",
+      "type": "object",
+      "required": ["id", "from", "fromHandle", "to", "toHandle"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+        "from": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+        "fromHandle": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+        "to": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+        "toHandle": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" }
+      }
+    }
+  }
+}

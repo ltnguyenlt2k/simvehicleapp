@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1",
+  "title": "Scenario v1",
+  "description": "Input trace + expectations shared by simulator, runtime conformance, integration and parity tests (ADR-0017 §3–5, ADR-0042). Times are virtual ms from app start. Array values are JSON arrays; int64/uint64 are decimal strings (ADR-0018).",
+  "type": "object",
+  "required": ["scenarioVersion", "name", "until", "inputs"],
+  "additionalProperties": false,
+  "properties": {
+    "scenarioVersion": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+        { "pattern": "^1\\." }
+      ]
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "vss": {
+      "type": "object",
+      "required": ["release"],
+      "additionalProperties": false,
+      "properties": { "release": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+$" } }
+    },
+    "until": { "type": "integer", "minimum": 0, "maximum": 86400000, "description": "≤ 24 h virtual (ADR-0017 §5)." },
+    "initial": {
+      "type": "object",
+      "propertyNames": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
+      "additionalProperties": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+    },
+    "latency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "read": { "type": "integer", "minimum": 0 },
+        "write": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "inputs": { "type": "array", "items": { "$ref": "#/$defs/input" } },
+    "expect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "writes": { "type": "array", "items": { "$ref": "#/$defs/write" } },
+        "trace": { "type": "array", "items": { "type": "object" }, "description": "Partial TraceEvent matchers (fields compared when present)." }
+      }
+    }
+  },
+  "$defs": {
+    "time": { "type": "integer", "minimum": 0 },
+    "input": {
+      "title": "ScenarioInput",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["t", "path", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "t": { "$ref": "#/$defs/time" },
+            "path": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
+            "value": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["t", "topic", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "t": { "$ref": "#/$defs/time" },
+            "topic": { "type": "string", "minLength": 1 },
+            "value": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+          }
+        }
+      ]
+    },
+    "write": {
+      "title": "ScenarioWrite",
+      "type": "object",
+      "required": ["t", "path", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "t": { "$ref": "#/$defs/time" },
+        "path": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
+        "value": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+      }
+    }
+  }
+}

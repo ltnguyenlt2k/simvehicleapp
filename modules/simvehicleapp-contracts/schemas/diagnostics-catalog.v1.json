@@ -1,0 +1,405 @@
+{
+  "catalogVersion": "1.0.0-alpha.1",
+  "codes": [
+    {
+      "code": "ARRAY_ELEMENT_TYPE_MISMATCH",
+      "severity": "error",
+      "stage": "types",
+      "title": "Array element type does not match",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0018"
+    },
+    {
+      "code": "ARRAY_INDEX_OUT_OF_RANGE",
+      "severity": "warning",
+      "stage": "runtime",
+      "title": "Array index out of range at runtime",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0018"
+    },
+    {
+      "code": "ARRAY_INDEX_TYPE_INVALID",
+      "severity": "error",
+      "stage": "types",
+      "title": "Array index is not an integer",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0018"
+    },
+    {
+      "code": "ARRAY_VALUE_REQUIRES_INDEXING",
+      "severity": "error",
+      "stage": "types",
+      "title": "Array value used in a scalar context",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0018"
+    },
+    {
+      "code": "BACKEND_UNAVAILABLE",
+      "severity": "error",
+      "stage": "backend",
+      "title": "Target backend is unavailable",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "BLOCK_PROPERTY_INVALID",
+      "severity": "error",
+      "stage": "block-config",
+      "title": "Block property value is invalid",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "BLOCK_PROPERTY_MISSING",
+      "severity": "error",
+      "stage": "block-config",
+      "title": "Required block property is missing",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "BLOCK_TYPE_UNKNOWN",
+      "severity": "error",
+      "stage": "structural",
+      "title": "Unknown block type",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "BLOCK_UNREACHABLE",
+      "severity": "warning",
+      "stage": "control-flow",
+      "title": "Block is not reachable from any trigger",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "BLOCK_VERSION_UNSUPPORTED",
+      "severity": "error",
+      "stage": "block-config",
+      "title": "Block version cannot be migrated",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "BUILD_FAILED",
+      "severity": "error",
+      "stage": "build",
+      "title": "Build failed",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "CODEGEN_INTERNAL_ERROR",
+      "severity": "error",
+      "stage": "codegen",
+      "title": "Internal code generator error",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "CONTAINER_INVALID",
+      "severity": "error",
+      "stage": "structural",
+      "title": "Invalid container nesting",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "CONTROL_FLOW_CYCLE",
+      "severity": "error",
+      "stage": "control-flow",
+      "title": "Control-flow cycle outside a loop container",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "CPP_COMPILE_ERROR",
+      "severity": "error",
+      "stage": "build",
+      "title": "C++ compilation error",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "DATA_REF_NOT_DOMINATING",
+      "severity": "error",
+      "stage": "control-flow",
+      "title": "Referenced block does not always run before this block",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "DEPS_INSTALL_FAILED",
+      "severity": "error",
+      "stage": "build",
+      "title": "Dependency installation failed",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "ENUM_VALUE_NOT_ALLOWED",
+      "severity": "error",
+      "stage": "vehicle-model",
+      "title": "Value is not in the signal's allowed list",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "EXPR_SYNTAX",
+      "severity": "error",
+      "stage": "block-config",
+      "title": "Expression syntax error",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "EXPR_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "stage": "block-config",
+      "title": "Expression calls a function outside the whitelist",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "EXPR_UNKNOWN_REF",
+      "severity": "error",
+      "stage": "block-config",
+      "title": "Expression references an unknown block, field, signal or variable",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "GENERATED_FILE_MODIFIED",
+      "severity": "warning",
+      "stage": "workspace",
+      "title": "Generated file was modified outside SimVehicleApp",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "GENERATED_TEST_FAILED",
+      "severity": "error",
+      "stage": "test",
+      "title": "Generated test failed",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "GRAPH_DANGLING_EDGE",
+      "severity": "error",
+      "stage": "structural",
+      "title": "Edge references a missing block",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "GRAPH_SCHEMA_INVALID",
+      "severity": "error",
+      "stage": "parse",
+      "title": "Workflow graph does not match the WorkflowGraph schema",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "GRAPH_TOO_LARGE",
+      "severity": "error",
+      "stage": "parse",
+      "title": "Workflow graph exceeds size limits",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "HANDLE_UNKNOWN",
+      "severity": "error",
+      "stage": "structural",
+      "title": "Edge uses a handle the block does not have",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "IR_VERSION_UNSUPPORTED",
+      "severity": "error",
+      "stage": "backend",
+      "title": "IR version not supported by the target backend",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "LICENSE_FEATURE_DENIED",
+      "severity": "error",
+      "stage": "license",
+      "title": "Feature not allowed by license",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "LOOP_GUARD_MISSING",
+      "severity": "error",
+      "stage": "control-flow",
+      "title": "Loop has no maxIterations guard",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "MODEL_HASH_MISMATCH",
+      "severity": "warning",
+      "stage": "vehicle-model",
+      "title": "Workflow was authored against a different vehicle model",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "OPCODE_UNSUPPORTED_BY_BACKEND",
+      "severity": "error",
+      "stage": "backend",
+      "title": "Opcode not supported by the target backend",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "PARALLEL_BRANCH_EMPTY",
+      "severity": "error",
+      "stage": "control-flow",
+      "title": "Parallel branch is empty",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "POLLING_PREFER_SUBSCRIPTION",
+      "severity": "info",
+      "stage": "lint",
+      "title": "Timer polling a signal; prefer On Signal Changed",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "RUN_CRASHED",
+      "severity": "error",
+      "stage": "run",
+      "title": "App crashed",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "RUN_START_TIMEOUT",
+      "severity": "error",
+      "stage": "run",
+      "title": "App did not start in time",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "TRIGGER_WITHOUT_ACTION",
+      "severity": "warning",
+      "stage": "control-flow",
+      "title": "Trigger has no following step",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "TYPE_MISMATCH",
+      "severity": "error",
+      "stage": "types",
+      "title": "Type mismatch",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "TYPE_NARROWING_REQUIRES_CAST",
+      "severity": "error",
+      "stage": "types",
+      "title": "Narrowing conversion requires an explicit Convert",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "UNIT_ASSUMED",
+      "severity": "info",
+      "stage": "units",
+      "title": "Unit assumed for unitless literal",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "UNIT_CONVERSION_INSERTED",
+      "severity": "info",
+      "stage": "units",
+      "title": "Unit conversion inserted",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "UNIT_DIMENSION_MISMATCH",
+      "severity": "error",
+      "stage": "units",
+      "title": "Units of different dimensions",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "VALUE_OUT_OF_RANGE",
+      "severity": "warning",
+      "stage": "vehicle-model",
+      "title": "Constant outside the signal's min/max",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "VDB_UNREACHABLE",
+      "severity": "error",
+      "stage": "run",
+      "title": "Vehicle databroker unreachable",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "VEHICLE_PATH_DEPRECATED",
+      "severity": "warning",
+      "stage": "vehicle-model",
+      "title": "VSS path is deprecated",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "VEHICLE_PATH_IS_BRANCH",
+      "severity": "error",
+      "stage": "vehicle-model",
+      "title": "VSS path is a branch, not a signal",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "VEHICLE_PATH_NOT_FOUND",
+      "severity": "error",
+      "stage": "vehicle-model",
+      "title": "VSS path not found in the selected release",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "VEHICLE_WRITE_READ_ONLY",
+      "severity": "error",
+      "stage": "vehicle-model",
+      "title": "Write to a sensor or attribute",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "WORKSPACE_COMMIT_FAILED",
+      "severity": "error",
+      "stage": "workspace",
+      "title": "Workspace commit failed",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    },
+    {
+      "code": "WORKSPACE_PATH_REJECTED",
+      "severity": "error",
+      "stage": "workspace",
+      "title": "File path rejected by workspace policy",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0016"
+    }
+  ]
+}

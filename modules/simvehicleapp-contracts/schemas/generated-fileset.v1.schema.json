@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1",
+  "title": "GeneratedFileSet v1",
+  "description": "Backend `POST /generate` result (ADR-0020, analysis/07 §2). Pure data: the workspace service is the only writer (ADR-0026). Every file path must be inside one of `ownedRoots`; the workspace re-validates.",
+  "type": "object",
+  "required": ["backend", "runtimeVersion", "files", "ownedRoots", "manifestFragment", "sourceMaps", "diagnostics"],
+  "additionalProperties": false,
+  "properties": {
+    "backend": { "type": "string", "pattern": "^[a-z][a-z0-9-]*@(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$" },
+    "runtimeVersion": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
+    "files": { "type": "array", "items": { "$ref": "#/$defs/file" } },
+    "ownedRoots": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "allOf": [
+          { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/relativePath" },
+          { "pattern": "/$" }
+        ]
+      }
+    },
+    "manifestFragment": {
+      "description": "AppManifest fragment merged by the workspace (ADR-0023); shape owned by velocitas-stack and locked in M6/M7.",
+      "type": "object"
+    },
+    "sourceMaps": { "type": "array", "items": { "$ref": "#/$defs/sourceMap" } },
+    "diagnostics": { "type": "array", "items": { "$ref": "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+  },
+  "$defs": {
+    "filePath": {
+      "allOf": [
+        { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/relativePath" },
+        { "not": { "pattern": "/$" } }
+      ]
+    },
+    "file": {
+      "title": "GeneratedFile",
+      "type": "object",
+      "required": ["path", "content", "sha256", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "$ref": "#/$defs/filePath" },
+        "content": { "type": "string" },
+        "sha256": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/sha256Hex" },
+        "role": { "enum": ["source", "header", "test", "build", "config", "doc"] }
+      }
+    },
+    "sourceMap": {
+      "title": "GeneratedSourceMap",
+      "type": "object",
+      "required": ["file", "ranges"],
+      "additionalProperties": false,
+      "properties": {
+        "file": { "$ref": "#/$defs/filePath" },
+        "ranges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["startLine", "endLine", "nodeId", "blockId", "workflowId"],
+            "additionalProperties": false,
+            "properties": {
+              "startLine": { "type": "integer", "minimum": 1 },
+              "endLine": { "type": "integer", "minimum": 1 },
+              "nodeId": { "type": "string", "pattern": "^n[0-9]+$" },
+              "blockId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+              "workflowId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+            }
+          }
+        }
+      }
+    },
+    "generateRequest": {
+      "title": "GenerateRequest",
+      "description": "Body of backend `POST /generate`.",
+      "type": "object",
+      "required": ["project", "workflows"],
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "object",
+          "required": ["slug", "appName", "language", "mqttTopicPrefix", "traceLevel"],
+          "additionalProperties": false,
+          "properties": {
+            "slug": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" },
+            "appName": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" },
+            "language": { "enum": ["cpp", "python", "rust"] },
+            "mqttTopicPrefix": { "type": "string", "minLength": 1, "pattern": "^[^#+]+$" },
+            "traceLevel": { "enum": ["off", "trigger", "node"] }
+          }
+        },
+        "workflows": { "type": "array", "minItems": 1, "items": { "$ref": "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1" } },
+        "options": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "emitTests": { "type": "boolean" } }
+        }
+      }
+    }
+  }
+}
