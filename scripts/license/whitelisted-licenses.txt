@@ -1,0 +1,14 @@
+# Allowed licenses (SPDX ids) for dependencies of SimVehicleApp modules — ADR-0004, license-compliance skill.
+# MPL-2.0 is file-level copyleft: keep files unmodified or publish changes. EPL-2.0 is allowed only for the
+# unmodified eclipse-mosquitto image and is therefore not listed here (no package dependency may use it).
+Apache-2.0
+MIT
+BSD-2-Clause
+BSD-3-Clause
+ISC
+MPL-2.0
+Zlib
+BSL-1.0
+Unicode-DFS-2016
+Unicode-3.0
+CC0-1.0

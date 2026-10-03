@@ -1,0 +1,4 @@
+# Explicit, reviewed exceptions for NON-whitelisted licenses. Only valid for dev-only dependencies
+# (never shipped in a package or image). Denylisted licenses (GPL family, SSPL, BUSL, Commons-Clause) cannot be excepted.
+# Format: <module-relative package dir> <TAB> <name>@<version> <TAB> <SPDX> <TAB> <reason>
+modules/simvehicleapp-contracts	argparse@2.0.1	Python-2.0	dev-only: transitive of json-schema-to-typescript (js-yaml) used by tools/gen-types.ts; PSF-style permissive. Pending PO confirmation (2026-10-03).
