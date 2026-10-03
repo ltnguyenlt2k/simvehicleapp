@@ -37,4 +37,4 @@
 | Q5 | Registry image nội bộ (ghcr/Harbor)? | ghcr.io của org |
 | Q6 | Tên sản phẩm cuối cùng | "SimVehicleApp" cấu hình được |
 | Q7 | Cho phép AI tự apply vào draft? | Tắt mặc định |
-| Q8 | Ngôn ngữ UI (VI/EN)? | EN mặc định + i18n VI (Sim có i18n?) — kiểm tra ở M1 |
+| Q8 | Ngôn ngữ UI (VI/EN)? | **Đã kiểm M01-T12 (2026-10-03):** Sim v0.7.13 không có framework i18n, UI hard-code EN ⇒ EN mặc định cho MVP; chuỗi SimVehicleApp gom vào config; tiếng Việt cần ADR riêng (M11+/M14). [Report](../docs/reports/M01-T12-i18n.md) |
