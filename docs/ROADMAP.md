@@ -28,7 +28,7 @@
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
-| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 1/12 ✔ (T01); T06 asset đang làm |
+| [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | 🔄 | 1/12 ✔ (T01); T02a–c, T06 đang làm |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
@@ -70,7 +70,7 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Fork + tag `baseline-v0.7.13` + `UPSTREAM_SYNC.md` | 0003 | ✔ | Claude Code 2026-10-03: dev một repo (ADR-0009) ⇒ tag `studio/baseline-v0.7.13` @ `68f7f9a`; "merge-base check" = `scripts/upstream_tree_check.py` so tree với `ad0b867`: 12.226/12.226 file giống từng byte, thay đổi cục bộ phải khai báo trong `UPSTREAM_SYNC.allow` → PASS; CI job `vendored-trees` (commits `4a9418d` `ac0f165` `1cec4e2`). Phát hiện kèm: import mất bit thực thi + template C++ thiếu `build.sh` (đã khôi phục) | T01 |
-| Clean-room gỡ `ee/` (spec Apache + `lib/sv/oss/*` + codemod + xoá `apps/sim/ee/`) | 0004 | 🔄 | Claude Code 2026-10-03. T02a spec: [docs/specs/M01-T02a-oss-clean-room-spec.md](specs/M01-T02a-oss-clean-room-spec.md) (chỉ từ file Apache; đính chính 11a) — **chờ PO review/ký clean-room** (11a §3.6). T02b/T02c chưa làm | T02a–c |
+| Clean-room gỡ `ee/` (spec Apache + `lib/sv/oss/*` + codemod + xoá `apps/sim/ee/`) | 0004 | 🔄 | Claude Code 2026-10-03. **T02a** spec [docs/specs/M01-T02a-oss-clean-room-spec.md](specs/M01-T02a-oss-clean-room-spec.md) — chờ PO review/ký clean-room (11a §3.6). **T02b** `lib/sv/oss/{brand,access-control,sso}` + 15 contract test PASS (`5af31ae`). **T02c** codemod 70 file, gỡ UI SSO/settings Enterprise, xoá `apps/sim/ee` (`a06dee1`): `tsc` 0 lỗi, vitest 676 file/9.356 test PASS, biome sạch, `studio_guards` PASS. **Còn:** CI `studio-image` (build image từ source, điều kiện phase M1) chạy sau push; PO ký spec | T02a–c |
 | Gỡ copilot (`lib/copilot/**`, routes, panel placeholder) | 0004 | ☐ | | T03 |
 | Gỡ `apps/pii`, `apps/docs`, devcontainer/helm cũ, Trigger.dev | 0008 | ☐ | | T04 |
 | Toolbar allowlist `sv_*` (ẩn 268 block cũ) | 0008 | ☐ | Theo [11b](../analysis/11b-block-inventory-and-migration.md) | T05 |
