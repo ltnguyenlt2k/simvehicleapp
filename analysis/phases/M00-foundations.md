@@ -27,7 +27,7 @@
 - [ ] Clone repo dev + cấu hình `.env` + `scripts/sv build/up` → stack đã hiện thực chạy; ghi riêng giới hạn build studio từ source và bằng chứng S-5 prebuilt.
 - [x] Contracts alpha publish (local registry hoặc `bun link`) — `bun link` `@simvehicleapp/contracts` + `@simvehicleapp/service-kit`, consumer import/validate GW-A OK (2026-10-03, commit `598d470`).
 - [ ] 6 spike có report + quyết định.
-- [ ] CI T08 PASS: license scan theo phạm vi phase, contract-only-deps, compose lint; có case vi phạm bị từ chối. Gỡ EE/Copilot và gate license sản phẩm thuộc M1.
+- [x] CI T08 PASS: license scan theo phạm vi phase, contract-only-deps, compose lint; có case vi phạm bị từ chối. Gỡ EE/Copilot và gate license sản phẩm thuộc M1. — GitHub Actions run #1 https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37115615196 @ `4f39bae`, 5/5 job success (2026-10-03).
 - [ ] ADR 0001–0007, 0009 Accepted (0002 áp dụng release; 0009 điều chỉnh dev).
 - [ ] Report `docs/reports/M00.md` ghi từng tiêu chí và bằng chứng; không dùng spike report thay report milestone.
 
@@ -59,7 +59,7 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T04 BASELINE | ✔ | `docs/BASELINE.md` (SHA + digest) |
 | T05/T06 contracts alpha + fixtures | ✔ | 2026-10-03: `modules/simvehicleapp-contracts` — 17 schema, OpenAPI 8 service, TS types, service-kit, fixture VSS/GW-A; `bun test` 89/89, `bun run check` PASS; commits `8d11a9a` `4a7600d` `07d8d90` `faa2878` `f35ff2a` `48da339` `598d470`. Gate item 5 còn chờ T08 + ADR Accepted |
 | T07 compose skeleton | ✔ | root include 3 fragment; mỗi fragment `config -q` độc lập |
-| T08 CI chung | 🔄 | 2026-10-03: `.github/workflows/ci.yml` + `scripts/ci`, `scripts/license`; local PASS (self-test 19/19 gồm case vi phạm, compose-lint, contract-only-deps, license-scan); chờ run GitHub Actions sau push |
+| T08 CI chung | ✔ | 2026-10-03: `.github/workflows/ci.yml` + `scripts/ci`, `scripts/license`; self-test 19/19 gồm case vi phạm; GitHub Actions run #1 PASS 5/5 job (https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37115615196) |
 | T09 S-1 | ✔ PASS | offline new project: init 26 s / deps 2 s / build 10 s |
 | T10 S-2 | ✔ PASS | SampleApp ↔ databroker:55555 ↔ MQTT |
 | T11 S-3 | ✔ PASS | set() = actuator **target** only |
@@ -69,4 +69,4 @@ Bố cục dev đã đổi theo yêu cầu PO → [ADR-0009](../adr/ADR-0009-dev
 | T15 cập nhật ADR | ✔ | 0024/0025/0028 Accepted, 0023 Notes, 0009 mới |
 | (thêm) E-1 export → devcontainer | ✔ PASS | `devcontainer up` + build + runtime-local + run app |
 
-**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn run CI T08 trên GitHub (local PASS 2026-10-03) và ADR-0004/0006/0007 đang Proposed (T05–T06 xong 2026-10-03). Report tiến độ `docs/reports/M00.md` (2026-10-03) ghi gate chưa đạt và từng tiêu chí; DoD "Report" chỉ tick khi gate PASS. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.
+**Gate M0: chưa PASS.** Spike/hạ tầng có bằng chứng lịch sử trong [report](../../docs/spikes/M0-spikes-report.md); còn ADR-0004/0006/0007 đang Proposed và đo lại stack ≤ 5 phút; CI T08 PASS trên GitHub 2026-10-03 (T05–T06 xong 2026-10-03). Report tiến độ `docs/reports/M00.md` (2026-10-03) ghi gate chưa đạt và từng tiêu chí; DoD "Report" chỉ tick khi gate PASS. Hoàn tất các mục này trước M1; không tự chuyển Accepted hoặc tick DoD từ kết quả review tài liệu.

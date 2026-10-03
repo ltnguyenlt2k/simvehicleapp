@@ -27,7 +27,7 @@
 
 | M | Tên | ADR cần Accepted | Trạng thái tổng | Tiến độ |
 |---|---|---|---|---|
-| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | 🔄 | 7/9 ✔; 1 ↷; 1 ☐ |
+| [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | 🔄 | 8/9 ✔; 1 ↷; 0 ☐ (gate chờ ADR Accepted) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ☐ | 0/12 |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
@@ -43,7 +43,7 @@
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
 
-**MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 7/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
+**MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
 
 ---
 
@@ -58,11 +58,11 @@ ADR: [0001](../analysis/adr/ADR-0001-record-architecture-decisions.md)–[0007](
 | `docs/BASELINE.md` (SHA/digest pin) | 0003 | ✔ | File có đủ SHA Sim/template/SDK + digest image | T04 |
 | Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | ✔ | Claude Code 2026-10-03. `@simvehicleapp/contracts@1.0.0-alpha.1`: 17 JSON Schema + catalog 50 mã, OpenAPI 3.1 cho 8 service (validate theo meta-schema OAS 3.1), TS types sinh tự động + validator Ajv, `@simvehicleapp/service-kit`; fixture VSS 4.0 + units.yaml (pin `249dc03`), GW-A `graph.json`/`scenario.yaml`. `bun test` 89/89 PASS, `bun run check` PASS, publish `bun link` kiểm từ consumer. commits `8d11a9a` `4a7600d` `07d8d90` `faa2878` `f35ff2a` `48da339` `598d470`. Lưu ý: ADR-0007 vẫn Proposed — Accept là việc của gate M0; AsyncAPI/Python types dời M8/M12 (ngoài phạm vi T05) | T05–T06 |
 | Compose skeleton root (`docker-compose.yml` include 3 fragment) | 0005,0009 | ✔ | `scripts/sv` + `docker-compose.yml` | T07 |
-| CI chung (license scan, contract-only-deps, compose lint) | 0004,0005 | 🔄 | Claude Code 2026-10-03: `scripts/ci/*`, `scripts/license/*`, `.github/workflows/ci.yml` (commits `9aeafad` `4fbd803`). **Local PASS** 2026-10-03: self-test 19/19 (mỗi luật có case vi phạm bị từ chối), compose-lint/contract-only-deps/license-scan PASS, contracts check+test 89/89. **Còn:** run PASS trên GitHub Actions (cần push); PO xác nhận ngoại lệ `argparse@2.0.1` (Python-2.0, dev-only) trong `scripts/license/license-exceptions.txt` | T08 |
+| CI chung (license scan, contract-only-deps, compose lint) | 0004,0005 | ✔ | Claude Code 2026-10-03: `scripts/ci/*`, `scripts/license/*`, `.github/workflows/ci.yml` (commits `9aeafad` `4fbd803`). **Local PASS** 2026-10-03: self-test 19/19 (mỗi luật có case vi phạm bị từ chối), compose-lint/contract-only-deps/license-scan PASS, contracts check+test 89/89. **GitHub Actions PASS** 2026-10-03 run #1 [37115615196](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37115615196) @ `4f39bae` (5/5 job). **Còn (không chặn ✔):** PO xác nhận ngoại lệ `argparse@2.0.1` (Python-2.0, dev-only) trong `scripts/license/license-exceptions.txt` | T08 |
 | Spike S-1..S-6 + E-1 (toolchain offline, databroker+MQTT, `set()` semantics, mock-provider, Sim minimal, code-server clangd, devcontainer export) | 0006,0024,0025,0028 | ✔ PASS cả 7 | `docs/spikes/M0-spikes-report.md` | T09–T14 |
 | Cập nhật ADR theo kết quả spike | 0023,0024,0025,0028 | ✔ | 0024/0025/0028 Accepted, 0023 có Notes, 0009 ra đời | T15 |
 
-**M0 chưa qua gate; chưa mở M1.** Còn: run CI T08 trên GitHub (local đã PASS), review/Accepted ADR-0004/0006/0007, chốt lại tiêu chí stack ≤ 5 phút bằng lần chạy mới. Report tiến độ: [`docs/reports/M00.md`](reports/M00.md) — gate FAIL/chưa đạt (T05/T06 xong 2026-10-03). Sau đó hoàn tất DoD và report `docs/reports/M00.md` theo [phase M0](../analysis/phases/M00-foundations.md). Spike PASS chỉ chứng minh phần spike. Xem [review 2026-10-03](reports/2026-10-03-documentation-review.md) về bằng chứng và thứ tự tiếp theo.
+**M0 chưa qua gate; chưa mở M1.** Còn: review/Accepted ADR-0004/0006/0007, chốt lại tiêu chí stack ≤ 5 phút bằng lần chạy mới. Report tiến độ: [`docs/reports/M00.md`](reports/M00.md) — gate FAIL/chưa đạt (T05/T06 xong 2026-10-03). Sau đó hoàn tất DoD và report `docs/reports/M00.md` theo [phase M0](../analysis/phases/M00-foundations.md). Spike PASS chỉ chứng minh phần spike. Xem [review 2026-10-03](reports/2026-10-03-documentation-review.md) về bằng chứng và thứ tự tiếp theo.
 
 ## M1 — Studio shell
 ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [0004](../analysis/adr/ADR-0004-license-compliance.md), [0008](../analysis/adr/ADR-0008-sim-refactor-strategy.md) · Phụ thuộc: M0 · Chi tiết: [phases/M01](../analysis/phases/M01-studio-shell.md)
