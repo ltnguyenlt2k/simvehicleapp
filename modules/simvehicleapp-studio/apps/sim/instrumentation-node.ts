@@ -27,10 +27,10 @@ const SPAN_NAME_PREFIX = `${MOTHERSHIP_ORIGIN}: `
 const SERVICE_INSTANCE_SLUG = 'sim' as const
 
 const DEFAULT_TELEMETRY_CONFIG = {
-  endpoint: env.TELEMETRY_ENDPOINT || 'https://telemetry.simstudio.ai/v1/traces',
+  endpoint: env.TELEMETRY_ENDPOINT || '',
   serviceName: 'mothership',
   serviceVersion: '0.1.0',
-  serverSide: { enabled: true },
+  serverSide: { enabled: false },
   batchSettings: {
     maxQueueSize: 2048,
     maxExportBatchSize: 512,
@@ -152,6 +152,11 @@ async function initializeOpenTelemetry() {
       process.env.TELEMETRY_ENDPOINT ||
       env.TELEMETRY_ENDPOINT ||
       telemetryConfig.endpoint
+    // SV: without an operator-configured collector there is nothing to export to (M01-T07).
+    if (!resolvedEndpoint) {
+      logger.info('OpenTelemetry disabled: no TELEMETRY_ENDPOINT / OTEL_EXPORTER_OTLP_ENDPOINT')
+      return
+    }
     telemetryConfig = {
       ...telemetryConfig,
       endpoint: resolvedEndpoint,

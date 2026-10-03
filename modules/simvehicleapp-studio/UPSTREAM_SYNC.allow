@@ -171,3 +171,9 @@ apps/sim/lib/a2a/utils.ts
 apps/sim/lib/sv/oss/brand/config.ts
 apps/sim/lib/sv/oss/oss.test.ts
 apps/sim/tools/google_vault/utils.ts
+
+# M01-T07 — telemetry off unless an operator collector is configured
+apps/sim/app/api/telemetry/route.ts
+apps/sim/app/api/telemetry/route.test.ts
+apps/sim/telemetry.config.ts
+apps/sim/instrumentation-node.ts

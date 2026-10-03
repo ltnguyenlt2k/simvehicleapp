@@ -2,7 +2,8 @@
  * Sim OpenTelemetry Configuration
  *
  * PRIVACY NOTICE:
- * - Telemetry is enabled by default to help us improve the product
+ * - SV (M01-T07): telemetry is OFF unless you configure your own collector with
+ *   TELEMETRY_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT; nothing is sent to the upstream Sim collector.
  * - You can disable telemetry via:
  *   1. Settings UI > Privacy tab > Toggle off "Allow anonymous telemetry"
  *   2. Setting NEXT_TELEMETRY_DISABLED=1 environment variable
@@ -31,7 +32,7 @@ const config = {
    * Change this if you want to send telemetry to your own collector
    * Supports any OTLP-compatible backend (Jaeger, Grafana Tempo, etc.)
    */
-  endpoint: env.TELEMETRY_ENDPOINT || 'https://telemetry.simstudio.ai/v1/traces',
+  endpoint: env.TELEMETRY_ENDPOINT || '',
 
   /**
    * Service name used to identify this instance
@@ -96,7 +97,7 @@ const config = {
    * - Unhandled errors only
    */
   clientSide: {
-    enabled: true,
+    enabled: false,
     batchIntervalMs: 10000, // 10 seconds
     maxBatchSize: 50,
   },
@@ -111,7 +112,11 @@ const config = {
    * - Semantic conventions for AI/LLM operations
    */
   serverSide: {
-    enabled: true,
+    enabled: Boolean(
+      env.TELEMETRY_ENDPOINT ||
+        process.env.TELEMETRY_ENDPOINT ||
+        process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+    ),
   },
 }
 

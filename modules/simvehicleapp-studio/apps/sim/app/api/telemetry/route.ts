@@ -59,7 +59,9 @@ async function forwardToCollector(data: Record<string, unknown>): Promise<boolea
     return false
   }
 
-  const endpoint = env.TELEMETRY_ENDPOINT || 'https://telemetry.simstudio.ai/v1/traces'
+  // SV: no default collector — forward only to an operator-configured endpoint (M01-T07).
+  const endpoint = env.TELEMETRY_ENDPOINT
+  if (!endpoint) return false
   const timeout = DEFAULT_TIMEOUT
 
   try {
