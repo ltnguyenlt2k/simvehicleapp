@@ -15,7 +15,6 @@ import {
   File,
   FolderPlus,
   HelpCircle,
-  Home,
   Integration,
   Key,
   Play,
@@ -213,14 +212,7 @@ export function SearchModal({
       context: 'workflow',
       run: () => invokeCommand('run-workflow'),
     })
-    list.push({
-      id: 'new-chat',
-      name: 'New chat',
-      keywords: 'chat message ask sim assistant home',
-      icon: Home,
-      context: 'global',
-      run: () => routerRef.current.push(`/workspace/${workspaceId}/home`),
-    })
+    // SV: 'New chat' action removed with the copilot chat (M01-T03).
     if (canEdit && onCreateWorkflow) {
       list.push({
         id: 'create-workflow',

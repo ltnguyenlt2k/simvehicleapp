@@ -201,3 +201,4 @@ apps/sim/package.json
 
 # M1 acceptance gate — Playwright E2E (own package, not a Sim workspace)
 e2e/*
+apps/sim/app/workspace/[workspaceId]/w/components/sidebar/components/search-modal/search-modal.tsx
