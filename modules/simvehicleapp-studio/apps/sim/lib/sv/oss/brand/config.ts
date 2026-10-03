@@ -18,6 +18,7 @@ export interface BrandConfig {
   logoUrl?: string
   faviconUrl?: string
   customCssUrl?: string
+  documentationUrl: string
   theme?: BrandTheme
   isWhitelabeled: boolean
 }
@@ -28,6 +29,7 @@ export const SV_BRAND_DEFAULTS = {
   supportEmail: 'support@simvehicleapp.local',
   primaryColor: '#0FC0FF',
   primaryHoverColor: '#0AA3DB',
+  documentationUrl: 'https://github.com/ltnguyenlt2k/simvehicleapp#readme',
 } as const
 
 /**
@@ -42,6 +44,7 @@ export function getBrandConfig(): BrandConfig {
     logoUrl: getEnv('NEXT_PUBLIC_BRAND_LOGO_URL') || undefined,
     faviconUrl: getEnv('NEXT_PUBLIC_BRAND_FAVICON_URL') || undefined,
     customCssUrl: getEnv('NEXT_PUBLIC_CUSTOM_CSS_URL') || undefined,
+    documentationUrl: getEnv('NEXT_PUBLIC_DOCUMENTATION_URL') || SV_BRAND_DEFAULTS.documentationUrl,
     theme: {
       primaryColor,
       primaryHoverColor:

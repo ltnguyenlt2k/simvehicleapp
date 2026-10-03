@@ -39,6 +39,7 @@ const BRAND_ENV = [
   'NEXT_PUBLIC_BRAND_LOGO_URL',
   'NEXT_PUBLIC_BRAND_PRIMARY_COLOR',
   'NEXT_PUBLIC_BRAND_PRIMARY_HOVER_COLOR',
+  'NEXT_PUBLIC_DOCUMENTATION_URL',
 ] as const
 
 afterEach(() => {
@@ -55,6 +56,7 @@ describe('brand (spec §2)', () => {
       theme: { primaryColor: '#0FC0FF', primaryHoverColor: '#0AA3DB' },
     })
     expect(brand.logoUrl).toBeUndefined()
+    expect(brand.documentationUrl).toBe('https://github.com/ltnguyenlt2k/simvehicleapp#readme')
     expect(getBrandConfig()).toEqual(brand)
     expect(useBrandConfig()).toEqual(brand)
   })
@@ -67,6 +69,8 @@ describe('brand (spec §2)', () => {
     expect(brand.name).toBe('Fleet Studio')
     expect(brand.supportEmail).toBe('help@example.com')
     expect(brand.theme).toMatchObject({ primaryColor: '#112233', primaryHoverColor: undefined })
+    process.env.NEXT_PUBLIC_DOCUMENTATION_URL = 'https://docs.example.com'
+    expect(getBrandConfig().documentationUrl).toBe('https://docs.example.com')
   })
 
   it('metadata uses the brand title template and no sim.ai URLs', () => {

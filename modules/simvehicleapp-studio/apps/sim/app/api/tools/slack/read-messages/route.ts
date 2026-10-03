@@ -86,7 +86,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
           {
             success: false,
             error:
-              'Bot is not in the channel. Please invite the Sim bot to your Slack channel by typing: /invite @Sim Studio',
+              'Bot is not in the channel. Please invite your Slack bot to the channel by typing: /invite @<your bot name>',
           },
           { status: 400 }
         )

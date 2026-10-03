@@ -17,6 +17,7 @@ import {
   isPrivateOrReservedIP,
   secureFetchWithPinnedIP,
 } from '@/lib/core/security/input-validation.server'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 /** Connect-format field type strings returned by normalization. */
 type ConnectFieldType =
@@ -242,7 +243,7 @@ export async function createOnePasswordClient(serviceAccountToken: string) {
   const { createClient } = await import('@1password/sdk')
   return createClient({
     auth: serviceAccountToken,
-    integrationName: 'Sim Studio',
+    integrationName: getBrandConfig().name,
     integrationVersion: '1.0.0',
   })
 }

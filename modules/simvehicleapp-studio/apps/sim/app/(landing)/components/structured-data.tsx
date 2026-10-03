@@ -27,7 +27,6 @@ export default function StructuredData() {
         '@type': 'Organization',
         '@id': `${SITE_URL}/#organization`,
         name: 'Sim',
-        alternateName: 'Sim Studio',
         description:
           'Sim is the open-source AI workspace where teams build, deploy, and manage AI agents. Connect 1,000+ integrations and every major LLM to create agents that automate real work.',
         url: SITE_URL,

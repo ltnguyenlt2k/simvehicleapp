@@ -23,7 +23,7 @@ const SECTION_TITLES: Record<string, string> = {
   secrets: 'Secrets',
   'access-control': 'Access Control',
   'audit-logs': 'Audit Logs',
-  apikeys: 'Sim API Keys',
+  apikeys: 'API Keys',
   byok: 'BYOK',
   subscription: 'Subscription',
   billing: 'Billing',

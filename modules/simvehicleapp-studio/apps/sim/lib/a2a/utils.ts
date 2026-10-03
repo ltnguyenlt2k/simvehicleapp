@@ -56,7 +56,7 @@ class ApiKeyInterceptor implements CallInterceptor {
  * Create an A2A client from an agent URL with optional API key authentication
  *
  * Supports both standard A2A agents (agent card at /.well-known/agent.json)
- * and Sim Studio agents (agent card at root URL via GET).
+ * and upstream Sim agents (agent card at root URL via GET).
  *
  * Tries standard path first, falls back to root URL for compatibility.
  */
@@ -148,7 +148,7 @@ export async function createA2AClient(agentUrl: string, apiKey?: string): Promis
     })
   }
 
-  // Fall back to root URL (Sim Studio compatibility)
+  // Fall back to root URL (upstream Sim compatibility)
   return factory.createFromUrl(agentUrl, '')
 }
 

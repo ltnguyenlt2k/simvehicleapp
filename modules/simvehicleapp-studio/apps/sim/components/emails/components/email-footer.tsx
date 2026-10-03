@@ -1,4 +1,4 @@
-import { Container, Img, Link, Section } from '@react-email/components'
+import { Container, Section } from '@react-email/components'
 import { baseStyles, colors, spacing, typography } from '@/components/emails/_styles'
 import { isHosted } from '@/lib/core/config/env-flags'
 import { getBaseUrl } from '@/lib/core/utils/urls'
@@ -67,42 +67,7 @@ export function EmailFooter({
                     &nbsp;
                   </td>
                   <td>
-                    <table cellPadding={0} cellSpacing={0} style={{ border: 0 }}>
-                      <tbody>
-                        <tr>
-                          <td align='left' style={{ padding: '0 8px 0 0' }}>
-                            <Link href={`${baseUrl}/x`} rel='noopener noreferrer'>
-                              <Img
-                                src={`${baseUrl}/static/x-icon.png`}
-                                width='20'
-                                height='20'
-                                alt='X'
-                              />
-                            </Link>
-                          </td>
-                          <td align='left' style={{ padding: '0 8px' }}>
-                            <Link href={`${baseUrl}/discord`} rel='noopener noreferrer'>
-                              <Img
-                                src={`${baseUrl}/static/discord-icon.png`}
-                                width='20'
-                                height='20'
-                                alt='Discord'
-                              />
-                            </Link>
-                          </td>
-                          <td align='left' style={{ padding: '0 8px' }}>
-                            <Link href={`${baseUrl}/github`} rel='noopener noreferrer'>
-                              <Img
-                                src={`${baseUrl}/static/github-icon.png`}
-                                width='20'
-                                height='20'
-                                alt='GitHub'
-                              />
-                            </Link>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    {/* SV: Sim social links (X, Discord, GitHub) removed in the rebrand (M01-T06). */}
                   </td>
                   <td style={baseStyles.gutter} width={spacing.gutter}>
                     &nbsp;

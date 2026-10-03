@@ -156,3 +156,18 @@ bun.lock
 # M01-T05 — toolbar/search allowlist (NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST, default sv_*,note) and hidden routes
 apps/sim/proxy.ts
 apps/sim/hooks/use-permission-config.ts
+
+# M01-T06 — rebrand of user-visible strings, docs links, emails (brand from lib/sv/oss/brand)
+apps/sim/app/api/auth/trello/authorize/route.ts
+apps/sim/app/api/tools/onepassword/utils.ts
+apps/sim/app/api/tools/slack/read-messages/route.ts
+apps/sim/app/(landing)/components/structured-data.tsx
+apps/sim/app/workspace/[workspaceId]/settings/[section]/page.tsx
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/command-list/command-list.tsx
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/editor.tsx
+apps/sim/components/emails/auth/onboarding-followup-email.tsx
+apps/sim/components/emails/billing/abandoned-checkout-email.tsx
+apps/sim/lib/a2a/utils.ts
+apps/sim/lib/sv/oss/brand/config.ts
+apps/sim/lib/sv/oss/oss.test.ts
+apps/sim/tools/google_vault/utils.ts

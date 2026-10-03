@@ -38,6 +38,7 @@ import { cn } from '@/lib/core/utils/cn'
 import { isMacPlatform } from '@/lib/core/utils/platform'
 import { buildFolderTree, getFolderPath } from '@/lib/folders/tree'
 import { captureEvent } from '@/lib/posthog/client'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 import { useRegisterGlobalCommands } from '@/app/workspace/[workspaceId]/providers/global-commands-provider'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { createCommands } from '@/app/workspace/[workspaceId]/utils/commands-utils'
@@ -803,7 +804,8 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
   const handleOpenHelpFromMenu = useCallback(() => setIsHelpModalOpen(true), [])
 
   const handleOpenDocs = useCallback(() => {
-    window.open('https://docs.sim.ai', '_blank', 'noopener,noreferrer')
+    // SV: documentation comes from the brand config (M01-T06).
+    window.open(getBrandConfig().documentationUrl, '_blank', 'noopener,noreferrer')
     captureEvent(posthog, 'docs_opened', { source: 'help_menu' })
   }, [posthog])
 

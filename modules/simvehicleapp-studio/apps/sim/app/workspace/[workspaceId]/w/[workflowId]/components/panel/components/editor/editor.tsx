@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useStoreWithEqualityFn } from 'zustand/traditional'
 import { Button, DashedDividerLine, FieldDivider, Loader, Tooltip } from '@/components/emcn'
 import { captureEvent } from '@/lib/posthog/client'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 import {
   buildCanonicalIndex,
   evaluateSubBlockCondition,
@@ -339,7 +340,8 @@ export function Editor() {
    */
   const handleOpenDocs = useCallback(() => {
     const docsLink = isSubflow ? subflowConfig?.docsLink : blockConfig?.docsLink
-    window.open(docsLink || 'https://docs.sim.ai/quick-reference', '_blank', 'noopener,noreferrer')
+    // SV: fall back to the brand documentation instead of docs.sim.ai (M01-T06).
+    window.open(docsLink || getBrandConfig().documentationUrl, '_blank', 'noopener,noreferrer')
     captureEvent(posthog, 'docs_opened', {
       source: 'editor_button',
       block_type: currentBlock?.type,

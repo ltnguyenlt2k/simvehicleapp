@@ -8,6 +8,7 @@ import { env } from '@/lib/core/config/env'
 import { getBaseUrl } from '@/lib/core/utils/urls'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
 import { getCanonicalScopesForProvider } from '@/lib/oauth/utils'
+import { getBrandConfig } from '@/lib/sv/oss/brand'
 
 const logger = createLogger('TrelloAuthorize')
 
@@ -42,7 +43,7 @@ export const GET = withRouteHandler(async (request: NextRequest) => {
 
     const authUrl = new URL('https://trello.com/1/authorize')
     authUrl.searchParams.set('key', apiKey)
-    authUrl.searchParams.set('name', 'Sim Studio')
+    authUrl.searchParams.set('name', getBrandConfig().name)
     authUrl.searchParams.set('expiration', 'never')
     authUrl.searchParams.set('callback_method', 'fragment')
     authUrl.searchParams.set('response_type', 'token')
