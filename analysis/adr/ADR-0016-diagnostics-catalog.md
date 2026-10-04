@@ -1,6 +1,6 @@
 # ADR-0016: Catalog diagnostics với mã ổn định
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-04) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-WF-04; Master Plan 7.2, 13.4; [06 §6](../06-ir-and-compiler.md#6-diagnostics-format-không-đổi-so-với-master-plan-bổ-sung-trường)
 
 ## Decision

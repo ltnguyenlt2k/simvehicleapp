@@ -95,7 +95,7 @@ flowchart TB
 | [0013](ADR-0013-dataflow-and-expression-language.md) | Dataflow bằng tham chiếu + expression language — **Accepted** | L1 | M3 |
 | [0014](ADR-0014-ir-v1.md) | Canonical IR v1 | L1 | M4 |
 | [0015](ADR-0015-type-and-unit-system.md) | Hệ kiểu & đơn vị | L1 | M4 |
-| [0016](ADR-0016-diagnostics-catalog.md) | Catalog diagnostics | L1 | M4 |
+| [0016](ADR-0016-diagnostics-catalog.md) | Catalog diagnostics — **Accepted** | L1 | M4 |
 | [0017](ADR-0017-simulator.md) | Simulator IR + virtual clock | L1 | M5 |
 | [0018](ADR-0018-vss-array-and-full-datatype-coverage.md) | **VSS array & full datatype coverage** (UI→expression→IR→codegen→runtime) — **Accepted** | L1 | M3/M4 |
 | [0020](ADR-0020-backend-plugin-contract.md) | Backend plugin contract (`compiler-code-<lang>`) | L1 | M6 |

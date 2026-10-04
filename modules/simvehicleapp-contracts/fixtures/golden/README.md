@@ -13,6 +13,8 @@ Conformance cases for single semantics rules live next door in `../conformance/`
 | GW-F | Welcome Sequence | `graph.json`, `scenario.yaml` | M03-T13 |
 | GW-G | Window Close on Rain | `graph.json`, `scenario.yaml` | M03-T13 — 4 × `sv_set_actuator` (block VSS paths are static) |
 
+Deviations of GW-C, GW-D, GW-G from `analysis/05` §5 accepted by the PO on 2026-10-04 (`sv_set_many` and range lookup wait for a real need).
+
 Conventions (since M2/M3): edge handles are BlockSpec handle ids (`source`, `target`, `then`, `stable`, `loop-start-source` …,
 ADR-0011 Notes); references use Sim-normalized block names (`<speedchanged.value>`, ADR-0013 Notes); expression props
 are SVX source strings, other props are literals. Expectations are hand-derived; `packages/ts/src/conformance.test.ts`

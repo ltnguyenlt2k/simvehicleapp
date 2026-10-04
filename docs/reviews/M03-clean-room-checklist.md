@@ -24,4 +24,4 @@
 | 7 | CI giữ bảo vệ cho thay đổi sau này | ✔ | job `studio-guards` chạy `scratch_denylist.py` mỗi push |
 
 ## 3. Ký
-- [ ] PO xác nhận checklist (điền ngày, tên): ______________________
+- [x] PO xác nhận checklist — 2026-10-04 (PO, qua phiên làm việc với agent).

@@ -30,7 +30,7 @@
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
-| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 10/14 |
+| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 11/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
@@ -79,7 +79,7 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 | Dockerfiles compose meta (app/realtime/migrations) | 0005 | ✔ | 2026-10-03: dùng Dockerfile upstream `docker/{app,realtime,db}.Dockerfile` (migrations = `db.Dockerfile`), fragment `compose.simvehicleapp.yaml` build từ module. Bằng chứng compose up với image build từ source: realtime/migrations build local, app build CI (artifact run 37123511051) → `up --wait` healthy, migrations exit 0, title SimVehicleApp | T08 |
 | BFF skeleton `/api/sv/health` | 0007 | ✔ | 2026-10-04: tái dùng panel Variables của Sim; `sv_var_get/set`, `sv_counter` chọn tên qua dropdown biến của workflow; ánh xạ kiểu ở Notes ADR-0012 | T09 |
 | Layout editor: action bar + bottom dock + banner an toàn | 0008 | ✔ | 2026-10-04: container `loop`/`parallel` của Sim mang `sv_repeat`/`sv_while`/`sv_parallel` (`lib/sv/container-mapping.ts`, test); mode không hỗ trợ bị ẩn → `CONTAINER_INVALID`; toolbar có Loop/Parallel | T10 |
-| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | ☐ | Chờ ADR-0016 Accepted (Notes rà soát 2026-10-04) | T11 |
+| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | 🔄 | ADR-0016 Accepted 2026-10-04 (PO); đang làm | T11 |
 | i18n check (Q8) | — | ✔ | 2026-10-04: 38 ca `contracts/fixtures/conformance/C01…C38` + test nhất quán (schema, ref, VSS, thứ tự thời gian); chốt các điểm ngữ nghĩa ở Notes ADR-0012 | T12 |
 
 ## M2 — VSS catalog & vehicle blocks
@@ -118,7 +118,7 @@ ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis
 | `POST /lint` realtime (S0–S3 + một phần S6) | 0016 | ☐ | debounce 300 ms | T11 |
 | Conformance scenarios ≥30 cho ADR-0012 | 0012 | ☐ | | T12 |
 | 7 golden workflow dựng trên canvas | — | 🔄 | 2026-10-04: GW-A…GW-G `graph.json` + `scenario.yaml` (lệch: GW-C ternary, GW-D/GW-G 4× Set); còn: dựng trên UI không lỗi lint (cần T11) + `sim-state.json` | T13 |
-| Clean-room review checklist | 0004 | 🔄 | 2026-10-04: `docs/reviews/M03-clean-room-checklist.md` lập xong, chờ PO ký | T14 |
+| Clean-room review checklist | 0004 | ✔ | 2026-10-04: `docs/reviews/M03-clean-room-checklist.md` — 7 mục có bằng chứng, PO ký 2026-10-04 | T14 |
 
 ## M4 — Compiler & IR
 ADR: [0014](../analysis/adr/ADR-0014-ir-v1.md), [0015](../analysis/adr/ADR-0015-type-and-unit-system.md), [0016](../analysis/adr/ADR-0016-diagnostics-catalog.md), [0018](../analysis/adr/ADR-0018-vss-array-and-full-datatype-coverage.md) · Phụ thuộc: M3 · Chi tiết: [phases/M04](../analysis/phases/M04-compiler-ir.md)
