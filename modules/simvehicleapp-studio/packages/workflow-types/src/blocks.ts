@@ -55,6 +55,8 @@ export type SubBlockType =
   | 'table-selector'
   | 'column-selector'
   | 'modal'
+  // SV: SimVehicleApp subBlock types (ADR-0011 §5)
+  | 'vss-path-selector'
 
 export interface OutputCondition {
   field: string

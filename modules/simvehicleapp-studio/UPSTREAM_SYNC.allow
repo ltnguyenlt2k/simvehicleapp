@@ -202,3 +202,9 @@ apps/sim/package.json
 # M1 acceptance gate — Playwright E2E (own package, not a Sim workspace)
 e2e/*
 apps/sim/app/workspace/[workspaceId]/w/components/sidebar/components/search-modal/search-modal.tsx
+
+# M02-T07/T12 — VSS catalog BFF (/api/sv/catalog/*, lib/sv/catalog-proxy) + vss-path-selector subBlock
+apps/sim/hooks/queries/sv-catalog.ts
+packages/workflow-types/src/blocks.ts
+apps/sim/blocks/types.ts
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/sub-block.tsx

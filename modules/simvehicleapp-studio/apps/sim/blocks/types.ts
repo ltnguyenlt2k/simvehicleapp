@@ -258,6 +258,9 @@ export interface SubBlockConfig {
   id: string
   title?: string
   type: SubBlockType
+  // SV: VSS binding of a `vss-path-selector` (BlockSpec `vssKinds`, ADR-0010 §6 / ADR-0018 §2)
+  vssKinds?: Array<'sensor' | 'actuator' | 'attribute'>
+  vssWrites?: boolean
   mode?: 'basic' | 'advanced' | 'both' | 'trigger' | 'trigger-advanced' // Default is 'both' if not specified. 'trigger' means only shown in trigger mode. 'trigger-advanced' is for advanced canonical pair members shown in trigger mode
   canonicalParamId?: string
   /** Controls parameter visibility in agent/tool-input context */

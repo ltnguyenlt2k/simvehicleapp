@@ -52,6 +52,8 @@ import {
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/components'
 import { MODAL_REGISTRY } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/components/modal-registry'
 import { useDependsOnGate } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/hooks/use-depends-on-gate'
+// SV: VSS path selector (M02-T07)
+import { VssPathSelector } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
 import type { SubBlockConfig } from '@/blocks/types'
 import { useWebhookManagement } from '@/hooks/use-webhook-management'
 
@@ -1164,6 +1166,20 @@ function SubBlockComponent({
             previewValue={previewValue as any}
             disabled={isDisabled}
             wandControlRef={wandControlRef}
+          />
+        )
+
+      // SV: SimVehicleApp subBlock (ADR-0011 §5)
+      case 'vss-path-selector':
+        return (
+          <VssPathSelector
+            blockId={blockId}
+            subBlockId={config.id}
+            kinds={config.vssKinds ?? ['sensor', 'actuator', 'attribute']}
+            writes={config.vssWrites}
+            isPreview={isPreview}
+            previewValue={previewValue as string | null | undefined}
+            disabled={isDisabled}
           />
         )
 
