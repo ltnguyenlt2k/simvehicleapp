@@ -88,7 +88,7 @@ export function parseVssRelease(doc: unknown, release: string): VssModel {
     visit(root, root, doc[root]);
   }
 
-  return { release, roots, nodes, children, counts, modelHash: sha256Hex(canonicalJson(doc)) };
+  return { release, roots, nodes, children, counts, modelHash: `sha256:${sha256Hex(canonicalJson(doc))}` };
 }
 
 function normalizeNode(path: string, name: string, raw: Raw): VssNode {

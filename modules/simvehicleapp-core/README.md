@@ -15,4 +15,8 @@ bun test
 |---|---|---|
 | `packages/vss` (`@simvehicleapp/vss`) | Parse VSS release JSON → node chuẩn hoá (shape `VssNode` của `openapi/vss-catalog.v1.yaml`), phân loại block khả dụng, `modelHash` = sha256 JSON canonical (key sắp xếp). int64/uint64 → chuỗi thập phân (ADR-0018 §7); lỗi cấu trúc ⇒ `VssParseError`, không bỏ dữ liệu. Nguồn (`VehicleModelSource`): `LocalFileSource` (seed, layout `<dir>/<vX.Y>/vss_rel_X.Y.json`), `HttpSource` (chỉ release có pin sha256 trong `COVESA_PINS`, cache `sv-vss`), `CompositeSource`. Search: `buildSearchIndex(model).search(q, {kind, limit})`. | M02-T01..T03 |
 
+| `services/vss-catalog` | HTTP `:4010` (chỉ mạng `sv-internal`) theo `openapi/vss-catalog.v1.yaml`: `/releases`, `/tree`, `/search`, `/nodes`, `/model-hash` + `/healthz`, `/version` (service-kit, auth `x-sv-internal`). Cache parse theo release, ETag mạnh. Env: `SV_VSS_DEFAULT_RELEASE` (v4.0), `SV_VSS_HTTP` (0 = offline), `SV_VSS_SEED_DIR`, `SV_VSS_CACHE_DIR`. | M02-T04 |
+
+Image: `docker compose build contracts && docker compose build vss-catalog` (hoặc `scripts/sv build`); contracts vào build qua `additional_contexts: docker-image://simvehicleapp/contracts:dev`.
+
 Node gốc (`Vehicle`) có trong `model.nodes` nhưng không hợp lệ theo `vssPath` của contract (cần ≥ 1 dấu chấm) — service chỉ trả các node con của gốc.

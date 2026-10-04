@@ -1,0 +1,5 @@
+node_modules
+**/node_modules
+**/.test-tmp
+**/*.test.ts
+**/__snapshots__

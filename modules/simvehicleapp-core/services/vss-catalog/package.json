@@ -1,0 +1,16 @@
+{
+  "name": "@simvehicleapp/vss-catalog-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "vss-catalog HTTP service on :4010 (ADR-0010, openapi/vss-catalog.v1.yaml).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@simvehicleapp/vss": "workspace:*"
+  }
+}

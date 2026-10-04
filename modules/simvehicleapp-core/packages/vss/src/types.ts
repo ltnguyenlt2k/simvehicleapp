@@ -53,6 +53,6 @@ export interface VssModel {
   nodes: ReadonlyMap<string, VssNode>;
   children: ReadonlyMap<string, readonly string[]>;
   counts: Readonly<Record<NodeKind, number>>;
-  /** sha256 (hex) of the canonical sorted-keys JSON of the release document (ADR-0010 §3). */
+  /** `sha256:<hex>` (contracts `common#/$defs/sha256`) of the canonical sorted-keys JSON of the release document (ADR-0010 §3). */
   modelHash: string;
 }

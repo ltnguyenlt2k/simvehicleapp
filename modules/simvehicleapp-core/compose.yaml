@@ -1,0 +1,27 @@
+# simvehicleapp-core — self-contained compose fragment. Building it needs image simvehicleapp/contracts:dev
+# (modules/simvehicleapp-contracts; `scripts/sv build` builds it first).
+services:
+  vss-catalog:
+    image: simvehicleapp/vss-catalog:dev
+    build:
+      context: .
+      dockerfile: services/vss-catalog/Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_VSS_DEFAULT_RELEASE: ${SV_VSS_DEFAULT_RELEASE:-v4.0}
+      # 0 = offline: only the seeded releases (v4.0, v4.2). 1 = also download other pinned releases.
+      SV_VSS_HTTP: ${SV_VSS_HTTP:-0}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    volumes:
+      - sv-vss:/var/cache/sv-vss
+    # Internal only (openapi/vss-catalog.v1.yaml): the studio BFF reaches it as http://vss-catalog:4010.
+    networks: [sv-internal]
+    restart: unless-stopped
+
+volumes:
+  sv-vss:
+
+networks:
+  sv-internal:

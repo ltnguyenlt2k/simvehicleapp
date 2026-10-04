@@ -71,10 +71,13 @@ services:
     build: { context: ../modules/simvehicleapp-studio, dockerfile: docker/realtime.Dockerfile }
     ports: ["127.0.0.1:3002:3002"]
     networks: [internal, edge]
-  vss-catalog:
-    build: { context: ../modules/simvehicleapp-core, dockerfile: services/vss-catalog/Dockerfile }
-    environment: [SV_VSS_DIR=/vss, SV_VSS_DEFAULT_RELEASE=v4.0]
-    volumes: [sv-vss:/vss, ./config/vss:/vss-seed:ro]
+  vss-catalog:   # thực tế: modules/simvehicleapp-core/compose.yaml (M02-T04)
+    build:
+      context: .   # modules/simvehicleapp-core
+      dockerfile: services/vss-catalog/Dockerfile
+      additional_contexts: { contracts: "docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}" }
+    environment: [INTERNAL_API_SECRET, SV_VSS_DEFAULT_RELEASE=v4.0, SV_VSS_HTTP=0]   # seed v4.0/v4.2 nằm trong image: /opt/sv/vss/<vX.Y>/
+    volumes: [sv-vss:/var/cache/sv-vss]   # cache cho HttpSource (chỉ release có pin sha256)
     networks: [internal]
   compiler:
     build: { context: ../modules/simvehicleapp-core, dockerfile: services/compiler/Dockerfile }

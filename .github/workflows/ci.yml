@@ -190,3 +190,30 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bun test
+
+  core-image:
+    name: core images build + vss-catalog smoke
+    runs-on: ubuntu-24.04
+    env:
+      # Own project name: `down -v` must never touch the developer stack (project "simvehicleapp") if run locally.
+      COMPOSE: docker compose -p sv-ci-core --env-file scripts/ci/ci.env
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: $COMPOSE build contracts && $COMPOSE build vss-catalog
+      - run: $COMPOSE up -d --wait --wait-timeout 60 vss-catalog
+      - name: Smoke the running service (auth, seeds, ETag)
+        run: |
+          $COMPOSE exec -T vss-catalog bun -e '
+            const h = { "x-sv-internal": process.env.INTERNAL_API_SECRET };
+            const get = (p, x = {}) => fetch("http://127.0.0.1:4010" + p, { headers: { ...h, ...x } });
+            const must = (c, m) => { if (!c) { console.error("FAIL", m); process.exit(1); } console.log("ok", m); };
+            must((await fetch("http://127.0.0.1:4010/releases")).status === 401, "no secret => 401");
+            const rel = await (await get("/releases")).json();
+            must(JSON.stringify(rel.releases.map((r) => r.release)) === "[\"v4.0\",\"v4.2\"]", "seeded v4.0 + v4.2");
+            const tree = await get("/tree?depth=16");
+            must((await tree.json()).nodes.length === 1196, "v4.0 tree below root has 1196 nodes");
+            must((await get("/tree?depth=16", { "if-none-match": tree.headers.get("etag") })).status === 304, "ETag => 304");
+            const nodes = await (await get("/nodes?paths=Vehicle.Speed&release=v4.2")).json();
+            must(nodes.nodes[0].kind === "sensor" && nodes.release === "v4.2", "v4.2 lookup");'
+      - if: always()
+        run: $COMPOSE logs vss-catalog && $COMPOSE down -v

@@ -133,7 +133,7 @@ describe("model hash", () => {
   });
 
   test("is pinned for the seeded releases (canonicalization must not drift)", () => {
-    expect(v40.modelHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(v40.modelHash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(v40.modelHash).not.toBe(v42.modelHash);
     expect({ v40: v40.modelHash, v42: v42.modelHash }).toMatchSnapshot();
   });
