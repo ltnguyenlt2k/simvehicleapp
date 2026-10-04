@@ -6,11 +6,18 @@ import { loadSchema, SCHEMA_NAMES } from "@simvehicleapp/contracts";
 import { createLogger, createService } from "@simvehicleapp/service-kit";
 import { BLOCK_SPECS } from "@simvehicleapp/blocks";
 import { createCompilerHandler } from "./app.ts";
+import { CatalogUnavailableError } from "./vehicle-lookup.ts";
+
+let catalogDown = false;
+const vehicle = async (_release: string, paths: readonly string[]) => {
+  if (catalogDown) throw new CatalogUnavailableError("down");
+  return new Map(paths.map((p) => [p, p === "Vehicle.Speed" ? ({ path: p, name: "Speed", kind: "sensor", datatype: "float", unit: "km/h" } as const) : null]));
+};
 
 const SECRET = "test-secret";
 const handler = createService(
   { name: "compiler", version: "0.1.0", secret: SECRET, logger: createLogger({ service: "compiler", write: () => {} }) },
-  createCompilerHandler(),
+  createCompilerHandler({ vehicle }),
 );
 const call = (path: string, init: RequestInit = {}) =>
   handler(new Request(`http://compiler:4020${path}`, { ...init, headers: { "x-sv-internal": SECRET, ...(init.headers ?? {}) } }));
@@ -49,7 +56,7 @@ test("auth is required; /healthz and /version are public", async () => {
 });
 
 test("routes of later milestones answer 501, unknown routes 404, wrong method 405", async () => {
-  for (const p of ["/compile", "/lint", "/simulate", "/opcodes"]) {
+  for (const p of ["/compile", "/simulate", "/opcodes"]) {
     expect(Object.keys(openapi.paths)).toContain(p);
     const res = await call(p, { method: p === "/opcodes" ? "GET" : "POST" });
     expect(res.status).toBe(501);
@@ -57,4 +64,36 @@ test("routes of later milestones answer 501, unknown routes 404, wrong method 40
   }
   expect((await call("/nope")).status).toBe(404);
   expect((await call("/blocks", { method: "POST" })).status).toBe(405);
+});
+
+const graph = (path: string) => ({
+  graphVersion: "1.0.0",
+  workflowId: "wf",
+  revision: 1,
+  name: "t",
+  vss: { release: "v4.0" },
+  variables: [],
+  blocks: [{ id: "b1", type: "sv_read_signal", name: "Read", props: { path }, parentId: null }],
+  edges: [],
+});
+
+test("POST /lint returns diagnostics that conform to the contract (M03-T11)", async () => {
+  const res = await call("/lint", { method: "POST", body: JSON.stringify({ graph: graph("Vehicle.Nope") }), headers: { "content-type": "application/json" } });
+  expect(res.status).toBe(200);
+  const body = (await res.json()) as { diagnostics: { code: string; blockId?: string }[] };
+  const validate = ajv.compile(openapi.paths["/lint"].post.responses["200"].content["application/json"].schema);
+  if (!(validate(body) as boolean)) throw new Error(ajv.errorsText(validate.errors));
+  expect(body.diagnostics.map((d) => d.code).sort()).toEqual(["BLOCK_UNREACHABLE", "VEHICLE_PATH_NOT_FOUND"]);
+});
+
+test("POST /lint input errors and catalog outage", async () => {
+  const post = (body: string) => call("/lint", { method: "POST", body, headers: { "content-type": "application/json" } });
+  expect((await post("{")).status).toBe(400);
+  expect((await post("{}")).status).toBe(400);
+  expect((await call("/lint")).status).toBe(405);
+  const schema = await post(JSON.stringify({ graph: { nope: 1 } }));
+  expect(((await schema.json()) as { diagnostics: { code: string }[] }).diagnostics[0]!.code).toBe("GRAPH_SCHEMA_INVALID");
+  catalogDown = true;
+  expect((await post(JSON.stringify({ graph: graph("Vehicle.Speed") }))).status).toBe(503);
+  catalogDown = false;
 });

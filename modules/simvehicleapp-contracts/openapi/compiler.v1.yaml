@@ -82,6 +82,9 @@ paths:
           content:
             application/json:
               schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+        "400": { description: "Body is not JSON or has no `graph` (a graph that breaks the WorkflowGraph schema is a 200 with GRAPH_SCHEMA_INVALID)." }
+        "413": { description: "Body larger than 2 MB." }
+        "503": { description: "vss-catalog unavailable; lint needs the VSS model of the graph's release." }
   /simulate:
     post:
       operationId: simulate

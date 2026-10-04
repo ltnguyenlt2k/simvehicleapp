@@ -249,5 +249,14 @@ jobs:
             const want = ["sv_on_signal_changed", "sv_read_attribute", "sv_read_signal", "sv_set_actuator"];
             if (res.status !== 200 || types.length !== Number(process.env.SPECS) || !want.every((t) => types.includes(t))) { console.error("FAIL /blocks", res.status, types); process.exit(1); }
             console.log("ok compiler /blocks", types.length, "specs");'
+          $COMPOSE exec -T compiler bun -e '
+            const graph = { graphVersion: "1.0.0", workflowId: "smoke", revision: 1, name: "smoke", vss: { release: "v4.2" }, variables: [],
+              blocks: [{ id: "b1", type: "sv_read_attribute", name: "Refuel", props: { path: "Vehicle.Body.RefuelPosition" }, parentId: null },
+                       { id: "b2", type: "sv_read_signal", name: "Nope", props: { path: "Vehicle.Nope" }, parentId: null }], edges: [] };
+            const res = await fetch("http://127.0.0.1:4020/lint", { method: "POST", headers: { "x-sv-internal": process.env.INTERNAL_API_SECRET, "content-type": "application/json" }, body: JSON.stringify({ graph }) });
+            const codes = (await res.json()).diagnostics.map((d) => d.code).sort().join(",");
+            const want = "BLOCK_UNREACHABLE,BLOCK_UNREACHABLE,VEHICLE_PATH_DEPRECATED,VEHICLE_PATH_NOT_FOUND";
+            if (res.status !== 200 || codes !== want) { console.error("FAIL /lint", res.status, codes); process.exit(1); }
+            console.log("ok compiler /lint via vss-catalog", codes);'
       - if: always()
         run: $COMPOSE logs vss-catalog compiler && $COMPOSE down -v
