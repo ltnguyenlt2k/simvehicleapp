@@ -29,7 +29,7 @@
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
-| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ☐ | 0/12 |
+| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 0/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
@@ -87,7 +87,7 @@ ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| `packages/vss` (parse/classify/normalize/hash) | 0010 | ☐ | Fixture ≥20 path (counts 287/425/379/106) | T01 |
+| `packages/vss` (parse/classify/normalize/hash) | 0010 | 🔄 | Fixture ≥20 path (counts 287/425/379/106) | T01 |
 | VSS sources (LocalFile seed v4.0/v4.2 + Http cache pin tag) | 0010 | ☐ | | T02 |
 | Search index (fuzzy, filter kind) | 0010 | ☐ | | T03 |
 | Service `vss-catalog` + ETag + OpenAPI | 0010 | ☐ | `:4010` | T04 |

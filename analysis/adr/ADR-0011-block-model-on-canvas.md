@@ -1,6 +1,6 @@
 # ADR-0011: Block vehicle trên canvas Sim — block generic tham số hoá bằng VSS path (không dùng custom-blocks)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-04) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-BLK-01..09, FR-VSS-02, R3–R5; thay thế Master Plan ADR-001; [00 F1](../00-research-findings.md#24-phát-hiện-quan-trọng--lệch-so-với-master-plan-v2); [11b — bảng 41 block mới ↔ cơ chế Sim tham khảo](../11b-block-inventory-and-migration.md#7-bảng-tổng-41-block-mới--cơ-chế-sim-tham-khảo--vss-minh-hoạ-đã-verify-thật)
 
 ## Context

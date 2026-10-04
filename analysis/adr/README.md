@@ -89,15 +89,15 @@ flowchart TB
 | [0007](ADR-0007-service-decomposition-and-contracts.md) | Phân rã service, tầng & contract | L0 | M0 |
 | [0008](ADR-0008-sim-refactor-strategy.md) | Chiến lược refactor Sim | L0 | M1 |
 | [0009](ADR-0009-dev-phase-module-folders.md) | **Dev phase: module folders + root compose (submodule khi release)** — Accepted | L0 | M0 ✔ |
-| [0010](ADR-0010-vss-catalog.md) | VSS Catalog service | L1 | M2 |
-| [0011](ADR-0011-block-model-on-canvas.md) | Block vehicle trên canvas Sim (generic + VSS-driven) | L1 | M2 |
+| [0010](ADR-0010-vss-catalog.md) | VSS Catalog service — **Accepted** | L1 | M2 |
+| [0011](ADR-0011-block-model-on-canvas.md) | Block vehicle trên canvas Sim (generic + VSS-driven) — **Accepted** | L1 | M2 |
 | [0012](ADR-0012-execution-semantics.md) | Ngữ nghĩa thực thi (trigger/run/yield/policy) | L1 | M3 |
 | [0013](ADR-0013-dataflow-and-expression-language.md) | Dataflow bằng tham chiếu + expression language | L1 | M3 |
 | [0014](ADR-0014-ir-v1.md) | Canonical IR v1 | L1 | M4 |
 | [0015](ADR-0015-type-and-unit-system.md) | Hệ kiểu & đơn vị | L1 | M4 |
 | [0016](ADR-0016-diagnostics-catalog.md) | Catalog diagnostics | L1 | M4 |
 | [0017](ADR-0017-simulator.md) | Simulator IR + virtual clock | L1 | M5 |
-| [0018](ADR-0018-vss-array-and-full-datatype-coverage.md) | **VSS array & full datatype coverage** (UI→expression→IR→codegen→runtime) | L1 | M3/M4 |
+| [0018](ADR-0018-vss-array-and-full-datatype-coverage.md) | **VSS array & full datatype coverage** (UI→expression→IR→codegen→runtime) — **Accepted** | L1 | M3/M4 |
 | [0020](ADR-0020-backend-plugin-contract.md) | Backend plugin contract (`compiler-code-<lang>`) | L1 | M6 |
 | [0021](ADR-0021-cpp-runtime-library.md) | Runtime C++ (strand, policies, trace) | L1 | M6 |
 | [0022](ADR-0022-cpp-codegen-strategy.md) | Chiến lược sinh C++ | L1 | M6 |

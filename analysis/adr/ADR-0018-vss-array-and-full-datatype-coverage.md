@@ -1,6 +1,6 @@
 # ADR-0018: Bao phủ đầy đủ datatype VSS — bao gồm mảng (array) — từ UI → expression → IR → codegen → runtime
 
-- **Status:** Proposed · **Date:** 2026-10-02 · **Level:** L1
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-04) · **Date:** 2026-10-02 · **Level:** L1
 - **Related:** FR-VSS-01, FR-BLK-01..04, NFR-05 (no silent data loss); mở rộng [ADR-0013](ADR-0013-dataflow-and-expression-language.md), [ADR-0015](ADR-0015-type-and-unit-system.md), [ADR-0016](ADR-0016-diagnostics-catalog.md), [ADR-0022](ADR-0022-cpp-codegen-strategy.md); [06 §4-5](../06-ir-and-compiler.md), [05](../05-blocks-and-execution-model.md)
 
 ## Context

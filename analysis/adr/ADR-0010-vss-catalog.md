@@ -1,6 +1,6 @@
 # ADR-0010: VSS Catalog service (nguồn duy nhất cho toolbar & validator)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-04) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-VSS-01..03, R2; Master Plan Part 5.1–5.3; [00 §3.9](../00-research-findings.md#39-vss-40-json-đã-tải-và-phân-tích)
 
 ## Context
