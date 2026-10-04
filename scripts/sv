@@ -3,6 +3,7 @@
 #   scripts/sv build            build all images in dependency order
 #   scripts/sv up               start everything (runtime + toolchain + ide + studio)
 #   scripts/sv down [-v]        stop (−v also removes volumes)
+#   scripts/sv refresh [--latest]  update the running stack to the pushed HEAD (studio image from CI, keeps data)
 #   scripts/sv smoke            S-1/S-2 smoke: new project offline build + run app + MQTT check
 #   scripts/sv reset-caches     drop conan/velocitas volumes after rebuilding the toolchain image
 set -euo pipefail
@@ -17,5 +18,6 @@ case "${1:-}" in
   down)  $DC down "${@:2}" ;;
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache ;;
   smoke) exec spikes/smoke.sh ;;
-  *) sed -n '2,8p' "$0"; exit 1 ;;
+  refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
+  *) sed -n '2,9p' "$0"; exit 1 ;;
 esac
