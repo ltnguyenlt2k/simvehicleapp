@@ -34,3 +34,10 @@
 
 ## Verification
 Test "cố ý sai" cho mỗi mã error P0 (Master Plan Phase 12); snapshot catalog; CI chặn xoá mã.
+
+## Notes / Deviations (2026-10-04, rà trước M03-T11)
+- Contract đã có: `schemas/diagnostics.v1.schema.json` (format §1, thêm `workflowId`) và `diagnostics-catalog.v1.json` (50 mã, gồm 4 mã mảng ADR-0018) — khớp bảng §3.
+- **Chưa có**: `docs/DIAGNOSTICS_CATALOG.md` (sinh từ catalog) và guard CI "chặn xoá/đổi tên mã" (§2, Verification). Đề xuất làm ngay khi Accepted: script sinh doc + kiểm `git show <base>:catalog` ⊆ catalog hiện tại trong job `contracts`.
+- M3 đã dùng mã sẵn có, không thêm mã: `EXPR_SYNTAX`/`EXPR_UNKNOWN_FUNCTION` (parser, kèm `data.reason` máy đọc được), `EXPR_UNKNOWN_REF` (resolver), `CONTAINER_INVALID` (ánh xạ container Sim, M03-T10).
+- `message` hiện là tiếng Anh do core sinh kèm `code` + `data`; i18n theo `code` (§1) thực hiện ở studio khi có bản dịch (M01-T12).
+- Lint M03-T11 = S0–S3 + một phần S6 dùng các mã stage parse/structural/block-config/vehicle-model/control-flow; không cần hệ kiểu (ADR-0015, M4).
