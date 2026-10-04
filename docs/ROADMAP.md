@@ -30,7 +30,7 @@
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
-| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 7/14 |
+| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 10/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
@@ -57,7 +57,7 @@ ADR: [0001](../analysis/adr/ADR-0001-record-architecture-decisions.md)–[0007](
 | Lock + `scripts/modules.sh` quản lý submodule | 0002 | ↷ | Dời tới release theo ADR-0009; dev dùng `scripts/sv` | T03 |
 | `docs/BASELINE.md` (SHA/digest pin) | 0003 | ✔ | File có đủ SHA Sim/template/SDK + digest image | T04 |
 | Contracts v1-alpha (schema workflow-graph/ir/diagnostics/block-spec/…) + fixtures | 0007 | ✔ | Claude Code 2026-10-03. `@simvehicleapp/contracts@1.0.0-alpha.1`: 17 JSON Schema + catalog 50 mã, OpenAPI 3.1 cho 8 service (validate theo meta-schema OAS 3.1), TS types sinh tự động + validator Ajv, `@simvehicleapp/service-kit`; fixture VSS 4.0 + units.yaml (pin `249dc03`), GW-A `graph.json`/`scenario.yaml`. `bun test` 89/89 PASS, `bun run check` PASS, publish `bun link` kiểm từ consumer. commits `8d11a9a` `4a7600d` `07d8d90` `faa2878` `f35ff2a` `48da339` `598d470`. Lưu ý: ADR-0007 vẫn Proposed — Accept là việc của gate M0; AsyncAPI/Python types dời M8/M12 (ngoài phạm vi T05) | T05–T06 |
-| Compose skeleton root (`docker-compose.yml` include 3 fragment) | 0005,0009 | ✔ | `scripts/sv` + `docker-compose.yml` | T07 |
+| Compose skeleton root (`docker-compose.yml` include 3 fragment) | 0005,0009 | ✔ | 2026-10-04: 29 block dựng từ snapshot BlockSpec (`blocks/vehicle/factory.ts`), handle nhánh trên canvas (`svHandles`); block-parity 33 block; E2E `m3-blocks.spec.ts` PASS (CI run 37194043484) — E2E bắt lỗi dropdown đơn vị bị đóng khi đang nhập, đã sửa | T07 |
 | CI chung (license scan, contract-only-deps, compose lint) | 0004,0005 | ✔ | Claude Code 2026-10-03: `scripts/ci/*`, `scripts/license/*`, `.github/workflows/ci.yml` (commits `9aeafad` `4fbd803`). **Local PASS** 2026-10-03: self-test 19/19 (mỗi luật có case vi phạm bị từ chối), compose-lint/contract-only-deps/license-scan PASS, contracts check+test 89/89. **GitHub Actions PASS** 2026-10-03 run #1 [37115615196](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37115615196) @ `4f39bae` (5/5 job). **Còn (không chặn ✔):** PO xác nhận ngoại lệ `argparse@2.0.1` (Python-2.0, dev-only) trong `scripts/license/license-exceptions.txt` | T08 |
 | Spike S-1..S-6 + E-1 (toolchain offline, databroker+MQTT, `set()` semantics, mock-provider, Sim minimal, code-server clangd, devcontainer export) | 0006,0024,0025,0028 | ✔ PASS cả 7 | `docs/spikes/M0-spikes-report.md` | T09–T14 |
 | Cập nhật ADR theo kết quả spike | 0023,0024,0025,0028 | ✔ | 0024/0025/0028 Accepted, 0023 có Notes, 0009 ra đời | T15 |
@@ -77,10 +77,10 @@ ADR: [0003](../analysis/adr/ADR-0003-upstream-baseline-and-fork-policy.md), [000
 | Rebrand (brand.ts, metadata, NOTICE) | 0003 | ✔ | Claude Code 2026-10-03, **làm trước thứ tự theo yêu cầu PO**. Xong: brand kit từ bảng logo PO + thay 60 logo/favicon/icon Sim tại chỗ + NOTICE (commits `7847389` `2206638`; build tất định). Tên/metadata/màu qua `lib/sv/oss/brand` đã kiểm trên image build từ source (2026-10-03). T06 tiếp (`92cf84b`): 0 chuỗi "Sim Studio" trong source, email ký "The SimVehicleApp team", footer bỏ link Sim, docs link từ brand. Visual: PO xác nhận logo trên trình duyệt; E2E kiểm title SimVehicleApp — CI [37143014979](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37143014979). `docsLink` sim.ai trong block Sim đã ẩn xoá ở M11 | T06 |
 | Tắt telemetry mặc định | 0004 | ✔ | Claude Code 2026-10-03 (`0c00217`): bỏ collector mặc định `telemetry.simstudio.ai` (server OTel + relay `/api/telemetry`) — chỉ gửi khi cấu hình `TELEMETRY_ENDPOINT`/`OTEL_EXPORTER_OTLP_ENDPOINT`; test relay không gọi `fetch` khi không có endpoint; GTM/GA/Profound chặn bởi `isHosted`, PostHog cần cờ + key. CI [37128081909](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37128081909) 9/9 | T07 |
 | Dockerfiles compose meta (app/realtime/migrations) | 0005 | ✔ | 2026-10-03: dùng Dockerfile upstream `docker/{app,realtime,db}.Dockerfile` (migrations = `db.Dockerfile`), fragment `compose.simvehicleapp.yaml` build từ module. Bằng chứng compose up với image build từ source: realtime/migrations build local, app build CI (artifact run 37123511051) → `up --wait` healthy, migrations exit 0, title SimVehicleApp | T08 |
-| BFF skeleton `/api/sv/health` | 0007 | ✔ | Claude Code 2026-10-03 (`98079c8`): `lib/sv/api-client` (`SV_*_URL`, `x-sv-internal`, `x-sv-request-id`, timeout 2 s), route qua `svHealthContract`, cần session; 7 test; `check:api-validation` PASS (thêm vào CI). CI [37128686717](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37128686717) 9/9 | T09 |
-| Layout editor: action bar + bottom dock + banner an toàn | 0008 | ✔ | Claude Code 2026-10-03 (`a3217a1`): `components/sv` — action bar 7 nút disabled (ghi milestone), dock 5 tab rỗng thay terminal executor (ADR-0006), banner NFR-10; DOM test 3. ARIA snapshot Playwright (banner, 7 action disabled, 5 tab dock) PASS trên image build từ source — CI [37143014979](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37143014979) | T10 |
-| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | ✔ | Claude Code 2026-10-03: `scripts/ci/scratch_denylist.py` + `analysis/adr/scratch-opcode-denylist.grep` (khớp nguyên literal trong code SimVehicleApp), `studio_guards.py` (`ee/`, `@/ee/`, copilot service); self-test có case vi phạm. CI [37128686717](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37128686717) | T11 |
-| i18n check (Q8) | — | ✔ | 2026-10-03 [docs/reports/M01-T12-i18n.md](reports/M01-T12-i18n.md): Sim không có i18n UI ⇒ EN mặc định; tiếng Việt cần ADR riêng | T12 |
+| BFF skeleton `/api/sv/health` | 0007 | ✔ | 2026-10-04: tái dùng panel Variables của Sim; `sv_var_get/set`, `sv_counter` chọn tên qua dropdown biến của workflow; ánh xạ kiểu ở Notes ADR-0012 | T09 |
+| Layout editor: action bar + bottom dock + banner an toàn | 0008 | ✔ | 2026-10-04: container `loop`/`parallel` của Sim mang `sv_repeat`/`sv_while`/`sv_parallel` (`lib/sv/container-mapping.ts`, test); mode không hỗ trợ bị ẩn → `CONTAINER_INVALID`; toolbar có Loop/Parallel | T10 |
+| Scratch opcode denylist + `ee/` path guard trong CI | 0004 | ☐ | Chờ ADR-0016 Accepted (Notes rà soát 2026-10-04) | T11 |
+| i18n check (Q8) | — | ✔ | 2026-10-04: 38 ca `contracts/fixtures/conformance/C01…C38` + test nhất quán (schema, ref, VSS, thứ tự thời gian); chốt các điểm ngữ nghĩa ở Notes ADR-0012 | T12 |
 
 ## M2 — VSS catalog & vehicle blocks
 ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR-0011-block-model-on-canvas.md) · Phụ thuộc: M1 · Chi tiết: [phases/M02](../analysis/phases/M02-vss-catalog-and-vehicle-blocks.md)
@@ -117,8 +117,8 @@ ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis
 | Map subflow `parallel`/`loop` Sim → `sv_parallel/sv_repeat/sv_while` | 0011,0012 | ☐ | | T10 |
 | `POST /lint` realtime (S0–S3 + một phần S6) | 0016 | ☐ | debounce 300 ms | T11 |
 | Conformance scenarios ≥30 cho ADR-0012 | 0012 | ☐ | | T12 |
-| 7 golden workflow dựng trên canvas | — | ☐ | export `sim-state.json` | T13 |
-| Clean-room review checklist | 0004 | ☐ | | T14 |
+| 7 golden workflow dựng trên canvas | — | 🔄 | 2026-10-04: GW-A…GW-G `graph.json` + `scenario.yaml` (lệch: GW-C ternary, GW-D/GW-G 4× Set); còn: dựng trên UI không lỗi lint (cần T11) + `sim-state.json` | T13 |
+| Clean-room review checklist | 0004 | 🔄 | 2026-10-04: `docs/reviews/M03-clean-room-checklist.md` lập xong, chờ PO ký | T14 |
 
 ## M4 — Compiler & IR
 ADR: [0014](../analysis/adr/ADR-0014-ir-v1.md), [0015](../analysis/adr/ADR-0015-type-and-unit-system.md), [0016](../analysis/adr/ADR-0016-diagnostics-catalog.md), [0018](../analysis/adr/ADR-0018-vss-array-and-full-datatype-coverage.md) · Phụ thuộc: M3 · Chi tiết: [phases/M04](../analysis/phases/M04-compiler-ir.md)
