@@ -224,3 +224,7 @@ apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/wo
 
 # M03-T10 — container modes limited to sv_repeat/sv_while/sv_parallel
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/hooks/use-subflow-editor.ts
+
+# M03-T11 — realtime lint (graph adapter in lib/sv, BFF /api/sv/lint, lint store, Problems tab, block badge)
+apps/sim/stores/sv/*
+apps/sim/hooks/queries/sv-lint.ts

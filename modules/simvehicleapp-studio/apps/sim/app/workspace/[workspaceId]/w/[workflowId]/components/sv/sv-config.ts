@@ -13,7 +13,7 @@ export const SV_ACTIONS = [
 ] as const
 
 export const SV_DOCK_TABS = [
-  { id: 'problems', label: 'Problems', milestone: 'M4' },
+  { id: 'problems', label: 'Problems', milestone: 'M3' },
   { id: 'simulation', label: 'Simulation timeline', milestone: 'M5' },
   { id: 'run-console', label: 'Run console', milestone: 'M8' },
   { id: 'signals', label: 'Signals', milestone: 'M8' },

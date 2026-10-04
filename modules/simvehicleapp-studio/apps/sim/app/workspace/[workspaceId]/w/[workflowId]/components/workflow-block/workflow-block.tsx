@@ -35,6 +35,8 @@ import {
 } from '@/lib/workflows/subblocks/visibility'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { ActionBar } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar'
+// SV: realtime lint badge (M03-T11)
+import { SvBlockProblemsBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
 import {
   useBlockProperties,
   useChildWorkflow,
@@ -820,6 +822,8 @@ export const WorkflowBlock = memo(function WorkflowBlock({
             </span>
           </div>
           <div className='relative z-10 flex flex-shrink-0 items-center gap-1'>
+            {/* SV: lint result of this block (M03-T11) */}
+            <SvBlockProblemsBadge blockId={id} />
             {isWorkflowSelector &&
               childWorkflowId &&
               typeof childIsDeployed === 'boolean' &&

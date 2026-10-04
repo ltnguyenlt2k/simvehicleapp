@@ -42,7 +42,8 @@ describe('vehicle editor chrome (M01-T10)', () => {
     ])
     expect(html.match(/role="tab"/g)).toHaveLength(5)
     expect(html).toContain('aria-selected="true" ')
-    expect(html).toContain('Problems — coming in M4')
+    expect(html).toContain('data-sv="problems"')
+    expect(html).toContain('No problems')
   })
 
   it('shows the safety boundary notice (NFR-10)', () => {

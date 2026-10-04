@@ -103,7 +103,7 @@ test.describe.serial('M1 gate', () => {
         - tab "Run console"
         - tab "Signals"
         - tab "Build log"
-      - tabpanel: Problems — coming in M4
+      - tabpanel "Problems"
     `)
 
     await page.locator('[data-tab-button="toolbar"]').click()

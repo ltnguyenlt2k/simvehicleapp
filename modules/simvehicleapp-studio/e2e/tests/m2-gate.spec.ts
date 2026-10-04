@@ -148,6 +148,10 @@ test.describe.serial('M2 gate', () => {
     await value.locator('[data-sv-quick-value="true"]').click()
     await expect(value.locator('textarea')).toHaveValue('true')
 
+    // M03-T11: the gate workflow built on the canvas has no lint problems.
+    await page.locator('[data-sv-tab="problems"]').click()
+    await expect(page.locator('[data-sv="problems"]')).toContainText('No problems', { timeout: 20_000 })
+
     await page.reload()
     await expect(node(page, 'When Speed changes')).toBeVisible()
     await expect(node(page, 'Set IsSignaling')).toBeVisible()

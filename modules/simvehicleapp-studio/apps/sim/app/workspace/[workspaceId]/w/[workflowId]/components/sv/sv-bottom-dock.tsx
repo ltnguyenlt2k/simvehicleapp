@@ -1,17 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Button } from '@/components/emcn'
+import { ProblemsList } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
 import {
   SV_DOCK_TABS,
   type SvDockTabId,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
+import { usePanelEditorStore } from '@/stores/panel'
+import { useSvLintStore } from '@/stores/sv/lint/store'
+import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 interface SvBottomDockProps {
   initialTab?: SvDockTabId
 }
 
-/** Bottom dock of the vehicle editor; every tab is empty until its milestone ships. */
+/** Problems tab bound to the lint store (M03-T11); clicking a problem selects its block. */
+function ProblemsTab() {
+  const diagnostics = useSvLintStore((s) => s.diagnostics)
+  const status = useSvLintStore((s) => s.status)
+  const blocks = useWorkflowStore((s) => s.blocks)
+  const blockName = useCallback((blockId: string) => blocks[blockId]?.name, [blocks])
+  const select = useCallback(
+    (blockId: string) => usePanelEditorStore.getState().setCurrentBlockId(blockId),
+    []
+  )
+  return (
+    <ProblemsList
+      diagnostics={diagnostics}
+      status={status}
+      blockName={blockName}
+      onSelect={select}
+    />
+  )
+}
+
+/** Bottom dock of the vehicle editor; tabs without content show the milestone that brings them. */
 export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   const [activeTab, setActiveTab] = useState<SvDockTabId>(initialTab)
   const active = SV_DOCK_TABS.find((tab) => tab.id === activeTab) ?? SV_DOCK_TABS[0]
@@ -36,12 +60,18 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
           </Button>
         ))}
       </div>
-      <div
-        role='tabpanel'
-        className='flex flex-1 items-center justify-center text-[12px] text-[var(--text-muted)]'
-      >
-        {`${active.label} — coming in ${active.milestone}`}
-      </div>
+      {active.id === 'problems' ? (
+        <div role='tabpanel' aria-label='Problems' className='flex min-h-0 flex-1'>
+          <ProblemsTab />
+        </div>
+      ) : (
+        <div
+          role='tabpanel'
+          className='flex flex-1 items-center justify-center text-[12px] text-[var(--text-muted)]'
+        >
+          {`${active.label} — coming in ${active.milestone}`}
+        </div>
+      )}
     </div>
   )
 }

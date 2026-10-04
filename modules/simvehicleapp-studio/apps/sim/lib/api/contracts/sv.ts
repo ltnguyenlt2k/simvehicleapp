@@ -194,3 +194,37 @@ export const svUpdateWorkflowSettingsContract = defineRouteContract({
 
 export type SvWorkflowSettings = z.output<typeof svWorkflowSettingsSchema>
 export type SvUpdateWorkflowSettingsBody = z.input<typeof svUpdateWorkflowSettingsBodySchema>
+
+/** One compiler diagnostic (contracts `diagnostics.v1`, ADR-0016); `code` is public API. */
+export const svDiagnosticSchema = z.object({
+  code: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
+  severity: z.enum(['error', 'warning', 'info']),
+  stage: z.string(),
+  blockId: z.string().optional(),
+  field: z.string().optional(),
+  nodeId: z.string().optional(),
+  workflowId: z.string().optional(),
+  message: z.string(),
+  suggestion: z.string().optional(),
+  docs: z.string(),
+  // untyped-response: diagnostic data is code-specific (reason, span, value…), ADR-0016 §1
+  data: z.record(z.string(), z.unknown()).optional(),
+})
+
+export const svLintBodySchema = z.object({
+  /** WorkflowGraph v1 built by `lib/sv/graph-adapter.ts`; validated by the compiler (GRAPH_SCHEMA_INVALID). */
+  graph: z.record(z.string(), z.unknown()),
+})
+
+export const svLintResponseSchema = z.object({ diagnostics: z.array(svDiagnosticSchema) })
+
+/** `POST /api/sv/lint` — realtime canvas lint through the compiler (M03-T11, analysis/05 §4). */
+export const svLintContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/lint',
+  body: svLintBodySchema,
+  response: { mode: 'json', schema: svLintResponseSchema },
+})
+
+export type SvDiagnostic = z.output<typeof svDiagnosticSchema>
+export type SvLintResponse = z.output<typeof svLintResponseSchema>

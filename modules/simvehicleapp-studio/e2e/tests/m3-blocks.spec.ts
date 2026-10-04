@@ -69,6 +69,13 @@ test.describe.serial('M3 blocks on the canvas', () => {
     await page.getByRole('menuitem', { name: 's', exact: true }).click()
     await expect(duration.getByRole('textbox', { name: 'Duration' })).toHaveValue('2')
 
+    // Realtime lint (M03-T11): the If/Else is not connected to any trigger.
+    await expect(ifElse.locator('[data-sv="block-problems"]')).toBeVisible({ timeout: 20_000 })
+    await page.locator('[data-sv-tab="problems"]').click()
+    await expect(
+      page.locator(`[data-sv="problems"] [data-sv-problem="BLOCK_UNREACHABLE"]`).first()
+    ).toBeVisible()
+
     const stop = await addFromToolbar(page, 'Stop')
     await expect(stop.locator('[data-handleid="target"]')).toHaveCount(1)
     await expect(stop.locator('.react-flow__handle-right')).toHaveCount(0)

@@ -42,6 +42,7 @@ import {
   SvSafetyBanner,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 // SV: VSS signal drops (M02-T10)
+import { SvLintRunner } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
 import {
   dispatchSignalDrop,
   parseSignalPayload,
@@ -4088,6 +4089,8 @@ const WorkflowContent = React.memo(
           {!embedded && <SvActionBar />}
           {/* SV: Read / When changes / Set menu for dropped VSS signals (M02-T10). */}
           {!embedded && <SvSignalDropMenu />}
+          {/* SV: realtime lint of the canvas (M03-T11). */}
+          {!embedded && <SvLintRunner />}
           <div ref={canvasContainerRef} className='relative flex-1 overflow-hidden'>
             {!isWorkflowReady && (
               <div className='absolute inset-0 z-[5] flex items-center justify-center bg-[var(--bg)]'>
