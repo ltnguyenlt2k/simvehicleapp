@@ -5,6 +5,7 @@ import { Search } from 'lucide-react'
 import { Button, ChipInput } from '@/components/emcn'
 import type { SvVssNode } from '@/lib/api/contracts/sv'
 import { useSubBlockValue } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/hooks/use-sub-block-value'
+import { useSvWorkflowRelease } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/use-workflow-release'
 import {
   type SvVssLeafKind,
   searchKindFilter,
@@ -151,11 +152,13 @@ export function VssPathSelector({
   subBlockId,
   kinds,
   writes = false,
-  release,
+  release: releaseProp,
   isPreview = false,
   previewValue,
   disabled = false,
 }: VssPathSelectorProps) {
+  const workflowRelease = useSvWorkflowRelease()
+  const release = releaseProp ?? workflowRelease
   const [storeValue, setStoreValue] = useSubBlockValue<string>(blockId, subBlockId)
   const [editing, setEditing] = useState(false)
   const [query, setQuery] = useState('')

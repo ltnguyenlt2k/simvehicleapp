@@ -43,3 +43,20 @@ export async function forwardCatalogRequest(
   logger.warn('vss-catalog error', { path, status: upstream.status })
   return NextResponse.json({ error: 'VSS catalog is unavailable' }, { status: 502 })
 }
+
+/** Release tags served by vss-catalog, or `null` when the catalog cannot be reached. */
+export async function fetchCatalogReleases(): Promise<string[] | null> {
+  try {
+    const res = await callSvService('vss-catalog', '/releases')
+    if (!res.ok) return null
+    const body = (await res.json()) as { releases?: { release?: unknown }[] }
+    return (body.releases ?? [])
+      .map((r) => r.release)
+      .filter((r): r is string => typeof r === 'string')
+  } catch (error) {
+    logger.warn('vss-catalog releases unavailable', {
+      error: getErrorMessage(error, 'unreachable'),
+    })
+    return null
+  }
+}

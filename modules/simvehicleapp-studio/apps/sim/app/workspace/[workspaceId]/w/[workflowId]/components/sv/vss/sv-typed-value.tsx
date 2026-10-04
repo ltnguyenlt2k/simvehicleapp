@@ -13,6 +13,7 @@ import {
   type SvScalarValue,
   type SvValueDomain,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/typed-value'
+import { useSvWorkflowRelease } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/use-workflow-release'
 import { isVssArray } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/vss-format'
 import { useSvCatalogNode } from '@/hooks/queries/sv-catalog'
 
@@ -187,12 +188,14 @@ export function SvTypedValueInput({
   unit,
   required = false,
   mode = 'value',
-  release,
+  release: releaseProp,
   isPreview = false,
   previewValue,
   previewPath,
   disabled = false,
 }: SvTypedValueInputProps) {
+  const workflowRelease = useSvWorkflowRelease()
+  const release = releaseProp ?? workflowRelease
   const [storeValue, setStoreValue] = useSubBlockValue<SvScalarValue | null>(blockId, subBlockId)
   const resolved = useResolvedType(
     blockId,

@@ -188,6 +188,18 @@ export const workflow = pgTable(
   })
 )
 
+/**
+ * SV: SimVehicleApp per-workflow settings (M02-T11): the VSS release the workflow is built against
+ * (ADR-0010 §3). Interim home until projects arrive in M7; one row per workflow, removed with it.
+ */
+export const svWorkflowSettings = pgTable('sv_workflow_settings', {
+  workflowId: text('workflow_id')
+    .primaryKey()
+    .references(() => workflow.id, { onDelete: 'cascade' }),
+  vssRelease: text('vss_release').notNull(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const workflowBlocks = pgTable(
   'workflow_blocks',
   {

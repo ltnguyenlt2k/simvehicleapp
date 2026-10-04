@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { workflowIdSchema } from '@/lib/api/contracts/primitives'
 import { defineRouteContract } from '@/lib/api/contracts/types'
 
 /** Health of one SimVehicleApp service as seen by the studio BFF. */
@@ -160,3 +161,36 @@ export type SvCatalogReleasesResponse = z.output<typeof svCatalogReleasesRespons
 export type SvCatalogTreeQuery = z.input<typeof svCatalogTreeQuerySchema>
 export type SvCatalogSearchQuery = z.input<typeof svCatalogSearchQuerySchema>
 export type SvCatalogNodesQuery = z.input<typeof svCatalogNodesQuerySchema>
+
+export const svWorkflowSettingsParamsSchema = z.object({
+  id: workflowIdSchema,
+})
+
+/** Per-workflow SimVehicleApp settings; `vssRelease: null` = the catalog default release. */
+export const svWorkflowSettingsSchema = z.object({
+  vssRelease: svVssReleaseSchema.nullable(),
+})
+
+export const svUpdateWorkflowSettingsBodySchema = z.object({
+  vssRelease: svVssReleaseSchema,
+})
+
+/** `GET /api/sv/workflows/[id]/settings` — VSS release of the workflow (M02-T11). */
+export const svGetWorkflowSettingsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/workflows/[id]/settings',
+  params: svWorkflowSettingsParamsSchema,
+  response: { mode: 'json', schema: svWorkflowSettingsSchema },
+})
+
+/** `PUT /api/sv/workflows/[id]/settings` — pin the workflow to a VSS release served by vss-catalog. */
+export const svUpdateWorkflowSettingsContract = defineRouteContract({
+  method: 'PUT',
+  path: '/api/sv/workflows/[id]/settings',
+  params: svWorkflowSettingsParamsSchema,
+  body: svUpdateWorkflowSettingsBodySchema,
+  response: { mode: 'json', schema: svWorkflowSettingsSchema },
+})
+
+export type SvWorkflowSettings = z.output<typeof svWorkflowSettingsSchema>
+export type SvUpdateWorkflowSettingsBody = z.input<typeof svUpdateWorkflowSettingsBodySchema>
