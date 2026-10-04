@@ -206,6 +206,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - run: bun test
+      - name: SVX parser fuzz (30 s, seeded; full 10-minute run is M3 gate evidence)
+        run: bun packages/expr/src/fuzz.ts 30 ${{ github.run_id }}
 
   core-image:
     name: core images build + vss-catalog/compiler smoke

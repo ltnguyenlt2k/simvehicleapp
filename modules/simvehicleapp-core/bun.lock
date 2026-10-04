@@ -21,6 +21,10 @@
         "@simvehicleapp/vss": "workspace:*",
       },
     },
+    "packages/expr": {
+      "name": "@simvehicleapp/expr",
+      "version": "0.1.0",
+    },
     "packages/vss": {
       "name": "@simvehicleapp/vss",
       "version": "0.1.0",
@@ -53,6 +57,8 @@
     "@simvehicleapp/compiler-service": ["@simvehicleapp/compiler-service@workspace:services/compiler"],
 
     "@simvehicleapp/contracts": ["@simvehicleapp/contracts@file:../simvehicleapp-contracts", { "dependencies": { "ajv": "8.17.1" }, "devDependencies": { "@types/bun": "1.3.8", "json-schema-to-typescript": "15.0.4", "typescript": "5.9.3" } }],
+
+    "@simvehicleapp/expr": ["@simvehicleapp/expr@workspace:packages/expr"],
 
     "@simvehicleapp/service-kit": ["@simvehicleapp/service-kit@file:../simvehicleapp-contracts/packages/service-kit", { "peerDependencies": { "@simvehicleapp/contracts": "1.0.0-alpha.1" } }],
 
