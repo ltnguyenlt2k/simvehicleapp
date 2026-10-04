@@ -30,7 +30,7 @@
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
-| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 6/14 |
+| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 7/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
@@ -112,7 +112,7 @@ ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis
 | BlockSpec Flow Control (9 block, dùng subflow container Sim cho `sv_repeat/while/parallel`) | 0012 | ✔ | 2026-10-04: 9 block; handle nhánh `then/else`, `case`/`default`, `ok/timeout`, `stable/broken`; container dùng id handle subflow Sim (`loop-/parallel-start/end-source`); `sv_throttle` (P2) chưa làm | T05 |
 | BlockSpec State/Comm (5 block) | 0012 | ✔ | 2026-10-04: `sv_var_get/set`, `sv_counter`, `sv_log`, `sv_mqtt_publish`, `sv_hmi_notify` (desugar → mqtt_publish); 36 spec tổng, core 570 test PASS; UI ở T07 (`PENDING_UI` trong parity) | T06 |
 | UI BlockConfig + handles (`then/else`, `ok/timeout`,…) | 0011 | ☐ | block-parity | T07 |
-| SubBlock `sv-expression` (bộ editor Sim: simple-code-editor + prism + TagDropdown, ADR-0013 §4 sửa 2026-10-04) + `sv-duration` | 0013 | ☐ | | T08 |
+| SubBlock `sv-expression` (bộ editor Sim: simple-code-editor + prism + TagDropdown, ADR-0013 §4 sửa 2026-10-04) + `sv-duration` | 0013 | ✔ | 2026-10-04: `components/sv/expr/` — editor SVX (highlight, `<` → TagDropdown, chèn signal VSS, chọn nhanh giá trị boolean/allowed), `sv-duration` (ms/s/min, số học thập phân chính xác); Set/debounce của M2 chuyển sang editor thật; studio 8 591/8 591 test PASS (local) | T08 |
 | Panel Variables | 0012 | ☐ | | T09 |
 | Map subflow `parallel`/`loop` Sim → `sv_parallel/sv_repeat/sv_while` | 0011,0012 | ☐ | | T10 |
 | `POST /lint` realtime (S0–S3 + một phần S6) | 0016 | ☐ | debounce 300 ms | T11 |
