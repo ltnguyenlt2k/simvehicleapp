@@ -41,6 +41,8 @@ async function logIn(page: Page, email: string, password: string) {
 }
 
 async function createWorkflow(page: Page): Promise<string> {
+  // Login/sign-up first redirects to the last workflow; settle there before creating a new one.
+  await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
   const before = new URL(page.url()).pathname
   await page.getByRole('button', { name: 'Search' }).click()
   const palette = page.getByRole('dialog')
@@ -108,7 +110,7 @@ test.describe.serial('M2 gate', () => {
 
   test('workflow "When Speed changes → Set Hazard.IsSignaling = true" is saved', async ({ page }) => {
     await logIn(page, user.email, user.password)
-    const workflowUrl = await createWorkflow(page)
+    await createWorkflow(page)
 
     const speed = await findSignal(page, 'Vehicle.Speed', 'Vehicle.Speed')
     await (await dropSignal(page, speed, 200, 200)).locator('[data-sv-block="sv_on_signal_changed"]').click()
@@ -152,6 +154,8 @@ test.describe.serial('M2 gate', () => {
     await page.locator('[data-sv-tab="problems"]').click()
     await expect(page.locator('[data-sv="problems"]')).toContainText('No problems', { timeout: 20_000 })
 
+    // The URL of the workflow actually built (not the redirect seen while it was being created).
+    const workflowUrl = page.url()
     await page.reload()
     await expect(node(page, 'When Speed changes')).toBeVisible()
     await expect(node(page, 'Set IsSignaling')).toBeVisible()

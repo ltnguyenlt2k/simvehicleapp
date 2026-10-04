@@ -14,6 +14,8 @@ async function signUpAndCreateWorkflow(page: Page) {
   await page.locator('#password').fill(user.password)
   await page.locator('button[type="submit"]').click()
   await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
+  // Login/sign-up first redirects to the last workflow; settle there before creating a new one.
+  await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
   const before = new URL(page.url()).pathname
   await page.getByRole('button', { name: 'Search' }).click()
   const palette = page.getByRole('dialog')
