@@ -27,11 +27,17 @@ describe('toolbar allowlist (M01-T05)', () => {
     }
   })
 
-  it('hides every registered Sim block except note', () => {
+  it('hides every registered Sim block except note; SimVehicleApp sv_* blocks stay (M02-T09)', () => {
     const offered = getAllBlocks()
       .map((block) => block.type)
       .filter((type) => isToolbarBlockAllowed(type))
-    expect(offered).toEqual(['note'])
+    expect(offered.filter((type) => !type.startsWith('sv_'))).toEqual(['note'])
+    expect(offered.filter((type) => type.startsWith('sv_')).sort()).toEqual([
+      'sv_on_signal_changed',
+      'sv_read_attribute',
+      'sv_read_signal',
+      'sv_set_actuator',
+    ])
   })
 
   it('honours NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST and treats regex characters literally', () => {
