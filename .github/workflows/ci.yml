@@ -192,15 +192,15 @@ jobs:
       - run: bun test
 
   core-image:
-    name: core images build + vss-catalog smoke
+    name: core images build + vss-catalog/compiler smoke
     runs-on: ubuntu-24.04
     env:
       # Own project name: `down -v` must never touch the developer stack (project "simvehicleapp") if run locally.
       COMPOSE: docker compose -p sv-ci-core --env-file scripts/ci/ci.env
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: $COMPOSE build contracts && $COMPOSE build vss-catalog
-      - run: $COMPOSE up -d --wait --wait-timeout 60 vss-catalog
+      - run: $COMPOSE build contracts && $COMPOSE build vss-catalog compiler
+      - run: $COMPOSE up -d --wait --wait-timeout 60 vss-catalog compiler
       - name: Smoke the running service (auth, seeds, ETag)
         run: |
           $COMPOSE exec -T vss-catalog bun -e '
@@ -215,5 +215,10 @@ jobs:
             must((await get("/tree?depth=16", { "if-none-match": tree.headers.get("etag") })).status === 304, "ETag => 304");
             const nodes = await (await get("/nodes?paths=Vehicle.Speed&release=v4.2")).json();
             must(nodes.nodes[0].kind === "sensor" && nodes.release === "v4.2", "v4.2 lookup");'
+          $COMPOSE exec -T compiler bun -e '
+            const res = await fetch("http://127.0.0.1:4020/blocks", { headers: { "x-sv-internal": process.env.INTERNAL_API_SECRET } });
+            const types = (await res.json()).blocks.map((b) => b.type).join(",");
+            if (res.status !== 200 || types !== "sv_on_signal_changed,sv_read_attribute,sv_read_signal,sv_set_actuator") { console.error("FAIL /blocks", res.status, types); process.exit(1); }
+            console.log("ok compiler /blocks", types);'
       - if: always()
-        run: $COMPOSE logs vss-catalog && $COMPOSE down -v
+        run: $COMPOSE logs vss-catalog compiler && $COMPOSE down -v

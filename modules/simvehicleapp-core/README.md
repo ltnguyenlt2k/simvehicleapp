@@ -17,7 +17,8 @@ bun test
 
 | `packages/blocks` (`@simvehicleapp/blocks`) | BlockSpec mỗi block `sv_*`: `<type>/spec.json` (validate `block-spec.v1`) + `semantics.md`; `BLOCK_SPECS` sắp theo `type`. M2: `sv_on_signal_changed`, `sv_read_signal`, `sv_read_attribute`, `sv_set_actuator`; test đối chiếu `vssKinds` với `blocksFor` trên mọi node VSS 4.0/4.2. | M02-T05 |
 | `services/vss-catalog` | HTTP `:4010` (chỉ mạng `sv-internal`) theo `openapi/vss-catalog.v1.yaml`: `/releases`, `/tree`, `/search`, `/nodes`, `/model-hash` + `/healthz`, `/version` (service-kit, auth `x-sv-internal`). Cache parse theo release, ETag mạnh. Env: `SV_VSS_DEFAULT_RELEASE` (v4.0), `SV_VSS_HTTP` (0 = offline), `SV_VSS_SEED_DIR`, `SV_VSS_CACHE_DIR`. | M02-T04 |
+| `services/compiler` | HTTP `:4020` (nội bộ) theo `openapi/compiler.v1.yaml`. Skeleton M2: `GET /blocks` (BlockSpec, ETag); `/compile`, `/lint`, `/opcodes` (M4) và `/simulate` (M5) trả `501 not_implemented` cho tới khi có thật. | M02-T06 |
 
-Image: `docker compose build contracts && docker compose build vss-catalog` (hoặc `scripts/sv build`); contracts vào build qua `additional_contexts: docker-image://simvehicleapp/contracts:dev`.
+Image: `docker compose build contracts && docker compose build vss-catalog compiler` (hoặc `scripts/sv build`); contracts vào build qua `additional_contexts: docker-image://simvehicleapp/contracts:dev`.
 
 Node gốc (`Vehicle`) có trong `model.nodes` nhưng không hợp lệ theo `vssPath` của contract (cần ≥ 1 dấu chấm) — service chỉ trả các node con của gốc.

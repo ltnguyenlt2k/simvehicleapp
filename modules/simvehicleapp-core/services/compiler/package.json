@@ -1,0 +1,16 @@
+{
+  "name": "@simvehicleapp/compiler-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "compiler HTTP service on :4020 (openapi/compiler.v1.yaml). M2 skeleton: GET /blocks; compile/lint/simulate arrive in M4/M5.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@simvehicleapp/blocks": "workspace:*"
+  }
+}

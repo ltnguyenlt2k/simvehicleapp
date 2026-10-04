@@ -20,6 +20,21 @@ services:
     networks: [sv-internal]
     restart: unless-stopped
 
+  compiler:
+    image: simvehicleapp/compiler:dev
+    build:
+      context: .
+      dockerfile: services/compiler/Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_CATALOG_URL: http://vss-catalog:4010
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # Internal only (openapi/compiler.v1.yaml): reached as http://compiler:4020.
+    networks: [sv-internal]
+    restart: unless-stopped
+
 volumes:
   sv-vss:
 
