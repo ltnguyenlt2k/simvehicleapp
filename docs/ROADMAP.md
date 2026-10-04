@@ -29,7 +29,7 @@
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
-| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 3/12 |
+| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 4/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
@@ -90,7 +90,7 @@ ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR
 | `packages/vss` (parse/classify/normalize/hash) | 0010 | ✔ | 2026-10-04: `modules/simvehicleapp-core/packages/vss`; `bun test` 54/54 (24 path biết trước, counts 287/425/379/106 v4.0 + 322/484/467/118 v4.2, `deprecation` thật v4.2, mọi node khớp `VssNode` OpenAPI, hash canonical khớp bản Python độc lập), `tsc` 0 lỗi; CI job `core` | T01 |
 | VSS sources (LocalFile seed v4.0/v4.2 + Http cache pin tag) | 0010 | ✔ | 2026-10-04: `packages/vss/src/sources.ts` (`LocalFileSource`, `HttpSource` chỉ tải release có pin sha256 + cache `sv-vss` ghi nguyên tử, `CompositeSource`); fixture v4.2 vendor ở contracts; 13 test offline (fetch inject) PASS | T02 | T02 |
 | Search index (fuzzy, filter kind) | 0010 | ✔ | 2026-10-04: `packages/vss/src/search.ts` — token camelCase trên name/path/description, prefix + fuzzy 1 lỗi, lọc kind, thứ tự tất định; "state of charge" top-5 chứa `…StateOfCharge.Current` (v4.0 & v4.2); 17 test PASS | T03 | T03 |
-| Service `vss-catalog` + ETag + OpenAPI | 0010 | ☐ | `:4010` | T04 |
+| Service `vss-catalog` + ETag + OpenAPI | 0010 | ✔ | 2026-10-04: `:4010` nội bộ; `services/vss-catalog` + image (seed v4.0/v4.2, contracts qua `docker-image://`); 29 contract test (mọi response validate theo OpenAPI, ETag/304, lỗi 400/404/503, auth) PASS; container healthy + smoke local; CI job `core-image` | T04 |
 | BlockSpec 4 block vehicle (`sv_read_signal/read_attribute/set_actuator/on_signal_changed`) | 0011 | ☐ | | T05 |
 | `GET /blocks` skeleton (compiler service) | 0011 | ☐ | | T06 |
 | SubBlock `vss-path-selector` | 0011 | ☐ | | T07 |
