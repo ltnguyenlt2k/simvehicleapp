@@ -44,7 +44,8 @@ const EDITORS: Record<string, readonly string[]> = {
   boolean: ['switch'],
   integer: ['sv-typed-value'],
   number: ['sv-typed-value'],
-  string: ['short-input'],
+  /** Variable names pick from the workflow Variables panel (M03-T09). */
+  string: ['short-input', 'dropdown'],
   template: ['long-input'],
   list: ['table'],
 }

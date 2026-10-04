@@ -1,5 +1,7 @@
 import type { BlockConfig, OutputFieldDefinition, SubBlockConfig } from '@/blocks/types'
 import specsSnapshot from '@/blocks/vehicle/block-specs.json'
+import { useVariablesStore } from '@/stores/variables/store'
+import { useWorkflowRegistry } from '@/stores/workflows/registry/store'
 
 /** Shape of the compiler's `GET /blocks` entries (contracts `block-spec.v1`), as kept in the snapshot. */
 export interface SpecProp {
@@ -33,6 +35,22 @@ export interface PropUi {
   /** Display label per enum value. */
   labels?: Record<string, string>
   advanced?: boolean
+  /** Pick from the workflow variables (Sim Variables panel, M03-T09) instead of free text. */
+  variablePicker?: boolean
+}
+
+/**
+ * Variables declared in the open workflow's Variables panel (M03-T09), as dropdown options. The
+ * Sim panel already stores name/type/initial value per workflow and syncs them in real time.
+ */
+export async function workflowVariableOptions(): Promise<Array<{ label: string; id: string }>> {
+  const workflowId = useWorkflowRegistry.getState().activeWorkflowId
+  if (!workflowId) return []
+  return useVariablesStore
+    .getState()
+    .getVariablesByWorkflowId(workflowId)
+    .map((v) => ({ id: v.name, label: `${v.name} (${v.type})` }))
+    .sort((a, b) => a.id.localeCompare(b.id))
 }
 
 export interface BlockUi {
@@ -123,6 +141,15 @@ export function subBlockFor(prop: SpecProp, ui: PropUi = {}): SubBlockConfig {
     case 'boolean':
       return { ...base, ...withDefault, type: 'switch' }
     case 'string':
+      if (ui.variablePicker) {
+        return {
+          ...base,
+          type: 'dropdown',
+          options: [],
+          fetchOptions: workflowVariableOptions,
+          searchable: true,
+        }
+      }
       return { ...base, ...withDefault, type: 'short-input' }
     case 'list':
       return { ...base, type: 'table', columns: (prop.items ?? []).map((i) => i.name) }

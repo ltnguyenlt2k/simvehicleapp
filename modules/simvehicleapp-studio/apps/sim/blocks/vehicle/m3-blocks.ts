@@ -223,14 +223,14 @@ export const SV_M3_BLOCKS: Record<string, BlockConfig> = {
     description: 'Read a workflow variable.',
     icon: I.variable,
     bgColor: C.state,
-    props: { name: { title: 'Variable' } },
+    props: { name: { title: 'Variable', variablePicker: true } },
   }),
   sv_var_set: blockFromSpec('sv_var_set', {
     name: 'Set variable',
     description: 'Change a workflow variable.',
     icon: I.variable,
     bgColor: C.state,
-    props: { name: { title: 'Variable' } },
+    props: { name: { title: 'Variable', variablePicker: true } },
   }),
   sv_counter: blockFromSpec('sv_counter', {
     name: 'Counter',
@@ -238,7 +238,7 @@ export const SV_M3_BLOCKS: Record<string, BlockConfig> = {
     icon: I.variable,
     bgColor: C.state,
     props: {
-      name: { title: 'Variable' },
+      name: { title: 'Variable', variablePicker: true },
       op: { title: 'Action', labels: { inc: 'Increase', dec: 'Decrease', reset: 'Reset' } },
     },
   }),
