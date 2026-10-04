@@ -20,9 +20,9 @@
 | M02-T12 | BFF proxy `/api/sv/catalog/*` | studio | | |
 
 ## DoD
-- [ ] Toolbar Vehicle hiển thị cây VSS 4.0 (1 197 node, lazy).
-- [ ] 4 block vehicle kéo/thả/cấu hình/lưu được.
-- [ ] Đổi release v4.0↔v4.2 ⇒ cây đổi, không rebuild.
+- [x] Toolbar Vehicle hiển thị cây VSS 4.0 (1 197 node, lazy). — E2E + smoke `/tree` (2026-10-04, [M02](../../docs/reports/M02.md))
+- [x] 4 block vehicle kéo/thả/cấu hình/lưu được. — E2E gate + block-parity
+- [x] Đổi release v4.0↔v4.2 ⇒ cây đổi, không rebuild. — E2E test 3
 
 ## Acceptance Gate
 Test fixture catalog PASS; E2E tạo workflow tối thiểu "When Speed changes → Set Hazard.IsSignaling = true"; restart studio giữ nguyên.
