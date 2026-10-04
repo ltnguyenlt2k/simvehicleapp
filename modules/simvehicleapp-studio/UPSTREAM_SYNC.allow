@@ -221,3 +221,6 @@ packages/db/migrations/meta/_journal.json
 
 # M03-T07 — named branch handles (svHandles) for SimVehicleApp flow blocks
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/workflow-block.tsx
+
+# M03-T10 — container modes limited to sv_repeat/sv_while/sv_parallel
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/hooks/use-subflow-editor.ts

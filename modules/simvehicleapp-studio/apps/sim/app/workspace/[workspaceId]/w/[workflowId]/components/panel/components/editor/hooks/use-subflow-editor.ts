@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { highlight, languages } from '@/components/emcn'
+// SV: container modes offered for vehicle apps (M03-T10)
+import { SV_SUPPORTED_CONTAINER_MODES } from '@/lib/sv/container-mapping'
 import {
   isLikelyReferenceSegment,
   SYSTEM_REFERENCE_PREFIXES,
@@ -369,12 +371,18 @@ export function useSubflowEditor(currentBlock: BlockState | null, currentBlockId
   const editorValue = isConditionMode ? conditionString : collectionString
 
   // Type options for combobox
+  // SV: only modes with a SimVehicleApp meaning (sv_repeat/sv_while/sv_parallel, M03-T10)
+  const svModes: readonly string[] = currentBlock
+    ? (SV_SUPPORTED_CONTAINER_MODES[currentBlock.type as 'loop' | 'parallel'] ?? [])
+    : []
   const typeOptions =
     isSubflow && subflowConfig
-      ? Object.entries(subflowConfig.typeLabels).map(([value, label]) => ({
-          value,
-          label,
-        }))
+      ? Object.entries(subflowConfig.typeLabels)
+          .filter(([value]) => svModes.includes(value))
+          .map(([value, label]) => ({
+            value,
+            label,
+          }))
       : []
 
   return {

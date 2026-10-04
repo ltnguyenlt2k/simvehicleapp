@@ -18,12 +18,13 @@ afterEach(() => {
 })
 
 describe('toolbar allowlist (M01-T05)', () => {
-  it('defaults to sv_* and note', () => {
-    expect(DEFAULT_TOOLBAR_ALLOWLIST).toBe('sv_*,note')
+  it('defaults to sv_*, note and the loop/parallel containers (M03-T10)', () => {
+    expect(DEFAULT_TOOLBAR_ALLOWLIST).toBe('sv_*,note,loop,parallel')
     const patterns = getToolbarAllowlist()
-    expect(isToolbarBlockAllowed('sv_read_signal', patterns)).toBe(true)
-    expect(isToolbarBlockAllowed('note', patterns)).toBe(true)
-    for (const type of ['agent', 'api', 'slack', 'loop', 'parallel', 'starter', 'notes', 'xsv_x']) {
+    for (const type of ['sv_read_signal', 'note', 'loop', 'parallel']) {
+      expect(isToolbarBlockAllowed(type, patterns)).toBe(true)
+    }
+    for (const type of ['agent', 'api', 'slack', 'starter', 'notes', 'xsv_x', 'loops']) {
       expect(isToolbarBlockAllowed(type, patterns)).toBe(false)
     }
   })

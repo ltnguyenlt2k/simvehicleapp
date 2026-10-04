@@ -112,7 +112,8 @@ test.describe.serial('M1 gate', () => {
     await expect(toolbar.getByText('Note', { exact: true })).toBeVisible()
     await expect(toolbar.getByText('Agent', { exact: true })).toHaveCount(0)
     await expect(toolbar.getByText('Slack', { exact: true })).toHaveCount(0)
-    await expect(toolbar.getByText('Loop', { exact: true })).toHaveCount(0)
+    // M03-T10: Sim's loop/parallel containers carry sv_repeat/sv_while/sv_parallel and are offered.
+    await expect(toolbar.getByText('Loop', { exact: true })).toBeVisible()
   })
 
   test('realtime collaboration: a block added in one session appears in another', async ({

@@ -73,9 +73,10 @@ function initialValue(sub: SubBlockConfig): unknown {
  * spec cannot silently lack UI: the M3 gate requires this list to be empty again.
  */
 const PENDING_UI: Record<string, string> = {
-  sv_parallel: 'M03-T10',
-  sv_repeat: 'M03-T10',
-  sv_while: 'M03-T10',
+  /** Container specs are carried by Sim's loop/parallel containers (M03-T10, lib/sv/container-mapping). */
+  sv_parallel: 'sim:parallel',
+  sv_repeat: 'sim:loop(for)',
+  sv_while: 'sim:loop(while)',
 }
 
 describe('block parity: studio BlockConfig ↔ core BlockSpec (M02-T09)', () => {
