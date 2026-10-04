@@ -155,7 +155,6 @@ bun.lock
 
 # M01-T05 — toolbar/search allowlist (NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST, default sv_*,note) and hidden routes
 apps/sim/proxy.ts
-apps/sim/hooks/use-permission-config.ts
 
 # M01-T06 — rebrand of user-visible strings, docs links, emails (brand from lib/sv/oss/brand)
 apps/sim/app/api/auth/trello/authorize/route.ts
@@ -181,7 +180,6 @@ apps/sim/instrumentation-node.ts
 # M01-T09 — BFF skeleton /api/sv/health (lib/sv/api-client, contracts/sv, SV_*_URL env)
 apps/sim/app/api/sv/*
 apps/sim/lib/api/contracts/sv.ts
-apps/sim/lib/api/contracts/index.ts
 
 # M01-T10 — vehicle editor chrome: action bar, bottom dock (replaces executor terminal), safety banner
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/sv/*
@@ -211,5 +209,12 @@ apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/
 
 # M02-T08/T09 — sv-typed-value/sv-enum subBlocks, 4 vehicle BlockConfigs + block-parity (ADR-0011)
 apps/sim/blocks/vehicle/*
-apps/sim/blocks/registry.ts
 apps/sim/blocks/blocks.test.ts
+
+# M02-T10/T11 — Vehicle panel + signal drop menu (toolbar, canvas/overlay drops), per-workflow VSS release
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/toolbar/toolbar.tsx
+apps/sim/hooks/queries/sv-workflow-settings.ts
+packages/db/schema.ts
+packages/db/migrations/0250_sv_workflow_settings.sql
+packages/db/migrations/meta/0250_snapshot.json
+packages/db/migrations/meta/_journal.json

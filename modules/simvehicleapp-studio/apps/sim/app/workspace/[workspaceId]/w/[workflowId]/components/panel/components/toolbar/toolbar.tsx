@@ -23,6 +23,8 @@ import { ToolbarItemContextMenu } from '@/app/workspace/[workspaceId]/w/[workflo
 import { useToolbarItemInteractions } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/toolbar/hooks'
 import { LoopTool } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/loop/loop-config'
 import { ParallelTool } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/parallel/parallel-config'
+// SV: Vehicle panel (M02-T10)
+import { SvVehiclePanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
 import { getCanonicalBlocksByCategory } from '@/blocks/registry'
 import type { BlockConfig } from '@/blocks/types'
 import { usePermissionConfig } from '@/hooks/use-permission-config'
@@ -713,6 +715,8 @@ export const Toolbar = memo(
 
         {/* Single scroll container with three collapsible sections */}
         <div className='flex flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-none pb-3'>
+          {/* SV: Vehicle signals from vss-catalog (ADR-0011 §2, M02-T10) */}
+          <SvVehiclePanel />
           <ToolbarSection
             label='Triggers'
             tooltip='Events that start a workflow'

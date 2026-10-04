@@ -41,6 +41,12 @@ import {
   SvBottomDock,
   SvSafetyBanner,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
+// SV: VSS signal drops (M02-T10)
+import {
+  dispatchSignalDrop,
+  parseSignalPayload,
+  SvSignalDropMenu,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
 import { WorkflowControls } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-controls/workflow-controls'
 import {
   useAutoLayout,
@@ -212,6 +218,27 @@ interface AddBlockFromToolbarDetail {
   type?: unknown
   enableTriggerMode?: unknown
   presetOperation?: unknown
+  // SV: block name and subBlock presets for blocks created from a VSS signal (ADR-0011 §2)
+  name?: unknown
+  presetSubBlockValues?: unknown
+}
+
+/** SV: optional block name / subBlock presets carried by toolbar drops (VSS signal drops, ADR-0011 Notes). */
+interface SvDropExtras {
+  name?: string
+  presetSubBlockValues?: Record<string, unknown>
+}
+
+/** SV: keeps only well-formed extras from untyped event payloads. */
+function svDropExtras(detail: { name?: unknown; presetSubBlockValues?: unknown }): SvDropExtras {
+  const presets = detail.presetSubBlockValues
+  return {
+    name: typeof detail.name === 'string' && detail.name ? detail.name : undefined,
+    presetSubBlockValues:
+      presets && typeof presets === 'object' && !Array.isArray(presets)
+        ? (presets as Record<string, unknown>)
+        : undefined,
+  }
 }
 
 /**
@@ -1785,7 +1812,10 @@ const WorkflowContent = React.memo(
      * @param position - Drop position in ReactFlow coordinates.
      */
     const handleToolbarDrop = useCallback(
-      (data: { type: string; enableTriggerMode?: boolean }, position: { x: number; y: number }) => {
+      (
+        data: { type: string; enableTriggerMode?: boolean } & SvDropExtras, // SV: + name/presets
+        position: { x: number; y: number }
+      ) => {
         if (!data.type || data.type === 'connectionBlock') return
 
         try {
@@ -1876,7 +1906,7 @@ const WorkflowContent = React.memo(
           const id = generateId()
           // Prefer semantic default names for triggers; then ensure unique numbering centrally
           const defaultTriggerNameDrop = TriggerUtils.getDefaultTriggerName(data.type)
-          const baseName = defaultTriggerNameDrop || blockConfig.name
+          const baseName = data.name || defaultTriggerNameDrop || blockConfig.name // SV: data.name
           const name = getUniqueBlockName(baseName, blocks)
 
           if (containerInfo) {
@@ -1927,7 +1957,9 @@ const WorkflowContent = React.memo(
               },
               containerInfo.loopId,
               'parent',
-              autoConnectEdge
+              autoConnectEdge,
+              undefined,
+              data.presetSubBlockValues // SV: VSS signal preset
             )
 
             // Resize the container node to fit the new block
@@ -1953,7 +1985,8 @@ const WorkflowContent = React.memo(
               undefined,
               undefined,
               autoConnectEdge,
-              enableTriggerMode
+              enableTriggerMode,
+              data.presetSubBlockValues // SV: VSS signal preset
             )
           }
         } catch (err) {
@@ -2022,7 +2055,8 @@ const WorkflowContent = React.memo(
 
         const id = generateId()
         const defaultTriggerName = TriggerUtils.getDefaultTriggerName(type)
-        const baseName = defaultTriggerName || blockConfig.name
+        const svExtras = svDropExtras(event.detail) // SV: VSS signal name/preset
+        const baseName = svExtras.name || defaultTriggerName || blockConfig.name
         const name = getUniqueBlockName(baseName, blocks)
 
         const autoConnectEdge = tryCreateAutoConnectEdge(basePosition, id, {
@@ -2039,9 +2073,10 @@ const WorkflowContent = React.memo(
           undefined,
           autoConnectEdge,
           enableTriggerMode === true,
-          typeof presetOperation === 'string' && presetOperation
-            ? { operation: presetOperation }
-            : undefined
+          svExtras.presetSubBlockValues ??
+            (typeof presetOperation === 'string' && presetOperation
+              ? { operation: presetOperation }
+              : undefined)
         )
       }
 
@@ -2076,6 +2111,8 @@ const WorkflowContent = React.memo(
           enableTriggerMode?: boolean
           clientX: number
           clientY: number
+          name?: unknown // SV
+          presetSubBlockValues?: unknown // SV
         }>
 
         const detail = customEvent.detail
@@ -2098,6 +2135,7 @@ const WorkflowContent = React.memo(
             {
               type: detail.type,
               enableTriggerMode: detail.enableTriggerMode ?? false,
+              ...svDropExtras(detail), // SV: VSS signal drop menu choice
             },
             position
           )
@@ -2178,6 +2216,13 @@ const WorkflowContent = React.memo(
           if (!raw) return
           const data = JSON.parse(raw)
           if (!data?.type) return
+
+          // SV: a VSS signal from the Vehicle panel opens the Read / When changes / Set menu
+          const svSignal = parseSignalPayload(data)
+          if (svSignal) {
+            dispatchSignalDrop({ signal: svSignal, clientX: event.clientX, clientY: event.clientY })
+            return
+          }
 
           const reactFlowBounds = event.currentTarget.getBoundingClientRect()
           const position = screenToFlowPosition({
@@ -4041,6 +4086,8 @@ const WorkflowContent = React.memo(
           {/* SV: vehicle editor chrome — safety notice (NFR-10) and action bar (M01-T10). */}
           {!embedded && <SvSafetyBanner />}
           {!embedded && <SvActionBar />}
+          {/* SV: Read / When changes / Set menu for dropped VSS signals (M02-T10). */}
+          {!embedded && <SvSignalDropMenu />}
           <div ref={canvasContainerRef} className='relative flex-1 overflow-hidden'>
             {!isWorkflowReady && (
               <div className='absolute inset-0 z-[5] flex items-center justify-center bg-[var(--bg)]'>

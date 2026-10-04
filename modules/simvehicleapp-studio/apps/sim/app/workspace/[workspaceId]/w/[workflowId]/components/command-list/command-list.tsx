@@ -9,6 +9,11 @@ import { Button, Library } from '@/components/emcn'
 import { AgentIcon } from '@/components/icons'
 import { cn } from '@/lib/core/utils/cn'
 import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
+// SV: VSS signal drops (M02-T10)
+import {
+  dispatchSignalDrop,
+  parseSignalPayload,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
 import { usePreventZoom } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks'
 import { useSearchModalStore } from '@/stores/modals/search/store'
 
@@ -142,6 +147,13 @@ export function CommandList() {
 
       const data = JSON.parse(raw) as { type?: string; enableTriggerMode?: boolean }
       if (!data?.type || data.type === 'connectionBlock') return
+
+      // SV: a VSS signal dropped on the empty canvas opens the block menu (M02-T10)
+      const svSignal = parseSignalPayload(data)
+      if (svSignal) {
+        dispatchSignalDrop({ signal: svSignal, clientX: event.clientX, clientY: event.clientY })
+        return
+      }
 
       const overlayDropEvent = new CustomEvent('toolbar-drop-on-empty-workflow-overlay', {
         detail: {
