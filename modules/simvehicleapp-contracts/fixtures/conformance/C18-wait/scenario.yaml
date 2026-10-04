@@ -1,0 +1,15 @@
+# C18-wait — wait is a yield point: the step after it runs durationMs later
+# Semantics: ADR-0012 §3 yield. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C18-wait
+description: "wait is a yield point: the step after it runs durationMs later"
+vss:
+  release: v4.0
+until: 2000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs: []
+expect:
+  writes:
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }

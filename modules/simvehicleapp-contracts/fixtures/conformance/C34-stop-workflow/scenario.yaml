@@ -1,0 +1,18 @@
+# C34-stop-workflow — stop(workflow) cancels every waiting run of the workflow
+# Semantics: ADR-0012 §6. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C34-stop-workflow
+description: "stop(workflow) cancels every waiting run of the workflow"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.IsMoving: false
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+  - { t: 1200, path: "Vehicle.Speed", value: 20 }
+  - { t: 1500, path: "Vehicle.IsMoving", value: true }
+expect:
+  writes: []

@@ -1,0 +1,46 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c38_condition_edge",
+  "revision": 1,
+  "name": "When condition becomes true fires on false→true edges only",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_condition",
+      "name": "fast",
+      "props": {
+        "expr": "<Vehicle.Speed> > 100",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_set_actuator",
+      "name": "set2",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    }
+  ]
+}

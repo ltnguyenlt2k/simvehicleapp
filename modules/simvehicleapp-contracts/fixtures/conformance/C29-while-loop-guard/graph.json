@@ -1,0 +1,81 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c29_while_loop_guard",
+  "revision": 1,
+  "name": "Exceeding maxIterations stops the run (loop guard); steps after the loop do not run",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_app_start",
+      "name": "start",
+      "props": {},
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_while",
+      "name": "loop",
+      "props": {
+        "condition": "true",
+        "maxIterations": 3,
+        "intervalMs": 0
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "set3",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": "<loop.index>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": "b2",
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "set4",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "loop-start-source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b2",
+      "fromHandle": "loop-end-source",
+      "to": "b4",
+      "toHandle": "target"
+    }
+  ]
+}

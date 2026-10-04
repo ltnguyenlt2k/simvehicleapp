@@ -1,8 +1,8 @@
 {
   "graphVersion": "1.0.0",
-  "workflowId": "gw_a",
+  "workflowId": "c23_stable_for_broken",
   "revision": 1,
-  "name": "Stable Overspeed Warning",
+  "name": "stable_for takes broken as soon as the condition turns false",
   "vss": {
     "release": "v4.0"
   },
@@ -11,12 +11,13 @@
     {
       "id": "b1",
       "type": "sv_on_signal_changed",
-      "name": "Speed changed",
+      "name": "trig",
       "props": {
-        "path": "Vehicle.Speed",
-        "mode": "any",
+        "path": "Vehicle.IsMoving",
+        "mode": "becomes",
         "debounceMs": 0,
-        "concurrency": "restart"
+        "concurrency": "restart",
+        "threshold": true
       },
       "parentId": null,
       "blockVersion": 1
@@ -24,9 +25,9 @@
     {
       "id": "b2",
       "type": "sv_stable_for",
-      "name": "Stable 2s",
+      "name": "stable",
       "props": {
-        "condition": "<speedchanged.value> > 120",
+        "condition": "<Vehicle.Speed> > 100",
         "durationMs": 2000
       },
       "parentId": null,
@@ -35,49 +36,25 @@
     {
       "id": "b3",
       "type": "sv_set_actuator",
-      "name": "Hazard on",
+      "name": "set3",
       "props": {
         "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
         "value": true,
-        "awaitAck": true
+        "awaitAck": true,
+        "onError": "continue"
       },
       "parentId": null,
       "blockVersion": 1
     },
     {
       "id": "b4",
-      "type": "sv_hmi_notify",
-      "name": "Overspeed notice",
-      "props": {
-        "severity": "warning",
-        "title": "Overspeed",
-        "message": "Speed {<speedchanged.value>} km/h"
-      },
-      "parentId": null,
-      "blockVersion": 1
-    },
-    {
-      "id": "b5",
-      "type": "sv_on_signal_changed",
-      "name": "Speed below 110",
-      "props": {
-        "path": "Vehicle.Speed",
-        "mode": "crosses_below",
-        "threshold": 110,
-        "debounceMs": 0,
-        "concurrency": "restart"
-      },
-      "parentId": null,
-      "blockVersion": 1
-    },
-    {
-      "id": "b6",
       "type": "sv_set_actuator",
-      "name": "Hazard off",
+      "name": "set4",
       "props": {
         "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
         "value": false,
-        "awaitAck": true
+        "awaitAck": true,
+        "onError": "continue"
       },
       "parentId": null,
       "blockVersion": 1
@@ -100,16 +77,9 @@
     },
     {
       "id": "e3",
-      "from": "b3",
-      "fromHandle": "source",
+      "from": "b2",
+      "fromHandle": "broken",
       "to": "b4",
-      "toHandle": "target"
-    },
-    {
-      "id": "e4",
-      "from": "b5",
-      "fromHandle": "source",
-      "to": "b6",
       "toHandle": "target"
     }
   ]

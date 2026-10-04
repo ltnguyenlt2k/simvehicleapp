@@ -1,0 +1,133 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c32_parallel_join_any",
+  "revision": 1,
+  "name": "join any continues after the first branch and cancels the others",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_app_start",
+      "name": "start",
+      "props": {},
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_parallel",
+      "name": "both",
+      "props": {
+        "join": "any"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_wait",
+      "name": "wait3",
+      "props": {
+        "durationMs": 1000
+      },
+      "parentId": "b2",
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "set4",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": 1,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": "b2",
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_wait",
+      "name": "wait5",
+      "props": {
+        "durationMs": 2000
+      },
+      "parentId": "b2",
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_set_actuator",
+      "name": "set6",
+      "props": {
+        "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+        "value": "\"FAST\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": "b2",
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_set_actuator",
+      "name": "set7",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "parallel-start-source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b2",
+      "fromHandle": "parallel-start-source",
+      "to": "b5",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b5",
+      "fromHandle": "source",
+      "to": "b6",
+      "toHandle": "target"
+    },
+    {
+      "id": "e6",
+      "from": "b2",
+      "fromHandle": "parallel-end-source",
+      "to": "b7",
+      "toHandle": "target"
+    }
+  ]
+}

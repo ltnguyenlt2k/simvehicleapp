@@ -1,0 +1,16 @@
+# C08-initial-is-baseline — Values present at app start are the baseline: no trigger at t=0
+# Semantics: ADR-0012 Notes 2026-10-04. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C08-initial-is-baseline
+description: "Values present at app start are the baseline: no trigger at t=0"
+vss:
+  release: v4.0
+until: 3000
+initial:
+  Vehicle.Speed: 50
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 2000, path: "Vehicle.Speed", value: 50 }
+expect:
+  writes:
+    - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

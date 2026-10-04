@@ -1,0 +1,22 @@
+# C05-crosses-below — previous ≥ threshold > value fires; landing exactly on the threshold does not
+# Semantics: 05 §2.1 crosses_below. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C05-crosses-below
+description: "previous ≥ threshold > value fires; landing exactly on the threshold does not"
+vss:
+  release: v4.0
+until: 7000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 110 }
+  - { t: 2000, path: "Vehicle.Speed", value: 90 }
+  - { t: 3000, path: "Vehicle.Speed", value: 80 }
+  - { t: 4000, path: "Vehicle.Speed", value: 105 }
+  - { t: 5000, path: "Vehicle.Speed", value: 100 }
+  - { t: 6000, path: "Vehicle.Speed", value: 99 }
+expect:
+  writes:
+    - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 6000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Fixtures: 38 conformance cases `fixtures/conformance/C01…C38/{graph.json, scenario.yaml}` (ADR-0012 executable spec, M03-T12) + consistency test; GW-A updated to BlockSpec handle ids (`source`/`target`) and normalized references (`<speedchanged.value>`).
 - `openapi/vss-catalog.v1.yaml` (additive): 304/400/404/503 responses, optional `unknown[]` on `/nodes`, strong-ETag and `/tree` root semantics documented (M02-T04, ADR-0010 Notes).
 - Build-only image `simvehicleapp/contracts:dev` (`Dockerfile`, `compose.yaml`, profile `build`) so other modules consume contracts without a build context outside their folder (ADR-0009).
 - Fixtures: VSS v4.2 JSON + `v4.2/units.yaml` + `v4.2/quantities.yaml` (M02-T01/T02, ADR-0010; unmodified, provenance updated).

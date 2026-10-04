@@ -1,0 +1,63 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c37_mqtt_queue",
+  "revision": 1,
+  "name": "MQTT trigger queues messages by default and runs them in order",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_mqtt",
+      "name": "cmd",
+      "props": {
+        "topic": "vehicle/cmd/wiper",
+        "payloadType": "text",
+        "concurrency": "queue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_wait",
+      "name": "wait2",
+      "props": {
+        "durationMs": 500
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "set3",
+      "props": {
+        "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+        "value": "<cmd.payload>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    }
+  ]
+}

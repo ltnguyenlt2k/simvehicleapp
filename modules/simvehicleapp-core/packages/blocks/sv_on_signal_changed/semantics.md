@@ -12,7 +12,8 @@ Nguồn: [05 §2.1](../../../../../analysis/05-blocks-and-execution-model.md#21-
   - `becomes`: cần `threshold` (cùng kiểu với signal, enum lấy từ `allowed`); bắn khi `value == threshold` và `previous != threshold`.
 - **`threshold`:** giá trị cùng datatype với signal (`$signal`); int64/uint64 là chuỗi thập phân (ADR-0018 §7). Thiếu khi `mode` cần ⇒ lỗi compile (diagnostic ở M4).
 - **`debounceMs`:** ≥ 0; > 0 ⇒ chỉ bắn khi điều kiện vẫn đúng sau khoảng thời gian này (đồng hồ đơn điệu; simulator dùng virtual clock).
-- **`concurrency`:** `restart` mặc định (huỷ run cũ đang chờ, tạo run mới); `ignore` / `queue` (`queueMax` 8) / `parallel` (`maxRuns` 4) theo 05 §3.2.
-- **Outputs:** `value`, `previous` (cùng kiểu/đơn vị signal), `timestamp` (ms). Lần cập nhật đầu tiên sau khi subscribe: `previous` chưa có ⇒ chỉ `mode = any` bắn, `previous` = `value`.
+- **`concurrency`:** `restart` mặc định (huỷ run cũ đang chờ, tạo run mới); `ignore`; `queue` (`queueMax` 8, tràn ⇒ bỏ sự kiện **cũ nhất** đang chờ + trace); `parallel` (`maxRuns` 4, vượt ⇒ bỏ sự kiện **mới**) — 05 §3.2, conformance C09–C14.
+- **Outputs:** `value`, `previous` (cùng kiểu/đơn vị signal), `timestamp` (ms).
+- **Mốc ban đầu (ADR-0012 Notes 2026-10-04):** giá trị signal đã có khi app khởi động (databroker trả khi subscribe) là mốc, **không** bắn. Signal chưa có giá trị ⇒ giá trị đầu tiên được publish bắn ở `mode = any` với `previous` = `value`. Conformance C08.
 - **Side-effect:** subscribe signal trên databroker; không ghi gì.
 - **Edge case:** mất kết nối databroker ⇒ không bắn, runtime tự reconnect (05 §3.6); giá trị không đổi ⇒ không bắn ở mọi mode.

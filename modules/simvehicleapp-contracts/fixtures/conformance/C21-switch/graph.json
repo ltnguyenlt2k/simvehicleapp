@@ -1,8 +1,8 @@
 {
   "graphVersion": "1.0.0",
-  "workflowId": "gw_a",
+  "workflowId": "c21_switch",
   "revision": 1,
-  "name": "Stable Overspeed Warning",
+  "name": "Switch takes the first matching case-<i>, else default",
   "vss": {
     "release": "v4.0"
   },
@@ -11,7 +11,7 @@
     {
       "id": "b1",
       "type": "sv_on_signal_changed",
-      "name": "Speed changed",
+      "name": "trig",
       "props": {
         "path": "Vehicle.Speed",
         "mode": "any",
@@ -23,11 +23,18 @@
     },
     {
       "id": "b2",
-      "type": "sv_stable_for",
-      "name": "Stable 2s",
+      "type": "sv_switch",
+      "name": "pick",
       "props": {
-        "condition": "<speedchanged.value> > 120",
-        "durationMs": 2000
+        "value": "<trig.value>",
+        "cases": [
+          {
+            "when": "10"
+          },
+          {
+            "when": "20"
+          }
+        ]
       },
       "parentId": null,
       "blockVersion": 1
@@ -35,49 +42,38 @@
     {
       "id": "b3",
       "type": "sv_set_actuator",
-      "name": "Hazard on",
+      "name": "set3",
       "props": {
-        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
-        "value": true,
-        "awaitAck": true
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": 1,
+        "awaitAck": true,
+        "onError": "continue"
       },
       "parentId": null,
       "blockVersion": 1
     },
     {
       "id": "b4",
-      "type": "sv_hmi_notify",
-      "name": "Overspeed notice",
+      "type": "sv_set_actuator",
+      "name": "set4",
       "props": {
-        "severity": "warning",
-        "title": "Overspeed",
-        "message": "Speed {<speedchanged.value>} km/h"
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": 2,
+        "awaitAck": true,
+        "onError": "continue"
       },
       "parentId": null,
       "blockVersion": 1
     },
     {
       "id": "b5",
-      "type": "sv_on_signal_changed",
-      "name": "Speed below 110",
-      "props": {
-        "path": "Vehicle.Speed",
-        "mode": "crosses_below",
-        "threshold": 110,
-        "debounceMs": 0,
-        "concurrency": "restart"
-      },
-      "parentId": null,
-      "blockVersion": 1
-    },
-    {
-      "id": "b6",
       "type": "sv_set_actuator",
-      "name": "Hazard off",
+      "name": "set5",
       "props": {
-        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
-        "value": false,
-        "awaitAck": true
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": 0,
+        "awaitAck": true,
+        "onError": "continue"
       },
       "parentId": null,
       "blockVersion": 1
@@ -94,22 +90,22 @@
     {
       "id": "e2",
       "from": "b2",
-      "fromHandle": "stable",
+      "fromHandle": "case-0",
       "to": "b3",
       "toHandle": "target"
     },
     {
       "id": "e3",
-      "from": "b3",
-      "fromHandle": "source",
+      "from": "b2",
+      "fromHandle": "case-1",
       "to": "b4",
       "toHandle": "target"
     },
     {
       "id": "e4",
-      "from": "b5",
-      "fromHandle": "source",
-      "to": "b6",
+      "from": "b2",
+      "fromHandle": "default",
+      "to": "b5",
       "toHandle": "target"
     }
   ]

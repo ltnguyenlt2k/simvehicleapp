@@ -1,0 +1,120 @@
+import { describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { ContractValidator, type WorkflowGraphV1 } from "./index.ts";
+
+/**
+ * Conformance scenarios (M03-T12, ADR-0012 §10) and golden workflows: every case must be a valid
+ * WorkflowGraph + Scenario pair whose references, VSS paths and expectations are consistent, so the
+ * simulator (M5) and runtimes (M6+) can treat them as an executable spec.
+ */
+const fixtures = new URL("../../../fixtures/", import.meta.url);
+const contracts = new ContractValidator();
+const vss = JSON.parse(readFileSync(new URL("vss/vss_rel_4.0.json", fixtures), "utf8"));
+
+interface VssLeaf {
+  type: string;
+  datatype?: string;
+  allowed?: unknown[];
+}
+function vssNode(path: string): VssLeaf | undefined {
+  let node: { children?: Record<string, unknown> } | undefined = { children: vss };
+  for (const seg of path.split(".")) node = node?.children?.[seg] as typeof node;
+  return node as VssLeaf | undefined;
+}
+
+/** Sim `normalizeName`: lowercase, no whitespace, no dots (ADR-0013 Notes 2026-10-04). */
+const normalize = (name: string) => name.toLowerCase().replace(/\s+/g, "").replace(/\./g, "");
+
+function cases(dir: string): { id: string; graph: WorkflowGraphV1; scenario: Record<string, any> }[] {
+  const root = new URL(`${dir}/`, fixtures);
+  return readdirSync(root, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)
+    .sort()
+    .map((id) => ({
+      id,
+      graph: JSON.parse(readFileSync(new URL(`${id}/graph.json`, root), "utf8")),
+      scenario: Bun.YAML.parse(readFileSync(new URL(`${id}/scenario.yaml`, root), "utf8")) as Record<string, any>,
+    }));
+}
+
+const conformance = cases("conformance");
+const golden = cases("golden");
+
+test("at least 30 conformance scenarios (M03-T12)", () => {
+  expect(conformance.length).toBeGreaterThanOrEqual(30);
+});
+
+const CONTAINERS = new Set(["sv_repeat", "sv_while", "sv_parallel"]);
+const SCALAR_OK: Record<string, (v: unknown) => boolean> = {
+  boolean: (v) => typeof v === "boolean",
+  string: (v) => typeof v === "string",
+};
+const isNumeric = (t: string) => /^(u?int(8|16|32)|float|double)$/.test(t);
+
+describe.each([...conformance, ...golden].map((c) => [c.id, c] as const))("%s", (_id, { graph, scenario }) => {
+  test("graph and scenario validate against their contracts", () => {
+    contracts.assert("workflow-graph", graph);
+    contracts.assert("scenario", scenario);
+    expect(scenario.vss.release).toBe(graph.vss.release);
+  });
+
+  test("ids are unique and edges/containers point at existing blocks", () => {
+    const ids = graph.blocks.map((b) => b.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const byId = new Map(graph.blocks.map((b) => [b.id, b]));
+    for (const e of graph.edges) {
+      expect(byId.has(e.from)).toBe(true);
+      expect(byId.has(e.to)).toBe(true);
+    }
+    for (const b of graph.blocks) {
+      if (b.parentId) expect(CONTAINERS.has(byId.get(b.parentId)?.type ?? "")).toBe(true);
+    }
+    const names = graph.blocks.map((b) => normalize(b.name));
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  test("references resolve to blocks, declared variables, loop fields or VSS signals", () => {
+    const names = new Set(graph.blocks.map((b) => normalize(b.name)));
+    const vars = new Set(graph.variables.map((v) => v.name));
+    for (const b of graph.blocks) {
+      for (const value of Object.values(b.props)) {
+        const text = typeof value === "string" ? value : JSON.stringify(value);
+        for (const m of text.matchAll(/<([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z0-9_]+)+)>/g)) {
+          const [head, rest] = [m[1]!, m[2]!.slice(1)];
+          if (head === "Vehicle") expect(vssNode(`Vehicle.${rest}`)?.type).toBeDefined();
+          else if (head === "variable") expect(vars.has(rest)).toBe(true);
+          else if (head === "loop") expect(b.parentId).toBeTruthy();
+          else expect(names.has(head)).toBe(true);
+        }
+      }
+    }
+  });
+
+  test("VSS paths exist; expected writes target actuators with values of the right type", () => {
+    for (const p of [...Object.keys(scenario.initial ?? {}), ...scenario.inputs.filter((i: any) => i.path).map((i: any) => i.path)]) {
+      expect(vssNode(p)?.type).toBeDefined();
+    }
+    for (const b of graph.blocks) {
+      const path = (b.props as { path?: unknown }).path;
+      if (typeof path === "string") expect(vssNode(path)?.type).toBeDefined();
+      if (b.type === "sv_set_actuator") expect(vssNode(path as string)?.type).toBe("actuator");
+    }
+    for (const w of scenario.expect?.writes ?? []) {
+      const node = vssNode(w.path)!;
+      expect(node.type).toBe("actuator");
+      const dt = node.datatype!;
+      if (SCALAR_OK[dt]) expect(SCALAR_OK[dt]!(w.value)).toBe(true);
+      else if (isNumeric(dt)) expect(typeof w.value).toBe("number");
+      if (node.allowed) expect(node.allowed).toContain(w.value);
+    }
+  });
+
+  test("inputs and expected writes are in time order and inside `until`", () => {
+    const times = (xs: { t: number }[]) => xs.map((x) => x.t);
+    const sorted = (ts: number[]) => ts.every((t, i) => i === 0 || ts[i - 1]! <= t);
+    expect(sorted(times(scenario.inputs))).toBe(true);
+    expect(sorted(times(scenario.expect?.writes ?? []))).toBe(true);
+    for (const t of [...times(scenario.inputs), ...times(scenario.expect?.writes ?? [])]) expect(t).toBeLessThanOrEqual(scenario.until);
+  });
+});

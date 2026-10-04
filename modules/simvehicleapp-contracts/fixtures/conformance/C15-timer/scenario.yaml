@@ -1,0 +1,16 @@
+# C15-timer — First tick at initialDelayMs, then every intervalMs; tick counts from 1
+# Semantics: ADR-0012 Notes 2026-10-04. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C15-timer
+description: "First tick at initialDelayMs, then every intervalMs; tick counts from 1"
+vss:
+  release: v4.0
+until: 3000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs: []
+expect:
+  writes:
+    - { t: 500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 1500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }
+    - { t: 2500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 3 }

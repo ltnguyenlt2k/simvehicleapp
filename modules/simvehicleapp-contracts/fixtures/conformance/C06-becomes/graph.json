@@ -1,0 +1,48 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c06_becomes",
+  "revision": 1,
+  "name": "becomes fires when the value turns equal to the threshold",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "trig",
+      "props": {
+        "path": "Vehicle.IsMoving",
+        "mode": "becomes",
+        "debounceMs": 0,
+        "concurrency": "restart",
+        "threshold": true
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_set_actuator",
+      "name": "set2",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    }
+  ]
+}

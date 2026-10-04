@@ -1,0 +1,17 @@
+# C32-parallel-join-any — join any continues after the first branch and cancels the others
+# Semantics: 05 §2.5 sv_parallel. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C32-parallel-join-any
+description: "join any continues after the first branch and cancels the others"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+  Vehicle.Body.Windshield.Front.Wiping.Mode: "OFF"
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs: []
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 1000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

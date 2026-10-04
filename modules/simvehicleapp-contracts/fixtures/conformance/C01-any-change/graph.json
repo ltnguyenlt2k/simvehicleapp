@@ -1,0 +1,47 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c01_any_change",
+  "revision": 1,
+  "name": "Any change fires once per changed value; equal value does not fire",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "trig",
+      "props": {
+        "path": "Vehicle.Speed",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_set_actuator",
+      "name": "set2",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    }
+  ]
+}

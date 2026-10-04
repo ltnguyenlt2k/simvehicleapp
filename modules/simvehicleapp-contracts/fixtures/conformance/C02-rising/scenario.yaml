@@ -1,0 +1,19 @@
+# C02-rising — Rising fires only when the value increases
+# Semantics: 05 §2.1 mode rising. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C02-rising
+description: "Rising fires only when the value increases"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+  - { t: 2000, path: "Vehicle.Speed", value: 5 }
+  - { t: 3000, path: "Vehicle.Speed", value: 7 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 3000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

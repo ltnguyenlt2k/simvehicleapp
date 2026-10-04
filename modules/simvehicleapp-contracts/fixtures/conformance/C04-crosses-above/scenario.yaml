@@ -1,0 +1,21 @@
+# C04-crosses-above — previous ≤ threshold < value fires; staying above does not
+# Semantics: 05 §2.1 crosses_above. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C04-crosses-above
+description: "previous ≤ threshold < value fires; staying above does not"
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 90 }
+  - { t: 2000, path: "Vehicle.Speed", value: 110 }
+  - { t: 3000, path: "Vehicle.Speed", value: 120 }
+  - { t: 4000, path: "Vehicle.Speed", value: 95 }
+  - { t: 5000, path: "Vehicle.Speed", value: 101 }
+expect:
+  writes:
+    - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 5000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

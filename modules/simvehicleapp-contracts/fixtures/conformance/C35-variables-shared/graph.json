@@ -1,0 +1,71 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c35_variables_shared",
+  "revision": 1,
+  "name": "Variables are app-wide: a value set by one run is seen by the next",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [
+    {
+      "name": "n",
+      "type": "int32",
+      "initial": 0
+    }
+  ],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "trig",
+      "props": {
+        "path": "Vehicle.Speed",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "queue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_var_set",
+      "name": "count",
+      "props": {
+        "name": "n",
+        "value": "<variable.n> + 1"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "set3",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": "<variable.n>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    }
+  ]
+}

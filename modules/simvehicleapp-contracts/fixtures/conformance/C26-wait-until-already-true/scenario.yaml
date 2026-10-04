@@ -1,0 +1,15 @@
+# C26-wait-until-already-true — wait_until whose condition is already true continues immediately
+# Semantics: sv_wait_until semantics. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C26-wait-until-already-true
+description: "wait_until whose condition is already true continues immediately"
+vss:
+  release: v4.0
+until: 1000
+initial:
+  Vehicle.Speed: 150
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs: []
+expect:
+  writes:
+    - { t: 0, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

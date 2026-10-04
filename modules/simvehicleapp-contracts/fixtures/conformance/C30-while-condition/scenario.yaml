@@ -1,0 +1,14 @@
+# C30-while-condition — while checks its condition before each iteration
+# Semantics: 05 §2.5 sv_while. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C30-while-condition
+description: "while checks its condition before each iteration"
+vss:
+  release: v4.0
+until: 1000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs: []
+expect:
+  writes:
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 3 }

@@ -1,0 +1,20 @@
+# C21-switch — Switch takes the first matching case-<i>, else default
+# Semantics: 05 §2.5 sv_switch. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C21-switch
+description: "Switch takes the first matching case-<i>, else default"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 5
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+  - { t: 2000, path: "Vehicle.Speed", value: 20 }
+  - { t: 3000, path: "Vehicle.Speed", value: 30 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }
+    - { t: 3000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 0 }

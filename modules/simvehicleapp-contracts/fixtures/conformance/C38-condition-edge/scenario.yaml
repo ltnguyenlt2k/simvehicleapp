@@ -1,0 +1,20 @@
+# C38-condition-edge — When condition becomes true fires on false→true edges only
+# Semantics: 05 §2.1 sv_on_condition. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C38-condition-edge
+description: "When condition becomes true fires on false→true edges only"
+vss:
+  release: v4.0
+until: 5000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 150 }
+  - { t: 2000, path: "Vehicle.Speed", value: 160 }
+  - { t: 3000, path: "Vehicle.Speed", value: 50 }
+  - { t: 4000, path: "Vehicle.Speed", value: 120 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 4000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

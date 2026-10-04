@@ -1,0 +1,46 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c15_timer",
+  "revision": 1,
+  "name": "First tick at initialDelayMs, then every intervalMs; tick counts from 1",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_timer",
+      "name": "tick",
+      "props": {
+        "intervalMs": 1000,
+        "initialDelayMs": 500,
+        "concurrency": "ignore"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_set_actuator",
+      "name": "set2",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": "<tick.tick>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    }
+  ]
+}

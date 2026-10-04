@@ -1,0 +1,15 @@
+# C19-wait-zero — wait 0 yields but keeps the virtual time and the step order
+# Semantics: ADR-0012 §3. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C19-wait-zero
+description: "wait 0 yields but keeps the virtual time and the step order"
+vss:
+  release: v4.0
+until: 1000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs: []
+expect:
+  writes:
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }

@@ -1,0 +1,86 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c30_while_condition",
+  "revision": 1,
+  "name": "while checks its condition before each iteration",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [
+    {
+      "name": "n",
+      "type": "int32",
+      "initial": 0
+    }
+  ],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_app_start",
+      "name": "start",
+      "props": {},
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_while",
+      "name": "loop",
+      "props": {
+        "condition": "<variable.n> < 3",
+        "maxIterations": 10,
+        "intervalMs": 0
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_counter",
+      "name": "inc",
+      "props": {
+        "name": "n",
+        "op": "inc",
+        "step": 1
+      },
+      "parentId": "b2",
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "set4",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": "<variable.n>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "loop-start-source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b2",
+      "fromHandle": "loop-end-source",
+      "to": "b4",
+      "toHandle": "target"
+    }
+  ]
+}

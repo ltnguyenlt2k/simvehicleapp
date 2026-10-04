@@ -1,0 +1,16 @@
+# C22-stable-for — stable_for continues on stable after the condition held for durationMs
+# Semantics: 05 §2.5 sv_stable_for. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C22-stable-for
+description: "stable_for continues on stable after the condition held for durationMs"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 150 }
+expect:
+  writes:
+    - { t: 3000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }

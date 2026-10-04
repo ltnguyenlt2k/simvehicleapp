@@ -1,0 +1,17 @@
+# C36-same-instant-order — Runs started by the same event execute in trigger order (deterministic seq)
+# Semantics: ADR-0012 §5. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C36-same-instant-order
+description: "Runs started by the same event execute in trigger order (deterministic seq)"
+vss:
+  release: v4.0
+until: 2000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }

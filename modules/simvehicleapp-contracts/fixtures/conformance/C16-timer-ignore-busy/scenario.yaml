@@ -1,0 +1,15 @@
+# C16-timer-ignore-busy — Timer ticks while a run is busy are skipped (ignore), never caught up
+# Semantics: ADR-0012 §4 ignore; 05 §2.1 timer. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C16-timer-ignore-busy
+description: "Timer ticks while a run is busy are skipped (ignore), never caught up"
+vss:
+  release: v4.0
+until: 5000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs: []
+expect:
+  writes:
+    - { t: 2500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 4500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 3 }

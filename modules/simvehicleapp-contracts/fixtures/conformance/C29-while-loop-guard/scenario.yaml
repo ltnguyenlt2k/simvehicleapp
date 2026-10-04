@@ -1,0 +1,19 @@
+# C29-while-loop-guard — Exceeding maxIterations stops the run (loop guard); steps after the loop do not run
+# Semantics: ADR-0012 §7. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C29-while-loop-guard
+description: "Exceeding maxIterations stops the run (loop guard); steps after the loop do not run"
+vss:
+  release: v4.0
+until: 1000
+initial:
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 9
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs: []
+expect:
+  writes:
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 0 }
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 0, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }
+  trace:
+    - {"ev": "error", "data": {"reason": "loop_guard"}}

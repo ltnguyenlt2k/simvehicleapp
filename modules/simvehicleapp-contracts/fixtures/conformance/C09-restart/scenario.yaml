@@ -1,0 +1,17 @@
+# C09-restart — restart cancels the waiting run and starts a new one
+# Semantics: ADR-0012 §4 restart. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C09-restart
+description: "restart cancels the waiting run and starts a new one"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+  - { t: 1500, path: "Vehicle.Speed", value: 20 }
+expect:
+  writes:
+    - { t: 2500, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 20 }

@@ -1,0 +1,18 @@
+# C35-variables-shared — Variables are app-wide: a value set by one run is seen by the next
+# Semantics: ADR-0012 Notes M03-T09. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C35-variables-shared
+description: "Variables are app-wide: a value set by one run is seen by the next"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+  - { t: 2000, path: "Vehicle.Speed", value: 20 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }

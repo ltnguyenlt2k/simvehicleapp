@@ -1,0 +1,23 @@
+# C14-parallel-max-runs — maxRuns 4: a fifth overlapping event is dropped
+# Semantics: 05 §3.2 maxRuns. Hand-derived expectation (M03-T12); the simulator (M5) and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C14-parallel-max-runs
+description: "maxRuns 4: a fifth overlapping event is dropped"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 1 }
+  - { t: 1001, path: "Vehicle.Speed", value: 2 }
+  - { t: 1002, path: "Vehicle.Speed", value: 3 }
+  - { t: 1003, path: "Vehicle.Speed", value: 4 }
+  - { t: 1004, path: "Vehicle.Speed", value: 5 }
+expect:
+  writes:
+    - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 1 }
+    - { t: 2001, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 2 }
+    - { t: 2002, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 3 }
+    - { t: 2003, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 4 }
