@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, type Locator, type Page, test } from '@playwright/test'
 
 /**
@@ -8,7 +9,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test'
  * minimal workflow "When Speed changes → Set Hazard.IsSignaling = true" survives a studio restart.
  * Tests tagged @after-restart run in a second Playwright invocation after CI restarts the studio.
  */
-const STATE_FILE = join(__dirname, '..', '.state', 'm2.json')
+const STATE_FILE = fileURLToPath(new URL('../.state/m2.json', import.meta.url))
 const run = Date.now().toString(36)
 const user = {
   name: 'Playwright Vehicle',
@@ -141,7 +142,7 @@ test.describe.serial('M2 gate', () => {
     await expect(node(page, 'Set IsSignaling')).toBeVisible()
     await expect(page.locator('.react-flow__edge')).toHaveCount(1)
 
-    mkdirSync(join(STATE_FILE, '..'), { recursive: true })
+    mkdirSync(dirname(STATE_FILE), { recursive: true })
     const state: GateState = { email: user.email, password: user.password, workflowUrl }
     writeFileSync(STATE_FILE, JSON.stringify(state))
   })
