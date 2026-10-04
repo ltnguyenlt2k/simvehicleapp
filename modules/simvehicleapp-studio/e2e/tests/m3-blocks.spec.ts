@@ -65,7 +65,7 @@ test.describe.serial('M3 blocks on the canvas', () => {
     await wait.click()
     const duration = editor.locator('[data-workflow-search-subblock-id="durationMs"]')
     await duration.getByRole('textbox', { name: 'Duration' }).fill('2')
-    await duration.getByRole('button').last().click()
+    await duration.getByRole('button', { name: 'ms' }).click()
     await page.getByRole('menuitem', { name: 's', exact: true }).click()
     await expect(duration.getByRole('textbox', { name: 'Duration' })).toHaveValue('2')
 

@@ -9,6 +9,7 @@ import {
   type SvDurationUnit,
   splitDuration,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/expr/duration'
+import { useExternalEditKey } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/use-external-edit-key'
 
 interface DurationFieldProps {
   initialMs: number | null
@@ -104,14 +105,18 @@ export function SvDurationInput({
   const [storeValue, setStoreValue] = useSubBlockValue<number | null>(blockId, subBlockId)
   const raw = isPreview ? previewValue : storeValue
   const ms = typeof raw === 'number' && Number.isInteger(raw) ? raw : null
+  const { key, markCommitted } = useExternalEditKey(ms)
   return (
     <DurationField
-      key={String(ms)}
+      key={key}
       initialMs={ms}
       min={min}
       required={required}
       disabled={isPreview || disabled}
-      onCommit={(next) => setStoreValue(next)}
+      onCommit={(next) => {
+        markCommitted(next)
+        setStoreValue(next)
+      }}
     />
   )
 }

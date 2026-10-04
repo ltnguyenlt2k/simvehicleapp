@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ChipInput, ChipSelect } from '@/components/emcn'
 import type { SvVssNode } from '@/lib/api/contracts/sv'
 import { useSubBlockValue } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/hooks/use-sub-block-value'
+import { useExternalEditKey } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/use-external-edit-key'
 import {
   allowedValueOf,
   formatTypedValue,
@@ -214,6 +215,7 @@ export function SvTypedValueInput({
   )
   const value = isPreview ? previewValue : storeValue
   const readOnly = isPreview || disabled
+  const { key: editKey, markCommitted } = useExternalEditKey(value)
 
   if (resolved.status === 'no-path') {
     return <Hint>{valueType === '$type' ? 'Choose a type first' : 'Pick a signal first'}</Hint>
@@ -252,14 +254,17 @@ export function SvTypedValueInput({
   }
   return (
     <TypedTextField
-      key={`${type}:${formatTypedValue(value)}`}
+      key={`${type}:${editKey}`}
       initial={formatTypedValue(value)}
       type={type}
       domain={node}
       unit={node?.unit ?? unit}
       required={required}
       disabled={readOnly}
-      onCommit={(v) => setStoreValue(v)}
+      onCommit={(v) => {
+        markCommitted(v)
+        setStoreValue(v)
+      }}
     />
   )
 }
