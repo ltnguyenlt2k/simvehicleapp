@@ -1,0 +1,24 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_on_signal_changed",
+  "version": 1,
+  "category": "triggers",
+  "title": "When signal changes",
+  "priority": "P0",
+  "opcode": "event.signal_changed",
+  "vssKinds": ["sensor", "actuator"],
+  "concurrencyDefault": "restart",
+  "props": [
+    { "name": "path", "kind": "vss-path", "required": true },
+    { "name": "mode", "kind": "enum", "required": true, "default": "any", "enum": ["any", "rising", "falling", "crosses_above", "crosses_below", "becomes"] },
+    { "name": "threshold", "kind": "typed-value", "required": false, "valueType": "$signal" },
+    { "name": "debounceMs", "kind": "duration", "required": false, "default": 0, "min": 0 },
+    { "name": "concurrency", "kind": "enum", "required": false, "default": "restart", "enum": ["restart", "ignore", "queue", "parallel"] }
+  ],
+  "outputs": [
+    { "name": "value", "type": "$signal", "unit": "$signal" },
+    { "name": "previous", "type": "$signal", "unit": "$signal" },
+    { "name": "timestamp", "type": "timestamp" }
+  ],
+  "handles": { "in": [], "out": ["source"] }
+}

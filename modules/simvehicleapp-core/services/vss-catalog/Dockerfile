@@ -3,12 +3,11 @@
 FROM oven/bun:1.3.8-alpine AS build
 WORKDIR /src/simvehicleapp-core
 COPY --from=contracts / /src/simvehicleapp-contracts/
+# Whole workspace: the frozen lockfile lists every workspace package (tests are excluded by .dockerignore).
 COPY package.json bun.lock ./
-COPY packages/vss/package.json packages/vss/
-COPY services/vss-catalog/package.json services/vss-catalog/
+COPY packages packages
+COPY services services
 RUN bun install --frozen-lockfile --production
-COPY packages/vss/src packages/vss/src
-COPY services/vss-catalog/src services/vss-catalog/src
 
 FROM oven/bun:1.3.8-alpine
 ENV NODE_ENV=production SV_VSS_SEED_DIR=/opt/sv/vss SV_VSS_CACHE_DIR=/var/cache/sv-vss SV_VSS_CATALOG_PORT=4010

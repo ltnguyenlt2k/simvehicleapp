@@ -1,0 +1,72 @@
+import { describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { ContractValidator } from "@simvehicleapp/contracts";
+import { blocksFor, parseVssRelease, type VssNode } from "@simvehicleapp/vss";
+import { BLOCK_SPECS, getBlockSpec, VEHICLE_BLOCK_TYPES } from "./index.ts";
+
+const root = join(import.meta.dir, "..");
+const dirs = readdirSync(root).filter((d) => d.startsWith("sv_") && statSync(join(root, d)).isDirectory()).sort();
+const contracts = new ContractValidator();
+const catalog = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve("@simvehicleapp/contracts/schemas/diagnostics-catalog.v1.json")), "utf8"));
+const codes = new Set<string>((catalog.diagnostics ?? catalog.codes ?? []).map((d: { code: string }) => d.code));
+
+test("every block folder is registered, sorted by type", () => {
+  expect(BLOCK_SPECS.map((s) => s.type)).toEqual(dirs);
+  expect([...VEHICLE_BLOCK_TYPES].sort() as string[]).toEqual(dirs);
+});
+
+describe.each(dirs)("%s", (dir) => {
+  const spec = getBlockSpec(dir)!;
+
+  test("spec.json is a valid BlockSpec v1 and folder name = type", () => {
+    contracts.assert("block-spec", spec);
+    expect(spec.type).toBe(dir);
+  });
+
+  test("semantics.md exists and names the opcode", () => {
+    const md = readFileSync(join(root, dir, "semantics.md"), "utf8");
+    expect(md).toContain(`\`${spec.opcode}\``);
+    for (const p of spec.props) expect(md).toContain(`\`${p.name}\``);
+  });
+
+  test("defaults are valid for their prop", () => {
+    for (const p of spec.props) {
+      if (p.default === undefined) continue;
+      if (p.kind === "enum") expect(p.enum).toContain(p.default as string);
+      if (typeof p.default === "number" && p.min !== undefined) expect(p.default).toBeGreaterThanOrEqual(p.min);
+    }
+  });
+
+  test("a required `path` prop of kind vss-path comes first", () => {
+    expect(spec.props[0]).toEqual({ name: "path", kind: "vss-path", required: true });
+  });
+
+  test("handles follow the Sim canvas (triggers: source only; steps: target → source/error)", () => {
+    expect(spec.handles).toEqual(spec.category === "triggers" ? { in: [], out: ["source"] } : { in: ["target"], out: ["source", "error"] });
+  });
+});
+
+test("diagnostic codes referenced by semantics exist in the public catalog", () => {
+  expect(codes.size).toBeGreaterThan(0);
+  for (const dir of dirs) {
+    for (const m of readFileSync(join(root, dir, "semantics.md"), "utf8").matchAll(/`([A-Z][A-Z0-9_]{3,})`/g)) {
+      expect(codes).toContain(m[1]!);
+    }
+  }
+});
+
+test("vssKinds agree with @simvehicleapp/vss blocksFor on every VSS 4.0/4.2 node (ADR-0010 §6)", () => {
+  for (const r of ["4.0", "4.2"]) {
+    const doc = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(`@simvehicleapp/contracts/fixtures/vss/vss_rel_${r}.json`)), "utf8"));
+    for (const node of parseVssRelease(doc, `v${r}`).nodes.values()) {
+      if (node.kind === "branch") {
+        expect(blocksFor(node)).toEqual([]);
+        continue;
+      }
+      const bySpec = BLOCK_SPECS.filter((s) => s.vssKinds?.includes(node.kind as Exclude<VssNode["kind"], "branch">)).map((s) => s.type);
+      expect([...blocksFor(node)].sort() as string[]).toEqual(bySpec);
+    }
+  }
+});

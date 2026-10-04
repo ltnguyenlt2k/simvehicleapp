@@ -1,0 +1,21 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_set_actuator",
+  "version": 1,
+  "category": "actuators",
+  "title": "Set actuator",
+  "priority": "P0",
+  "opcode": "vehicle.write",
+  "vssKinds": ["actuator"],
+  "props": [
+    { "name": "path", "kind": "vss-path", "required": true },
+    { "name": "value", "kind": "expression", "required": true, "valueType": "$signal" },
+    { "name": "awaitAck", "kind": "boolean", "required": false, "default": true },
+    { "name": "onError", "kind": "enum", "required": false, "default": "continue", "enum": ["continue", "stop"] }
+  ],
+  "outputs": [
+    { "name": "ok", "type": "boolean" },
+    { "name": "error", "type": "string" }
+  ],
+  "handles": { "in": ["target"], "out": ["source", "error"] }
+}

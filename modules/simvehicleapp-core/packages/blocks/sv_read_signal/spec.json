@@ -1,0 +1,19 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_read_signal",
+  "version": 1,
+  "category": "sensors",
+  "title": "Read signal",
+  "priority": "P0",
+  "opcode": "vehicle.read",
+  "vssKinds": ["sensor", "actuator"],
+  "props": [
+    { "name": "path", "kind": "vss-path", "required": true },
+    { "name": "source", "kind": "enum", "required": false, "default": "latest-from-trigger", "enum": ["latest-from-trigger", "fresh-read"] }
+  ],
+  "outputs": [
+    { "name": "value", "type": "$signal", "unit": "$signal" },
+    { "name": "timestamp", "type": "timestamp" }
+  ],
+  "handles": { "in": ["target"], "out": ["source", "error"] }
+}

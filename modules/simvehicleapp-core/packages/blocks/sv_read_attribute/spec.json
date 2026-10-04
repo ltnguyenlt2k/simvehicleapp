@@ -1,0 +1,17 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_read_attribute",
+  "version": 1,
+  "category": "attributes",
+  "title": "Read attribute",
+  "priority": "P0",
+  "opcode": "vehicle.read_attribute",
+  "vssKinds": ["attribute"],
+  "props": [
+    { "name": "path", "kind": "vss-path", "required": true }
+  ],
+  "outputs": [
+    { "name": "value", "type": "$signal", "unit": "$signal" }
+  ],
+  "handles": { "in": ["target"], "out": ["source", "error"] }
+}
