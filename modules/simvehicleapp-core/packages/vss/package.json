@@ -1,0 +1,13 @@
+{
+  "name": "@simvehicleapp/vss",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VSS release parser: normalize nodes, classify block availability, canonical model hash (ADR-0010, ADR-0018).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "bun test"
+  }
+}

@@ -1,0 +1,8 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`model hash is pinned for the seeded releases (canonicalization must not drift) 1`] = `
+{
+  "v40": "0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "v42": "5ce5cb9bd23f580c8d29697e6d7ccd43b8cf0db1631912fa8b03e8d964c1f1c5",
+}
+`;
