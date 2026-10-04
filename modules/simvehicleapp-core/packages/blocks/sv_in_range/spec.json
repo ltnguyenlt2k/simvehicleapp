@@ -1,0 +1,55 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_in_range",
+  "version": 1,
+  "category": "logic",
+  "title": "In range / Hysteresis",
+  "priority": "P1",
+  "opcode": "logic.in_range",
+  "props": [
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "low",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "high",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "mode",
+      "kind": "enum",
+      "required": false,
+      "default": "range",
+      "enum": [
+        "range",
+        "hysteresis"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "boolean"
+    },
+    {
+      "name": "state",
+      "type": "boolean"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

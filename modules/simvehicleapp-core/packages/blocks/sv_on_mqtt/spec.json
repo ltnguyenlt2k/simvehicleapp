@@ -1,0 +1,55 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_on_mqtt",
+  "version": 1,
+  "category": "triggers",
+  "title": "When MQTT message",
+  "priority": "P0",
+  "opcode": "event.mqtt_message",
+  "concurrencyDefault": "queue",
+  "props": [
+    {
+      "name": "topic",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "name": "payloadType",
+      "kind": "enum",
+      "required": false,
+      "default": "text",
+      "enum": [
+        "text",
+        "json"
+      ]
+    },
+    {
+      "name": "concurrency",
+      "kind": "enum",
+      "required": false,
+      "default": "queue",
+      "enum": [
+        "restart",
+        "ignore",
+        "queue",
+        "parallel"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "payload",
+      "type": "$inferred"
+    },
+    {
+      "name": "topic",
+      "type": "string"
+    }
+  ],
+  "handles": {
+    "in": [],
+    "out": [
+      "source"
+    ]
+  }
+}

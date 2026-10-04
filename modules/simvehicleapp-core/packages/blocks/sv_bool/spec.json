@@ -1,0 +1,51 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_bool",
+  "version": 1,
+  "category": "logic",
+  "title": "And / Or / Not / Xor",
+  "priority": "P0",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "op",
+      "kind": "enum",
+      "required": true,
+      "default": "and",
+      "enum": [
+        "and",
+        "or",
+        "not",
+        "xor"
+      ]
+    },
+    {
+      "name": "inputs",
+      "kind": "list",
+      "required": true,
+      "items": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true,
+          "valueType": "boolean"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "boolean"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

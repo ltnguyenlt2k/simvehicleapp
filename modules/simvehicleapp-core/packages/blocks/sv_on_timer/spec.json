@@ -1,0 +1,53 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_on_timer",
+  "version": 1,
+  "category": "triggers",
+  "title": "Every …",
+  "priority": "P0",
+  "opcode": "event.timer",
+  "concurrencyDefault": "ignore",
+  "props": [
+    {
+      "name": "intervalMs",
+      "kind": "duration",
+      "required": true,
+      "min": 10
+    },
+    {
+      "name": "initialDelayMs",
+      "kind": "duration",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    {
+      "name": "concurrency",
+      "kind": "enum",
+      "required": false,
+      "default": "ignore",
+      "enum": [
+        "restart",
+        "ignore",
+        "queue",
+        "parallel"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "tick",
+      "type": "uint32"
+    },
+    {
+      "name": "timestamp",
+      "type": "timestamp"
+    }
+  ],
+  "handles": {
+    "in": [],
+    "out": [
+      "source"
+    ]
+  }
+}

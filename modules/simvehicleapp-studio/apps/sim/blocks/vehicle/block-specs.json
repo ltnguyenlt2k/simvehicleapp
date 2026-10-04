@@ -2,13 +2,669 @@
   "blocks": [
     {
       "specVersion": "1.0.0",
+      "type": "sv_array_at",
+      "version": 1,
+      "category": "logic",
+      "title": "Array element at",
+      "priority": "P0",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "array",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "index",
+          "kind": "expression",
+          "required": true,
+          "valueType": "int32"
+        },
+        {
+          "name": "default",
+          "kind": "expression",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$element"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_array_contains",
+      "version": 1,
+      "category": "logic",
+      "title": "Array contains",
+      "priority": "P1",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "array",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "boolean"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_array_length",
+      "version": 1,
+      "category": "logic",
+      "title": "Array length",
+      "priority": "P0",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "array",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "length",
+          "type": "uint32"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_bool",
+      "version": 1,
+      "category": "logic",
+      "title": "And / Or / Not / Xor",
+      "priority": "P0",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "op",
+          "kind": "enum",
+          "required": true,
+          "default": "and",
+          "enum": [
+            "and",
+            "or",
+            "not",
+            "xor"
+          ]
+        },
+        {
+          "name": "inputs",
+          "kind": "list",
+          "required": true,
+          "items": [
+            {
+              "name": "value",
+              "kind": "expression",
+              "required": true,
+              "valueType": "boolean"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "boolean"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_clamp",
+      "version": 1,
+      "category": "logic",
+      "title": "Clamp",
+      "priority": "P1",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "min",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "max",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_compare",
+      "version": 1,
+      "category": "logic",
+      "title": "Compare",
+      "priority": "P0",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "left",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "op",
+          "kind": "enum",
+          "required": true,
+          "default": ">",
+          "enum": [
+            ">",
+            "<",
+            ">=",
+            "<=",
+            "==",
+            "!="
+          ]
+        },
+        {
+          "name": "right",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "boolean"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_constant",
+      "version": 1,
+      "category": "logic",
+      "title": "Constant",
+      "priority": "P0",
+      "opcode": "const",
+      "props": [
+        {
+          "name": "type",
+          "kind": "enum",
+          "required": true,
+          "default": "float",
+          "enum": [
+            "boolean",
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+            "float",
+            "double",
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "kind": "typed-value",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_convert",
+      "version": 1,
+      "category": "logic",
+      "title": "Convert unit/type",
+      "priority": "P1",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "to",
+          "kind": "string",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_expression",
+      "version": 1,
+      "category": "logic",
+      "title": "Expression",
+      "priority": "P0",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "expr",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_in_range",
+      "version": 1,
+      "category": "logic",
+      "title": "In range / Hysteresis",
+      "priority": "P1",
+      "opcode": "logic.in_range",
+      "props": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "low",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "high",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "kind": "enum",
+          "required": false,
+          "default": "range",
+          "enum": [
+            "range",
+            "hysteresis"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "boolean"
+        },
+        {
+          "name": "state",
+          "type": "boolean"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_lookup",
+      "version": 1,
+      "category": "logic",
+      "title": "Lookup table",
+      "priority": "P1",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "table",
+          "kind": "list",
+          "required": true,
+          "items": [
+            {
+              "name": "when",
+              "kind": "expression",
+              "required": true
+            },
+            {
+              "name": "then",
+              "kind": "expression",
+              "required": true
+            }
+          ]
+        },
+        {
+          "name": "default",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_math",
+      "version": 1,
+      "category": "logic",
+      "title": "Math",
+      "priority": "P0",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "op",
+          "kind": "enum",
+          "required": true,
+          "default": "+",
+          "enum": [
+            "+",
+            "-",
+            "*",
+            "/",
+            "%",
+            "min",
+            "max",
+            "abs",
+            "round",
+            "floor",
+            "ceil"
+          ]
+        },
+        {
+          "name": "a",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "b",
+          "kind": "expression",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_on_app_start",
+      "version": 1,
+      "category": "triggers",
+      "title": "When app starts",
+      "priority": "P0",
+      "opcode": "event.app_start",
+      "props": [],
+      "outputs": [],
+      "handles": {
+        "in": [],
+        "out": [
+          "source"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_on_condition",
+      "version": 1,
+      "category": "triggers",
+      "title": "When condition becomes true",
+      "priority": "P1",
+      "opcode": "event.condition",
+      "concurrencyDefault": "restart",
+      "props": [
+        {
+          "name": "expr",
+          "kind": "expression",
+          "required": true,
+          "valueType": "boolean"
+        },
+        {
+          "name": "debounceMs",
+          "kind": "duration",
+          "required": false,
+          "default": 0,
+          "min": 0
+        },
+        {
+          "name": "concurrency",
+          "kind": "enum",
+          "required": false,
+          "default": "restart",
+          "enum": [
+            "restart",
+            "ignore",
+            "queue",
+            "parallel"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "timestamp",
+          "type": "timestamp"
+        }
+      ],
+      "handles": {
+        "in": [],
+        "out": [
+          "source"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_on_mqtt",
+      "version": 1,
+      "category": "triggers",
+      "title": "When MQTT message",
+      "priority": "P0",
+      "opcode": "event.mqtt_message",
+      "concurrencyDefault": "queue",
+      "props": [
+        {
+          "name": "topic",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "payloadType",
+          "kind": "enum",
+          "required": false,
+          "default": "text",
+          "enum": [
+            "text",
+            "json"
+          ]
+        },
+        {
+          "name": "concurrency",
+          "kind": "enum",
+          "required": false,
+          "default": "queue",
+          "enum": [
+            "restart",
+            "ignore",
+            "queue",
+            "parallel"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "payload",
+          "type": "$inferred"
+        },
+        {
+          "name": "topic",
+          "type": "string"
+        }
+      ],
+      "handles": {
+        "in": [],
+        "out": [
+          "source"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
       "type": "sv_on_signal_changed",
       "version": 1,
       "category": "triggers",
       "title": "When signal changes",
       "priority": "P0",
       "opcode": "event.signal_changed",
-      "vssKinds": ["sensor", "actuator"],
+      "vssKinds": [
+        "sensor",
+        "actuator"
+      ],
       "concurrencyDefault": "restart",
       "props": [
         {
@@ -21,7 +677,14 @@
           "kind": "enum",
           "required": true,
           "default": "any",
-          "enum": ["any", "rising", "falling", "crosses_above", "crosses_below", "becomes"]
+          "enum": [
+            "any",
+            "rising",
+            "falling",
+            "crosses_above",
+            "crosses_below",
+            "becomes"
+          ]
         },
         {
           "name": "threshold",
@@ -41,7 +704,12 @@
           "kind": "enum",
           "required": false,
           "default": "restart",
-          "enum": ["restart", "ignore", "queue", "parallel"]
+          "enum": [
+            "restart",
+            "ignore",
+            "queue",
+            "parallel"
+          ]
         }
       ],
       "outputs": [
@@ -62,7 +730,62 @@
       ],
       "handles": {
         "in": [],
-        "out": ["source"]
+        "out": [
+          "source"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_on_timer",
+      "version": 1,
+      "category": "triggers",
+      "title": "Every …",
+      "priority": "P0",
+      "opcode": "event.timer",
+      "concurrencyDefault": "ignore",
+      "props": [
+        {
+          "name": "intervalMs",
+          "kind": "duration",
+          "required": true,
+          "min": 10
+        },
+        {
+          "name": "initialDelayMs",
+          "kind": "duration",
+          "required": false,
+          "default": 0,
+          "min": 0
+        },
+        {
+          "name": "concurrency",
+          "kind": "enum",
+          "required": false,
+          "default": "ignore",
+          "enum": [
+            "restart",
+            "ignore",
+            "queue",
+            "parallel"
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tick",
+          "type": "uint32"
+        },
+        {
+          "name": "timestamp",
+          "type": "timestamp"
+        }
+      ],
+      "handles": {
+        "in": [],
+        "out": [
+          "source"
+        ]
       }
     },
     {
@@ -73,7 +796,9 @@
       "title": "Read attribute",
       "priority": "P0",
       "opcode": "vehicle.read_attribute",
-      "vssKinds": ["attribute"],
+      "vssKinds": [
+        "attribute"
+      ],
       "props": [
         {
           "name": "path",
@@ -89,8 +814,13 @@
         }
       ],
       "handles": {
-        "in": ["target"],
-        "out": ["source", "error"]
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
       }
     },
     {
@@ -101,7 +831,10 @@
       "title": "Read signal",
       "priority": "P0",
       "opcode": "vehicle.read",
-      "vssKinds": ["sensor", "actuator"],
+      "vssKinds": [
+        "sensor",
+        "actuator"
+      ],
       "props": [
         {
           "name": "path",
@@ -113,7 +846,10 @@
           "kind": "enum",
           "required": false,
           "default": "latest-from-trigger",
-          "enum": ["latest-from-trigger", "fresh-read"]
+          "enum": [
+            "latest-from-trigger",
+            "fresh-read"
+          ]
         }
       ],
       "outputs": [
@@ -128,8 +864,70 @@
         }
       ],
       "handles": {
-        "in": ["target"],
-        "out": ["source", "error"]
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_scale",
+      "version": 1,
+      "category": "logic",
+      "title": "Map range",
+      "priority": "P1",
+      "opcode": "expr",
+      "props": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "inMin",
+          "kind": "number",
+          "required": true
+        },
+        {
+          "name": "inMax",
+          "kind": "number",
+          "required": true
+        },
+        {
+          "name": "outMin",
+          "kind": "number",
+          "required": true
+        },
+        {
+          "name": "outMax",
+          "kind": "number",
+          "required": true
+        },
+        {
+          "name": "clamp",
+          "kind": "boolean",
+          "required": false,
+          "default": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "double"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
       }
     },
     {
@@ -140,7 +938,9 @@
       "title": "Set actuator",
       "priority": "P0",
       "opcode": "vehicle.write",
-      "vssKinds": ["actuator"],
+      "vssKinds": [
+        "actuator"
+      ],
       "props": [
         {
           "name": "path",
@@ -164,7 +964,10 @@
           "kind": "enum",
           "required": false,
           "default": "continue",
-          "enum": ["continue", "stop"]
+          "enum": [
+            "continue",
+            "stop"
+          ]
         }
       ],
       "outputs": [
@@ -178,8 +981,13 @@
         }
       ],
       "handles": {
-        "in": ["target"],
-        "out": ["source", "error"]
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
       }
     }
   ]

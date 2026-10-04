@@ -1,0 +1,53 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_lookup",
+  "version": 1,
+  "category": "logic",
+  "title": "Lookup table",
+  "priority": "P1",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "table",
+      "kind": "list",
+      "required": true,
+      "items": [
+        {
+          "name": "when",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "then",
+          "kind": "expression",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "default",
+      "kind": "expression",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_compare",
+  "version": 1,
+  "category": "logic",
+  "title": "Compare",
+  "priority": "P0",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "left",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "op",
+      "kind": "enum",
+      "required": true,
+      "default": ">",
+      "enum": [
+        ">",
+        "<",
+        ">=",
+        "<=",
+        "==",
+        "!="
+      ]
+    },
+    {
+      "name": "right",
+      "kind": "expression",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "boolean"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

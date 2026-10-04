@@ -1,0 +1,51 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_constant",
+  "version": 1,
+  "category": "logic",
+  "title": "Constant",
+  "priority": "P0",
+  "opcode": "const",
+  "props": [
+    {
+      "name": "type",
+      "kind": "enum",
+      "required": true,
+      "default": "float",
+      "enum": [
+        "boolean",
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "float",
+        "double",
+        "string"
+      ]
+    },
+    {
+      "name": "value",
+      "kind": "typed-value",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

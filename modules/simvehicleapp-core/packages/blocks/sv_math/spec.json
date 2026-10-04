@@ -1,0 +1,55 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_math",
+  "version": 1,
+  "category": "logic",
+  "title": "Math",
+  "priority": "P0",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "op",
+      "kind": "enum",
+      "required": true,
+      "default": "+",
+      "enum": [
+        "+",
+        "-",
+        "*",
+        "/",
+        "%",
+        "min",
+        "max",
+        "abs",
+        "round",
+        "floor",
+        "ceil"
+      ]
+    },
+    {
+      "name": "a",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "b",
+      "kind": "expression",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

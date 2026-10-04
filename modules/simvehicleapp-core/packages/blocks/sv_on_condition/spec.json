@@ -1,0 +1,49 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_on_condition",
+  "version": 1,
+  "category": "triggers",
+  "title": "When condition becomes true",
+  "priority": "P1",
+  "opcode": "event.condition",
+  "concurrencyDefault": "restart",
+  "props": [
+    {
+      "name": "expr",
+      "kind": "expression",
+      "required": true,
+      "valueType": "boolean"
+    },
+    {
+      "name": "debounceMs",
+      "kind": "duration",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    {
+      "name": "concurrency",
+      "kind": "enum",
+      "required": false,
+      "default": "restart",
+      "enum": [
+        "restart",
+        "ignore",
+        "queue",
+        "parallel"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "timestamp",
+      "type": "timestamp"
+    }
+  ],
+  "handles": {
+    "in": [],
+    "out": [
+      "source"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_array_contains",
+  "version": 1,
+  "category": "logic",
+  "title": "Array contains",
+  "priority": "P1",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "array",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "boolean"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

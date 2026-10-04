@@ -1,0 +1,41 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_clamp",
+  "version": 1,
+  "category": "logic",
+  "title": "Clamp",
+  "priority": "P1",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "min",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "max",
+      "kind": "expression",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

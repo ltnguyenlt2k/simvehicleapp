@@ -1,0 +1,36 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_convert",
+  "version": 1,
+  "category": "logic",
+  "title": "Convert unit/type",
+  "priority": "P1",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "to",
+      "kind": "string",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

@@ -14,7 +14,7 @@ const codes = new Set<string>((catalog.diagnostics ?? catalog.codes ?? []).map((
 
 test("every block folder is registered, sorted by type", () => {
   expect(BLOCK_SPECS.map((s) => s.type)).toEqual(dirs);
-  expect([...VEHICLE_BLOCK_TYPES].sort() as string[]).toEqual(dirs);
+  expect(VEHICLE_BLOCK_TYPES.every((t) => dirs.includes(t))).toBe(true);
 });
 
 describe.each(dirs)("%s", (dir) => {
@@ -39,8 +39,19 @@ describe.each(dirs)("%s", (dir) => {
     }
   });
 
-  test("a required `path` prop of kind vss-path comes first", () => {
-    expect(spec.props[0]).toEqual({ name: "path", kind: "vss-path", required: true });
+  test("vehicle blocks bind a required `path` first; other blocks have no vss-path prop", () => {
+    const isVehicle = (VEHICLE_BLOCK_TYPES as readonly string[]).includes(spec.type);
+    if (isVehicle) expect(spec.props[0]).toEqual({ name: "path", kind: "vss-path", required: true });
+    else {
+      expect(spec.props.some((p) => p.kind === "vss-path")).toBe(false);
+      expect(spec.vssKinds).toBeUndefined();
+    }
+  });
+
+  test("triggers declare a concurrency default matching their `concurrency` prop (05 §3.2)", () => {
+    const prop = spec.props.find((p) => p.name === "concurrency");
+    if (spec.category !== "triggers" || spec.type === "sv_on_app_start") return;
+    expect(prop?.default).toBe(spec.concurrencyDefault as string);
   });
 
   test("handles follow the Sim canvas (triggers: source only; steps: target → source/error)", () => {

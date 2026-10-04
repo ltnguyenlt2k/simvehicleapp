@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { loadSchema, SCHEMA_NAMES } from "@simvehicleapp/contracts";
 import { createLogger, createService } from "@simvehicleapp/service-kit";
+import { BLOCK_SPECS } from "@simvehicleapp/blocks";
 import { createCompilerHandler } from "./app.ts";
 
 const SECRET = "test-secret";
@@ -20,13 +21,16 @@ const openapi = Bun.YAML.parse(
 const ajv = new Ajv2020({ strict: true, strictTypes: false, strictRequired: false, allowUnionTypes: true });
 for (const name of SCHEMA_NAMES) ajv.addSchema(loadSchema(name));
 
-test("GET /blocks conforms to the contract and lists the M2 vehicle blocks", async () => {
+test("GET /blocks conforms to the contract and lists every BlockSpec sorted by type", async () => {
   const res = await call("/blocks");
   expect(res.status).toBe(200);
   const body = (await res.json()) as { blocks: { type: string }[] };
   const validate = ajv.compile(openapi.paths["/blocks"].get.responses["200"].content["application/json"].schema);
   if (!(validate(body) as boolean)) throw new Error(ajv.errorsText(validate.errors));
-  expect(body.blocks.map((b: { type: string }) => b.type)).toEqual(["sv_on_signal_changed", "sv_read_attribute", "sv_read_signal", "sv_set_actuator"]);
+  const types = body.blocks.map((b: { type: string }) => b.type);
+  expect(types).toEqual(BLOCK_SPECS.map((s) => s.type));
+  expect(types).toEqual([...types].sort());
+  for (const t of ["sv_on_signal_changed", "sv_read_attribute", "sv_read_signal", "sv_set_actuator"]) expect(types).toContain(t);
 });
 
 test("GET /blocks has a stable ETag and honours If-None-Match", async () => {

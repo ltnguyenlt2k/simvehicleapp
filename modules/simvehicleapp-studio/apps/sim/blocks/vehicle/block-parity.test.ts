@@ -59,12 +59,45 @@ function initialValue(sub: SubBlockConfig): unknown {
   return sub.defaultValue
 }
 
+/**
+ * Specs whose studio BlockConfig is not written yet, with the task that adds it. Kept explicit so a
+ * spec cannot silently lack UI: the M3 gate requires this list to be empty again.
+ */
+const PENDING_UI: Record<string, string> = Object.fromEntries(
+  [
+    'sv_array_at',
+    'sv_array_contains',
+    'sv_array_length',
+    'sv_bool',
+    'sv_clamp',
+    'sv_compare',
+    'sv_constant',
+    'sv_convert',
+    'sv_expression',
+    'sv_in_range',
+    'sv_lookup',
+    'sv_math',
+    'sv_on_app_start',
+    'sv_on_condition',
+    'sv_on_mqtt',
+    'sv_on_timer',
+    'sv_scale',
+  ].map((type) => [type, 'M03-T07'])
+)
+
 describe('block parity: studio BlockConfig ↔ core BlockSpec (M02-T09)', () => {
-  it('registers exactly the blocks of the spec snapshot', () => {
-    expect(Object.keys(SV_VEHICLE_BLOCKS).sort()).toEqual(SPECS.map((s) => s.type))
+  it('every spec has a BlockConfig unless listed as pending, and vice versa', () => {
+    const withUi = Object.keys(SV_VEHICLE_BLOCKS).sort()
+    expect(withUi.every((type) => SPECS.some((s) => s.type === type))).toBe(true)
+    expect(withUi.filter((type) => type in PENDING_UI)).toEqual([])
+    expect(SPECS.map((s) => s.type).filter((type) => !withUi.includes(type))).toEqual(
+      Object.keys(PENDING_UI).sort()
+    )
   })
 
-  describe.each(SPECS.map((s) => [s.type, s] as const))('%s', (type, spec) => {
+  describe.each(
+    SPECS.filter((s) => !(s.type in PENDING_UI)).map((s) => [s.type, s] as const)
+  )('%s', (type, spec) => {
     const config = SV_VEHICLE_BLOCKS[type] as BlockConfig
 
     it('has the same type and canvas handles (Sim draws no in/error handle on triggers)', () => {

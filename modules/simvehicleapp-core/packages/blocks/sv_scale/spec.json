@@ -1,0 +1,57 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_scale",
+  "version": 1,
+  "category": "logic",
+  "title": "Map range",
+  "priority": "P1",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "inMin",
+      "kind": "number",
+      "required": true
+    },
+    {
+      "name": "inMax",
+      "kind": "number",
+      "required": true
+    },
+    {
+      "name": "outMin",
+      "kind": "number",
+      "required": true
+    },
+    {
+      "name": "outMax",
+      "kind": "number",
+      "required": true
+    },
+    {
+      "name": "clamp",
+      "kind": "boolean",
+      "required": false,
+      "default": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "double"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

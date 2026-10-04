@@ -1,0 +1,42 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_array_at",
+  "version": 1,
+  "category": "logic",
+  "title": "Array element at",
+  "priority": "P0",
+  "opcode": "expr",
+  "props": [
+    {
+      "name": "array",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "index",
+      "kind": "expression",
+      "required": true,
+      "valueType": "int32"
+    },
+    {
+      "name": "default",
+      "kind": "expression",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "$element"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}
