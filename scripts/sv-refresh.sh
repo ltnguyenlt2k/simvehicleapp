@@ -47,8 +47,10 @@ if docker image inspect "$marker" >/dev/null 2>&1; then
 else
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/sv-refresh.XXXXXX")
   trap 'rm -rf "$tmp"' EXIT
-  echo "refresh: downloading studio image of ${run_sha:0:12} from run $run (~700 MB)…"
-  gh run download "$run" -n studio-image -D "$tmp"
+  artifact=$(gh api "repos/$REPO/actions/runs/$run/artifacts" \
+    --jq '.artifacts[] | select(.name == "studio-image" and .expired == false) | .id')
+  echo "refresh: downloading studio image of ${run_sha:0:12} from run $run (~700 MB, parallel ranges)…"
+  python3 scripts/fetch_artifact.py --repo "$REPO" --artifact "$artifact" --out "$tmp/a.zip" --extract "$tmp"
   docker load -i "$tmp/studio-image.tar.gz"
   docker tag simvehicleapp/studio:dev "$marker"
 fi
