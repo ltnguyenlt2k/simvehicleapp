@@ -36,6 +36,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 scripts/ci/contract_only_deps.py
+      - name: Studio BlockSpec snapshot matches core (block-parity input, ADR-0011)
+        run: python3 scripts/ci/block_specs_sync.py
 
   vendored-trees:
     name: vendored trees match upstream pins

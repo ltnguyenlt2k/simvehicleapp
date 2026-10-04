@@ -333,6 +333,8 @@ import type {
   BlockTemplate,
   SuggestedSkill,
 } from '@/blocks/types'
+// SV: SimVehicleApp vehicle blocks (ADR-0011 §3)
+import { SV_VEHICLE_BLOCKS } from '@/blocks/vehicle'
 
 /** All block configs keyed by block type. The execution source of truth. */
 const BLOCK_REGISTRY: Record<string, BlockConfig> = {
@@ -632,6 +634,8 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   zep: ZepBlock,
   zoom: ZoomBlock,
   zoominfo: ZoomInfoBlock,
+  // SV: SimVehicleApp vehicle blocks (ADR-0011 §3)
+  ...SV_VEHICLE_BLOCKS,
 }
 
 /**

@@ -586,6 +586,10 @@ describe.concurrent('Blocks Module', () => {
         'sort-builder',
         'skill-input',
         'modal',
+        // SV: SimVehicleApp subBlock types (ADR-0011 §5)
+        'vss-path-selector',
+        'sv-typed-value',
+        'sv-enum',
       ]
 
       const blocks = getAllBlocks()

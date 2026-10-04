@@ -14,6 +14,7 @@ HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE.parent), str(HERE.parents[1] / "license")]
 
 import compose_lint  # noqa: E402
+import block_specs_sync  # noqa: E402
 import contract_only_deps  # noqa: E402
 import license_scan  # noqa: E402
 
@@ -127,6 +128,28 @@ class ContractOnlyDepsTest(TempRepo):
     def test_cargo_path_outside_module_rejected(self):
         self.write("modules/rust/Cargo.toml", '[dependencies]\ncore = { path = "../core" }\n')
         self.assertTrue(any("../core" in e for e in self.check()))
+
+
+class BlockSpecsSyncTest(TempRepo):
+    def spec(self, t: str, title: str = "T"):
+        self.write(f"modules/simvehicleapp-core/packages/blocks/{t}/spec.json", json.dumps({"type": t, "title": title}))
+
+    def test_in_sync_after_write(self):
+        self.spec("sv_b")
+        self.spec("sv_a")
+        self.assertEqual(block_specs_sync.run(self.root, write=True), [])
+        self.assertEqual(block_specs_sync.run(self.root), [])
+        snap = json.loads((self.root / block_specs_sync.SNAPSHOT).read_text())
+        self.assertEqual([s["type"] for s in snap["blocks"]], ["sv_a", "sv_b"])
+
+    def test_missing_or_stale_snapshot_rejected(self):
+        self.spec("sv_a")
+        self.assertTrue(any("missing" in e for e in block_specs_sync.run(self.root)))
+        block_specs_sync.run(self.root, write=True)
+        self.spec("sv_a", title="changed")
+        self.assertTrue(any("content differs" in e for e in block_specs_sync.run(self.root)))
+        self.spec("sv_c")
+        self.assertTrue(any("types" in e for e in block_specs_sync.run(self.root)))
 
 
 class LicenseScanTest(TempRepo):

@@ -208,3 +208,8 @@ apps/sim/hooks/queries/sv-catalog.ts
 packages/workflow-types/src/blocks.ts
 apps/sim/blocks/types.ts
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/sub-block.tsx
+
+# M02-T08/T09 — sv-typed-value/sv-enum subBlocks, 4 vehicle BlockConfigs + block-parity (ADR-0011)
+apps/sim/blocks/vehicle/*
+apps/sim/blocks/registry.ts
+apps/sim/blocks/blocks.test.ts

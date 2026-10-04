@@ -1,0 +1,186 @@
+{
+  "blocks": [
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_on_signal_changed",
+      "version": 1,
+      "category": "triggers",
+      "title": "When signal changes",
+      "priority": "P0",
+      "opcode": "event.signal_changed",
+      "vssKinds": ["sensor", "actuator"],
+      "concurrencyDefault": "restart",
+      "props": [
+        {
+          "name": "path",
+          "kind": "vss-path",
+          "required": true
+        },
+        {
+          "name": "mode",
+          "kind": "enum",
+          "required": true,
+          "default": "any",
+          "enum": ["any", "rising", "falling", "crosses_above", "crosses_below", "becomes"]
+        },
+        {
+          "name": "threshold",
+          "kind": "typed-value",
+          "required": false,
+          "valueType": "$signal"
+        },
+        {
+          "name": "debounceMs",
+          "kind": "duration",
+          "required": false,
+          "default": 0,
+          "min": 0
+        },
+        {
+          "name": "concurrency",
+          "kind": "enum",
+          "required": false,
+          "default": "restart",
+          "enum": ["restart", "ignore", "queue", "parallel"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "previous",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "timestamp",
+          "type": "timestamp"
+        }
+      ],
+      "handles": {
+        "in": [],
+        "out": ["source"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_read_attribute",
+      "version": 1,
+      "category": "attributes",
+      "title": "Read attribute",
+      "priority": "P0",
+      "opcode": "vehicle.read_attribute",
+      "vssKinds": ["attribute"],
+      "props": [
+        {
+          "name": "path",
+          "kind": "vss-path",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$signal",
+          "unit": "$signal"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source", "error"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_read_signal",
+      "version": 1,
+      "category": "sensors",
+      "title": "Read signal",
+      "priority": "P0",
+      "opcode": "vehicle.read",
+      "vssKinds": ["sensor", "actuator"],
+      "props": [
+        {
+          "name": "path",
+          "kind": "vss-path",
+          "required": true
+        },
+        {
+          "name": "source",
+          "kind": "enum",
+          "required": false,
+          "default": "latest-from-trigger",
+          "enum": ["latest-from-trigger", "fresh-read"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "timestamp",
+          "type": "timestamp"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source", "error"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_set_actuator",
+      "version": 1,
+      "category": "actuators",
+      "title": "Set actuator",
+      "priority": "P0",
+      "opcode": "vehicle.write",
+      "vssKinds": ["actuator"],
+      "props": [
+        {
+          "name": "path",
+          "kind": "vss-path",
+          "required": true
+        },
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true,
+          "valueType": "$signal"
+        },
+        {
+          "name": "awaitAck",
+          "kind": "boolean",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "onError",
+          "kind": "enum",
+          "required": false,
+          "default": "continue",
+          "enum": ["continue", "stop"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "ok",
+          "type": "boolean"
+        },
+        {
+          "name": "error",
+          "type": "string"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source", "error"]
+      }
+    }
+  ]
+}
