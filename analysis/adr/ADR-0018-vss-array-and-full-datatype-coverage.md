@@ -97,3 +97,8 @@ call     := ident '(' args ')'                   // + 3 hàm mới: len(arr) · 
 - Test cố ý sai: dùng `<PidsA.value> == "01"` (so sánh mảng trực tiếp) ⇒ đúng mã `ARRAY_VALUE_REQUIRES_INDEXING`.
 - Test giá trị `int64` giả lập `9223372036854775000` đi hết WorkflowGraph → IR → Scenario → C++ build → runtime, so sánh bit-exact ở hai đầu.
 - Build thật C++ cho GW mở rộng dùng `sv_array_length`/`sv_array_at` trên `Vehicle.OBD.PidsA` — binary không crash khi index vượt biên (test bằng giá trị index runtime lớn hơn độ dài mảng thật).
+
+## Notes / Deviations (2026-10-04, rà lại trước M2)
+- Quét lại `vss_rel_4.2.json` (asset sha256 `6de4edc9…`): node mảng = `string[]` 11 attribute + 3 sensor, `float[]` 2 sensor, `uint8[]` 1 attribute; **0 actuator mảng** ✔ (khớp Context §3). v4.0: 9 `string[]` + 1 `uint8[]`, 0 actuator mảng ✔.
+- `Vehicle.OBD.PidsA` trong v4.0 là **attribute** `string[]`, **không có `default`** ⇒ ca Verification `len(...) == 32` phụ thuộc giá trị do scenario cung cấp, không phải dữ liệu catalog; golden test M3/M4 phải khai báo giá trị trong scenario.
+- Phạm vi M2 của ADR này chỉ gồm: badge `T[]` trên panel Vehicle/block (M02-T10) và `sv-typed-value` hiển thị read-only khi kiểu đích là mảng (M02-T08). Opcode/SVX/block `sv_array_*`/runtime theo bảng Implementation (M3+).

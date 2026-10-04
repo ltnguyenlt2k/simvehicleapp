@@ -48,3 +48,10 @@ flowchart LR
 
 ## Verification
 Kéo `Vehicle.Speed` tạo block đúng; đổi release VSS của project → cây đổi mà không build lại studio; `Set` không xuất hiện cho sensor.
+
+## Notes / Deviations (2026-10-04, rà source Sim v0.7.13 trước M2)
+- **Vị trí `SubBlockType`**: union nằm ở `packages/workflow-types/src/blocks.ts` (package dùng chung với `apps/realtime`), không phải `apps/sim/blocks/types.ts` (file này chỉ re-export). 5 subBlock type mới (§5) thêm vào union đó với marker `// SV:`; renderer thêm `case` trong `…/editor/components/sub-block/sub-block.tsx` (switch theo `config.type`). Package không được import `apps/*` (boundary check của Sim) — union chỉ là literal type nên không vi phạm.
+- **Drag-to-create (§2)**: `onDrop` của canvas (`workflow.tsx`) chỉ đọc `{type, enableTriggerMode}` từ `dataTransfer` rồi gọi `handleToolbarDrop`; nhưng `addBlock(...)` **đã** có tham số `presetSubBlockValues`. ⇒ mở rộng payload drop thêm `name?` + `presetSubBlockValues?` và truyền xuống `addBlock` (sửa nhỏ `// SV:`), không tạo đường tạo block riêng. Đường "add bằng click/command palette" giữ nguyên (block rỗng, chọn path sau).
+- **"path đã điền & khoá"**: Sim không có cơ chế khoá từng subBlock. ⇒ "khoá" hiện thực trong chính `vss-path-selector`: khi đã có giá trị thì hiển thị dạng read-only (path + kind/type/unit), đổi path phải bấm hành động "Change" tường minh. Không sửa cơ chế subBlock lõi.
+- **Allowlist toolbar (§3)**: đã có từ M01-T05 (`NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST`, mặc định `sv_*,note`) — block `sv_*` mới tự hiện, không cần sửa thêm.
+- **`GET /blocks` (§4)**: do skeleton compiler service phục vụ (M02-T06); studio gọi qua BFF (`lib/sv/api-client.ts`, biến `SV_COMPILER_URL`), không import package core (luật cứng §2).
