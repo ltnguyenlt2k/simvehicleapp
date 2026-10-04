@@ -1,6 +1,6 @@
 # ADR-0008: Chiến lược refactor Sim thành `simvehicleapp-studio`
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L0
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-03; M1 gate PASS) · **Date:** 2026-09-30 · **Level:** L0
 - **Related:** FR-PLT-01/06; [11](../11-sim-refactor-plan.md), [11b — kiểm kê từng block cụ thể](../11b-block-inventory-and-migration.md); ADR-0003, ADR-0004
 
 ## Context
@@ -30,7 +30,7 @@ Xem [phases/M01](../phases/M01-studio-shell.md) và [phases/M11](../phases/M11-h
 ## Verification
 Toolbar chỉ hiện nhóm vehicle; `grep -ri "copilot.sim.ai\|sim.ai" apps` rỗng (trừ NOTICE); build & test xanh.
 
-## Notes / Deviations (2026-10-03 — M1 implemented, chưa đổi Status)
+## Notes / Deviations (2026-10-03 — M1 implemented; PO chấp thuận cùng ADR 2026-10-04)
 Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đổi so với Sim v0.7.13 khai báo trong `modules/simvehicleapp-studio/UPSTREAM_SYNC.allow` và kiểm bằng CI `vendored-trees`.
 1. **Copilot = cả module Chat/Mothership** (trang chủ workspace, chat, scheduled tasks, inbox, settings) ⇒ gỡ toàn bộ ở đợt 1; giữ 45 helper cục bộ không gọi mạng trong `lib/copilot` (Files, telemetry). Route `home`/`chat` cũ chuyển hướng về `/w` ở proxy.
 2. **Terminal executor của Sim** được thay bằng bottom dock SimVehicleApp trong editor (khớp ADR-0006: không dùng executor Sim cho vehicle workflow).

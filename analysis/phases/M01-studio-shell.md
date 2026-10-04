@@ -24,9 +24,11 @@
 | M01-T12 | Kiểm tra i18n (Q8) & ghi kết quả | report | |
 
 ## DoD
-- [ ] Không còn `ee/`, copilot, pii; license scan xanh.
-- [ ] Đăng nhập, tạo workspace, tạo workflow rỗng, lưu, realtime collab hoạt động.
-- [ ] UI mang thương hiệu SimVehicleApp, toolbar không hiển thị block cũ.
+- [x] Không còn `ee/`, copilot, pii; license scan xanh. — studio_guards + tree check + license scan (CI 37144577397).
+- [x] Đăng nhập, tạo workspace, tạo workflow rỗng, lưu, realtime collab hoạt động. — Playwright E2E 4/4.
+- [x] UI mang thương hiệu SimVehicleApp, toolbar không hiển thị block cũ. — E2E + xác nhận bằng mắt.
 
 ## Acceptance Gate
 Build + test (`bun run test`) xanh; compose up; E2E: signup → tạo workflow → reload thấy workflow; license scan PASS.
+
+**Gate M1: PASS (2026-10-04)** — [docs/reports/M01.md](../../docs/reports/M01.md), CI [37144577397](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37144577397).

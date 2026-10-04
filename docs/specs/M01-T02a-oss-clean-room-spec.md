@@ -1,6 +1,7 @@
 # Spec clean-room thay thế `apps/sim/ee/` — `lib/sv/oss/*` (M01-T02a)
 
 - **Ngày:** 2026-10-03 · **Tác giả spec:** Claude Code · **ADR:** 0004 (Accepted), 0008 · **Phân tích:** [11a](../../analysis/11a-ee-clean-room-replacement.md)
+- **Clean-room review:** PO ký xác nhận 2026-10-04 — spec chỉ suy ra từ phần Apache, không trích `apps/sim/ee/` (11a §3.6).
 - **Baseline:** Sim v0.7.13 `ad0b8678…` (snapshot `modules/simvehicleapp-studio`, tag `studio/baseline-v0.7.13`)
 
 ## 0. Tuyên bố clean-room
