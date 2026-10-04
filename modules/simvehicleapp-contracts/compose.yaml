@@ -1,0 +1,8 @@
+# simvehicleapp-contracts — build-only image consumed by other modules' Dockerfiles (never started).
+#   docker compose build contracts      (scripts/sv build does this first)
+services:
+  contracts:
+    image: ${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    build:
+      context: .
+    profiles: [build]

@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- `openapi/vss-catalog.v1.yaml` (additive): 304/400/404/503 responses, optional `unknown[]` on `/nodes`, strong-ETag and `/tree` root semantics documented (M02-T04, ADR-0010 Notes).
+- Build-only image `simvehicleapp/contracts:dev` (`Dockerfile`, `compose.yaml`, profile `build`) so other modules consume contracts without a build context outside their folder (ADR-0009).
 - Fixtures: VSS v4.2 JSON + `v4.2/units.yaml` + `v4.2/quantities.yaml` (M02-T01/T02, ADR-0010; unmodified, provenance updated).
 
 ## 1.0.0-alpha.1 — unreleased (M00-T05/T06)
