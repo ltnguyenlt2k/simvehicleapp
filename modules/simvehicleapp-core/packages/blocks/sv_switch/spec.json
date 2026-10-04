@@ -1,0 +1,38 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_switch",
+  "version": 1,
+  "category": "flow",
+  "title": "Switch",
+  "priority": "P1",
+  "opcode": "control.switch",
+  "props": [
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    },
+    {
+      "name": "cases",
+      "kind": "list",
+      "required": true,
+      "items": [
+        {
+          "name": "when",
+          "kind": "expression",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "case",
+      "default"
+    ]
+  }
+}

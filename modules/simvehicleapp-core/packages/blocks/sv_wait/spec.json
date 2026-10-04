@@ -1,0 +1,26 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_wait",
+  "version": 1,
+  "category": "flow",
+  "title": "Wait",
+  "priority": "P0",
+  "opcode": "control.wait",
+  "props": [
+    {
+      "name": "durationMs",
+      "kind": "duration",
+      "required": true,
+      "min": 0
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source"
+    ]
+  }
+}

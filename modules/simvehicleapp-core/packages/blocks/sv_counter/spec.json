@@ -1,0 +1,49 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_counter",
+  "version": 1,
+  "category": "state",
+  "title": "Counter",
+  "priority": "P1",
+  "opcode": "state.counter",
+  "props": [
+    {
+      "name": "name",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "name": "op",
+      "kind": "enum",
+      "required": false,
+      "default": "inc",
+      "enum": [
+        "inc",
+        "dec",
+        "reset"
+      ]
+    },
+    {
+      "name": "step",
+      "kind": "integer",
+      "required": false,
+      "default": 1,
+      "min": 1
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "int32"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

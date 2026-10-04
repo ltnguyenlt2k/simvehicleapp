@@ -73,15 +73,30 @@ const PENDING_UI: Record<string, string> = Object.fromEntries(
     'sv_compare',
     'sv_constant',
     'sv_convert',
+    'sv_counter',
     'sv_expression',
+    'sv_hmi_notify',
+    'sv_if',
     'sv_in_range',
+    'sv_log',
     'sv_lookup',
     'sv_math',
+    'sv_mqtt_publish',
     'sv_on_app_start',
     'sv_on_condition',
     'sv_on_mqtt',
     'sv_on_timer',
+    'sv_parallel',
+    'sv_repeat',
     'sv_scale',
+    'sv_stable_for',
+    'sv_stop',
+    'sv_switch',
+    'sv_var_get',
+    'sv_var_set',
+    'sv_wait',
+    'sv_wait_until',
+    'sv_while',
   ].map((type) => [type, 'M03-T07'])
 )
 
@@ -95,49 +110,50 @@ describe('block parity: studio BlockConfig ↔ core BlockSpec (M02-T09)', () => 
     )
   })
 
-  describe.each(
-    SPECS.filter((s) => !(s.type in PENDING_UI)).map((s) => [s.type, s] as const)
-  )('%s', (type, spec) => {
-    const config = SV_VEHICLE_BLOCKS[type] as BlockConfig
+  describe.each(SPECS.filter((s) => !(s.type in PENDING_UI)).map((s) => [s.type, s] as const))(
+    '%s',
+    (type, spec) => {
+      const config = SV_VEHICLE_BLOCKS[type] as BlockConfig
 
-    it('has the same type and canvas handles (Sim draws no in/error handle on triggers)', () => {
-      expect(config.type).toBe(spec.type)
-      const isTrigger = config.category === 'triggers'
-      expect(isTrigger).toBe(spec.category === 'triggers')
-      expect(spec.handles).toEqual(
-        isTrigger ? { in: [], out: ['source'] } : { in: ['target'], out: ['source', 'error'] }
-      )
-    })
+      it('has the same type and canvas handles (Sim draws no in/error handle on triggers)', () => {
+        expect(config.type).toBe(spec.type)
+        const isTrigger = config.category === 'triggers'
+        expect(isTrigger).toBe(spec.category === 'triggers')
+        expect(spec.handles).toEqual(
+          isTrigger ? { in: [], out: ['source'] } : { in: ['target'], out: ['source', 'error'] }
+        )
+      })
 
-    it('has one subBlock per prop, in spec order', () => {
-      expect(config.subBlocks.map((s) => s.id)).toEqual(spec.props.map((p) => p.name))
-    })
+      it('has one subBlock per prop, in spec order', () => {
+        expect(config.subBlocks.map((s) => s.id)).toEqual(spec.props.map((p) => p.name))
+      })
 
-    it.each(spec.props.map((p) => [p.name, p] as const))('prop %s matches', (_name, prop) => {
-      const sub = config.subBlocks.find((s) => s.id === prop.name) as SubBlockConfig
-      expect(EDITORS[prop.kind]).toContain(sub.type)
-      expect(sub.required === true).toBe(prop.required)
-      if (prop.default !== undefined) expect(initialValue(sub)).toEqual(prop.default)
-      if (prop.kind === 'enum') {
-        expect((sub.options as { id: string }[]).map((o) => o.id)).toEqual(prop.enum)
-      }
-      if (prop.kind === 'vss-path') {
-        expect(sub.vssKinds).toEqual(spec.vssKinds)
-        expect(sub.vssWrites === true).toBe(spec.type === 'sv_set_actuator')
-      }
-      if (prop.valueType) expect(sub.svValueType).toBe(prop.valueType)
-      if (prop.kind === 'duration') {
-        expect(sub.svValueType).toBe('uint32')
-        expect(sub.svUnit).toBe('ms')
-      }
-    })
+      it.each(spec.props.map((p) => [p.name, p] as const))('prop %s matches', (_name, prop) => {
+        const sub = config.subBlocks.find((s) => s.id === prop.name) as SubBlockConfig
+        expect(EDITORS[prop.kind]).toContain(sub.type)
+        expect(sub.required === true).toBe(prop.required)
+        if (prop.default !== undefined) expect(initialValue(sub)).toEqual(prop.default)
+        if (prop.kind === 'enum') {
+          expect((sub.options as { id: string }[]).map((o) => o.id)).toEqual(prop.enum)
+        }
+        if (prop.kind === 'vss-path') {
+          expect(sub.vssKinds).toEqual(spec.vssKinds)
+          expect(sub.vssWrites === true).toBe(spec.type === 'sv_set_actuator')
+        }
+        if (prop.valueType) expect(sub.svValueType).toBe(prop.valueType)
+        if (prop.kind === 'duration') {
+          expect(sub.svValueType).toBe('uint32')
+          expect(sub.svUnit).toBe('ms')
+        }
+      })
 
-    it('exposes the spec outputs for <Block.field> references', () => {
-      expect(Object.keys(config.outputs)).toEqual(spec.outputs.map((o) => o.name))
-      for (const out of spec.outputs) {
-        const def = config.outputs[out.name] as { type: string }
-        expect(def.type).toBe(OUTPUT_TYPES[out.type])
-      }
-    })
-  })
+      it('exposes the spec outputs for <Block.field> references', () => {
+        expect(Object.keys(config.outputs)).toEqual(spec.outputs.map((o) => o.name))
+        for (const out of spec.outputs) {
+          const def = config.outputs[out.name] as { type: string }
+          expect(def.type).toBe(OUTPUT_TYPES[out.type])
+        }
+      })
+    }
+  )
 })

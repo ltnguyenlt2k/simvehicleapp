@@ -1,0 +1,31 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_var_set",
+  "version": 1,
+  "category": "state",
+  "title": "Set variable",
+  "priority": "P0",
+  "opcode": "state.set",
+  "props": [
+    {
+      "name": "name",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "name": "value",
+      "kind": "expression",
+      "required": true
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

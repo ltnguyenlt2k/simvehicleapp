@@ -1,0 +1,41 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_repeat",
+  "version": 1,
+  "category": "flow",
+  "title": "Repeat",
+  "priority": "P1",
+  "opcode": "control.repeat",
+  "container": true,
+  "props": [
+    {
+      "name": "count",
+      "kind": "integer",
+      "required": true,
+      "min": 1,
+      "max": 10000
+    },
+    {
+      "name": "intervalMs",
+      "kind": "duration",
+      "required": false,
+      "default": 0,
+      "min": 0
+    }
+  ],
+  "outputs": [
+    {
+      "name": "index",
+      "type": "uint32"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "loop-start-source",
+      "loop-end-source"
+    ]
+  }
+}

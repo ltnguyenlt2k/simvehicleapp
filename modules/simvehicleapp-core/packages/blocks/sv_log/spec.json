@@ -1,0 +1,38 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_log",
+  "version": 1,
+  "category": "comm",
+  "title": "Log",
+  "priority": "P0",
+  "opcode": "comm.log",
+  "props": [
+    {
+      "name": "level",
+      "kind": "enum",
+      "required": false,
+      "default": "info",
+      "enum": [
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ]
+    },
+    {
+      "name": "message",
+      "kind": "template",
+      "required": true
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

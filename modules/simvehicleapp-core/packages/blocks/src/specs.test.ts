@@ -17,6 +17,19 @@ test("every block folder is registered, sorted by type", () => {
   expect(VEHICLE_BLOCK_TYPES.every((t) => dirs.includes(t))).toBe(true);
 });
 
+/** Branch handles of flow blocks (analysis/05 §2.5); containers use Sim subflow handle ids (M03-T10). */
+const FLOW_HANDLES: Record<string, string[]> = {
+  sv_if: ["then", "else"],
+  sv_switch: ["case", "default"],
+  sv_wait: ["source"],
+  sv_wait_until: ["ok", "timeout"],
+  sv_stable_for: ["stable", "broken"],
+  sv_repeat: ["loop-start-source", "loop-end-source"],
+  sv_while: ["loop-start-source", "loop-end-source"],
+  sv_parallel: ["parallel-start-source", "parallel-end-source"],
+  sv_stop: [],
+};
+
 describe.each(dirs)("%s", (dir) => {
   const spec = getBlockSpec(dir)!;
 
@@ -54,8 +67,13 @@ describe.each(dirs)("%s", (dir) => {
     expect(prop?.default).toBe(spec.concurrencyDefault as string);
   });
 
-  test("handles follow the Sim canvas (triggers: source only; steps: target → source/error)", () => {
-    expect(spec.handles).toEqual(spec.category === "triggers" ? { in: [], out: ["source"] } : { in: ["target"], out: ["source", "error"] });
+  test("handles follow the Sim canvas (triggers: source; steps: target → source/error; flow: named branches)", () => {
+    if (spec.category === "triggers") expect(spec.handles).toEqual({ in: [], out: ["source"] });
+    else if (spec.category === "flow") {
+      expect(spec.handles.in).toEqual(["target"]);
+      expect(spec.handles.out).toEqual(FLOW_HANDLES[spec.type] ?? ["<missing in FLOW_HANDLES>"]);
+      expect(spec.container === true).toBe(/^(loop|parallel)-start-source$/.test(spec.handles.out[0] ?? ""));
+    } else expect(spec.handles).toEqual({ in: ["target"], out: ["source", "error"] });
   });
 });
 

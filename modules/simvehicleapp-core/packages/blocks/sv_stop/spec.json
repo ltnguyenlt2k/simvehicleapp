@@ -1,0 +1,29 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_stop",
+  "version": 1,
+  "category": "flow",
+  "title": "Stop",
+  "priority": "P0",
+  "opcode": "control.stop",
+  "props": [
+    {
+      "name": "scope",
+      "kind": "enum",
+      "required": false,
+      "default": "run",
+      "enum": [
+        "run",
+        "workflow",
+        "app"
+      ]
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": []
+  }
+}

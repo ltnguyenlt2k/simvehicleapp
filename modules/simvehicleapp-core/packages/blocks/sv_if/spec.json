@@ -1,0 +1,27 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_if",
+  "version": 1,
+  "category": "flow",
+  "title": "If / Else",
+  "priority": "P0",
+  "opcode": "control.branch",
+  "props": [
+    {
+      "name": "condition",
+      "kind": "expression",
+      "required": true,
+      "valueType": "boolean"
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "then",
+      "else"
+    ]
+  }
+}

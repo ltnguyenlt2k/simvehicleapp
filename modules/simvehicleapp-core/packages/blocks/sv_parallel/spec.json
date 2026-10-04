@@ -1,0 +1,33 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_parallel",
+  "version": 1,
+  "category": "flow",
+  "title": "Run in parallel",
+  "priority": "P1",
+  "opcode": "control.parallel",
+  "container": true,
+  "props": [
+    {
+      "name": "join",
+      "kind": "enum",
+      "required": false,
+      "default": "all",
+      "enum": [
+        "all",
+        "any",
+        "none"
+      ]
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "parallel-start-source",
+      "parallel-end-source"
+    ]
+  }
+}

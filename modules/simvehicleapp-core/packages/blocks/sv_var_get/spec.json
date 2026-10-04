@@ -1,0 +1,31 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_var_get",
+  "version": 1,
+  "category": "state",
+  "title": "Get variable",
+  "priority": "P0",
+  "opcode": "state.get",
+  "props": [
+    {
+      "name": "name",
+      "kind": "string",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

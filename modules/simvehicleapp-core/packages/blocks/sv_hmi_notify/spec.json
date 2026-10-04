@@ -1,0 +1,42 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_hmi_notify",
+  "version": 1,
+  "category": "comm",
+  "title": "HMI notification",
+  "priority": "P0",
+  "opcode": "comm.hmi_notify",
+  "props": [
+    {
+      "name": "severity",
+      "kind": "enum",
+      "required": false,
+      "default": "info",
+      "enum": [
+        "info",
+        "warning",
+        "critical"
+      ]
+    },
+    {
+      "name": "title",
+      "kind": "template",
+      "required": true
+    },
+    {
+      "name": "message",
+      "kind": "template",
+      "required": true
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

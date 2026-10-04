@@ -1,0 +1,33 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_stable_for",
+  "version": 1,
+  "category": "flow",
+  "title": "Stable for",
+  "priority": "P0",
+  "opcode": "control.stable_for",
+  "props": [
+    {
+      "name": "condition",
+      "kind": "expression",
+      "required": false,
+      "valueType": "boolean"
+    },
+    {
+      "name": "durationMs",
+      "kind": "duration",
+      "required": true,
+      "min": 1
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "stable",
+      "broken"
+    ]
+  }
+}

@@ -340,6 +340,55 @@
     },
     {
       "specVersion": "1.0.0",
+      "type": "sv_counter",
+      "version": 1,
+      "category": "state",
+      "title": "Counter",
+      "priority": "P1",
+      "opcode": "state.counter",
+      "props": [
+        {
+          "name": "name",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "op",
+          "kind": "enum",
+          "required": false,
+          "default": "inc",
+          "enum": [
+            "inc",
+            "dec",
+            "reset"
+          ]
+        },
+        {
+          "name": "step",
+          "kind": "integer",
+          "required": false,
+          "default": 1,
+          "min": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "int32"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
       "type": "sv_expression",
       "version": 1,
       "category": "logic",
@@ -366,6 +415,75 @@
         "out": [
           "source",
           "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_hmi_notify",
+      "version": 1,
+      "category": "comm",
+      "title": "HMI notification",
+      "priority": "P0",
+      "opcode": "comm.hmi_notify",
+      "props": [
+        {
+          "name": "severity",
+          "kind": "enum",
+          "required": false,
+          "default": "info",
+          "enum": [
+            "info",
+            "warning",
+            "critical"
+          ]
+        },
+        {
+          "name": "title",
+          "kind": "template",
+          "required": true
+        },
+        {
+          "name": "message",
+          "kind": "template",
+          "required": true
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_if",
+      "version": 1,
+      "category": "flow",
+      "title": "If / Else",
+      "priority": "P0",
+      "opcode": "control.branch",
+      "props": [
+        {
+          "name": "condition",
+          "kind": "expression",
+          "required": true,
+          "valueType": "boolean"
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "then",
+          "else"
         ]
       }
     },
@@ -414,6 +532,44 @@
           "type": "boolean"
         }
       ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_log",
+      "version": 1,
+      "category": "comm",
+      "title": "Log",
+      "priority": "P0",
+      "opcode": "comm.log",
+      "props": [
+        {
+          "name": "level",
+          "kind": "enum",
+          "required": false,
+          "default": "info",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ]
+        },
+        {
+          "name": "message",
+          "kind": "template",
+          "required": true
+        }
+      ],
+      "outputs": [],
       "handles": {
         "in": [
           "target"
@@ -522,6 +678,64 @@
           "type": "$inferred"
         }
       ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_mqtt_publish",
+      "version": 1,
+      "category": "comm",
+      "title": "Publish MQTT",
+      "priority": "P0",
+      "opcode": "comm.mqtt_publish",
+      "props": [
+        {
+          "name": "topic",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "payload",
+          "kind": "template",
+          "required": true
+        },
+        {
+          "name": "payloadType",
+          "kind": "enum",
+          "required": false,
+          "default": "text",
+          "enum": [
+            "text",
+            "json"
+          ]
+        },
+        {
+          "name": "qos",
+          "kind": "enum",
+          "required": false,
+          "default": 0,
+          "enum": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "name": "retain",
+          "kind": "boolean",
+          "required": false,
+          "default": false
+        }
+      ],
+      "outputs": [],
       "handles": {
         "in": [
           "target"
@@ -790,6 +1004,39 @@
     },
     {
       "specVersion": "1.0.0",
+      "type": "sv_parallel",
+      "version": 1,
+      "category": "flow",
+      "title": "Run in parallel",
+      "priority": "P1",
+      "opcode": "control.parallel",
+      "container": true,
+      "props": [
+        {
+          "name": "join",
+          "kind": "enum",
+          "required": false,
+          "default": "all",
+          "enum": [
+            "all",
+            "any",
+            "none"
+          ]
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "parallel-start-source",
+          "parallel-end-source"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
       "type": "sv_read_attribute",
       "version": 1,
       "category": "attributes",
@@ -870,6 +1117,47 @@
         "out": [
           "source",
           "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_repeat",
+      "version": 1,
+      "category": "flow",
+      "title": "Repeat",
+      "priority": "P1",
+      "opcode": "control.repeat",
+      "container": true,
+      "props": [
+        {
+          "name": "count",
+          "kind": "integer",
+          "required": true,
+          "min": 1,
+          "max": 10000
+        },
+        {
+          "name": "intervalMs",
+          "kind": "duration",
+          "required": false,
+          "default": 0,
+          "min": 0
+        }
+      ],
+      "outputs": [
+        {
+          "name": "index",
+          "type": "uint32"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "loop-start-source",
+          "loop-end-source"
         ]
       }
     },
@@ -987,6 +1275,275 @@
         "out": [
           "source",
           "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_stable_for",
+      "version": 1,
+      "category": "flow",
+      "title": "Stable for",
+      "priority": "P0",
+      "opcode": "control.stable_for",
+      "props": [
+        {
+          "name": "condition",
+          "kind": "expression",
+          "required": false,
+          "valueType": "boolean"
+        },
+        {
+          "name": "durationMs",
+          "kind": "duration",
+          "required": true,
+          "min": 1
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "stable",
+          "broken"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_stop",
+      "version": 1,
+      "category": "flow",
+      "title": "Stop",
+      "priority": "P0",
+      "opcode": "control.stop",
+      "props": [
+        {
+          "name": "scope",
+          "kind": "enum",
+          "required": false,
+          "default": "run",
+          "enum": [
+            "run",
+            "workflow",
+            "app"
+          ]
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": []
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_switch",
+      "version": 1,
+      "category": "flow",
+      "title": "Switch",
+      "priority": "P1",
+      "opcode": "control.switch",
+      "props": [
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        },
+        {
+          "name": "cases",
+          "kind": "list",
+          "required": true,
+          "items": [
+            {
+              "name": "when",
+              "kind": "expression",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "case",
+          "default"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_var_get",
+      "version": 1,
+      "category": "state",
+      "title": "Get variable",
+      "priority": "P0",
+      "opcode": "state.get",
+      "props": [
+        {
+          "name": "name",
+          "kind": "string",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_var_set",
+      "version": 1,
+      "category": "state",
+      "title": "Set variable",
+      "priority": "P0",
+      "opcode": "state.set",
+      "props": [
+        {
+          "name": "name",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source",
+          "error"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_wait",
+      "version": 1,
+      "category": "flow",
+      "title": "Wait",
+      "priority": "P0",
+      "opcode": "control.wait",
+      "props": [
+        {
+          "name": "durationMs",
+          "kind": "duration",
+          "required": true,
+          "min": 0
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "source"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_wait_until",
+      "version": 1,
+      "category": "flow",
+      "title": "Wait until",
+      "priority": "P1",
+      "opcode": "control.wait_until",
+      "props": [
+        {
+          "name": "condition",
+          "kind": "expression",
+          "required": true,
+          "valueType": "boolean"
+        },
+        {
+          "name": "timeoutMs",
+          "kind": "duration",
+          "required": true,
+          "min": 1
+        }
+      ],
+      "outputs": [],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "ok",
+          "timeout"
+        ]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_while",
+      "version": 1,
+      "category": "flow",
+      "title": "While",
+      "priority": "P1",
+      "opcode": "control.while",
+      "container": true,
+      "props": [
+        {
+          "name": "condition",
+          "kind": "expression",
+          "required": true,
+          "valueType": "boolean"
+        },
+        {
+          "name": "maxIterations",
+          "kind": "integer",
+          "required": true,
+          "default": 1000,
+          "min": 1,
+          "max": 1000000
+        },
+        {
+          "name": "intervalMs",
+          "kind": "duration",
+          "required": false,
+          "default": 0,
+          "min": 0
+        }
+      ],
+      "outputs": [
+        {
+          "name": "index",
+          "type": "uint32"
+        }
+      ],
+      "handles": {
+        "in": [
+          "target"
+        ],
+        "out": [
+          "loop-start-source",
+          "loop-end-source"
         ]
       }
     }

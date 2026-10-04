@@ -1,0 +1,58 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_mqtt_publish",
+  "version": 1,
+  "category": "comm",
+  "title": "Publish MQTT",
+  "priority": "P0",
+  "opcode": "comm.mqtt_publish",
+  "props": [
+    {
+      "name": "topic",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "name": "payload",
+      "kind": "template",
+      "required": true
+    },
+    {
+      "name": "payloadType",
+      "kind": "enum",
+      "required": false,
+      "default": "text",
+      "enum": [
+        "text",
+        "json"
+      ]
+    },
+    {
+      "name": "qos",
+      "kind": "enum",
+      "required": false,
+      "default": 0,
+      "enum": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "name": "retain",
+      "kind": "boolean",
+      "required": false,
+      "default": false
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source",
+      "error"
+    ]
+  }
+}

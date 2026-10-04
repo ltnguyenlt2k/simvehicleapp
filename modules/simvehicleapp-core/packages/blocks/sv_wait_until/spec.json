@@ -1,0 +1,33 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_wait_until",
+  "version": 1,
+  "category": "flow",
+  "title": "Wait until",
+  "priority": "P1",
+  "opcode": "control.wait_until",
+  "props": [
+    {
+      "name": "condition",
+      "kind": "expression",
+      "required": true,
+      "valueType": "boolean"
+    },
+    {
+      "name": "timeoutMs",
+      "kind": "duration",
+      "required": true,
+      "min": 1
+    }
+  ],
+  "outputs": [],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "ok",
+      "timeout"
+    ]
+  }
+}
