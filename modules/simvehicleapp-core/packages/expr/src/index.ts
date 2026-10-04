@@ -10,3 +10,13 @@ export {
   type SvxErrorCode,
   type SvxSyntaxReason,
 } from "./parser.ts";
+export {
+  checkRefs,
+  collectRefs,
+  type RefCheck,
+  type RefError,
+  type RefErrorReason,
+  type RefResolver,
+  type ResolvedRef,
+  walk,
+} from "./refs.ts";
