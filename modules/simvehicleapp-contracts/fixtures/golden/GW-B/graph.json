@@ -38,7 +38,7 @@
       "props": {
         "severity": "warning",
         "title": "Low battery",
-        "message": "Battery at {<socchanged.value>} %"
+        "message": "Battery at <socchanged.value> %"
       },
       "parentId": null,
       "blockVersion": 1

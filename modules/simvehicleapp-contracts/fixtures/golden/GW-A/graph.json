@@ -51,7 +51,7 @@
       "props": {
         "severity": "warning",
         "title": "Overspeed",
-        "message": "Speed {<speedchanged.value>} km/h"
+        "message": "Speed <speedchanged.value> km/h"
       },
       "parentId": null,
       "blockVersion": 1
