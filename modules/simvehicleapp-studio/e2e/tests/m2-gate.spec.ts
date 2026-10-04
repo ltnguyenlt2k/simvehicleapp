@@ -157,6 +157,32 @@ test.describe.serial('M2 gate', () => {
     writeFileSync(STATE_FILE, JSON.stringify(state))
   })
 
+  test('switching the workflow to VSS v4.2 changes the tree without a rebuild (DoD)', async ({
+    page,
+  }) => {
+    const v42Only = 'Vehicle.Powertrain.TractionBattery.Charging.ChargePortPosition'
+    await logIn(page, user.email, user.password)
+    await createWorkflow(page)
+    const panel = await openVehiclePanel(page)
+    const picker = panel.locator('[data-sv="vss-release-picker"]')
+    await expect(picker).toContainText('v4.0')
+
+    const search = panel.getByRole('textbox', { name: 'Search vehicle signals' })
+    await search.fill('charge port position')
+    await expect(panel.getByText('Searching…')).toHaveCount(0)
+    await expect(panel.locator(`[data-sv-panel-path="${v42Only}"]`)).toHaveCount(0)
+
+    await picker.getByRole('button').click()
+    await page.getByRole('menuitem', { name: 'v4.2' }).click()
+    await expect(picker).toContainText('v4.2')
+    await expect(panel.locator(`[data-sv-panel-path="${v42Only}"]`)).toBeVisible()
+
+    await page.reload()
+    await expect((await openVehiclePanel(page)).locator('[data-sv="vss-release-picker"]')).toContainText(
+      'v4.2'
+    )
+  })
+
   test('@after-restart the gate workflow is unchanged after restarting the studio', async ({
     page,
   }) => {
