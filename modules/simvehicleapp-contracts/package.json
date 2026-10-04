@@ -21,8 +21,8 @@
     "NOTICE"
   ],
   "scripts": {
-    "gen": "bun tools/gen-types.ts",
-    "check": "bun tools/gen-types.ts --check && tsc --noEmit -p .",
+    "gen": "bun tools/gen-types.ts && bun tools/gen-diagnostics-doc.ts",
+    "check": "bun tools/gen-types.ts --check && bun tools/gen-diagnostics-doc.ts --check && tsc --noEmit -p .",
     "test": "bun test"
   },
   "dependencies": {

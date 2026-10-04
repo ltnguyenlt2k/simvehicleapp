@@ -41,3 +41,4 @@ Test "cố ý sai" cho mỗi mã error P0 (Master Plan Phase 12); snapshot catal
 - M3 đã dùng mã sẵn có, không thêm mã: `EXPR_SYNTAX`/`EXPR_UNKNOWN_FUNCTION` (parser, kèm `data.reason` máy đọc được), `EXPR_UNKNOWN_REF` (resolver), `CONTAINER_INVALID` (ánh xạ container Sim, M03-T10).
 - `message` hiện là tiếng Anh do core sinh kèm `code` + `data`; i18n theo `code` (§1) thực hiện ở studio khi có bản dịch (M01-T12).
 - Lint M03-T11 = S0–S3 + một phần S6 dùng các mã stage parse/structural/block-config/vehicle-model/control-flow; không cần hệ kiểu (ADR-0015, M4).
+- **Triển khai 2026-10-04 (sau Accepted):** doc sinh ở `modules/simvehicleapp-contracts/DIAGNOSTICS_CATALOG.md` (không phải `docs/` ở gốc — tool của module không ghi ra ngoài module, ADR-0009), `bun run check` của contracts fail nếu doc cũ; `scripts/ci/diagnostics_guard.py` (job `contracts`) so catalog với `github.event.before`/base PR: xoá, đổi tên, đổi severity/stage ⇒ FAIL; thêm mã hoặc cờ `deprecated` ⇒ OK.

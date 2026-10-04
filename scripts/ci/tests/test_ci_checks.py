@@ -16,6 +16,7 @@ sys.path[:0] = [str(HERE.parent), str(HERE.parents[1] / "license")]
 import compose_lint  # noqa: E402
 import block_specs_sync  # noqa: E402
 import contract_only_deps  # noqa: E402
+import diagnostics_guard  # noqa: E402
 import license_scan  # noqa: E402
 
 LICENSE_DIR = HERE.parents[1] / "license"
@@ -150,6 +151,21 @@ class BlockSpecsSyncTest(TempRepo):
         self.assertTrue(any("content differs" in e for e in block_specs_sync.run(self.root)))
         self.spec("sv_c")
         self.assertTrue(any("types" in e for e in block_specs_sync.run(self.root)))
+
+
+class DiagnosticsGuardTest(unittest.TestCase):
+    base = {"codes": [{"code": "A_ONE", "severity": "error", "stage": "parse"}, {"code": "B_TWO", "severity": "warning", "stage": "lint"}]}
+
+    def test_adding_and_deprecating_is_allowed(self):
+        now = {"codes": self.base["codes"] + [{"code": "C_NEW", "severity": "info", "stage": "lint"}]}
+        now["codes"][0] = {**now["codes"][0], "deprecated": True}
+        self.assertEqual(diagnostics_guard.compare(self.base, now), [])
+
+    def test_removal_rename_and_severity_change_rejected(self):
+        now = {"codes": [{"code": "A_ONE", "severity": "warning", "stage": "parse"}, {"code": "B_2", "severity": "warning", "stage": "lint"}]}
+        errors = diagnostics_guard.compare(self.base, now)
+        self.assertTrue(any("B_TWO was removed" in e for e in errors))
+        self.assertTrue(any("A_ONE: severity changed" in e for e in errors))
 
 
 class LicenseScanTest(TempRepo):
