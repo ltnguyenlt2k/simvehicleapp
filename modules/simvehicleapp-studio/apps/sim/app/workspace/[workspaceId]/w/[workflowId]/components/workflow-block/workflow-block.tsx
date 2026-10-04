@@ -608,6 +608,18 @@ export const WorkflowBlock = memo(function WorkflowBlock({
 
   const subBlockRows = subBlockRowsData.rows
   const subBlockState = subBlockRowsData.stateToUse
+
+  /** SV: named branch handles of SimVehicleApp flow blocks (then/else, ok/timeout, case-<i>…). */
+  const svHandles = useMemo(() => {
+    const spec = config.svHandles
+    if (!spec) return undefined
+    if (typeof spec !== 'function') return spec
+    const values: Record<string, unknown> = {}
+    for (const [key, sub] of Object.entries(subBlockState ?? {})) {
+      values[key] = (sub as { value?: unknown } | undefined)?.value
+    }
+    return spec(values)
+  }, [config.svHandles, subBlockState])
   const topologySubBlocks = data.isPreview
     ? (data.blockState?.subBlocks ?? {})
     : (currentStoreBlock?.subBlocks ?? {})
@@ -981,7 +993,11 @@ export const WorkflowBlock = memo(function WorkflowBlock({
                 })
               )
             )}
-            {shouldShowDefaultHandles && <SubBlockRow title='error' />}
+            {shouldShowDefaultHandles && !svHandles && <SubBlockRow title='error' />}
+            {/* SV: one labelled row per named branch handle, aligned with the handles below */}
+            {svHandles?.map((handle) => (
+              <SubBlockRow key={`sv-handle-${handle.id}`} title={handle.label} />
+            ))}
           </div>
         )}
 
@@ -1086,7 +1102,33 @@ export const WorkflowBlock = memo(function WorkflowBlock({
           </>
         )}
 
-        {type !== 'condition' && type !== 'router_v2' && type !== 'response' && (
+        {/* SV: named branch handles, bottom-anchored like Sim's error handle */}
+        {svHandles?.map((handle, index) => (
+          <Handle
+            key={`sv-handle-${handle.id}`}
+            type='source'
+            position={Position.Right}
+            id={handle.id}
+            className={getHandleClasses('right')}
+            style={{
+              right: '-7px',
+              top: 'auto',
+              bottom: `${HANDLE_POSITIONS.ERROR_BOTTOM_OFFSET + (svHandles.length - 1 - index) * HANDLE_POSITIONS.CONDITION_ROW_HEIGHT}px`,
+              transform: 'translateY(50%)',
+            }}
+            data-nodeid={id}
+            data-handleid={handle.id}
+            isConnectableStart={true}
+            isConnectableEnd={false}
+            isValidConnection={(connection) => {
+              if (connection.target === id) return false
+              const edges = useWorkflowStore.getState().edges
+              return !wouldCreateCycle(edges, connection.source!, connection.target!)
+            }}
+          />
+        ))}
+
+        {type !== 'condition' && type !== 'router_v2' && type !== 'response' && !svHandles && (
           <>
             <Handle
               type='source'

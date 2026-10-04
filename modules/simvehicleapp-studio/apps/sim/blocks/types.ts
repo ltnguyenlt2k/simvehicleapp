@@ -264,6 +264,7 @@ export interface SubBlockConfig {
   // SV: value editors `sv-typed-value` / `sv-enum`: `$signal` = datatype of the `path` subBlock (ADR-0018)
   svValueType?:
     | '$signal'
+    | '$type'
     | 'boolean'
     | 'int8'
     | 'int16'
@@ -446,8 +447,17 @@ export interface SubBlockConfig {
   unsupportedToolTypes?: ('mcp' | 'custom-tool')[]
 }
 
+/** SV: a named source handle of a SimVehicleApp flow block (BlockSpec `handles.out`, ADR-0011 Notes). */
+export interface SvHandle {
+  id: string
+  label: string
+}
+
 export interface BlockConfig<T extends ToolResponse = ToolResponse> {
   type: string
+  // SV: named branch handles replacing Sim's source/error pair (e.g. then/else); a function for
+  // handles derived from subBlock values (sv_switch `case-<i>`). `[]` = no outgoing handle (sv_stop).
+  svHandles?: SvHandle[] | ((values: Record<string, unknown>) => SvHandle[])
   name: string
   description: string
   category: BlockCategory

@@ -18,7 +18,8 @@ import { isVssArray } from '@/app/workspace/[workspaceId]/w/[workflowId]/compone
 import { useSvCatalogNode } from '@/hooks/queries/sv-catalog'
 
 /** Where a typed editor gets its type from: the bound signal, or a fixed scalar type. */
-export type SvValueTypeSource = '$signal' | SvScalarType
+/** `$type` = the scalar type chosen in the block's `type` subBlock (sv_constant). */
+export type SvValueTypeSource = '$signal' | '$type' | SvScalarType
 
 interface HintProps {
   children: React.ReactNode
@@ -56,9 +57,15 @@ function useResolvedType(
   previewPath: string | undefined
 ): ResolvedType {
   const [storePath] = useSubBlockValue<string>(blockId, pathSubBlockId)
+  const [typeChoice] = useSubBlockValue<string>(blockId, 'type')
   const path =
     valueType === '$signal' ? (isPreview ? previewPath : storePath) || undefined : undefined
   const { data } = useSvCatalogNode(release, path)
+  if (valueType === '$type') {
+    return isSvScalarType(typeChoice)
+      ? { status: 'ready', type: typeChoice }
+      : { status: 'no-path' }
+  }
   if (valueType !== '$signal') return { status: 'ready', type: valueType }
   if (!path) return { status: 'no-path' }
   if (data === undefined) return { status: 'loading' }
@@ -208,7 +215,9 @@ export function SvTypedValueInput({
   const value = isPreview ? previewValue : storeValue
   const readOnly = isPreview || disabled
 
-  if (resolved.status === 'no-path') return <Hint>Pick a signal first</Hint>
+  if (resolved.status === 'no-path') {
+    return <Hint>{valueType === '$type' ? 'Choose a type first' : 'Pick a signal first'}</Hint>
+  }
   if (resolved.status === 'loading') return <Hint>Loading signal type…</Hint>
   if (resolved.status === 'unknown-path')
     return <Hint tone='error'>Signal not found in catalog</Hint>

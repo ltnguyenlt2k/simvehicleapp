@@ -33,13 +33,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -69,13 +64,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -100,13 +90,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -123,12 +108,7 @@
           "kind": "enum",
           "required": true,
           "default": "and",
-          "enum": [
-            "and",
-            "or",
-            "not",
-            "xor"
-          ]
+          "enum": ["and", "or", "not", "xor"]
         },
         {
           "name": "inputs",
@@ -151,13 +131,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -192,13 +167,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -220,14 +190,7 @@
           "kind": "enum",
           "required": true,
           "default": ">",
-          "enum": [
-            ">",
-            "<",
-            ">=",
-            "<=",
-            "==",
-            "!="
-          ]
+          "enum": [">", "<", ">=", "<=", "==", "!="]
         },
         {
           "name": "right",
@@ -242,13 +205,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -293,13 +251,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -329,13 +282,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -357,11 +305,7 @@
           "kind": "enum",
           "required": false,
           "default": "inc",
-          "enum": [
-            "inc",
-            "dec",
-            "reset"
-          ]
+          "enum": ["inc", "dec", "reset"]
         },
         {
           "name": "step",
@@ -378,13 +322,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -409,13 +348,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -432,11 +366,7 @@
           "kind": "enum",
           "required": false,
           "default": "info",
-          "enum": [
-            "info",
-            "warning",
-            "critical"
-          ]
+          "enum": ["info", "warning", "critical"]
         },
         {
           "name": "title",
@@ -451,13 +381,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -478,13 +403,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "then",
-          "else"
-        ]
+        "in": ["target"],
+        "out": ["then", "else"]
       }
     },
     {
@@ -516,10 +436,7 @@
           "kind": "enum",
           "required": false,
           "default": "range",
-          "enum": [
-            "range",
-            "hysteresis"
-          ]
+          "enum": ["range", "hysteresis"]
         }
       ],
       "outputs": [
@@ -533,13 +450,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -556,12 +468,7 @@
           "kind": "enum",
           "required": false,
           "default": "info",
-          "enum": [
-            "debug",
-            "info",
-            "warn",
-            "error"
-          ]
+          "enum": ["debug", "info", "warn", "error"]
         },
         {
           "name": "message",
@@ -571,13 +478,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -624,13 +526,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -647,19 +544,7 @@
           "kind": "enum",
           "required": true,
           "default": "+",
-          "enum": [
-            "+",
-            "-",
-            "*",
-            "/",
-            "%",
-            "min",
-            "max",
-            "abs",
-            "round",
-            "floor",
-            "ceil"
-          ]
+          "enum": ["+", "-", "*", "/", "%", "min", "max", "abs", "round", "floor", "ceil"]
         },
         {
           "name": "a",
@@ -679,13 +564,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -712,21 +592,14 @@
           "kind": "enum",
           "required": false,
           "default": "text",
-          "enum": [
-            "text",
-            "json"
-          ]
+          "enum": ["text", "json"]
         },
         {
           "name": "qos",
           "kind": "enum",
           "required": false,
           "default": 0,
-          "enum": [
-            0,
-            1,
-            2
-          ]
+          "enum": [0, 1, 2]
         },
         {
           "name": "retain",
@@ -737,13 +610,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -758,9 +626,7 @@
       "outputs": [],
       "handles": {
         "in": [],
-        "out": [
-          "source"
-        ]
+        "out": ["source"]
       }
     },
     {
@@ -791,12 +657,7 @@
           "kind": "enum",
           "required": false,
           "default": "restart",
-          "enum": [
-            "restart",
-            "ignore",
-            "queue",
-            "parallel"
-          ]
+          "enum": ["restart", "ignore", "queue", "parallel"]
         }
       ],
       "outputs": [
@@ -807,9 +668,7 @@
       ],
       "handles": {
         "in": [],
-        "out": [
-          "source"
-        ]
+        "out": ["source"]
       }
     },
     {
@@ -832,22 +691,14 @@
           "kind": "enum",
           "required": false,
           "default": "text",
-          "enum": [
-            "text",
-            "json"
-          ]
+          "enum": ["text", "json"]
         },
         {
           "name": "concurrency",
           "kind": "enum",
           "required": false,
           "default": "queue",
-          "enum": [
-            "restart",
-            "ignore",
-            "queue",
-            "parallel"
-          ]
+          "enum": ["restart", "ignore", "queue", "parallel"]
         }
       ],
       "outputs": [
@@ -862,9 +713,7 @@
       ],
       "handles": {
         "in": [],
-        "out": [
-          "source"
-        ]
+        "out": ["source"]
       }
     },
     {
@@ -875,10 +724,7 @@
       "title": "When signal changes",
       "priority": "P0",
       "opcode": "event.signal_changed",
-      "vssKinds": [
-        "sensor",
-        "actuator"
-      ],
+      "vssKinds": ["sensor", "actuator"],
       "concurrencyDefault": "restart",
       "props": [
         {
@@ -891,14 +737,7 @@
           "kind": "enum",
           "required": true,
           "default": "any",
-          "enum": [
-            "any",
-            "rising",
-            "falling",
-            "crosses_above",
-            "crosses_below",
-            "becomes"
-          ]
+          "enum": ["any", "rising", "falling", "crosses_above", "crosses_below", "becomes"]
         },
         {
           "name": "threshold",
@@ -918,12 +757,7 @@
           "kind": "enum",
           "required": false,
           "default": "restart",
-          "enum": [
-            "restart",
-            "ignore",
-            "queue",
-            "parallel"
-          ]
+          "enum": ["restart", "ignore", "queue", "parallel"]
         }
       ],
       "outputs": [
@@ -944,9 +778,7 @@
       ],
       "handles": {
         "in": [],
-        "out": [
-          "source"
-        ]
+        "out": ["source"]
       }
     },
     {
@@ -977,12 +809,7 @@
           "kind": "enum",
           "required": false,
           "default": "ignore",
-          "enum": [
-            "restart",
-            "ignore",
-            "queue",
-            "parallel"
-          ]
+          "enum": ["restart", "ignore", "queue", "parallel"]
         }
       ],
       "outputs": [
@@ -997,9 +824,7 @@
       ],
       "handles": {
         "in": [],
-        "out": [
-          "source"
-        ]
+        "out": ["source"]
       }
     },
     {
@@ -1017,22 +842,13 @@
           "kind": "enum",
           "required": false,
           "default": "all",
-          "enum": [
-            "all",
-            "any",
-            "none"
-          ]
+          "enum": ["all", "any", "none"]
         }
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "parallel-start-source",
-          "parallel-end-source"
-        ]
+        "in": ["target"],
+        "out": ["parallel-start-source", "parallel-end-source"]
       }
     },
     {
@@ -1043,9 +859,7 @@
       "title": "Read attribute",
       "priority": "P0",
       "opcode": "vehicle.read_attribute",
-      "vssKinds": [
-        "attribute"
-      ],
+      "vssKinds": ["attribute"],
       "props": [
         {
           "name": "path",
@@ -1061,13 +875,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -1078,10 +887,7 @@
       "title": "Read signal",
       "priority": "P0",
       "opcode": "vehicle.read",
-      "vssKinds": [
-        "sensor",
-        "actuator"
-      ],
+      "vssKinds": ["sensor", "actuator"],
       "props": [
         {
           "name": "path",
@@ -1093,10 +899,7 @@
           "kind": "enum",
           "required": false,
           "default": "latest-from-trigger",
-          "enum": [
-            "latest-from-trigger",
-            "fresh-read"
-          ]
+          "enum": ["latest-from-trigger", "fresh-read"]
         }
       ],
       "outputs": [
@@ -1111,13 +914,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -1152,13 +950,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "loop-start-source",
-          "loop-end-source"
-        ]
+        "in": ["target"],
+        "out": ["loop-start-source", "loop-end-source"]
       }
     },
     {
@@ -1209,13 +1002,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -1226,9 +1014,7 @@
       "title": "Set actuator",
       "priority": "P0",
       "opcode": "vehicle.write",
-      "vssKinds": [
-        "actuator"
-      ],
+      "vssKinds": ["actuator"],
       "props": [
         {
           "name": "path",
@@ -1252,10 +1038,7 @@
           "kind": "enum",
           "required": false,
           "default": "continue",
-          "enum": [
-            "continue",
-            "stop"
-          ]
+          "enum": ["continue", "stop"]
         }
       ],
       "outputs": [
@@ -1269,13 +1052,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -1302,13 +1080,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "stable",
-          "broken"
-        ]
+        "in": ["target"],
+        "out": ["stable", "broken"]
       }
     },
     {
@@ -1325,18 +1098,12 @@
           "kind": "enum",
           "required": false,
           "default": "run",
-          "enum": [
-            "run",
-            "workflow",
-            "app"
-          ]
+          "enum": ["run", "workflow", "app"]
         }
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
+        "in": ["target"],
         "out": []
       }
     },
@@ -1369,13 +1136,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "case",
-          "default"
-        ]
+        "in": ["target"],
+        "out": ["case", "default"]
       }
     },
     {
@@ -1400,13 +1162,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -1431,13 +1188,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source",
-          "error"
-        ]
+        "in": ["target"],
+        "out": ["source", "error"]
       }
     },
     {
@@ -1458,12 +1210,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "source"
-        ]
+        "in": ["target"],
+        "out": ["source"]
       }
     },
     {
@@ -1490,13 +1238,8 @@
       ],
       "outputs": [],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "ok",
-          "timeout"
-        ]
+        "in": ["target"],
+        "out": ["ok", "timeout"]
       }
     },
     {
@@ -1538,13 +1281,8 @@
         }
       ],
       "handles": {
-        "in": [
-          "target"
-        ],
-        "out": [
-          "loop-start-source",
-          "loop-end-source"
-        ]
+        "in": ["target"],
+        "out": ["loop-start-source", "loop-end-source"]
       }
     }
   ]

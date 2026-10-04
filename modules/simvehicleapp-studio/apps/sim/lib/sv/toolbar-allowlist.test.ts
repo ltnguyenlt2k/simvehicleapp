@@ -9,6 +9,7 @@ import {
   parseToolbarAllowlist,
 } from '@/lib/sv/toolbar-allowlist'
 import { getAllBlocks } from '@/blocks/registry'
+import { SV_VEHICLE_BLOCKS } from '@/blocks/vehicle'
 
 vi.unmock('@/blocks/registry')
 
@@ -27,17 +28,14 @@ describe('toolbar allowlist (M01-T05)', () => {
     }
   })
 
-  it('hides every registered Sim block except note; SimVehicleApp sv_* blocks stay (M02-T09)', () => {
+  it('hides every registered Sim block except note; every SimVehicleApp sv_* block stays', () => {
     const offered = getAllBlocks()
       .map((block) => block.type)
       .filter((type) => isToolbarBlockAllowed(type))
     expect(offered.filter((type) => !type.startsWith('sv_'))).toEqual(['note'])
-    expect(offered.filter((type) => type.startsWith('sv_')).sort()).toEqual([
-      'sv_on_signal_changed',
-      'sv_read_attribute',
-      'sv_read_signal',
-      'sv_set_actuator',
-    ])
+    expect(offered.filter((type) => type.startsWith('sv_')).sort()).toEqual(
+      Object.keys(SV_VEHICLE_BLOCKS).sort()
+    )
   })
 
   it('honours NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST and treats regex characters literally', () => {

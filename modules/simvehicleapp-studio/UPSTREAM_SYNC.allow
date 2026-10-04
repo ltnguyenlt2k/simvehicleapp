@@ -218,3 +218,6 @@ packages/db/schema.ts
 packages/db/migrations/0250_sv_workflow_settings.sql
 packages/db/migrations/meta/0250_snapshot.json
 packages/db/migrations/meta/_journal.json
+
+# M03-T07 — named branch handles (svHandles) for SimVehicleApp flow blocks
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/workflow-block.tsx
