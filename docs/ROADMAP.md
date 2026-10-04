@@ -30,7 +30,7 @@
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
-| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 0/14 |
+| [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | 🔄 | 6/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
@@ -105,12 +105,12 @@ ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| `packages/expr` (lexer + Pratt parser + AST) | 0013 | 🔄 | 200 case + fuzz 10 phút | T01 |
-| Reference `<…>` + resolver interface | 0013 | ☐ | | T02 |
-| Template string `"…{<ref>}…"` | 0013 | ☐ | | T03 |
-| BlockSpec Logic & Math (14 block, gồm `sv_array_length/at/contains` ADR-0018) | 0013,0018 | ☐ | | T04 |
-| BlockSpec Flow Control (9 block, dùng subflow container Sim cho `sv_repeat/while/parallel`) | 0012 | ☐ | | T05 |
-| BlockSpec State/Comm (5 block) | 0012 | ☐ | | T06 |
+| `packages/expr` (lexer + Pratt parser + AST) | 0013 | ✔ | 2026-10-04: `core/packages/expr`; 222 test (≥200 ca hợp lệ/lỗi + 2 000 AST ngẫu nhiên round-trip); fuzz 10 phút PASS (34,1 triệu input, seed 7), CI fuzz 30 s; fuzz/test bắt và sửa: tra hàm qua prototype (`constructor(…)`), span lỗi vượt nguồn | T01 |
+| Reference `<…>` + resolver interface | 0013 | ✔ | 2026-10-04: `collectRefs`/`checkRefs` + `RefResolver` (block, `<Vehicle.…>`, `<variable.…>` theo Sim, `<loop/parallel.…>`), `EXPR_UNKNOWN_REF` kèm reason; 12 test | T02 |
+| Template string `"…{<ref>}…"` | 0013 | ✔ | 2026-10-04: trong parser (đệ quy, `\{` `\}`, span tuyệt đối); có trong bảng test T01 | T03 |
+| BlockSpec Logic & Math (14 block, gồm `sv_array_length/at/contains` ADR-0018) | 0013,0018 | ✔ | 2026-10-04: 13 block logic/math/mảng + 4 trigger (`sv_on_app_start/timer/mqtt/condition`) — `spec.json` + `semantics.md`; block thuần dùng opcode `expr` (gộp vào biểu thức), `sv_in_range` giữ `logic.in_range` (có state) | T04 |
+| BlockSpec Flow Control (9 block, dùng subflow container Sim cho `sv_repeat/while/parallel`) | 0012 | ✔ | 2026-10-04: 9 block; handle nhánh `then/else`, `case`/`default`, `ok/timeout`, `stable/broken`; container dùng id handle subflow Sim (`loop-/parallel-start/end-source`); `sv_throttle` (P2) chưa làm | T05 |
+| BlockSpec State/Comm (5 block) | 0012 | ✔ | 2026-10-04: `sv_var_get/set`, `sv_counter`, `sv_log`, `sv_mqtt_publish`, `sv_hmi_notify` (desugar → mqtt_publish); 36 spec tổng, core 570 test PASS; UI ở T07 (`PENDING_UI` trong parity) | T06 |
 | UI BlockConfig + handles (`then/else`, `ok/timeout`,…) | 0011 | ☐ | block-parity | T07 |
 | SubBlock `sv-expression` (bộ editor Sim: simple-code-editor + prism + TagDropdown, ADR-0013 §4 sửa 2026-10-04) + `sv-duration` | 0013 | ☐ | | T08 |
 | Panel Variables | 0012 | ☐ | | T09 |
