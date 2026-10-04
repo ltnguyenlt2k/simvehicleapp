@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Fixtures: VSS v4.2 JSON + `v4.2/units.yaml` + `v4.2/quantities.yaml` (M02-T01/T02, ADR-0010; unmodified, provenance updated).
+
 ## 1.0.0-alpha.1 — unreleased (M00-T05/T06)
 - JSON Schemas: common, workflow-graph, ir, diagnostics, diagnostics-catalog (+ 50-code catalog from ADR-0016/0018), block-spec,
   generated-fileset, backend-capabilities, toolchain-job, trace-event, log-line, signal-update, scenario, workflow-patch,
