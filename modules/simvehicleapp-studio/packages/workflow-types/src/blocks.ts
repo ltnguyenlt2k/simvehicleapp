@@ -57,6 +57,8 @@ export type SubBlockType =
   | 'modal'
   // SV: SimVehicleApp subBlock types (ADR-0011 §5)
   | 'vss-path-selector'
+  | 'sv-typed-value'
+  | 'sv-enum'
 
 export interface OutputCondition {
   field: string

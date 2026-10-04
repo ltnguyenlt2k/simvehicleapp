@@ -261,6 +261,22 @@ export interface SubBlockConfig {
   // SV: VSS binding of a `vss-path-selector` (BlockSpec `vssKinds`, ADR-0010 §6 / ADR-0018 §2)
   vssKinds?: Array<'sensor' | 'actuator' | 'attribute'>
   vssWrites?: boolean
+  // SV: value editors `sv-typed-value` / `sv-enum`: `$signal` = datatype of the `path` subBlock (ADR-0018)
+  svValueType?:
+    | '$signal'
+    | 'boolean'
+    | 'int8'
+    | 'int16'
+    | 'int32'
+    | 'int64'
+    | 'uint8'
+    | 'uint16'
+    | 'uint32'
+    | 'uint64'
+    | 'float'
+    | 'double'
+    | 'string'
+  svUnit?: string
   mode?: 'basic' | 'advanced' | 'both' | 'trigger' | 'trigger-advanced' // Default is 'both' if not specified. 'trigger' means only shown in trigger mode. 'trigger-advanced' is for advanced canonical pair members shown in trigger mode
   canonicalParamId?: string
   /** Controls parameter visibility in agent/tool-input context */

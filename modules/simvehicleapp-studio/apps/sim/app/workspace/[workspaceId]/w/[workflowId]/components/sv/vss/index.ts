@@ -1,3 +1,15 @@
+export { SvTypedValueInput, type SvValueTypeSource } from './sv-typed-value'
+export {
+  allowedValueOf,
+  formatTypedValue,
+  is64BitType,
+  isSvScalarType,
+  parseTypedInput,
+  SV_SCALAR_TYPES,
+  type SvScalarType,
+  type SvScalarValue,
+  type SvTypedParseResult,
+} from './typed-value'
 export {
   formatVssDomain,
   formatVssType,

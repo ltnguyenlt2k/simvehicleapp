@@ -53,7 +53,10 @@ import {
 import { MODAL_REGISTRY } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/components/modal-registry'
 import { useDependsOnGate } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/sub-block/hooks/use-depends-on-gate'
 // SV: VSS path selector (M02-T07)
-import { VssPathSelector } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
+import {
+  SvTypedValueInput,
+  VssPathSelector,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
 import type { SubBlockConfig } from '@/blocks/types'
 import { useWebhookManagement } from '@/hooks/use-webhook-management'
 
@@ -1179,6 +1182,23 @@ function SubBlockComponent({
             writes={config.vssWrites}
             isPreview={isPreview}
             previewValue={previewValue as string | null | undefined}
+            disabled={isDisabled}
+          />
+        )
+
+      case 'sv-typed-value':
+      case 'sv-enum':
+        return (
+          <SvTypedValueInput
+            blockId={blockId}
+            subBlockId={config.id}
+            valueType={config.svValueType}
+            unit={config.svUnit}
+            required={config.required === true}
+            mode={config.type === 'sv-enum' ? 'enum' : 'value'}
+            isPreview={isPreview}
+            previewValue={previewValue}
+            previewPath={(subBlockValues?.path?.value as string | null | undefined) ?? undefined}
             disabled={isDisabled}
           />
         )
