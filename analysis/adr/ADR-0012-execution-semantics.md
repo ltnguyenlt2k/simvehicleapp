@@ -33,3 +33,8 @@ Conformance scenarios `simvehicleapp-contracts/fixtures/conformance/*.yaml` (≥
 
 ## Verification
 Simulator và runtime C++ pass 100% conformance.
+
+## Notes / Deviations (2026-10-04, rà source Sim v0.7.13 trước M3)
+- **Block Start của Sim**: workflow mới của Sim luôn có block `starter` ("Start", thấy trong E2E M2), không thuộc mô hình §1 (trigger = các block `sv_on_*`). Đề xuất: không tạo `starter` cho workflow vehicle mới; workflow cũ có `starter` ⇒ compiler bỏ qua nếu không nối, cảnh báo nếu có edge từ nó (diagnostic mới, chỉ thêm). Cần làm cùng các trigger M3 (`sv_on_app_start` thay vai trò "khi app chạy").
+- **Handle**: M2 đã chốt handle theo id canvas Sim (`source`/`error`, ADR-0011 Notes); §8 "handle `error`" khớp; các nhánh `then/else`, `ok/timeout`, `stable/broken` (M03-T07) là handle riêng của block flow, lowering ánh xạ sang IR.
+- Không có source Sim nào cài ngữ nghĩa strand/yield/concurrency (executor của Sim không dùng cho vehicle, ADR-0006) ⇒ Decision §2–§7 không lệch source; được kiểm bằng simulator (M5) và conformance.
