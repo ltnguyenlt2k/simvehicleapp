@@ -59,6 +59,8 @@ export type SubBlockType =
   | 'vss-path-selector'
   | 'sv-typed-value'
   | 'sv-enum'
+  | 'sv-expression'
+  | 'sv-duration'
 
 export interface OutputCondition {
   field: string

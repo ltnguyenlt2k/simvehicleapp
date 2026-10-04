@@ -143,9 +143,10 @@ test.describe.serial('M2 gate', () => {
     await expect(
       editor.locator('[data-sv="vss-path-card"][data-sv-path="Vehicle.Body.Lights.Hazard.IsSignaling"]')
     ).toBeVisible()
-    await editor.locator('[data-workflow-search-subblock-id="value"]').getByRole('button').first().click()
-    await page.getByRole('menuitem', { name: 'true', exact: true }).click()
-    await expect(editor.locator('[data-workflow-search-subblock-id="value"]')).toContainText('true')
+    // `value` is an SVX expression (M03-T08); boolean actuators offer quick picks.
+    const value = editor.locator('[data-workflow-search-subblock-id="value"]')
+    await value.locator('[data-sv-quick-value="true"]').click()
+    await expect(value.locator('textarea')).toHaveValue('true')
 
     await page.reload()
     await expect(node(page, 'When Speed changes')).toBeVisible()
@@ -199,6 +200,6 @@ test.describe.serial('M2 gate', () => {
     const editor = page.locator('[data-tab-content="editor"]')
     await expect(editor.locator('[data-sv="vss-path-card"][data-sv-path="Vehicle.Speed"]')).toBeVisible()
     await set.click()
-    await expect(editor.locator('[data-workflow-search-subblock-id="value"]')).toContainText('true')
+    await expect(editor.locator('[data-workflow-search-subblock-id="value"] textarea')).toHaveValue('true')
   })
 })

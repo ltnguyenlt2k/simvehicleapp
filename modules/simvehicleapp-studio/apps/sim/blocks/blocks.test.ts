@@ -590,6 +590,8 @@ describe.concurrent('Blocks Module', () => {
         'vss-path-selector',
         'sv-typed-value',
         'sv-enum',
+        'sv-expression',
+        'sv-duration',
       ]
 
       const blocks = getAllBlocks()

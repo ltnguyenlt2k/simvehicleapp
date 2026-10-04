@@ -44,9 +44,8 @@ export const SvOnSignalChangedBlock: BlockConfig = {
     {
       id: 'debounceMs',
       title: 'Debounce',
-      type: 'sv-typed-value',
-      svValueType: 'uint32',
-      svUnit: 'ms',
+      type: 'sv-duration',
+      svMin: 0,
       defaultValue: 0,
       mode: 'advanced',
     },

@@ -277,6 +277,8 @@ export interface SubBlockConfig {
     | 'double'
     | 'string'
   svUnit?: string
+  // SV: minimum for `sv-duration` in ms (BlockSpec `min`)
+  svMin?: number
   mode?: 'basic' | 'advanced' | 'both' | 'trigger' | 'trigger-advanced' // Default is 'both' if not specified. 'trigger' means only shown in trigger mode. 'trigger-advanced' is for advanced canonical pair members shown in trigger mode
   canonicalParamId?: string
   /** Controls parameter visibility in agent/tool-input context */

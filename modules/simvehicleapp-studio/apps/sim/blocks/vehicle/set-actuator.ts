@@ -2,9 +2,8 @@ import type { BlockConfig } from '@/blocks/types'
 import { SetActuatorIcon, SV_BLOCK_COLORS } from '@/blocks/vehicle/icons'
 
 /**
- * UI config of BlockSpec `sv_set_actuator` v1 (core `packages/blocks`, analysis/05 §2.3).
- * `value` is an expression in the spec; until `sv-expression` lands (M03-T08) it is edited as a
- * typed literal, which is a valid expression.
+ * UI config of BlockSpec `sv_set_actuator` v1 (core `packages/blocks`, analysis/05 §2.3). `value` is
+ * an SVX expression; the editor offers quick picks for boolean/`allowed` actuators.
  */
 export const SvSetActuatorBlock: BlockConfig = {
   type: 'sv_set_actuator',
@@ -27,9 +26,10 @@ export const SvSetActuatorBlock: BlockConfig = {
     {
       id: 'value',
       title: 'Value',
-      type: 'sv-typed-value',
+      type: 'sv-expression',
       required: true,
       svValueType: '$signal',
+      placeholder: 'e.g. true, 50, <readspeed1.value> > 100',
     },
     {
       id: 'awaitAck',

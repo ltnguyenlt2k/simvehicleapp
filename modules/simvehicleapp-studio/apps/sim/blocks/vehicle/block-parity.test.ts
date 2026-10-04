@@ -37,10 +37,8 @@ const EDITORS: Record<string, readonly string[]> = {
   'vss-path': ['vss-path-selector'],
   enum: ['dropdown'],
   'typed-value': ['sv-typed-value', 'sv-enum'],
-  /** `sv-expression` arrives in M03-T08; a typed literal is a valid expression meanwhile. */
-  expression: ['sv-expression', 'sv-typed-value'],
-  /** `sv-duration` arrives in M03-T08; meanwhile a uint32 in ms. */
-  duration: ['sv-duration', 'sv-typed-value'],
+  expression: ['sv-expression'],
+  duration: ['sv-duration'],
   boolean: ['switch'],
 }
 
@@ -141,10 +139,7 @@ describe('block parity: studio BlockConfig ↔ core BlockSpec (M02-T09)', () => 
           expect(sub.vssWrites === true).toBe(spec.type === 'sv_set_actuator')
         }
         if (prop.valueType) expect(sub.svValueType).toBe(prop.valueType)
-        if (prop.kind === 'duration') {
-          expect(sub.svValueType).toBe('uint32')
-          expect(sub.svUnit).toBe('ms')
-        }
+        if (prop.kind === 'duration') expect(sub.svMin ?? 0).toBe(prop.min ?? 0)
       })
 
       it('exposes the spec outputs for <Block.field> references', () => {
