@@ -100,6 +100,16 @@ class ContractOnlyDepsTest(TempRepo):
         self.write("modules/studio/package.json", json.dumps({"dependencies": {"@simvehicleapp/core": "1.0.0"}}))
         self.assertTrue(any("@simvehicleapp/core" in e for e in self.check()))
 
+    def test_workspace_package_of_same_module_allowed(self):
+        self.write("modules/core/packages/vss/package.json", json.dumps({"name": "@simvehicleapp/vss"}))
+        self.write("modules/core/services/cat/package.json", json.dumps({"dependencies": {"@simvehicleapp/vss": "workspace:*"}}))
+        self.assertEqual(self.check(), [])
+
+    def test_workspace_package_of_other_module_rejected(self):
+        self.write("modules/core/packages/vss/package.json", json.dumps({"name": "@simvehicleapp/vss"}))
+        self.write("modules/studio/package.json", json.dumps({"dependencies": {"@simvehicleapp/vss": "workspace:*"}}))
+        self.assertTrue(any("@simvehicleapp/vss" in e for e in self.check()))
+
     def test_path_dependency_outside_module_rejected(self):
         self.write("modules/studio/package.json", json.dumps({"devDependencies": {"core": "file:../core"}}))
         self.assertTrue(any("outside the module" in e for e in self.check()))
