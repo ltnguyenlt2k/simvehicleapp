@@ -12,6 +12,8 @@ import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useVariablesStore } from '@/stores/variables/store'
+import { useSubBlockStore } from '@/stores/workflows/subblock/store'
+import { mergeSubblockState } from '@/stores/workflows/utils'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 /** analysis/05 §4: lint runs 300 ms after the last edit. */
@@ -51,6 +53,10 @@ export function SvLintRunner() {
     }))
   )
   const allVariables = useVariablesStore((s) => s.variables)
+  // Live subBlock values live in the subblock store, not in the workflow store (found by the M2 E2E).
+  const subBlockValues = useSubBlockStore((s) =>
+    workflowId ? s.workflowValues[workflowId] : undefined
+  )
   const setResult = useSvLintStore((s) => s.setResult)
   const setStatus = useSvLintStore((s) => s.setStatus)
 
@@ -61,10 +67,11 @@ export function SvLintRunner() {
       workflowId,
       name: workflows?.[workflowId]?.name ?? 'Untitled',
       vssRelease: release,
-      state,
+      state: { ...state, blocks: mergeSubblockState(state.blocks, workflowId) },
       variables,
     })
-  }, [workflowId, release, workflows, state, allVariables])
+    // subBlockValues: mergeSubblockState reads the subblock store; recompute when it changes
+  }, [workflowId, release, workflows, state, allVariables, subBlockValues])
 
   const graphJson = useMemo(() => (adapted ? JSON.stringify(adapted.graph) : undefined), [adapted])
   const debounced = useDebounce(graphJson, SV_LINT_DEBOUNCE_MS)
