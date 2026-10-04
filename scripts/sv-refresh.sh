@@ -55,7 +55,9 @@ else
   docker tag simvehicleapp/studio:dev "$marker"
 fi
 
-echo "refresh: building contracts + core images…"
+echo "refresh: building migrations/realtime, contracts and core images…"
+# Small images built from source: DB migrations (new Drizzle migrations), realtime, contracts, core.
+$DC build studio-migrations studio-realtime
 $DC build contracts
 $DC build vss-catalog compiler
 $DC up -d

@@ -61,8 +61,12 @@ async function openVehiclePanel(page: Page): Promise<Locator> {
   return panel
 }
 
-/** Search the Vehicle panel and return the row of `path`. */
-async function findSignal(panel: Locator, query: string, path: string): Promise<Locator> {
+/**
+ * Search the Vehicle panel and return the row of `path`. Adding a block switches the side panel to
+ * the Editor tab (Sim behaviour), so the Toolbar tab is reopened first.
+ */
+async function findSignal(page: Page, query: string, path: string): Promise<Locator> {
+  const panel = await openVehiclePanel(page)
   await panel.getByRole('textbox', { name: 'Search vehicle signals' }).fill(query)
   const row = panel.locator(`[data-sv-panel-path="${path}"]`)
   await expect(row).toBeVisible()
@@ -92,7 +96,7 @@ test.describe.serial('M2 gate', () => {
     await expect(panel.locator('[data-sv-panel-path="Vehicle.Cabin"]')).toBeVisible()
     await expect(panel.locator('[data-sv="vss-release-picker"]')).toBeVisible()
 
-    const speed = await findSignal(panel, 'Vehicle.Speed', 'Vehicle.Speed')
+    const speed = await findSignal(page, 'Vehicle.Speed', 'Vehicle.Speed')
     await expect(speed).toContainText('float · km/h')
     const menu = await dropSignal(page, speed, 300, 200)
     await expect(menu.locator('[data-sv-block]')).toHaveText(['Read', 'When changes'])
@@ -105,15 +109,14 @@ test.describe.serial('M2 gate', () => {
   test('workflow "When Speed changes → Set Hazard.IsSignaling = true" is saved', async ({ page }) => {
     await logIn(page, user.email, user.password)
     const workflowUrl = await createWorkflow(page)
-    const panel = await openVehiclePanel(page)
 
-    const speed = await findSignal(panel, 'Vehicle.Speed', 'Vehicle.Speed')
+    const speed = await findSignal(page, 'Vehicle.Speed', 'Vehicle.Speed')
     await (await dropSignal(page, speed, 200, 200)).locator('[data-sv-block="sv_on_signal_changed"]').click()
     const trigger = node(page, 'When Speed changes')
     await expect(trigger).toBeVisible()
 
     const hazard = await findSignal(
-      panel,
+      page,
       'Hazard IsSignaling',
       'Vehicle.Body.Lights.Hazard.IsSignaling'
     )
@@ -123,13 +126,20 @@ test.describe.serial('M2 gate', () => {
     const set = node(page, 'Set IsSignaling')
     await expect(set).toBeVisible()
 
-    // Control edge: trigger → set (Sim handle ids, ADR-0011 Notes).
-    await trigger.locator('[data-handleid="source"]').dragTo(set.locator('[data-handleid="target"]'))
+    // Control edge trigger → set. Sim auto-connects a dropped block to the previous one; connect by
+    // hand only when it did not (Sim handle ids, ADR-0011 Notes).
+    const editor = page.locator('[data-tab-content="editor"]')
+    if ((await page.locator('.react-flow__edge').count()) === 0) {
+      await page.getByRole('button', { name: 'Fit view' }).click().catch(() => {})
+      await trigger
+        .locator('[data-handleid="source"]')
+        .dragTo(set.locator('[data-handleid="target"]'), { force: true })
+    }
     await expect(page.locator('.react-flow__edge')).toHaveCount(1)
+    await set.click()
+    await expect(editor.getByText('When Speed changes', { exact: false })).toBeVisible()
 
     // Configure: the path is locked to the dropped signal; value is a boolean pick.
-    await set.click()
-    const editor = page.locator('[data-tab-content="editor"]')
     await expect(
       editor.locator('[data-sv="vss-path-card"][data-sv-path="Vehicle.Body.Lights.Hazard.IsSignaling"]')
     ).toBeVisible()
