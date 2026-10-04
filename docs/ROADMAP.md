@@ -29,7 +29,7 @@
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
-| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 6/12 |
+| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 8/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
@@ -93,12 +93,12 @@ ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR
 | Service `vss-catalog` + ETag + OpenAPI | 0010 | ✔ | 2026-10-04: `:4010` nội bộ; `services/vss-catalog` + image (seed v4.0/v4.2, contracts qua `docker-image://`); 29 contract test (mọi response validate theo OpenAPI, ETag/304, lỗi 400/404/503, auth) PASS; container healthy + smoke local; CI job `core-image` | T04 |
 | BlockSpec 4 block vehicle (`sv_read_signal/read_attribute/set_actuator/on_signal_changed`) | 0011 | ✔ | 2026-10-04: `packages/blocks/<type>/{spec.json, semantics.md}`; 23 test (validate `block-spec.v1`, handle theo canvas Sim, mã diagnostic có trong catalog, `vssKinds` ≡ `blocksFor` trên mọi node v4.0/v4.2) PASS; Notes ADR-0011 | T05 | T05 |
 | `GET /blocks` skeleton (compiler service) | 0011 | ✔ | 2026-10-04: `services/compiler` `:4020` nội bộ; `/blocks` validate theo OpenAPI + ETag/304; route M4/M5 trả 501; 4 test PASS; image healthy + smoke trong CI job `core-image` | T06 | T06 |
-| SubBlock `vss-path-selector` | 0011 | ☐ | | T07 |
+| SubBlock `vss-path-selector` | 0011 | ✔ | 2026-10-04: `components/sv/vss/` — cây lazy (`/tree` từng cấp) + tìm kiếm debounce, leaf sai kind hiện nhưng bị khoá kèm lý do, path đã chọn hiển thị dạng card read-only + "Change" (Notes ADR-0011), badge kind/type/unit/`[ ]`/deprecated; `SubBlockType` + `SubBlockConfig.vssKinds/vssWrites` (`// SV:`); 13 test component PASS, tsc 0 lỗi, audit API/React Query PASS | T07 | T07 |
 | SubBlock `sv-typed-value`, `sv-enum` | 0011,0018 | ☐ | Theo full datatype list ADR-0018 | T08 |
 | BlockConfig UI 4 block vehicle + đăng ký | 0011 | ☐ | `block-parity.test.ts` | T09 |
 | Panel Vehicle (toolbar cây VSS + drag→menu) | 0011 | ☐ | | T10 |
 | Project settings chọn VSS release | 0010 | ☐ | | T11 |
-| BFF proxy `/api/sv/catalog/*` | 0007 | ☐ | | T12 |
+| BFF proxy `/api/sv/catalog/*` | 0007 | ✔ | 2026-10-04: route `releases/tree/search/nodes` (session bắt buộc, contract Zod, 400/404 giữ nguyên, lỗi upstream → 502, chưa cấu hình → 503) + hooks `hooks/queries/sv-catalog.ts`; 13 test PASS. Làm trước T07 vì selector cần đường dữ liệu | T12 | T12 |
 
 ## M3 — Logic/Flow/State/Comm blocks
 ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis/adr/ADR-0013-dataflow-and-expression-language.md), [0018](../analysis/adr/ADR-0018-vss-array-and-full-datatype-coverage.md) · Phụ thuộc: M2 · Chi tiết: [phases/M03](../analysis/phases/M03-logic-flow-blocks.md)
