@@ -1,0 +1,64 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "gw_c",
+  "revision": 1,
+  "name": "Auto Wipers",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "Rain changed",
+      "props": {
+        "path": "Vehicle.Body.Raindetection.Intensity",
+        "mode": "any",
+        "debounceMs": 500,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_expression",
+      "name": "Wiper mode",
+      "props": {
+        "expr": "<rainchanged.value> < 10 ? \"OFF\" : <rainchanged.value> < 40 ? \"INTERVAL\" : <rainchanged.value> < 70 ? \"MEDIUM\" : \"FAST\""
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "Set wipers",
+      "props": {
+        "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+        "value": "<wipermode.result>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# GW-D Auto Door Lock — analysis/05 §5 golden (M03-T13). Hand-derived expectations; M5 simulator must reproduce them.
+# Deviation: four sequential sv_set_actuator blocks instead of sv_set_many (P1, not in M3)
+scenarioVersion: 1.0.0
+name: GW-D Auto Door Lock
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Cabin.Door.Row1.DriverSide.IsLocked: false
+  Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked: false
+  Vehicle.Cabin.Door.Row2.DriverSide.IsLocked: false
+  Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 10 }
+  - { t: 2000, path: "Vehicle.Speed", value: 20 }
+  - { t: 3000, path: "Vehicle.Speed", value: 30 }
+  - { t: 4000, path: "Vehicle.Speed", value: 5 }
+  - { t: 5000, path: "Vehicle.Speed", value: 25 }
+expect:
+  writes:
+    - { t: 2000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked", value: true }
+    - { t: 2000, path: "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked", value: true }
+    - { t: 2000, path: "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked", value: true }
+    - { t: 2000, path: "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked", value: true }
+    - { t: 5000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked", value: true }
+    - { t: 5000, path: "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked", value: true }
+    - { t: 5000, path: "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked", value: true }
+    - { t: 5000, path: "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked", value: true }

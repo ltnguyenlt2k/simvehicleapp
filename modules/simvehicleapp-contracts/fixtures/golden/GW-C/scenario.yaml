@@ -1,0 +1,20 @@
+# GW-C Auto Wipers — analysis/05 §5 golden (M03-T13). Hand-derived expectations; M5 simulator must reproduce them.
+# Deviation: range lookup written as an SVX ternary in sv_expression (sv_lookup matches equal values only)
+scenarioVersion: 1.0.0
+name: GW-C Auto Wipers
+vss:
+  release: v4.0
+until: 7000
+initial:
+  Vehicle.Body.Raindetection.Intensity: 0
+  Vehicle.Body.Windshield.Front.Wiping.Mode: "OFF"
+inputs:
+  - { t: 1000, path: "Vehicle.Body.Raindetection.Intensity", value: 25 }
+  - { t: 1200, path: "Vehicle.Body.Raindetection.Intensity", value: 30 }
+  - { t: 3000, path: "Vehicle.Body.Raindetection.Intensity", value: 80 }
+  - { t: 5000, path: "Vehicle.Body.Raindetection.Intensity", value: 5 }
+expect:
+  writes:
+    - { t: 1700, path: "Vehicle.Body.Windshield.Front.Wiping.Mode", value: "INTERVAL" }
+    - { t: 3500, path: "Vehicle.Body.Windshield.Front.Wiping.Mode", value: "FAST" }
+    - { t: 5500, path: "Vehicle.Body.Windshield.Front.Wiping.Mode", value: "OFF" }

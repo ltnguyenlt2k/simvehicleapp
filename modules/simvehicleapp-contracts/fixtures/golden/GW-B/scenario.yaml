@@ -1,0 +1,18 @@
+# GW-B Low Battery HMI Warning — analysis/05 §5 golden (M03-T13). Hand-derived expectations; M5 simulator must reproduce them.
+scenarioVersion: 1.0.0
+name: GW-B Low Battery HMI Warning
+vss:
+  release: v4.0
+until: 5000
+initial:
+  Vehicle.Powertrain.TractionBattery.StateOfCharge.Current: 50
+  Vehicle.IsMoving: true
+  Vehicle.Cabin.Light.InteractiveLightBar.Color: "WHITE"
+inputs:
+  - { t: 1000, path: "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current", value: 25 }
+  - { t: 2000, path: "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current", value: 15 }
+  - { t: 3000, path: "Vehicle.IsMoving", value: false }
+  - { t: 4000, path: "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current", value: 10 }
+expect:
+  writes:
+    - { t: 2000, path: "Vehicle.Cabin.Light.InteractiveLightBar.Color", value: "RED" }

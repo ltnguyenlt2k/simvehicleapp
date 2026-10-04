@@ -1,0 +1,28 @@
+# GW-G Window Close on Rain — analysis/05 §5 golden (M03-T13). Hand-derived expectations; M5 simulator must reproduce them.
+# Deviation: the 4 windows are 4 sv_set_actuator blocks (a block's VSS path is static, so repeat cannot iterate over windows)
+scenarioVersion: 1.0.0
+name: GW-G Window Close on Rain
+vss:
+  release: v4.0
+until: 12000
+initial:
+  Vehicle.Body.Raindetection.Intensity: 0
+  Vehicle.Speed: 0
+  Vehicle.Cabin.Door.Row1.DriverSide.Window.Position: 50
+  Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position: 50
+  Vehicle.Cabin.Door.Row2.DriverSide.Window.Position: 50
+  Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position: 50
+inputs:
+  - { t: 1000, path: "Vehicle.Body.Raindetection.Intensity", value: 40 }
+  - { t: 1500, path: "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position", value: 0 }
+  - { t: 1500, path: "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position", value: 0 }
+  - { t: 1500, path: "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position", value: 0 }
+  - { t: 1500, path: "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position", value: 0 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position", value: 0 }
+    - { t: 1000, path: "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position", value: 0 }
+    - { t: 1000, path: "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position", value: 0 }
+    - { t: 1000, path: "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position", value: 0 }
+  trace:
+    - { ev: "exit", blockId: "b7", ts: 1500 }

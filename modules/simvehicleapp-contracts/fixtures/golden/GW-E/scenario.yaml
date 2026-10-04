@@ -1,0 +1,17 @@
+# GW-E Periodic Telemetry — analysis/05 §5 golden (M03-T13). Hand-derived expectations; M5 simulator must reproduce them.
+scenarioVersion: 1.0.0
+name: GW-E Periodic Telemetry
+vss:
+  release: v4.0
+until: 3500
+initial:
+  Vehicle.Speed: 42
+  Vehicle.Powertrain.TractionBattery.StateOfCharge.Current: 80
+inputs:
+  - { t: 1500, path: "Vehicle.Speed", value: 50 }
+expect:
+  writes: []
+  trace:
+    - { ev: "exit", blockId: "b2", ts: 1000 }
+    - { ev: "exit", blockId: "b2", ts: 2000 }
+    - { ev: "exit", blockId: "b2", ts: 3000 }
