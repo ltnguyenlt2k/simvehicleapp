@@ -14,7 +14,7 @@
 | M03-T05 | BlockSpec flow: sv_if, sv_switch, sv_wait, sv_wait_until, sv_stable_for, sv_repeat, sv_while, sv_parallel (dùng subflow container Sim), sv_stop | core | |
 | M03-T06 | BlockSpec state/comm: sv_var_get/set, sv_counter, sv_log, sv_mqtt_publish, sv_hmi_notify | core | |
 | M03-T07 | UI BlockConfig tương ứng + handles đúng tên (`then/else`, `ok/timeout`, `stable/broken`, `done/error`) | studio | block-parity |
-| M03-T08 | SubBlock `sv-expression` (Monaco Editor — đã có sẵn trong Sim, ngôn ngữ SVX tuỳ biến, highlight, autocomplete ref từ block phía trước + catalog), `sv-duration` (500 ms / 2 s) | studio | component test |
+| M03-T08 | SubBlock `sv-expression` (bộ editor ô nhập của Sim: `react-simple-code-editor` + prism grammar SVX, `TagDropdown` cho ref block phía trước + nhóm Vehicle từ catalog — ADR-0013 §4 sửa 2026-10-04), `sv-duration` (500 ms / 2 s) | studio | component test |
 | M03-T09 | Panel Variables (khai báo tên/kiểu/giá trị đầu) | studio | |
 | M03-T10 | Map subflow `parallel` & `loop` của Sim sang sv_parallel/sv_repeat/sv_while (reuse container UI) | studio | |
 | M03-T11 | `POST /lint` (S0–S3 + một phần S6) + debounce 300 ms + badge trên block + tab Problems | core+studio | lint rules §4 file 05 |

@@ -131,7 +131,7 @@ Cột "VSS ví dụ" lấy từ `vss_rel_4.0.json` thật (đã verify tồn t�
 | `sv_set_many` | Actuator | *(mới)* | `Vehicle.Cabin.Door.Row1.{DriverSide,PassengerSide}.IsLocked` |
 | `sv_toggle` | Actuator | *(mới, desugar ở compiler)* | `Vehicle.Body.Lights.Beam.Low.IsOn` |
 | `sv_compare`, `sv_bool`, `sv_math`, `sv_constant` | Logic | `condition.ts` (hình dạng operator picker) | — |
-| `sv_expression` | Logic | `condition.ts` (Monaco editor — xem [ADR-0013 Notes](adr/ADR-0013-dataflow-and-expression-language.md)) | — |
+| `sv_expression` | Logic | `condition.ts` (bộ editor ô nhập của Sim — xem [ADR-0013 Notes](adr/ADR-0013-dataflow-and-expression-language.md)) | — |
 | `sv_scale`, `sv_clamp`, `sv_in_range`, `sv_lookup`, `sv_convert` | Logic | *(mới)* | `Vehicle.Powertrain.TractionBattery.StateOfCharge.Current` (percent, 0–100) |
 | `sv_if`, `sv_switch` | Flow | `condition.ts` (branch UI) | — |
 | `sv_wait` | Flow | `wait.ts` (gần 1:1) | — |

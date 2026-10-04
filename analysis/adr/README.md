@@ -91,8 +91,8 @@ flowchart TB
 | [0009](ADR-0009-dev-phase-module-folders.md) | **Dev phase: module folders + root compose (submodule khi release)** — Accepted | L0 | M0 ✔ |
 | [0010](ADR-0010-vss-catalog.md) | VSS Catalog service — **Accepted** | L1 | M2 |
 | [0011](ADR-0011-block-model-on-canvas.md) | Block vehicle trên canvas Sim (generic + VSS-driven) — **Accepted** | L1 | M2 |
-| [0012](ADR-0012-execution-semantics.md) | Ngữ nghĩa thực thi (trigger/run/yield/policy) | L1 | M3 |
-| [0013](ADR-0013-dataflow-and-expression-language.md) | Dataflow bằng tham chiếu + expression language | L1 | M3 |
+| [0012](ADR-0012-execution-semantics.md) | Ngữ nghĩa thực thi (trigger/run/yield/policy) — **Accepted** | L1 | M3 |
+| [0013](ADR-0013-dataflow-and-expression-language.md) | Dataflow bằng tham chiếu + expression language — **Accepted** | L1 | M3 |
 | [0014](ADR-0014-ir-v1.md) | Canonical IR v1 | L1 | M4 |
 | [0015](ADR-0015-type-and-unit-system.md) | Hệ kiểu & đơn vị | L1 | M4 |
 | [0016](ADR-0016-diagnostics-catalog.md) | Catalog diagnostics | L1 | M4 |

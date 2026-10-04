@@ -1,6 +1,6 @@
 # ADR-0013: Dataflow bằng tham chiếu `<…>` + expression language riêng (không eval)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-04) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** Master Plan ADR-004 & Part 6.6; [06 §4](../06-ir-and-compiler.md); [00 F4](../00-research-findings.md#24-phát-hiện-quan-trọng--lệch-so-với-master-plan-v2)
 
 ## Context
@@ -10,7 +10,7 @@ Sim: edge = control-flow; dữ liệu qua `<blockName.field>` trong subBlock; Co
 1. **Giữ mô hình Sim**: edge = control; data = tham chiếu. Ba dạng tham chiếu: `<Tên block.field>`, `<Vehicle.Path>` (giá trị mới nhất đã cache), `<var.name>` (biến workflow).
 2. **Expression language SimVehicleApp (SVX)** — grammar ở [06 §4](../06-ir-and-compiler.md): số (có đơn vị tuỳ chọn), string, bool, toán tử số học/so sánh/logic/ternary, hàm whitelist (`abs min max clamp round floor ceil scale in_range now_ms len`), template string `"Speed {<Speed.value>} km/h"`.
 3. **Parser tự viết** (Pratt, TypeScript, ~600 LOC) trong `simvehicleapp-core/packages/expr`: lexer → parser → AST → typer (dùng type/unit system ADR-0015) → lowering `$expr`. Không dùng thư viện expression bên ngoài (tránh eval/prototype pollution và để kiểm soát typing/units).
-4. Editor trong studio: **Monaco Editor** (`@monaco-editor/react` 4.7.0 + `monaco-editor` 0.55.1 — đã có sẵn trong `package.json` của Sim, dùng chung với các editor khác của studio, không thêm thư viện mới) với ngôn ngữ tuỳ biến đăng ký qua `monaco.languages.register` (token provider + completion provider cho `<…>`) và lint realtime qua `POST /lint`.
+4. Editor trong studio: ~~Monaco Editor~~ **bộ editor ô nhập của Sim** — `react-simple-code-editor` + `prismjs` (grammar SVX) + `TagDropdown` cho tham chiếu `<…>` (thêm nhóm Vehicle từ catalog); lint realtime qua `POST /lint`. *(Sửa 2026-10-04, PO chọn — xem Notes 2026-10-04; trước đó: Monaco 0.55.1.)*
 5. Output của block có schema kiểu (từ BlockSpec) ⇒ tham chiếu typed.
 6. Giới hạn: độ sâu AST ≤ 64, độ dài ≤ 2 000 ký tự.
 
@@ -45,3 +45,4 @@ Kiểm tra trực tiếp `apps/sim/package.json` của snapshot Sim v0.7.13: kh�
 - **Tên trong tham chiếu block**: Sim chuẩn hoá tên block bằng `normalizeName` (`apps/sim/executor/constants.ts`: lowercase, bỏ khoảng trắng và dấu `.`) ⇒ block "When Speed changes 1" (tên do M2 đặt khi thả signal) được tham chiếu là `<whenspeedchanges1.value>`, không phải `<Tên block.field>` như §1 viết. SVX phải dùng đúng quy tắc này để tham chiếu khớp với dropdown `<…>` của Sim.
 - **Xung đột `<Vehicle.Path>` ↔ tham chiếu block**: block tên "Vehicle"/"vehicle" chuẩn hoá thành `vehicle` ⇒ `<vehicle.speed>` mơ hồ. Đề xuất: tiền tố `Vehicle.` (phân biệt hoa/thường, đúng như VSS) dành riêng cho signal; tên block chuẩn hoá thành `vehicle` bị từ chối bằng diagnostic mới (stage S1) — cần thêm mã vào catalog (chỉ thêm, ADR-0016).
 - **Editor (§4)**: Monaco có trong `package.json` nhưng Sim chỉ dùng nó cho trình xem file (`files/components/file-viewer/text-editor.tsx`); mọi ô nhập trong block (`code`, tool-input code editor, subflow editor) dùng `react-simple-code-editor` + `prismjs`, và gợi ý `<…>` là component `TagDropdown` dùng chung. Đề xuất cho `sv-expression`: dựa trên cùng bộ đó (prism grammar cho SVX + `TagDropdown` cho tham chiếu block + nhóm Vehicle từ catalog) để UX tham chiếu giống hệt Sim và tránh nạp Monaco trong mỗi block; Monaco giữ cho editor lớn (nếu cần). Thay đổi này đụng Decision §4 ⇒ cần PO chấp thuận.
+- **Quyết định PO 2026-10-04**: Accept kèm Notes; editor `sv-expression` dùng bộ editor ô nhập của Sim (đã sửa Decision §4).

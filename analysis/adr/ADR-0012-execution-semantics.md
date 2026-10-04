@@ -1,6 +1,6 @@
 # ADR-0012: Ngữ nghĩa thực thi — trigger, run instance, yield, concurrency policy (clean-room)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (2026-10-04 — PO chấp thuận cùng Notes 2026-10-04) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-WF-01, FR-BLK-03/05; [05 §3](../05-blocks-and-execution-model.md#3-ngữ-nghĩa-thực-thi-execution-semantics); Master Plan 8.7
 
 ## Context
