@@ -29,7 +29,7 @@
 |---|---|---|---|---|
 | [M0](#m0--foundations) | Foundations | 0001–0007, 0009 | ✔ | 8/9 ✔; 1 ↷ — gate PASS 2026-10-03 ([report](reports/M00.md)) |
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
-| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 10/12 |
+| [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | 🔄 | 11/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ☐ | 0/14 |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
@@ -96,8 +96,8 @@ ADR: [0010](../analysis/adr/ADR-0010-vss-catalog.md), [0011](../analysis/adr/ADR
 | SubBlock `vss-path-selector` | 0011 | ✔ | 2026-10-04: `components/sv/vss/` — cây lazy (`/tree` từng cấp) + tìm kiếm debounce, leaf sai kind hiện nhưng bị khoá kèm lý do, path đã chọn hiển thị dạng card read-only + "Change" (Notes ADR-0011), badge kind/type/unit/`[ ]`/deprecated; `SubBlockType` + `SubBlockConfig.vssKinds/vssWrites` (`// SV:`); 13 test component PASS, tsc 0 lỗi, audit API/React Query PASS | T07 | T07 |
 | SubBlock `sv-typed-value`, `sv-enum` | 0011,0018 | ✔ | 2026-10-04: 12 kiểu vô hướng, kiểm phạm vi số nguyên bằng BigInt, int64/uint64 lưu chuỗi thập phân, `min/max/allowed` của catalog, boolean/`allowed` chỉ chọn, mảng read-only; kiểu lấy từ subBlock `path` (`$signal`) hoặc cố định; 25 test PASS | T08 |
 | BlockConfig UI 4 block vehicle + đăng ký | 0011 | ✔ | 2026-10-04: `apps/sim/blocks/vehicle/*` + 1 điểm đăng ký `// SV:`; `block-parity.test.ts` 25 test PASS (đã thử làm lệch ⇒ FAIL) trên snapshot `block-specs.json` giữ bằng `scripts/ci/block_specs_sync.py`; test registry Sim 970 PASS, tsc 0 lỗi | T09 |
-| Panel Vehicle (toolbar cây VSS + drag→menu) | 0011 | ☐ | | T10 |
-| Project settings chọn VSS release | 0010 | ☐ | | T11 |
+| Panel Vehicle (toolbar cây VSS + drag→menu) | 0011 | 🔄 | 2026-10-04: section "Vehicle" trong toolbar + menu thả signal (Read/When changes/Set theo kind) qua đường tạo block sẵn có của Sim (`// SV:`); unit test PASS (studio 8 578/8 578 local); chờ E2E `m2-gate.spec.ts` trên CI | T10 | T10 |
+| Project settings chọn VSS release | 0010 | ✔ | 2026-10-04: bảng `sv_workflow_settings` (migration 0250) + `GET/PUT /api/sv/workflows/[id]/settings` (quyền workflow, khoá ⇒ 423, release phải có trong catalog) + chọn release ở đầu panel Vehicle; 5 test route PASS; Notes ADR-0010 | T11 | T11 |
 | BFF proxy `/api/sv/catalog/*` | 0007 | ✔ | 2026-10-04: route `releases/tree/search/nodes` (session bắt buộc, contract Zod, 400/404 giữ nguyên, lỗi upstream → 502, chưa cấu hình → 503) + hooks `hooks/queries/sv-catalog.ts`; 13 test PASS. Làm trước T07 vì selector cần đường dữ liệu | T12 | T12 |
 
 ## M3 — Logic/Flow/State/Comm blocks
