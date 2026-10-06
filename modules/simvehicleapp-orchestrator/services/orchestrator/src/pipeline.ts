@@ -1,6 +1,6 @@
 import { type Clients, type Diagnostic, type FileSet, ServiceUnavailable } from "./clients.ts";
 import { compileDiagnostics, depsDiagnostics, testDiagnostics } from "./errors.ts";
-import type { Generation, LogLine, Project, Repo, Stage, StageInfo, Verdict } from "./repo.ts";
+import type { Generation, LogLine, Project, Repo, RunInfo, Stage, StageInfo, Verdict } from "./repo.ts";
 import { STAGES } from "./repo.ts";
 
 /**
@@ -33,6 +33,30 @@ class StageFailed extends Error {
   constructor(readonly diagnostics: Diagnostic[]) {
     super(diagnostics[0]?.message ?? "stage failed");
   }
+}
+
+type IrDoc = {
+  workflowId: string;
+  triggers?: { id?: string; src?: { blockId?: string } }[];
+  nodes?: { id?: string; src?: { blockId?: string } }[];
+  signals?: { path: string; vssType: string; dataType: string; access?: string[] }[];
+};
+
+/** Node → block map of the trace and the signals the app uses, from the IR of each workflow (M8). */
+export function runInfoOf(irs: readonly IrDoc[]): RunInfo {
+  const traceMap: RunInfo["traceMap"] = {};
+  const signals = new Map<string, RunInfo["signals"][number]>();
+  for (const ir of irs) {
+    const map: Record<string, string> = {};
+    for (const n of [...(ir.triggers ?? []), ...(ir.nodes ?? [])]) if (n.id && n.src?.blockId) map[n.id] = n.src.blockId;
+    traceMap[ir.workflowId] = map;
+    for (const s of ir.signals ?? []) {
+      const prev = signals.get(s.path);
+      const access = [...new Set([...(prev?.access ?? []), ...(s.access ?? [])])].sort();
+      signals.set(s.path, { path: s.path, vssType: s.vssType, dataType: s.dataType, access });
+    }
+  }
+  return { traceMap, signals: [...signals.values()].sort((a, b) => a.path.localeCompare(b.path)) };
 }
 
 export async function runGeneration(gen: Generation, deps: PipelineDeps): Promise<Generation> {
@@ -111,6 +135,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
       state.workflows = irs.map((ir) => ({ workflowId: ir.workflowId, revision: ir.workflowRevision, irHash: ir.irHash }));
       state.compilerVersion = irs[0]?.compilerVersion;
       state.modelHash = irs[0]?.modelHash;
+      state.runInfo = runInfoOf(irs as unknown as IrDoc[]);
       emit(`${irs.length} workflow(s) compiled`);
     });
 

@@ -48,6 +48,9 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
       for (const msg of s.lines ?? (kind === "test" ? ran : [`${kind} ok`])) onLine({ runId: "j", seq: seq++, ts: 0, stream: "stdout", level: "info", msg });
       return { id: `j-${kind}`, state: s.state, exitCode: s.state === "succeeded" ? 0 : 1, diagnostics: [] };
     },
+    startJob: async (_l, kind) => (calls.push(`start:${kind}`), { ok: true, value: { id: `j-${kind}`, state: "running", exitCode: null, diagnostics: [] } }),
+    followJob: async (_l, id) => ({ id, state: "succeeded", exitCode: 0, diagnostics: [] }),
+    mirror: async (release, paths) => void calls.push(`mirror:${release}:${paths.join(",")}`),
     ...overrides,
   };
   return { clients, calls };

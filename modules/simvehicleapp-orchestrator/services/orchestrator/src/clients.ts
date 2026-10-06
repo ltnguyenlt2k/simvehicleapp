@@ -52,11 +52,18 @@ export interface Clients {
   workspaceGet(path: string): Promise<Outcome<unknown>>;
   /** Runs a toolchain job to its end; every log line goes to `onLine`. */
   job(language: string, kind: string, project: string, onLine: (l: LogLine) => void, options?: Record<string, unknown>): Promise<ToolchainJob>;
+  /** Starts a toolchain job (a `run` is followed separately); 409/422 come back as an outcome. */
+  startJob(language: string, kind: string, project: string, options?: Record<string, unknown>): Promise<Outcome<ToolchainJob>>;
+  /** Follows a job's log after `afterSeq` until it ends (reconnecting on drops); resolves with the final job. */
+  followJob(language: string, jobId: string, afterSeq: number, onLine: (l: LogLine) => void): Promise<ToolchainJob>;
+  /** Actuators whose target the signal-gateway mirrors to the current value (empty = none). */
+  mirror(release: string, paths: string[]): Promise<void>;
 }
 
 export interface Endpoints {
   compiler: string;
   workspace: string;
+  signalGateway?: string;
   backends: Record<string, string>;
   toolchains: Record<string, string>;
   secret: string;
@@ -106,44 +113,59 @@ export function httpClients(e: Endpoints): Clients {
       return outcome(await call(`${e.workspace}/projects/${slug}/commits`, { method: "POST", body: JSON.stringify(body) }));
     },
     async job(language, kind, project, onLine, options) {
-      const tc = base(e.toolchains, language, "toolchain");
-      const created = await call(`${tc}/jobs`, { method: "POST", body: JSON.stringify({ kind, project, ...(options ? { options } : {}) }) });
-      if (created.status === 422) {
-        const d = (await created.json()) as Diagnostic[];
-        return { id: "", state: "failed", exitCode: null, diagnostics: d };
+      const created = await this.startJob(language, kind, project, options);
+      if (!created.ok) {
+        if (created.status === 422) return { id: "", state: "failed", exitCode: null, diagnostics: created.diagnostics };
+        throw new ServiceUnavailable(`toolchain /jobs ⇒ ${created.status}`);
       }
-      if (!created.ok) throw new ServiceUnavailable(`toolchain /jobs ⇒ ${created.status}`);
-      const job = (await created.json()) as ToolchainJob;
-      // Follow the log until the job ends (the stream closes then); resume after the last seq if it drops.
-      let last = -1;
-      for (let attempt = 0; attempt < 50; attempt++) {
-        const res = await call(`${tc}/jobs/${job.id}/stream`, { headers: { accept: "text/event-stream", "last-event-id": String(last) } });
-        if (!res.ok || !res.body) break;
-        const decoder = new TextDecoder();
-        let buf = "";
-        try {
-          for await (const chunk of res.body) {
-            buf += decoder.decode(chunk, { stream: true });
-            let i = buf.indexOf("\n\n");
-            while (i >= 0) {
-              const data = buf.slice(0, i).split("\n").find((l) => l.startsWith("data: "));
-              buf = buf.slice(i + 2);
-              if (data) {
-                const line = JSON.parse(data.slice(6)) as LogLine;
-                last = line.seq;
-                onLine(line);
+      return this.followJob(language, created.value.id, -1, onLine);
+    },
+    async startJob(language, kind, project, options) {
+      const tc = base(e.toolchains, language, "toolchain");
+      return outcome<ToolchainJob>(await call(`${tc}/jobs`, { method: "POST", body: JSON.stringify({ kind, project, ...(options ? { options } : {}) }) }));
+    },
+    async mirror(release, paths) {
+      if (!e.signalGateway) return;
+      const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths }) });
+      if (!res.ok) throw new ServiceUnavailable(`signal-gateway /mirror ⇒ ${res.status}`);
+    },
+    async followJob(language, jobId, afterSeq, onLine) {
+      const tc = base(e.toolchains, language, "toolchain");
+      // Follow the log until the job ends (the stream closes then); resume after the last seq when it
+      // drops. A run streams for hours: only consecutive failed connections give up.
+      let last = afterSeq;
+      for (let failures = 0; failures < 50; ) {
+        const res = await call(`${tc}/jobs/${jobId}/stream`, { headers: { accept: "text/event-stream", "last-event-id": String(last) } }).catch(() => null);
+        if (res?.ok && res.body) {
+          failures = 0;
+          const decoder = new TextDecoder();
+          let buf = "";
+          try {
+            for await (const chunk of res.body) {
+              buf += decoder.decode(chunk, { stream: true });
+              let i = buf.indexOf("\n\n");
+              while (i >= 0) {
+                const data = buf.slice(0, i).split("\n").find((l) => l.startsWith("data: "));
+                buf = buf.slice(i + 2);
+                if (data) {
+                  const line = JSON.parse(data.slice(6)) as LogLine;
+                  last = line.seq;
+                  onLine(line);
+                }
+                i = buf.indexOf("\n\n");
               }
-              i = buf.indexOf("\n\n");
             }
+          } catch {
+            // dropped: reconnect below
           }
-        } catch {
-          // dropped: reconnect below
-        }
-        const now = (await (await call(`${tc}/jobs/${job.id}`)).json()) as ToolchainJob;
-        if (!["queued", "running"].includes(now.state)) return now;
+        } else failures++;
+        const now = await call(`${tc}/jobs/${jobId}`)
+          .then((r) => (r.ok ? (r.json() as Promise<ToolchainJob>) : null))
+          .catch(() => null);
+        if (now && !["queued", "running"].includes(now.state)) return now;
         await Bun.sleep(500);
       }
-      return (await (await call(`${tc}/jobs/${job.id}`)).json()) as ToolchainJob;
+      throw new ServiceUnavailable(`toolchain job ${jobId}: the log stream is unreachable`);
     },
   };
 }

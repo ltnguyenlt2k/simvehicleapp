@@ -5,6 +5,7 @@ import { httpClients } from "./clients.ts";
 import { EventHub } from "./events.ts";
 import { runGeneration } from "./pipeline.ts";
 import { PgRepo } from "./repo.ts";
+import { RunManager } from "./runs.ts";
 
 const port = Number(process.env.SV_ORCHESTRATOR_PORT ?? 4030);
 const log = createLogger({ service: "orchestrator" });
@@ -38,9 +39,14 @@ const clients = httpClients({
   workspace: process.env.SV_WORKSPACE_URL ?? "http://workspace:4040",
   backends: parseMap(process.env.SV_BACKENDS ?? "cpp=http://codegen-cpp:4110"),
   toolchains: parseMap(process.env.SV_TOOLCHAINS ?? "cpp=http://toolchain-cpp:4210"),
+  signalGateway: process.env.SV_SIGNAL_GATEWAY_URL ?? "http://signal-gateway:4050",
   secret,
 });
 const hub = new EventHub();
+// One databroker per VSS release (ADR-0024 §6), the same map the signal-gateway uses.
+const runs = new RunManager({ repo, clients, hub, databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"), log });
+const stale = await runs.recover();
+if (stale) log.warn("stopped runs left active by a restart", { runs: stale });
 const ideUrl = process.env.SV_IDE_URL;
 
 // One worker: generations run one after another (the toolchain builds one project at a time anyway).
@@ -61,6 +67,6 @@ const kick = () => wake?.();
 })();
 
 const background = (p: Promise<void>) => void p.catch((e) => log.error("background task failed", { err: e }));
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log }, createOrchestratorHandler({ repo, clients, hub, ideUrl, kick, background }));
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log }, createOrchestratorHandler({ repo, clients, hub, runs, ideUrl, kick, background }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

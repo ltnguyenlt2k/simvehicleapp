@@ -48,6 +48,12 @@ export interface LogLine {
   raw?: string;
 }
 
+/** What a run needs from its generation (M8): node → block of every workflow, signals of the app. */
+export interface RunInfo {
+  traceMap: Record<string, Record<string, string>>;
+  signals: { path: string; vssType: string; dataType: string; access: string[] }[];
+}
+
 export interface Generation {
   id: string;
   projectId: string;
@@ -61,6 +67,7 @@ export interface Generation {
   backend?: string;
   compilerVersion?: string;
   modelHash?: string;
+  runInfo?: RunInfo;
   request: GenerationRequest;
   createdAt: number;
   startedAt?: number;
@@ -72,6 +79,40 @@ export interface GenerationRequest {
   scenarios?: { workflowId: string; scenario: Record<string, unknown> }[];
   overwriteModified?: boolean;
 }
+
+export type RunState = "starting" | "running" | "stopping" | "stopped" | "crashed";
+export const ACTIVE_RUN_STATES: readonly RunState[] = ["starting", "running", "stopping"];
+
+export interface Run {
+  id: string;
+  projectId: string;
+  generationId: string;
+  state: RunState;
+  vssRelease: string;
+  traceLevel: ProjectSettings["traceLevel"];
+  jobId?: string;
+  exitCode?: number;
+  diagnostics: unknown[];
+  createdAt: number;
+  runningAt?: number;
+  finishedAt?: number;
+}
+
+/** TraceEvent v1 (contracts trace-event). */
+export interface TraceEvent {
+  runId: string;
+  seq: number;
+  ts: number;
+  wf?: string;
+  run?: number;
+  node?: string;
+  blockId?: string;
+  ev: string;
+  data?: Record<string, unknown>;
+}
+
+/** One event of a run's stream: a log line or a trace event, sharing one seq space (SSE resume). */
+export type RunEvent = { kind: "log"; seq: number; body: LogLine } | { kind: "trace"; seq: number; body: TraceEvent };
 
 export interface Repo {
   migrate(): Promise<void>;
@@ -89,6 +130,15 @@ export interface Repo {
   requeueRunning(): Promise<number>;
   appendEvent(generationId: string, line: LogLine): Promise<void>;
   events(generationId: string, afterSeq: number): Promise<LogLine[]>;
+  /** The most recent generation of a project (any state). */
+  latestGeneration(projectId: string): Promise<Generation | null>;
+  createRun(r: Run): Promise<Run>;
+  run(id: string): Promise<Run | null>;
+  /** Most recent first. */
+  runs(filter: { projectId?: string; active?: boolean; limit?: number }): Promise<Run[]>;
+  updateRun(id: string, patch: Partial<Omit<Run, "id" | "projectId" | "generationId" | "createdAt">>): Promise<void>;
+  appendRunEvents(runId: string, events: RunEvent[]): Promise<void>;
+  runEvents(runId: string, afterSeq: number, limit?: number): Promise<RunEvent[]>;
 }
 
 export const initialVerification = (): Generation["verification"] => ({ ir: "pending", format: "pending", compile: "pending", tests: "pending" });
@@ -150,6 +200,38 @@ export class MemoryRepo implements Repo {
   }
   async events(id: string, after: number) {
     return (this.logs.get(id) ?? []).filter((l) => l.seq > after);
+  }
+  readonly runsById = new Map<string, Run>();
+  readonly runLogs = new Map<string, RunEvent[]>();
+  async latestGeneration(projectId: string) {
+    const g = [...this.gens.values()].filter((x) => x.projectId === projectId).sort((a, b) => b.createdAt - a.createdAt)[0];
+    return g ? structuredClone(g) : null;
+  }
+  async createRun(r: Run) {
+    this.runsById.set(r.id, structuredClone(r));
+    return r;
+  }
+  async run(id: string) {
+    const r = this.runsById.get(id);
+    return r ? structuredClone(r) : null;
+  }
+  async runs(f: { projectId?: string; active?: boolean; limit?: number }) {
+    return [...this.runsById.values()]
+      .filter((r) => (!f.projectId || r.projectId === f.projectId) && (!f.active || ACTIVE_RUN_STATES.includes(r.state)))
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, f.limit ?? 20)
+      .map((r) => structuredClone(r));
+  }
+  async updateRun(id: string, patch: Partial<Run>) {
+    Object.assign(this.runsById.get(id)!, structuredClone(patch));
+  }
+  async appendRunEvents(id: string, events: RunEvent[]) {
+    const l = this.runLogs.get(id) ?? [];
+    l.push(...structuredClone(events));
+    this.runLogs.set(id, l);
+  }
+  async runEvents(id: string, after: number, limit = 5000) {
+    return (this.runLogs.get(id) ?? []).filter((e) => e.seq > after).slice(0, limit);
   }
 }
 
@@ -257,6 +339,7 @@ export class PgRepo implements Repo {
       ...(r.backend ? { backend: String(r.backend) } : {}),
       ...(r.compiler_version ? { compilerVersion: String(r.compiler_version) } : {}),
       ...(r.model_hash ? { modelHash: String(r.model_hash) } : {}),
+      ...(r.run_info ? { runInfo: parse<RunInfo>(r.run_info) } : {}),
       request: parse(r.request),
       createdAt: ms(r.created_at)!,
       ...(r.started_at ? { startedAt: ms(r.started_at) } : {}),
@@ -294,6 +377,7 @@ export class PgRepo implements Repo {
     if (patch.backend !== undefined) set.backend = patch.backend;
     if (patch.compilerVersion !== undefined) set.compiler_version = patch.compilerVersion;
     if (patch.modelHash !== undefined) set.model_hash = patch.modelHash;
+    if (patch.runInfo !== undefined) set.run_info = patch.runInfo;
     if (patch.finishedAt !== undefined) set.finished_at = new Date(patch.finishedAt);
     if (Object.keys(set).length) await this.sql`UPDATE sv.generation SET ${this.sql(set)} WHERE id = ${id}`;
   }
@@ -311,5 +395,72 @@ export class PgRepo implements Repo {
   async events(id: string, after: number) {
     const rows = (await this.sql`SELECT line FROM sv.generation_event WHERE generation_id = ${id} AND seq > ${after} ORDER BY seq`) as Row[];
     return rows.map((r) => parse<LogLine>(r.line));
+  }
+
+  async latestGeneration(projectId: string) {
+    const rows = (await this.sql`SELECT * FROM sv.generation WHERE project_id = ${projectId} ORDER BY created_at DESC LIMIT 1`) as Row[];
+    return rows[0] ? this.toGeneration(rows[0]) : null;
+  }
+
+  private toRun(r: Row): Run {
+    return {
+      id: String(r.id),
+      projectId: String(r.project_id),
+      generationId: String(r.generation_id),
+      state: r.state as RunState,
+      vssRelease: String(r.vss_release),
+      traceLevel: r.trace_level as Run["traceLevel"],
+      ...(r.job_id ? { jobId: String(r.job_id) } : {}),
+      ...(r.exit_code !== null && r.exit_code !== undefined ? { exitCode: Number(r.exit_code) } : {}),
+      diagnostics: parse(r.diagnostics),
+      createdAt: ms(r.created_at)!,
+      ...(r.running_at ? { runningAt: ms(r.running_at) } : {}),
+      ...(r.finished_at ? { finishedAt: ms(r.finished_at) } : {}),
+    };
+  }
+
+  async createRun(r: Run) {
+    await this.sql`INSERT INTO sv.run (id, project_id, generation_id, state, vss_release, trace_level, diagnostics, created_at)
+      VALUES (${r.id}, ${r.projectId}, ${r.generationId}, ${r.state}, ${r.vssRelease}, ${r.traceLevel}, ${r.diagnostics}, ${new Date(r.createdAt)})`;
+    return r;
+  }
+
+  async run(id: string) {
+    const rows = (await this.sql`SELECT * FROM sv.run WHERE id = ${id}`) as Row[];
+    return rows[0] ? this.toRun(rows[0]) : null;
+  }
+
+  async runs(f: { projectId?: string; active?: boolean; limit?: number }) {
+    const limit = f.limit ?? 20;
+    const active = f.active === true;
+    const rows = (f.projectId
+      ? await this.sql`SELECT * FROM sv.run WHERE project_id = ${f.projectId} AND (${!active} OR state IN ('starting', 'running', 'stopping')) ORDER BY created_at DESC LIMIT ${limit}`
+      : await this.sql`SELECT * FROM sv.run WHERE (${!active} OR state IN ('starting', 'running', 'stopping')) ORDER BY created_at DESC LIMIT ${limit}`) as Row[];
+    return rows.map((r) => this.toRun(r));
+  }
+
+  async updateRun(id: string, patch: Partial<Run>) {
+    const set: Record<string, unknown> = {};
+    if (patch.state !== undefined) set.state = patch.state;
+    if (patch.jobId !== undefined) set.job_id = patch.jobId;
+    if (patch.exitCode !== undefined) set.exit_code = patch.exitCode;
+    if (patch.diagnostics !== undefined) set.diagnostics = patch.diagnostics;
+    if (patch.runningAt !== undefined) set.running_at = new Date(patch.runningAt);
+    if (patch.finishedAt !== undefined) set.finished_at = new Date(patch.finishedAt);
+    if (Object.keys(set).length) await this.sql`UPDATE sv.run SET ${this.sql(set)} WHERE id = ${id}`;
+  }
+
+  async appendRunEvents(id: string, events: RunEvent[]) {
+    if (!events.length) return;
+    const rows = events.map((e) => ({ run_id: id, seq: e.seq, kind: e.kind, body: e.body }));
+    await this.sql`INSERT INTO sv.run_event ${this.sql(rows)} ON CONFLICT DO NOTHING`;
+    // Ring buffer: a run keeps its newest MAX_EVENTS events (ADR-0027 §2).
+    const last = events[events.length - 1]!.seq;
+    if (last > MAX_EVENTS && Math.floor(last / 1000) !== Math.floor((events[0]!.seq - 1) / 1000)) await this.sql`DELETE FROM sv.run_event WHERE run_id = ${id} AND seq <= ${last - MAX_EVENTS}`;
+  }
+
+  async runEvents(id: string, after: number, limit = 5000) {
+    const rows = (await this.sql`SELECT seq, kind, body FROM sv.run_event WHERE run_id = ${id} AND seq > ${after} ORDER BY seq LIMIT ${limit}`) as Row[];
+    return rows.map((r) => ({ kind: r.kind, seq: Number(r.seq), body: parse(r.body) }) as RunEvent);
   }
 }

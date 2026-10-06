@@ -37,4 +37,22 @@ describe("orchestrator responses ⇄ openapi/orchestrator.v1.yaml", () => {
     expect(passed).toMatchObject({ success: true, editor: { url: "http://127.0.0.1:8080/?folder=/workspace/projects/comfort" } });
     expect(failed).toMatchObject({ success: false, stage: "build" });
   });
+
+  test("Run (starting, running, crashed with diagnostics) validates; the toolchain job id stays internal", async () => {
+    const repo = new MemoryRepo();
+    const h = createOrchestratorHandler({ repo, clients: {} as never, hub: new EventHub(), kick() {}, background() {} });
+    const base = { projectId: crypto.randomUUID(), generationId: "g1", vssRelease: "v4.0", traceLevel: "node" as const, diagnostics: [], createdAt: 1, jobId: "job-1" };
+    await repo.createRun({ ...base, id: "r_1", state: "starting" });
+    await repo.createRun({ ...base, id: "r_2", state: "running", runningAt: 2, createdAt: 2 });
+    await repo.createRun({ ...base, id: "r_3", state: "crashed", exitCode: 139, finishedAt: 4, createdAt: 3, diagnostics: [{ code: "RUN_CRASHED", severity: "error", stage: "run", message: "The app exited with 139", docs: "diagnostics#RUN_CRASHED", data: { exitCode: 139 } }] });
+    const list = await (await h(new Request("http://o/runs"), ctx)).json();
+    expect(list.runs.map((r: { id: string }) => r.id)).toEqual(["r_3", "r_2", "r_1"]);
+    for (const r of list.runs) {
+      const ok = schema("Run")(r);
+      if (!ok) console.log(schema("Run").errors);
+      expect(ok).toBe(true);
+      expect(r.jobId).toBeUndefined();
+    }
+    expect(schema("Run")(await (await h(new Request("http://o/runs/r_3"), ctx)).json())).toBe(true);
+  });
 });

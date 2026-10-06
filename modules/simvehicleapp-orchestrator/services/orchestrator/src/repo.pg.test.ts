@@ -33,4 +33,33 @@ describe.skipIf(!url)("PgRepo (schema sv on Postgres)", () => {
     expect((await repo.events("g2", 2)).map((l) => l.msg)).toEqual(["m3", "m4"]);
     await admin.close();
   });
+
+  test("runs (migration 0002): run_info round-trips; one active run is found; run events resume by seq and stay a ring", async () => {
+    const repo = PgRepo.connect(url!);
+    await repo.migrate();
+    const p = (await repo.project("comfort"))!;
+    const runInfo = { traceMap: { gw_a: { n2: "b2" } }, signals: [{ path: "Vehicle.Speed", vssType: "sensor", dataType: "float", access: ["subscribe"] }] };
+    await repo.updateGeneration("g2", { state: "succeeded", runInfo });
+    expect((await repo.latestGeneration(p.id))!.id).toBe("g2");
+    expect((await repo.generation("g2"))!.runInfo).toEqual(runInfo);
+    const base = { projectId: p.id, generationId: "g2", vssRelease: "v4.0", traceLevel: "node" as const, diagnostics: [] };
+    await repo.createRun({ ...base, id: "r1", state: "stopped", createdAt: 1_000 });
+    await repo.createRun({ ...base, id: "r2", state: "starting", createdAt: 2_000 });
+    await repo.updateRun("r2", { state: "running", jobId: "job-1", runningAt: 2_500 });
+    expect((await repo.runs({ active: true })).map((r) => r.id)).toEqual(["r2"]);
+    expect((await repo.runs({ projectId: p.id })).map((r) => r.id)).toEqual(["r2", "r1"]);
+    expect(await repo.run("r2")).toMatchObject({ state: "running", jobId: "job-1", runningAt: 2_500 });
+    await repo.updateRun("r2", { state: "crashed", exitCode: 139, finishedAt: 3_000, diagnostics: [{ code: "RUN_CRASHED" }] });
+    expect(await repo.run("r2")).toMatchObject({ state: "crashed", exitCode: 139, finishedAt: 3_000, diagnostics: [{ code: "RUN_CRASHED" }] });
+    const ev = (seq: number) => (seq % 2 ? { kind: "trace" as const, seq, body: { runId: "r2", seq, ts: seq, ev: "enter", wf: "gw_a", run: 1, node: "n2", blockId: "b2" } } : { kind: "log" as const, seq, body: { runId: "r2", seq, ts: seq, stream: "stdout" as const, level: "info" as const, msg: `m${seq}` } });
+    await repo.appendRunEvents("r2", [0, 1, 2, 3].map(ev));
+    await repo.appendRunEvents("r2", [3, 4].map(ev)); // a replayed event is ignored
+    expect((await repo.runEvents("r2", 1)).map((e) => [e.seq, e.kind])).toEqual([[2, "log"], [3, "trace"], [4, "log"]]);
+    // ring buffer: only the newest 20 000 are kept
+    for (let start = 5; start < 21_005; start += 1000) await repo.appendRunEvents("r2", Array.from({ length: 1000 }, (_, k) => ev(start + k)));
+    const kept = await repo.runEvents("r2", -1, 30_000);
+    expect(kept.length).toBeLessThanOrEqual(21_000);
+    expect(kept[0]!.seq).toBeGreaterThan(0);
+    expect(kept.at(-1)!.seq).toBe(21_004);
+  });
 });

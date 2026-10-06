@@ -1,10 +1,11 @@
 import { ContractValidator } from "@simvehicleapp/contracts";
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import type { Clients } from "./clients.ts";
-import type { EventHub } from "./events.ts";
+import { type EventHub, itemOfLine, itemOfRunEvent } from "./events.ts";
 import { present } from "./pipeline.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
-import { type Generation, initialVerification, type Project, type Repo, STAGES } from "./repo.ts";
+import { ACTIVE_RUN_STATES, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
+import { RunConflict, type RunManager } from "./runs.ts";
 
 /**
  * HTTP surface of the orchestrator (`openapi/orchestrator.v1.yaml`): projects, their workflows,
@@ -21,6 +22,8 @@ export interface AppDeps {
   repo: Repo;
   clients: Clients;
   hub: EventHub;
+  /** Live runs (M8); without it the run endpoints answer 503. */
+  runs?: RunManager;
   ideUrl?: string;
   /** Wakes the generation worker. */
   kick(): void;
@@ -39,6 +42,12 @@ const projectView = (p: Project) => ({
   ...(p.statusMessage ? { statusMessage: p.statusMessage } : {}),
   workflows: p.workflows,
 });
+
+/** Run v1 of the contract (the toolchain job id stays internal). */
+const runView = (r: Run) => {
+  const { jobId: _job, ...view } = r;
+  return view;
+};
 
 async function readBody(req: Request): Promise<Record<string, unknown> | Response> {
   if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY) return json(413, { error: "payload_too_large" });
@@ -106,6 +115,23 @@ export function createOrchestratorHandler(d: AppDeps) {
         const r = await d.clients.workspaceGet(gid ? `/projects/${project.slug}/generations/${gid}/file${q}` : `/projects/${project.slug}/file${q}`);
         return r.ok ? json(200, r.value) : json(r.status === 404 ? 404 : 502, { error: r.status === 404 ? "not_found" : "workspace_unavailable" });
       }
+      if (parts[2] === "runs" && parts.length === 3 && req.method === "POST") {
+        if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
+        const b = await readBody(req);
+        if (b instanceof Response) return b;
+        const gid = b.generationId;
+        if (typeof gid !== "string" || !ID.test(gid)) return json(400, { error: "invalid_request", message: "generationId is required" });
+        if (b.traceLevel !== undefined && !["off", "trigger", "node"].includes(b.traceLevel as string)) return json(400, { error: "invalid_request", message: "traceLevel must be off, trigger or node" });
+        if (!(await d.repo.generation(gid))) return json(404, { error: "not_found", message: "unknown generation" });
+        try {
+          const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined);
+          ctx.log.info("run requested", { project: project.slug, run: run.id, state: run.state });
+          return json(202, runView(run));
+        } catch (e) {
+          if (e instanceof RunConflict) return json(409, { error: "conflict", message: e.message, ...(e.activeRun ? { activeRun: runView(e.activeRun) } : {}) });
+          throw e;
+        }
+      }
       if (parts[2] === "generations" && parts.length === 3 && req.method === "POST") {
         const b = await readBody(req);
         if (b instanceof Response) return b;
@@ -144,16 +170,46 @@ export function createOrchestratorHandler(d: AppDeps) {
       return json(404, { error: "not_found" });
     }
 
+    if (url.pathname === "/runs" && req.method === "GET") {
+      const projectId = url.searchParams.get("projectId");
+      if (projectId !== null && !ID.test(projectId)) return json(400, { error: "invalid_request" });
+      const runs = await d.repo.runs({ ...(projectId ? { projectId } : {}), active: url.searchParams.get("active") === "true", limit: 20 });
+      return json(200, { runs: runs.map(runView) });
+    }
+
+    if (parts[0] === "runs" && parts[1] && (parts.length === 2 || (parts.length === 3 && parts[2] === "stop"))) {
+      const run = ID.test(parts[1]) ? await d.repo.run(parts[1]) : null;
+      if (!run) return json(404, { error: "not_found" });
+      if (parts.length === 2 && req.method === "GET") return json(200, runView(run));
+      if (parts[2] === "stop" && req.method === "POST") {
+        if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
+        const stopped = await d.runs.stop(run.id);
+        ctx.log.info("run stop requested", { run: run.id });
+        return json(200, runView(stopped ?? run));
+      }
+      return json(405, { error: "method_not_allowed" });
+    }
+
     if (url.pathname === "/events" && req.method === "GET") {
-      const gid = url.searchParams.get("generationId");
-      if (!gid || !ID.test(gid)) return json(400, { error: "invalid_request", message: "generationId is required (runs arrive in M8)" });
-      if (!(await d.repo.generation(gid))) return json(404, { error: "not_found" });
       const after = Number(req.headers.get("last-event-id") ?? -1);
+      const from = Number.isFinite(after) ? after : -1;
+      const rid = url.searchParams.get("runId");
+      if (rid !== null) {
+        if (!ID.test(rid) || !(await d.repo.run(rid))) return json(404, { error: "not_found" });
+        const finished = async () => {
+          const r = await d.repo.run(rid);
+          return !r || !ACTIVE_RUN_STATES.includes(r.state);
+        };
+        return d.hub.stream(rid, from, async (a) => (await d.repo.runEvents(rid, a)).map(itemOfRunEvent), finished, req.signal);
+      }
+      const gid = url.searchParams.get("generationId");
+      if (!gid || !ID.test(gid)) return json(400, { error: "invalid_request", message: "runId or generationId is required" });
+      if (!(await d.repo.generation(gid))) return json(404, { error: "not_found" });
       const finished = async () => {
         const g = await d.repo.generation(gid);
         return !g || ["succeeded", "failed", "cancelled"].includes(g.state);
       };
-      return d.hub.stream(d.repo, gid, Number.isFinite(after) ? after : -1, finished, req.signal);
+      return d.hub.stream(gid, from, async (a) => (await d.repo.events(gid, a)).map(itemOfLine), finished, req.signal);
     }
     return json(404, { error: "not_found" });
   };

@@ -1,0 +1,17 @@
+{
+  "name": "@simvehicleapp/signal-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "signal-gateway on :4050 (openapi/signal-gateway.v1.yaml): KUKSA databroker bridge over kuksa.val.v1 — signal stream (SSE), inject, actuator mirroring, scenario playback.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.0",
+    "@grpc/proto-loader": "0.8.0"
+  }
+}

@@ -16,6 +16,9 @@ services:
       SV_WORKSPACE_URL: http://workspace:4040
       SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
       SV_TOOLCHAINS: ${SV_TOOLCHAINS:-cpp=http://toolchain-cpp:4210}
+      # Runs (M8): databroker per VSS release (ADR-0024 §6) and the gateway that mirrors actuators.
+      SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}
+      SV_SIGNAL_GATEWAY_URL: http://signal-gateway:4050
       # code-server as the browser reaches it (Appendix A `editor.url`).
       SV_IDE_URL: ${SV_IDE_PUBLIC_URL:-http://127.0.0.1:${SV_IDE_PORT:-8080}}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
@@ -43,6 +46,24 @@ services:
       - sv-workspace:/workspace
     # Internal only: reached as http://workspace:4040; reaches backends on sv-codegen.
     networks: [sv-internal, sv-codegen]
+    restart: unless-stopped
+
+  signal-gateway:
+    image: simvehicleapp/signal-gateway:dev
+    build:
+      context: .
+      dockerfile: services/signal-gateway/Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # One databroker per VSS release (ADR-0024 §6); the same map the orchestrator uses for runs.
+      SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}
+      SV_CATALOG_URL: http://vss-catalog:4010
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # Internal only: the studio BFF reaches it as http://signal-gateway:4050.
+    networks: [sv-internal]
     restart: unless-stopped
 
 volumes:
