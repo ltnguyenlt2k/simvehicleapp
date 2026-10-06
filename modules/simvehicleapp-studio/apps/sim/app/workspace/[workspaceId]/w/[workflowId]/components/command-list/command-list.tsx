@@ -6,7 +6,6 @@ import { Search } from 'lucide-react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { Button, Library } from '@/components/emcn'
-import { AgentIcon } from '@/components/icons'
 import { cn } from '@/lib/core/utils/cn'
 import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
 // SV: VSS signal drops (M02-T10)
@@ -36,11 +35,6 @@ interface CommandItem {
  */
 const commands: CommandItem[] = [
   {
-    label: 'New Agent',
-    icon: AgentIcon,
-    shortcut: ['⇧', 'A'],
-  },
-  {
     label: 'Logs',
     icon: Library,
     shortcut: 'L',
@@ -68,7 +62,6 @@ export function CommandList() {
    * Handle click on a command row.
    *
    * Mirrors the behavior of the corresponding global keyboard shortcuts:
-   * - New Agent: add an agent block to the canvas
    * - Logs: navigate to workspace logs
    * - Search Blocks: open the universal search modal
    *
@@ -78,13 +71,6 @@ export function CommandList() {
     (label: string) => {
       try {
         switch (label) {
-          case 'New Agent': {
-            const event = new CustomEvent('add-block-from-toolbar', {
-              detail: { type: 'agent', enableTriggerMode: false },
-            })
-            window.dispatchEvent(event)
-            return
-          }
           case 'Logs': {
             if (!workspaceId) {
               logger.warn('No workspace ID found, cannot navigate to logs from command list')
@@ -196,6 +182,14 @@ export function CommandList() {
             }}
           />
         </div>
+
+        {/* SV: vehicle apps start from a trigger or a signal; Sim's "New Agent" is not offered */}
+        <p
+          className='mb-2 max-w-[260px] text-center text-[var(--text-tertiary)] text-sm'
+          data-sv='empty-canvas-hint'
+        >
+          Drag a vehicle signal or a trigger here to start
+        </p>
 
         {commands.map((command) => {
           const Icon = command.icon

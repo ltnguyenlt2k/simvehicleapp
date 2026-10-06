@@ -2135,11 +2135,9 @@ const WorkflowContent = React.memo(
             return
           }
 
-          const bounds = canvasElement.getBoundingClientRect()
-          const position = screenToFlowPosition({
-            x: detail.clientX - bounds.left,
-            y: detail.clientY - bounds.top,
-          })
+          // SV: screenToFlowPosition takes screen coordinates (reactflow ≥ 11.10 subtracts the
+          // canvas bounds itself); subtracting them again shifted drops by the sidebar/header size.
+          const position = screenToFlowPosition({ x: detail.clientX, y: detail.clientY })
 
           handleToolbarDrop(
             {
@@ -2234,11 +2232,8 @@ const WorkflowContent = React.memo(
             return
           }
 
-          const reactFlowBounds = event.currentTarget.getBoundingClientRect()
-          const position = screenToFlowPosition({
-            x: event.clientX - reactFlowBounds.left,
-            y: event.clientY - reactFlowBounds.top,
-          })
+          // SV: screen coordinates, not canvas-relative (see the overlay drop handler)
+          const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
 
           handleToolbarDrop(
             {
@@ -2297,11 +2292,8 @@ const WorkflowContent = React.memo(
         if (!event.dataTransfer?.types.includes('application/json')) return
 
         try {
-          const reactFlowBounds = event.currentTarget.getBoundingClientRect()
-          const position = screenToFlowPosition({
-            x: event.clientX - reactFlowBounds.left,
-            y: event.clientY - reactFlowBounds.top,
-          })
+          // SV: screen coordinates, not canvas-relative (see the overlay drop handler)
+          const position = screenToFlowPosition({ x: event.clientX, y: event.clientY })
 
           // Check if hovering over a container node
           const containerInfo = isPointInLoopNode(position)
