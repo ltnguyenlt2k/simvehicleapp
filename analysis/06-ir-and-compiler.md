@@ -151,7 +151,7 @@ Chi tiết thao tác trên giá trị mảng (`T[]`): [ADR-0018](adr/ADR-0018-vs
 ## 5. Type & Unit (tóm tắt [ADR-0015](adr/ADR-0015-type-and-unit-system.md))
 - Kiểu: `boolean, int8..int64, uint8..uint64, float, double, string, T[]` (theo VSS) + nội bộ `duration(ms)`, `timestamp(ms)`, `json`. `T[]` **read-only** trong UI (không actuator nào kiểu mảng trong VSS thật); `int64`/`uint64` mã hoá dạng chuỗi trong mọi JSON (tránh mất chính xác) — chi tiết [ADR-0018](adr/ADR-0018-vss-array-and-full-datatype-coverage.md).
 - Quy tắc số: phép toán hai số nguyên → kiểu rộng hơn; có float/double → `double` trong biểu thức. **Không cast ngầm thu hẹp:** ghi biểu thức rộng hơn vào actuator hẹp ⇒ lỗi `TYPE_NARROWING_REQUIRES_CAST`, quick-fix chèn block `sv_convert` (cast + clamp theo min/max VSS, lowering `type.cast`). Literal nằm trong miền kiểu đích được nhận trực tiếp; ngoài miền ⇒ `VALUE_OUT_OF_RANGE` (ADR-0015 Notes 2026-10-06; sửa câu cũ "compiler chèn `type.cast` với clamp" vốn trái ADR-0015 §3).
-- Unit: bảng từ `units.yaml` + `quantities.yaml` của VSS release; conversion hỗ trợ (km/h↔m/s↔mph, celsius↔fahrenheit↔K, percent↔ratio, ms↔s↔min, W↔kW, Wh↔kWh).
+- Unit: chỉ unit của VSS (`units.yaml` v4.0/v4.2, 61 unit) — bảng hệ số chính xác ở `core/packages/units`; quy đổi trong cùng quantity VSS (vd km/h↔m/s, mm↔m↔km↔inch, ms↔s↔min↔h↔day↔weeks, W↔kW↔PS, mbar↔Pa↔kPa↔psi, percent↔ratio, cpm↔bpm↔Hz, kWh/100km↔Wh/km). `mph`, `fahrenheit`, `K`, `Wh` (bản cũ liệt kê) không phải unit VSS nên không có. `dB`/`dBm`, `months`/`years`, `unix-time`/`iso8601` không quy đổi (ADR-0015 Notes §8).
 
 ---
 

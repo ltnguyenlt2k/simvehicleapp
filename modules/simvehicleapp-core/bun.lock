@@ -34,6 +34,14 @@
       "name": "@simvehicleapp/expr",
       "version": "0.1.0",
     },
+    "packages/types": {
+      "name": "@simvehicleapp/types",
+      "version": "0.1.0",
+    },
+    "packages/units": {
+      "name": "@simvehicleapp/units",
+      "version": "0.1.0",
+    },
     "packages/vss": {
       "name": "@simvehicleapp/vss",
       "version": "0.1.0",
@@ -74,6 +82,10 @@
     "@simvehicleapp/expr": ["@simvehicleapp/expr@workspace:packages/expr"],
 
     "@simvehicleapp/service-kit": ["@simvehicleapp/service-kit@file:../simvehicleapp-contracts/packages/service-kit", { "peerDependencies": { "@simvehicleapp/contracts": "1.0.0-alpha.1" } }],
+
+    "@simvehicleapp/types": ["@simvehicleapp/types@workspace:packages/types"],
+
+    "@simvehicleapp/units": ["@simvehicleapp/units@workspace:packages/units"],
 
     "@simvehicleapp/vss": ["@simvehicleapp/vss@workspace:packages/vss"],
 
