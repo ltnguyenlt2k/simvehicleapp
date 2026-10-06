@@ -65,9 +65,11 @@ export const subBlock = (page: Page, id: string) =>
 
 /** Canvas node by its exact block name. */
 export function nodeByName(page: Page, name: string): Locator {
+  // Block and container headers render the name as `title`; matching any text would also hit a
+  // container's inner "Start" pill or a field value.
   return page
     .locator('.react-flow__node')
-    .filter({ has: page.getByText(name, { exact: true }) })
+    .filter({ has: page.locator(`[title="${name.replace(/"/g, '\\"')}"]`) })
     .first()
 }
 
@@ -148,7 +150,12 @@ export async function connect(from: Locator, fromHandle: string, to: Locator, to
   const edges = page.locator('.react-flow__edge')
   const before = await edges.count()
   const src = from.locator(`.react-flow__handle[data-handleid="${fromHandle}"]`).first()
-  const dst = to.locator(`.react-flow__handle[data-handleid="${toHandle}"]`).first()
+  // A container's input handle has no id, so it carries no data-handleid.
+  const dst = (
+    toHandle === 'target'
+      ? to.locator('.react-flow__handle.target')
+      : to.locator(`.react-flow__handle[data-handleid="${toHandle}"]`)
+  ).first()
   const a = await src.boundingBox()
   const b = await dst.boundingBox()
   if (!a || !b) throw new Error(`handle not visible: ${fromHandle} → ${toHandle}`)

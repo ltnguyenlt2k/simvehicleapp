@@ -286,14 +286,20 @@ async function build(page: Page, g: Graph) {
   let cursor = { ...ORIGIN }
   let rowHeight = 0
   for (const b of g.blocks.filter((x) => !x.parentId)) {
-    if (cursor.x + 260 > paneRect.width) cursor = { x: ORIGIN.x, y: cursor.y + rowHeight + GAP }
+    // Containers grow with their children, so they start a row of their own.
+    const wrap = cursor.x + 260 > paneRect.width || (CONTAINERS.has(b.type) && cursor.x > ORIGIN.x)
+    if (wrap) {
+      cursor = { x: ORIGIN.x, y: cursor.y + rowHeight + GAP }
+      rowHeight = 0
+    }
     await addBlock(page, b, { x: cursor.x + 20, y: cursor.y + 20 })
     await moveNode(page, b.name, cursor.x, cursor.y)
     const children = g.blocks.filter((c) => c.parentId === b.id)
     for (const [k, c] of children.entries()) {
       const box = await paneBox(page, b.name)
       await addBlock(page, c, { x: box.x + 40, y: box.y + 80 })
-      await moveNode(page, c.name, box.x + 16 + k * 290, box.y + 60)
+      // right of the container's inner "Start" pill (it holds the branch-start handle)
+      await moveNode(page, c.name, box.x + 170 + k * 290, box.y + 60)
     }
     const placed = await paneBox(page, b.name)
     cursor = { x: placed.x + placed.width + GAP, y: cursor.y }
@@ -349,13 +355,48 @@ async function exportSimState(page: Page, g: Graph, workflowId: string) {
     },
     variables: Object.values(data.variables),
   }
-  let edgeNo = 0
-  const edgeIds = new Map<string, string>()
-  for (const e of data.state.edges as { id: string }[]) edgeIds.set(e.id, `e${++edgeNo}`)
-  const text = JSON.stringify(doc, null, 2).replace(
-    UUID,
-    (id) => ids.get(id) ?? edgeIds.get(id) ?? id
-  )
+  // Block ids → golden ids, then a stable order: blocks/container members by id, edges by
+  // (source, handle, target) and renumbered e1…, so re-exporting gives identical bytes.
+  type Edge = {
+    id: string
+    source: string
+    target: string
+    sourceHandle?: string
+    targetHandle?: string
+  }
+  const mapped = JSON.parse(
+    JSON.stringify(doc).replace(UUID, (id) => ids.get(id) ?? id)
+  ) as typeof doc & { state: { blocks: Record<string, unknown>; edges: Edge[] } }
+  const sortedKeys = <T>(o: Record<string, T>) =>
+    Object.fromEntries(
+      Object.keys(o)
+        .sort()
+        .map((k) => [k, o[k]])
+    )
+  const edgeKey = (e: Edge) =>
+    [e.source, e.sourceHandle ?? '', e.target, e.targetHandle ?? ''].join('\u0000')
+  const edges = [...mapped.state.edges]
+    .sort((a, b) => (edgeKey(a) < edgeKey(b) ? -1 : edgeKey(a) > edgeKey(b) ? 1 : 0))
+    .map((e, i) => ({ ...e, id: `e${i + 1}` }))
+  const members = (c: unknown) =>
+    sortedKeys(
+      Object.fromEntries(
+        Object.entries((c ?? {}) as Record<string, { nodes?: string[] }>).map(([k, v]) => [
+          k,
+          v.nodes ? { ...v, nodes: [...v.nodes].sort() } : v,
+        ])
+      )
+    )
+  const stable = {
+    ...mapped,
+    state: {
+      blocks: sortedKeys(mapped.state.blocks),
+      edges,
+      loops: members(mapped.state.loops),
+      parallels: members(mapped.state.parallels),
+    },
+  }
+  const text = JSON.stringify(stable, null, 2)
   return `${text}\n`
 }
 
@@ -393,8 +434,14 @@ test.describe('M3 gate — golden workflows built on the canvas', () => {
       })
 
       // Reload: the graph linted from the persisted state is what the adapter really produces.
+      // The canvas may lint while the workflow is still loading (empty graph); take the first lint
+      // of the fully loaded workflow. A wrong block/edge count therefore fails here (timeout).
       const linted = page.waitForRequest(
-        (r: Request) => r.method() === 'POST' && new URL(r.url()).pathname === '/api/sv/lint',
+        (r: Request) => {
+          if (r.method() !== 'POST' || new URL(r.url()).pathname !== '/api/sv/lint') return false
+          const sent = (JSON.parse(r.postData() ?? '{}') as { graph?: Graph }).graph
+          return sent?.blocks.length === g.blocks.length && sent.edges.length === g.edges.length
+        },
         { timeout: 30_000 }
       )
       await page.reload()
