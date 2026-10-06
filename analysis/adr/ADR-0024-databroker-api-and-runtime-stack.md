@@ -35,3 +35,7 @@ Spike S-2/S-3/S-4 ghi `docs/spikes/`; integration test GW-A: inject Speed 130 tr
 - **S-4:** mock-provider 0.4.1 = `VDB_ADDRESS` env + `/mock/mock.py` mount; upstream default mock animates `Vehicle.Speed` (would fight UI injection) → we ship `runtime/mock/mock.py`. Stays optional (`--profile mock`).
 - SDK fires the first subscription item with `NOT_AVAILABLE` when no value exists → runtime must test availability before `value()` (template SampleApp logs an exception there).
 - App stdout contains ANSI colour codes → log ingestion strips them.
+
+## Notes / Deviations (2026-10-07) — M6
+- Giữ `sdv.databroker.v1` (mặc định SDK) cho app C++, nhưng SDK 0.7.1 v1 gửi `UINT8`/`UINT16` sai kiểu wire (`int32_value`) ⇒ `INVALID_TYPE`; runtime C++ tránh ở adapter (ADR-0021 Notes §8). Khi nâng SDK cần kiểm lại (nếu upstream sửa, giữ workaround vẫn đúng vì `uint32` là kiểu wire chuẩn).
+- Inject sensor cho kiểm thử live tạm dùng `kuksa-databroker-cli:0.5.0` (`publish`, cần TTY ⇒ `script`); M8 thay bằng signal-gateway.

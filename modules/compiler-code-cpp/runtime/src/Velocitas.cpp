@@ -104,13 +104,9 @@ std::unique_ptr<DataPointValue> toSdk(const std::string& path, const std::string
     if (type == "int64") {
         return typed<int64_t>(path, v);
     }
-    if (type == "uint8") {
-        return typed<uint8_t>(path, v);
-    }
-    if (type == "uint16") {
-        return typed<uint16_t>(path, v);
-    }
-    if (type == "uint32") {
+    // SDK 0.7.1 sends UINT8/UINT16 as `int32_value` on sdv.databroker.v1, which the databroker rejects
+    // (INVALID_TYPE); uint32 is the wire type of both on v1 and kuksa.val.v2, so send them as uint32.
+    if (type == "uint8" || type == "uint16" || type == "uint32") {
         return typed<uint32_t>(path, v);
     }
     if (type == "uint64") {

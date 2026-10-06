@@ -14,3 +14,7 @@
 
 ## Verification
 E2E: run GW-A → UI nhận `app.started` < 30 s sau build; highlight n2 khi Speed > 120; stop sạch trong 5 s; resume SSE sau reload trang không mất sự kiện (theo seq).
+
+## Notes / Deviations (2026-10-07) — quan sát từ runtime C++ (M6), cho TraceIngest (M8)
+- Logger của Velocitas SDK in mã màu ANSI không kết thúc dòng (`\x1b[0m`) nên một dòng `SVTRACE {...}` có thể bắt đầu bằng mã escape: TraceIngest phải bỏ các escape ANSI rồi mới nhận diện tiền tố `SVTRACE `.
+- `ts` của dòng runtime là epoch ms; output `timestamp` của trigger và `now_ms` là ms đơn điệu từ lúc app khởi động (IR_SPEC `now_ms`).
