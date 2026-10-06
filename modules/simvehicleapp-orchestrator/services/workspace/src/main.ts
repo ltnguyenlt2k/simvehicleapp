@@ -2,14 +2,18 @@ import { createLogger, createService } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createWorkspaceHandler } from "./app.ts";
 import { httpSources, parseMap } from "./sources.ts";
-import { Store } from "./store.ts";
+import { type CrashPoint, Store } from "./store.ts";
 
 const port = Number(process.env.SV_WORKSPACE_PORT ?? 4040);
 const log = createLogger({ service: "workspace" });
 const secret = process.env.INTERNAL_API_SECRET ?? "";
 if (!secret) log.warn("INTERNAL_API_SECRET is not set: every workspace request will be rejected (fail closed)");
 
-const store = new Store(process.env.SV_WORKSPACE_ROOT ?? "/workspace");
+// SV_FAULT_AT=afterStaging|midSwap|afterSwap makes the process exit at that point of a commit (fault
+// injection of ADR-0026 Verification; never set in a real deployment).
+const faultAt = process.env.SV_FAULT_AT as CrashPoint | undefined;
+if (faultAt) log.warn("FAULT INJECTION ENABLED: commits exit the process", { at: faultAt });
+const store = new Store(process.env.SV_WORKSPACE_ROOT ?? "/workspace", faultAt);
 // A commit interrupted by a crash is finished or undone before any request (ADR-0026 §3.5).
 const recovered = store.recover();
 if (recovered.rolledBack.length || recovered.finished.length) log.warn("recovered interrupted commits", recovered);

@@ -1,7 +1,7 @@
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { InitFailed, initProject, type InitSources, ProjectExists } from "./init.ts";
 import { PathRejected, SLUG } from "./paths.ts";
-import { CommitRejected, type FileSet, type Store } from "./store.ts";
+import { CommitRejected, Crash, type FileSet, type Store } from "./store.ts";
 
 /**
  * HTTP surface of the workspace (`openapi/workspace.v1.yaml`): project creation, generation commits,
@@ -61,6 +61,11 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
           return json(200, record);
         } catch (e) {
           if (e instanceof CommitRejected) return json(e.status, e.diagnostics);
+          if (e instanceof Crash) {
+            // Fault injection (SV_FAULT_AT, tests only): die like a killed process, mid-commit.
+            ctx.log.error("fault injection: exiting mid-commit", { slug, gid, point: e.message });
+            process.exit(137);
+          }
           if (e instanceof PathRejected) return json(422, [diag("WORKSPACE_PATH_REJECTED", e.message, { path: e.path, reason: e.reason })]);
           throw e;
         }
