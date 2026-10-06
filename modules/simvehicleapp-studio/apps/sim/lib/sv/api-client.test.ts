@@ -9,6 +9,7 @@ const { mockEnv, mockFetch } = vi.hoisted(() => ({
     SV_CATALOG_URL: undefined as string | undefined,
     SV_COMPILER_URL: undefined as string | undefined,
     SV_ORCHESTRATOR_URL: undefined as string | undefined,
+    SV_SIGNAL_GATEWAY_URL: undefined as string | undefined,
     SV_AI_URL: undefined as string | undefined,
   },
   mockFetch: vi.fn(),

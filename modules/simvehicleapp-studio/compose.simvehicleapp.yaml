@@ -60,6 +60,7 @@ services:
       SV_CATALOG_URL: ${SV_CATALOG_URL:-http://vss-catalog:4010}
       SV_COMPILER_URL: ${SV_COMPILER_URL:-http://compiler:4020}
       SV_ORCHESTRATOR_URL: ${SV_ORCHESTRATOR_URL:-http://orchestrator:4030}
+      SV_SIGNAL_GATEWAY_URL: ${SV_SIGNAL_GATEWAY_URL:-http://signal-gateway:4050}
     ports: ["127.0.0.1:${SV_STUDIO_PORT:-3000}:3000"]
     depends_on:
       studio-migrations: { condition: service_completed_successfully }

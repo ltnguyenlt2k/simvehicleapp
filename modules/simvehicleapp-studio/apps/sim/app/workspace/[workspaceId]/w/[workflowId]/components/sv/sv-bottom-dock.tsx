@@ -12,6 +12,11 @@ import {
   ProblemsList,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
 import {
+  RunConsole,
+  SignalsPanel,
+  useWorkflowRuns,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
+import {
   ScenarioEditor,
   SimulationTimeline,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
@@ -24,6 +29,7 @@ import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvLintStore } from '@/stores/sv/lint/store'
+import { useSvRunStore } from '@/stores/sv/run/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
@@ -167,16 +173,26 @@ function BuildLogTab() {
   )
 }
 
-/** Bottom dock of the vehicle editor; tabs without content show the milestone that brings them. */
+/** Run console tab (M08-T08): log + trace of the live run; trace lines name their block. */
+function RunConsoleTab() {
+  const { run } = useWorkflowRuns()
+  const blocks = useWorkflowStore((s) => s.blocks)
+  const blockName = useCallback((blockId: string) => blocks[blockId]?.name, [blocks])
+  return <RunConsole run={run} blockName={blockName} />
+}
+
+/** Bottom dock of the vehicle editor: Problems, Simulation, Run console, Signals, Build log. */
 export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   const [activeTab, setActiveTab] = useState<SvDockTabId>(initialTab)
   const active = SV_DOCK_TABS.find((tab) => tab.id === activeTab) ?? SV_DOCK_TABS[0]
   const focusProblems = useSvLintStore((s) => s.focusProblems)
   const focusSimulation = useSvSimulationStore((s) => s.focusSimulation)
   const focusBuildLog = useSvSynCodeStore((s) => s.focusBuildLog)
+  const focusRunConsole = useSvRunStore((s) => s.focusRunConsole)
   const seenFocus = useRef(focusProblems)
   const seenSimulation = useRef(focusSimulation)
   const seenBuildLog = useRef(focusBuildLog)
+  const seenRunConsole = useRef(focusRunConsole)
 
   // Verify brings the Problems tab to the front, Simulate the timeline.
   useEffect(() => {
@@ -194,13 +210,18 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
     seenBuildLog.current = focusBuildLog
     setActiveTab('build-log')
   }, [focusBuildLog])
+  useEffect(() => {
+    if (focusRunConsole === seenRunConsole.current) return
+    seenRunConsole.current = focusRunConsole
+    setActiveTab('run-console')
+  }, [focusRunConsole])
 
   return (
     <div
       data-sv='bottom-dock'
       className={cn(
         'flex flex-shrink-0 flex-col border-[var(--border)] border-t bg-[var(--surface-1)]',
-        active.id === 'simulation' || active.id === 'build-log' ? 'h-[280px]' : 'h-[160px]'
+        active.id === 'problems' ? 'h-[160px]' : 'h-[280px]'
       )}
     >
       <div role='tablist' aria-label='Vehicle app output' className='flex gap-1 px-2 pt-1.5'>
@@ -226,16 +247,17 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
         <div role='tabpanel' aria-label='Simulation timeline' className='flex min-h-0 flex-1'>
           <SimulationTab />
         </div>
-      ) : active.id === 'build-log' ? (
-        <div role='tabpanel' aria-label='Build log' className='flex min-h-0 flex-1'>
-          <BuildLogTab />
+      ) : active.id === 'run-console' ? (
+        <div role='tabpanel' aria-label='Run console' className='flex min-h-0 flex-1'>
+          <RunConsoleTab />
+        </div>
+      ) : active.id === 'signals' ? (
+        <div role='tabpanel' aria-label='Signals' className='flex min-h-0 flex-1'>
+          <SignalsPanel />
         </div>
       ) : (
-        <div
-          role='tabpanel'
-          className='flex flex-1 items-center justify-center text-[12px] text-[var(--text-muted)]'
-        >
-          {`${active.label} — coming in ${active.milestone}`}
+        <div role='tabpanel' aria-label='Build log' className='flex min-h-0 flex-1'>
+          <BuildLogTab />
         </div>
       )}
     </div>

@@ -20,6 +20,18 @@ vi.mock(
   '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-syncode-follow',
   () => ({ useSynCodeFollow: () => ({ generation: undefined, running: false }) })
 )
+vi.mock('@/hooks/queries/sv-runs', () => ({
+  activeRunOf: () => undefined,
+  useSvRuns: () => ({ data: [] }),
+  useStartSvRun: () => ({ mutate: mockMutate, isPending: false }),
+  useStopSvRun: () => ({ mutate: mockMutate, isPending: false }),
+  useSetSvSignal: () => ({ mutate: mockMutate, isPending: false }),
+  usePlaySvScenario: () => ({ mutate: mockMutate, isPending: false }),
+}))
+vi.mock('@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/use-run-follow', () => ({
+  useRunFollow: () => ({ project: undefined, run: undefined, active: undefined }),
+  useWorkflowRuns: () => ({ project: undefined, run: undefined, active: undefined }),
+}))
 vi.mock('@/hooks/queries/workflows', () => ({ useWorkflowMap: () => ({ data: {} }) }))
 vi.mock('next/navigation', () => ({ useParams: () => ({}) }))
 vi.mock('@/hooks/use-collaborative-workflow', () => ({
@@ -40,7 +52,7 @@ import {
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 
 describe('vehicle editor chrome (M01-T10)', () => {
-  it('renders the seven actions; Verify (M4) and Simulate (M5) wait for a graph, SynCode (M7) for a project, the others for their milestone', () => {
+  it('renders the seven actions; Verify (M4) and Simulate (M5) wait for a graph, SynCode (M7) and Run (M8) for a project, Stop for a run, the others for their milestone', () => {
     const html = renderToStaticMarkup(<SvActionBar />)
     expect(SV_ACTIONS.map((a) => a.label)).toEqual([
       'Verify',
@@ -56,9 +68,11 @@ describe('vehicle editor chrome (M01-T10)', () => {
       expect(html).toContain(
         action.id === 'verify' || action.id === 'simulate'
           ? `title="${action.label} the workflow"`
-          : action.id === 'syncode'
+          : action.id === 'syncode' || action.id === 'run'
             ? 'title="Add this workflow to a vehicle project first (Vehicle projects page)"'
-            : `title="${action.label} — available in ${action.milestone}"`
+            : action.id === 'stop'
+              ? 'title="Nothing is running"'
+              : `title="${action.label} — available in ${action.milestone}"`
       )
     }
     expect(html.match(/disabled=""/g)).toHaveLength(SV_ACTIONS.length)

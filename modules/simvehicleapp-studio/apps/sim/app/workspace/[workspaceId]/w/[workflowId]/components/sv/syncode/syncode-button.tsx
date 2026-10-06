@@ -1,10 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useParams } from 'next/navigation'
 import { Button, ChipSelect, toast } from '@/components/emcn'
 import { useSynCodeFollow } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-syncode-follow'
-import { useStartSvGeneration, useSvProjects } from '@/hooks/queries/sv-projects'
+import { useWorkflowProject } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-workflow-project'
+import { useStartSvGeneration } from '@/hooks/queries/sv-projects'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
 
@@ -14,22 +13,10 @@ import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
  * workflows of the project come from their saved state.
  */
 export function SynCodeButton() {
-  const params = useParams<{ workspaceId?: string }>()
-  const workflowId = useSvLintStore((s) => s.workflowId)
   const graphJson = useSvLintStore((s) => s.graphJson)
-  const selectedProjectId = useSvSynCodeStore((s) => s.selectedProjectId)
-  const { data: projects } = useSvProjects(params?.workspaceId)
+  const { project, candidates } = useWorkflowProject()
   const start = useStartSvGeneration()
   const { running } = useSynCodeFollow()
-
-  const candidates = useMemo(
-    () =>
-      (projects ?? []).filter((p) =>
-        p.workflows.some((w) => w.enabled && w.simWorkflowId === workflowId)
-      ),
-    [projects, workflowId]
-  )
-  const project = candidates.find((p) => p.id === selectedProjectId) ?? candidates[0]
   const busy = running || start.isPending
 
   const onSynCode = () => {

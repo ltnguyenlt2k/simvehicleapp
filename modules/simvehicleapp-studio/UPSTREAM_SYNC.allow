@@ -249,3 +249,6 @@ apps/sim/hooks/queries/sv-projects.ts
 apps/sim/app/workspace/[workspaceId]/vehicle-projects/*
 packages/db/migrations/0252_sv_projects.sql
 packages/db/migrations/meta/0252_snapshot.json
+
+# M08-T08/T09 — live runs (BFF runs/signals/play, Run/Stop, Run console, Signals panel, live trace overlay)
+apps/sim/hooks/queries/sv-runs.ts

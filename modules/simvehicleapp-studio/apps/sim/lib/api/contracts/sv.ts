@@ -4,7 +4,7 @@ import { defineRouteContract } from '@/lib/api/contracts/types'
 
 /** Health of one SimVehicleApp service as seen by the studio BFF. */
 export const svServiceHealthSchema = z.object({
-  service: z.enum(['vss-catalog', 'compiler', 'orchestrator', 'ai-assistant']),
+  service: z.enum(['vss-catalog', 'compiler', 'orchestrator', 'signal-gateway', 'ai-assistant']),
   status: z.enum(['ok', 'degraded', 'down', 'unconfigured']),
   latencyMs: z.number().int().min(0).optional(),
   error: z.string().optional(),
@@ -572,6 +572,143 @@ export const svProjectFileContract = defineRouteContract({
   query: svProjectFileQuerySchema,
   response: { mode: 'json', schema: svProjectFileSchema },
 })
+
+// ---- Live runs and signals (M08-T08/T09, orchestrator.v1 runs + signal-gateway.v1) ---------------------
+
+export const svRunSchema = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  generationId: z.string(),
+  state: z.enum(['starting', 'running', 'stopping', 'stopped', 'crashed']),
+  vssRelease: z.string(),
+  traceLevel: z.enum(['off', 'trigger', 'node']),
+  exitCode: z.number().int().optional(),
+  diagnostics: z.array(svDiagnosticSchema),
+  createdAt: z.number(),
+  runningAt: z.number().optional(),
+  finishedAt: z.number().optional(),
+})
+
+export const svStartRunBodySchema = z.object({
+  /** Default: the project's latest generation (it must have passed SynCode). */
+  generationId: z.string().min(1).max(128).optional(),
+  traceLevel: z.enum(['off', 'trigger', 'node']).optional(),
+})
+
+/** `POST /api/sv/projects/[id]/runs` — run the app of the project's latest SynCode on the runtime stack. */
+export const svStartRunContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/runs',
+  params: svProjectParamsSchema,
+  body: svStartRunBodySchema,
+  response: { mode: 'json', schema: svRunSchema },
+})
+
+export const svRunListSchema = z.object({ runs: z.array(svRunSchema) })
+
+/** `GET /api/sv/projects/[id]/runs` — the project's recent runs, newest first. */
+export const svListRunsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/runs',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: svRunListSchema },
+})
+
+export const svRunParamsSchema = z.object({
+  id: svProjectIdSchema,
+  rid: z.string().min(1).max(128),
+})
+
+/** `GET /api/sv/projects/[id]/runs/[rid]`. */
+export const svGetRunContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/runs/[rid]',
+  params: svRunParamsSchema,
+  response: { mode: 'json', schema: svRunSchema },
+})
+
+/** `POST /api/sv/projects/[id]/runs/[rid]/stop` — SIGINT, SIGKILL after 5 s. */
+export const svStopRunContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/runs/[rid]/stop',
+  params: svRunParamsSchema,
+  response: { mode: 'json', schema: svRunSchema },
+})
+
+/** `GET /api/sv/projects/[id]/runs/[rid]/events` — SSE of the run: `log` (LogLine v1) and `trace` (TraceEvent v1). */
+export const svRunEventsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/runs/[rid]/events',
+  params: svRunParamsSchema,
+  response: { mode: 'stream' },
+})
+
+export const svSignalFieldSchema = z.enum(['value', 'target'])
+
+/** SignalUpdate v1 (signal-gateway). */
+export const svSignalUpdateSchema = z.object({
+  path: svVssPathSchema,
+  ts: z.number(),
+  value: svScenarioValueSchema,
+  field: svSignalFieldSchema,
+})
+
+export const svSignalStreamQuerySchema = z.object({
+  /** Comma-separated VSS paths (≤ 200). */
+  paths: z.string().min(1).max(20_000),
+})
+
+/** `GET /api/sv/projects/[id]/signals?paths=` — SSE of SignalUpdate v1 on the project's databroker. */
+export const svSignalStreamContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/signals',
+  params: svProjectParamsSchema,
+  query: svSignalStreamQuerySchema,
+  response: { mode: 'stream' },
+})
+
+export const svSetSignalBodySchema = z.object({
+  path: svVssPathSchema,
+  value: svScenarioValueSchema,
+  field: svSignalFieldSchema,
+})
+
+/** `POST /api/sv/projects/[id]/signals` — inject a value (sensor current value or actuator target). */
+export const svSetSignalContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/signals',
+  params: svProjectParamsSchema,
+  body: svSetSignalBodySchema,
+  response: { mode: 'json', schema: svSignalUpdateSchema },
+})
+
+export const svPlaybackSchema = z.object({
+  id: z.string(),
+  release: z.string(),
+  name: z.string(),
+  state: z.enum(['playing', 'done', 'stopped', 'failed']),
+  until: z.number(),
+  played: z.number(),
+  total: z.number(),
+  startedAt: z.number(),
+  error: z.string().optional(),
+})
+
+export const svPlayScenarioBodySchema = z.object({ scenario: svScenarioSchema })
+
+/** `POST /api/sv/projects/[id]/play` — play a scenario on the project's databroker (M08-T07). */
+export const svPlayScenarioContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/play',
+  params: svProjectParamsSchema,
+  body: svPlayScenarioBodySchema,
+  response: { mode: 'json', schema: svPlaybackSchema },
+})
+
+export type SvRun = z.output<typeof svRunSchema>
+export type SvSignalUpdate = z.output<typeof svSignalUpdateSchema>
+export type SvSignalField = z.output<typeof svSignalFieldSchema>
+export type SvPlayback = z.output<typeof svPlaybackSchema>
 
 export type SvProject = z.output<typeof svProjectSchema>
 export type SvCreateProjectBody = z.input<typeof svCreateProjectBodySchema>

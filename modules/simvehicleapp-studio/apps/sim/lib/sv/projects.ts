@@ -9,6 +9,7 @@ import {
   svDiagnosticSchema,
   svGenerationSchema,
   svProjectSchema,
+  svRunSchema,
   svScenarioSchema,
 } from '@/lib/api/contracts/sv'
 import { getSession } from '@/lib/auth'
@@ -45,23 +46,40 @@ export async function authorizeProject(
   return { row, userId: session.user.id }
 }
 
-/** JSON call to the orchestrator; outages become 502/503 without upstream details. */
-export async function orchestrator(
+const SERVICE_NAME: Record<'orchestrator' | 'signal-gateway', string> = {
+  orchestrator: 'Orchestrator',
+  'signal-gateway': 'Signal gateway',
+}
+
+/** JSON call to an internal service; outages become 502/503 without upstream details. */
+export async function svJson(
+  service: 'orchestrator' | 'signal-gateway',
   path: string,
   init: { method?: string; body?: unknown; timeoutMs?: number } = {}
 ): Promise<{ status: number; body: unknown } | NextResponse> {
   let res: Response
   try {
-    res = await callSvService('orchestrator', path, { timeoutMs: 15000, ...init })
+    res = await callSvService(service, path, { timeoutMs: 15000, ...init })
   } catch (error) {
     if (error instanceof SvServiceNotConfiguredError) {
-      return NextResponse.json({ error: 'Orchestrator is not configured' }, { status: 503 })
+      return NextResponse.json(
+        { error: `${SERVICE_NAME[service]} is not configured` },
+        { status: 503 }
+      )
     }
-    logger.warn('orchestrator unreachable', { path })
-    return NextResponse.json({ error: 'Orchestrator is unavailable' }, { status: 502 })
+    logger.warn('service unreachable', { service, path })
+    return NextResponse.json({ error: `${SERVICE_NAME[service]} is unavailable` }, { status: 502 })
   }
-  const body = await res.json().catch(() => null)
+  const body = res.status === 204 ? null : await res.json().catch(() => null)
   return { status: res.status, body }
+}
+
+/** JSON call to the orchestrator. */
+export function orchestrator(
+  path: string,
+  init: { method?: string; body?: unknown; timeoutMs?: number } = {}
+) {
+  return svJson('orchestrator', path, init)
 }
 
 /**
@@ -86,7 +104,7 @@ export function upstreamError(res: { status: number; body: unknown }): NextRespo
       { status: 422 }
     )
   }
-  if ([400, 404, 409].includes(res.status)) {
+  if ([400, 404, 409, 422].includes(res.status) && !Array.isArray(res.body)) {
     return NextResponse.json({ error: message }, { status: res.status })
   }
   logger.warn('orchestrator error', { status: res.status })
@@ -101,6 +119,31 @@ export function parseGeneration(body: unknown) {
 /** A project of the orchestrator, checked against the BFF contract. */
 export function parseProject(body: unknown) {
   return svProjectSchema.safeParse(body)
+}
+
+/** The orchestrator's view of an authorized project (its VSS release selects the databroker). */
+export async function projectOf(projectId: string) {
+  const res = await orchestrator(`/projects/${projectId}`)
+  if (res instanceof NextResponse) return res
+  if (res.status !== 200) return upstreamError(res)
+  const project = parseProject(res.body)
+  if (!project.success) {
+    return NextResponse.json({ error: 'Orchestrator returned an invalid project' }, { status: 502 })
+  }
+  return project.data
+}
+
+/** A run of the project (another project's run is "not found": runs share one stack). */
+export async function runOf(projectId: string, runId: string) {
+  const res = await orchestrator(`/runs/${encodeURIComponent(runId)}`)
+  if (res instanceof NextResponse) return res
+  if (res.status !== 200) return upstreamError(res)
+  const run = svRunSchema.safeParse(res.body)
+  if (!run.success)
+    return NextResponse.json({ error: 'Orchestrator returned an invalid run' }, { status: 502 })
+  if (run.data.projectId !== projectId)
+    return NextResponse.json({ error: 'Run not found' }, { status: 404 })
+  return run.data
 }
 
 /** Workflows of `workspaceId` among `ids` (others are dropped: a project never reaches another workspace). */

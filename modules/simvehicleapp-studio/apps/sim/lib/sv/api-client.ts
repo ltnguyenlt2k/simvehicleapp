@@ -6,7 +6,13 @@ import { generateRequestId } from '@/lib/core/utils/request'
 const logger = createLogger('SvApiClient')
 
 /** SimVehicleApp services the studio BFF talks to (ADR-0007 dependency matrix: studio → core, orchestrator, ai). */
-export const SV_SERVICES = ['vss-catalog', 'compiler', 'orchestrator', 'ai-assistant'] as const
+export const SV_SERVICES = [
+  'vss-catalog',
+  'compiler',
+  'orchestrator',
+  'signal-gateway',
+  'ai-assistant',
+] as const
 export type SvService = (typeof SV_SERVICES)[number]
 
 export const INTERNAL_AUTH_HEADER = 'x-sv-internal'
@@ -19,6 +25,7 @@ export function getSvServiceUrl(service: SvService): string | undefined {
     'vss-catalog': env.SV_CATALOG_URL,
     compiler: env.SV_COMPILER_URL,
     orchestrator: env.SV_ORCHESTRATOR_URL,
+    'signal-gateway': env.SV_SIGNAL_GATEWAY_URL,
     'ai-assistant': env.SV_AI_URL,
   }[service]
   return url ? url.replace(/\/+$/, '') : undefined

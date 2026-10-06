@@ -15,7 +15,7 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 vi.mock('@/lib/sv/api-client', () => ({
-  SV_SERVICES: ['vss-catalog', 'compiler', 'orchestrator', 'ai-assistant'],
+  SV_SERVICES: ['vss-catalog', 'compiler', 'orchestrator', 'signal-gateway', 'ai-assistant'],
   checkSvServiceHealth: mockCheck,
 }))
 
@@ -49,6 +49,7 @@ describe('GET /api/sv/health (M01-T09)', () => {
       'vss-catalog',
       'compiler',
       'orchestrator',
+      'signal-gateway',
       'ai-assistant',
     ])
   })

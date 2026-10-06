@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { Button, toast } from '@/components/emcn'
+import { RunButtons } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
 import { defaultScenario } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
 import { SV_ACTIONS } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
 import { SynCodeButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
@@ -11,13 +12,14 @@ import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 
 /** Actions that work today; the others stay disabled until their milestone ships. */
-const READY = new Set<string>(['verify', 'simulate', 'syncode'])
+const READY = new Set<string>(['verify', 'simulate', 'syncode', 'run', 'stop'])
 
 /**
  * Workflow actions of the vehicle editor. Verify (M04-T11) runs every compiler check on the graph
  * on the canvas and shows the result in Problems; it is stale as soon as the canvas changes.
  * Simulate (M05-T10) compiles and runs the workflow's scenario on a virtual clock. SynCode (M07-T18)
- * generates, builds and tests the vehicle-app project of the workflow.
+ * generates, builds and tests the vehicle-app project of the workflow; Run/Stop (M08-T08) run its app
+ * on the vehicle stack.
  */
 export function SvActionBar() {
   const graphJson = useSvLintStore((s) => s.graphJson)
@@ -114,6 +116,8 @@ export function SvActionBar() {
     >
       {SV_ACTIONS.map((action) => {
         if (action.id === 'syncode') return <SynCodeButton key={action.id} />
+        if (action.id === 'run') return <RunButtons key={action.id} />
+        if (action.id === 'stop') return null
         const ready = READY.has(action.id)
         const busy =
           (action.id === 'verify' && verifyStatus === 'verifying') ||
