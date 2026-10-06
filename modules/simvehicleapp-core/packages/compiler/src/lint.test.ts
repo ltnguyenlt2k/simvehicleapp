@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { type DiagnosticV1, fixturesDir, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
 import { parseVssRelease, type VssModel } from "@simvehicleapp/vss";
-import { lint, type VehicleLookup } from "./index.ts";
+import { BLOCK_SPECS } from "@simvehicleapp/blocks";
+import { lint, migrateGraph, type VehicleLookup } from "./index.ts";
 
 const fixture = (rel: string) => `${fixturesDir}${rel}`;
 const models: Record<string, VssModel> = {
@@ -170,5 +171,49 @@ describe("lint: output contract", () => {
     lookups = 0;
     await lint(base(), { vehicle });
     expect(lookups).toBe(1);
+  });
+});
+
+describe("lint: fan-out and block migrations (M04-T03)", () => {
+  test("S1: one output connected to two blocks ⇒ EDGE_FANOUT_NOT_ALLOWED on the source block", async () => {
+    const g = base();
+    g.blocks.push({ ...structuredClone(g.blocks[1]!), id: "b3", name: "Hazard 2" });
+    g.edges.push({ id: "e2", from: "b1", fromHandle: "source", to: "b3", toHandle: "target" });
+    const diags = await lint(g, { vehicle });
+    const fan = diags.filter((d) => d.code === "EDGE_FANOUT_NOT_ALLOWED");
+    expect(fan).toHaveLength(1);
+    expect(fan[0]).toMatchObject({ blockId: "b1", severity: "error", stage: "structural", data: { handle: "source", edges: ["e1", "e2"] } });
+  });
+
+  test("S1: a parallel container may start several branches (GW-F)", async () => {
+    const gwf = JSON.parse(readFileSync(fixture("golden/GW-F/graph.json"), "utf8")) as WorkflowGraphV1;
+    expect(gwf.edges.filter((e) => e.fromHandle === "parallel-start-source").length).toBeGreaterThan(1);
+    expect((await codes(gwf)).filter((c) => c === "EDGE_FANOUT_NOT_ALLOWED")).toEqual([]);
+  });
+
+  const specV2 = () => {
+    const specs = BLOCK_SPECS.map((s) => (s.type === "sv_set_actuator" ? { ...s, version: 2 } : s));
+    return specs;
+  };
+
+  test("S2: an older blockVersion is migrated before it is checked", async () => {
+    const g = base();
+    // v1 stored the value under `val`; the v2 migration renames it.
+    const b2 = g.blocks[1]!;
+    (b2 as { props: Record<string, unknown> }).props = { path: "Vehicle.Body.Lights.Hazard.IsSignaling", val: "true" };
+    const migrations = { sv_set_actuator: { 1: (p: Readonly<Record<string, unknown>>) => { const { val, ...rest } = p; return { ...rest, value: val }; } } };
+    expect(await lint(g, { vehicle, specs: specV2(), migrations })).toEqual([]);
+    expect(migrateGraph(g, new Map(specV2().map((s) => [s.type, s])), migrations).graph.blocks[1]).toMatchObject({ blockVersion: 2, props: { value: "true" } });
+  });
+
+  test("S2: no migration path, or a newer block ⇒ BLOCK_VERSION_UNSUPPORTED", async () => {
+    const g = base();
+    const noPath = (await lint(g, { vehicle, specs: specV2(), migrations: {} })).filter((d) => d.code === "BLOCK_VERSION_UNSUPPORTED");
+    expect(noPath).toHaveLength(1);
+    expect(noPath[0]).toMatchObject({ blockId: "b2", data: { blockVersion: 1, supported: 2, reason: "no_path" } });
+    const newer = base();
+    newer.blocks[1]!.blockVersion = 3;
+    const d = (await lint(newer, { vehicle })).filter((x) => x.code === "BLOCK_VERSION_UNSUPPORTED");
+    expect(d[0]).toMatchObject({ blockId: "b2", data: { blockVersion: 3, supported: 1, reason: "newer" } });
   });
 });

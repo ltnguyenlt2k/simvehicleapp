@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Diagnostics catalog (additive): `EDGE_FANOUT_NOT_ALLOWED` (structural, error) — one output connected to several blocks (ADR-0014 Notes 2026-10-06).
 - `openapi/compiler.v1.yaml` (additive): `/lint` documents 400/413/503 (M03-T11).
 - Generated `DIAGNOSTICS_CATALOG.md` + guard against removing/renaming codes (ADR-0016).
 - Fixtures: 38 conformance cases `fixtures/conformance/C01…C38/{graph.json, scenario.yaml}` (ADR-0012 executable spec, M03-T12) + consistency test; GW-A updated to BlockSpec handle ids (`source`/`target`) and normalized references (`<speedchanged.value>`).

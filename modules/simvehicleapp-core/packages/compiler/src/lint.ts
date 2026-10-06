@@ -3,6 +3,7 @@ import { BLOCK_SPECS, type BlockSpec } from "@simvehicleapp/blocks";
 import { checkRefs, collectRefs, type Node, parseExpression, type RefResolver } from "@simvehicleapp/expr";
 import { isArrayType, type VssNode } from "@simvehicleapp/vss";
 import { diag, sortDiagnostics } from "./diagnostics.ts";
+import { MIGRATIONS, migrateGraph, type MigrationRegistry } from "./migrations.ts";
 
 /** analysis/06 §3 S0. */
 export const MAX_BLOCKS = 2000;
@@ -17,9 +18,12 @@ export type VehicleLookup = (release: string, paths: readonly string[]) => Promi
 export interface LintContext {
   vehicle: VehicleLookup;
   specs?: readonly BlockSpec[];
+  /** Block property migrations (defaults to the built-in registry). */
+  migrations?: MigrationRegistry;
 }
 
 const CONTAINERS = new Set(["sv_repeat", "sv_while", "sv_parallel"]);
+const PARALLEL_START = "parallel-start-source";
 const TRIGGER_CATEGORY = "triggers";
 const validator = new ContractValidator();
 
@@ -70,8 +74,19 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
       }),
     ];
   }
-  const graph = graphInput as WorkflowGraphV1;
   const specs = new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s]));
+  // S2 (first): old blockVersions are migrated so every later check sees current props.
+  const { graph, failures: migrationFailures } = migrateGraph(graphInput as WorkflowGraphV1, specs, ctx.migrations ?? MIGRATIONS);
+  for (const f of migrationFailures) {
+    const title = specs.get(f.type)!.title;
+    out.push(
+      diag("BLOCK_VERSION_UNSUPPORTED", wfId, {
+        blockId: f.blockId,
+        message: f.reason === "newer" ? `${title} v${f.from} is newer than this compiler (v${f.to})` : `${title} v${f.from} cannot be upgraded to v${f.to}`,
+        data: { blockVersion: f.from, supported: f.to, reason: f.reason },
+      }),
+    );
+  }
   const byId = new Map(graph.blocks.map((b) => [b.id, b]));
   const byName = new Map(graph.blocks.map((b) => [normalizeName(b.name), b]));
   const known = graph.blocks.filter((b) => specs.has(b.type));
@@ -106,6 +121,24 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
     if (ts && !ts.handles.in.includes(e.toHandle)) {
       out.push(diag("HANDLE_UNKNOWN", wfId, { blockId: to.id, message: `${ts.title} cannot be entered through '${e.toHandle}'`, data: { edge: e.id, handle: e.toHandle } }));
     }
+  }
+  // One output, one next step (ADR-0014 Notes): only a parallel container starts several branches.
+  const fanout = new Map<string, string[]>();
+  for (const e of graph.edges) {
+    if (!byId.has(e.from) || !byId.has(e.to) || e.fromHandle === PARALLEL_START) continue;
+    const key = `${e.from}\u0000${e.fromHandle}`;
+    fanout.set(key, [...(fanout.get(key) ?? []), e.id]);
+  }
+  for (const [key, edgeIds] of fanout) {
+    if (edgeIds.length < 2) continue;
+    const [blockId, handle] = key.split("\u0000") as [string, string];
+    out.push(
+      diag("EDGE_FANOUT_NOT_ALLOWED", wfId, {
+        blockId,
+        message: `'${handle}' of ${byId.get(blockId)!.name} is connected to ${edgeIds.length} blocks — keep one, or put the steps in Run in parallel`,
+        data: { handle, edges: [...edgeIds].sort() },
+      }),
+    );
   }
 
   // S3 prefetch: every VSS path used by a vss-path prop or a <Vehicle.…> reference
@@ -142,9 +175,6 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
   for (const b of known) {
     const spec = specs.get(b.type)!;
     const props = b.props as Record<string, unknown>;
-    if ((b.blockVersion ?? 1) > spec.version) {
-      out.push(diag("BLOCK_VERSION_UNSUPPORTED", wfId, { blockId: b.id, message: `${spec.title} v${b.blockVersion} is newer than this compiler (v${spec.version})`, data: { blockVersion: b.blockVersion, supported: spec.version } }));
-    }
     const resolver: RefResolver = {
       block: (name, field) => {
         const target = byName.get(name);
@@ -256,7 +286,7 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
   }
   for (const b of known) {
     if (!reached.has(b.id)) out.push(diag("BLOCK_UNREACHABLE", wfId, { blockId: b.id, message: `${b.name} never runs — it is not connected to a trigger` }));
-    if (b.type === "sv_parallel" && !(outgoing.get(b.id) ?? []).some((e) => e.fromHandle === "parallel-start-source")) {
+    if (b.type === "sv_parallel" && !(outgoing.get(b.id) ?? []).some((e) => e.fromHandle === PARALLEL_START)) {
       out.push(diag("PARALLEL_BRANCH_EMPTY", wfId, { blockId: b.id, message: "Run in parallel has no branch" }));
     }
     if (b.type === "sv_on_timer") {

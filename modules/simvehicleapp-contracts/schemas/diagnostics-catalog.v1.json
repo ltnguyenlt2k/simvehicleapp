@@ -138,6 +138,14 @@
       "adr": "ADR-0016"
     },
     {
+      "code": "EDGE_FANOUT_NOT_ALLOWED",
+      "severity": "error",
+      "stage": "structural",
+      "title": "Output connected to more than one block (use Run in parallel)",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0014"
+    },
+    {
       "code": "ENUM_VALUE_NOT_ALLOWED",
       "severity": "error",
       "stage": "vehicle-model",
