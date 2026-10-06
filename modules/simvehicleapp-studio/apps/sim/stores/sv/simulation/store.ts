@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import type { SvSimulateResponse } from '@/lib/api/contracts/sv'
+import type { SvScenario, SvSimulateResponse } from '@/lib/api/contracts/sv'
 
 type SimResult = NonNullable<SvSimulateResponse['result']>
 
@@ -13,6 +13,9 @@ interface SvSimulationState {
   /** Replay cursor (virtual ms). */
   cursor: number
   status: 'idle' | 'running' | 'done' | 'failed'
+  /** Scenario being edited (saved after a short debounce); Simulate always uses what the editor shows. */
+  draft: { workflowId: string; scenario: SvScenario } | null
+  setDraft: (workflowId: string, scenario: SvScenario) => void
   /** Bumped to bring the Simulation tab to the front. */
   focusSimulation: number
   showSimulation: () => void
@@ -31,6 +34,7 @@ const initialState = {
   cursor: 0,
   status: 'idle' as SvSimulationState['status'],
   focusSimulation: 0,
+  draft: null as SvSimulationState['draft'],
 }
 
 /** Last simulation of the open workflow and the replay cursor (M05-T10). */
@@ -39,6 +43,7 @@ export const useSvSimulationStore = create<SvSimulationState>()(
     (set) => ({
       ...initialState,
       setRunning: () => set({ status: 'running' }),
+      setDraft: (workflowId, scenario) => set({ draft: { workflowId, scenario } }),
       showSimulation: () => set((s) => ({ focusSimulation: s.focusSimulation + 1 })),
       setResult: (workflowId, graphJson, until, result) =>
         set({ workflowId, graphJson, until, result, cursor: until, status: 'done' }),

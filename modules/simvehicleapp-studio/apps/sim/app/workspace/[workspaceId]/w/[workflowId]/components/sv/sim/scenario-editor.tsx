@@ -12,6 +12,7 @@ import {
   scenarioToYaml,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
 import { useSaveSvScenario, useSvScenario } from '@/hooks/queries/sv-simulation'
+import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 
 interface ScenarioEditorProps {
   workflowId: string
@@ -35,7 +36,10 @@ const withTarget = (i: Input, target: string): Input =>
 export function ScenarioEditor({ workflowId, workflowName }: ScenarioEditorProps) {
   const { data: saved, isLoading } = useSvScenario(workflowId)
   const save = useSaveSvScenario(workflowId)
-  const [draft, setDraft] = useState<SvScenario | null>(null)
+  const draft = useSvSimulationStore((s) =>
+    s.draft?.workflowId === workflowId ? s.draft.scenario : null
+  )
+  const setDraft = useSvSimulationStore((s) => s.setDraft)
   const [yamlText, setYamlText] = useState<string | null>(null)
   const [yamlError, setYamlError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -47,11 +51,11 @@ export function ScenarioEditor({ workflowId, workflowName }: ScenarioEditorProps
 
   const update = useCallback(
     (next: SvScenario) => {
-      setDraft(next)
+      setDraft(workflowId, next)
       if (timer.current) clearTimeout(timer.current)
       timer.current = setTimeout(() => save.mutate(next), SAVE_DEBOUNCE_MS)
     },
-    [save]
+    [save, setDraft, workflowId]
   )
 
   useEffect(

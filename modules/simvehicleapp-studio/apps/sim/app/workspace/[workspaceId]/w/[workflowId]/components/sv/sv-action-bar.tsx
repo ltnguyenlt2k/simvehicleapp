@@ -35,7 +35,9 @@ export function SvActionBar() {
     } = useSvLintStore.getState()
     if (!current || !wf) return
     const sim = useSvSimulationStore.getState()
-    const run = scenario ?? defaultScenario('Scenario')
+    // What the editor shows (a draft may not be saved yet), else the saved scenario.
+    const draft = sim.draft?.workflowId === wf ? sim.draft.scenario : null
+    const run = draft ?? scenario ?? defaultScenario('Scenario')
     sim.setRunning()
     sim.showSimulation()
     simulate.mutate(
