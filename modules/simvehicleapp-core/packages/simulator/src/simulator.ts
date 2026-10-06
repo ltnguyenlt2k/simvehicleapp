@@ -131,6 +131,8 @@ class Simulator {
   private readonly appToken = new Token();
   private runCount = 0;
   private stopped = false;
+  /** Fiber whose step is running (stop / loop guard end the other fibers of its run). */
+  private current: Fiber | undefined;
   private readonly result: SimulationResult;
   private readonly runId: string;
 
@@ -399,6 +401,8 @@ class Simulator {
     run.token.cancel();
     run.finished = true;
     this.trace("cancel", { run, node: run.trigger.id, blockId: run.trigger.src.blockId, data: { reason } });
+    // Its waiting fibers end now (the C++ runtime must not keep one per restart; no visible effect).
+    this.reap(run, this.current);
   }
 
   private finishRun(run: Run) {
@@ -428,6 +432,8 @@ class Simulator {
     if (f.done) return;
     if (f.token.cancelled) return this.complete(f);
     let r: IteratorResult<Effect, void>;
+    const outer = this.current;
+    this.current = f;
     try {
       r = f.gen.next(input);
     } catch (e) {
@@ -436,6 +442,8 @@ class Simulator {
         return;
       }
       throw e;
+    } finally {
+      this.current = outer;
     }
     if (r.done) return this.complete(f);
     const effect = r.value;
@@ -457,6 +465,7 @@ class Simulator {
         if (effect.mode === "all" && pending.length === 0) return this.schedule(this.t, () => this.step(f, "done")), undefined;
         if (effect.mode === "any" && pending.length < effect.fibers.length) {
           for (const c of pending) c.token.cancel();
+          this.reap(f.run);
           this.schedule(this.t, () => this.step(f, "done"));
           return;
         }
@@ -467,7 +476,10 @@ class Simulator {
             const left = effect.fibers.filter((x) => !x.done);
             if (effect.mode === "any" || left.length === 0) {
               resumed = true;
-              if (effect.mode === "any") for (const x of left) x.token.cancel();
+              if (effect.mode === "any") {
+                for (const x of left) x.token.cancel();
+                this.reap(f.run);
+              }
               this.schedule(this.t, () => this.step(f, "done"));
             }
           });
@@ -475,6 +487,14 @@ class Simulator {
         return;
       }
     }
+  }
+
+  /**
+   * Cancelled fibers end when they are cancelled (their timers never resume them), so the run ends as
+   * soon as its last live fiber does — not when a cancelled branch's timer would have fired.
+   */
+  private reap(run: Run, except?: Fiber) {
+    for (const f of [...run.fibers]) if (f !== except && f.token.cancelled && !f.done) this.complete(f);
   }
 
   private complete(f: Fiber) {
@@ -633,6 +653,7 @@ class Simulator {
           if (i >= max) {
             this.trace("error", { run, node: node.id, blockId: node.src.blockId, data: { reason: "loop_guard", maxIterations: max } });
             run.token.cancel();
+            this.reap(run, this.current);
             throw new StopRun();
           }
           out({ index: BigInt(i) });
@@ -657,6 +678,7 @@ class Simulator {
           for (const runs of this.runsOf.values()) for (const r of runs) if (r !== run) this.cancelRun(r, "stop");
         }
         run.token.cancel();
+        this.reap(run, this.current);
         throw new StopRun();
       }
       case "state.get":

@@ -156,3 +156,28 @@ describe("missing values", () => {
     expect(r.writes).toEqual([{ t: 1500, path: HAZARD, value: true }]);
   });
 });
+
+describe("cancelled branches end when cancelled", () => {
+  test("parallel join any: the run ends with its last live fiber, so a queued run starts then (analysis/07 §4)", () => {
+    const src = (b: string) => ({ blockId: b });
+    const ir = {
+      workflowId: "w",
+      signals: [{ id: "s0", path: "Vehicle.Body.Raindetection.Intensity", dataType: "uint8" }, { id: "s1", path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", dataType: "uint8" }],
+      topics: [],
+      state: [],
+      triggers: [{ id: "n1", opcode: "event.signal_changed", signal: "s0", props: { mode: "any", debounceMs: 0 }, concurrency: { policy: "queue", queueMax: 1 }, outputs: { value: { type: "uint8" }, previous: { type: "uint8" }, timestamp: { type: "timestamp" } }, entry: "n2", src: src("b1") }],
+      nodes: [
+        { id: "n2", opcode: "control.parallel", args: { branches: [{ entry: "n3" }, { entry: "n4" }], join: "any" }, next: { next: "n5" }, src: src("b2") },
+        { id: "n3", opcode: "control.wait", args: { durationMs: 100 }, next: { next: null }, src: src("b3") },
+        { id: "n4", opcode: "control.wait", args: { durationMs: 300 }, next: { next: "n6" }, src: src("b4") },
+        { id: "n6", opcode: "vehicle.write", args: { signal: "s1", value: { $const: 1, type: "uint8" }, awaitAck: true, onError: "continue" }, next: { next: null }, src: src("b6") },
+        { id: "n5", opcode: "vehicle.write", args: { signal: "s1", value: { $ref: "n1.value" }, awaitAck: true, onError: "continue" }, next: { next: null }, src: src("b5") },
+      ],
+    };
+    const inputs = [10, 20, 30].map((t, i) => ({ t, path: "Vehicle.Body.Raindetection.Intensity", value: i + 1 }));
+    const r = simulate(ir, { until: 2000, initial: { "Vehicle.Body.Raindetection.Intensity": 0 }, inputs });
+    // run 1 ends at 110 (branch n4 cancelled, never writes); the queue kept only value 3.
+    expect(r.writes.map((w) => [w.t, w.value])).toEqual([[110, 1], [210, 3]]);
+    expect(r.trace.filter((e) => e.data?.reason === "queue_overflow")).toHaveLength(1);
+  });
+});
