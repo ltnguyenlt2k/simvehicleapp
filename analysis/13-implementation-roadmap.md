@@ -1,6 +1,6 @@
 # 13 — Implementation Roadmap (thứ tự thực hiện)
 
-> Kế hoạch tổng: 15 milestone (M0–M14), mỗi milestone có file chi tiết trong [phases/](phases/README.md) gồm: mục tiêu → ADR cần Accepted trước → task (mỗi task ≤ 1–2 ngày) → file/contract → test → DoD → **Acceptance Gate**.
+> Kế hoạch tổng: 16 milestone (M0–M15; M15 là bước cuối — E2E toàn diện + video demo, yêu cầu PO 2026-10-06), mỗi milestone có file chi tiết trong [phases/](phases/README.md) gồm: mục tiêu → ADR cần Accepted trước → task (mỗi task ≤ 1–2 ngày) → file/contract → test → DoD → **Acceptance Gate**.
 > Luật vận hành: **không bắt đầu milestone phụ thuộc khi gate trước FAIL** (Master Plan Part 15). Báo cáo cuối mỗi milestone theo [template](phases/REPORT_TEMPLATE.md).
 > File này **ít đổi** (kế hoạch). Tiến độ thật, theo dõi theo từng feature, cập nhật liên tục khi code: [`docs/ROADMAP.md`](../docs/ROADMAP.md).
 
@@ -32,6 +32,9 @@ flowchart LR
   M11 --> M12["M12 compiler-code-python"]
   M11 --> M13["M13 compiler-code-rust (feasibility)"]
   M11 --> M14["M14 Services (gRPC, standalone), curated blocks, multi-user"]
+  M12 --> M15["M15 E2E toàn diện + video demo (bước cuối)"]
+  M13 --> M15
+  M14 --> M15
 ```
 
 **Đường găng (critical path):** M0 → M1 → M2 → M3 → M4 → M6 → M7 → M8 → M11.
@@ -60,6 +63,7 @@ flowchart LR
 | [M12](phases/M12-python-backend.md) | Python backend | compiler-code-python + toolchain-python + ide-python | 0040 | 29 | 4 |
 | [M13](phases/M13-rust-backend.md) | Rust feasibility | báo cáo + prototype GW-A | 0041 | 30 | 3 |
 | [M14](phases/M14-services-curated-multiuser.md) | Mở rộng | gRPC service block, standalone mode, curated multi-VSS blocks, multi-user workspaces, kuksa.val.v2 | 0043+ | 23–25 | 6+ |
+| [M15](phases/M15-final-e2e-demo-video.md) | E2E toàn diện + video demo | Playwright: mọi kéo thả, 7 golden bằng UI, full luồng signup→run→export, cộng tác, lỗi service; 3 run xanh liên tiếp; video full luồng trong README | — | (mới) | 2–3 |
 
 **MVP (v1.0) = M0 → M11** ≈ 48 người-tuần; với đội 4 dev (1 FE, 2 BE/TS, 1 C++/Velocitas) ≈ 4–5 tháng lịch có song song. Đây là ước lượng kế hoạch, cần cập nhật theo throughput và thời gian build thực tế; Python/Rust và M14 nằm sau v1.0.
 

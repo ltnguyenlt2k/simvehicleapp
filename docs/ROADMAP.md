@@ -42,6 +42,7 @@
 | [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
+| [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | ☐ | 0/12 |
 
 **MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
 
@@ -316,6 +317,25 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 | 9 | Reverse proxy + SSO forward-auth cho IDE | — | ☐ chưa có ADR |
 | 10 | VSS overlay OEM (vss-tools pipeline) | — | ☐ chưa có ADR |
 
+
+## M15 — E2E toàn diện + video demo (bước cuối)
+Phụ thuộc: **toàn bộ** M0–M14 (plan, ADR, ROADMAP xong) · Chi tiết: [phases/M15](../analysis/phases/M15-final-e2e-demo-video.md) · Yêu cầu PO 2026-10-06.
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Ma trận kịch bản E2E `e2e/SCENARIOS.md` | — | ☐ | truy ngược FR/ADR | T01 |
+| Kéo thả từ toolbar: mọi block, vào/ra container, thả bị từ chối | — | ☐ | | T02 |
+| Kéo thả từ panel Vehicle: mọi kind × release v4.0/v4.2, menu đúng kind | 0010, 0011 | ☐ | | T03 |
+| Nối mọi handle, nối sai bị chặn, undo/redo, copy/paste, đổi tên ⇒ ref cập nhật | 0011, 0013 | ☐ | | T04 |
+| 7 golden dựng hoàn toàn bằng UI, Problems sạch, graph khớp golden | 0042 | ☐ | | T05 |
+| Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | ☐ | | T06 |
+| Cộng tác realtime + mất kết nối/restart service | — | ☐ | | T07 |
+| 3 run CI xanh liên tiếp, 0 flaky | — | ☐ | | T08 |
+| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | ☐ | | T09 |
+| Hậu kỳ + checklist xem video (PO ký) | — | ☐ | | T10 |
+| Video trong README tổng, kiểm hiển thị thật trên GitHub | — | ☐ | | T11 |
+| Báo cáo `docs/reports/M15.md` | — | ☐ | | T12 |
+
 ---
 
-*Cập nhật lần cuối: 2026-10-03. Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*
+*Cập nhật lần cuối: 2026-10-06 (thêm M15 theo yêu cầu PO). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*
