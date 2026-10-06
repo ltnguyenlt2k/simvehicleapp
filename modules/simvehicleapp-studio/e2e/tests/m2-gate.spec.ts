@@ -44,7 +44,7 @@ async function createWorkflow(page: Page): Promise<string> {
   // Login/sign-up first redirects to the last workflow; settle there before creating a new one.
   await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
   const before = new URL(page.url()).pathname
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
   const palette = page.getByRole('dialog')
   await palette.getByRole('combobox').fill('Create workflow')
   await palette.getByRole('option', { name: 'Create workflow' }).click()
@@ -77,8 +77,10 @@ async function findSignal(page: Page, query: string, path: string): Promise<Loca
 
 /** Drag a signal row onto the canvas at (x, y) and return the opened block menu. */
 async function dropSignal(page: Page, row: Locator, x: number, y: number): Promise<Locator> {
+  // force: on an empty canvas the hint overlay sits above the pane and forwards the drop (as for a user)
   await row.locator('[draggable="true"]').dragTo(page.locator('.react-flow__pane'), {
     targetPosition: { x, y },
+    force: true,
   })
   const menu = page.locator('[data-sv="signal-drop-menu"]')
   await expect(menu).toBeVisible()

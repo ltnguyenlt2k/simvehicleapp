@@ -158,7 +158,6 @@ function normalize(g: Graph) {
 }
 
 /** Grid slot (pane coordinates) of the i-th top-level block. */
-const slot = (i: number) => ({ x: 260 + (i % 3) * 400, y: 120 + Math.floor(i / 3) * 290 })
 
 async function setProp(page: Page, b: GBlock, p: SpecProp, value: unknown) {
   const sb = await revealSubBlock(page, p.name)
@@ -243,21 +242,62 @@ async function addBlock(page: Page, b: GBlock, at: { x: number; y: number }) {
 }
 
 /** Pane coordinates inside the container block `parent` (k-th child). */
-async function insideContainer(page: Page, parentName: string, k: number) {
-  const box = await nodeByName(page, parentName).boundingBox()
-  const paneBox = await pane(page).boundingBox()
-  if (!box || !paneBox) throw new Error(`container ${parentName} not visible`)
-  return { x: box.x - paneBox.x + 60 + k * 300, y: box.y - paneBox.y + 110 }
+/** Pane-relative box of a node (canvas zoom stays 1 while building). */
+async function paneBox(page: Page, name: string) {
+  const box = await nodeByName(page, name).boundingBox()
+  const paneRect = await pane(page).boundingBox()
+  if (!box || !paneRect) throw new Error(`${name} not visible`)
+  return { x: box.x - paneRect.x, y: box.y - paneRect.y, width: box.width, height: box.height }
 }
 
+/**
+ * Moves a node by dragging its header so that its top-left lands at pane point (x, y). Children of a
+ * container are not clamped right/down, and the container grows to fit (the way a user makes room).
+ */
+async function moveNode(page: Page, name: string, x: number, y: number) {
+  const from = await paneBox(page, name)
+  const paneRect = await pane(page).boundingBox()
+  if (!paneRect) throw new Error('pane not visible')
+  const grabX = 60
+  const grabY = 18
+  await page.mouse.move(paneRect.x + from.x + grabX, paneRect.y + from.y + grabY)
+  await page.mouse.down()
+  await page.mouse.move(paneRect.x + x + grabX, paneRect.y + y + grabY, { steps: 12 })
+  await page.mouse.up()
+  await expect
+    .poll(async () => {
+      const b = await paneBox(page, name)
+      return Math.abs(b.x - x) <= 24 && Math.abs(b.y - y) <= 24
+    })
+    .toBe(true)
+}
+
+const GAP = 70
+const ORIGIN = { x: 40, y: 40 }
+
+/**
+ * Places top-level blocks left to right with a running cursor (measured boxes, so a grown container
+ * never overlaps the next block) and wraps when the row is full. Container children are dropped into
+ * the container, then moved side by side inside it.
+ */
 async function build(page: Page, g: Graph) {
-  const top = g.blocks.filter((b) => !b.parentId)
-  for (const [i, b] of top.entries()) {
-    await addBlock(page, b, slot(i))
+  const paneRect = await pane(page).boundingBox()
+  if (!paneRect) throw new Error('pane not visible')
+  let cursor = { ...ORIGIN }
+  let rowHeight = 0
+  for (const b of g.blocks.filter((x) => !x.parentId)) {
+    if (cursor.x + 260 > paneRect.width) cursor = { x: ORIGIN.x, y: cursor.y + rowHeight + GAP }
+    await addBlock(page, b, { x: cursor.x + 20, y: cursor.y + 20 })
+    await moveNode(page, b.name, cursor.x, cursor.y)
     const children = g.blocks.filter((c) => c.parentId === b.id)
     for (const [k, c] of children.entries()) {
-      await addBlock(page, c, await insideContainer(page, b.name, k))
+      const box = await paneBox(page, b.name)
+      await addBlock(page, c, { x: box.x + 40, y: box.y + 80 })
+      await moveNode(page, c.name, box.x + 16 + k * 290, box.y + 60)
     }
+    const placed = await paneBox(page, b.name)
+    cursor = { x: placed.x + placed.width + GAP, y: cursor.y }
+    rowHeight = Math.max(rowHeight, placed.height)
   }
   const name = new Map(g.blocks.map((b) => [b.id, b.name]))
   for (const e of g.edges) {

@@ -17,7 +17,7 @@ async function signUpAndCreateWorkflow(page: Page) {
   // Login/sign-up first redirects to the last workflow; settle there before creating a new one.
   await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
   const before = new URL(page.url()).pathname
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
   const palette = page.getByRole('dialog')
   await palette.getByRole('combobox').fill('Create workflow')
   await palette.getByRole('option', { name: 'Create workflow' }).click()
@@ -63,6 +63,9 @@ test.describe.serial('M3 blocks on the canvas', () => {
     await expect(condition.locator('textarea')).toHaveValue('<Vehicle.Speed> > 120 km/h')
 
     const wait = await addFromToolbar(page, 'Wait')
+    // Auto-connect from a branch block uses its first branch handle (`then`), not Sim's missing
+    // `source` — an edge on a missing handle was invisible and reported HANDLE_UNKNOWN (M03-T13).
+    await expect(page.locator('.react-flow__edge')).toHaveCount(1)
     await expect(wait.locator('[data-handleid="error"]')).toHaveCount(0)
     await wait.click()
     const duration = editor.locator('[data-workflow-search-subblock-id="durationMs"]')

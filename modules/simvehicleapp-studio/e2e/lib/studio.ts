@@ -40,7 +40,7 @@ export async function setAutoConnect(page: Page, enabled: boolean) {
 export async function createWorkflow(page: Page): Promise<string> {
   await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
   const before = new URL(page.url()).pathname
-  await page.getByRole('button', { name: 'Search' }).click()
+  await page.getByRole('button', { name: 'Search', exact: true }).click()
   const palette = page.getByRole('dialog')
   await palette.getByRole('combobox').fill('Create workflow')
   await palette.getByRole('option', { name: 'Create workflow' }).click()
@@ -83,7 +83,8 @@ export async function dragFromToolbar(page: Page, blockName: string, x: number, 
   const toolbar = await openToolbar(page)
   const item = toolbar.getByRole('button', { name: `Add ${blockName}`, exact: true }).first()
   await item.scrollIntoViewIfNeeded()
-  await item.dragTo(pane(page), { targetPosition: { x, y } })
+  // force: on an empty canvas the hint overlay sits above the pane and forwards the drop (as for a user)
+  await item.dragTo(pane(page), { targetPosition: { x, y }, force: true })
 }
 
 export async function openVehiclePanel(page: Page): Promise<Locator> {
@@ -111,7 +112,9 @@ export async function dropSignal(
   y: number
 ) {
   const row = await findSignal(page, path)
-  await row.locator('[draggable="true"]').dragTo(pane(page), { targetPosition: { x, y } })
+  await row
+    .locator('[draggable="true"]')
+    .dragTo(pane(page), { targetPosition: { x, y }, force: true })
   const menu = page.locator('[data-sv="signal-drop-menu"]')
   await expect(menu).toBeVisible()
   await menu.locator(`[data-sv-block="${blockType}"]`).click()

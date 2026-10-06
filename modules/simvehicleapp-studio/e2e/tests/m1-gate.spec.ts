@@ -57,7 +57,7 @@ test.describe.serial('M1 gate', () => {
     const before = new URL(page.url()).pathname
 
     // The sidebar '+' is icon-only; create through the command palette like a keyboard user.
-    await page.getByRole('button', { name: 'Search' }).click()
+    await page.getByRole('button', { name: 'Search', exact: true }).click()
     const palette = page.getByRole('dialog')
     await palette.getByRole('combobox').fill('Create workflow')
     await palette.getByRole('option', { name: 'Create workflow' }).click()
