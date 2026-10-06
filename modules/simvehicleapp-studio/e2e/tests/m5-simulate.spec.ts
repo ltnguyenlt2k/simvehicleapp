@@ -67,7 +67,12 @@ test.describe('M5 Simulate', () => {
     await page.getByRole('button', { name: 'Apply' }).click()
     await expect(page.locator('[data-sv="scenario-input-row"]')).toHaveCount(1)
 
+    // Simulate keeps the simulated scenario with the workflow (saved without waiting for the debounce).
+    const saved = page.waitForResponse(
+      (r) => r.request().method() === 'PUT' && r.url().includes('/scenario') && r.ok()
+    )
     await page.locator('[data-sv-action="simulate"]').click()
+    await saved
     const timeline = page.locator('[data-sv="simulation-timeline"]')
     await expect(timeline).toBeVisible({ timeout: 30_000 })
     const write = timeline.locator('[data-sv-sim-row="write"]')

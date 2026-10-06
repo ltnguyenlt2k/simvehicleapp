@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
 import { Button, ChipInput, ChipTextarea } from '@/components/emcn'
 import type { SvScenario } from '@/lib/api/contracts/sv'
@@ -11,7 +12,7 @@ import {
   scenarioFromYaml,
   scenarioToYaml,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
-import { useSaveSvScenario, useSvScenario } from '@/hooks/queries/sv-simulation'
+import { svScenarioKeys, useSaveSvScenario, useSvScenario } from '@/hooks/queries/sv-simulation'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 
 interface ScenarioEditorProps {
@@ -34,6 +35,9 @@ const withTarget = (i: Input, target: string): Input =>
  * `mqtt:<topic>`), run length; YAML view to import/export the contracts `scenario` v1 format.
  */
 export function ScenarioEditor({ workflowId, workflowName }: ScenarioEditorProps) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pending = useRef<SvScenario | null>(null)
+  const queryClient = useQueryClient()
   const { data: saved, isLoading } = useSvScenario(workflowId)
   const save = useSaveSvScenario(workflowId)
   const draft = useSvSimulationStore((s) =>
@@ -42,28 +46,44 @@ export function ScenarioEditor({ workflowId, workflowName }: ScenarioEditorProps
   const setDraft = useSvSimulationStore((s) => s.setDraft)
   const [yamlText, setYamlText] = useState<string | null>(null)
   const [yamlError, setYamlError] = useState<string | null>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const scenario = useMemo(
     () => draft ?? saved ?? defaultScenario(workflowName),
     [draft, saved, workflowName]
   )
 
+  /** Saves the pending edit now; skipped when it is already what is saved (Simulate saves too). */
+  const flush = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
+    const next = pending.current
+    pending.current = null
+    if (next && queryClient.getQueryData(svScenarioKeys.detail(workflowId)) !== next) {
+      save.mutate(next)
+    }
+  }, [queryClient, save, workflowId])
+  const flushRef = useRef(flush)
+  flushRef.current = flush
+
   const update = useCallback(
     (next: SvScenario) => {
       setDraft(workflowId, next)
+      pending.current = next
       if (timer.current) clearTimeout(timer.current)
-      timer.current = setTimeout(() => save.mutate(next), SAVE_DEBOUNCE_MS)
+      timer.current = setTimeout(() => flushRef.current(), SAVE_DEBOUNCE_MS)
     },
-    [save, setDraft, workflowId]
+    [setDraft, workflowId]
   )
 
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current)
-    },
-    []
-  )
+  // An edit is never dropped: leaving the tab or the page saves it right away.
+  useEffect(() => {
+    const onPageHide = () => flushRef.current()
+    window.addEventListener('pagehide', onPageHide)
+    return () => {
+      window.removeEventListener('pagehide', onPageHide)
+      flushRef.current()
+    }
+  }, [])
 
   const setInput = (index: number, input: Input) =>
     update({ ...scenario, inputs: scenario.inputs.map((x, i) => (i === index ? input : x)) })

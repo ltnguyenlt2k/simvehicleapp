@@ -5,7 +5,7 @@ import { Button, toast } from '@/components/emcn'
 import { defaultScenario } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
 import { SV_ACTIONS } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
 import { useSvVerify } from '@/hooks/queries/sv-lint'
-import { useSvScenario, useSvSimulate } from '@/hooks/queries/sv-simulation'
+import { useSaveSvScenario, useSvScenario, useSvSimulate } from '@/hooks/queries/sv-simulation'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 
@@ -25,6 +25,7 @@ export function SvActionBar() {
   const simStatus = useSvSimulationStore((s) => s.status)
   const { data: scenario } = useSvScenario(workflowId ?? undefined)
   const simulate = useSvSimulate()
+  const saveScenario = useSaveSvScenario(workflowId ?? undefined)
 
   const onSimulate = useCallback(() => {
     const {
@@ -38,6 +39,8 @@ export function SvActionBar() {
     // What the editor shows (a draft may not be saved yet), else the saved scenario.
     const draft = sim.draft?.workflowId === wf ? sim.draft.scenario : null
     const run = draft ?? scenario ?? defaultScenario('Scenario')
+    // The scenario that was simulated is the one kept with the workflow.
+    if (draft && draft !== scenario) saveScenario.mutate(draft)
     sim.setRunning()
     sim.showSimulation()
     simulate.mutate(
@@ -68,7 +71,7 @@ export function SvActionBar() {
         },
       }
     )
-  }, [scenario, simulate])
+  }, [saveScenario, scenario, simulate])
 
   const onVerify = useCallback(() => {
     const {
