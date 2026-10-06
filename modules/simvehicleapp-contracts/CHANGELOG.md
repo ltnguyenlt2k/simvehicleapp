@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/compiler.v1.yaml` (non-breaking): `/compile` `target` optional (S7 skipped without it), documents 400/413/503 (M04-T10).
 - Conformance fixtures made well-typed for the M4 compiler (expected writes unchanged): C09–C14, C34, C35 trigger on `Vehicle.Body.Raindetection.Intensity` (uint8 %, same type/unit as the FanSpeed they mirror into) instead of `Vehicle.Speed` (km/h ⇒ % was a unit mismatch); C15/C16 write `min(<tick.tick>, 100)`, C30/C35 `clamp(…, 0, 100)` (uint32/int32 ⇒ uint8 narrowing). C08 input fixed (equal value must not fire).
 - Diagnostics catalog (additive): `EDGE_FANOUT_NOT_ALLOWED` (structural, error) — one output connected to several blocks (ADR-0014 Notes 2026-10-06).
 - `openapi/compiler.v1.yaml` (additive): `/lint` documents 400/413/503 (M03-T11).

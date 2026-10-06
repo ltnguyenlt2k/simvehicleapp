@@ -48,7 +48,7 @@ paths:
               properties:
                 graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
                 mode: { enum: [lint, verify, build] }
-                target: { type: string, pattern: "^[a-z][a-z0-9-]*$", description: "Backend id for S7 (e.g. cpp). Required for verify/build." }
+                target: { type: string, pattern: "^[a-z][a-z0-9-]*$", description: "Backend id for S7 (e.g. cpp). Optional: without it S7 is skipped and the IR is backend-neutral (backend checks then run at generation time; ADR-0014 Notes §12)." }
       responses:
         "200":
           description: Compilation result; `ir` present only for mode=build without errors.
@@ -60,7 +60,9 @@ paths:
                 properties:
                   ir: { $ref: "urn:simvehicleapp:contracts:ir:1.0.0-alpha.1" }
                   diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
-        "413": { description: "Graph exceeds limits (GRAPH_TOO_LARGE in diagnostics)." }
+        "400": { description: "Body is not JSON, or `graph`/`mode` is missing or invalid." }
+        "413": { description: "Request body larger than 2 MB (graph limit is 1 MB; GRAPH_TOO_LARGE in diagnostics below that)." }
+        "503": { description: "vss-catalog unavailable (the graph cannot be checked against the vehicle model)." }
   /lint:
     post:
       operationId: lint

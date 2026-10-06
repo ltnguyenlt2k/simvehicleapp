@@ -44,6 +44,12 @@ const DEFAULT_MAX_RUNS = 4;
 const INLINE_REF = /<([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)>/g;
 const validator = new ContractValidator();
 
+/** Trigger/node opcodes this compiler emits (`GET /opcodes`): BlockSpec opcodes after lowering. */
+export function knownOpcodes(specs: readonly BlockSpec[] = BLOCK_SPECS): string[] {
+  const lowered = (op: string) => (PURE.has(op) ? "logic.eval" : op === "comm.hmi_notify" ? "comm.mqtt_publish" : op);
+  return [...new Set(specs.map((s) => lowered(s.opcode)))].sort();
+}
+
 /** Placeholders patched once node/signal/state ids are known. */
 const P = { node: "@@n:", signal: "@@s:", state: "@@v:", topic: "@@t:" } as const;
 
