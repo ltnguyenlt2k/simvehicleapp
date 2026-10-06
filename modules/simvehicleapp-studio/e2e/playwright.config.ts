@@ -10,7 +10,8 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
-  retries: process.env.CI ? 1 : 0,
+  // No retries: a flaky test must be fixed at its root cause, never masked (M15-T08).
+  retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: process.env.SV_STUDIO_URL ?? 'http://localhost:3000',
