@@ -44,7 +44,8 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
       calls.push(`job:${kind}`);
       const s = jobs[kind] ?? { state: "succeeded" };
       let seq = 0;
-      for (const msg of s.lines ?? [`${kind} ok`]) onLine({ runId: "j", seq: seq++, ts: 0, stream: "stdout", level: "info", msg });
+      const ran = ["[==========] 1 test from 1 test suite ran. (1 ms total)", "[  PASSED  ] 1 test."];
+      for (const msg of s.lines ?? (kind === "test" ? ran : [`${kind} ok`])) onLine({ runId: "j", seq: seq++, ts: 0, stream: "stdout", level: "info", msg });
       return { id: `j-${kind}`, state: s.state, exitCode: s.state === "succeeded" ? 0 : 1, diagnostics: [] };
     },
     ...overrides,
@@ -160,6 +161,14 @@ describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
     const d2 = await runGeneration(g2, { repo, clients: failing.clients, events });
     expect(d2).toMatchObject({ stage: "test", verification: { compile: "passed", format: "passed", tests: "failed" } });
     expect(d2.diagnostics).toMatchObject([{ code: "GENERATED_TEST_FAILED", workflowId: "gw_a" }]);
+
+    // No scenario ⇒ no generated test binary: SynCode passes but tests are "skipped", not "passed".
+    const none = fakeClients({}, { test: { state: "succeeded", lines: ["$ build/bin/app_generated_tests", "no app_generated_tests", "no app_utests"] } });
+    const g3 = gen();
+    await repo.createGeneration(g3);
+    const d3 = await runGeneration(g3, { repo, clients: none.clients, events });
+    expect(d3).toMatchObject({ state: "succeeded", verification: { ir: "passed", compile: "passed", format: "passed", tests: "skipped" } });
+    expect(d3.stages.find((x) => x.name === "test")?.state).toBe("skipped");
   });
 
   test("an unreachable service is BACKEND_UNAVAILABLE; a project that is not ready fails at once", async () => {

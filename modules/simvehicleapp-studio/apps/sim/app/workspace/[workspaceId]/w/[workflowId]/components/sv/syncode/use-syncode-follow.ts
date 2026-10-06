@@ -45,7 +45,11 @@ export function useSynCodeFollow() {
     reported.current = generation.id
     queryClient.invalidateQueries({ queryKey: svProjectKeys.files(generation.projectId) })
     if (generation.state === 'succeeded') {
-      toast.success('SynCode passed: IR, format, compile and tests')
+      toast.success(
+        generation.verification.tests === 'skipped'
+          ? 'SynCode passed — no tests ran: simulate the workflow to save a scenario, it becomes its test'
+          : 'SynCode passed: IR, format, compile and tests'
+      )
     } else if (generation.state === 'failed') {
       const first = generation.diagnostics[0]
       toast.error(

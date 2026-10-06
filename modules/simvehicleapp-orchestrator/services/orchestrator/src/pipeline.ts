@@ -165,6 +165,11 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
         const mapped = testDiagnostics(lines, (cls) => classes.get(cls));
         throw new StageFailed(mapped.length ? mapped : [diag("GENERATED_TEST_FAILED", "test", "The generated tests failed (see the log)")]);
       }
+      // No scenario ⇒ no generated test binary: nothing was verified, so the verdict is not "passed".
+      if (!lines.some((l) => /^\[=+\] \d+ tests? from \d+ test (?:suites?|cases?) ran/.test(l))) {
+        emit("no tests ran (save a simulation scenario with the workflow to generate its test)", "warn");
+        return "skipped";
+      }
     });
 
     state.state = "succeeded";

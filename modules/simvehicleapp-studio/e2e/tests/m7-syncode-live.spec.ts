@@ -15,16 +15,17 @@ import {
  * @live — needs the full dev stack (`scripts/sv up`: orchestrator, workspace, codegen-cpp,
  * toolchain-cpp), so CI (studio + core only) skips it; run it locally with `--grep @live`.
  *
- * M07-T17…T19 for real: create a project on the Projects page, assign the workflow, SynCode builds
- * and tests the C++ app with the Velocitas toolchain; after a change, the second SynCode shows the
- * change as a diff against the previous generation in the generated-files viewer.
+ * M07-T17…T19 for real: the workflow's simulated scenario (with its expected write) becomes the
+ * generated test; create a project on the Projects page, assign the workflow, SynCode builds and tests
+ * the C++ app with the Velocitas toolchain; after a change, the second SynCode shows the change as a
+ * diff against the previous generation in the generated-files viewer.
  */
 
-async function setDuration(page: Page, ms: string) {
+async function setCondition(page: Page, threshold: number) {
   await nodeByName(page, 'Stable for 1').click()
-  const duration = subBlock(page, 'durationMs').getByRole('textbox', { name: 'Duration' })
-  await duration.fill(ms)
-  await duration.press('Tab')
+  const condition = subBlock(page, 'condition').locator('textarea').first()
+  await condition.fill(`<whenspeedchanges1.value> > ${threshold}`)
+  await condition.press('Escape')
 }
 
 async function synCode(page: Page) {
@@ -60,11 +61,10 @@ test.describe('M7 SynCode on the real stack', () => {
     await dragFromToolbar(page, 'Stable for', 600, 200)
     const stable = nodeByName(page, 'Stable for 1')
     await expect(stable).toBeVisible()
-    await stable.click()
-    const condition = subBlock(page, 'condition').locator('textarea').first()
-    await condition.fill('<whenspeedchanges1.value> > 120')
-    await condition.press('Escape')
-    await setDuration(page, '2000')
+    await setCondition(page, 120)
+    const duration = subBlock(page, 'durationMs').getByRole('textbox', { name: 'Duration' })
+    await duration.fill('2000')
+    await duration.press('Tab')
     await dropSignal(page, 'Vehicle.Body.Lights.Hazard.IsSignaling', 'sv_set_actuator', 1000, 200)
     const set = nodeByName(page, 'Set IsSignaling 1')
     await expect(set).toBeVisible()
@@ -74,6 +74,38 @@ test.describe('M7 SynCode on the real stack', () => {
     await value.press('Escape')
     await connect(trigger, 'source', stable)
     await connect(stable, 'stable', set)
+
+    // The simulated scenario (saved with the workflow) is what the generated test checks.
+    await page.locator('[data-sv-tab="simulation"]').click()
+    await page.locator('[data-sv="scenario-editor"]').getByRole('button', { name: 'YAML' }).click()
+    await page
+      .getByRole('textbox', { name: 'Scenario YAML' })
+      .fill(
+        [
+          'scenarioVersion: 1.0.0',
+          'name: Overspeed',
+          'until: 5000',
+          'initial:',
+          '  Vehicle.Speed: 100',
+          '  Vehicle.Body.Lights.Hazard.IsSignaling: false',
+          'inputs:',
+          '  - { t: 1000, path: Vehicle.Speed, value: 130 }',
+          'expect:',
+          '  writes:',
+          '    - { t: 3000, path: Vehicle.Body.Lights.Hazard.IsSignaling, value: true }',
+        ].join('\n')
+      )
+    await page.getByRole('button', { name: 'Apply' }).click()
+    const saved = page.waitForResponse(
+      (r) => r.request().method() === 'PUT' && r.url().includes('/scenario') && r.ok()
+    )
+    await page.locator('[data-sv-action="simulate"]').click()
+    await saved
+    await expect(
+      page.locator('[data-sv="simulation-timeline"] [data-sv-sim-row="write"]')
+    ).toHaveCount(1, {
+      timeout: 30_000,
+    })
 
     // Projects page: create the project (prepared by the workspace + toolchain), assign the workflow.
     await page.getByRole('link', { name: 'Vehicle projects' }).click()
@@ -97,10 +129,14 @@ test.describe('M7 SynCode on the real stack', () => {
       'href',
       new RegExp(`/\\?folder=/workspace/projects/${slug}$`)
     )
-    await expect(page.getByRole('log', { name: 'Build log' })).toContainText('[  PASSED  ]')
+    // The generated test ran (gtest output; Playwright compares whitespace-normalized text).
+    await expect(page.getByRole('log', { name: 'Build log' })).toContainText(
+      'Test.scenarioMeetsItsExpectations'
+    )
+    await expect(page.getByRole('log', { name: 'Build log' })).toContainText('[ PASSED ] 1 test')
 
     // A change, a second SynCode, and the diff of the generated workflow code.
-    await setDuration(page, '3000')
+    await setCondition(page, 125)
     await synCode(page)
     await page.getByRole('link', { name: 'Vehicle projects' }).click()
     await card.locator('[data-sv="project-files-toggle"]').click()
@@ -109,10 +145,10 @@ test.describe('M7 SynCode on the real stack', () => {
     await expect(files.locator('[data-sv="file-content"]')).toContainText('w.stableFor(')
     await files.locator('[data-sv="file-diff-toggle"]').click()
     await expect(
-      files.locator('[data-sv-diff="del"]').filter({ hasText: '2000' }).first()
+      files.locator('[data-sv-diff="del"]').filter({ hasText: '120' }).first()
     ).toBeVisible()
     await expect(
-      files.locator('[data-sv-diff="add"]').filter({ hasText: '3000' }).first()
+      files.locator('[data-sv-diff="add"]').filter({ hasText: '125' }).first()
     ).toBeVisible()
   })
 })
