@@ -268,8 +268,20 @@ export function callType(name: string, args: TypeInfo[]): TypeResult {
         if (!isNumericType(a.type)) return fail(scalarGuard(a) ?? "not_numeric");
         acc = acc.ok ? unify(acc.info, a) : acc;
       }
-      if (acc.ok && isIntLike(acc.info) && !isTimeType(acc.info.type)) return ok({ type: "int64", range: acc.info.range });
-      return acc;
+      if (!acc.ok || !isIntLike(acc.info) || isTimeType(acc.info.type)) return acc;
+      // Integers: the exact range of the result (min/max of the bounds; clamp = min(max(x, lo), hi)).
+      const rs = args.map((a) => rangeOf(a)!);
+      const lo = (xs: bigint[]) => xs.reduce((m, v) => (v < m ? v : m));
+      const hi = (xs: bigint[]) => xs.reduce((m, v) => (v > m ? v : m));
+      let range: Range;
+      if (name === "min") range = { min: lo(rs.map((r) => r.min)), max: lo(rs.map((r) => r.max)) };
+      else if (name === "max") range = { min: hi(rs.map((r) => r.min)), max: hi(rs.map((r) => r.max)) };
+      else {
+        const [x, l, h] = rs as [Range, Range, Range];
+        const raised = { min: hi([x.min, l.min]), max: hi([x.max, l.max]) };
+        range = { min: lo([raised.min, h.min]), max: lo([raised.max, h.max]) };
+      }
+      return intResult(range);
     }
     case "round":
     case "floor":
