@@ -84,12 +84,18 @@ const sse = (lines: string[]) =>
     )
     .join('')
 
-/** Mocks the project + generation BFF routes; `final` is what the generation ends as. */
-async function mockSynCode(page: Page, workflowId: string, final: Record<string, unknown>) {
+/**
+ * Mocks the project + generation BFF routes before the editor loads; the project is `creating` until
+ * `workflow.id` is set (the editor polls it), then `ready` with that workflow. `final` is what the
+ * generation ends as.
+ */
+async function mockSynCode(page: Page, workflow: { id: string }, final: Record<string, unknown>) {
   const sent: { open?: { workflowId: string } }[] = []
   let polls = 0
   await page.route(/\/api\/sv\/projects\?workspaceId=/, (route) =>
-    route.fulfill({ json: { projects: [project([workflowId])] } })
+    route.fulfill({
+      json: { projects: [workflow.id ? project([workflow.id]) : project([], 'creating')] },
+    })
   )
   await page.route(`**/api/sv/projects/${PROJECT_ID}/generations`, (route) => {
     sent.push(route.request().postDataJSON())
@@ -98,11 +104,13 @@ async function mockSynCode(page: Page, workflowId: string, final: Record<string,
   await page.route(`**/api/sv/projects/${PROJECT_ID}/generations/${GENERATION_ID}`, (route) =>
     route.fulfill({ json: polls++ === 0 ? generation('running') : final })
   )
-  await page.route(`**/api/sv/projects/${PROJECT_ID}/generations/${GENERATION_ID}/events`, (route) =>
-    route.fulfill({
-      headers: { 'content-type': 'text/event-stream' },
-      body: sse(['▶ ir', '1 workflow(s) compiled', '▶ build', '[100%] Built target app']),
-    })
+  await page.route(
+    `**/api/sv/projects/${PROJECT_ID}/generations/${GENERATION_ID}/events`,
+    (route) =>
+      route.fulfill({
+        headers: { 'content-type': 'text/event-stream' },
+        body: sse(['▶ ir', '1 workflow(s) compiled', '▶ build', '[100%] Built target app']),
+      })
   )
   return sent
 }
@@ -159,14 +167,16 @@ test.describe('M7 SynCode', () => {
   })
 
   test('SynCode pass: stages, build log, verification and the IDE link', async ({ page }) => {
-    const { workflowId } = await workflowWithTrigger(page, 'm7s')
+    const workflow = { id: '' }
     const sent = await mockSynCode(
       page,
-      workflowId,
+      workflow,
       generation('succeeded', {
         editor: { url: 'http://127.0.0.1:8080/?folder=/workspace/projects/hazard-app' },
       })
     )
+    const { workflowId } = await workflowWithTrigger(page, 'm7s')
+    workflow.id = workflowId
     const syncode = page.locator('[data-sv-action="syncode"]')
     await expect(syncode).toBeEnabled({ timeout: 20_000 })
     await syncode.click()
@@ -192,28 +202,30 @@ test.describe('M7 SynCode', () => {
   })
 
   test('SynCode fail: failing stage and a diagnostic that focuses its block', async ({ page }) => {
-    const { workflowId, blockId } = await workflowWithTrigger(page, 'm7f')
-    await dragFromToolbar(page, 'Stable for', 600, 200)
-    await expect(nodeByName(page, 'Stable for 1')).toBeVisible()
+    const workflow = { id: '' }
+    // Serialized when the route answers: the ids are filled in once the workflow exists.
+    const compileError = {
+      code: 'CPP_COMPILE_ERROR',
+      severity: 'error',
+      stage: 'build',
+      message: "'speed' was not declared in this scope",
+      docs: 'diagnostics#CPP_COMPILE_ERROR',
+      workflowId: '',
+      blockId: '',
+    }
     await mockSynCode(
       page,
-      workflowId,
-      generation('failed', {
-        stage: 'build',
-        diagnostics: [
-          {
-            code: 'CPP_COMPILE_ERROR',
-            severity: 'error',
-            stage: 'build',
-            message: "'speed' was not declared in this scope",
-            docs: 'diagnostics#CPP_COMPILE_ERROR',
-            workflowId,
-            blockId,
-          },
-        ],
-      })
+      workflow,
+      generation('failed', { stage: 'build', diagnostics: [compileError] })
     )
-    await page.locator('[data-sv-action="syncode"]').click()
+    const { workflowId, blockId } = await workflowWithTrigger(page, 'm7f')
+    Object.assign(compileError, { workflowId, blockId })
+    workflow.id = workflowId
+    await dragFromToolbar(page, 'Stable for', 600, 200)
+    await expect(nodeByName(page, 'Stable for 1')).toBeVisible()
+    const syncode = page.locator('[data-sv-action="syncode"]')
+    await expect(syncode).toBeEnabled({ timeout: 20_000 })
+    await syncode.click()
 
     const log = page.locator('[data-sv="build-log"]')
     await expect(log.locator('[data-sv-stage="build"]')).toHaveAttribute('data-sv-state', 'failed')
@@ -221,15 +233,18 @@ test.describe('M7 SynCode', () => {
       'data-sv-state',
       'failed'
     )
-    await expect(log.locator('[data-sv-verify="tests"]')).toHaveAttribute('data-sv-state', 'skipped')
+    await expect(log.locator('[data-sv-verify="tests"]')).toHaveAttribute(
+      'data-sv-state',
+      'skipped'
+    )
     await expect(log.locator('[data-sv="syncode-result"]')).toContainText('SynCode failed at Build')
-    const diagnostic = log.locator('[data-sv-diagnostic="CPP_COMPILE_ERROR"]')
-    await expect(diagnostic).toContainText("When Speed changes 1: 'speed' was not declared")
+    const problem = log.locator('[data-sv-diagnostic="CPP_COMPILE_ERROR"]')
+    await expect(problem).toContainText("When Speed changes 1: 'speed' was not declared")
 
     await pane(page).click({ position: { x: 900, y: 600 } })
     await nodeByName(page, 'Stable for 1').click()
     await expect(editor(page).locator('h2').first()).toHaveText('Stable for 1')
-    await diagnostic.click()
+    await problem.click()
     await expect(editor(page).locator('h2').first()).toHaveText('When Speed changes 1')
   })
 })
