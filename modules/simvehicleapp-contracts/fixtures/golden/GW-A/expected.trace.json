@@ -1,0 +1,291 @@
+[
+  {
+    "runId": "golden",
+    "seq": 0,
+    "ts": 1000,
+    "ev": "trigger",
+    "wf": "gw_a",
+    "run": 1,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 100,
+        "previous": 0,
+        "timestamp": 1000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 1,
+    "ts": 1000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 2,
+    "ts": 1000,
+    "ev": "exit",
+    "wf": "gw_a",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "broken"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 3,
+    "ts": 2000,
+    "ev": "trigger",
+    "wf": "gw_a",
+    "run": 2,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 130,
+        "previous": 100,
+        "timestamp": 2000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 4,
+    "ts": 2000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 5,
+    "ts": 3000,
+    "ev": "cancel",
+    "wf": "gw_a",
+    "run": 2,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "reason": "restart"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 6,
+    "ts": 3000,
+    "ev": "trigger",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 135,
+        "previous": 130,
+        "timestamp": 3000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 7,
+    "ts": 3000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 8,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "stable"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 9,
+    "ts": 5000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n3",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 10,
+    "ts": 5000,
+    "ev": "write",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 11,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 12,
+    "ts": 5000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n4",
+    "blockId": "b4"
+  },
+  {
+    "runId": "golden",
+    "seq": 13,
+    "ts": 5000,
+    "ev": "value",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "kind": "mqtt",
+      "topic": "simvehicleapp/stable-overspeed-warning/hmi",
+      "payload": "{\"severity\":\"warning\",\"title\":\"Overspeed\",\"message\":\"Speed 135 km/h\",\"ts\":5000}"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 14,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_a",
+    "run": 3,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 15,
+    "ts": 6000,
+    "ev": "trigger",
+    "wf": "gw_a",
+    "run": 4,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 105,
+        "previous": 135,
+        "timestamp": 6000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 16,
+    "ts": 6000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 4,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 17,
+    "ts": 6000,
+    "ev": "exit",
+    "wf": "gw_a",
+    "run": 4,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "broken"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 18,
+    "ts": 6000,
+    "ev": "trigger",
+    "wf": "gw_a",
+    "run": 5,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "outputs": {
+        "value": 105,
+        "previous": 135,
+        "timestamp": 6000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 19,
+    "ts": 6000,
+    "ev": "enter",
+    "wf": "gw_a",
+    "run": 5,
+    "node": "n6",
+    "blockId": "b6"
+  },
+  {
+    "runId": "golden",
+    "seq": 20,
+    "ts": 6000,
+    "ev": "write",
+    "wf": "gw_a",
+    "run": 5,
+    "node": "n6",
+    "blockId": "b6",
+    "data": {
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "value": false
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 21,
+    "ts": 6000,
+    "ev": "exit",
+    "wf": "gw_a",
+    "run": 5,
+    "node": "n6",
+    "blockId": "b6",
+    "data": {
+      "handle": "next"
+    }
+  }
+]

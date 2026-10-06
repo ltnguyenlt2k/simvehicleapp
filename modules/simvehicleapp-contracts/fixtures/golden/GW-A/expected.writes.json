@@ -1,0 +1,12 @@
+[
+  {
+    "t": 5000,
+    "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+    "value": true
+  },
+  {
+    "t": 6000,
+    "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+    "value": false
+  }
+]

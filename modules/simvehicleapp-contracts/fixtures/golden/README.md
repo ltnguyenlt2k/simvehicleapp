@@ -25,4 +25,4 @@ checks every graph/scenario pair for schema validity, reference and VSS consiste
 studio adapter input, Sim ids replaced by the golden ids (by block name), blocks/edges in a stable order — re-exporting gives
 identical bytes. It is the input of the M4 graph-adapter golden test (`sim-state.json` → `graph.json`). Never hand-edited.
 
-Still to come: `ir.json` (M4), generated code (M6) and `expected.trace.json` (M5) — generated, never hand-edited.
+`ir.json` (M4, `core/packages/compiler/src/golden-ir.ts`) and `expected.writes.json` / `expected.trace.json` (M5, `core/packages/simulator/src/golden-trace.ts`) are generated and frozen after review — never hand-edited; runtimes must reproduce them (parity, ADR-0042). Still to come: generated code (M6).

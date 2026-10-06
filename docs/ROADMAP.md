@@ -154,7 +154,7 @@ ADR: [0017](../analysis/adr/ADR-0017-simulator.md) · Phụ thuộc: M4 · Chi t
 | Simulator Web Worker (tuỳ chọn) | 0017 | ☐ | | T08 |
 | UI Scenario editor | 0017 | ☐ | | T09 |
 | UI Simulation timeline + Replay overlay (`TraceOverlay`, dùng lại ở M8) | 0017,0027 | ☐ | | T10 |
-| `expected.trace/writes` GW-A..G đóng băng | 0042 | ☐ | | T11 |
+| `expected.trace/writes` GW-A..G đóng băng | 0042 | 🔄 | 2026-10-07 (Claude Code): sinh bằng `simulator/src/golden-trace.ts` từ `ir.json` + scenario, runId `golden`, test so byte; writes = kỳ vọng suy tay của scenario; review [M05-golden-trace-review](reviews/M05-golden-trace-review.md) (uỷ quyền PO) | T11 |
 
 ## M6 — C++ backend & runtime
 ADR: [0020](../analysis/adr/ADR-0020-backend-plugin-contract.md), [0021](../analysis/adr/ADR-0021-cpp-runtime-library.md), [0022](../analysis/adr/ADR-0022-cpp-codegen-strategy.md) · Phụ thuộc: M0 (song song), M4 · Chi tiết: [phases/M06](../analysis/phases/M06-cpp-backend-and-runtime.md)

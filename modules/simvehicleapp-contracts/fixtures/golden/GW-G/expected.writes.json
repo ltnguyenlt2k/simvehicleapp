@@ -1,0 +1,22 @@
+[
+  {
+    "t": 1000,
+    "path": "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position",
+    "value": 0
+  },
+  {
+    "t": 1000,
+    "path": "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position",
+    "value": 0
+  },
+  {
+    "t": 1000,
+    "path": "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position",
+    "value": 0
+  },
+  {
+    "t": 1000,
+    "path": "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position",
+    "value": 0
+  }
+]

@@ -1,0 +1,12 @@
+[
+  {
+    "t": 0,
+    "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn",
+    "value": true
+  },
+  {
+    "t": 500,
+    "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity",
+    "value": 80
+  }
+]

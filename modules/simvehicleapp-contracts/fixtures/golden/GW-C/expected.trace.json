@@ -1,0 +1,164 @@
+[
+  {
+    "runId": "golden",
+    "seq": 0,
+    "ts": 1700,
+    "ev": "trigger",
+    "wf": "gw_c",
+    "run": 1,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 30,
+        "previous": 25,
+        "timestamp": 1700
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 1,
+    "ts": 1700,
+    "ev": "enter",
+    "wf": "gw_c",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 2,
+    "ts": 1700,
+    "ev": "write",
+    "wf": "gw_c",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+      "value": "INTERVAL"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 3,
+    "ts": 1700,
+    "ev": "exit",
+    "wf": "gw_c",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 4,
+    "ts": 3500,
+    "ev": "trigger",
+    "wf": "gw_c",
+    "run": 2,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 80,
+        "previous": 30,
+        "timestamp": 3500
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 5,
+    "ts": 3500,
+    "ev": "enter",
+    "wf": "gw_c",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 6,
+    "ts": 3500,
+    "ev": "write",
+    "wf": "gw_c",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+      "value": "FAST"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 7,
+    "ts": 3500,
+    "ev": "exit",
+    "wf": "gw_c",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 8,
+    "ts": 5500,
+    "ev": "trigger",
+    "wf": "gw_c",
+    "run": 3,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 5,
+        "previous": 80,
+        "timestamp": 5500
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 9,
+    "ts": 5500,
+    "ev": "enter",
+    "wf": "gw_c",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 10,
+    "ts": 5500,
+    "ev": "write",
+    "wf": "gw_c",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+      "value": "OFF"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 11,
+    "ts": 5500,
+    "ev": "exit",
+    "wf": "gw_c",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  }
+]

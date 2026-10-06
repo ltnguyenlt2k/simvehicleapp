@@ -1,0 +1,332 @@
+[
+  {
+    "runId": "golden",
+    "seq": 0,
+    "ts": 2000,
+    "ev": "trigger",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 20,
+        "previous": 10,
+        "timestamp": 2000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 1,
+    "ts": 2000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 2,
+    "ts": 2000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 3,
+    "ts": 2000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 4,
+    "ts": 2000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n3",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 5,
+    "ts": 2000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 6,
+    "ts": 2000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 7,
+    "ts": 2000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n4",
+    "blockId": "b4"
+  },
+  {
+    "runId": "golden",
+    "seq": 8,
+    "ts": 2000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 9,
+    "ts": 2000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 10,
+    "ts": 2000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n5",
+    "blockId": "b5"
+  },
+  {
+    "runId": "golden",
+    "seq": 11,
+    "ts": 2000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 12,
+    "ts": 2000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 1,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 13,
+    "ts": 5000,
+    "ev": "trigger",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "value": 25,
+        "previous": 5,
+        "timestamp": 5000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 14,
+    "ts": 5000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 15,
+    "ts": 5000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 16,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 17,
+    "ts": 5000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n3",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 18,
+    "ts": 5000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 19,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 20,
+    "ts": 5000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n4",
+    "blockId": "b4"
+  },
+  {
+    "runId": "golden",
+    "seq": 21,
+    "ts": 5000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 22,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 23,
+    "ts": 5000,
+    "ev": "enter",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n5",
+    "blockId": "b5"
+  },
+  {
+    "runId": "golden",
+    "seq": 24,
+    "ts": 5000,
+    "ev": "write",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "path": "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 25,
+    "ts": 5000,
+    "ev": "exit",
+    "wf": "gw_d",
+    "run": 2,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "handle": "next"
+    }
+  }
+]

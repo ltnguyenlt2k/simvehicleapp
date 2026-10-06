@@ -1,0 +1,42 @@
+[
+  {
+    "t": 2000,
+    "path": "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 2000,
+    "path": "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 2000,
+    "path": "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 2000,
+    "path": "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 5000,
+    "path": "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 5000,
+    "path": "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 5000,
+    "path": "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked",
+    "value": true
+  },
+  {
+    "t": 5000,
+    "path": "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked",
+    "value": true
+  }
+]

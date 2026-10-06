@@ -1,0 +1,164 @@
+[
+  {
+    "runId": "golden",
+    "seq": 0,
+    "ts": 1000,
+    "ev": "trigger",
+    "wf": "gw_e",
+    "run": 1,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "tick": 1,
+        "timestamp": 1000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 1,
+    "ts": 1000,
+    "ev": "enter",
+    "wf": "gw_e",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 2,
+    "ts": 1000,
+    "ev": "value",
+    "wf": "gw_e",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "kind": "mqtt",
+      "topic": "simvehicleapp/telemetry",
+      "payload": "{\"speed\": 42, \"soc\": 80}"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 3,
+    "ts": 1000,
+    "ev": "exit",
+    "wf": "gw_e",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 4,
+    "ts": 2000,
+    "ev": "trigger",
+    "wf": "gw_e",
+    "run": 2,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "tick": 2,
+        "timestamp": 2000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 5,
+    "ts": 2000,
+    "ev": "enter",
+    "wf": "gw_e",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 6,
+    "ts": 2000,
+    "ev": "value",
+    "wf": "gw_e",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "kind": "mqtt",
+      "topic": "simvehicleapp/telemetry",
+      "payload": "{\"speed\": 50, \"soc\": 80}"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 7,
+    "ts": 2000,
+    "ev": "exit",
+    "wf": "gw_e",
+    "run": 2,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 8,
+    "ts": 3000,
+    "ev": "trigger",
+    "wf": "gw_e",
+    "run": 3,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {
+        "tick": 3,
+        "timestamp": 3000
+      }
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 9,
+    "ts": 3000,
+    "ev": "enter",
+    "wf": "gw_e",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 10,
+    "ts": 3000,
+    "ev": "value",
+    "wf": "gw_e",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "kind": "mqtt",
+      "topic": "simvehicleapp/telemetry",
+      "payload": "{\"speed\": 50, \"soc\": 80}"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 11,
+    "ts": 3000,
+    "ev": "exit",
+    "wf": "gw_e",
+    "run": 3,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "next"
+    }
+  }
+]

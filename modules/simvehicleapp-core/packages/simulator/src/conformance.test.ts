@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { compile } from "@simvehicleapp/compiler";
 import { fixtureContext } from "@simvehicleapp/compiler/src/golden-ir.ts";
 import { fixturesDir } from "@simvehicleapp/contracts";
+import { goldenIds, goldenOutputs } from "./golden-trace.ts";
 import { checkExpectations, simulate } from "./index.ts";
 
 /**
@@ -44,6 +45,16 @@ describe("golden scenarios GW-A…GW-G on the simulator", () => {
     test(id, async () => {
       const { mismatches } = await run(id);
       expect(mismatches.map((m) => m.message)).toEqual([]);
+    });
+  }
+});
+
+describe("frozen golden outputs (M05-T11): expected.writes.json / expected.trace.json", () => {
+  for (const id of goldenIds()) {
+    test(`${id}`, () => {
+      const out = goldenOutputs(id);
+      expect(out.writes).toBe(readFileSync(`${fixturesDir}golden/${id}/expected.writes.json`, "utf8"));
+      expect(out.trace).toBe(readFileSync(`${fixturesDir}golden/${id}/expected.trace.json`, "utf8"));
     });
   }
 });

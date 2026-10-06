@@ -1,0 +1,173 @@
+[
+  {
+    "runId": "golden",
+    "seq": 0,
+    "ts": 0,
+    "ev": "trigger",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n1",
+    "blockId": "b1",
+    "data": {
+      "outputs": {}
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 1,
+    "ts": 0,
+    "ev": "enter",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2"
+  },
+  {
+    "runId": "golden",
+    "seq": 2,
+    "ts": 0,
+    "ev": "enter",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n3",
+    "blockId": "b3"
+  },
+  {
+    "runId": "golden",
+    "seq": 3,
+    "ts": 0,
+    "ev": "write",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn",
+      "value": true
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 4,
+    "ts": 0,
+    "ev": "enter",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n4",
+    "blockId": "b4"
+  },
+  {
+    "runId": "golden",
+    "seq": 5,
+    "ts": 0,
+    "ev": "exit",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n3",
+    "blockId": "b3",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 6,
+    "ts": 500,
+    "ev": "exit",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n4",
+    "blockId": "b4",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 7,
+    "ts": 500,
+    "ev": "enter",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n5",
+    "blockId": "b5"
+  },
+  {
+    "runId": "golden",
+    "seq": 8,
+    "ts": 500,
+    "ev": "write",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity",
+      "value": 80
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 9,
+    "ts": 500,
+    "ev": "exit",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n5",
+    "blockId": "b5",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 10,
+    "ts": 500,
+    "ev": "exit",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n2",
+    "blockId": "b2",
+    "data": {
+      "handle": "next"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 11,
+    "ts": 500,
+    "ev": "enter",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n6",
+    "blockId": "b6"
+  },
+  {
+    "runId": "golden",
+    "seq": 12,
+    "ts": 500,
+    "ev": "value",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n6",
+    "blockId": "b6",
+    "data": {
+      "kind": "log",
+      "level": "info",
+      "message": "welcome done"
+    }
+  },
+  {
+    "runId": "golden",
+    "seq": 13,
+    "ts": 500,
+    "ev": "exit",
+    "wf": "gw_f",
+    "run": 1,
+    "node": "n6",
+    "blockId": "b6",
+    "data": {
+      "handle": "next"
+    }
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "t": 1700,
+    "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+    "value": "INTERVAL"
+  },
+  {
+    "t": 3500,
+    "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+    "value": "FAST"
+  },
+  {
+    "t": 5500,
+    "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+    "value": "OFF"
+  }
+]
