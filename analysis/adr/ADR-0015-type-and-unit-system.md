@@ -1,6 +1,6 @@
 # ADR-0015: Hệ kiểu & đơn vị (theo VSS datatypes/units, conversion tường minh)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Proposed — triển khai M4 theo uỷ quyền PO 2026-10-06, **chờ PO chấp thuận** khi verify cuối · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** Master Plan 6.4, 6.5; [06 §5](../06-ir-and-compiler.md)
 
 ## Context
@@ -31,3 +31,10 @@ Chi tiết kiểu mảng `T[]` (read-only trong UI, index/len/contains, diagnost
 
 ## Verification
 Bảng test ≥ 100 cặp phép toán/kiểu; unit conversion test với giá trị chuẩn (100 km/h = 27.7778 m/s).
+
+## Notes / Deviations
+**2026-10-06 — rà soát trước M4:**
+1. Nguồn bảng unit: v4.0 dùng `contracts/fixtures/vss/units.yaml` (seed từ nhánh `release/4.0`); v4.2 dùng `fixtures/vss/v4.2/{units,quantities}.yaml`. `packages/units` nạp theo release của workflow và gắn vào `modelHash`, nên đổi bảng ⇒ đổi hash.
+2. Hệ số chuyển đổi **chỉ** lấy từ bảng nội bộ có test (100 km/h = 27.7778 m/s, °C↔°F/K có offset). Unit không có trong bảng nhưng cùng dimension ⇒ `UNIT_DIMENSION_MISMATCH` (không đoán).
+3. Literal số không unit so với signal có unit ⇒ gán unit của vế kia + info `UNIT_ASSUMED`; `%` là unit `percent` (ADR-0013 Notes).
+4. So sánh/ghi giá trị kiểu `string` có `allowed` (enum VSS): literal kiểm ở lint S3 (`ENUM_VALUE_NOT_ALLOWED`, đã có M3); biểu thức string ⇒ warning + runtime từ chối ghi.
