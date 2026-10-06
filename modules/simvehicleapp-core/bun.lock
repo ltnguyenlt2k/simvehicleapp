@@ -64,6 +64,7 @@
       "dependencies": {
         "@simvehicleapp/blocks": "workspace:*",
         "@simvehicleapp/compiler": "workspace:*",
+        "@simvehicleapp/simulator": "workspace:*",
         "@simvehicleapp/vss": "workspace:*",
       },
     },

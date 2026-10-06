@@ -298,6 +298,14 @@
       "adr": "ADR-0016"
     },
     {
+      "code": "SIM_LIMIT_REACHED",
+      "severity": "warning",
+      "stage": "runtime",
+      "title": "Simulation stopped at its event limit (1e6 events)",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0017"
+    },
+    {
       "code": "TRIGGER_WITHOUT_ACTION",
       "severity": "warning",
       "stage": "control-flow",

@@ -114,6 +114,24 @@ paths:
                   trace: { type: array, items: { $ref: "urn:simvehicleapp:contracts:trace-event:1.0.0-alpha.1" } }
                   writes: { type: array, items: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1#/$defs/write" } }
                   diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+                  signals:
+                    description: Signal values applied from the scenario, for the timeline (additive, M05-T07).
+                    type: array
+                    items: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1#/$defs/write" }
+                  publishes:
+                    description: MQTT messages published by the app.
+                    type: array
+                    items: { type: object, required: [t, topic, payload], properties: { t: { type: integer, minimum: 0 }, topic: { type: string }, payload: { type: string } } }
+                  logs:
+                    description: Log lines of the app.
+                    type: array
+                    items: { type: object, required: [t, level, message], properties: { t: { type: integer, minimum: 0 }, level: { type: string }, message: { type: string } } }
+                  expectations:
+                    description: Present when the scenario has `expect`; mismatches are human-readable.
+                    type: object
+                    required: [passed, mismatches]
+                    properties: { passed: { type: boolean }, mismatches: { type: array, items: { type: string } } }
+        "400": { description: "Body is not JSON, or `ir`/`scenario` does not match its contract." }
         "422": { $ref: "#/components/responses/Diagnostics" }
   /blocks:
     get:

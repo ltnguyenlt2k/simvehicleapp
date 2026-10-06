@@ -55,15 +55,10 @@ test("auth is required; /healthz and /version are public", async () => {
   expect((await (await handler(new Request("http://compiler:4020/version"))).json()).name).toBe("compiler");
 });
 
-test("routes of later milestones answer 501, unknown routes 404, wrong method 405", async () => {
-  for (const p of ["/simulate"]) {
-    expect(Object.keys(openapi.paths)).toContain(p);
-    const res = await call(p, { method: "POST" });
-    expect(res.status).toBe(501);
-    expect((await res.json()).error).toBe("not_implemented");
-  }
+test("unknown routes 404, wrong method 405", async () => {
   expect((await call("/nope")).status).toBe(404);
   expect((await call("/blocks", { method: "POST" })).status).toBe(405);
+  expect((await call("/simulate")).status).toBe(405);
 });
 
 const graph = (path: string) => ({
@@ -208,4 +203,41 @@ test("performance: a 200-block graph compiles (build) in under 300 ms (M04-T10)"
   }
   times.sort((a, b) => a - b);
   expect(times[1]!).toBeLessThan(300);
+});
+
+// --- M05-T07: /simulate ---
+const scenarioOf = (id: string) => Bun.YAML.parse(readFileSync(`${fixturesDir}${id}/scenario.yaml`, "utf8"));
+const gwaIr = JSON.parse(readFileSync(`${fixturesDir}golden/GW-A/ir.json`, "utf8"));
+
+test("POST /simulate runs the golden GW-A scenario and conforms to the contract", async () => {
+  const res = await post("/simulate", { ir: gwaIr, scenario: scenarioOf("golden/GW-A") });
+  expect(res.status).toBe(200);
+  const body = (await res.json()) as { writes: unknown[]; trace: { runId: string }[]; expectations: { passed: boolean; mismatches: string[] }; diagnostics: unknown[] };
+  const validate = ajv.compile(openapi.paths["/simulate"].post.responses["200"].content["application/json"].schema);
+  if (!(validate(body) as boolean)) throw new Error(ajv.errorsText(validate.errors));
+  expect(body.expectations).toEqual({ passed: true, mismatches: [] });
+  expect(body.writes).toEqual([
+    { t: 5000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true },
+    { t: 6000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false },
+  ]);
+  expect(body.diagnostics).toEqual([]);
+});
+
+test("POST /simulate rejects bodies off contract and reports the event limit", async () => {
+  expect((await post("/simulate", "{")).status).toBe(400);
+  expect((await post("/simulate", { ir: { irVersion: "1.0.0" }, scenario: scenarioOf("golden/GW-A") })).status).toBe(400);
+  expect((await post("/simulate", { ir: gwaIr, scenario: { name: "x" } })).status).toBe(400);
+  const capped = createService(
+    { name: "compiler", version: "0.1.0", secret: SECRET, logger: createLogger({ service: "compiler", write: () => {} }) },
+    createCompilerHandler({ vehicle: fx.vehicle, modelHash: fx.modelHash, simMaxEvents: 50 }),
+  );
+  const flood = {
+    scenarioVersion: "1.0.0",
+    name: "flood",
+    until: 86_400_000,
+    inputs: Array.from({ length: 100 }, (_, i) => ({ t: i, path: "Vehicle.Speed", value: i % 2 ? 200 : 0 })),
+  };
+  const res = await capped(new Request("http://compiler:4020/simulate", { method: "POST", body: JSON.stringify({ ir: gwaIr, scenario: flood }), headers: { "x-sv-internal": SECRET, "content-type": "application/json" } }));
+  const body = (await res.json()) as { diagnostics: { code: string; severity: string; data: { events: number } }[] };
+  expect(body.diagnostics).toEqual([expect.objectContaining({ code: "SIM_LIMIT_REACHED", severity: "warning", data: expect.objectContaining({ events: 50 }) })]);
 });

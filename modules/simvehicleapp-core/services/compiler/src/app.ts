@@ -4,18 +4,20 @@ import { BLOCK_SPECS } from "@simvehicleapp/blocks";
 import {
   type CapabilitiesLookup,
   compile,
+  diag,
   IR_VERSION,
   knownOpcodes,
   lint,
   type ModelHashLookup,
   type VehicleLookup,
 } from "@simvehicleapp/compiler";
+import { ContractValidator } from "@simvehicleapp/contracts";
+import { checkExpectations, simulate } from "@simvehicleapp/simulator";
 import { CatalogUnavailableError } from "./vehicle-lookup.ts";
 
 /** Routes of `openapi/compiler.v1.yaml` not implemented yet, with the milestone that brings them. */
-const PENDING: Readonly<Record<string, string>> = {
-  "/simulate": "M5",
-};
+const PENDING: Readonly<Record<string, string>> = {};
+const validator = new ContractValidator();
 const MODES = new Set(["lint", "verify", "build"]);
 const OPCODES_BODY = JSON.stringify({ irVersion: IR_VERSION, opcodes: knownOpcodes() });
 
@@ -34,6 +36,8 @@ export interface CompilerDeps {
   modelHash?: ModelHashLookup;
   /** Backend `/capabilities` for S7 (`target` of /compile). */
   capabilities?: CapabilitiesLookup;
+  /** Simulation event cap (ADR-0017 §5, default 1e6; tests lower it). */
+  simMaxEvents?: number;
 }
 
 /** Request bodies above this are rejected before parsing (the compiler limit is 1 MB of graph). */
@@ -75,6 +79,42 @@ export function createCompilerHandler(deps: CompilerDeps) {
         }
         throw e;
       }
+    }
+    if (pathname === "/simulate") {
+      if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+      const length = Number(req.headers.get("content-length") ?? 0);
+      if (length > MAX_BODY_BYTES) return json(413, { error: "payload_too_large" });
+      let body: { ir?: unknown; scenario?: unknown };
+      try {
+        body = (await req.json()) as typeof body;
+      } catch {
+        return json(400, { error: "invalid_json" });
+      }
+      for (const [name, contract] of [["ir", "ir"], ["scenario", "scenario"]] as const) {
+        const v = validator.validate(contract, body?.[name]);
+        if (!v.valid) {
+          return json(400, { error: "invalid_request", message: `body.${name} does not match the ${contract} contract`, errors: v.errors.slice(0, 10).map((e) => `${e.instancePath || "/"} ${e.message}`) });
+        }
+      }
+      const ir = body.ir as { irVersion: string; workflowId: string };
+      if (!ir.irVersion.startsWith("1.")) {
+        return json(422, [diag("IR_VERSION_UNSUPPORTED", ir.workflowId, { message: `The simulator runs IR 1.x, not ${ir.irVersion}`, data: { irVersion: ir.irVersion } })]);
+      }
+      const sc = body.scenario as { until: number; initial?: Record<string, unknown>; inputs: never[]; latency?: { read?: number; write?: number }; expect?: never };
+      const result = simulate(ir, { until: sc.until, initial: sc.initial, inputs: sc.inputs, latency: sc.latency, runId: ctx.requestId, ...(deps.simMaxEvents ? { maxEvents: deps.simMaxEvents } : {}) });
+      const diagnostics = result.limit
+        ? [diag("SIM_LIMIT_REACHED", ir.workflowId, { message: `Simulation stopped after ${result.limit.events} events at t=${result.limit.t} ms`, data: { ...result.limit } })]
+        : [];
+      const mismatches = sc.expect ? checkExpectations(result, sc.expect).map((m) => m.message) : undefined;
+      return json(200, {
+        trace: result.trace,
+        writes: result.writes,
+        signals: result.signals,
+        publishes: result.publishes,
+        logs: result.logs,
+        diagnostics,
+        ...(mismatches ? { expectations: { passed: mismatches.length === 0, mismatches } } : {}),
+      });
     }
     if (pathname === "/opcodes") {
       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
