@@ -1,9 +1,10 @@
 import { ContractValidator, type DiagnosticV1, type GraphBlock, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
 import { BLOCK_SPECS, type BlockSpec } from "@simvehicleapp/blocks";
-import { checkRefs, collectRefs, type Node, parseExpression, type RefResolver } from "@simvehicleapp/expr";
+import { checkRefs, collectRefs, type Node, parseExpression, type RefCheck, type RefResolver } from "@simvehicleapp/expr";
 import { isArrayType, type VssNode } from "@simvehicleapp/vss";
 import { diag, sortDiagnostics } from "./diagnostics.ts";
 import { MIGRATIONS, migrateGraph, type MigrationRegistry } from "./migrations.ts";
+import { analyzeControlFlow } from "./controlflow.ts";
 
 /** analysis/06 §3 S0. */
 export const MAX_BLOCKS = 2000;
@@ -29,6 +30,7 @@ export interface LintContext {
 
 const CONTAINERS = new Set(["sv_repeat", "sv_while", "sv_parallel"]);
 const PARALLEL_START = "parallel-start-source";
+const CONTAINER_START = new Set(["loop-start-source", PARALLEL_START]);
 const TRIGGER_CATEGORY = "triggers";
 const validator = new ContractValidator();
 
@@ -146,6 +148,41 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
     );
   }
 
+  // A connection stays inside one container level; only a container's start handle enters its body.
+  for (const e of graph.edges) {
+    const from = byId.get(e.from);
+    const to = byId.get(e.to);
+    if (!from || !to || !specs.has(from.type) || !specs.has(to.type)) continue;
+    const entersBody = CONTAINERS.has(from.type) && CONTAINER_START.has(e.fromHandle);
+    const ok = entersBody ? to.parentId === from.id : (from.parentId ?? null) === (to.parentId ?? null);
+    if (!ok) {
+      out.push(
+        diag("CONTAINER_INVALID", wfId, {
+          blockId: from.id,
+          message: entersBody ? `${to.name} is not inside ${from.name} — move it into the container` : `The connection from ${from.name} to ${to.name} crosses the edge of a repeat/while/parallel container`,
+          data: { reason: "crosses_boundary", edge: e.id },
+        }),
+      );
+    }
+  }
+
+  // S6 — control flow: no cycles outside containers; reachability and dominance for references
+  const cf = analyzeControlFlow(graph, (b) => specs.get(b.type)?.category === TRIGGER_CATEGORY);
+  for (const cycle of cf.cycles) {
+    out.push(
+      diag("CONTROL_FLOW_CYCLE", wfId, {
+        blockId: cycle[0]!,
+        message: `${cycle.map((id) => byId.get(id)!.name).join(" → ")} loop back on themselves — use Repeat or While for loops`,
+        data: { blocks: cycle },
+      }),
+    );
+  }
+  /** `<block.field>` uses of `b` whose block may not have run yet (DATA_REF_NOT_DOMINATING). */
+  const notDominating = (b: GraphBlock, refs: readonly RefCheck[]) =>
+    cf.reachable.has(b.id)
+      ? refs.filter((r) => r.resolved && r.ref.kind === "block" && !cf.dominates(byName.get(r.ref.path[0]!)!.id, b.id))
+      : [];
+
   // S3 prefetch: every VSS path used by a vss-path prop or a <Vehicle.…> reference
   const exprCache = new Map<string, ReturnType<typeof parseExpression>>();
   const parsed = (b: GraphBlock, prop: string, kind: string, value: string) => {
@@ -235,16 +272,26 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
           continue;
         }
         const ast: Node = r.ast;
-        for (const e of checkRefs(ast, resolver).errors) {
+        const checked = checkRefs(ast, resolver);
+        for (const e of checked.errors) {
           out.push(diag("EXPR_UNKNOWN_REF", wfId, { blockId: b.id, field: p.name, message: e.message, data: { reason: e.reason, ref: e.ref, span: e.span } }));
+        }
+        for (const u of notDominating(b, checked.refs)) {
+          const ref = `<${u.ref.path.join(".")}>`;
+          out.push(diag("DATA_REF_NOT_DOMINATING", wfId, { blockId: b.id, field: p.name, message: `${ref} may not have a value yet: ${byName.get(u.ref.path[0]!)!.name} does not always run before ${b.name}`, data: { ref, span: u.ref.span } }));
         }
       }
       if (p.kind === "template" && typeof v === "string") {
         for (const m of v.matchAll(INLINE_REF)) {
           const inner = parseExpression(m[0]);
           if (!inner.ok) continue;
-          for (const e of checkRefs(inner.ast, resolver).errors) {
-            out.push(diag("EXPR_UNKNOWN_REF", wfId, { blockId: b.id, field: p.name, message: e.message, data: { reason: e.reason, ref: e.ref, span: { start: m.index!, end: m.index! + m[0].length } } }));
+          const checked = checkRefs(inner.ast, resolver);
+          const span = { start: m.index!, end: m.index! + m[0].length };
+          for (const e of checked.errors) {
+            out.push(diag("EXPR_UNKNOWN_REF", wfId, { blockId: b.id, field: p.name, message: e.message, data: { reason: e.reason, ref: e.ref, span } }));
+          }
+          for (const u of notDominating(b, checked.refs)) {
+            out.push(diag("DATA_REF_NOT_DOMINATING", wfId, { blockId: b.id, field: p.name, message: `${m[0]} may not have a value yet: ${byName.get(u.ref.path[0]!)!.name} does not always run before ${b.name}`, data: { ref: m[0], span } }));
           }
         }
       }
@@ -289,14 +336,7 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
   const outgoing = new Map<string, typeof graph.edges>();
   for (const e of graph.edges) outgoing.set(e.from, [...(outgoing.get(e.from) ?? []), e]);
   const triggers = known.filter((b) => specs.get(b.type)!.category === TRIGGER_CATEGORY);
-  const reached = new Set<string>();
-  const queue = triggers.map((t) => t.id);
-  while (queue.length) {
-    const id = queue.shift()!;
-    if (reached.has(id)) continue;
-    reached.add(id);
-    for (const e of outgoing.get(id) ?? []) if (byId.has(e.to)) queue.push(e.to);
-  }
+  const reached = cf.reachable;
   for (const t of triggers) {
     if (!(outgoing.get(t.id) ?? []).length) out.push(diag("TRIGGER_WITHOUT_ACTION", wfId, { blockId: t.id, message: `${t.name} starts nothing — connect a step after it` }));
   }

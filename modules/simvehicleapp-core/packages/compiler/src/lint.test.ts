@@ -235,3 +235,79 @@ describe("lint: S3 model hash (M04-T04, risk R2)", () => {
     expect(await lint(base(), { vehicle, modelHash: async () => other })).toEqual([]);
   });
 });
+
+describe("lint: S6 control flow (M04-T06)", () => {
+  type B = WorkflowGraphV1["blocks"][number];
+  const blk = (id: string, type: string, name: string, props: Record<string, unknown>, parentId: string | null = null) =>
+    ({ id, type, name, props, parentId, blockVersion: 1 }) as unknown as B;
+  const edge = (id: string, from: string, fromHandle: string, to: string) => ({ id, from, fromHandle, to, toHandle: "target" });
+  const trig = blk("t", "sv_on_signal_changed", "Speed changed", { path: "Vehicle.Speed", mode: "any" });
+  const expr = (id: string, name: string, e: string, parent: string | null = null) => blk(id, "sv_expression", name, { expr: e }, parent);
+  const graph = (blocks: B[], edges: ReturnType<typeof edge>[]): WorkflowGraphV1 => ({ ...base(), blocks, edges }) as WorkflowGraphV1;
+  const only = async (g: WorkflowGraphV1, code: string) => (await lint(g, { vehicle })).filter((d) => d.code === code);
+
+  test("a cycle outside containers ⇒ CONTROL_FLOW_CYCLE once, on the first block id", async () => {
+    const g = graph([trig, expr("a", "A", "1"), expr("b", "B", "2")], [edge("e1", "t", "source", "a"), edge("e2", "a", "source", "b"), edge("e3", "b", "source", "a")]);
+    const d = await only(g, "CONTROL_FLOW_CYCLE");
+    expect(d).toHaveLength(1);
+    expect(d[0]).toMatchObject({ blockId: "a", data: { blocks: ["a", "b"] } });
+  });
+
+  test("a reference to a block on another branch ⇒ DATA_REF_NOT_DOMINATING", async () => {
+    const g = graph(
+      [trig, blk("i", "sv_if", "Check", { condition: "<speedchanged.value> > 10" }), expr("x", "Fast", "1"), expr("y", "Slow", "<fast.result> + 1"), expr("z", "Join", "<fast.result>")],
+      [edge("e1", "t", "source", "i"), edge("e2", "i", "then", "x"), edge("e3", "i", "else", "y"), edge("e4", "x", "source", "z"), edge("e5", "y", "source", "z")],
+    );
+    const d = await only(g, "DATA_REF_NOT_DOMINATING");
+    expect(d.map((x) => [x.blockId, x.field, (x.data as { ref: string }).ref])).toEqual([
+      ["y", "expr", "<fast.result>"],
+      ["z", "expr", "<fast.result>"],
+    ]);
+  });
+
+  test("references along one path are fine, including the trigger's outputs and template props", async () => {
+    const g = graph(
+      [trig, expr("x", "Double", "<speedchanged.value> * 2"), blk("l", "sv_log", "Log", { message: "speed <double.result>" })],
+      [edge("e1", "t", "source", "x"), edge("e2", "x", "source", "l")],
+    );
+    expect(await only(g, "DATA_REF_NOT_DOMINATING")).toEqual([]);
+  });
+
+  test("a template prop referencing a block that does not always run ⇒ DATA_REF_NOT_DOMINATING", async () => {
+    const t2 = blk("t2", "sv_on_app_start", "Start", {});
+    const g = graph(
+      [trig, t2, expr("x", "Double", "<speedchanged.value> * 2"), blk("l", "sv_log", "Log", { message: "speed <double.result>" })],
+      [edge("e1", "t", "source", "x"), edge("e2", "x", "source", "l"), edge("e3", "t2", "source", "l")],
+    );
+    expect((await only(g, "DATA_REF_NOT_DOMINATING")).map((d) => d.blockId)).toEqual(["l"]);
+  });
+
+  test("container bodies do not dominate what follows the container", async () => {
+    const g = graph(
+      [
+        blk("s", "sv_on_app_start", "Start", {}),
+        blk("r", "sv_repeat", "Three times", { count: 3, intervalMs: 0 }),
+        expr("x", "Inside", "<loop.index> * 2", "r"),
+        expr("y", "After", "<inside.result>"),
+      ],
+      [edge("e1", "s", "source", "r"), edge("e2", "r", "loop-start-source", "x"), edge("e3", "r", "loop-end-source", "y")],
+    );
+    expect((await only(g, "DATA_REF_NOT_DOMINATING")).map((d) => d.blockId)).toEqual(["y"]);
+    expect(await only(g, "CONTAINER_INVALID")).toEqual([]);
+  });
+
+  test("connections crossing a container edge ⇒ CONTAINER_INVALID (crosses_boundary)", async () => {
+    const g = graph(
+      [
+        blk("s", "sv_on_app_start", "Start", {}),
+        blk("r", "sv_repeat", "Three times", { count: 3, intervalMs: 0 }),
+        expr("x", "Inside", "1", "r"),
+        expr("y", "Outside", "2"),
+      ],
+      [edge("e1", "s", "source", "r"), edge("e2", "r", "loop-start-source", "y"), edge("e3", "x", "source", "y"), edge("e4", "r", "loop-end-source", "x")],
+    );
+    const d = await only(g, "CONTAINER_INVALID");
+    expect(d.map((x) => (x.data as { edge: string }).edge).sort()).toEqual(["e2", "e3", "e4"]);
+    expect(d.every((x) => (x.data as { reason: string }).reason === "crosses_boundary")).toBe(true);
+  });
+});
