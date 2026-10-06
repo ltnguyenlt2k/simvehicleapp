@@ -1,0 +1,394 @@
+{
+  "workflowId": "gw_g",
+  "name": "Window Close on Rain",
+  "vssRelease": "v4.0",
+  "state": {
+    "blocks": {
+      "b1": {
+        "id": "b1",
+        "type": "sv_on_condition",
+        "name": "Rain while parked",
+        "position": {
+          "x": 40,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": true,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "expr": {
+            "id": "expr",
+            "type": "sv-expression",
+            "value": "<Vehicle.Body.Raindetection.Intensity> > 30 && <Vehicle.Speed> < 5"
+          },
+          "debounceMs": {
+            "id": "debounceMs",
+            "type": "sv-duration",
+            "value": 0
+          },
+          "concurrency": {
+            "id": "concurrency",
+            "type": "dropdown",
+            "value": "ignore"
+          }
+        },
+        "outputs": {
+          "timestamp": {
+            "type": "number"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b2": {
+        "id": "b2",
+        "type": "sv_set_actuator",
+        "name": "Close 1",
+        "position": {
+          "x": 360,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "0"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b3": {
+        "id": "b3",
+        "type": "sv_set_actuator",
+        "name": "Close 2",
+        "position": {
+          "x": 680,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "0"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b4": {
+        "id": "b4",
+        "type": "sv_set_actuator",
+        "name": "Close 3",
+        "position": {
+          "x": 1000,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "0"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b5": {
+        "id": "b5",
+        "type": "sv_set_actuator",
+        "name": "Close 4",
+        "position": {
+          "x": 40,
+          "y": 245
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "0"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b6": {
+        "id": "b6",
+        "type": "sv_wait_until",
+        "name": "All closed",
+        "position": {
+          "x": 360,
+          "y": 245
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "condition": {
+            "id": "condition",
+            "type": "sv-expression",
+            "value": "<Vehicle.Cabin.Door.Row1.DriverSide.Window.Position> == 0 && <Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position> == 0 && <Vehicle.Cabin.Door.Row2.DriverSide.Window.Position> == 0 && <Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position> == 0"
+          },
+          "timeoutMs": {
+            "id": "timeoutMs",
+            "type": "sv-duration",
+            "value": 10000
+          }
+        },
+        "outputs": {},
+        "data": {},
+        "locked": false
+      },
+      "b7": {
+        "id": "b7",
+        "type": "sv_log",
+        "name": "Closed",
+        "position": {
+          "x": 680,
+          "y": 245
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "level": {
+            "id": "level",
+            "type": "dropdown",
+            "value": "info"
+          },
+          "message": {
+            "id": "message",
+            "type": "long-input",
+            "value": "windows closed"
+          }
+        },
+        "outputs": {},
+        "data": {},
+        "locked": false
+      },
+      "b8": {
+        "id": "b8",
+        "type": "sv_log",
+        "name": "Not closed",
+        "position": {
+          "x": 1000,
+          "y": 245
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "level": {
+            "id": "level",
+            "type": "dropdown",
+            "value": "warn"
+          },
+          "message": {
+            "id": "message",
+            "type": "long-input",
+            "value": "windows did not close"
+          }
+        },
+        "outputs": {},
+        "data": {},
+        "locked": false
+      }
+    },
+    "edges": [
+      {
+        "id": "e1",
+        "source": "b1",
+        "target": "b2",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e2",
+        "source": "b2",
+        "target": "b3",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e3",
+        "source": "b3",
+        "target": "b4",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e4",
+        "source": "b4",
+        "target": "b5",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e5",
+        "source": "b5",
+        "target": "b6",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e6",
+        "source": "b6",
+        "target": "b7",
+        "sourceHandle": "ok",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e7",
+        "source": "b6",
+        "target": "b8",
+        "sourceHandle": "timeout",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      }
+    ],
+    "loops": {},
+    "parallels": {}
+  },
+  "variables": []
+}

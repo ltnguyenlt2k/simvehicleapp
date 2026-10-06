@@ -1,0 +1,108 @@
+{
+  "workflowId": "gw_e",
+  "name": "Periodic Telemetry",
+  "vssRelease": "v4.0",
+  "state": {
+    "blocks": {
+      "b1": {
+        "id": "b1",
+        "type": "sv_on_timer",
+        "name": "Every second",
+        "position": {
+          "x": 40,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": true,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "intervalMs": {
+            "id": "intervalMs",
+            "type": "sv-duration",
+            "value": 1000
+          },
+          "concurrency": {
+            "id": "concurrency",
+            "type": "dropdown",
+            "value": "ignore"
+          },
+          "initialDelayMs": {
+            "id": "initialDelayMs",
+            "type": "sv-duration",
+            "value": 1000
+          }
+        },
+        "outputs": {
+          "tick": {
+            "type": "number"
+          },
+          "timestamp": {
+            "type": "number"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b2": {
+        "id": "b2",
+        "type": "sv_mqtt_publish",
+        "name": "Publish telemetry",
+        "position": {
+          "x": 360,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "qos": {
+            "id": "qos",
+            "type": "dropdown",
+            "value": "0"
+          },
+          "topic": {
+            "id": "topic",
+            "type": "short-input",
+            "value": "simvehicleapp/telemetry"
+          },
+          "retain": {
+            "id": "retain",
+            "type": "switch",
+            "value": false
+          },
+          "payload": {
+            "id": "payload",
+            "type": "long-input",
+            "value": "{\"speed\": <Vehicle.Speed>, \"soc\": <Vehicle.Powertrain.TractionBattery.StateOfCharge.Current>}"
+          },
+          "payloadType": {
+            "id": "payloadType",
+            "type": "dropdown",
+            "value": "json"
+          }
+        },
+        "outputs": {},
+        "data": {},
+        "locked": false
+      }
+    },
+    "edges": [
+      {
+        "id": "e1",
+        "source": "b1",
+        "target": "b2",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      }
+    ],
+    "loops": {},
+    "parallels": {}
+  },
+  "variables": []
+}
