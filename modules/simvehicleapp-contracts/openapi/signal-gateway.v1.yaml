@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: SimVehicleApp Signal Gateway API
   version: 1.0.0-alpha.1
-  description: "Bridge to KUKSA databroker via kuksa.val.v1 (ADR-0024 §4, analysis/08 §4). Inject only paths present in the catalog, dev runs only."
+  description: "Bridge to KUKSA databroker via kuksa.val.v1 (ADR-0024 §4, analysis/08 §4): signal stream (SSE), inject, actuator mirroring, scenario playback. Only paths of the release catalog."
   license: { name: Apache-2.0, identifier: Apache-2.0 }
 servers:
   - url: http://signal-gateway:4050
@@ -34,30 +34,118 @@ paths:
               schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
   /signals:
     get:
-      operationId: signalsWebSocket
+      operationId: streamSignals
       tags: [signals]
-      description: "WebSocket upgrade. Client sends SignalClientMessage (subscribe/unsubscribe/set); server pushes SignalUpdate v1."
+      description: "SSE of SignalUpdate v1 (`event: signal`) for the paths: the current value/target of each first, then every change. Replaces the WebSocket of the skeleton (ADR-0027 Notes 2026-10-07: the studio BFF relays SSE, Next.js route handlers cannot proxy a WebSocket)."
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
-        - { name: release, in: query, required: true, schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }, description: "Selects the databroker for this VSS release (SV_DATABROKERS)." }
+        - { $ref: "#/components/parameters/Release" }
+        - { $ref: "#/components/parameters/Paths" }
       responses:
-        "101":
-          description: Switching protocols.
-          x-sv-client-message: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1#/$defs/clientMessage" }
-          x-sv-server-message: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1" }
+        "200":
+          description: Event stream.
+          content:
+            text/event-stream:
+              schema: { type: string }
+              x-sv-event-data: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1" }
+        "400": { $ref: "#/components/responses/Rejected" }
+        "503": { description: "No databroker for this release, or it is unreachable." }
+    post:
+      operationId: setSignal
+      tags: [signals]
+      description: "Injects a value: `value` = current value (sensor, attribute, actuator — the feeder/provider role), `target` = actuator target. Only paths of the release catalog; the value must fit the datatype, min/max and allowed values."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [release, path, value, field]
+              additionalProperties: false
+              properties:
+                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                path: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" }
+                value: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+                field: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1#/$defs/field" }
+      responses:
+        "200":
+          description: Written.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1" }
+        "400": { $ref: "#/components/responses/Rejected" }
+        "422": { $ref: "#/components/responses/Rejected" }
+        "503": { description: "No databroker for this release, or it is unreachable." }
+  /mirror:
+    put:
+      operationId: setMirror
+      tags: [signals]
+      description: "Actuators whose target is copied to their current value (the provider role in dev runs, ADR-0024 Notes M0): the orchestrator sets the actuators the running app writes, an empty list stops mirroring."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [release, paths]
+              additionalProperties: false
+              properties:
+                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                paths: { type: array, maxItems: 500, uniqueItems: true, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+      responses:
+        "204": { description: Mirroring updated. }
+        "400": { $ref: "#/components/responses/Rejected" }
+  /play:
+    post:
+      operationId: playScenario
+      tags: [scenarios]
+      description: "Plays a scenario v1 on the real databroker (M08-T07): `initial` at once, then each input at its time (signal inputs set the current value, topic inputs are published on MQTT). One playback at a time; a new one replaces it."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [release, scenario]
+              additionalProperties: false
+              properties:
+                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                scenario: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1" }
+      responses:
+        "202":
+          description: Playing.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Playback" }
+        "400": { $ref: "#/components/responses/Rejected" }
+    get:
+      operationId: getPlayback
+      tags: [scenarios]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: The current or last playback.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Playback" }
+        "404": { description: Nothing played yet. }
+    delete:
+      operationId: stopPlayback
+      tags: [scenarios]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "204": { description: Stopped (or nothing was playing). }
   /snapshot:
     get:
       operationId: snapshot
       tags: [signals]
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
-        - { name: release, in: query, required: true, schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" } }
-        - name: paths
-          in: query
-          required: true
-          style: form
-          explode: false
-          schema: { type: array, minItems: 1, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+        - { $ref: "#/components/parameters/Release" }
+        - { $ref: "#/components/parameters/Paths" }
       responses:
         "200":
           description: Current values (and actuator targets).
@@ -82,9 +170,47 @@ components:
       required: false
       description: Correlation id propagated across services (ADR-0007 §6).
       schema: { type: string, maxLength: 128 }
+    Release:
+      name: release
+      in: query
+      required: true
+      description: "Selects the databroker for this VSS release (SV_DATABROKERS)."
+      schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+    Paths:
+      name: paths
+      in: query
+      required: true
+      style: form
+      explode: false
+      schema: { type: array, minItems: 1, maxItems: 200, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
   responses:
+    Rejected:
+      description: "Rejected: unknown path for the release, value of the wrong type/range, or refused by the databroker."
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, message]
+            properties:
+              error: { type: string }
+              message: { type: string }
     Diagnostics:
       description: Request understood but rejected; see diagnostics (ADR-0016).
       content:
         application/json:
           schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+  schemas:
+    Playback:
+      type: object
+      required: [id, release, name, state, until, played, total, startedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        release: { type: string }
+        name: { type: string }
+        state: { enum: [playing, done, stopped, failed] }
+        until: { type: integer, minimum: 0, description: "Scenario length (ms)." }
+        played: { type: integer, minimum: 0, description: "Inputs applied so far." }
+        total: { type: integer, minimum: 0 }
+        startedAt: { type: integer }
+        error: { type: string }

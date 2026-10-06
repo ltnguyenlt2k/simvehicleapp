@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (M08, runs locked): `Run` (projectId, vssRelease, traceLevel, exitCode, runningAt, finishedAt…), `startRun` body `traceLevel` (lowers only) + 409 body with `activeRun`, `GET /runs` (`projectId`, `active`), `GET /runs/{rid}`.
+- `openapi/signal-gateway.v1.yaml` (M08, skeleton never implemented): the `/signals` WebSocket becomes SSE (`GET /signals`) + `POST /signals` (inject) — the studio BFF relays SSE and cannot proxy a WebSocket (ADR-0027 Notes 2026-10-07); new `PUT /mirror` (actuator target → current) and `/play` (scenario playback on the databroker, M08-T07).
 - `openapi/orchestrator.v1.yaml` (M07, skeleton locked): `Project` (appName, settings, status, workflows), `Generation` (Appendix A/B: success, stage, stages, verification, generatedFiles, editor…), `PUT /projects/{id}/workflows`, `GET /projects/{id}/files`, `GET /projects/{id}/file`, `startGeneration` body `scenarios`/`overwriteModified`.
 - Diagnostics catalog (additive, M07): `PROJECT_VSS_RELEASE_MISMATCH` (codegen, error) — a workflow authored for another VSS release than its project (the generated code would not build against the project's vehicle model).
 - `openapi/workspace.v1.yaml` (additive, M07-T19): `GET /projects/{slug}/file`, `/generations`, `/generations/{gid}/file` for the generated-files viewer.

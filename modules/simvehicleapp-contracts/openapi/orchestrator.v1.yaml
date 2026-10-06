@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: SimVehicleApp Orchestrator API
   version: 1.0.0-alpha.1
-  description: "Projects, SynCode generations, runs and the event stream (ADR-0020, ADR-0026, ADR-0027). Data owner of schema `sv`. Project and Generation bodies locked in M7 (2026-10-07); runs in M8."
+  description: "Projects, SynCode generations, runs and the event stream (ADR-0020, ADR-0026, ADR-0027). Data owner of schema `sv`. Project and Generation bodies locked in M7 (2026-10-07); runs locked in M8."
   license: { name: Apache-2.0, identifier: Apache-2.0 }
 servers:
   - url: http://orchestrator:4030
@@ -200,6 +200,7 @@ paths:
     post:
       operationId: startRun
       tags: [runs]
+      description: "Runs the app a succeeded generation built (toolchain `run` job) against the databroker of the project's VSS release (ADR-0024 §6). One run at a time on the shared runtime stack."
       parameters: [{ $ref: "#/components/parameters/RequestId" }]
       requestBody:
         required: true
@@ -208,15 +209,61 @@ paths:
             schema:
               type: object
               required: [generationId]
+              additionalProperties: false
               properties:
                 generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                traceLevel: { enum: ["off", trigger, node], description: "Lowers the project's trace level for this run (SV_TRACE_LEVEL; never raises it)." }
       responses:
         "202":
           description: Run starting.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Run" }
-        "409": { description: "Another run is active (one shared runtime stack, ADR-0024 §6)." }
+        "404": { description: "Unknown project or generation." }
+        "409":
+          description: "Another run is active (one shared runtime stack, ADR-0024 §6), or the generation did not succeed / is not the project's current one."
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error, message]
+                properties:
+                  error: { type: string }
+                  message: { type: string }
+                  activeRun: { $ref: "#/components/schemas/Run" }
+  /runs:
+    get:
+      operationId: listRuns
+      tags: [runs]
+      description: "Most recent runs first (at most 20)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: projectId, in: query, required: false, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+        - { name: active, in: query, required: false, schema: { type: boolean }, description: "Only the run that is starting, running or stopping." }
+      responses:
+        "200":
+          description: Runs.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runs]
+                properties:
+                  runs: { type: array, items: { $ref: "#/components/schemas/Run" } }
+  /runs/{rid}:
+    parameters:
+      - { name: rid, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+    get:
+      operationId: getRun
+      tags: [runs]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Run" }
+        "404": { description: "Unknown run." }
   /runs/{rid}/stop:
     parameters:
       - { name: rid, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
@@ -226,10 +273,11 @@ paths:
       parameters: [{ $ref: "#/components/parameters/RequestId" }]
       responses:
         "200":
-          description: Stop requested (SIGINT, SIGKILL after 5 s).
+          description: Stop requested (SIGINT, SIGKILL after 5 s); a finished run is returned unchanged.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Run" }
+        "404": { description: "Unknown run." }
   /events:
     get:
       operationId: streamEvents
@@ -337,9 +385,18 @@ components:
         finishedAt: { type: integer }
     Run:
       type: object
-      required: [id, generationId, state]
+      description: "A live run (analysis/08 §5): starting until the app traces `app.started` (30 s, else RUN_START_TIMEOUT), stopped after Stop, crashed when the app exits on its own or never starts."
+      required: [id, projectId, generationId, state, vssRelease, traceLevel, diagnostics, createdAt]
+      additionalProperties: false
       properties:
         id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        projectId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         state: { enum: [starting, running, stopping, stopped, crashed] }
+        vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+        traceLevel: { enum: ["off", trigger, node] }
+        exitCode: { type: integer }
         diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+        createdAt: { type: integer }
+        runningAt: { type: integer, description: "When `app.started` arrived." }
+        finishedAt: { type: integer }
