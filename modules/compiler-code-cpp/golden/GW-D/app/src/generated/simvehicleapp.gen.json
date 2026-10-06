@@ -1,0 +1,69 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_d",
+      "revision": 1,
+      "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/Main.cpp",
+      "sha256": "5231a3aa79182a34b693311ff7fe63a1357663f6653a204cae9bb5a2c99c96a4",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.cpp",
+      "sha256": "5205d2c5b38fd0b2c92b527dbfcf76f9dd7a04f425bb833b5b6c7af2d30d1c96",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.hpp",
+      "sha256": "287a9b0d6f4fea743dd7f7274ee24d4099617c7c3ade7180bb5420c7bd155288",
+      "role": "header"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "5999c7115970a7eb426c8e73494d66d172db3b93c807af9ec3b70de4c1dc853e",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/AutoDoorLock.map.json",
+      "sha256": "a79b7056049240a982f1a724b52cd5c7bd1a1bfad85514dccc7ea6f1b0eb072a",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/AutoDoorLock.cpp",
+      "sha256": "5770509af47fe1f77677363a07febdcf5162ae5e516df67a98c947ba53c527ed",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/AutoDoorLock.hpp",
+      "sha256": "1c0b9b02f1e124db4ffe96815b4bfbc1d81a537c91a743b5f2c1b3a1398b781e",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/AutoDoorLock_test.cpp",
+      "sha256": "2fbc4081439b674f1bd076e556a7bad0ae7b0f9b174b880df7dc11d87e3ca2ce",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/CMakeLists.txt",
+      "sha256": "244e15e05333790e03b1cc285338e68162381b45be02ea4d8c7f796213f818e4",
+      "role": "build"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_b",
+      "revision": 1,
+      "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/Main.cpp",
+      "sha256": "fea33a39ecc6b896965f5874dd16266772f4cc5e32b8fdc6661eb3c4ddbec058",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.cpp",
+      "sha256": "9c4a79eb22a0d0132f3dfa7d9da5ae8897ca4908649a70ea05c50f705462239a",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.hpp",
+      "sha256": "d27c0cba6bc7e98f18dbc2e507e42561789887f645013059f80a99ab5a88ad8e",
+      "role": "header"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "ca5dfb86cb24e81116d86e59b443bd0c7bad036e48798216cd2b347c69b1448b",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/LowBatteryHMIWarning.map.json",
+      "sha256": "3899c2ce130e1682211655ef2474b54fe02899b32f078cfe09dc968fd3cee03b",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/LowBatteryHMIWarning.cpp",
+      "sha256": "9df0f206d85e793bd12ef6f86036573dbe157c425bb0505aa13e207fc0a5fabb",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/LowBatteryHMIWarning.hpp",
+      "sha256": "23a60b9bcd1fb059240faf21ece811b6ff0c033378b318fa6ded55ae21792bf8",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/CMakeLists.txt",
+      "sha256": "f3fc8c5a366fb3492b28def675553982f6eb590e418d845d330e6f89e9729934",
+      "role": "build"
+    },
+    {
+      "path": "app/tests/generated/LowBatteryHMIWarning_test.cpp",
+      "sha256": "aa171927fe5b88d52aefeb19bf7ad4e4d127439a8907a9e0532106b027a1d86c",
+      "role": "test"
+    }
+  ]
+}

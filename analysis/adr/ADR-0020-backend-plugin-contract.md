@@ -37,3 +37,9 @@ flowchart LR
 
 ## Verification
 Stub backend `compiler-code-echo` (test fixture) thay được `cpp` trong E2E mà không sửa module khác; determinism test ở mỗi backend.
+
+## Notes / Deviations (2026-10-07) — triển khai M6 (`modules/compiler-code-cpp`), theo uỷ quyền PO 2026-10-06, chờ PO xác nhận
+1. **Service/port:** `codegen-cpp:4110` (như OpenAPI). Compose: network riêng `sv-codegen` với `internal: true` (không egress), filesystem read-only + tmpfs `/tmp`; compiler (S7) và orchestrator (M7) tham gia network này. Bằng chứng: smoke CI job `core-image` (401 không secret, `/capabilities` 24 opcode, fetch ra ngoài bị chặn, ghi đĩa bị chặn, `/compile target=cpp` đọc `/capabilities` rồi `/generate` qua network nội bộ).
+2. **Contract (additive, contracts CHANGELOG):** `generateRequest.scenarios[] {workflowId, scenario}` cho test sinh kèm (ADR-0022 §8 cần scenario mà request cũ không mang); `FileBundle.remove[]` cho overlay xoá file mẫu của template (SampleApp/Launcher) — trước đó contract không có cách diễn đạt "xoá".
+3. **Mã lỗi** dùng mã có sẵn trong catalog: `OPCODE_UNSUPPORTED_BY_BACKEND` (kèm `nodeId`/`blockId`), `IR_VERSION_UNSUPPORTED` (422, kiểm trước schema để IR 2.x không thành 400), `CODEGEN_INTERNAL_ERROR`; request sai contract ⇒ 400.
+4. Generator đọc file của chính module một lần lúc khởi động (`backend.yaml`, `runtime/`, `template-overlay/`), request không chạm đĩa.

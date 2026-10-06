@@ -34,3 +34,7 @@ SynCode 2 lần liên tiếp ⇒ AppManifest byte-identical; entry thêm tay gi�
 - **VSS vendored into each project**: `app/vss/<release>.json`, AppManifest `vehicle-signal-interface.config.src` = that relative path (supported by `velocitas_lib.obtain_local_file_path`). Offline + reproducible; verified in toolchain, IDE and exported devcontainer.
 - Project overlay adds a guard in `app/tests/CMakeLists.txt` (`# SV: offline googletest`) that is a no-op unless `SV_GOOGLETEST_SRC` is set.
 - Exported project keeps the template `.devcontainer/` and runs with `devcontainer up` + `runtime-local` (E-1 PASS).
+
+## Notes / Deviations (2026-10-07) — M6 (backend C++), theo uỷ quyền PO 2026-10-06, chờ PO xác nhận
+- Overlay một lần (`GET /template-overlay/files`): `app/src/CMakeLists.txt` (target `app` = generated + `user/*.cpp` + runtime vendored), `app/src/user/UserHooks.*` (`simvehicleapp::user::onAppStart/onAppStop`), `app/tests/CMakeLists.txt` (giữ googletest đúng pin + guard offline của toolchain, thêm `generated/` và `utests/` nếu có); xoá `SampleApp.*`, `Launcher.cpp`, `utests/SampleApp_test.cpp`, `utests/CMakeLists.txt` qua `FileBundle.remove`.
+- `manifestFragment` của backend **không** mang `vehicle-signal-interface.src`: nguồn VSS là việc của workspace (VSS vendored `app/vss/<release>.json`, Notes M0); fragment chỉ có `required[] {path, access}` (write thắng read) và `pubsub.reads/writes`, đã sort.

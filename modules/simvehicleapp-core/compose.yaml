@@ -30,9 +30,11 @@ services:
     environment:
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       SV_CATALOG_URL: http://vss-catalog:4010
+      # Backends for stage S7 (`/compile` with a target): GET /capabilities (ADR-0020 §4).
+      SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
-    # Internal only (openapi/compiler.v1.yaml): reached as http://compiler:4020.
-    networks: [sv-internal]
+    # Internal only (openapi/compiler.v1.yaml): reached as http://compiler:4020; reaches backends on sv-codegen.
+    networks: [sv-internal, sv-codegen]
     restart: unless-stopped
 
 volumes:
@@ -40,3 +42,6 @@ volumes:
 
 networks:
   sv-internal:
+  # Backends (compiler-code-<lang>) live on this internal network (no egress, ADR-0020 §3).
+  sv-codegen:
+    internal: true

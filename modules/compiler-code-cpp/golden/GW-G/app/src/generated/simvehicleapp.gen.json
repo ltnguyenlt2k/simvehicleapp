@@ -1,0 +1,69 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_g",
+      "revision": 1,
+      "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/Main.cpp",
+      "sha256": "d644c84fe8268c57c3b4a42ada4e8e921b9bb16a84ed6d3a9a601349716e402b",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.cpp",
+      "sha256": "6984a32900a57fc7852bbcc76f0da59e1eaf649ee5c1ea2f98e57b0afdb559a9",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.hpp",
+      "sha256": "9c3a5b9f7578478d42da3571c11f8c2b141a5aa227c0196a1f3e4586c589b9a6",
+      "role": "header"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "20f271f86c9f1aafbcb542732b2a0087cbfe3e0c16f0b207100548ad49634bff",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/WindowCloseOnRain.map.json",
+      "sha256": "8c140bbb74eafa1da38155e832c5bc0623425ca7899721e89cff690bcfdf298d",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/WindowCloseOnRain.cpp",
+      "sha256": "1c9041af1f76d3ec380a6eeb0a2fcf2100f47df07a294e6aa043c98f7a215614",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/WindowCloseOnRain.hpp",
+      "sha256": "53151aa08924be91ebb4d7b6bbc9ffd80adc7c6118b0ca3fdc30250be6da385c",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/CMakeLists.txt",
+      "sha256": "435189cd4868e26a3aad594c278f54558082721ebe5f88be5c10a31d7b1c5582",
+      "role": "build"
+    },
+    {
+      "path": "app/tests/generated/WindowCloseOnRain_test.cpp",
+      "sha256": "f260fa6112f85b4e90c818d4bf083e27580a3be1c428cc55013aed9f232d9506",
+      "role": "test"
+    }
+  ]
+}

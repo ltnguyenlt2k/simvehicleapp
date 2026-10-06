@@ -161,26 +161,26 @@ ADR: [0020](../analysis/adr/ADR-0020-backend-plugin-contract.md), [0021](../anal
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| CMake/Conan package runtime (SDK 0.7.1) | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T01 |
-| `IClock`/`SteadyClock`/`VirtualClock` + `Strand` | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu; gtest + TSAN | T02 |
-| `IVehicleAccess` + `VelocitasVehicleAccess` | 0021 | ☐ | Integration databroker nightly | T03 |
-| `testing::MockVehicle` | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T04 |
-| `Runtime` (signal registry, onX handlers, policies, cancel) | 0012,0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu; conformance | T05 |
-| `Ctx` API (read/write/wait/publish/log/trace/stop) | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T06 |
-| `StateVar<T>` + loop helpers | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T07 |
-| `Tracer` (SVTRACE) + `AppBase` | 0021,0027 | 🔄 | 2026-10-07 (Claude Code): bắt đầu; golden trace | T08 |
-| Conformance runner C++ | 0042 | ☐ | 100% scenario | T09 |
+| CMake/Conan package runtime (SDK 0.7.1) | 0021 | 🔄 | 2026-10-07 (Claude Code): `compiler-code-cpp/runtime` CMake độc lập (C++17, nlohmann 3.11.3, gtest đúng pin template), build trong CI ubuntu; vendored vào project (ADR-0021 §8, Conan để P2); build trong toolchain image chờ T17 | T01 |
+| `IClock`/`SteadyClock`/`VirtualClock` + `Strand` | 0021 | 🔄 | 2026-10-07 (Claude Code): `Strand` (t, seq), `IClock`/`SteadyClock`, đồng hồ ảo (`runUntil`); gtest + ASan/UBSan + TSAN sạch local; chờ CI | T02 |
+| `IVehicleAccess` + `VelocitasVehicleAccess` | 0021 | 🔄 | 2026-10-07 (Claude Code): `VelocitasVehicleAccess`/`VelocitasPubSub` theo path qua `IVehicleDataBrokerClient` (header/source SDK 0.7.1 đọc trong toolchain); biên dịch chờ T17, integration databroker nightly | T03 |
+| `testing::MockVehicle` | 0021 | 🔄 | 2026-10-07 (Claude Code): `testing::MockVehicle`/`MockPubSub`/`runScenario`/`checkExpectations` (mô hình simulator); chờ CI | T04 |
+| `Runtime` (signal registry, onX handlers, policies, cancel) | 0012,0021 | 🔄 | 2026-10-07 (Claude Code): `Runtime` interpreter mirror simulator (ADR-0021 Notes §1); conformance 45/45 local (ASan); chờ CI | T05 |
+| `Ctx` API (read/write/wait/publish/log/trace/stop) | 0021 | 🔄 | 2026-10-07 (Claude Code): builder `Workflow` + `Ctx` (out/signal/state/nowMs) thay API continuation (ADR-0021 Notes §1); chờ CI | T06 |
+| `StateVar<T>` + loop helpers | 0021 | 🔄 | 2026-10-07 (Claude Code): state/counter, repeat/while (loop guard), parallel join all/any/none trong runtime; chờ CI | T07 |
+| `Tracer` (SVTRACE) + `AppBase` | 0021,0027 | 🔄 | 2026-10-07 (Claude Code): Tracer `SVTRACE` theo `runtimeLine` + `AppBase(appName, level)`; biên dịch `AppBase` chờ T17 | T08 |
+| Conformance runner C++ | 0042 | 🔄 | 2026-10-07 (Claude Code): `generator/conformance/conformance.sh`: sinh C++ cho 38 conformance + 7 golden, build với runtime, so writes/trace matcher + golden trace từng event — 45/45 PASS local (cả ASan/UBSan); chờ CI | T09 |
 | `docs/RUNTIME_API.md` | 0021 | ☐ | | T10 |
-| Server `/capabilities /generate /runtime/files` + `backend.yaml` | 0020 | ☐ | Contract test | T11 |
-| `CodeWriter` + `sanitizeIdent` | 0022 | ☐ | | T12 |
-| Naming tất định (VSS path→member, type map) | 0022 | ☐ | Đã đóng spike keyword/clang-format trước M6 | T13 |
-| Emitters P0 (trigger/vehicle/control/state/comm/`$expr`) | 0022 | ☐ | Golden GW-A,B,E | T14 |
-| Emitters P1 (switch/wait_until/repeat/while/parallel/condition) | 0022 | ☐ | Golden GW-C,D,F,G | T15 |
-| Project files (`SimVehicleApp.*`, `Main.cpp`, manifest fragment, sourcemap) | 0022,0023 | ☐ | Golden | T16 |
-| Template overlay (xoá SampleApp, `UserHooks.*`) | 0022,0023 | ☐ | Build thật | T17 |
-| Tests sinh kèm (`*_test.cpp` từ scenario) | 0042 | ☐ | ctest | T18 |
-| Manifest fragment builder | 0023 | ☐ | | T19 |
-| Determinism test (2 lần, 2 OS) | 0006 | ☐ | CI | T20 |
+| Server `/capabilities /generate /runtime/files` + `backend.yaml` | 0020 | 🔄 | 2026-10-07 (Claude Code): `generator/src/app.ts` + `backend.yaml`; contract test (capabilities/fileset/bundle/diagnostics) + smoke compose (S7, no-egress, read-only); chờ CI | T11 |
+| `CodeWriter` + `sanitizeIdent` | 0022 | 🔄 | 2026-10-07 (Claude Code): `CodeWriter` (source map, ≤100 cột), `cppString`/`commentText`/`sanitizeIdent` + fuzz 500 chuỗi; chờ CI
+| Naming tất định (VSS path→member, type map) | 0022 | 🔄 | 2026-10-07 (Claude Code): tên class (PascalCase + hash khi trùng), biến local snake_case, map VSS→C++, kiểu tính mirror simulator (ADR-0022 Notes §2); chờ CI | T13 |
+| Emitters P0 (trigger/vehicle/control/state/comm/`$expr`) | 0022 | 🔄 | 2026-10-07 (Claude Code): emitter trigger/vehicle/control/state/comm/`$expr`; golden C++ GW-A,B,E diff 0 + chạy đúng trace; chờ CI | T14 |
+| Emitters P1 (switch/wait_until/repeat/while/parallel/condition) | 0022 | 🔄 | 2026-10-07 (Claude Code): switch/wait_until/repeat/while/parallel/condition; golden GW-C,D,F,G; `write_many` không có block sinh ra (không khai báo trong backend.yaml); chờ CI | T15 |
+| Project files (`SimVehicleApp.*`, `Main.cpp`, manifest fragment, sourcemap) | 0022,0023 | 🔄 | 2026-10-07 (Claude Code): `SimVehicleApp.*` (host + kiểm model có kiểu), `Main.cpp`, `generated.cmake`, `simvehicleapp.gen.json`, sourcemap; chờ CI | T16 |
+| Template overlay (xoá SampleApp, `UserHooks.*`) | 0022,0023 | 🔄 | 2026-10-07 (Claude Code): overlay (`app/src/CMakeLists.txt`, `user/UserHooks.*`, `app/tests/CMakeLists.txt`, `remove` SampleApp/Launcher); build thật trong toolchain đang làm | T17 |
+| Tests sinh kèm (`*_test.cpp` từ scenario) | 0042 | 🔄 | 2026-10-07 (Claude Code): `app/tests/generated/*_test.cpp` (scenario nhúng, `runScenario` + `checkExpectations`); 7 golden build + PASS trong conformance; ctest trong toolchain chờ T17 | T18 |
+| Manifest fragment builder | 0023 | 🔄 | 2026-10-07 (Claude Code): `manifestFragment` (write thắng read, sort, pubsub) + unit test; chờ CI
+| Determinism test (2 lần, 2 OS) | 0006 | 🔄 | 2026-10-07 (Claude Code): test generate 2 lần cùng byte; job CI thứ hai trên macOS so golden; chờ CI | T20 |
 
 ## M7 — Workspace/Toolchain/SynCode
 ADR: [0023](../analysis/adr/ADR-0023-velocitas-project-layout-and-manifest.md), [0025](../analysis/adr/ADR-0025-headless-velocitas-toolchain.md), [0026](../analysis/adr/ADR-0026-workspace-service.md) · Phụ thuộc: M6, M0 (song song) · Chi tiết: [phases/M07](../analysis/phases/M07-workspace-toolchain-syncode.md)

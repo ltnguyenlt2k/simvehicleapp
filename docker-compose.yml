@@ -6,6 +6,7 @@ name: simvehicleapp
 include:
   - modules/simvehicleapp-contracts/compose.yaml
   - modules/simvehicleapp-core/compose.yaml
+  - modules/compiler-code-cpp/compose.yaml
   - modules/velocitas-stack/compose.yaml
   - modules/ide-vscode/compose.yaml
   - modules/simvehicleapp-studio/compose.simvehicleapp.yaml

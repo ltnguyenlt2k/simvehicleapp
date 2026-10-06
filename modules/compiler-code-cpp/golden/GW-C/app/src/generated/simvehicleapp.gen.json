@@ -1,0 +1,69 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_c",
+      "revision": 1,
+      "irHash": "sha256:bc1e3bf33a1b354a68eb7697c09be91013ccf8c1b4ae5565d86250b099429f0e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/Main.cpp",
+      "sha256": "df808e00dd0d1f6861dfa7d72eabda926a0f4b02c426cb36ea90a88fd488f3c8",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.cpp",
+      "sha256": "1c1fe4994b4c9e445962b51dfa5127da772544cbd6d6606ad2efafd2bbf24057",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.hpp",
+      "sha256": "0b70e17e8b318132a43da1a3745c386c053e91686e08be2baa9d1c4576c12ebc",
+      "role": "header"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "b4f5513b5ff16fbdef3ba97ec4f405125a03e8c6f70ab99ff5485da38b2117d4",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/AutoWipers.map.json",
+      "sha256": "cbac68a928dec5632a0d55904a47bda17071e1df1a8c4964bd1a79c954d72076",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/AutoWipers.cpp",
+      "sha256": "af442402c9e0427f33d129e51fc3b92bfd1ea92360ecb80a22f4eb53438fa577",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/AutoWipers.hpp",
+      "sha256": "1307b674c926e0f4725e4e7cafae9e90f98a152d8f16d4e512c31bb1c44e67d4",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/AutoWipers_test.cpp",
+      "sha256": "402f65cbd8c9b7bc5d0c92d41b4d0ea15f56e67367284268ea8896225b1e62fc",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/CMakeLists.txt",
+      "sha256": "8e9eac1f6743cad1fa6f1072e41d980b9472d57bb70f158c2ee20d6c214a61d8",
+      "role": "build"
+    }
+  ]
+}

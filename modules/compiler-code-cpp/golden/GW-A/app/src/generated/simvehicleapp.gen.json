@@ -1,0 +1,69 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_a",
+      "revision": 1,
+      "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/Main.cpp",
+      "sha256": "56f882564664bc01fc71167e244cf4e5b03e32487d892932c930e988f2fb6ea5",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.cpp",
+      "sha256": "b0dfde0fe6d78bba6f1ec71b537668be0d74317d5d1422e7b97e1c1cdfdd20ea",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.hpp",
+      "sha256": "299bab15a89fb9275c50f25cf91b5b6d10f86ea5a783ffa520f2bf94f6dba800",
+      "role": "header"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "b52468dcf12a04444e0101d5ea0a49c2ebf8f0ba5650f0e7fd5c9e6e11e30081",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/StableOverspeedWarning.map.json",
+      "sha256": "3cb8b9e57b1827f5ffea2328a39173dae3ab8ee263e7cfce26c77285eab96768",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/StableOverspeedWarning.cpp",
+      "sha256": "85a855600948ce4e5901dc5f9cdabd63f348fdaa1eb5ba59c4891dca809eb45d",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/StableOverspeedWarning.hpp",
+      "sha256": "b7d612d95e2a3a7bce4f40e3a14c7552f9a28358b4f34f1b64515242417604ab",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/CMakeLists.txt",
+      "sha256": "707a2cb1f31195277fc416a49405f1cacc10a87915ca65dd7ee6585805a82958",
+      "role": "build"
+    },
+    {
+      "path": "app/tests/generated/StableOverspeedWarning_test.cpp",
+      "sha256": "a834301b5bfb7a8445159483b510e4e5a1455fb717bc67ba92393e498efcf285",
+      "role": "test"
+    }
+  ]
+}

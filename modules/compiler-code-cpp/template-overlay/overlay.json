@@ -1,0 +1,10 @@
+{
+  "description": "Files of vehicle-app-cpp-template replaced by the SimVehicleApp app (ADR-0023 §3): the sample app and its test.",
+  "remove": [
+    "app/src/Launcher.cpp",
+    "app/src/SampleApp.cpp",
+    "app/src/SampleApp.h",
+    "app/tests/utests/CMakeLists.txt",
+    "app/tests/utests/SampleApp_test.cpp"
+  ]
+}

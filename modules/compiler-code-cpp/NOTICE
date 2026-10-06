@@ -1,0 +1,13 @@
+SimVehicleApp compiler-code-cpp
+Copyright 2026 SimVehicleApp contributors
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This module includes third-party material:
+- template-overlay/app/tests/CMakeLists.txt is derived from app/tests/CMakeLists.txt of
+  eclipse-velocitas/vehicle-app-cpp-template @ 275e858e3de8f43d6b4c71a389e358dffe73b42b
+  (Copyright (c) 2022-2025 Contributors to the Eclipse Foundation, Apache-2.0; header kept, modified).
+
+Fetched at build time, not redistributed in this repository:
+- nlohmann/json 3.11.3 (MIT) — runtime JSON values (the project gets it from the template's Conan dependencies).
+- googletest @ 609281088cfefc76f9d0ce82e1ff6c30cc3591e5 (BSD-3-Clause) — tests, the same archive the template pins.
+- Eclipse Velocitas vehicle-app-cpp-sdk 0.7.1 (Apache-2.0) — linked by generated apps through the template.

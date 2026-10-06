@@ -1,0 +1,63 @@
+{
+  "file": "app/src/generated/workflows/WindowCloseOnRain.cpp",
+  "workflowId": "gw_g",
+  "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce",
+  "ranges": [
+    {
+      "startLine": 35,
+      "endLine": 44,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 46,
+      "endLine": 53,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 55,
+      "endLine": 62,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 64,
+      "endLine": 71,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 73,
+      "endLine": 80,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 82,
+      "endLine": 89,
+      "nodeId": "n6",
+      "blockId": "b6",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 91,
+      "endLine": 96,
+      "nodeId": "n7",
+      "blockId": "b7",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 98,
+      "endLine": 103,
+      "nodeId": "n8",
+      "blockId": "b8",
+      "workflowId": "gw_g"
+    }
+  ]
+}

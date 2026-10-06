@@ -1,0 +1,44 @@
+# compiler-code-cpp — Backend Plugin manifest (ADR-0020, analysis/07 §1); served as JSON by GET /capabilities.
+id: cpp
+name: compiler-code-cpp
+version: 0.1.0
+language: cpp
+irVersions: ">=1.0.0 <2.0.0"
+contracts: ">=1.0.0-alpha.1 <2.0.0"
+opcodes:
+  - event.app_start
+  - event.signal_changed
+  - event.timer
+  - event.condition
+  - event.mqtt_message
+  - vehicle.read
+  - vehicle.read_attribute
+  - vehicle.write
+  - control.branch
+  - control.switch
+  - control.wait
+  - control.wait_until
+  - control.stable_for
+  - control.repeat
+  - control.while
+  - control.parallel
+  - control.stop
+  - state.get
+  - state.set
+  - state.counter
+  - logic.eval
+  - logic.in_range
+  - comm.log
+  - comm.mqtt_publish
+features:
+  concurrencyPolicies: [restart, ignore, queue, parallel]
+  trace: true
+  sourceMaps: true
+runtime:
+  name: simvehicleapp-runtime-cpp
+  version: 0.1.0
+  vendorPath: app/src/simvehicleapp-runtime
+toolchain:
+  id: toolchain-cpp
+  template: vehicle-app-cpp-template
+  templateSha: 275e858e3de8f43d6b4c71a389e358dffe73b42b

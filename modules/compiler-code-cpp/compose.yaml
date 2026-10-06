@@ -1,0 +1,23 @@
+# compiler-code-cpp — self-contained compose fragment. Building it needs image simvehicleapp/contracts:dev
+# (modules/simvehicleapp-contracts; `scripts/sv build` builds it first).
+services:
+  codegen-cpp:
+    image: simvehicleapp/codegen-cpp:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # Pure generator (ADR-0020 §3): read-only filesystem, no network egress (internal network only).
+    read_only: true
+    tmpfs: [/tmp]
+    networks: [sv-codegen]
+    restart: unless-stopped
+
+networks:
+  # internal: containers on it can reach each other but nothing outside the host bridge.
+  sv-codegen:
+    internal: true

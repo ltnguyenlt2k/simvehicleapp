@@ -23,7 +23,7 @@ const handler = createService(
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler });
 log.info("listening", { port: server.port });
 
-/** `SV_BACKENDS="cpp=http://compiler-code-cpp:4100,python=http://…"` (backends arrive in M6). */
+/** `SV_BACKENDS="cpp=http://codegen-cpp:4110,python=http://…"` (ADR-0020 §4). */
 function parseBackends(text: string): Record<string, string> {
   const out: Record<string, string> = {};
   for (const item of text.split(",").map((x) => x.trim()).filter(Boolean)) {

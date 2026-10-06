@@ -1,0 +1,69 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_e",
+      "revision": 1,
+      "irHash": "sha256:77be02a978f54386a11eded8c64a0b9fe9e91508d154b7a6641ff7996deb1c03"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/Main.cpp",
+      "sha256": "2b170d7246a2c7a8640e35961758f69ea16631c8538d42d21aa7b3380c110ce0",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.cpp",
+      "sha256": "17d7f6dc47eee15c62fee8685d2f0553281ddccc7bebf943ef50ca8c11755d2b",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/SimVehicleApp.hpp",
+      "sha256": "91827a48219fb98048b034c3760aa040b5d7efdc4bd345660b9b6daa1b710303",
+      "role": "header"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "f99a1d003eb3b4977846fc2b4b4fae4fe56d3d84991d513974e9a703cd56afe9",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/PeriodicTelemetry.map.json",
+      "sha256": "50f41381575e078994790243a861316a15b0ac1574173595b5e1d2fc6c9affc6",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/PeriodicTelemetry.cpp",
+      "sha256": "a310fe8777e902bd4f3426f7b4ff6eac189a8bd4fed8b5d621af83d36bacc034",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/PeriodicTelemetry.hpp",
+      "sha256": "db7e4c045084faf663ee75805ee3fbdf33e6885f5d9d8824ca85960ae4bfbd47",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/CMakeLists.txt",
+      "sha256": "228e88f2966a42c5b1d420cc191e4732535857d969bc80f89ad53ccd9550df42",
+      "role": "build"
+    },
+    {
+      "path": "app/tests/generated/PeriodicTelemetry_test.cpp",
+      "sha256": "36929756421494dce4e0598bc202b5e5e2eefb6a04e7a03b611733209fac8355",
+      "role": "test"
+    }
+  ]
+}

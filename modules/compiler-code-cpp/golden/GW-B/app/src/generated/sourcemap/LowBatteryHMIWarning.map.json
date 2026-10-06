@@ -1,0 +1,35 @@
+{
+  "file": "app/src/generated/workflows/LowBatteryHMIWarning.cpp",
+  "workflowId": "gw_b",
+  "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e",
+  "ranges": [
+    {
+      "startLine": 24,
+      "endLine": 33,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_b"
+    },
+    {
+      "startLine": 35,
+      "endLine": 41,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_b"
+    },
+    {
+      "startLine": 43,
+      "endLine": 50,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_b"
+    },
+    {
+      "startLine": 52,
+      "endLine": 59,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_b"
+    }
+  ]
+}
