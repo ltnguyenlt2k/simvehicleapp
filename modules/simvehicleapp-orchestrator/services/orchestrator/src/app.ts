@@ -119,9 +119,11 @@ export function createOrchestratorHandler(d: AppDeps) {
         if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
         const b = await readBody(req);
         if (b instanceof Response) return b;
-        const gid = b.generationId;
-        if (typeof gid !== "string" || !ID.test(gid)) return json(400, { error: "invalid_request", message: "generationId is required" });
+        if (b.generationId !== undefined && (typeof b.generationId !== "string" || !ID.test(b.generationId))) return json(400, { error: "invalid_request", message: "generationId must be a generation id" });
         if (b.traceLevel !== undefined && !["off", "trigger", "node"].includes(b.traceLevel as string)) return json(400, { error: "invalid_request", message: "traceLevel must be off, trigger or node" });
+        // Default: the project's latest generation (RunManager checks it succeeded).
+        const gid = (b.generationId as string | undefined) ?? (await d.repo.latestGeneration(project.id))?.id;
+        if (!gid) return json(409, { error: "conflict", message: "SynCode the project first: it has no generation to run" });
         if (!(await d.repo.generation(gid))) return json(404, { error: "not_found", message: "unknown generation" });
         try {
           const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined);

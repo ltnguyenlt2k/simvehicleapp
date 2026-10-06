@@ -208,10 +208,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [generationId]
               additionalProperties: false
               properties:
-                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id", description: "Default: the project's latest generation (it must have succeeded)." }
                 traceLevel: { enum: ["off", trigger, node], description: "Lowers the project's trace level for this run (SV_TRACE_LEVEL; never raises it)." }
       responses:
         "202":

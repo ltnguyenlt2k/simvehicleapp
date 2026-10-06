@@ -207,9 +207,10 @@ describe("RunManager (M08-T03/T04, analysis/08 §5)", () => {
     const g = await gen();
     const h = createOrchestratorHandler({ repo, clients: tc.clients, hub, runs, kick() {}, background() {} });
     const call = (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => h(new Request(`http://o${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) }), ctx);
-    expect((await call("POST", `/projects/${project.id}/runs`, {})).status).toBe(400);
+    expect((await call("POST", `/projects/${project.id}/runs`, { generationId: 7 })).status).toBe(400);
     expect((await call("POST", `/projects/${project.id}/runs`, { generationId: "g_nope" })).status).toBe(404);
-    const started = await call("POST", `/projects/${project.id}/runs`, { generationId: g.id });
+    // without generationId: the latest generation
+    const started = await call("POST", `/projects/${project.id}/runs`, {});
     expect(started.status).toBe(202);
     const run = await started.json();
     expect(run).toMatchObject({ id: "r_1", projectId: project.id, generationId: g.id, state: "starting" });
