@@ -55,7 +55,7 @@ export const SvOnSignalChangedBlock: BlockConfig = {
       type: 'dropdown',
       options: [
         { label: 'Restart the run', id: 'restart' },
-        { label: 'Ignore the change', id: 'ignore' },
+        { label: 'Ignore the event', id: 'ignore' },
         { label: 'Queue it', id: 'queue' },
         { label: 'Run in parallel', id: 'parallel' },
       ],

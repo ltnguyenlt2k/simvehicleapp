@@ -1643,6 +1643,13 @@ const WorkflowContent = React.memo(
         return 'loop-end-source'
       } else if (block.type === 'parallel') {
         return 'parallel-end-source'
+      } else if (getBlock(block.type)?.svHandles) {
+        // SV: flow blocks expose named branch handles (then/else, ok/timeout…) and no `source`;
+        // auto-connect from the first rendered one, or not at all when the block has no output.
+        const svHandle = document.querySelector(
+          `[data-nodeid="${block.id}"].react-flow__handle.source[data-handleid]`
+        )
+        return svHandle?.getAttribute('data-handleid') ?? null
       }
       return 'source'
     }, [])
@@ -1735,6 +1742,7 @@ const WorkflowContent = React.memo(
               id: closestBlock.id,
               type: closestBlock.type,
             })
+            if (!sourceHandle) return undefined
             return createEdgeObject(closestBlock.id, targetBlockId, sourceHandle)
           }
           return undefined
@@ -1760,6 +1768,7 @@ const WorkflowContent = React.memo(
         }
 
         const sourceHandle = determineSourceHandle(closestBlock)
+        if (!sourceHandle) return undefined
         return createEdgeObject(closestBlock.id, targetBlockId, sourceHandle)
       },
       [

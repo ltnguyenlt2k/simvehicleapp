@@ -228,3 +228,6 @@ apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/
 # M03-T11 — realtime lint (graph adapter in lib/sv, BFF /api/sv/lint, lint store, Problems tab, block badge)
 apps/sim/stores/sv/*
 apps/sim/hooks/queries/sv-lint.ts
+
+# M03-T13 — new workflows start empty (no Sim Start block); auto-connect uses sv branch handles
+apps/sim/lib/workflows/defaults.ts
