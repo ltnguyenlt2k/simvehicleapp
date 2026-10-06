@@ -209,6 +209,26 @@ export const svWorkflowScenarios = pgTable('sv_workflow_scenarios', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+/**
+ * SV: a vehicle-app project of a workspace (M07-T17). The orchestrator owns the project (schema `sv`);
+ * this row only scopes it to a workspace so the BFF can check access before every project call.
+ */
+export const svProjects = pgTable(
+  'sv_projects',
+  {
+    id: text('id').primaryKey(),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspace.id, { onDelete: 'cascade' }),
+    slug: text('slug').notNull().unique(),
+    createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    workspaceIdx: index('sv_projects_workspace_idx').on(table.workspaceId),
+  })
+)
+
 export const workflowBlocks = pgTable(
   'workflow_blocks',
   {

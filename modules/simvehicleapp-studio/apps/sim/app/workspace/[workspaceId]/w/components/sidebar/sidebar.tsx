@@ -25,6 +25,7 @@ import {
   BookOpen,
   Database,
   Files,
+  FolderCode,
   HelpCircle,
   PanelLeft,
   Plus,
@@ -507,6 +508,13 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
   const workspaceNavItems = useMemo(
     () =>
       [
+        {
+          id: 'vehicle-projects',
+          label: 'Vehicle projects',
+          icon: FolderCode,
+          href: `/workspace/${workspaceId}/vehicle-projects`,
+          hidden: false,
+        },
         {
           id: 'tables',
           label: 'Tables',

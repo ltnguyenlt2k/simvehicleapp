@@ -1,4 +1,5 @@
 import type { BlockState, Loop, Parallel, Variable } from '@sim/workflow-types/workflow'
+import type { SvDiagnostic } from '@/lib/api/contracts/sv'
 import { mapSimContainer } from '@/lib/sv/container-mapping'
 import specsSnapshot from '@/blocks/vehicle/block-specs.json'
 
@@ -207,5 +208,18 @@ export function adaptWorkflow(input: AdaptInput): {
       edges,
     },
     issues,
+  }
+}
+
+/** Adapter issues shown like compiler diagnostics (catalog codes, structural stage). */
+export function issueToDiagnostic(issue: AdapterIssue, workflowId: string): SvDiagnostic {
+  return {
+    code: issue.code,
+    severity: 'error',
+    stage: issue.code === 'CONTAINER_INVALID' ? 'structural' : 'block-config',
+    workflowId,
+    ...(issue.blockId ? { blockId: issue.blockId } : {}),
+    message: issue.message,
+    docs: `diagnostics#${issue.code}`,
   }
 }

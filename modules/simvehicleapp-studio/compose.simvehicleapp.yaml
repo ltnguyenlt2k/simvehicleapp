@@ -59,6 +59,7 @@ services:
       # BFF → SimVehicleApp services on sv-internal (modules/simvehicleapp-core). Unreachable ⇒ /api/sv/* answer 502.
       SV_CATALOG_URL: ${SV_CATALOG_URL:-http://vss-catalog:4010}
       SV_COMPILER_URL: ${SV_COMPILER_URL:-http://compiler:4020}
+      SV_ORCHESTRATOR_URL: ${SV_ORCHESTRATOR_URL:-http://orchestrator:4030}
     ports: ["127.0.0.1:${SV_STUDIO_PORT:-3000}:3000"]
     depends_on:
       studio-migrations: { condition: service_completed_successfully }

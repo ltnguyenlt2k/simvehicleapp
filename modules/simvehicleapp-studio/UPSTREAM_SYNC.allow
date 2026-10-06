@@ -242,3 +242,10 @@ apps/sim/app/(auth)/login/login-form.tsx
 apps/sim/hooks/queries/sv-simulation.ts
 packages/db/migrations/0251_sv_workflow_scenarios.sql
 packages/db/migrations/meta/0251_snapshot.json
+
+# M07-T17…T19 — vehicle projects (sv_projects + migration, BFF /api/sv/projects/*, Projects page + sidebar entry,
+# SynCode button, Build log tab, generated-files viewer)
+apps/sim/hooks/queries/sv-projects.ts
+apps/sim/app/workspace/[workspaceId]/vehicle-projects/*
+packages/db/migrations/0252_sv_projects.sql
+packages/db/migrations/meta/0252_snapshot.json

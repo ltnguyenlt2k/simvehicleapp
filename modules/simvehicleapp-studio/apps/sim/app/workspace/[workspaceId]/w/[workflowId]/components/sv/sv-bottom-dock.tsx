@@ -19,11 +19,13 @@ import {
   SV_DOCK_TABS,
   type SvDockTabId,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
+import { BuildLog } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
 import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
+import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { prepareBlockState } from '@/stores/workflows/utils'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
@@ -147,14 +149,34 @@ function SimulationTab() {
   )
 }
 
+/** Build log tab (M07-T18): diagnostics of the open workflow focus their block. */
+function BuildLogTab() {
+  const workflowId = useSvLintStore((s) => s.workflowId)
+  const params = useParams<{ workspaceId?: string }>()
+  const { data: workflows } = useWorkflowMap(params?.workspaceId)
+  const blocks = useWorkflowStore((s) => s.blocks)
+  const workflowName = useCallback((id: string) => workflows?.[id]?.name, [workflows])
+  const blockName = useCallback((blockId: string) => blocks[blockId]?.name, [blocks])
+  return (
+    <BuildLog
+      workflowId={workflowId}
+      workflowName={workflowName}
+      blockName={blockName}
+      onSelectBlock={focusField}
+    />
+  )
+}
+
 /** Bottom dock of the vehicle editor; tabs without content show the milestone that brings them. */
 export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   const [activeTab, setActiveTab] = useState<SvDockTabId>(initialTab)
   const active = SV_DOCK_TABS.find((tab) => tab.id === activeTab) ?? SV_DOCK_TABS[0]
   const focusProblems = useSvLintStore((s) => s.focusProblems)
   const focusSimulation = useSvSimulationStore((s) => s.focusSimulation)
+  const focusBuildLog = useSvSynCodeStore((s) => s.focusBuildLog)
   const seenFocus = useRef(focusProblems)
   const seenSimulation = useRef(focusSimulation)
+  const seenBuildLog = useRef(focusBuildLog)
 
   // Verify brings the Problems tab to the front, Simulate the timeline.
   useEffect(() => {
@@ -167,13 +189,18 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
     seenSimulation.current = focusSimulation
     setActiveTab('simulation')
   }, [focusSimulation])
+  useEffect(() => {
+    if (focusBuildLog === seenBuildLog.current) return
+    seenBuildLog.current = focusBuildLog
+    setActiveTab('build-log')
+  }, [focusBuildLog])
 
   return (
     <div
       data-sv='bottom-dock'
       className={cn(
         'flex flex-shrink-0 flex-col border-[var(--border)] border-t bg-[var(--surface-1)]',
-        active.id === 'simulation' ? 'h-[280px]' : 'h-[160px]'
+        active.id === 'simulation' || active.id === 'build-log' ? 'h-[280px]' : 'h-[160px]'
       )}
     >
       <div role='tablist' aria-label='Vehicle app output' className='flex gap-1 px-2 pt-1.5'>
@@ -198,6 +225,10 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
       ) : active.id === 'simulation' ? (
         <div role='tabpanel' aria-label='Simulation timeline' className='flex min-h-0 flex-1'>
           <SimulationTab />
+        </div>
+      ) : active.id === 'build-log' ? (
+        <div role='tabpanel' aria-label='Build log' className='flex min-h-0 flex-1'>
+          <BuildLogTab />
         </div>
       ) : (
         <div

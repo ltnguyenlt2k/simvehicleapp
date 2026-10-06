@@ -15,7 +15,7 @@ vi.mock(
   () => ({})
 )
 
-import { issueToDiagnostic } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/lint-runner'
+import { issueToDiagnostic } from '@/lib/sv/graph-adapter'
 
 const d = (
   code: string,

@@ -1758,6 +1758,13 @@
       "when": 1791310248819,
       "tag": "0251_sv_workflow_scenarios",
       "breakpoints": true
+    },
+    {
+      "idx": 252,
+      "version": "7",
+      "when": 1791322521482,
+      "tag": "0252_sv_projects",
+      "breakpoints": true
     }
   ]
 }

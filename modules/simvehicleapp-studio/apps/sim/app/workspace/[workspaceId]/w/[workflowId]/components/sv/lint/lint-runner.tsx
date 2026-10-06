@@ -3,8 +3,7 @@
 import { useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useShallow } from 'zustand/react/shallow'
-import type { SvDiagnostic } from '@/lib/api/contracts/sv'
-import { type AdapterIssue, adaptWorkflow } from '@/lib/sv/graph-adapter'
+import { adaptWorkflow, issueToDiagnostic } from '@/lib/sv/graph-adapter'
 import { useSvWorkflowRelease } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/use-workflow-release'
 import { useSvCatalogReleases } from '@/hooks/queries/sv-catalog'
 import { useSvLint } from '@/hooks/queries/sv-lint'
@@ -18,19 +17,6 @@ import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 /** analysis/05 §4: lint runs 300 ms after the last edit. */
 export const SV_LINT_DEBOUNCE_MS = 300
-
-/** Adapter issues shown like compiler diagnostics (catalog codes, structural stage). */
-export function issueToDiagnostic(issue: AdapterIssue, workflowId: string): SvDiagnostic {
-  return {
-    code: issue.code,
-    severity: 'error',
-    stage: issue.code === 'CONTAINER_INVALID' ? 'structural' : 'block-config',
-    workflowId,
-    ...(issue.blockId ? { blockId: issue.blockId } : {}),
-    message: issue.message,
-    docs: `diagnostics#${issue.code}`,
-  }
-}
 
 /**
  * Realtime lint driver (M03-T11): adapts the canvas to a WorkflowGraph, lints it through the BFF

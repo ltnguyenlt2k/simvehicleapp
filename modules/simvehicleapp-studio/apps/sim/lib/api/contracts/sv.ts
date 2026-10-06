@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { workflowIdSchema } from '@/lib/api/contracts/primitives'
+import { workflowIdSchema, workspaceIdSchema } from '@/lib/api/contracts/primitives'
 import { defineRouteContract } from '@/lib/api/contracts/types'
 
 /** Health of one SimVehicleApp service as seen by the studio BFF. */
@@ -372,3 +372,210 @@ export type SvScenario = z.output<typeof svScenarioSchema>
 export type SvScenarioInput = z.output<typeof svScenarioInputSchema>
 export type SvTraceEvent = z.output<typeof svTraceEventSchema>
 export type SvSimulateResponse = z.output<typeof svSimulateResponseSchema>
+
+// ---- Projects and SynCode (M07-T17…T19, orchestrator.v1 + workspace.v1) ----------------------------
+
+const svProjectSlugSchema = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9-]{0,62}$/, 'lowercase letters, digits and dashes (≤ 63)')
+const svProjectIdSchema = z.string().min(1).max(128)
+
+export const svProjectSchema = z.object({
+  id: svProjectIdSchema,
+  slug: svProjectSlugSchema,
+  name: z.string(),
+  appName: z.string(),
+  language: z.enum(['cpp', 'python', 'rust']),
+  vssRelease: z.string(),
+  settings: z.object({
+    mqttTopicPrefix: z.string(),
+    traceLevel: z.enum(['off', 'trigger', 'node']),
+  }),
+  /** `creating` until the workspace and the toolchain have prepared the project folder. */
+  status: z.enum(['creating', 'ready', 'failed']),
+  statusMessage: z.string().optional(),
+  workflows: z.array(z.object({ simWorkflowId: z.string(), enabled: z.boolean() })),
+})
+
+export const svProjectListQuerySchema = z.object({ workspaceId: workspaceIdSchema })
+export const svProjectListSchema = z.object({ projects: z.array(svProjectSchema) })
+
+/** `GET /api/sv/projects?workspaceId=` — vehicle-app projects of a workspace. */
+export const svListProjectsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects',
+  query: svProjectListQuerySchema,
+  response: { mode: 'json', schema: svProjectListSchema },
+})
+
+export const svCreateProjectBodySchema = z.object({
+  workspaceId: workspaceIdSchema,
+  name: z.string().trim().min(1, 'name is required').max(200),
+  slug: svProjectSlugSchema,
+  vssRelease: z.string().regex(/^v[0-9]+\.[0-9]+$/, 'a VSS release like v4.0'),
+  workflowIds: z.array(workflowIdSchema).max(500),
+})
+
+/** `POST /api/sv/projects` — create a C++ project in the workspace and assign workflows. */
+export const svCreateProjectContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects',
+  body: svCreateProjectBodySchema,
+  response: { mode: 'json', schema: svProjectSchema },
+})
+
+export const svProjectParamsSchema = z.object({ id: svProjectIdSchema })
+
+/** `GET /api/sv/projects/[id]`. */
+export const svGetProjectContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: svProjectSchema },
+})
+
+export const svUpdateProjectWorkflowsBodySchema = z.object({
+  workflowIds: z.array(workflowIdSchema).max(500),
+})
+
+/** `PUT /api/sv/projects/[id]/workflows` — the workflows SynCode generates into the project. */
+export const svUpdateProjectWorkflowsContract = defineRouteContract({
+  method: 'PUT',
+  path: '/api/sv/projects/[id]/workflows',
+  params: svProjectParamsSchema,
+  body: svUpdateProjectWorkflowsBodySchema,
+  response: { mode: 'json', schema: svProjectSchema },
+})
+
+const svVerdictSchema = z.enum(['passed', 'failed', 'skipped', 'pending'])
+export const svGenerationStageNames = [
+  'ir',
+  'codegen',
+  'write',
+  'deps',
+  'build',
+  'format-check',
+  'test',
+] as const
+
+/** A SynCode generation (Master Plan Appendix A on success, Appendix B on failure). */
+export const svGenerationSchema = z.object({
+  id: z.string(),
+  generationId: z.string(),
+  projectId: z.string(),
+  state: z.enum(['queued', 'running', 'succeeded', 'failed', 'cancelled']),
+  success: z.boolean().optional(),
+  stage: z.enum(svGenerationStageNames).optional(),
+  stages: z.array(
+    z.object({
+      name: z.enum(svGenerationStageNames),
+      state: z.enum(['pending', 'running', 'passed', 'failed', 'skipped']),
+      startedAt: z.number().optional(),
+      finishedAt: z.number().optional(),
+    })
+  ),
+  verification: z.object({
+    ir: svVerdictSchema,
+    format: svVerdictSchema,
+    compile: svVerdictSchema,
+    tests: svVerdictSchema,
+  }),
+  diagnostics: z.array(svDiagnosticSchema),
+  generatedFiles: z.array(z.string()),
+  workflows: z.array(
+    z.object({ workflowId: z.string(), revision: z.number(), irHash: z.string() })
+  ),
+  workflowRevision: z.number().optional(),
+  modelHash: z.string().optional(),
+  compilerVersion: z.string().optional(),
+  backend: z.string().optional(),
+  editor: z.object({ url: z.string() }).optional(),
+  createdAt: z.number(),
+  finishedAt: z.number().optional(),
+})
+
+export const svStartGenerationBodySchema = z.object({
+  /** Proceed when generated files were edited by hand (they are backed up first). */
+  overwriteModified: z.boolean().optional(),
+  /** The graph of the workflow open in the editor (fresher than the saved one). */
+  open: z
+    .object({ workflowId: workflowIdSchema, graph: z.record(z.string(), z.unknown()) })
+    .optional(),
+})
+
+/** `POST /api/sv/projects/[id]/generations` — SynCode every enabled workflow of the project. */
+export const svStartGenerationContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/generations',
+  params: svProjectParamsSchema,
+  body: svStartGenerationBodySchema,
+  response: { mode: 'json', schema: svGenerationSchema },
+})
+
+export const svGenerationParamsSchema = z.object({
+  id: svProjectIdSchema,
+  gid: z.string().min(1).max(128),
+})
+
+/** `GET /api/sv/projects/[id]/generations/[gid]`. */
+export const svGetGenerationContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/generations/[gid]',
+  params: svGenerationParamsSchema,
+  response: { mode: 'json', schema: svGenerationSchema },
+})
+
+/** `GET /api/sv/projects/[id]/generations/[gid]/events` — SSE of the build log (LogLine v1). */
+export const svGenerationEventsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/generations/[gid]/events',
+  params: svGenerationParamsSchema,
+  response: { mode: 'stream' },
+})
+
+export const svLogLineSchema = z.object({
+  runId: z.string(),
+  seq: z.number().int().min(0),
+  ts: z.number(),
+  stream: z.enum(['stdout', 'stderr', 'system']),
+  level: z.enum(['debug', 'info', 'warn', 'error']),
+  msg: z.string(),
+  raw: z.string().optional(),
+})
+
+export const svProjectFilesSchema = z.object({
+  files: z.array(z.object({ path: z.string(), size: z.number(), owned: z.boolean().optional() })),
+  current: z.string().nullable(),
+  generations: z.array(z.string()),
+})
+
+/** `GET /api/sv/projects/[id]/files` — tree of the project and its retained generations (M07-T19). */
+export const svProjectFilesContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/files',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: svProjectFilesSchema },
+})
+
+export const svProjectFileQuerySchema = z.object({
+  path: z.string().min(1).max(1024),
+  /** A retained generation: the file as that generation wrote it (diff). */
+  generationId: z.string().min(1).max(128).optional(),
+})
+export const svProjectFileSchema = z.object({ path: z.string(), content: z.string() })
+
+/** `GET /api/sv/projects/[id]/file?path=` — one file, read-only (M07-T19). */
+export const svProjectFileContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/file',
+  params: svProjectParamsSchema,
+  query: svProjectFileQuerySchema,
+  response: { mode: 'json', schema: svProjectFileSchema },
+})
+
+export type SvProject = z.output<typeof svProjectSchema>
+export type SvCreateProjectBody = z.input<typeof svCreateProjectBodySchema>
+export type SvGeneration = z.output<typeof svGenerationSchema>
+export type SvStartGenerationBody = z.input<typeof svStartGenerationBodySchema>
+export type SvLogLine = z.output<typeof svLogLineSchema>
+export type SvProjectFiles = z.output<typeof svProjectFilesSchema>

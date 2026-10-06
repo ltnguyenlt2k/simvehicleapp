@@ -35,6 +35,10 @@ export interface SvRequestOptions {
   method?: string
   body?: unknown
   timeoutMs?: number
+  /** Extra request headers (e.g. `last-event-id` when resuming a stream). */
+  headers?: Record<string, string>
+  /** Aborts the call with the caller (a client leaving a proxied stream). */
+  signal?: AbortSignal
 }
 
 /**
@@ -44,11 +48,18 @@ export interface SvRequestOptions {
 export async function callSvService(
   service: SvService,
   path: string,
-  { method = 'GET', body, timeoutMs = DEFAULT_SERVICE_TIMEOUT_MS }: SvRequestOptions = {}
+  {
+    method = 'GET',
+    body,
+    timeoutMs = DEFAULT_SERVICE_TIMEOUT_MS,
+    headers: extra,
+    signal,
+  }: SvRequestOptions = {}
 ): Promise<Response> {
   const base = getSvServiceUrl(service)
   if (!base) throw new SvServiceNotConfiguredError(service)
   const headers: Record<string, string> = {
+    ...extra,
     [INTERNAL_AUTH_HEADER]: env.INTERNAL_API_SECRET,
     [REQUEST_ID_HEADER]: generateRequestId(),
   }
@@ -57,7 +68,9 @@ export async function callSvService(
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)])
+      : AbortSignal.timeout(timeoutMs),
     cache: 'no-store',
   })
 }
