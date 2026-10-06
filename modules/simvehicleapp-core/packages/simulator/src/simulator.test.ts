@@ -181,3 +181,23 @@ describe("cancelled branches end when cancelled", () => {
     expect(r.trace.filter((e) => e.data?.reason === "queue_overflow")).toHaveLength(1);
   });
 });
+
+describe("logic.eval outputs", () => {
+  test("a pure block lowered to logic.eval keeps its own output name (array length ⇒ `length`)", () => {
+    const src = (b: string) => ({ blockId: b });
+    const ir = {
+      workflowId: "w",
+      signals: [{ id: "s0", path: "Vehicle.Cabin.SeatPosCount", dataType: "uint8[]" }],
+      topics: [],
+      state: [],
+      triggers: [{ id: "n1", opcode: "event.app_start", props: {}, outputs: {}, entry: "n2", src: src("b1") }],
+      nodes: [
+        { id: "n2", opcode: "control.wait", args: { durationMs: 100 }, next: { next: "n3" }, src: src("b2") },
+        { id: "n3", opcode: "logic.eval", args: { value: { $expr: { op: "array.len", value: { $signal: "s0" }, type: "uint32" } } }, outputs: { length: { type: "uint32" } }, next: { next: "n4" }, src: src("b3") },
+        { id: "n4", opcode: "comm.log", args: { level: "info", message: { $template: ["seats ", { $ref: "n3.length" }] } }, next: { next: null }, src: src("b4") },
+      ],
+    };
+    const r = simulate(ir, { until: 1000, initial: { "Vehicle.Cabin.SeatPosCount": [2, 3] } });
+    expect(r.logs).toEqual([{ t: 100, level: "info", message: "seats 2" }]);
+  });
+});

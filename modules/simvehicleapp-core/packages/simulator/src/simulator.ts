@@ -703,7 +703,8 @@ class Simulator {
         return "next";
       }
       case "logic.eval":
-        out({ result: this.eval(a.value, run) });
+        // The block's own output name (`result`, `value` of array.at/constant, `length` of array length).
+        out({ [Object.keys(node.outputs ?? {})[0] ?? "result"]: this.eval(a.value, run) });
         return "next";
       case "logic.in_range": {
         const v = this.eval(a.value, run);
