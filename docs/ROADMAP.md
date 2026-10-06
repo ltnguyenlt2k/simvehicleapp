@@ -32,8 +32,8 @@
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ✔ | 14/14 — gate PASS 2026-10-06 ([report](reports/M03.md); review conformance theo uỷ quyền PO, chờ xác nhận) |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ✔ | 12/12 — gate PASS 2026-10-07 ([report](reports/M04.md); ADR-0014/0015 + review golden IR theo uỷ quyền PO, chờ xác nhận) |
-| [M5](#m5--simulator) | Simulator | 0017 | 🔄 | 0/11 |
-| [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
+| [M5](#m5--simulator) | Simulator | 0017 | ✔ | 10/11 + T08 ↷ — gate PASS ([report](reports/M05.md)) |
+| [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | 🔄 | 0/20 |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ☐ | 0/19 |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ☐ | 0/10 |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ☐ | 0/8 |
@@ -144,31 +144,31 @@ ADR: [0017](../analysis/adr/ADR-0017-simulator.md) · Phụ thuộc: M4 · Chi t
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| VirtualClock + Strand giả lập + scheduler tất định | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — min-heap (t, seq), fiber generator + cancel token; chạy 2 lần cùng byte; chờ CI | T01 |
-| Interpreter opcode P0 | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — event.*, vehicle.*, control.*, state.*, comm.*, logic.eval/in_range; biểu thức theo IR_SPEC (int BigInt, float32 `fround`); conformance C01–C38 + 7 golden 45/45 PASS local | T02 |
-| Concurrency policies (restart/ignore/queue/parallel) | 0012,0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — theo trigger, queueMax/maxRuns, trace cancel/queue_overflow (C09–C14) | T03 |
-| Opcode P1 (switch/wait_until/repeat/while/parallel/condition/write_many) | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — switch, wait_until, repeat, while (loop_guard), parallel join all/any/none, condition trigger; `write_many` chưa có block sinh ra (`sv_set_many` dời theo quyết định PO 2026-10-04) | T04 |
-| MockVehicle + MockMqtt | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — ghi actuator đặt target (không đổi giá trị hiện tại, GW-G), kiểm min/max/allowed khi có model; MQTT loopback theo filter `+`/`#` | T05 |
-| Tracer TraceEvent v1 + ScenarioPlayer | 0017,0027 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — mọi event hợp lệ contract `trace-event` (test), `signals[]` riêng cho timeline; `checkExpectations` (writes chính xác, trace matcher theo thứ tự) | T06 |
-| `POST /simulate` + giới hạn (24h ảo, 1e6 event) | 0017 | 🔄 | 2026-10-07 (Claude Code): service compiler `/simulate` — validate `ir`/`scenario` theo contract (400), IR ≠ 1.x ⇒ 422, `SIM_LIMIT_REACHED` (mã mới, warning) khi chạm 1e6 sự kiện, `expectations` khi scenario có `expect`, thêm `signals/publishes/logs` (OpenAPI additive); perf 10 phút ảo < 1 s (test simulator); service 16 test | T07 |
+| VirtualClock + Strand giả lập + scheduler tất định | 0017 | ✔ | 2026-10-07 (Claude Code): `core/packages/simulator` — min-heap (t, seq), fiber generator + cancel token; chạy 2 lần cùng byte; CI [37517004426](https://github.com/ltnguyenlt2k/simvehicleapp/actions/runs/37517004426) | T01 |
+| Interpreter opcode P0 | 0017 | ✔ | 2026-10-07 (Claude Code): `core/packages/simulator` — event.*, vehicle.*, control.*, state.*, comm.*, logic.eval/in_range; biểu thức theo IR_SPEC (int BigInt, float32 `fround`); conformance C01–C38 + 7 golden 45/45 PASS local | T02 |
+| Concurrency policies (restart/ignore/queue/parallel) | 0012,0017 | ✔ | 2026-10-07 (Claude Code): `core/packages/simulator` — theo trigger, queueMax/maxRuns, trace cancel/queue_overflow (C09–C14) | T03 |
+| Opcode P1 (switch/wait_until/repeat/while/parallel/condition/write_many) | 0017 | ✔ | 2026-10-07 (Claude Code): `core/packages/simulator` — switch, wait_until, repeat, while (loop_guard), parallel join all/any/none, condition trigger; `write_many` chưa có block sinh ra (`sv_set_many` dời theo quyết định PO 2026-10-04) | T04 |
+| MockVehicle + MockMqtt | 0017 | ✔ | 2026-10-07 (Claude Code): `core/packages/simulator` — ghi actuator đặt target (không đổi giá trị hiện tại, GW-G), kiểm min/max/allowed khi có model; MQTT loopback theo filter `+`/`#` | T05 |
+| Tracer TraceEvent v1 + ScenarioPlayer | 0017,0027 | ✔ | 2026-10-07 (Claude Code): `core/packages/simulator` — mọi event hợp lệ contract `trace-event` (test), `signals[]` riêng cho timeline; `checkExpectations` (writes chính xác, trace matcher theo thứ tự) | T06 |
+| `POST /simulate` + giới hạn (24h ảo, 1e6 event) | 0017 | ✔ | 2026-10-07 (Claude Code): service compiler `/simulate` — validate `ir`/`scenario` theo contract (400), IR ≠ 1.x ⇒ 422, `SIM_LIMIT_REACHED` (mã mới, warning) khi chạm 1e6 sự kiện, `expectations` khi scenario có `expect`, thêm `signals/publishes/logs` (OpenAPI additive); perf 10 phút ảo < 1 s (test simulator); service 16 test | T07 |
 | Simulator Web Worker (tuỳ chọn) | 0017 | ↷ | 2026-10-07 (Claude Code): không cần — điều kiện của phase là độ trễ service > 300 ms; đo thật trên stack E2E: `/compile` 64 ms + `/simulate` 35 ms. Package simulator thuần TS nên vẫn chạy được trong Worker nếu sau này cần | T08 |
-| UI Scenario editor | 0017 | 🔄 | 2026-10-07 (Claude Code): tab Simulation — bảng initial/inputs (signal hoặc `mqtt:topic`), độ dài chạy, chế độ YAML import/export (validate contract `scenario`), tự lưu (bảng `sv_workflow_scenarios`, migration 0251, BFF `/api/sv/workflows/[id]/scenario`); "record from Signals" để M8; vitest + tsc PASS local; E2E chờ CI | T09 |
-| UI Simulation timeline + Replay overlay (`TraceOverlay`, dùng lại ở M8) | 0017,0027 | 🔄 | 2026-10-07 (Claude Code): nút Simulate (BFF `/api/sv/simulate`: compile build ⇒ simulate; lỗi compile ⇒ Problems), timeline (input/trigger/write/log/publish/error/cancel), thanh tua + Play, badge replay trên block (`SvTraceBadge` + `replayAt`, chỉ hiện khi graph chưa đổi); E2E `m5-simulate.spec.ts` chờ CI | T10 |
-| `expected.trace/writes` GW-A..G đóng băng | 0042 | 🔄 | 2026-10-07 (Claude Code): sinh bằng `simulator/src/golden-trace.ts` từ `ir.json` + scenario, runId `golden`, test so byte; writes = kỳ vọng suy tay của scenario; review [M05-golden-trace-review](reviews/M05-golden-trace-review.md) (uỷ quyền PO) | T11 |
+| UI Scenario editor | 0017 | ✔ | 2026-10-07 (Claude Code): tab Simulation — bảng initial/inputs (signal hoặc `mqtt:topic`), độ dài chạy, chế độ YAML import/export (validate contract `scenario`), tự lưu (bảng `sv_workflow_scenarios`, migration 0251, BFF `/api/sv/workflows/[id]/scenario`); "record from Signals" để M8; vitest + tsc PASS local; E2E `m5-simulate` PASS CI 37517004426 | T09 |
+| UI Simulation timeline + Replay overlay (`TraceOverlay`, dùng lại ở M8) | 0017,0027 | ✔ | 2026-10-07 (Claude Code): nút Simulate (BFF `/api/sv/simulate`: compile build ⇒ simulate; lỗi compile ⇒ Problems), timeline (input/trigger/write/log/publish/error/cancel), thanh tua + Play, badge replay trên block (`SvTraceBadge` + `replayAt`, chỉ hiện khi graph chưa đổi); E2E `m5-simulate.spec.ts` PASS CI 37517004426 (sửa lưu bản nháp d398a02, 44f06c5) | T10 |
+| `expected.trace/writes` GW-A..G đóng băng | 0042 | ✔ | 2026-10-07 (Claude Code): sinh bằng `simulator/src/golden-trace.ts` từ `ir.json` + scenario, runId `golden`, test so byte; writes = kỳ vọng suy tay của scenario; review [M05-golden-trace-review](reviews/M05-golden-trace-review.md) (uỷ quyền PO) | T11 |
 
 ## M6 — C++ backend & runtime
 ADR: [0020](../analysis/adr/ADR-0020-backend-plugin-contract.md), [0021](../analysis/adr/ADR-0021-cpp-runtime-library.md), [0022](../analysis/adr/ADR-0022-cpp-codegen-strategy.md) · Phụ thuộc: M0 (song song), M4 · Chi tiết: [phases/M06](../analysis/phases/M06-cpp-backend-and-runtime.md)
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| CMake/Conan package runtime (SDK 0.7.1) | 0021 | ☐ | Có thể bắt đầu ngay sau M0 | T01 |
-| `IClock`/`SteadyClock`/`VirtualClock` + `Strand` | 0021 | ☐ | gtest + TSAN | T02 |
+| CMake/Conan package runtime (SDK 0.7.1) | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T01 |
+| `IClock`/`SteadyClock`/`VirtualClock` + `Strand` | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu; gtest + TSAN | T02 |
 | `IVehicleAccess` + `VelocitasVehicleAccess` | 0021 | ☐ | Integration databroker nightly | T03 |
-| `testing::MockVehicle` | 0021 | ☐ | | T04 |
-| `Runtime` (signal registry, onX handlers, policies, cancel) | 0012,0021 | ☐ | Conformance | T05 |
-| `Ctx` API (read/write/wait/publish/log/trace/stop) | 0021 | ☐ | | T06 |
-| `StateVar<T>` + loop helpers | 0021 | ☐ | | T07 |
-| `Tracer` (SVTRACE) + `AppBase` | 0021,0027 | ☐ | Golden trace | T08 |
+| `testing::MockVehicle` | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T04 |
+| `Runtime` (signal registry, onX handlers, policies, cancel) | 0012,0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu; conformance | T05 |
+| `Ctx` API (read/write/wait/publish/log/trace/stop) | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T06 |
+| `StateVar<T>` + loop helpers | 0021 | 🔄 | 2026-10-07 (Claude Code): bắt đầu | T07 |
+| `Tracer` (SVTRACE) + `AppBase` | 0021,0027 | 🔄 | 2026-10-07 (Claude Code): bắt đầu; golden trace | T08 |
 | Conformance runner C++ | 0042 | ☐ | 100% scenario | T09 |
 | `docs/RUNTIME_API.md` | 0021 | ☐ | | T10 |
 | Server `/capabilities /generate /runtime/files` + `backend.yaml` | 0020 | ☐ | Contract test | T11 |
