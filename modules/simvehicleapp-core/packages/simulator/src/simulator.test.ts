@@ -1,0 +1,110 @@
+import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { compile } from "@simvehicleapp/compiler";
+import { fixtureContext } from "@simvehicleapp/compiler/src/golden-ir.ts";
+import { ContractValidator, fixturesDir } from "@simvehicleapp/contracts";
+import { cast, evaluate, formatFloat32, fromJson, roundHalfAway, simulate, toJson } from "./index.ts";
+
+const ctx = fixtureContext();
+const gwa = JSON.parse(readFileSync(`${fixturesDir}golden/GW-A/graph.json`, "utf8"));
+const irOf = async (graph: unknown) => {
+  const r = await compile(graph, ctx);
+  if (!r.ir) throw new Error(r.diagnostics.map((d) => d.code).join(", "));
+  return r.ir;
+};
+const HAZARD = "Vehicle.Body.Lights.Hazard.IsSignaling";
+
+describe("M5 gate example (analysis/phases/M05 Gate)", () => {
+  test("GW-A: Speed 100→130 at 1000, held ⇒ Hazard on at 3000", async () => {
+    const r = simulate(await irOf(gwa), { until: 6000, initial: { "Vehicle.Speed": 100, [HAZARD]: false }, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 130 }] });
+    expect(r.writes).toEqual([{ t: 3000, path: HAZARD, value: true }]);
+  });
+  test("GW-A: a speed change at 2500 restarts the window ⇒ Hazard on at 4500", async () => {
+    const r = simulate(await irOf(gwa), {
+      until: 6000,
+      initial: { "Vehicle.Speed": 100, [HAZARD]: false },
+      inputs: [
+        { t: 1000, path: "Vehicle.Speed", value: 130 },
+        { t: 2500, path: "Vehicle.Speed", value: 140 },
+      ],
+    });
+    expect(r.writes).toEqual([{ t: 4500, path: HAZARD, value: true }]);
+    expect(r.trace.filter((e) => e.ev === "cancel").map((e) => [e.ts, e.data?.reason])).toEqual([[2500, "restart"]]);
+  });
+});
+
+describe("trace and determinism (M05-T06)", () => {
+  test("every trace event is a valid TraceEvent v1 and the run is reproducible byte for byte", async () => {
+    const ir = await irOf(gwa);
+    const sc = Bun.YAML.parse(readFileSync(`${fixturesDir}golden/GW-A/scenario.yaml`, "utf8")) as { until: number; initial: Record<string, unknown>; inputs: [] };
+    const a = simulate(ir, sc);
+    const b = simulate(structuredClone(ir), structuredClone(sc));
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    const v = new ContractValidator();
+    for (const e of a.trace) {
+      const r = v.validate("trace-event", e);
+      expect(r.errors).toEqual([]);
+    }
+    expect(a.trace.map((e) => e.seq)).toEqual(a.trace.map((_, i) => i));
+    expect(a.trace.every((e, i) => i === 0 || e.ts >= a.trace[i - 1]!.ts)).toBe(true);
+  });
+});
+
+describe("limits and validation (ADR-0017 §5)", () => {
+  test("until is bounded to 24 h; the event cap stops a runaway and reports it", async () => {
+    const ir = await irOf(gwa);
+    expect(() => simulate(ir, { until: 86_400_001 })).toThrow();
+    const inputs = Array.from({ length: 50 }, (_, i) => ({ t: i, path: "Vehicle.Speed", value: i }));
+    const r = simulate(ir, { until: 1000, inputs, maxEvents: 20 });
+    expect(r.limit).toEqual({ reason: "events", events: 20, t: r.limit!.t });
+  });
+
+  test("a write outside the VSS range takes the error path (onError continue ⇒ logged, run goes on)", async () => {
+    const g = structuredClone(gwa);
+    g.blocks = g.blocks.filter((b: { id: string }) => ["b1", "b3"].includes(b.id));
+    g.blocks[1].props = { path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: "<speedchanged.value> > 0 ? 100 : 0", awaitAck: true, onError: "continue" };
+    g.edges = [{ id: "e1", from: "b1", fromHandle: "source", to: "b3", toHandle: "target" }];
+    const ir = await irOf(g);
+    const r = simulate(ir, { until: 2000, initial: { "Vehicle.Speed": 0 }, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 10 }], model: { "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed": { min: 0, max: 50 } } });
+    expect(r.writes).toEqual([]);
+    expect(r.trace.find((e) => e.ev === "error")?.data?.message).toContain("outside");
+  });
+
+  test("perf: 10 minutes of virtual time (100 ms changes) simulate in under 1 s", async () => {
+    const ir = await irOf(gwa);
+    const inputs = Array.from({ length: 6000 }, (_, i) => ({ t: i * 100, path: "Vehicle.Speed", value: 100 + (i % 50) }));
+    const t0 = performance.now();
+    const r = simulate(ir, { until: 600_000, initial: { "Vehicle.Speed": 0 }, inputs });
+    const ms = performance.now() - t0;
+    expect(r.limit).toBeUndefined();
+    expect(ms).toBeLessThan(1000);
+  });
+});
+
+describe("value semantics (IR_SPEC)", () => {
+  test("int64 stays exact; int64/uint64 serialize as decimal strings", () => {
+    const big = { $expr: { op: "+", l: { $const: "9223372036854775000", type: "int64" }, r: { $const: "7", type: "int64" }, type: "int64" } };
+    const c = { ref: () => 0n, signal: () => undefined, state: () => null, now: () => 0, typeOfRef: () => undefined };
+    expect(evaluate(big, c)).toBe(9223372036854775007n);
+    expect(toJson(9223372036854775007n, "int64")).toBe("9223372036854775007");
+    expect(toJson(80n, "uint8")).toBe(80);
+  });
+  test("division and modulo are double; float formats with the shortest binary32 digits", () => {
+    const c = { ref: () => 0n, signal: () => undefined, state: () => null, now: () => 0, typeOfRef: () => undefined };
+    const div = (op: string, l: string, r: string) => evaluate({ $expr: { op, l: { $const: l, type: "int64" }, r: { $const: r, type: "int64" }, type: "double" } }, c);
+    expect(div("/", "7", "2")).toBe(3.5);
+    expect(div("%", "-7", "2")).toBe(-1);
+    expect(div("/", "1", "0")).toBe(Infinity);
+    expect(formatFloat32(Math.fround(0.1))).toBe("0.1");
+    expect(formatFloat32(Math.fround(120.5))).toBe("120.5");
+  });
+  test("type.cast rounds half away from zero, NaN ⇒ 0, clamps", () => {
+    expect(cast(2.5, "uint8")).toBe(3n);
+    expect(cast(-2.5, "int8")).toBe(-3n);
+    expect(cast(Number.NaN, "int32")).toBe(0n);
+    expect(cast(300.4, "uint8")).toBe(255n);
+    expect(cast(-1, "uint8")).toBe(0n);
+    expect(roundHalfAway(0.49999999999999994)).toBe(0);
+    expect(fromJson("18446744073709551615", "uint64")).toBe(18446744073709551615n);
+  });
+});

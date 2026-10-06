@@ -1,0 +1,19 @@
+{
+  "name": "@simvehicleapp/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic IR v1 simulator with a virtual clock, mock vehicle/MQTT and TraceEvent v1 output (ADR-0017, ADR-0012).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@simvehicleapp/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@simvehicleapp/compiler": "workspace:*"
+  }
+}

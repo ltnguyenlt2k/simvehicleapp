@@ -32,7 +32,7 @@
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ✔ | 14/14 — gate PASS 2026-10-06 ([report](reports/M03.md); review conformance theo uỷ quyền PO, chờ xác nhận) |
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ✔ | 12/12 — gate PASS 2026-10-07 ([report](reports/M04.md); ADR-0014/0015 + review golden IR theo uỷ quyền PO, chờ xác nhận) |
-| [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
+| [M5](#m5--simulator) | Simulator | 0017 | 🔄 | 0/11 |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ☐ | 0/19 |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ☐ | 0/10 |
@@ -144,12 +144,12 @@ ADR: [0017](../analysis/adr/ADR-0017-simulator.md) · Phụ thuộc: M4 · Chi t
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| VirtualClock + Strand giả lập + scheduler tất định | 0017 | ☐ | | T01 |
-| Interpreter opcode P0 | 0017 | ☐ | Conformance | T02 |
-| Concurrency policies (restart/ignore/queue/parallel) | 0012,0017 | ☐ | | T03 |
-| Opcode P1 (switch/wait_until/repeat/while/parallel/condition/write_many) | 0017 | ☐ | | T04 |
-| MockVehicle + MockMqtt | 0017 | ☐ | | T05 |
-| Tracer TraceEvent v1 + ScenarioPlayer | 0017,0027 | ☐ | Cùng format runtime thật | T06 |
+| VirtualClock + Strand giả lập + scheduler tất định | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — min-heap (t, seq), fiber generator + cancel token; chạy 2 lần cùng byte; chờ CI | T01 |
+| Interpreter opcode P0 | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — event.*, vehicle.*, control.*, state.*, comm.*, logic.eval/in_range; biểu thức theo IR_SPEC (int BigInt, float32 `fround`); conformance C01–C38 + 7 golden 45/45 PASS local | T02 |
+| Concurrency policies (restart/ignore/queue/parallel) | 0012,0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — theo trigger, queueMax/maxRuns, trace cancel/queue_overflow (C09–C14) | T03 |
+| Opcode P1 (switch/wait_until/repeat/while/parallel/condition/write_many) | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — switch, wait_until, repeat, while (loop_guard), parallel join all/any/none, condition trigger; `write_many` chưa có block sinh ra (`sv_set_many` dời theo quyết định PO 2026-10-04) | T04 |
+| MockVehicle + MockMqtt | 0017 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — ghi actuator đặt target (không đổi giá trị hiện tại, GW-G), kiểm min/max/allowed khi có model; MQTT loopback theo filter `+`/`#` | T05 |
+| Tracer TraceEvent v1 + ScenarioPlayer | 0017,0027 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — mọi event hợp lệ contract `trace-event` (test), `signals[]` riêng cho timeline; `checkExpectations` (writes chính xác, trace matcher theo thứ tự) | T06 |
 | `POST /simulate` + giới hạn (24h ảo, 1e6 event) | 0017 | ☐ | Perf 10' ảo < 1s | T07 |
 | Simulator Web Worker (tuỳ chọn) | 0017 | ☐ | | T08 |
 | UI Scenario editor | 0017 | ☐ | | T09 |
