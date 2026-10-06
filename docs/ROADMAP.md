@@ -35,7 +35,7 @@
 | [M5](#m5--simulator) | Simulator | 0017 | ✔ | 10/11 + T08 ↷ — gate PASS ([report](reports/M05.md)) |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ✔ | 20/20 — gate PASS ([report](reports/M06.md)) |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
-| [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ☐ | 0/10 |
+| [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | 🔄 | 0/10 |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ☐ | 0/8 |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ☐ | 0/10 |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
@@ -212,16 +212,16 @@ ADR: [0024](../analysis/adr/ADR-0024-databroker-api-and-runtime-stack.md), [0027
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Compose runtime (databroker/mosquitto/mock-provider theo project) | 0024 | ☐ | Compose smoke | T01 |
-| Nhiều VSS release → nhiều databroker (profile) | 0024 | ☐ | Test 2 release | T02 |
-| RunManager + state machine | 0027 | ☐ | | T03 |
-| toolchain `run` job (SSE stdout/stderr, exit code) | 0025,0027 | ☐ | | T04 |
-| TraceIngest (SVTRACE parse) + run_event ring buffer | 0027 | ☐ | Load test 2k ev/s | T05 |
-| signal-gateway (kuksa.val.v1 WS, allowlist từ catalog) | 0024 | ☐ | Integration | T06 |
-| Scenario player trên databroker thật | 0017,0024 | ☐ | | T07 |
+| Compose runtime (databroker/mosquitto/mock-provider theo project) | 0024 | 🔄 | Compose smoke — Claude Code 2026-10-07 | T01 |
+| Nhiều VSS release → nhiều databroker (profile) | 0024 | 🔄 | Test 2 release | T02 |
+| RunManager + state machine | 0027 | 🔄 | | T03 |
+| toolchain `run` job (SSE stdout/stderr, exit code) | 0025,0027 | 🔄 | | T04 |
+| TraceIngest (SVTRACE parse) + run_event ring buffer | 0027 | 🔄 | Load test 2k ev/s | T05 |
+| signal-gateway (kuksa.val.v1 WS, allowlist từ catalog) | 0024 | 🔄 | Integration | T06 |
+| Scenario player trên databroker thật | 0017,0024 | 🔄 | | T07 |
 | UI Run console + Signals panel + Trace overlay | 0027 | ☐ | Playwright | T08 |
 | "Record scenario from Signals" | 0017,0027 | ☐ | | T09 |
-| `scripts/smoke.sh` đầy đủ GW-A live | — | ☐ | CI nightly | T10 |
+| `scripts/smoke.sh` đầy đủ GW-A live | — | 🔄 | CI nightly | T10 |
 
 ## M9 — IDE & Export & License
 ADR: [0028](../analysis/adr/ADR-0028-ide-code-server.md), [0031](../analysis/adr/ADR-0031-export-and-licensing.md) · Phụ thuộc: M7 · Chi tiết: [phases/M09](../analysis/phases/M09-ide-export-license.md)
