@@ -1,0 +1,30 @@
+# simvehicleapp-orchestrator — self-contained compose fragment. Building it needs image simvehicleapp/contracts:dev
+# (modules/simvehicleapp-contracts; `scripts/sv build` builds it first).
+services:
+  workspace:
+    image: simvehicleapp/workspace:dev
+    build:
+      context: .
+      dockerfile: services/workspace/Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_TOOLCHAINS: ${SV_TOOLCHAINS:-cpp=http://toolchain-cpp:4210}
+      SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
+      SV_CATALOG_URL: http://vss-catalog:4010
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # The only writer of /workspace/projects (ADR-0026); same volume as the toolchain and IDE.
+    volumes:
+      - sv-workspace:/workspace
+    # Internal only: reached as http://workspace:4040; reaches backends on sv-codegen.
+    networks: [sv-internal, sv-codegen]
+    restart: unless-stopped
+
+volumes:
+  sv-workspace:
+
+networks:
+  sv-internal:
+  sv-codegen:
+    internal: true

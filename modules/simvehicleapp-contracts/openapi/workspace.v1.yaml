@@ -110,6 +110,58 @@ paths:
                         path: { $ref: "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/filePath" }
                         size: { type: integer, minimum: 0 }
                         owned: { type: boolean, description: "Inside an owned root (generated)." }
+  /projects/{slug}/file:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    get:
+      operationId: readFile
+      tags: [projects]
+      description: "One text file of the project for the read-only viewer (≤ 1 MB; additive 2026-10-07, M07-T19)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: path, in: query, required: true, schema: { $ref: "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/filePath" } }
+      responses:
+        "200":
+          description: File content.
+          content:
+            application/json:
+              schema: { type: object, required: [path, content], properties: { path: { type: string }, content: { type: string } } }
+        "404": { description: "No such file (or the path is rejected)." }
+  /projects/{slug}/generations:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    get:
+      operationId: listGenerations
+      tags: [generations]
+      description: "Current generation and the retained ones, oldest first (additive 2026-10-07, M07-T19)."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Generations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [current, generations]
+                properties:
+                  current: { type: [string, "null"] }
+                  generations: { type: array, items: { type: string } }
+  /projects/{slug}/generations/{gid}/file:
+    parameters:
+      - { $ref: "#/components/parameters/Slug" }
+      - { name: gid, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+    get:
+      operationId: readGenerationFile
+      tags: [generations]
+      description: "A file as a retained generation wrote it (diff with the previous generation; additive 2026-10-07, M07-T19)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: path, in: query, required: true, schema: { $ref: "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/filePath" } }
+      responses:
+        "200":
+          description: File content in that generation.
+          content:
+            application/json:
+              schema: { type: object, required: [path, content], properties: { path: { type: string }, content: { type: string } } }
+        "404": { description: "Generation not retained or file not in it." }
   /projects/{slug}/export:
     parameters: [{ $ref: "#/components/parameters/Slug" }]
     post:

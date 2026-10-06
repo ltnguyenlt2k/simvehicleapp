@@ -1,0 +1,13 @@
+{
+  "name": "@simvehicleapp/workspace-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "workspace service on :4040 (openapi/workspace.v1.yaml, ADR-0026): the only writer of /workspace/projects/**.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  }
+}
