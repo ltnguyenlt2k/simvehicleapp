@@ -92,6 +92,20 @@ export function createOrchestratorHandler(d: AppDeps) {
         await d.repo.setWorkflows(project.id, list.map((w: { simWorkflowId: string; enabled?: boolean }) => ({ simWorkflowId: w.simWorkflowId, enabled: w.enabled !== false })));
         return json(200, projectView((await d.repo.project(project.id))!));
       }
+      if (parts[2] === "files" && parts.length === 3 && req.method === "GET") {
+        // Tree + retained generations of the project folder (generated-files viewer, M07-T19).
+        const [tree, gens] = await Promise.all([d.clients.workspaceGet(`/projects/${project.slug}/tree`), d.clients.workspaceGet(`/projects/${project.slug}/generations`)]);
+        if (!tree.ok || !gens.ok) return json(tree.ok ? (gens as { status: number }).status : (tree as { status: number }).status, { error: "workspace_unavailable" });
+        return json(200, { ...(tree.value as object), ...(gens.value as object) });
+      }
+      if (parts[2] === "file" && parts.length === 3 && req.method === "GET") {
+        const path = url.searchParams.get("path") ?? "";
+        const gid = url.searchParams.get("generationId");
+        if (!path || path.length > 1024 || (gid !== null && !ID.test(gid))) return json(400, { error: "invalid_request" });
+        const q = `?path=${encodeURIComponent(path)}`;
+        const r = await d.clients.workspaceGet(gid ? `/projects/${project.slug}/generations/${gid}/file${q}` : `/projects/${project.slug}/file${q}`);
+        return r.ok ? json(200, r.value) : json(r.status === 404 ? 404 : 502, { error: r.status === 404 ? "not_found" : "workspace_unavailable" });
+      }
       if (parts[2] === "generations" && parts.length === 3 && req.method === "POST") {
         const b = await readBody(req);
         if (b instanceof Response) return b;

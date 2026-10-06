@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: SimVehicleApp Orchestrator API
   version: 1.0.0-alpha.1
-  description: "Projects, SynCode generations, runs and the event stream (ADR-0020, ADR-0026, ADR-0027). Data owner of schema `sv`. Skeleton: resource bodies are locked in M7/M8."
+  description: "Projects, SynCode generations, runs and the event stream (ADR-0020, ADR-0026, ADR-0027). Data owner of schema `sv`. Project and Generation bodies locked in M7 (2026-10-07); runs in M8."
   license: { name: Apache-2.0, identifier: Apache-2.0 }
 servers:
   - url: http://orchestrator:4030
@@ -63,6 +63,8 @@ paths:
                 name: { type: string, minLength: 1, maxLength: 200 }
                 language: { enum: [cpp, python, rust] }
                 vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                appName: { type: string, pattern: "^[A-Z][A-Za-z0-9]*$", description: "Default: PascalCase of the name." }
+                settings: { $ref: "#/components/schemas/ProjectSettings" }
       responses:
         "201":
           description: Created.
@@ -83,6 +85,69 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Project" }
         "404": { description: "Unknown project." }
+  /projects/{id}/workflows:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    put:
+      operationId: setProjectWorkflows
+      description: "Workflows (studio ids) SynCode generates into the project (M07-T17)."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workflows]
+              properties:
+                workflows:
+                  type: array
+                  maxItems: 500
+                  items:
+                    type: object
+                    required: [simWorkflowId]
+                    properties:
+                      simWorkflowId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                      enabled: { type: boolean, default: true }
+      responses:
+        "200":
+          description: Project with its workflows.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /projects/{id}/files:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    get:
+      operationId: getProjectFiles
+      description: "Tree of the project folder and its retained generations (workspace, read-only; M07-T19)."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Files and generations.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [files, current, generations]
+                properties:
+                  files: { type: array, items: { type: object, required: [path, size], properties: { path: { type: string }, size: { type: integer }, owned: { type: boolean } } } }
+                  current: { type: [string, "null"] }
+                  generations: { type: array, items: { type: string } }
+  /projects/{id}/file:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    get:
+      operationId: getProjectFile
+      description: "One file of the project, or as a retained generation wrote it (`generationId`, diff view; M07-T19)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: path, in: query, required: true, schema: { type: string, maxLength: 1024 } }
+        - { name: generationId, in: query, required: false, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
+      responses:
+        "200":
+          description: File content.
+          content:
+            application/json:
+              schema: { type: object, required: [path, content], properties: { path: { type: string }, content: { type: string } } }
+        "404": { description: "No such file or generation." }
   /projects/{id}/generations:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     post:
@@ -98,7 +163,17 @@ paths:
               type: object
               required: [graphs]
               properties:
-                graphs: { type: array, minItems: 1, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }, description: "Workflow graphs exported by the studio adapter." }
+                graphs: { type: array, minItems: 1, maxItems: 100, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }, description: "Workflow graphs exported by the studio adapter." }
+                scenarios:
+                  description: "Scenario per workflow for the generated tests (M7)."
+                  type: array
+                  items:
+                    type: object
+                    required: [workflowId, scenario]
+                    properties:
+                      workflowId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                      scenario: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1" }
+                overwriteModified: { type: boolean, default: false, description: "Overwrite generated files edited by hand (backed up by the workspace)." }
       responses:
         "202":
           description: Generation queued.
@@ -201,25 +276,65 @@ components:
         application/json:
           schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
   schemas:
+    ProjectSettings:
+      type: object
+      properties:
+        mqttTopicPrefix: { type: string, pattern: "^[^#+]+$", description: "Default simvehicleapp/<slug>." }
+        traceLevel: { enum: [off, trigger, node], default: node }
     Project:
       type: object
-      required: [id, slug, name, language, vssRelease]
+      required: [id, slug, name, appName, language, vssRelease, settings, status, workflows]
       properties:
         id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
         name: { type: string }
+        appName: { type: string }
         language: { enum: [cpp, python, rust] }
         vssRelease: { type: string }
+        settings: { $ref: "#/components/schemas/ProjectSettings" }
+        status: { enum: [creating, ready, failed], description: "creating until the workspace and the toolchain prepared the folder." }
+        statusMessage: { type: string }
+        workflows: { type: array, items: { type: object, required: [simWorkflowId, enabled], properties: { simWorkflowId: { type: string }, enabled: { type: boolean } } } }
+    Verdict: { enum: [passed, failed, skipped, pending] }
     Generation:
+      description: "Master Plan Appendix A (success) / Appendix B (failure: success false, stage, diagnostics)."
       type: object
-      required: [id, projectId, state]
+      required: [id, generationId, projectId, state, stages, verification, diagnostics, generatedFiles, workflows, createdAt]
       properties:
         id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+        generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         projectId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         state: { enum: [queued, running, succeeded, failed, cancelled] }
-        stage: { enum: [ir, codegen, write, deps, build, format-check, test] }
-        manifest: { $ref: "urn:simvehicleapp:contracts:generation-manifest:1.0.0-alpha.1" }
+        success: { type: boolean, description: "Present once the generation ended." }
+        stage: { enum: [ir, codegen, write, deps, build, format-check, test], description: "Running stage, or the failing one." }
+        stages:
+          type: array
+          items:
+            type: object
+            required: [name, state]
+            properties:
+              name: { enum: [ir, codegen, write, deps, build, format-check, test] }
+              state: { enum: [pending, running, passed, failed, skipped] }
+              startedAt: { type: integer }
+              finishedAt: { type: integer }
+        verification:
+          type: object
+          required: [ir, format, compile, tests]
+          properties:
+            ir: { $ref: "#/components/schemas/Verdict" }
+            format: { $ref: "#/components/schemas/Verdict" }
+            compile: { $ref: "#/components/schemas/Verdict" }
+            tests: { $ref: "#/components/schemas/Verdict" }
         diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+        generatedFiles: { type: array, items: { type: string } }
+        workflows: { type: array, items: { type: object, required: [workflowId, revision, irHash], properties: { workflowId: { type: string }, revision: { type: integer }, irHash: { type: string } } } }
+        workflowRevision: { type: integer }
+        modelHash: { type: string }
+        compilerVersion: { type: string }
+        backend: { type: string }
+        editor: { type: object, required: [url], properties: { url: { type: string } } }
+        createdAt: { type: integer }
+        finishedAt: { type: integer }
     Run:
       type: object
       required: [id, generationId, state]

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (M07, skeleton locked): `Project` (appName, settings, status, workflows), `Generation` (Appendix A/B: success, stage, stages, verification, generatedFiles, editor…), `PUT /projects/{id}/workflows`, `GET /projects/{id}/files`, `GET /projects/{id}/file`, `startGeneration` body `scenarios`/`overwriteModified`.
 - Diagnostics catalog (additive, M07): `PROJECT_VSS_RELEASE_MISMATCH` (codegen, error) — a workflow authored for another VSS release than its project (the generated code would not build against the project's vehicle model).
 - `openapi/workspace.v1.yaml` (additive, M07-T19): `GET /projects/{slug}/file`, `/generations`, `/generations/{gid}/file` for the generated-files viewer.
 - `openapi/vss-catalog.v1.yaml` (additive, M07): `GET /vss?release=` — the release document a new project vendors as `app/vss/vss_rel_<x>.json`.

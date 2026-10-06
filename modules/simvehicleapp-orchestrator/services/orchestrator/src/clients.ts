@@ -48,6 +48,8 @@ export interface Clients {
   generate(language: string, request: unknown): Promise<Outcome<FileSet>>;
   createProject(body: { slug: string; language: string; appName: string; vssRelease: string }): Promise<Outcome<unknown>>;
   commit(slug: string, body: { generationId: string; fileset: FileSet; overwriteModified: boolean }): Promise<Outcome<unknown>>;
+  /** Read-only views of the project folder (workspace tree/file/generations), for the files viewer. */
+  workspaceGet(path: string): Promise<Outcome<unknown>>;
   /** Runs a toolchain job to its end; every log line goes to `onLine`. */
   job(language: string, kind: string, project: string, onLine: (l: LogLine) => void, options?: Record<string, unknown>): Promise<ToolchainJob>;
 }
@@ -96,6 +98,9 @@ export function httpClients(e: Endpoints): Clients {
     },
     async createProject(body) {
       return outcome(await call(`${e.workspace}/projects`, { method: "POST", body: JSON.stringify(body) }));
+    },
+    async workspaceGet(path) {
+      return outcome(await call(`${e.workspace}${path}`));
     },
     async commit(slug, body) {
       return outcome(await call(`${e.workspace}/projects/${slug}/commits`, { method: "POST", body: JSON.stringify(body) }));

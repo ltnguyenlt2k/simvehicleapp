@@ -32,6 +32,14 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
     generate: async (_l, req) => (calls.push(`generate:${JSON.stringify((req as { scenarios?: unknown }).scenarios ?? null).length > 4 ? "with-scenarios" : "no-scenarios"}`), { ok: true, value: fileset }),
     createProject: async () => (calls.push("ws:create"), { ok: true, value: {} }),
     commit: async () => (calls.push("ws:commit"), { ok: true, value: {} }),
+    workspaceGet: async (path) =>
+      path.endsWith("/tree")
+        ? { ok: true, value: { files: [{ path: "app/src/generated/A.cpp", size: 7, owned: true }] } }
+        : path.endsWith("/generations")
+          ? { ok: true, value: { current: "g1", generations: ["g1"] } }
+          : path.includes("missing")
+            ? { ok: false, status: 404, diagnostics: [] }
+            : { ok: true, value: { path: "app/src/generated/A.cpp", content: path.includes("/generations/") ? "old" : "new" } },
     job: async (_l, kind, _p, onLine) => {
       calls.push(`job:${kind}`);
       const s = jobs[kind] ?? { state: "succeeded" };
@@ -208,5 +216,9 @@ describe("HTTP API + events (openapi/orchestrator.v1.yaml)", () => {
     const view = await (await call("GET", `/projects/${p.id}/generations/${g.id}`)).json();
     expect(view).toMatchObject({ success: true, state: "succeeded" });
     expect((await call("GET", "/events")).status).toBe(400);
+    expect(await (await call("GET", `/projects/${p.id}/files`)).json()).toEqual({ files: [{ path: "app/src/generated/A.cpp", size: 7, owned: true }], current: "g1", generations: ["g1"] });
+    expect(await (await call("GET", `/projects/${p.id}/file?path=app/src/generated/A.cpp`)).json()).toEqual({ path: "app/src/generated/A.cpp", content: "new" });
+    expect(await (await call("GET", `/projects/${p.id}/file?path=app/src/generated/A.cpp&generationId=g1`)).json()).toMatchObject({ content: "old" });
+    expect((await call("GET", `/projects/${p.id}/file?path=missing`)).status).toBe(404);
   });
 });
