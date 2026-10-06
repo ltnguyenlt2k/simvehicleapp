@@ -55,11 +55,11 @@ else
   docker tag simvehicleapp/studio:dev "$marker"
 fi
 
-echo "refresh: building migrations/realtime, contracts and core images…"
+echo "refresh: building migrations/realtime, contracts, core and backend images…"
 # Small images built from source: DB migrations (new Drizzle migrations), realtime, contracts, core.
 $DC build studio-migrations studio-realtime
 $DC build contracts
-$DC build vss-catalog compiler
+$DC build vss-catalog compiler codegen-cpp
 $DC up -d
 # Keep the running studio image and the previous one (rollback); older sha-* tags are ~2 GB each.
 # Only image tags are removed — never containers or volumes.

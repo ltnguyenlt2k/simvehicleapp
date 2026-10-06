@@ -114,11 +114,15 @@ export async function dropSignal(
   y: number
 ) {
   const row = await findSignal(page, path)
-  await row
-    .locator('[draggable="true"]')
-    .dragTo(pane(page), { targetPosition: { x, y }, force: true })
   const menu = page.locator('[data-sv="signal-drop-menu"]')
-  await expect(menu).toBeVisible()
+  // A synthetic HTML5 drop right after the canvas mounts is sometimes lost; drop again like a user would
+  // (a lost drop creates nothing, so retrying cannot duplicate a block).
+  await expect(async () => {
+    await row
+      .locator('[draggable="true"]')
+      .dragTo(pane(page), { targetPosition: { x, y }, force: true })
+    await expect(menu).toBeVisible({ timeout: 3_000 })
+  }).toPass({ timeout: 20_000 })
   await menu.locator(`[data-sv-block="${blockType}"]`).click()
   await expect(menu).toBeHidden()
 }
