@@ -2,7 +2,7 @@
   "name": "@simvehicleapp/compiler",
   "version": "0.1.0",
   "private": true,
-  "description": "SimVehicleApp compiler: WorkflowGraph checks (lint = S0–S3 + part of S6, analysis/06 §3), later IR (M4).",
+  "description": "SimVehicleApp compiler: WorkflowGraph checks (lint = S0\u2013S3 + part of S6, analysis/06 \u00a73), later IR (M4).",
   "license": "Apache-2.0",
   "type": "module",
   "main": "src/index.ts",
@@ -13,6 +13,8 @@
   "dependencies": {
     "@simvehicleapp/blocks": "workspace:*",
     "@simvehicleapp/expr": "workspace:*",
+    "@simvehicleapp/types": "workspace:*",
+    "@simvehicleapp/units": "workspace:*",
     "@simvehicleapp/vss": "workspace:*"
   }
 }

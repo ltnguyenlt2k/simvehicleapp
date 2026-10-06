@@ -27,6 +27,8 @@
       "dependencies": {
         "@simvehicleapp/blocks": "workspace:*",
         "@simvehicleapp/expr": "workspace:*",
+        "@simvehicleapp/types": "workspace:*",
+        "@simvehicleapp/units": "workspace:*",
         "@simvehicleapp/vss": "workspace:*",
       },
     },
