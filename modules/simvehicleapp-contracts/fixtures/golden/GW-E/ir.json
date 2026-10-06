@@ -1,0 +1,98 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:77be02a978f54386a11eded8c64a0b9fe9e91508d154b7a6641ff7996deb1c03",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "PeriodicTelemetry",
+  "nodes": [
+    {
+      "args": {
+        "payload": {
+          "$template": [
+            "{\"speed\": ",
+            {
+              "$signal": "s1"
+            },
+            ", \"soc\": ",
+            {
+              "$signal": "s0"
+            },
+            "}"
+          ]
+        },
+        "payloadType": "json",
+        "qos": 0,
+        "retain": false,
+        "topic": "t0"
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "comm.mqtt_publish",
+      "src": {
+        "blockId": "b2"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s0",
+      "path": "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s1",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:20042942d77bac5b012c6e5dfcdff1dd9957025f6ab92a5829417a4152f54993",
+  "state": [],
+  "topics": [
+    {
+      "direction": "write",
+      "id": "t0",
+      "topic": "simvehicleapp/telemetry"
+    }
+  ],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "ignore"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.timer",
+      "outputs": {
+        "tick": {
+          "type": "uint32"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        }
+      },
+      "props": {
+        "initialDelayMs": 1000,
+        "intervalMs": 1000
+      },
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "gw_e",
+  "workflowRevision": 1
+}

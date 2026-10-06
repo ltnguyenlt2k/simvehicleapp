@@ -1,0 +1,168 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:bc1e3bf33a1b354a68eb7697c09be91013ccf8c1b4ae5565d86250b099429f0e",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "AutoWipers",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$expr": {
+            "cond": {
+              "$expr": {
+                "l": {
+                  "$ref": "n1.value"
+                },
+                "op": "<",
+                "r": {
+                  "$const": "10",
+                  "type": "int64",
+                  "unit": "percent"
+                },
+                "type": "boolean"
+              }
+            },
+            "else": {
+              "$expr": {
+                "cond": {
+                  "$expr": {
+                    "l": {
+                      "$ref": "n1.value"
+                    },
+                    "op": "<",
+                    "r": {
+                      "$const": "40",
+                      "type": "int64",
+                      "unit": "percent"
+                    },
+                    "type": "boolean"
+                  }
+                },
+                "else": {
+                  "$expr": {
+                    "cond": {
+                      "$expr": {
+                        "l": {
+                          "$ref": "n1.value"
+                        },
+                        "op": "<",
+                        "r": {
+                          "$const": "70",
+                          "type": "int64",
+                          "unit": "percent"
+                        },
+                        "type": "boolean"
+                      }
+                    },
+                    "else": {
+                      "$const": "FAST",
+                      "type": "string"
+                    },
+                    "op": "?:",
+                    "then": {
+                      "$const": "MEDIUM",
+                      "type": "string"
+                    },
+                    "type": "string"
+                  }
+                },
+                "op": "?:",
+                "then": {
+                  "$const": "INTERVAL",
+                  "type": "string"
+                },
+                "type": "string"
+              }
+            },
+            "op": "?:",
+            "then": {
+              "$const": "OFF",
+              "type": "string"
+            },
+            "type": "string"
+          }
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "string",
+      "id": "s1",
+      "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+      "unit": null,
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:12a1e9e909cfc69004970aa5ab44aea6a0d051719427ce83e0232b3118c69f7c",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 500,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "gw_c",
+  "workflowRevision": 1
+}

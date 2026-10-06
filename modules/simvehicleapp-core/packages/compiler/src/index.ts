@@ -4,3 +4,4 @@ export { lint, MAX_BLOCKS, MAX_GRAPH_BYTES, normalizeName, type LintContext, typ
 export { BackendUnavailableError, type CapabilitiesLookup, checkBackend, httpCapabilities, type IrForCapabilities } from "./capabilities.ts";
 export { analyzeControlFlow, type ControlFlow } from "./controlflow.ts";
 export { type IrExpr, type RefBinding, type Typed, Typer, type TyperCode, type TyperDiagnostic, type TypeEnv } from "./typer.ts";
+export { COMPILER_VERSION, type CompileContext, type CompileResult, compile, IR_VERSION, kebab, pascal } from "./compile.ts";

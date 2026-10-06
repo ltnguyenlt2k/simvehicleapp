@@ -1,0 +1,378 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "WindowCloseOnRain",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$const": 0,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": "n3"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s2",
+        "value": {
+          "$const": 0,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": "n4"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s3",
+        "value": {
+          "$const": 0,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": "n5"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s4",
+        "value": {
+          "$const": 0,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n5",
+      "next": {
+        "error": null,
+        "next": "n6"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b5"
+      }
+    },
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$expr": {
+                "l": {
+                  "$expr": {
+                    "l": {
+                      "$expr": {
+                        "l": {
+                          "$signal": "s1"
+                        },
+                        "op": "==",
+                        "r": {
+                          "$const": "0",
+                          "type": "int64",
+                          "unit": "percent"
+                        },
+                        "type": "boolean"
+                      }
+                    },
+                    "op": "&&",
+                    "r": {
+                      "$expr": {
+                        "l": {
+                          "$signal": "s2"
+                        },
+                        "op": "==",
+                        "r": {
+                          "$const": "0",
+                          "type": "int64",
+                          "unit": "percent"
+                        },
+                        "type": "boolean"
+                      }
+                    },
+                    "type": "boolean"
+                  }
+                },
+                "op": "&&",
+                "r": {
+                  "$expr": {
+                    "l": {
+                      "$signal": "s3"
+                    },
+                    "op": "==",
+                    "r": {
+                      "$const": "0",
+                      "type": "int64",
+                      "unit": "percent"
+                    },
+                    "type": "boolean"
+                  }
+                },
+                "type": "boolean"
+              }
+            },
+            "op": "&&",
+            "r": {
+              "$expr": {
+                "l": {
+                  "$signal": "s4"
+                },
+                "op": "==",
+                "r": {
+                  "$const": "0",
+                  "type": "int64",
+                  "unit": "percent"
+                },
+                "type": "boolean"
+              }
+            },
+            "type": "boolean"
+          }
+        },
+        "timeoutMs": 10000
+      },
+      "id": "n6",
+      "next": {
+        "ok": "n7",
+        "timeout": "n8"
+      },
+      "opcode": "control.wait_until",
+      "src": {
+        "blockId": "b6"
+      }
+    },
+    {
+      "args": {
+        "level": "info",
+        "message": {
+          "$template": [
+            "windows closed"
+          ]
+        }
+      },
+      "id": "n7",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "comm.log",
+      "src": {
+        "blockId": "b7"
+      }
+    },
+    {
+      "args": {
+        "level": "warn",
+        "message": {
+          "$template": [
+            "windows did not close"
+          ]
+        }
+      },
+      "id": "n8",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "comm.log",
+      "src": {
+        "blockId": "b8"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "subscribe",
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe",
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s2",
+      "path": "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe",
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s3",
+      "path": "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe",
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s4",
+      "path": "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s5",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:c5b8a4b954c9ed94df40405a1181172006185702a1c579a57d3fc6152a14ec59",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "ignore"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.condition",
+      "outputs": {
+        "timestamp": {
+          "type": "timestamp"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "expr": {
+          "$expr": {
+            "l": {
+              "$expr": {
+                "l": {
+                  "$signal": "s0"
+                },
+                "op": ">",
+                "r": {
+                  "$const": "30",
+                  "type": "int64",
+                  "unit": "percent"
+                },
+                "type": "boolean"
+              }
+            },
+            "op": "&&",
+            "r": {
+              "$expr": {
+                "l": {
+                  "$signal": "s5"
+                },
+                "op": "<",
+                "r": {
+                  "$const": "5",
+                  "type": "int64",
+                  "unit": "km/h"
+                },
+                "type": "boolean"
+              }
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "gw_g",
+  "workflowRevision": 1
+}

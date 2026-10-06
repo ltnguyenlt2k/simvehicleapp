@@ -1,0 +1,159 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:5a1b3deaee0493022195cff3b084acde7c1036d5c98b5dd5adcaf6d05b9a2195",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "WelcomeSequence",
+  "nodes": [
+    {
+      "args": {
+        "branches": [
+          {
+            "entry": "n3"
+          },
+          {
+            "entry": "n4"
+          }
+        ],
+        "join": "all"
+      },
+      "id": "n2",
+      "next": {
+        "next": "n6"
+      },
+      "opcode": "control.parallel",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "durationMs": 500
+      },
+      "id": "n4",
+      "next": {
+        "next": "n5"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b4"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": 80,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n5",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b5"
+      }
+    },
+    {
+      "args": {
+        "level": "info",
+        "message": {
+          "$template": [
+            "welcome done"
+          ]
+        }
+      },
+      "id": "n6",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "comm.log",
+      "src": {
+        "blockId": "b6"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s1",
+      "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn",
+      "unit": null,
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:1d1d936d815b62d5b1f264471ea38ebecd8b93b06847e5d3566f37f9529ab2f5",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.app_start",
+      "outputs": {},
+      "props": {},
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "gw_f",
+  "workflowRevision": 1
+}

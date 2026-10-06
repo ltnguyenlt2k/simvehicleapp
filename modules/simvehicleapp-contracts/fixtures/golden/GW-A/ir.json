@@ -1,0 +1,250 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "StableOverspeedWarning",
+  "nodes": [
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$ref": "n1.value"
+            },
+            "op": ">",
+            "r": {
+              "$const": "120",
+              "type": "int64",
+              "unit": "km/h"
+            },
+            "type": "boolean"
+          }
+        },
+        "durationMs": 2000
+      },
+      "id": "n2",
+      "next": {
+        "broken": null,
+        "stable": "n3"
+      },
+      "opcode": "control.stable_for",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": "n4"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "payload": {
+          "$template": [
+            "{\"severity\":\"warning\",\"title\":",
+            {
+              "$expr": {
+                "op": "json.string",
+                "type": "string",
+                "value": {
+                  "$template": [
+                    "Overspeed"
+                  ]
+                }
+              }
+            },
+            ",\"message\":",
+            {
+              "$expr": {
+                "op": "json.string",
+                "type": "string",
+                "value": {
+                  "$template": [
+                    "Speed ",
+                    {
+                      "$ref": "n1.value"
+                    },
+                    " km/h"
+                  ]
+                }
+              }
+            },
+            ",\"ts\":",
+            {
+              "$expr": {
+                "args": [],
+                "op": "now_ms",
+                "type": "timestamp"
+              }
+            },
+            "}"
+          ]
+        },
+        "payloadType": "json",
+        "qos": 0,
+        "retain": false,
+        "topic": "t0"
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "comm.mqtt_publish",
+      "src": {
+        "blockId": "b4"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": false,
+          "type": "boolean"
+        }
+      },
+      "id": "n6",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b6"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s1",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:4d5525940232cf021275e71896962d178737f0e7122133d5a651c47939da0125",
+  "state": [],
+  "topics": [
+    {
+      "direction": "write",
+      "id": "t0",
+      "topic": "simvehicleapp/stable-overspeed-warning/hmi"
+    }
+  ],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b1"
+      }
+    },
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n6",
+      "id": "n5",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "crosses_below",
+        "threshold": {
+          "$const": 110,
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b5"
+      }
+    }
+  ],
+  "workflowId": "gw_a",
+  "workflowRevision": 1
+}

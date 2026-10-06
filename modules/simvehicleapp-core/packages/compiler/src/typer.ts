@@ -10,6 +10,7 @@ import {
   literalType,
   logical,
   negate,
+  type Range,
   type TypeErrorReason,
   type TypeInfo,
   type TypeResult,
@@ -40,6 +41,8 @@ export interface RefBinding {
   expr: IrExpr;
   type: ValueType;
   unit: string | null;
+  /** Known integer range when narrower than the type (e.g. `<loop.index>` of a 3-times repeat ⇒ 0…2). */
+  range?: Range;
 }
 
 export interface TypeEnv {
@@ -131,6 +134,36 @@ export class Typer {
     }
   }
 
+  /**
+   * `sv_convert` (ADR-0014 Notes §11): `to` is a VSS unit (same-quantity conversion) or a value type
+   * (`type.cast`: real ⇒ integer rounds half away from zero, NaN ⇒ 0, then clamps to the target range).
+   */
+  convert(value: Typed, to: string, span: Span): Typed | undefined {
+    try {
+      const unit = canonicalUnit(to);
+      if (unit) {
+        if (!value.unit) return { ...value, unit };
+        return this.convertTo(value, unit, span);
+      }
+      if (!isCastTarget(to)) {
+        this.report("TYPE_MISMATCH", span, `'${to}' is neither a VSS unit nor a value type`, { reason: "unknown_target", to });
+        return undefined;
+      }
+      const from = value.info.type;
+      const numeric = (t: string) => isIntegerType(t) || t === "float" || t === "double";
+      const ok = from === to || (numeric(from) && numeric(to)) || (to === "string" && (numeric(from) || from === "boolean"));
+      if (!ok) {
+        this.report("TYPE_MISMATCH", span, `A ${from} value cannot be converted to ${to}`, { reason: "not_convertible", from, to });
+        return undefined;
+      }
+      const info = typeOf(to as ValueType);
+      return { expr: op("type.cast", { value: value.expr, to: to as never }, info, value.unit), info, unit: value.unit };
+    } catch (e) {
+      if (e instanceof Poisoned) return undefined;
+      throw e;
+    }
+  }
+
   private report(code: TyperCode, span: Span, message: string, data: Record<string, unknown> = {}): void {
     this.diagnostics.push({ code, message, span, data });
   }
@@ -180,7 +213,7 @@ export class Typer {
       case "ref": {
         const b = this.env.ref(n);
         if (!b) throw new Poisoned();
-        return { expr: b.expr, info: typeOf(b.type), unit: b.unit };
+        return { expr: b.expr, info: b.range ? { type: b.type, range: b.range } : typeOf(b.type), unit: b.unit };
       }
       case "index": {
         const target = this.node(n.target);
@@ -363,6 +396,9 @@ export class Typer {
     return { expr: ir, info: r.info, unit };
   }
 }
+
+const CAST_TARGETS = new Set(["boolean", "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64", "float", "double", "string"]);
+const isCastTarget = (t: string) => CAST_TARGETS.has(t);
 
 const rangeText = (t: TypeInfo) => (t.range && !t.literal ? ` (${t.range.min}…${t.range.max})` : "");
 
