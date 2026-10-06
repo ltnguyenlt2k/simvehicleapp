@@ -282,6 +282,14 @@
       "adr": "ADR-0016"
     },
     {
+      "code": "PROJECT_VSS_RELEASE_MISMATCH",
+      "severity": "error",
+      "stage": "codegen",
+      "title": "Workflow uses a different VSS release than its project",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0023"
+    },
+    {
       "code": "RUN_CRASHED",
       "severity": "error",
       "stage": "run",
