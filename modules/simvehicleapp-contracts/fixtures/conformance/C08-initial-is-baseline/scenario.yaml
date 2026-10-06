@@ -10,7 +10,7 @@ initial:
   Vehicle.Speed: 50
   Vehicle.Body.Lights.Hazard.IsSignaling: false
 inputs:
-  - { t: 2000, path: "Vehicle.Speed", value: 50 }
+  - { t: 2000, path: "Vehicle.Speed", value: 60 }
 expect:
   writes:
     - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
