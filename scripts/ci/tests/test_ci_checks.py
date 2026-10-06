@@ -17,6 +17,7 @@ import compose_lint  # noqa: E402
 import block_specs_sync  # noqa: E402
 import contract_only_deps  # noqa: E402
 import diagnostics_guard  # noqa: E402
+import golden_sync  # noqa: E402
 import license_scan  # noqa: E402
 
 LICENSE_DIR = HERE.parents[1] / "license"
@@ -151,6 +152,31 @@ class BlockSpecsSyncTest(TempRepo):
         self.assertTrue(any("content differs" in e for e in block_specs_sync.run(self.root)))
         self.spec("sv_c")
         self.assertTrue(any("types" in e for e in block_specs_sync.run(self.root)))
+
+
+class GoldenSyncTest(TempRepo):
+    def golden(self, gw: str, graph: str = "{}", sim_state: str | None = "{}"):
+        self.write(f"modules/simvehicleapp-contracts/fixtures/golden/{gw}/graph.json", graph)
+        if sim_state is not None:
+            self.write(f"modules/simvehicleapp-contracts/fixtures/golden/{gw}/sim-state.json", sim_state)
+
+    def test_in_sync_after_write(self):
+        self.golden("GW-A")
+        self.golden("GW-B", sim_state=None)  # no UI export yet: not copied
+        self.assertEqual(golden_sync.run(self.root, write=True), [])
+        self.assertEqual(golden_sync.run(self.root), [])
+        copied = sorted(p.relative_to(self.root / golden_sync.COPY).as_posix() for p in (self.root / golden_sync.COPY).rglob("*.json"))
+        self.assertEqual(copied, ["GW-A/graph.json", "GW-A/sim-state.json"])
+
+    def test_missing_stale_or_orphan_copy_rejected(self):
+        self.golden("GW-A")
+        self.assertTrue(any("missing" in e for e in golden_sync.run(self.root)))
+        golden_sync.run(self.root, write=True)
+        self.golden("GW-A", graph='{"changed": true}')
+        self.assertTrue(any("differs" in e for e in golden_sync.run(self.root)))
+        golden_sync.run(self.root, write=True)
+        self.write(f"{golden_sync.COPY}/GW-Z/graph.json", "{}")
+        self.assertTrue(any("no source" in e for e in golden_sync.run(self.root)))
 
 
 class DiagnosticsGuardTest(unittest.TestCase):

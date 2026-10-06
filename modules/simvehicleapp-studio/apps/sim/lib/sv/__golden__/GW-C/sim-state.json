@@ -1,0 +1,165 @@
+{
+  "workflowId": "gw_c",
+  "name": "Auto Wipers",
+  "vssRelease": "v4.0",
+  "state": {
+    "blocks": {
+      "b1": {
+        "id": "b1",
+        "type": "sv_on_signal_changed",
+        "name": "Rain changed",
+        "position": {
+          "x": 40,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": true,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "mode": {
+            "id": "mode",
+            "type": "dropdown",
+            "value": "any"
+          },
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Body.Raindetection.Intensity"
+          },
+          "threshold": {
+            "id": "threshold",
+            "type": "sv-typed-value",
+            "value": null
+          },
+          "debounceMs": {
+            "id": "debounceMs",
+            "type": "sv-duration",
+            "value": 500
+          },
+          "concurrency": {
+            "id": "concurrency",
+            "type": "dropdown",
+            "value": "restart"
+          }
+        },
+        "outputs": {
+          "value": {
+            "type": "any",
+            "description": "New value (type and unit of the signal)"
+          },
+          "previous": {
+            "type": "any",
+            "description": "Value before the change"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Time of the change (ms)"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b2": {
+        "id": "b2",
+        "type": "sv_expression",
+        "name": "Wiper mode",
+        "position": {
+          "x": 360,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "expr": {
+            "id": "expr",
+            "type": "sv-expression",
+            "value": "<rainchanged.value> < 10 ? \"OFF\" : <rainchanged.value> < 40 ? \"INTERVAL\" : <rainchanged.value> < 70 ? \"MEDIUM\" : \"FAST\""
+          }
+        },
+        "outputs": {
+          "result": {
+            "type": "any"
+          }
+        },
+        "data": {},
+        "locked": false
+      },
+      "b3": {
+        "id": "b3",
+        "type": "sv_set_actuator",
+        "name": "Set wipers",
+        "position": {
+          "x": 680,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Body.Windshield.Front.Wiping.Mode"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "<wipermode.result>"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {},
+        "locked": false
+      }
+    },
+    "edges": [
+      {
+        "id": "e1",
+        "source": "b1",
+        "target": "b2",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e2",
+        "source": "b2",
+        "target": "b3",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      }
+    ],
+    "loops": {},
+    "parallels": {}
+  },
+  "variables": []
+}

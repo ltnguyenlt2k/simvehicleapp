@@ -1,0 +1,83 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "gw_b",
+  "revision": 1,
+  "name": "Low Battery HMI Warning",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "SoC changed",
+      "props": {
+        "path": "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_if",
+      "name": "Low and moving",
+      "props": {
+        "condition": "<socchanged.value> < 20 && <Vehicle.IsMoving>"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_hmi_notify",
+      "name": "Low battery notice",
+      "props": {
+        "severity": "warning",
+        "title": "Low battery",
+        "message": "Battery at <socchanged.value> %"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "Light bar red",
+      "props": {
+        "path": "Vehicle.Cabin.Light.InteractiveLightBar.Color",
+        "value": "\"RED\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "then",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    }
+  ]
+}

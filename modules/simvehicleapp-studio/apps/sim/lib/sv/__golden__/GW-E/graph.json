@@ -1,0 +1,47 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "gw_e",
+  "revision": 1,
+  "name": "Periodic Telemetry",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_timer",
+      "name": "Every second",
+      "props": {
+        "intervalMs": 1000,
+        "initialDelayMs": 1000,
+        "concurrency": "ignore"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_mqtt_publish",
+      "name": "Publish telemetry",
+      "props": {
+        "topic": "simvehicleapp/telemetry",
+        "payload": "{\"speed\": <Vehicle.Speed>, \"soc\": <Vehicle.Powertrain.TractionBattery.StateOfCharge.Current>}",
+        "payloadType": "json",
+        "qos": 0,
+        "retain": false
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    }
+  ]
+}

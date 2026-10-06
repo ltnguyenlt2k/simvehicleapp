@@ -1,0 +1,160 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "gw_g",
+  "revision": 1,
+  "name": "Window Close on Rain",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_condition",
+      "name": "Rain while parked",
+      "props": {
+        "expr": "<Vehicle.Body.Raindetection.Intensity> > 30 && <Vehicle.Speed> < 5",
+        "debounceMs": 0,
+        "concurrency": "ignore"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_set_actuator",
+      "name": "Close 1",
+      "props": {
+        "path": "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position",
+        "value": 0,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "Close 2",
+      "props": {
+        "path": "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position",
+        "value": 0,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "Close 3",
+      "props": {
+        "path": "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position",
+        "value": 0,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_set_actuator",
+      "name": "Close 4",
+      "props": {
+        "path": "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position",
+        "value": 0,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_wait_until",
+      "name": "All closed",
+      "props": {
+        "condition": "<Vehicle.Cabin.Door.Row1.DriverSide.Window.Position> == 0 && <Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position> == 0 && <Vehicle.Cabin.Door.Row2.DriverSide.Window.Position> == 0 && <Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position> == 0",
+        "timeoutMs": 10000
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_log",
+      "name": "Closed",
+      "props": {
+        "level": "info",
+        "message": "windows closed"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b8",
+      "type": "sv_log",
+      "name": "Not closed",
+      "props": {
+        "level": "warn",
+        "message": "windows did not close"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b4",
+      "fromHandle": "source",
+      "to": "b5",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b5",
+      "fromHandle": "source",
+      "to": "b6",
+      "toHandle": "target"
+    },
+    {
+      "id": "e6",
+      "from": "b6",
+      "fromHandle": "ok",
+      "to": "b7",
+      "toHandle": "target"
+    },
+    {
+      "id": "e7",
+      "from": "b6",
+      "fromHandle": "timeout",
+      "to": "b8",
+      "toHandle": "target"
+    }
+  ]
+}

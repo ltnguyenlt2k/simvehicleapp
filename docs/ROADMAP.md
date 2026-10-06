@@ -31,7 +31,7 @@
 | [M1](#m1--studio-shell) | Studio shell | 0003, 0004, 0008 | ✔ | 12/12 ✔ — gate PASS 2026-10-04 ([report](reports/M01.md)) |
 | [M2](#m2--vss-catalog--vehicle-blocks) | VSS & vehicle blocks | 0010, 0011 | ✔ | 12/12 |
 | [M3](#m3--logicflowstatecomm-blocks) | Logic/Flow blocks | 0012, 0013, 0018 | ✔ | 14/14 — gate PASS 2026-10-06 ([report](reports/M03.md); review conformance theo uỷ quyền PO, chờ xác nhận) |
-| [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ☐ | 0/12 |
+| [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | 🔄 | 0/12 |
 | [M5](#m5--simulator) | Simulator | 0017 | ☐ | 0/11 |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ☐ | 0/20 |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ☐ | 0/19 |
@@ -126,7 +126,7 @@ ADR: [0014](../analysis/adr/ADR-0014-ir-v1.md), [0015](../analysis/adr/ADR-0015-
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| `graph-adapter.ts` (Sim state → WorkflowGraph v1) | 0014 | ☐ | Golden GW-A..G | T01 |
+| `graph-adapter.ts` (Sim state → WorkflowGraph v1) | 0014 | 🔄 | 2026-10-06 (Claude Code): `lib/sv/graph-adapter.golden.test.ts` — 7 `sim-state.json` dựng qua UI ⇒ đúng `graph.json` + tất định; bản sao golden giữ đồng bộ bởi `scripts/ci/golden_sync.py` (CI). Local 15/15 PASS, chờ CI | T01 |
 | `packages/types` + `packages/units` | 0015 | ☐ | ≥100 case type; bảng conversion | T02 |
 | S0 parse/limits, S1 structural, S2 block config+migration | 0014 | ☐ | Case cố ý sai mỗi mã | T03 |
 | S3 vehicle model (qua `VehicleModelProvider`) | 0010,0014 | ☐ | | T04 |

@@ -38,6 +38,8 @@ jobs:
       - run: python3 scripts/ci/contract_only_deps.py
       - name: Studio BlockSpec snapshot matches core (block-parity input, ADR-0011)
         run: python3 scripts/ci/block_specs_sync.py
+      - name: Studio golden copy matches contracts (graph-adapter golden test input, M04-T01)
+        run: python3 scripts/ci/golden_sync.py
 
   vendored-trees:
     name: vendored trees match upstream pins

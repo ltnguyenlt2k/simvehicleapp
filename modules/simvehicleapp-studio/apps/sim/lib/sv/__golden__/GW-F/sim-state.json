@@ -1,0 +1,274 @@
+{
+  "workflowId": "gw_f",
+  "name": "Welcome Sequence",
+  "vssRelease": "v4.0",
+  "state": {
+    "blocks": {
+      "b1": {
+        "id": "b1",
+        "type": "sv_on_app_start",
+        "name": "Start",
+        "position": {
+          "x": 40,
+          "y": 40
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {},
+        "outputs": {},
+        "data": {},
+        "locked": false
+      },
+      "b2": {
+        "id": "b2",
+        "type": "parallel",
+        "name": "Welcome",
+        "position": {
+          "x": 40,
+          "y": 152
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {},
+        "outputs": {},
+        "data": {
+          "type": "subflowNode",
+          "width": 500,
+          "height": 300,
+          "count": 5,
+          "collection": "",
+          "parallelType": "count",
+          "batchSize": 20
+        },
+        "locked": false
+      },
+      "b3": {
+        "id": "b3",
+        "type": "sv_set_actuator",
+        "name": "Ambient on",
+        "position": {
+          "x": 170,
+          "y": 66
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "true"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {
+          "extent": "parent",
+          "parentId": "b2"
+        },
+        "locked": false
+      },
+      "b4": {
+        "id": "b4",
+        "type": "sv_wait",
+        "name": "Short pause",
+        "position": {
+          "x": 460,
+          "y": 66
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "durationMs": {
+            "id": "durationMs",
+            "type": "sv-duration",
+            "value": 500
+          }
+        },
+        "outputs": {},
+        "data": {
+          "extent": "parent",
+          "parentId": "b2"
+        },
+        "locked": false
+      },
+      "b5": {
+        "id": "b5",
+        "type": "sv_set_actuator",
+        "name": "Ambient 80",
+        "position": {
+          "x": 750,
+          "y": 66
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "path": {
+            "id": "path",
+            "type": "vss-path-selector",
+            "value": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity"
+          },
+          "value": {
+            "id": "value",
+            "type": "sv-expression",
+            "value": "80"
+          },
+          "onError": {
+            "id": "onError",
+            "type": "dropdown",
+            "value": "continue"
+          },
+          "awaitAck": {
+            "id": "awaitAck",
+            "type": "switch",
+            "value": true
+          }
+        },
+        "outputs": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when the write succeeded"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message when the write failed"
+          }
+        },
+        "data": {
+          "extent": "parent",
+          "parentId": "b2"
+        },
+        "locked": false
+      },
+      "b6": {
+        "id": "b6",
+        "type": "sv_log",
+        "name": "Done",
+        "position": {
+          "x": 40,
+          "y": 522
+        },
+        "enabled": true,
+        "horizontalHandles": true,
+        "advancedMode": false,
+        "triggerMode": false,
+        "height": 0,
+        "subBlocks": {
+          "level": {
+            "id": "level",
+            "type": "dropdown",
+            "value": "info"
+          },
+          "message": {
+            "id": "message",
+            "type": "long-input",
+            "value": "welcome done"
+          }
+        },
+        "outputs": {},
+        "data": {},
+        "locked": false
+      }
+    },
+    "edges": [
+      {
+        "id": "e1",
+        "source": "b1",
+        "target": "b2",
+        "sourceHandle": "source",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e2",
+        "source": "b2",
+        "target": "b6",
+        "sourceHandle": "parallel-end-source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e3",
+        "source": "b2",
+        "target": "b3",
+        "sourceHandle": "parallel-start-source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e4",
+        "source": "b2",
+        "target": "b4",
+        "sourceHandle": "parallel-start-source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      },
+      {
+        "id": "e5",
+        "source": "b4",
+        "target": "b5",
+        "sourceHandle": "source",
+        "targetHandle": "target",
+        "type": "default",
+        "data": {}
+      }
+    ],
+    "loops": {},
+    "parallels": {
+      "b2": {
+        "id": "b2",
+        "nodes": [
+          "b3",
+          "b4",
+          "b5"
+        ],
+        "count": 5,
+        "distribution": "",
+        "parallelType": "count",
+        "batchSize": 20,
+        "enabled": true
+      }
+    }
+  },
+  "variables": []
+}
