@@ -32,6 +32,13 @@ const VERIFY: { key: keyof SvGeneration['verification']; label: string }[] = [
   { key: 'tests', label: 'Tests' },
 ]
 
+/** What a terminal shows for a line rewritten with `\r` (ninja/cmake progress): its last segment. */
+function terminalLine(msg: string): string {
+  if (!msg.includes('\r')) return msg
+  const parts = msg.split('\r').filter((p) => p.length > 0)
+  return parts[parts.length - 1] ?? ''
+}
+
 interface BuildLogProps {
   /** The workflow open in the editor: its diagnostics focus the block. */
   workflowId: string | null
@@ -178,7 +185,7 @@ export function BuildLog({ workflowId, workflowName, blockName, onSelectBlock }:
                   : 'text-[var(--text-primary)]'
             )}
           >
-            {l.msg}
+            {terminalLine(l.msg)}
           </div>
         ))}
       </div>

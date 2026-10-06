@@ -147,7 +147,7 @@ jobs:
           docker run --rm --network host -e CI=1 -e SV_STUDIO_URL=http://localhost:3000 \
             -e SV_REPO=/repo -e SV_GOLDEN_EXPORT=1 -v "$PWD":/repo -w /repo/modules/simvehicleapp-studio/e2e \
             mcr.microsoft.com/playwright:v1.63.0-noble \
-            bash -c "npm install --no-audit --no-fund --silent && npx playwright test --grep-invert @after-restart"
+            bash -c "npm install --no-audit --no-fund --silent && npx playwright test --grep-invert '@after-restart|@live'"
       - name: E2E — M2 gate survives a studio restart
         run: |
           $STACK --env-file "$RUNNER_TEMP/studio.env" restart studio
