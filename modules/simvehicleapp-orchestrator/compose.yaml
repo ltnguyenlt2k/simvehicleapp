@@ -36,6 +36,8 @@ services:
       SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
       SV_CATALOG_URL: http://vss-catalog:4010
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+      # Fault injection for the M7 gate only (gate/m7-gate.sh): empty in every real deployment.
+      SV_FAULT_AT: ${SV_FAULT_AT:-}
     # The only writer of /workspace/projects (ADR-0026); same volume as the toolchain and IDE.
     volumes:
       - sv-workspace:/workspace
