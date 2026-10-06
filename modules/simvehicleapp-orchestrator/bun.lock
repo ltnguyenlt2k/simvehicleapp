@@ -13,6 +13,10 @@
         "typescript": "5.9.3",
       },
     },
+    "services/orchestrator": {
+      "name": "@simvehicleapp/orchestrator-service",
+      "version": "0.1.0",
+    },
     "services/workspace": {
       "name": "@simvehicleapp/workspace-service",
       "version": "0.1.0",
@@ -27,6 +31,8 @@
     "@jsdevtools/ono": ["@jsdevtools/ono@7.1.3", "", {}, "sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg=="],
 
     "@simvehicleapp/contracts": ["@simvehicleapp/contracts@file:../simvehicleapp-contracts", { "dependencies": { "ajv": "8.17.1" }, "devDependencies": { "@types/bun": "1.3.8", "json-schema-to-typescript": "15.0.4", "typescript": "5.9.3" } }],
+
+    "@simvehicleapp/orchestrator-service": ["@simvehicleapp/orchestrator-service@workspace:services/orchestrator"],
 
     "@simvehicleapp/service-kit": ["@simvehicleapp/service-kit@file:../simvehicleapp-contracts/packages/service-kit", { "peerDependencies": { "@simvehicleapp/contracts": "1.0.0-alpha.1" } }],
 
@@ -78,6 +84,6 @@
 
     "undici-types": ["undici-types@8.9.0", "", {}, "sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg=="],
 
-    "@simvehicleapp/service-kit/@simvehicleapp/contracts": ["@simvehicleapp/contracts@file:../simvehicleapp-contracts", {}],
+    "@simvehicleapp/service-kit/@simvehicleapp/contracts": ["@simvehicleapp/contracts@file:../simvehicleapp-contracts", { "dependencies": { "ajv": "8.17.1" }, "devDependencies": { "@types/bun": "1.3.8", "json-schema-to-typescript": "15.0.4", "typescript": "5.9.3" } }],
   }
 }

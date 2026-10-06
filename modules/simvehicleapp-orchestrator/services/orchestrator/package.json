@@ -1,0 +1,13 @@
+{
+  "name": "@simvehicleapp/orchestrator-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "orchestrator service on :4030 (openapi/orchestrator.v1.yaml): projects, SynCode generations (ir → codegen → write → deps → build → format-check → test), events; data owner of schema `sv`.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  }
+}

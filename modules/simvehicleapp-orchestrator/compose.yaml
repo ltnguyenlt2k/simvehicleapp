@@ -1,6 +1,28 @@
 # simvehicleapp-orchestrator — self-contained compose fragment. Building it needs image simvehicleapp/contracts:dev
 # (modules/simvehicleapp-contracts; `scripts/sv build` builds it first).
 services:
+  orchestrator:
+    image: simvehicleapp/orchestrator:dev
+    build:
+      context: .
+      dockerfile: services/orchestrator/Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # Data owner of schema `sv` in the stack's Postgres (ADR-0007 §4); it migrates the schema itself.
+      SV_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
+      SV_COMPILER_URL: http://compiler:4020
+      SV_WORKSPACE_URL: http://workspace:4040
+      SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
+      SV_TOOLCHAINS: ${SV_TOOLCHAINS:-cpp=http://toolchain-cpp:4210}
+      # code-server as the browser reaches it (Appendix A `editor.url`).
+      SV_IDE_URL: ${SV_IDE_PUBLIC_URL:-http://127.0.0.1:${SV_IDE_PORT:-8080}}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # Internal only: the studio BFF reaches it as http://orchestrator:4030.
+    networks: [sv-internal, sv-codegen]
+    restart: unless-stopped
+
   workspace:
     image: simvehicleapp/workspace:dev
     build:
