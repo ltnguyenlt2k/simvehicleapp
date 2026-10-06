@@ -13,7 +13,7 @@
       "type": "sv_on_signal_changed",
       "name": "trig",
       "props": {
-        "path": "Vehicle.Speed",
+        "path": "Vehicle.Body.Raindetection.Intensity",
         "mode": "any",
         "debounceMs": 0,
         "concurrency": "restart"

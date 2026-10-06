@@ -58,3 +58,11 @@
 ## Ghi chú cho M5 (simulator)
 - `expect.writes` được hiểu là **danh sách đầy đủ và đúng thứ tự** (C34 `writes: []` nghĩa là không có ghi nào). Bộ chạy conformance M5 phải so khớp chặt, không chỉ kiểm "có chứa".
 - `expect.trace` là matcher con (chỉ cần chứa các sự kiện đã liệt kê).
+
+## Cập nhật 2026-10-06 (M04-T08, compiler có kiểu)
+Compiler M4 (kiểu + unit, ADR-0015 Notes §7) từ chối 14 graph conformance được viết ở M3 khi chưa kiểm kiểu — lỗi thật của fixture, không phải của compiler:
+- C09–C14, C34, C35 ghi giá trị trigger `Vehicle.Speed` (float, km/h) vào `FanSpeed` (uint8, %): khác dimension. Trigger đổi sang `Vehicle.Body.Raindetection.Intensity` (uint8, %), giá trị input giữ nguyên.
+- C15/C16 ghi `<tick.tick>` (uint32), C30/C35 ghi biến `int32` vào `uint8`: thu hẹp. Bọc `min(…, 100)` / `clamp(…, 0, 100)` (miền [0, 100] gán thẳng được).
+- C27–C29 (`<loop.index>`) hợp lệ không cần sửa: compiler suy miền chỉ số từ `count`/`maxIterations` của container.
+
+Mọi kỳ vọng ghi (`expect.writes`) giữ nguyên; suy tay lại không đổi.

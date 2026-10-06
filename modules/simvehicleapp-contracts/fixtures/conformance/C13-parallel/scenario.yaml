@@ -7,12 +7,12 @@ vss:
   release: v4.0
 until: 4000
 initial:
-  Vehicle.Speed: 0
+  Vehicle.Body.Raindetection.Intensity: 0
   Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
 inputs:
-  - { t: 1000, path: "Vehicle.Speed", value: 10 }
-  - { t: 1100, path: "Vehicle.Speed", value: 20 }
-  - { t: 1200, path: "Vehicle.Speed", value: 30 }
+  - { t: 1000, path: "Vehicle.Body.Raindetection.Intensity", value: 10 }
+  - { t: 1100, path: "Vehicle.Body.Raindetection.Intensity", value: 20 }
+  - { t: 1200, path: "Vehicle.Body.Raindetection.Intensity", value: 30 }
 expect:
   writes:
     - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 10 }

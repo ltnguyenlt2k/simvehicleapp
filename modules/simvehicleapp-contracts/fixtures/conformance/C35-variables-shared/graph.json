@@ -19,7 +19,7 @@
       "type": "sv_on_signal_changed",
       "name": "trig",
       "props": {
-        "path": "Vehicle.Speed",
+        "path": "Vehicle.Body.Raindetection.Intensity",
         "mode": "any",
         "debounceMs": 0,
         "concurrency": "queue"
@@ -33,7 +33,7 @@
       "name": "count",
       "props": {
         "name": "n",
-        "value": "<variable.n> + 1"
+        "value": "clamp(<variable.n> + 1, 0, 100)"
       },
       "parentId": null,
       "blockVersion": 1
@@ -44,7 +44,7 @@
       "name": "set3",
       "props": {
         "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
-        "value": "<variable.n>",
+        "value": "clamp(<variable.n>, 0, 100)",
         "awaitAck": true,
         "onError": "continue"
       },

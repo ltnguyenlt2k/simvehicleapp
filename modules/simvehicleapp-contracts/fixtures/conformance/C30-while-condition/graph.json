@@ -52,7 +52,7 @@
       "name": "set4",
       "props": {
         "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
-        "value": "<variable.n>",
+        "value": "clamp(<variable.n>, 0, 100)",
         "awaitAck": true,
         "onError": "continue"
       },
