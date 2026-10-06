@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 
@@ -176,4 +177,27 @@ TEST(RuntimeTest, fibersStillWaitingWhenTheRuntimeIsDestroyedAreReleasedSafely) 
     const auto r = runScenario(bind, scenarioOf(R"({"until": 5600, "inputs": []})"));
     EXPECT_EQ(stringify(r.writes), R"([{"t":2500,"path":"Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed","value":1},)"
                                    R"({"t":4500,"path":"Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed","value":3}])");
+}
+
+TEST(RuntimeTest, stdoutTraceKeepsLifecycleEventsAtEveryLevelAndTheEnvOnlyLowersTheLevel) {
+    using simvehicleapp::rt::StdoutTraceSink;
+    using simvehicleapp::rt::TraceLevel;
+    using simvehicleapp::rt::TraceRecord;
+    StdoutTraceSink off("App", TraceLevel::Off);
+    ::testing::internal::CaptureStdout();
+    off.trace(TraceRecord{0, 1, "app.started", "", std::nullopt, "", "", std::nullopt});
+    off.trace(TraceRecord{1, 2, "enter", "wf", 1, "n2", "b2", std::nullopt});
+    off.trace(TraceRecord{2, 3, "vdb.disconnected", "", std::nullopt, "", "", std::nullopt});
+    const std::string out = ::testing::internal::GetCapturedStdout();
+    EXPECT_NE(out.find("\"ev\":\"app.started\""), std::string::npos);
+    EXPECT_NE(out.find("\"ev\":\"vdb.disconnected\""), std::string::npos);
+    EXPECT_EQ(out.find("\"ev\":\"enter\""), std::string::npos);
+
+    ::setenv("SV_TRACE_LEVEL", "node", 1);
+    EXPECT_EQ(StdoutTraceSink::levelFromEnv(TraceLevel::Trigger), TraceLevel::Trigger);
+    ::setenv("SV_TRACE_LEVEL", "off", 1);
+    EXPECT_EQ(StdoutTraceSink::levelFromEnv(TraceLevel::Node), TraceLevel::Off);
+    ::setenv("SV_TRACE_LEVEL", "bogus", 1);
+    EXPECT_EQ(StdoutTraceSink::levelFromEnv(TraceLevel::Node), TraceLevel::Node);
+    ::unsetenv("SV_TRACE_LEVEL");
 }

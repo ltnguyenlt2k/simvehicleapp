@@ -1496,18 +1496,18 @@ StdoutTraceSink::StdoutTraceSink(std::string appName, TraceLevel level)
     , m_level(level) {}
 
 TraceLevel StdoutTraceSink::levelFromEnv(TraceLevel fallback) {
+    // The env can lower the level the project was generated with, never raise it (analysis/08 §3.2).
     const char* v = std::getenv("SV_TRACE_LEVEL");
     const std::string s = v != nullptr ? v : "";
+    TraceLevel env = fallback;
     if (s == "off") {
-        return TraceLevel::Off;
+        env = TraceLevel::Off;
+    } else if (s == "trigger") {
+        env = TraceLevel::Trigger;
+    } else if (s == "node") {
+        env = TraceLevel::Node;
     }
-    if (s == "trigger") {
-        return TraceLevel::Trigger;
-    }
-    if (s == "node") {
-        return TraceLevel::Node;
-    }
-    return fallback;
+    return static_cast<int>(env) < static_cast<int>(fallback) ? env : fallback;
 }
 
 namespace {
@@ -1518,7 +1518,10 @@ std::mutex& stdoutMutex() {
 } // namespace
 
 void StdoutTraceSink::trace(const TraceRecord& r) {
-    if (m_level == TraceLevel::Off || (m_level == TraceLevel::Trigger && (r.ev == "enter" || r.ev == "exit"))) {
+    // Lifecycle events (`app.*`, `vdb.*`) are always written: a live run needs them at every level.
+    const bool lifecycle = r.ev.rfind("app.", 0) == 0 || r.ev.rfind("vdb.", 0) == 0;
+    if (!lifecycle &&
+        (m_level == TraceLevel::Off || (m_level == TraceLevel::Trigger && (r.ev == "enter" || r.ev == "exit")))) {
         return;
     }
     Value line = Value::object();
