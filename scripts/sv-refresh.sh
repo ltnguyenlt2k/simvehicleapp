@@ -55,11 +55,14 @@ else
   docker tag simvehicleapp/studio:dev "$marker"
 fi
 
-echo "refresh: building migrations/realtime, contracts, core and backend images…"
-# Small images built from source: DB migrations (new Drizzle migrations), realtime, contracts, core.
+echo "refresh: building migrations/realtime, contracts, core, backend, orchestration and toolchain-agent images…"
+# Small images built from source: DB migrations (new Drizzle migrations), realtime, contracts, core,
+# the orchestration services, and the toolchain image (only its agent layer rebuilds; the C++ toolchain
+# layers come from the cache). ide-cpp is not rebuilt: it does not run the agent.
 $DC build studio-migrations studio-realtime
 $DC build contracts
 $DC build vss-catalog compiler codegen-cpp
+$DC build orchestrator workspace signal-gateway toolchain-cpp
 $DC up -d
 # Keep the running studio image and the previous one (rollback); older sha-* tags are ~2 GB each.
 # Only image tags are removed — never containers or volumes.
