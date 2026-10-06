@@ -84,7 +84,7 @@ jobs:
           bun-version: 1.3.13 # packageManager of the Sim snapshot
       - run: bun install --frozen-lockfile
       - name: API contract audit (Sim boundary rules)
-        run: bun run check:api-validation
+        run: bun run check:api-validation:strict
       - name: Type-check apps/sim
         working-directory: modules/simvehicleapp-studio/apps/sim
         run: bun run type-check

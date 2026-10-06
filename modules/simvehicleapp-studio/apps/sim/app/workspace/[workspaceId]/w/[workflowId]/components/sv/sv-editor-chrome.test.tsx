@@ -6,6 +6,13 @@ import { describe, expect, it, vi } from 'vitest'
 
 const { mockMutate } = vi.hoisted(() => ({ mockMutate: vi.fn() }))
 vi.mock('@/hooks/queries/sv-lint', () => ({ useSvVerify: () => ({ mutate: mockMutate }) }))
+vi.mock('@/hooks/queries/sv-simulation', () => ({
+  useSvScenario: () => ({ data: null }),
+  useSvSimulate: () => ({ mutate: mockMutate }),
+  useSaveSvScenario: () => ({ mutate: mockMutate }),
+}))
+vi.mock('@/hooks/queries/workflows', () => ({ useWorkflowMap: () => ({ data: {} }) }))
+vi.mock('next/navigation', () => ({ useParams: () => ({}) }))
 vi.mock('@/hooks/use-collaborative-workflow', () => ({
   useCollaborativeWorkflow: () => ({
     collaborativeBatchAddBlocks: vi.fn(),
@@ -24,7 +31,7 @@ import {
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 
 describe('vehicle editor chrome (M01-T10)', () => {
-  it('renders the seven actions; Verify (M4) waits for a graph, the others for their milestone', () => {
+  it('renders the seven actions; Verify (M4) and Simulate (M5) wait for a graph, the others for their milestone', () => {
     const html = renderToStaticMarkup(<SvActionBar />)
     expect(SV_ACTIONS.map((a) => a.label)).toEqual([
       'Verify',
@@ -38,8 +45,8 @@ describe('vehicle editor chrome (M01-T10)', () => {
     for (const action of SV_ACTIONS) {
       expect(html).toContain(`data-sv-action="${action.id}"`)
       expect(html).toContain(
-        action.id === 'verify'
-          ? 'title="Verify the workflow"'
+        action.id === 'verify' || action.id === 'simulate'
+          ? `title="${action.label} the workflow"`
           : `title="${action.label} — available in ${action.milestone}"`
       )
     }

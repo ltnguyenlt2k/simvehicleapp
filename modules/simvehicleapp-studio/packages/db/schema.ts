@@ -200,6 +200,15 @@ export const svWorkflowSettings = pgTable('sv_workflow_settings', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+/** SV: simulation scenario of a workflow (contracts `scenario` v1, M05-T09). */
+export const svWorkflowScenarios = pgTable('sv_workflow_scenarios', {
+  workflowId: text('workflow_id')
+    .primaryKey()
+    .references(() => workflow.id, { onDelete: 'cascade' }),
+  scenario: jsonb('scenario').notNull(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const workflowBlocks = pgTable(
   'workflow_blocks',
   {

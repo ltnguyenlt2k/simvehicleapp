@@ -152,8 +152,8 @@ ADR: [0017](../analysis/adr/ADR-0017-simulator.md) · Phụ thuộc: M4 · Chi t
 | Tracer TraceEvent v1 + ScenarioPlayer | 0017,0027 | 🔄 | 2026-10-07 (Claude Code): `core/packages/simulator` — mọi event hợp lệ contract `trace-event` (test), `signals[]` riêng cho timeline; `checkExpectations` (writes chính xác, trace matcher theo thứ tự) | T06 |
 | `POST /simulate` + giới hạn (24h ảo, 1e6 event) | 0017 | 🔄 | 2026-10-07 (Claude Code): service compiler `/simulate` — validate `ir`/`scenario` theo contract (400), IR ≠ 1.x ⇒ 422, `SIM_LIMIT_REACHED` (mã mới, warning) khi chạm 1e6 sự kiện, `expectations` khi scenario có `expect`, thêm `signals/publishes/logs` (OpenAPI additive); perf 10 phút ảo < 1 s (test simulator); service 16 test | T07 |
 | Simulator Web Worker (tuỳ chọn) | 0017 | ☐ | | T08 |
-| UI Scenario editor | 0017 | ☐ | | T09 |
-| UI Simulation timeline + Replay overlay (`TraceOverlay`, dùng lại ở M8) | 0017,0027 | ☐ | | T10 |
+| UI Scenario editor | 0017 | 🔄 | 2026-10-07 (Claude Code): tab Simulation — bảng initial/inputs (signal hoặc `mqtt:topic`), độ dài chạy, chế độ YAML import/export (validate contract `scenario`), tự lưu (bảng `sv_workflow_scenarios`, migration 0251, BFF `/api/sv/workflows/[id]/scenario`); "record from Signals" để M8; vitest + tsc PASS local; E2E chờ CI | T09 |
+| UI Simulation timeline + Replay overlay (`TraceOverlay`, dùng lại ở M8) | 0017,0027 | 🔄 | 2026-10-07 (Claude Code): nút Simulate (BFF `/api/sv/simulate`: compile build ⇒ simulate; lỗi compile ⇒ Problems), timeline (input/trigger/write/log/publish/error/cancel), thanh tua + Play, badge replay trên block (`SvTraceBadge` + `replayAt`, chỉ hiện khi graph chưa đổi); E2E `m5-simulate.spec.ts` chờ CI | T10 |
 | `expected.trace/writes` GW-A..G đóng băng | 0042 | 🔄 | 2026-10-07 (Claude Code): sinh bằng `simulator/src/golden-trace.ts` từ `ir.json` + scenario, runId `golden`, test so byte; writes = kỳ vọng suy tay của scenario; review [M05-golden-trace-review](reviews/M05-golden-trace-review.md) (uỷ quyền PO) | T11 |
 
 ## M6 — C++ backend & runtime

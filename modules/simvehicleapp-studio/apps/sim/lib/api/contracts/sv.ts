@@ -236,3 +236,139 @@ export const svVerifyContract = defineRouteContract({
 
 export type SvDiagnostic = z.output<typeof svDiagnosticSchema>
 export type SvLintResponse = z.output<typeof svLintResponseSchema>
+
+const svScenarioValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  z.array(z.union([z.string(), z.number(), z.boolean()])),
+])
+const svScenarioTimeSchema = z.number().int().min(0).max(86_400_000)
+
+/** One scenario input: a VSS signal value or an MQTT message at virtual time `t` (contracts `scenario` v1). */
+export const svScenarioInputSchema = z.union([
+  z
+    .object({ t: svScenarioTimeSchema, path: svVssPathSchema, value: svScenarioValueSchema })
+    .strict(),
+  z
+    .object({
+      t: svScenarioTimeSchema,
+      topic: z.string().min(1).max(256),
+      value: svScenarioValueSchema,
+    })
+    .strict(),
+])
+
+/** Simulation scenario (contracts `scenario` v1, ADR-0017 §3): initial values, inputs over time, optional expectations. */
+export const svScenarioSchema = z
+  .object({
+    scenarioVersion: z.literal('1.0.0'),
+    name: z.string().min(1).max(200),
+    description: z.string().max(2000).optional(),
+    vss: z.object({ release: svVssReleaseSchema }).strict().optional(),
+    until: svScenarioTimeSchema,
+    initial: z.record(svVssPathSchema, svScenarioValueSchema).optional(),
+    latency: z
+      .object({
+        read: z.number().int().min(0).optional(),
+        write: z.number().int().min(0).optional(),
+      })
+      .strict()
+      .optional(),
+    inputs: z.array(svScenarioInputSchema).max(10_000, 'at most 10 000 inputs'),
+    expect: z
+      .object({
+        writes: z
+          .array(
+            z
+              .object({ t: svScenarioTimeSchema, path: z.string(), value: svScenarioValueSchema })
+              .strict()
+          )
+          .optional(),
+        // untyped-response: partial TraceEvent matchers are free-form by design (contracts `scenario`)
+        trace: z.array(z.record(z.string(), z.unknown())).optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+
+export const svScenarioResponseSchema = z.object({ scenario: svScenarioSchema.nullable() })
+export const svUpdateScenarioBodySchema = z.object({ scenario: svScenarioSchema })
+
+/** `GET /api/sv/workflows/[id]/scenario` — the workflow's simulation scenario, `null` when none was saved (M05-T09). */
+export const svGetScenarioContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/workflows/[id]/scenario',
+  params: svWorkflowSettingsParamsSchema,
+  response: { mode: 'json', schema: svScenarioResponseSchema },
+})
+
+/** `PUT /api/sv/workflows/[id]/scenario` — save the simulation scenario (M05-T09). */
+export const svUpdateScenarioContract = defineRouteContract({
+  method: 'PUT',
+  path: '/api/sv/workflows/[id]/scenario',
+  params: svWorkflowSettingsParamsSchema,
+  body: svUpdateScenarioBodySchema,
+  response: { mode: 'json', schema: svScenarioResponseSchema },
+})
+
+/** TraceEvent v1 (contracts `trace-event`, ADR-0027) as produced by the simulator. */
+export const svTraceEventSchema = z.object({
+  runId: z.string(),
+  seq: z.number().int().min(0),
+  ts: z.number().int().min(0),
+  wf: z.string().optional(),
+  run: z.number().int().min(0).optional(),
+  node: z.string().optional(),
+  blockId: z.string().optional(),
+  ev: z.string(),
+  // untyped-response: event payload depends on `ev` (outputs, write, log, reason…), contracts `trace-event`
+  data: z.record(z.string(), z.unknown()).optional(),
+})
+
+const svTimedValueSchema = z.object({
+  t: z.number().int().min(0),
+  path: z.string(),
+  value: z.unknown(),
+})
+
+export const svSimulateBodySchema = z.object({
+  /** WorkflowGraph v1 from the canvas; the BFF compiles it, then simulates the IR. */
+  graph: z.record(z.string(), z.unknown()),
+  scenario: svScenarioSchema,
+})
+
+export const svSimulateResponseSchema = z.object({
+  /** Compile diagnostics, plus SIM_LIMIT_REACHED when the simulation hit its event cap. */
+  diagnostics: z.array(svDiagnosticSchema),
+  /** Absent when the graph does not compile. */
+  result: z
+    .object({
+      trace: z.array(svTraceEventSchema),
+      writes: z.array(svTimedValueSchema),
+      signals: z.array(svTimedValueSchema),
+      publishes: z.array(
+        z.object({ t: z.number().int().min(0), topic: z.string(), payload: z.string() })
+      ),
+      logs: z.array(
+        z.object({ t: z.number().int().min(0), level: z.string(), message: z.string() })
+      ),
+      expectations: z.object({ passed: z.boolean(), mismatches: z.array(z.string()) }).optional(),
+    })
+    .optional(),
+})
+
+/** `POST /api/sv/simulate` — compile the canvas graph and simulate it with a scenario (M05-T09/T10, ADR-0017). */
+export const svSimulateContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/simulate',
+  body: svSimulateBodySchema,
+  response: { mode: 'json', schema: svSimulateResponseSchema },
+})
+
+export type SvScenario = z.output<typeof svScenarioSchema>
+export type SvScenarioInput = z.output<typeof svScenarioInputSchema>
+export type SvTraceEvent = z.output<typeof svTraceEventSchema>
+export type SvSimulateResponse = z.output<typeof svSimulateResponseSchema>

@@ -37,6 +37,7 @@ import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/provide
 import { ActionBar } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar'
 // SV: realtime lint badge (M03-T11)
 import { SvBlockProblemsBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
+import { SvTraceBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
 import {
   useBlockProperties,
   useChildWorkflow,
@@ -822,8 +823,9 @@ export const WorkflowBlock = memo(function WorkflowBlock({
             </span>
           </div>
           <div className='relative z-10 flex flex-shrink-0 items-center gap-1'>
-            {/* SV: lint result of this block (M03-T11) */}
+            {/* SV: lint result (M03-T11) and simulation replay (M05-T10) of this block */}
             <SvBlockProblemsBadge blockId={id} />
+            <SvTraceBadge blockId={id} />
             {isWorkflowSelector &&
               childWorkflowId &&
               typeof childIsDeployed === 'boolean' &&

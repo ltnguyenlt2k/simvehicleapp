@@ -2,23 +2,38 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { generateId } from '@sim/utils/id'
+import { useParams } from 'next/navigation'
 import { Button } from '@/components/emcn'
 import type { SvDiagnostic } from '@/lib/api/contracts/sv'
+import { cn } from '@/lib/core/utils/cn'
 import { planConvertFix } from '@/lib/sv/quick-fix'
 import {
   type ProblemFix,
   ProblemsList,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
 import {
+  ScenarioEditor,
+  SimulationTimeline,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
+import {
   SV_DOCK_TABS,
   type SvDockTabId,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
+import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvLintStore } from '@/stores/sv/lint/store'
+import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { prepareBlockState } from '@/stores/workflows/utils'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
+
+/** Name of the open workflow (scenario default name). */
+function useWorkflowName(workflowId: string | null): string {
+  const params = useParams<{ workspaceId?: string }>()
+  const { data: workflows } = useWorkflowMap(params?.workspaceId)
+  return (workflowId ? workflows?.[workflowId]?.name : undefined) ?? 'Scenario'
+}
 
 interface SvBottomDockProps {
   initialTab?: SvDockTabId
@@ -117,24 +132,49 @@ function ProblemsTab() {
   )
 }
 
+/** Simulation tab (M05-T09/T10): scenario editor next to the timeline of the last simulation. */
+function SimulationTab() {
+  const workflowId = useSvLintStore((s) => s.workflowId)
+  const workflowName = useWorkflowName(workflowId)
+  if (!workflowId) return null
+  return (
+    <div className='flex min-h-0 flex-1'>
+      <div className='flex w-[440px] min-w-0 shrink-0 flex-col border-[var(--border)] border-r'>
+        <ScenarioEditor key={workflowId} workflowId={workflowId} workflowName={workflowName} />
+      </div>
+      <SimulationTimeline />
+    </div>
+  )
+}
+
 /** Bottom dock of the vehicle editor; tabs without content show the milestone that brings them. */
 export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   const [activeTab, setActiveTab] = useState<SvDockTabId>(initialTab)
   const active = SV_DOCK_TABS.find((tab) => tab.id === activeTab) ?? SV_DOCK_TABS[0]
   const focusProblems = useSvLintStore((s) => s.focusProblems)
+  const focusSimulation = useSvSimulationStore((s) => s.focusSimulation)
   const seenFocus = useRef(focusProblems)
+  const seenSimulation = useRef(focusSimulation)
 
-  // Verify brings the Problems tab to the front.
+  // Verify brings the Problems tab to the front, Simulate the timeline.
   useEffect(() => {
     if (focusProblems === seenFocus.current) return
     seenFocus.current = focusProblems
     setActiveTab('problems')
   }, [focusProblems])
+  useEffect(() => {
+    if (focusSimulation === seenSimulation.current) return
+    seenSimulation.current = focusSimulation
+    setActiveTab('simulation')
+  }, [focusSimulation])
 
   return (
     <div
       data-sv='bottom-dock'
-      className='flex h-[160px] flex-shrink-0 flex-col border-[var(--border)] border-t bg-[var(--surface-1)]'
+      className={cn(
+        'flex flex-shrink-0 flex-col border-[var(--border)] border-t bg-[var(--surface-1)]',
+        active.id === 'simulation' ? 'h-[280px]' : 'h-[160px]'
+      )}
     >
       <div role='tablist' aria-label='Vehicle app output' className='flex gap-1 px-2 pt-1.5'>
         {SV_DOCK_TABS.map((tab) => (
@@ -154,6 +194,10 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
       {active.id === 'problems' ? (
         <div role='tabpanel' aria-label='Problems' className='flex min-h-0 flex-1'>
           <ProblemsTab />
+        </div>
+      ) : active.id === 'simulation' ? (
+        <div role='tabpanel' aria-label='Simulation timeline' className='flex min-h-0 flex-1'>
+          <SimulationTab />
         </div>
       ) : (
         <div

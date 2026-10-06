@@ -237,3 +237,8 @@ docker/app.Dockerfile
 
 # M03-T13 — login shows rate limiting (429) instead of "Invalid email or password"
 apps/sim/app/(auth)/login/login-form.tsx
+
+# M05-T09/T10 — scenario table + migration, simulate BFF, scenario editor, simulation timeline, replay badge
+apps/sim/hooks/queries/sv-simulation.ts
+packages/db/migrations/0251_sv_workflow_scenarios.sql
+packages/db/migrations/meta/0251_snapshot.json

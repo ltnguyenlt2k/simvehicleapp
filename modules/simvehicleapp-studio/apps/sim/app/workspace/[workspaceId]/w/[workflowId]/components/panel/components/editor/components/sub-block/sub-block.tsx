@@ -1229,7 +1229,7 @@ function SubBlockComponent({
             min={config.svMin}
             required={config.required === true}
             isPreview={isPreview}
-            previewValue={(previewValue as unknown as number | null | undefined) ?? null}
+            previewValue={typeof previewValue === 'number' ? previewValue : null}
             disabled={isDisabled}
           />
         )
