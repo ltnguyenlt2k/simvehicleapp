@@ -25,3 +25,8 @@ khai báo làm CI fail. Sửa file gốc Sim: tối thiểu, đánh dấu `// SV
 | Ngày | Upstream commit | Phạm vi | Lý do | Commit SimVehicleApp |
 |---|---|---|---|---|
 | — | — | — | (chưa có) | — |
+
+## Lỗi upstream sửa tại chỗ (chưa có bản vá upstream)
+| Ngày | Phạm vi | Lỗi | Bằng chứng | Commit SimVehicleApp |
+|---|---|---|---|---|
+| 2026-10-06 | `workflow.tsx` — drop từ overlay canvas rỗng, `onDrop`, `onDragOver` | `screenToFlowPosition` của reactflow 11.11 đã tự trừ bounds canvas (`@reactflow/core`: "no need to subtract the react flow bounds anymore"); Sim trừ lần nữa ⇒ block rơi lệch khỏi con trỏ đúng bằng kích thước sidebar/header, thả vào Parallel/Loop sai container | Có ở pin `ad0b8678` và ở `main` `546d4e7e5d50` (2026-10-05); E2E GW-F (thả block vào Parallel) | `7fc6da9` |

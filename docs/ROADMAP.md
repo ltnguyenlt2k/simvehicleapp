@@ -118,7 +118,7 @@ ADR: [0012](../analysis/adr/ADR-0012-execution-semantics.md), [0013](../analysis
 | Map subflow `parallel`/`loop` Sim → `sv_parallel/sv_repeat/sv_while` | 0011,0012 | ☐ | | T10 |
 | `POST /lint` realtime (S0–S3 + một phần S6) | 0016 | ☐ | debounce 300 ms | T11 |
 | Conformance scenarios ≥30 cho ADR-0012 | 0012 | ☐ | | T12 |
-| 7 golden workflow dựng trên canvas | — | 🔄 | 2026-10-04: GW-A…GW-G `graph.json` + `scenario.yaml` (lệch: GW-C ternary, GW-D/GW-G 4× Set); còn: dựng trên UI không lỗi lint (cần T11) + `sim-state.json` | T13 |
+| 7 golden workflow dựng trên canvas | — | 🔄 | 2026-10-04: GW-A…GW-G `graph.json` + `scenario.yaml` (lệch: GW-C ternary, GW-D/GW-G 4× Set). 2026-10-06 (Claude Code): E2E `m3-goldens.spec.ts` dựng cả 7 bằng UI ⇒ Problems sạch ⇒ graph adapter = `graph.json`; CI xuất `sim-state.json`. Lỗi thật tìm ra khi dựng: auto-connect dùng handle `source` không tồn tại, block Start của Sim trùng tên, drop lệch con trỏ (lỗi upstream), C08 mâu thuẫn C01. Còn: CI xanh + commit `sim-state.json` | T13 |
 | Clean-room review checklist | 0004 | ✔ | 2026-10-04: `docs/reviews/M03-clean-room-checklist.md` — 7 mục có bằng chứng, PO ký 2026-10-04 | T14 |
 
 ## M4 — Compiler & IR
