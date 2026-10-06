@@ -22,10 +22,11 @@ test.describe('M4 Verify and quick-fix', () => {
   test('narrowing write ⇒ Verify reports it ⇒ Insert Convert ⇒ Verify passes', async ({ page }) => {
     await signUp(page, newUser('m4', 'Playwright Verify'))
     await setAutoConnect(page, false)
+    await page.reload() // the editor reads the setting once; reload so the drop below is not auto-connected
     await createWorkflow(page)
 
     await dropSignal(page, 'Vehicle.Speed', 'sv_on_signal_changed', 300, 200)
-    await expect(nodeByName(page, 'When Speed changes')).toBeVisible()
+    await expect(nodeByName(page, 'When Speed changes 1')).toBeVisible()
     await dropSignal(
       page,
       'Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed',
@@ -33,14 +34,14 @@ test.describe('M4 Verify and quick-fix', () => {
       800,
       200
     )
-    const set = nodeByName(page, 'Set FanSpeed')
+    const set = nodeByName(page, 'Set FanSpeed 1')
     await expect(set).toBeVisible()
-    await connect(nodeByName(page, 'When Speed changes'), 'source', set)
+    await connect(nodeByName(page, 'When Speed changes 1'), 'source', set)
 
     // A double (scale) written into a uint8 actuator: fine for lint, a narrowing for the type checker.
     await set.click()
     const value = subBlock(page, 'value').locator('textarea').first()
-    await value.fill('scale(<whenspeedchanges.value>, 0, 200, 0, 100)')
+    await value.fill('scale(<whenspeedchanges1.value>, 0, 200, 0, 100)')
     await value.press('Escape')
     await page.locator('[data-sv-tab="problems"]').click()
     const problems = page.locator('[data-sv="problems"]')
@@ -54,7 +55,7 @@ test.describe('M4 Verify and quick-fix', () => {
 
     // Clicking the problem focuses the field in the editor.
     await narrowing.click()
-    await expect(editor(page).locator('h2').first()).toHaveText('Set FanSpeed')
+    await expect(editor(page).locator('h2').first()).toHaveText('Set FanSpeed 1')
 
     await problems.locator('[data-sv-fix="TYPE_NARROWING_REQUIRES_CAST"]').click()
     const convert = nodeByName(page, 'Convert 1')

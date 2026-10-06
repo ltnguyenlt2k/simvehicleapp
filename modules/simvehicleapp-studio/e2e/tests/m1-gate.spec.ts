@@ -89,7 +89,7 @@ test.describe
     `)
       await expect(page.locator('[data-sv="action-bar"]')).toMatchAriaSnapshot(`
       - toolbar "Vehicle app actions":
-        - button "Verify" [disabled]
+        - button "Verify"
         - button "Simulate" [disabled]
         - button "SynCode" [disabled]
         - button "Run" [disabled]
