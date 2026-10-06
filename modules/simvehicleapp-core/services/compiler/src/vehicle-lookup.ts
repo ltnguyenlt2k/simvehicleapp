@@ -1,5 +1,5 @@
 import { internalHeaders } from "@simvehicleapp/service-kit";
-import type { VehicleLookup } from "@simvehicleapp/compiler";
+import type { ModelHashLookup, VehicleLookup } from "@simvehicleapp/compiler";
 import type { VssNode } from "@simvehicleapp/vss";
 
 export class CatalogUnavailableError extends Error {
@@ -49,5 +49,34 @@ export function catalogVehicleLookup(opts: {
       for (const p of body.unknown ?? []) result.set(p, null);
     }
     return result;
+  };
+}
+
+/**
+ * `ModelHashLookup` over `vss-catalog GET /model-hash` (ADR-0010 §3): the hash of the model the
+ * catalog serves for a release; `null` for an unknown release. Called only for graphs pinned to a hash.
+ */
+export function catalogModelHash(opts: {
+  baseUrl: string;
+  secret: string;
+  requestId?: () => string;
+  fetch?: (url: string, init?: RequestInit) => Promise<Response>;
+  timeoutMs?: number;
+}): ModelHashLookup {
+  const doFetch = opts.fetch ?? ((url, init) => globalThis.fetch(url, init));
+  const base = opts.baseUrl.replace(/\/+$/, "");
+  return async (release) => {
+    let res: Response;
+    try {
+      res = await doFetch(`${base}/model-hash?${new URLSearchParams({ release })}`, {
+        headers: internalHeaders(opts.requestId?.() ?? crypto.randomUUID(), opts.secret),
+        signal: AbortSignal.timeout(opts.timeoutMs ?? 3000),
+      });
+    } catch (e) {
+      throw new CatalogUnavailableError(`vss-catalog unreachable: ${(e as Error).message}`);
+    }
+    if (res.status === 404) return null;
+    if (!res.ok) throw new CatalogUnavailableError(`vss-catalog answered HTTP ${res.status}`);
+    return ((await res.json()) as { modelHash: string }).modelHash;
   };
 }

@@ -15,8 +15,13 @@ export const MAX_GRAPH_BYTES = 1024 * 1024;
  */
 export type VehicleLookup = (release: string, paths: readonly string[]) => Promise<ReadonlyMap<string, VssNode | null>>;
 
+/** sha256 of the catalog's model for a release (vss-catalog `/model-hash`); `null` = unknown release. */
+export type ModelHashLookup = (release: string) => Promise<string | null>;
+
 export interface LintContext {
   vehicle: VehicleLookup;
+  /** When set, a graph pinned to another model hash gets MODEL_HASH_MISMATCH (risk R2). */
+  modelHash?: ModelHashLookup;
   specs?: readonly BlockSpec[];
   /** Block property migrations (defaults to the built-in registry). */
   migrations?: MigrationRegistry;
@@ -163,6 +168,17 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
     }
   }
   const vss = paths.size ? await ctx.vehicle(graph.vss.release, [...paths].sort()) : new Map<string, VssNode | null>();
+  if (graph.vss.modelHash && ctx.modelHash) {
+    const current = await ctx.modelHash(graph.vss.release);
+    if (current && current !== graph.vss.modelHash) {
+      out.push(
+        diag("MODEL_HASH_MISMATCH", wfId, {
+          message: `VSS ${graph.vss.release} changed since this workflow was designed — re-check the signals it uses`,
+          data: { release: graph.vss.release, pinned: graph.vss.modelHash, current },
+        }),
+      );
+    }
+  }
 
   // S2 — block config (props, expressions, references) and S3 — vehicle model
   const variables = new Set(graph.variables.map((v) => v.name));

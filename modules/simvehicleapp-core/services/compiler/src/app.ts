@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { BLOCK_SPECS } from "@simvehicleapp/blocks";
-import { lint, type VehicleLookup } from "@simvehicleapp/compiler";
+import { lint, type ModelHashLookup, type VehicleLookup } from "@simvehicleapp/compiler";
 import { CatalogUnavailableError } from "./vehicle-lookup.ts";
 
 /** Routes of `openapi/compiler.v1.yaml` not implemented yet, with the milestone that brings them. */
@@ -22,6 +22,8 @@ const BLOCKS_ETAG = `"${createHash("sha256").update(BLOCKS_BODY).digest("hex")}"
 export interface CompilerDeps {
   /** VSS lookup for lint/compile (vss-catalog over HTTP in the service). */
   vehicle: VehicleLookup;
+  /** Catalog model hash per release (MODEL_HASH_MISMATCH for pinned graphs). */
+  modelHash?: ModelHashLookup;
 }
 
 /** Request bodies above this are rejected before parsing (the compiler limit is 1 MB of graph). */
@@ -43,7 +45,7 @@ export function createCompilerHandler(deps: CompilerDeps) {
       const graph = (body as { graph?: unknown } | null)?.graph;
       if (graph === undefined) return json(400, { error: "invalid_request", message: "body.graph is required" });
       try {
-        return json(200, { diagnostics: await lint(graph, { vehicle: deps.vehicle }) });
+        return json(200, { diagnostics: await lint(graph, { vehicle: deps.vehicle, modelHash: deps.modelHash }) });
       } catch (e) {
         if (e instanceof CatalogUnavailableError) {
           ctx.log.warn("lint without catalog", { err: e });

@@ -217,3 +217,21 @@ describe("lint: fan-out and block migrations (M04-T03)", () => {
     expect(d[0]).toMatchObject({ blockId: "b2", data: { blockVersion: 3, supported: 1, reason: "newer" } });
   });
 });
+
+describe("lint: S3 model hash (M04-T04, risk R2)", () => {
+  const pinned = `sha256:${"a".repeat(64)}`;
+  const other = `sha256:${"b".repeat(64)}`;
+  test("a graph pinned to another model of its release ⇒ MODEL_HASH_MISMATCH (warning)", async () => {
+    const g = base();
+    g.vss = { release: "v4.0", modelHash: pinned };
+    const diags = await lint(g, { vehicle, modelHash: async () => other });
+    expect(diags).toEqual([expect.objectContaining({ code: "MODEL_HASH_MISMATCH", severity: "warning", stage: "vehicle-model", data: { release: "v4.0", pinned, current: other } })]);
+  });
+  test("same hash, no pin, or unknown release ⇒ nothing", async () => {
+    const g = base();
+    g.vss = { release: "v4.0", modelHash: pinned };
+    expect(await lint(g, { vehicle, modelHash: async () => pinned })).toEqual([]);
+    expect(await lint(g, { vehicle, modelHash: async () => null })).toEqual([]);
+    expect(await lint(base(), { vehicle, modelHash: async () => other })).toEqual([]);
+  });
+});
