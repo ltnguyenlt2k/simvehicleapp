@@ -231,3 +231,6 @@ apps/sim/hooks/queries/sv-lint.ts
 
 # M03-T13 — new workflows start empty (no Sim Start block); auto-connect uses sv branch handles
 apps/sim/lib/workflows/defaults.ts
+
+# Build — slim runtime stage (Bun + Node 22 only, no build toolchain); docs/STUDIO_BUILD.md
+docker/app.Dockerfile

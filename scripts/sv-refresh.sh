@@ -61,5 +61,13 @@ $DC build studio-migrations studio-realtime
 $DC build contracts
 $DC build vss-catalog compiler
 $DC up -d
+# Keep the running studio image and the previous one (rollback); older sha-* tags are ~2 GB each.
+# Only image tags are removed — never containers or volumes.
+mapfile -t old_tags < <(docker images simvehicleapp/studio --format '{{.CreatedAt}}\t{{.Repository}}:{{.Tag}}' \
+  | grep ':sha-' | sort -r | cut -f2 | grep -vx "$marker" | tail -n +2)
+if ((${#old_tags[@]})); then
+  echo "refresh: removing ${#old_tags[@]} old studio image tag(s)"
+  docker image rm "${old_tags[@]}" >/dev/null 2>&1 || true
+fi
 echo "refresh: stack is on ${run_sha:0:12}"
 $DC ps --format '{{.Service}}\t{{.Status}}'

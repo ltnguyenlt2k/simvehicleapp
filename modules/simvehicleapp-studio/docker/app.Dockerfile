@@ -82,13 +82,27 @@ RUN --mount=type=cache,id=next-cache-${TARGETPLATFORM},target=/app/apps/sim/.nex
     bun run build
 
 # ========================================
+# SV: Runtime base — Bun + Node.js 22 only. The build toolchain of `base` (python3/pip,
+# make/g++, ffmpeg) is never used at runtime: the standalone server runs on Bun and only the
+# isolated-vm worker is spawned with `node` (same NodeSource 22.x as the deps stage, so the
+# rebuilt native module keeps its ABI). Smaller image, identical behaviour.
+# ========================================
+FROM oven/bun:1.3.13-slim AS runtime
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get purge -y curl gnupg && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# ========================================
 # Runner Stage: Run the actual app
 # ========================================
 
-FROM base AS runner
+FROM runtime AS runner
 WORKDIR /app
 
-# Node.js 22, Python, ffmpeg, etc. are already installed in base stage
 ENV NODE_ENV=production
 
 # Create non-root user and group

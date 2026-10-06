@@ -113,6 +113,8 @@ jobs:
         run: >-
           docker build --file modules/simvehicleapp-studio/docker/app.Dockerfile
           --tag simvehicleapp/studio:dev modules/simvehicleapp-studio
+      - name: Studio image size (docs/STUDIO_BUILD.md)
+        run: docker image ls simvehicleapp/studio:dev --format '{{.Repository}}:{{.Tag}} {{.Size}}'
       - name: Export image for local verification (main only, 3 days; before E2E so a failing gate can still be previewed and debugged locally)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker save simvehicleapp/studio:dev | gzip -1 > studio-image.tar.gz && ls -lh studio-image.tar.gz
