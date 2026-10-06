@@ -49,6 +49,15 @@ services:
     ports: ["127.0.0.1:${SV_DATABROKER_PORT:-55555}:55555"]
     networks: [sv-internal]
 
+  # One databroker per supported VSS release (ADR-0024 §6): runs of a v4.2 project use this one
+  # (SV_DATABROKERS). Internal only; a databroker idles at a few MB, so it runs by default.
+  databroker-v4-2:
+    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
+    command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss/vss_rel_4.2.json"]
+    volumes:
+      - ./vss:/vss:ro
+    networks: [sv-internal]
+
   mqtt:
     image: eclipse-mosquitto:2.0.14
     command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]

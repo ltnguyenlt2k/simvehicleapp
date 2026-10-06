@@ -94,6 +94,30 @@ describe("job queue (ADR-0025 §4)", () => {
     expect(jobs.get(run.id)!.state).toBe("cancelled");
     expect(() => jobs.create("stop", "p", { runJobId: "nope" })).toThrow();
   });
+
+  test("a long run keeps streaming: the oldest lines drop, seq keeps counting; a build log stays capped", async () => {
+    const jobs = new JobManager(
+      fakePlanner({
+        run: { steps: [{ label: "app", argv: sh("seq 1 60000"), cwd: SCRATCH }], failCode: "RUN_CRASHED", failStage: "run" },
+        build: { steps: [{ label: "cc", argv: sh("seq 1 60000"), cwd: SCRATCH }], failCode: "BUILD_FAILED", failStage: "build" },
+      }),
+    );
+    const run = jobs.create("run", "p");
+    await waitFor(() => jobs.get(run.id)!.state === "succeeded", 20_000);
+    const lines = jobs.lines(run.id);
+    expect(lines.length).toBeLessThanOrEqual(50_000);
+    expect(lines.at(-1)!.msg).toBe("job succeeded");
+    expect(lines.at(-2)!.msg).toBe("60000");
+    expect(lines.at(-1)!.seq).toBe(60_001); // seq 0 "$ app", 1…60 000 the output, then "job succeeded"
+    for (let i = 1; i < lines.length; i++) expect(lines[i]!.seq).toBe(lines[i - 1]!.seq + 1);
+    const seen: number[] = [];
+    jobs.subscribe(run.id, 59_990, (l) => seen.push(l.seq), () => {});
+    expect(seen).toEqual([59_991, 59_992, 59_993, 59_994, 59_995, 59_996, 59_997, 59_998, 59_999, 60_000, 60_001]);
+
+    const build = jobs.create("build", "p");
+    await waitFor(() => jobs.get(build.id)!.state === "succeeded", 20_000);
+    expect(jobs.lines(build.id).at(-1)!.msg).toBe("49999");
+  });
 });
 
 describe("HTTP API (openapi/toolchain.v1.yaml)", () => {

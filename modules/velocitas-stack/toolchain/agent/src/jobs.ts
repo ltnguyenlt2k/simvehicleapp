@@ -75,9 +75,13 @@ interface Entry {
   listeners: Set<(l: LogLine | null) => void>;
   proc?: { kill(signal: NodeJS.Signals | number): void; pid: number };
   cancelRequested: boolean;
+  /** Next seq: lines keep their seq when a long run drops its oldest lines. */
+  nextSeq: number;
 }
 
 const MAX_LINES = 50_000;
+/** A run keeps its newest lines (a vehicle app runs for hours); dropped in chunks to stay cheap. */
+const RUN_DROP_CHUNK = 5_000;
 const MAX_JOBS = 200;
 const ANSI = /\x1b\[[0-9;?]*[A-Za-z]/g;
 const BUILD_KINDS: ReadonlySet<JobKind> = new Set(["init", "deps", "build", "test", "format-check", "generate-model"]);
@@ -110,7 +114,7 @@ export class JobManager {
       if (!target || target.job.kind !== "run") throw new ConflictError("runJobId does not name a run job");
     }
     const job: Job = { id: this.newId(), kind, project, ...(options ? { options } : {}), state: "queued", exitCode: null, createdAt: this.now(), diagnostics: [] };
-    this.jobs.set(job.id, { job, lines: [], listeners: new Set(), cancelRequested: false });
+    this.jobs.set(job.id, { job, lines: [], listeners: new Set(), cancelRequested: false, nextSeq: 0 });
     this.prune();
     if (kind === "run") {
       this.activeRun = job.id;
@@ -270,15 +274,20 @@ export class JobManager {
   private output(e: Entry, stream: "stdout" | "stderr", raw: string) {
     const msg = raw.replace(ANSI, "").replace(/\r$/, "");
     const level = /\berror\b|FAILED|fatal/i.test(msg) ? "error" : /\bwarning\b/i.test(msg) ? "warn" : "info";
-    this.push(e, { runId: e.job.id, seq: e.lines.length, ts: this.now(), stream, level, msg, ...(raw !== msg ? { raw } : {}) });
+    this.push(e, { runId: e.job.id, seq: e.nextSeq, ts: this.now(), stream, level, msg, ...(raw !== msg ? { raw } : {}) });
   }
 
   private system(e: Entry, msg: string, level: LogLine["level"]) {
-    this.push(e, { runId: e.job.id, seq: e.lines.length, ts: this.now(), stream: "system", level, msg });
+    this.push(e, { runId: e.job.id, seq: e.nextSeq, ts: this.now(), stream: "system", level, msg });
   }
 
   private push(e: Entry, l: LogLine) {
-    if (e.lines.length >= MAX_LINES) return; // the job log is capped; the job result still arrives
+    if (e.lines.length >= MAX_LINES) {
+      // A build log is capped (the job result still arrives); a run keeps streaming its newest lines.
+      if (e.job.kind !== "run") return;
+      e.lines.splice(0, RUN_DROP_CHUNK);
+    }
+    e.nextSeq++;
     e.lines.push(l);
     for (const f of e.listeners) f(l);
   }
