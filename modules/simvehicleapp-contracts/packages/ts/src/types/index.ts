@@ -1078,6 +1078,15 @@ export interface GenerateRequest {
   options?: {
     emitTests?: boolean;
   };
+  /**
+   * Scenario of a workflow for the generated tests (ADR-0022 §8, additive 2026-10-07); workflows without one get no test.
+   *
+   * @maxItems 1000
+   */
+  scenarios?: {
+    workflowId: string;
+    scenario: ScenarioV1;
+  }[];
 }
 export interface ToolchainJobRequest {
   kind: "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model";

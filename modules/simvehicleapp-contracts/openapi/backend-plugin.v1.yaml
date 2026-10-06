@@ -104,3 +104,7 @@ components:
             properties:
               runtimeVersion: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" }
               files: { type: array, items: { $ref: "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/$defs/file" } }
+              remove:
+                description: "Template files the overlay replaces by deleting them (e.g. the sample app); additive 2026-10-07."
+                type: array
+                items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/relativePath" }

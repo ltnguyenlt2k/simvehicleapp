@@ -95,6 +95,20 @@
           "type": "object",
           "additionalProperties": false,
           "properties": { "emitTests": { "type": "boolean" } }
+        },
+        "scenarios": {
+          "description": "Scenario of a workflow for the generated tests (ADR-0022 §8, additive 2026-10-07); workflows without one get no test.",
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "required": ["workflowId", "scenario"],
+            "additionalProperties": false,
+            "properties": {
+              "workflowId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
+              "scenario": { "$ref": "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1" }
+            }
+          }
         }
       }
     }
