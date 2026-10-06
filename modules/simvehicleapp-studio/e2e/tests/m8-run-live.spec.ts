@@ -105,9 +105,26 @@ test.describe('M8 live run on the real stack', () => {
     )
     await consoleHas(page, 'app.started')
 
+    // The databroker keeps values between runs: start from Hazard off so only this app can turn it on.
+    const workspaceId = editorUrl.split('/')[2]
+    const projects = await (
+      await page.request.get(`/api/sv/projects?workspaceId=${workspaceId}`)
+    ).json()
+    const projectId = (projects.projects as { id: string; slug: string }[]).find(
+      (p) => p.slug === slug
+    )?.id
+    for (const field of ['target', 'value']) {
+      const reset = await page.request.post(`/api/sv/projects/${projectId}/signals`, {
+        data: { path: HAZARD, value: false, field },
+      })
+      expect(reset.ok()).toBe(true)
+    }
+
     // Signals: Speed 100 then 130 held 3 s ⇒ Hazard on (target, and current through the gateway mirror)
     await page.locator('[data-sv-tab="signals"]').click()
-    await expect(page.locator(`[data-sv-signal="${HAZARD}"]`)).toBeVisible()
+    await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)).toHaveText(
+      'false'
+    )
     await inject(page, SPEED, '100')
     await expect(page.locator(`[data-sv-signal="${SPEED}"] [data-sv-signal-value]`)).toHaveText(
       '100'

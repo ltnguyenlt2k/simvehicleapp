@@ -6,6 +6,16 @@ import { useWorkflowProject } from '@/app/workspace/[workspaceId]/w/[workflowId]
 import { useStartSvGeneration } from '@/hooks/queries/sv-projects'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
+import { useWorkflowRegistry } from '@/stores/workflows/registry/store'
+
+/** Blocks of the WorkflowGraph JSON on the canvas (0 when it cannot be read). */
+function blockCount(graphJson: string): number {
+  try {
+    return (JSON.parse(graphJson) as { blocks?: unknown[] }).blocks?.length ?? 0
+  } catch {
+    return 0
+  }
+}
 
 /**
  * SynCode (M07-T18): generates, builds and tests the project the open workflow belongs to. The
@@ -14,7 +24,11 @@ import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
  */
 export function SynCodeButton() {
   const graphJson = useSvLintStore((s) => s.graphJson)
-  const { project, candidates } = useWorkflowProject()
+  const { project, candidates, workflowId } = useWorkflowProject()
+  // The canvas holds this workflow (an editor graph read during loading is empty — found by the M8 live E2E).
+  const loaded = useWorkflowRegistry(
+    (s) => s.hydration.phase === 'ready' && s.hydration.workflowId === workflowId
+  )
   const start = useStartSvGeneration()
   const { running } = useSynCodeFollow()
   const busy = running || start.isPending
@@ -28,11 +42,13 @@ export function SynCodeButton() {
       toast.error(`SynCode: fix ${issues.length} problem${issues.length === 1 ? '' : 's'} first`)
       return
     }
+    // The editor's graph may hold edits not saved yet; an empty one is never trusted over the saved state.
+    const open =
+      blockCount(current) > 0
+        ? { workflowId: wf, graph: JSON.parse(current) as Record<string, unknown> }
+        : undefined
     start.mutate(
-      {
-        projectId: project.id,
-        body: { open: { workflowId: wf, graph: JSON.parse(current) as Record<string, unknown> } },
-      },
+      { projectId: project.id, body: open ? { open } : {} },
       {
         onSuccess: (generation) => useSvSynCodeStore.getState().start(project.id, generation.id),
         onError: (e) => toast.error(`SynCode: ${e.message}`),
@@ -42,9 +58,11 @@ export function SynCodeButton() {
 
   const title = !project
     ? 'Add this workflow to a vehicle project first (Vehicle projects page)'
-    : project.status !== 'ready'
-      ? `Project ${project.name} is ${project.status === 'creating' ? 'still being prepared' : 'not ready'}`
-      : `Generate, build and test ${project.name}`
+    : !loaded
+      ? 'Loading the workflow…'
+      : project.status !== 'ready'
+        ? `Project ${project.name} is ${project.status === 'creating' ? 'still being prepared' : 'not ready'}`
+        : `Generate, build and test ${project.name}`
 
   return (
     <>
@@ -53,7 +71,7 @@ export function SynCodeButton() {
         size='sm'
         data-sv-action='syncode'
         aria-busy={busy || undefined}
-        disabled={!project || project.status !== 'ready' || busy || !graphJson}
+        disabled={!project || project.status !== 'ready' || busy || !graphJson || !loaded}
         onClick={onSynCode}
         title={title}
       >

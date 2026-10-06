@@ -27,7 +27,8 @@ const project = (workflowId: string) => ({
   language: 'cpp',
   vssRelease: 'v4.0',
   settings: { mqttTopicPrefix: 'sv', traceLevel: 'node' },
-  status: 'ready',
+  // `creating` (polled by the editor) until the test's workflow exists, then ready with it.
+  status: workflowId ? 'ready' : 'creating',
   workflows: workflowId ? [{ simWorkflowId: workflowId, enabled: true }] : [],
 })
 
