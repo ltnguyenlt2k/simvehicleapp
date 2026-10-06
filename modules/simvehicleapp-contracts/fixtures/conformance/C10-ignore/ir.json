@@ -1,0 +1,108 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:e13ed96639ded2031cc3586aae08902386c52c42788257f1fd0a44e2f8778887",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "IgnoreDropsEventsWhileARunIsActiveTheNextEventAfterItEndsStartsARun",
+  "nodes": [
+    {
+      "args": {
+        "durationMs": 1000
+      },
+      "id": "n2",
+      "next": {
+        "next": "n3"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$ref": "n1.value"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:3735c4c891708bb5b08449da37a8f9341f27bdae66dd8685bb2300f6c166237b",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "ignore"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c10_ignore",
+  "workflowRevision": 1
+}

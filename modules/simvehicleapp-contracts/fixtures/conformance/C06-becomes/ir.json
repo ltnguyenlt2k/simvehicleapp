@@ -1,0 +1,98 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:fcd3df17e78f3b627b44e03c47c6729e63b7f97158517ce5101e08366f63ebb4",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "BecomesFiresWhenTheValueTurnsEqualToTheThreshold",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "boolean",
+      "id": "s1",
+      "path": "Vehicle.IsMoving",
+      "unit": null,
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:3391f922728f194d89bf609820598e37efaecf14c0f8add9b65efe0d1648e478",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "becomes",
+        "threshold": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c06_becomes",
+  "workflowRevision": 1
+}

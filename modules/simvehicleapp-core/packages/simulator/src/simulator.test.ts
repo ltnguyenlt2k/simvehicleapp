@@ -108,3 +108,30 @@ describe("value semantics (IR_SPEC)", () => {
     expect(fromJson("18446744073709551615", "uint64")).toBe(18446744073709551615n);
   });
 });
+
+describe("waiters are resumed once", () => {
+  test("a waiter resumed by a nested change (state.set of another run) is not resumed again", () => {
+    const src = (b: string) => ({ blockId: b });
+    const cond = { $expr: { op: ">", l: { $signal: "s0" }, r: { $const: 10, type: "uint8" }, type: "boolean" } };
+    const ir = {
+      workflowId: "w",
+      signals: [{ id: "s0", path: "Vehicle.Speed", dataType: "float" }],
+      topics: [],
+      state: [{ id: "v0", name: "x", type: "int32", initial: 0 }],
+      triggers: [
+        { id: "n1", opcode: "event.app_start", props: {}, outputs: {}, entry: "n2", src: src("b1") },
+        { id: "n4", opcode: "event.app_start", props: {}, outputs: {}, entry: "n5", src: src("b4") },
+      ],
+      nodes: [
+        { id: "n2", opcode: "control.wait_until", args: { condition: cond, timeoutMs: 10000 }, next: { ok: "n3", timeout: null }, src: src("b2") },
+        { id: "n3", opcode: "state.set", args: { state: "v0", value: { $const: 1, type: "int32" } }, next: { next: null }, src: src("b3") },
+        { id: "n5", opcode: "control.wait_until", args: { condition: cond, timeoutMs: 10000 }, next: { ok: "n6", timeout: null }, src: src("b5") },
+        { id: "n6", opcode: "control.wait", args: { durationMs: 500 }, next: { next: "n7" }, src: src("b6") },
+        { id: "n7", opcode: "comm.log", args: { level: "info", message: { $template: ["done"] } }, next: { next: null }, src: src("b7") },
+      ],
+    };
+    const r = simulate(ir, { until: 3000, initial: { "Vehicle.Speed": 0 }, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 20 }] });
+    expect(r.logs).toEqual([{ t: 1500, level: "info", message: "done" }]);
+    expect(r.trace.filter((e) => e.node === "n5" && e.ev === "exit")).toHaveLength(1);
+  });
+});

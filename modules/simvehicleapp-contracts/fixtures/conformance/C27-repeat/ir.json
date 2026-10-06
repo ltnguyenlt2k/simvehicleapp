@@ -1,0 +1,126 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:bd4a30fcb72cdc53dd134f2c150688e814dfa25b03f02eee2111fd62bbd39104",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "RepeatRunsItsBodyCountTimesWithLoopIndex0N1ThenContinues",
+  "nodes": [
+    {
+      "args": {
+        "count": 3,
+        "intervalMs": 0
+      },
+      "body": {
+        "entry": "n3"
+      },
+      "id": "n2",
+      "next": {
+        "next": "n4"
+      },
+      "opcode": "control.repeat",
+      "outputs": {
+        "index": {
+          "type": "uint32"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$ref": "n2.index"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:0b7743f87c11ff39d54fe86b532a309e3d2eb954927f63a8f0cc3871b369c2e5",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.app_start",
+      "outputs": {},
+      "props": {},
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c27_repeat",
+  "workflowRevision": 1
+}

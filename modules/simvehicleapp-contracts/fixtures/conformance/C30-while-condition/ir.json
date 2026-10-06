@@ -1,0 +1,145 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:cf7cea73faaf69550ca7261a5b32160b188cc90da06fcd78f78cb10cc4cdca09",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "WhileChecksItsConditionBeforeEachIteration",
+  "nodes": [
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$state": "v0"
+            },
+            "op": "<",
+            "r": {
+              "$const": "3",
+              "type": "int64"
+            },
+            "type": "boolean"
+          }
+        },
+        "intervalMs": 0,
+        "maxIterations": 10
+      },
+      "body": {
+        "entry": "n3"
+      },
+      "id": "n2",
+      "next": {
+        "next": "n4"
+      },
+      "opcode": "control.while",
+      "outputs": {
+        "index": {
+          "type": "uint32"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "op": "inc",
+        "state": "v0",
+        "step": 1
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "state.counter",
+      "outputs": {
+        "value": {
+          "type": "int32"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$expr": {
+            "args": [
+              {
+                "$state": "v0"
+              },
+              {
+                "$const": "0",
+                "type": "int64"
+              },
+              {
+                "$const": "100",
+                "type": "int64"
+              }
+            ],
+            "op": "clamp",
+            "type": "int64"
+          }
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:2685a6299e026d2e83d8730196e83e0ee510db0acf9d338a3d2c0c8c49fa8d3d",
+  "state": [
+    {
+      "id": "v0",
+      "initial": 0,
+      "name": "n",
+      "type": "int32"
+    }
+  ],
+  "topics": [],
+  "triggers": [
+    {
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.app_start",
+      "outputs": {},
+      "props": {},
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c30_while_condition",
+  "workflowRevision": 1
+}

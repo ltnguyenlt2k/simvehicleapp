@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { ContractValidator, fixturesDir, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
 import { parseVssRelease, type VssModel } from "@simvehicleapp/vss";
-import { goldenIds, goldenIr } from "./golden-ir.ts";
+import { goldenIr, irFixtureDirs } from "./golden-ir.ts";
 import { type CompileContext, compile, kebab, pascal } from "./index.ts";
 
 const fixture = (rel: string) => `${fixturesDir}${rel}`;
@@ -47,9 +47,9 @@ describe("compile: names", () => {
 });
 
 describe("golden IR snapshots (ADR-0014 Verification: diff = 0)", () => {
-  for (const id of goldenIds()) {
-    test(`${id}/ir.json is what the compiler produces`, async () => {
-      expect(await goldenIr(id)).toBe(readFileSync(fixture(`golden/${id}/ir.json`), "utf8"));
+  for (const dir of irFixtureDirs()) {
+    test(`${dir}/ir.json is what the compiler produces`, async () => {
+      expect(await goldenIr(dir)).toBe(readFileSync(fixture(`${dir}/ir.json`), "utf8"));
     });
   }
 });

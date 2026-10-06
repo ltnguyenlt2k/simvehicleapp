@@ -1,0 +1,99 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:fb1f30315a1177872c2a4dda09e6b109d29447de154ca49de332fd38379b77ac",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "MQTTTriggerQueuesMessagesByDefaultAndRunsThemInOrder",
+  "nodes": [
+    {
+      "args": {
+        "durationMs": 500
+      },
+      "id": "n2",
+      "next": {
+        "next": "n3"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$ref": "n1.payload"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "string",
+      "id": "s0",
+      "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+      "unit": null,
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:2674ae572bceb62be095e6cabdc86bb42db2f0689d637d2880463c95cd230933",
+  "state": [],
+  "topics": [
+    {
+      "direction": "read",
+      "id": "t0",
+      "topic": "vehicle/cmd/wiper"
+    }
+  ],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.mqtt_message",
+      "outputs": {
+        "payload": {
+          "type": "string"
+        },
+        "topic": {
+          "type": "string"
+        }
+      },
+      "props": {
+        "payloadType": "text"
+      },
+      "src": {
+        "blockId": "b1"
+      },
+      "topic": "t0"
+    }
+  ],
+  "workflowId": "c37_mqtt_queue",
+  "workflowRevision": 1
+}

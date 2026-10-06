@@ -1,0 +1,108 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:ce848b9985a48371b0c90dd5dd1548a6280e673b42bc123612fb7a68efbcaa5a",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "RestartCancelsTheWaitingRunAndStartsANewOne",
+  "nodes": [
+    {
+      "args": {
+        "durationMs": 1000
+      },
+      "id": "n2",
+      "next": {
+        "next": "n3"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$ref": "n1.value"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:7a439b1e65e24a7c54fbf817e5f72b35f353690e6e6da0f29a9808b271466eb4",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c09_restart",
+  "workflowRevision": 1
+}

@@ -1,0 +1,101 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:bb25a6775af8d0599f9645bd0beebd1dfd3275ac269e1af1faa5696c8dfb78ca",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "PreviousThresholdValueFiresStayingAboveDoesNot",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s1",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:0429f5cf6196e14c3e148dc7c99490d177fa17b69761964f77752e45317fc409",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "crosses_above",
+        "threshold": {
+          "$const": 100,
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c04_crosses_above",
+  "workflowRevision": 1
+}

@@ -1,0 +1,96 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:af5c78631ad2ee89ad9ff3bd71aec4d98c3f4f9370be33134e2b3e5869581627",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "ValuesPresentAtAppStartAreTheBaselineNoTriggerAtT0",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s1",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:439bc186097e6c256e066de0a7f79b95da1aaca02c282961dc34689f543575a5",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c08_initial_is_baseline",
+  "workflowRevision": 1
+}

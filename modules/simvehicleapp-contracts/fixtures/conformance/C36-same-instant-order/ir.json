@@ -1,0 +1,155 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:2716e3030c8dd92a903ca637c18e80932bd2474cbf232ace36ce91169dff4f71",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "RunsStartedByTheSameEventExecuteInTriggerOrderDeterministicSeq",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": 1,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": 2,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s1",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:82dcc91115dbf74bd812654b312710977b71caee0c12d8ab6f7eb221bcf5d0a0",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b1"
+      }
+    },
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n4",
+      "id": "n3",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "workflowId": "c36_same_instant_order",
+  "workflowRevision": 1
+}

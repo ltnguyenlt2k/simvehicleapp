@@ -1,0 +1,109 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:8f8b61816e34f48e5da020f579fedc8e35784071996480fc40ba936a05e8218c",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "MaxRuns4AFifthOverlappingEventIsDropped",
+  "nodes": [
+    {
+      "args": {
+        "durationMs": 1000
+      },
+      "id": "n2",
+      "next": {
+        "next": "n3"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$ref": "n1.value"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:5ccc1566447f5850e1f46ce544f72f14568bf16fbd96f74dfaff21f6a33e53fc",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "maxRuns": 4,
+        "policy": "parallel"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c14_parallel_max_runs",
+  "workflowRevision": 1
+}

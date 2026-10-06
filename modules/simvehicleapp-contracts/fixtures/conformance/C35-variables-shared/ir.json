@@ -1,0 +1,162 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:a930d8ca6f6d1b1bc4e7f08ea34a95a9c3e944fb5c9154ac737a67ab9752cd09",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "VariablesAreAppWideAValueSetByOneRunIsSeenByTheNext",
+  "nodes": [
+    {
+      "args": {
+        "state": "v0",
+        "value": {
+          "$expr": {
+            "args": [
+              {
+                "$expr": {
+                  "l": {
+                    "$state": "v0"
+                  },
+                  "op": "+",
+                  "r": {
+                    "$const": "1",
+                    "type": "int64"
+                  },
+                  "type": "int64"
+                }
+              },
+              {
+                "$const": "0",
+                "type": "int64"
+              },
+              {
+                "$const": "100",
+                "type": "int64"
+              }
+            ],
+            "op": "clamp",
+            "type": "int64"
+          }
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": "n3"
+      },
+      "opcode": "state.set",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$expr": {
+            "args": [
+              {
+                "$state": "v0"
+              },
+              {
+                "$const": "0",
+                "type": "int64"
+              },
+              {
+                "$const": "100",
+                "type": "int64"
+              }
+            ],
+            "op": "clamp",
+            "type": "int64"
+          }
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:435e7636d11a31c4bac2ecf6f12dff6428e11fbd53584784ae98d76737a1a6ff",
+  "state": [
+    {
+      "id": "v0",
+      "initial": 0,
+      "name": "n",
+      "type": "int32"
+    }
+  ],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c35_variables_shared",
+  "workflowRevision": 1
+}

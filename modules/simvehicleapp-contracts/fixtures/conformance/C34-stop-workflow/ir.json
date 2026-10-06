@@ -1,0 +1,161 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:964e8bb56b7e7411c4f67585aa42101c21985ba81a866349961fff8f28a9b77f",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "StopWorkflowCancelsEveryWaitingRunOfTheWorkflow",
+  "nodes": [
+    {
+      "args": {
+        "durationMs": 1000
+      },
+      "id": "n2",
+      "next": {
+        "next": "n3"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$ref": "n1.value"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "scope": "workflow"
+      },
+      "id": "n5",
+      "next": {},
+      "opcode": "control.stop",
+      "src": {
+        "blockId": "b5"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "boolean",
+      "id": "s2",
+      "path": "Vehicle.IsMoving",
+      "unit": null,
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:f8645a4c9f5a0da2d0a1075f916db3b382163704c4830e6474257dea137fcb1a",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "maxRuns": 4,
+        "policy": "parallel"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    },
+    {
+      "concurrency": {
+        "policy": "restart"
+      },
+      "entry": "n5",
+      "id": "n4",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "becomes",
+        "threshold": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "signal": "s2",
+      "src": {
+        "blockId": "b4"
+      }
+    }
+  ],
+  "workflowId": "c34_stop_workflow",
+  "workflowRevision": 1
+}

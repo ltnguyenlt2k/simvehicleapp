@@ -1,0 +1,67 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:82ec84de377fc08c7058f855d6668e5547904ae04462a4d8f857f8dd8a3deed4",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "WhenAppStartsFiresExactlyOnceAtT0",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:a8f179756be33a70c7345d09cdda0bd09a743199a81805ca6a95fcf3bd5d38d7",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.app_start",
+      "outputs": {},
+      "props": {},
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c17_app_start_once",
+  "workflowRevision": 1
+}

@@ -1,0 +1,110 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:17c1c2b158048a3160198b6bc2518daff034b9fc86cc7e9cd73803703f37e0a9",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "Wait0YieldsButKeepsTheVirtualTimeAndTheStepOrder",
+  "nodes": [
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": 1,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": "n3"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "durationMs": 0
+      },
+      "id": "n3",
+      "next": {
+        "next": "n4"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": 2,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:2c47d79823d70f80511ab4359245835a78a682d7d4d5ca7b48ac4c7b05ef2e0c",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.app_start",
+      "outputs": {},
+      "props": {},
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c19_wait_zero",
+  "workflowRevision": 1
+}

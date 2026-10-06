@@ -1,0 +1,191 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:afbb3f0e4c9a34139aac7ff36234753847029112b0ad7b5611e3b39a82d99cbb",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "JoinNoneContinuesAtOnceBranchesKeepRunning",
+  "nodes": [
+    {
+      "args": {
+        "branches": [
+          {
+            "entry": "n3"
+          },
+          {
+            "entry": "n5"
+          }
+        ],
+        "join": "none"
+      },
+      "id": "n2",
+      "next": {
+        "next": "n7"
+      },
+      "opcode": "control.parallel",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "durationMs": 1000
+      },
+      "id": "n3",
+      "next": {
+        "next": "n4"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s2",
+        "value": {
+          "$const": 1,
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    },
+    {
+      "args": {
+        "durationMs": 2000
+      },
+      "id": "n5",
+      "next": {
+        "next": "n6"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b5"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$const": "FAST",
+          "type": "string"
+        }
+      },
+      "id": "n6",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b6"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n7",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b7"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "string",
+      "id": "s1",
+      "path": "Vehicle.Body.Windshield.Front.Wiping.Mode",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s2",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:f81c6c2b032c3c6cdb47c4e697ff3a0c7793070330671b796cc9cdff2f8ace51",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.app_start",
+      "outputs": {},
+      "props": {},
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c33_parallel_join_none",
+  "workflowRevision": 1
+}

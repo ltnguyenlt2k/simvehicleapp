@@ -1,0 +1,104 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:a4438fd6454a5c6dbd89845f097b9acba0117f33bcaa42cde16f7a107b1369d8",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "TimerTicksWhileARunIsBusyAreSkippedIgnoreNeverCaughtUp",
+  "nodes": [
+    {
+      "args": {
+        "durationMs": 1500
+      },
+      "id": "n2",
+      "next": {
+        "next": "n3"
+      },
+      "opcode": "control.wait",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$expr": {
+            "args": [
+              {
+                "$ref": "n1.tick"
+              },
+              {
+                "$const": "100",
+                "type": "int64"
+              }
+            ],
+            "op": "min",
+            "type": "int64"
+          }
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:573d10f30d2910eccbf091d093ca025d3315bbb34b50e4404551bd240643bf95",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "ignore"
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.timer",
+      "outputs": {
+        "tick": {
+          "type": "uint32"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        }
+      },
+      "props": {
+        "initialDelayMs": 1000,
+        "intervalMs": 1000
+      },
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c16_timer_ignore_busy",
+  "workflowRevision": 1
+}

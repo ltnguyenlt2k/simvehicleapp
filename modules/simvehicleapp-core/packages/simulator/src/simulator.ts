@@ -321,6 +321,8 @@ class Simulator {
       }
     }
     for (const w of [...this.waiters]) {
+      // A nested change (a resumed run that sets state) may already have resumed or dropped it.
+      if (!this.waiters.has(w)) continue;
       if (w.fiber.token.cancelled) {
         this.waiters.delete(w);
         continue;
