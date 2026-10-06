@@ -106,6 +106,24 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/UnknownRelease" }
         "503": { $ref: "#/components/responses/ReleaseUnavailable" }
+  /vss:
+    get:
+      operationId: getVssDocument
+      tags: [catalog]
+      description: "The VSS release document (JSON exported by vss-tools) — vendored into a new project as app/vss/vss_rel_<x>.json (ADR-0023 Notes M0). Additive 2026-10-07 (M07)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/ReleaseQuery" }
+      responses:
+        "200":
+          description: The release document; `x-sv-release` names the release; the ETag is its model hash.
+          content:
+            application/json:
+              schema: { type: object }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/UnknownRelease" }
+        "503": { $ref: "#/components/responses/ReleaseUnavailable" }
   /model-hash:
     get:
       operationId: getModelHash

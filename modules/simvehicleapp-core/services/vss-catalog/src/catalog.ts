@@ -16,6 +16,8 @@ export interface LoadedRelease {
   model: VssModel;
   index: SearchIndex;
   origin: string;
+  /** The release document as JSON text (vendored into projects, `GET /vss`). */
+  documentJson: string;
 }
 
 export class UnknownReleaseError extends Error {
@@ -64,7 +66,7 @@ export class Catalog {
     const files = await this.source.load(release);
     if (!files) throw new UnknownReleaseError(release);
     const model = parseVssRelease(files.document, release);
-    return { model, index: buildSearchIndex(model), origin: files.origin };
+    return { model, index: buildSearchIndex(model), origin: files.origin, documentJson: JSON.stringify(files.document) };
   }
 }
 

@@ -56,7 +56,7 @@ async function conforming(path: string, query = "", status = "200") {
 
 describe("contract conformance (openapi/vss-catalog.v1.yaml)", () => {
   test("every documented operation is served", () => {
-    expect(Object.keys(openapi.paths).sort()).toEqual(["/healthz", "/model-hash", "/nodes", "/releases", "/search", "/tree", "/version"]);
+    expect(Object.keys(openapi.paths).sort()).toEqual(["/healthz", "/model-hash", "/nodes", "/releases", "/search", "/tree", "/version", "/vss"]);
   });
 
   test("/healthz and /version are public", async () => {
@@ -119,6 +119,17 @@ describe("contract conformance (openapi/vss-catalog.v1.yaml)", () => {
     expect(body.unknown).toEqual(["Vehicle.Nope"]);
     const known = await conforming("/nodes", "?paths=Vehicle.Speed");
     expect(known.body.unknown).toBeUndefined();
+  });
+
+  test("/vss is the release document the model was parsed from (vendored into projects)", async () => {
+    const res = await get("/vss?release=v4.2");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-sv-release")).toBe("v4.2");
+    const doc = await res.json();
+    expect(Object.keys(doc)).toEqual(["Vehicle"]);
+    expect(doc.Vehicle.children.Speed.datatype).toBe("float");
+    expect((await get("/vss?release=v4.2", { "if-none-match": res.headers.get("etag")! })).status).toBe(304);
+    expect((await get("/vss?release=v9.9")).status).toBe(404);
   });
 
   test("/model-hash matches the parsed model", async () => {

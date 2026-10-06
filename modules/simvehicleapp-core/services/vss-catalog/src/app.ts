@@ -87,6 +87,14 @@ export function createCatalogHandler(catalog: Catalog) {
           return cachedJson(req, unknown.length ? { release: model.release, nodes, unknown } : { release: model.release, nodes });
         }
 
+        case "/vss": {
+          // The release document, vendored into new projects as app/vss/<file> (ADR-0023 Notes M0).
+          const loaded = await catalog.get(releaseParam(url));
+          const etag = `"${loaded.model.modelHash.slice(7)}"`;
+          if (req.headers.get("if-none-match")?.split(",").some((t) => t.trim() === etag)) return new Response(null, { status: 304, headers: { etag } });
+          return new Response(loaded.documentJson, { headers: { etag, "cache-control": "no-cache", "content-type": "application/json", "x-sv-release": loaded.model.release } });
+        }
+
         case "/model-hash": {
           const { model } = await catalog.get(releaseParam(url));
           return cachedJson(req, { release: model.release, modelHash: model.modelHash });
