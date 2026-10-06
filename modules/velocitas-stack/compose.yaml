@@ -18,9 +18,13 @@ services:
       dockerfile: toolchain/cpp/Dockerfile
       additional_contexts:
         devcontainer: service:devcontainer-cpp
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
       args:
         CONAN_JOBS: ${SV_CONAN_JOBS:-8}
     environment:
+      # Toolchain agent on :4210 (internal only): jobs for the orchestrator (ADR-0025).
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
       SDV_MIDDLEWARE_TYPE: native
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
       SDV_MQTT_ADDRESS: mqtt://mqtt:1883

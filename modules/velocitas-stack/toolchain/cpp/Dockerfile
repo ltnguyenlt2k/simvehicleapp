@@ -8,6 +8,15 @@
 # (velocitas init/sync + setup-dependencies.sh + install_dependencies.sh) at IMAGE BUILD
 # time, so containers start ready-to-build and can work offline (VELOCITAS_OFFLINE=1).
 # ---------------------------------------------------------------------------
+# Toolchain agent (ADR-0025 §2, toolchain.v1.yaml): Bun + sources + contracts at the same /src layout as the
+# other services (contracts read their JSON Schemas from disk, so no single-file binary).
+FROM oven/bun:1.3.8-debian AS agent
+WORKDIR /src/velocitas-stack/toolchain/agent
+COPY --from=contracts / /src/simvehicleapp-contracts/
+COPY toolchain/agent/package.json toolchain/agent/bun.lock toolchain/agent/bunfig.toml ./
+RUN bun install --frozen-lockfile --production
+COPY toolchain/agent/src src
+
 FROM devcontainer AS toolchain
 
 ARG CONAN_JOBS=8
@@ -80,6 +89,11 @@ RUN mkdir -p /home/vscode/.sv/conan-offline-index/recipes \
  && conan remote add sv-offline /home/vscode/.sv/conan-offline-index --type=local-recipes-index \
  && conan remote disable sv-offline
 ENV VELOCITAS_OFFLINE=1
+COPY --from=agent /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=agent /src /src
+ENV SV_TOOLCHAIN_PORT=4210 SV_PROJECTS_DIR=/workspace/projects
 WORKDIR /workspace
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \
+  CMD ["bun", "-e", "fetch('http://127.0.0.1:4210/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
 ENTRYPOINT ["sv-entrypoint"]
-CMD ["sleep", "infinity"]
+CMD ["bun", "/src/velocitas-stack/toolchain/agent/src/main.ts"]
