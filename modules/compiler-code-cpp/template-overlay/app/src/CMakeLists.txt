@@ -6,6 +6,9 @@ set(TARGET_NAME "app")
 
 set(SV_RT_VELOCITAS ON CACHE BOOL "Build the Velocitas SDK adapter of the runtime" FORCE)
 add_subdirectory(simvehicleapp-runtime)
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/generated/generated.cmake)
+  message(FATAL_ERROR "app/src/generated is empty: press SynCode in SimVehicleApp to generate the app first.")
+endif()
 include(${CMAKE_CURRENT_SOURCE_DIR}/generated/generated.cmake)
 file(GLOB SV_USER_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/user/*.cpp)
 
