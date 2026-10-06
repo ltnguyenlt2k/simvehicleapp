@@ -107,6 +107,14 @@ describe("value semantics (IR_SPEC)", () => {
     expect(roundHalfAway(0.49999999999999994)).toBe(0);
     expect(fromJson("18446744073709551615", "uint64")).toBe(18446744073709551615n);
   });
+  test("to string a value is formatted with its own static type (IR_SPEC Formatting)", () => {
+    const f = { $const: 0.1, type: "float" };
+    const ctx = { ref: () => null, signal: () => undefined, state: () => null, now: () => 0, typeOfRef: () => undefined };
+    expect(evaluate({ $expr: { op: "type.cast", value: f, to: "string", type: "string" } }, ctx)).toBe("0.1");
+    expect(evaluate({ $expr: { op: "json.string", value: f, type: "string" } }, ctx)).toBe('"0.1"');
+    expect(evaluate({ $expr: { op: "json.string", value: { $const: 'say "hi"\n', type: "string" }, type: "string" } }, ctx)).toBe('"say \\"hi\\"\\n"');
+    expect(cast(Math.fround(0.1), "string")).toBe("0.10000000149011612");
+  });
 });
 
 describe("waiters are resumed once", () => {
@@ -133,5 +141,18 @@ describe("waiters are resumed once", () => {
     const r = simulate(ir, { until: 3000, initial: { "Vehicle.Speed": 0 }, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 20 }] });
     expect(r.logs).toEqual([{ t: 1500, level: "info", message: "done" }]);
     expect(r.trace.filter((e) => e.node === "n5" && e.ev === "exit")).toHaveLength(1);
+  });
+});
+
+describe("missing values", () => {
+  test("using `previous` of the first value (no baseline) is a no_value error, as for a signal without value", async () => {
+    const g = structuredClone(gwa);
+    g.blocks = g.blocks.filter((b: { id: string }) => ["b1", "b3"].includes(b.id));
+    g.blocks[1].props = { path: HAZARD, value: "<speedchanged.previous> > 100", awaitAck: true, onError: "continue" };
+    g.edges = [{ id: "e1", from: "b1", fromHandle: "source", to: "b3", toHandle: "target" }];
+    const ir = await irOf(g);
+    const r = simulate(ir, { until: 2000, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 130 }, { t: 1500, path: "Vehicle.Speed", value: 140 }] });
+    expect(r.trace.filter((e) => e.ev === "error").map((e) => [e.ts, e.data])).toEqual([[1000, { reason: "no_value", message: "n1.previous has no value" }]]);
+    expect(r.writes).toEqual([{ t: 1500, path: HAZARD, value: true }]);
   });
 });

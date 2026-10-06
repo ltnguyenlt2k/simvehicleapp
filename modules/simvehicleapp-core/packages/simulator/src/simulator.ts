@@ -1,4 +1,4 @@
-import { EvalError, type EvalContext, type Expr, evaluate, fromJson, toJson, type Value, cast } from "./values.ts";
+import { EvalError, type EvalContext, type Expr, evaluate, exprType, fromJson, toJson, type Value, cast } from "./values.ts";
 
 /**
  * IR v1 simulator (ADR-0017, execution semantics ADR-0012 + Notes, executable spec = conformance
@@ -489,7 +489,8 @@ class Simulator {
     return {
       ref: (node, output) => {
         const v = run?.outputs.get(node)?.[output];
-        if (v === undefined) throw new EvalError("no_value", `${node}.${output} has no value`);
+        // `previous` of the first value (no baseline) is null: using it is a missing value, as for signals.
+        if (v === undefined || v === null) throw new EvalError("no_value", `${node}.${output} has no value`);
         return v;
       },
       signal: (id) => this.values.get(id),
@@ -564,7 +565,7 @@ class Simulator {
     switch (node.opcode) {
       case "vehicle.write": {
         const s = this.signalById.get(String(a.signal))!;
-        const value = cast(this.eval(a.value, run), s.dataType);
+        const value = cast(this.eval(a.value, run), s.dataType, exprType(a.value, this.ctx(run)));
         const bounds = this.opts.model?.[s.path];
         const n = typeof value === "bigint" ? Number(value) : value;
         const bad =
@@ -663,7 +664,7 @@ class Simulator {
         return "next";
       case "state.set": {
         const id = String(a.state);
-        this.state.set(id, cast(this.eval(a.value, run), this.stateType.get(id)!));
+        this.state.set(id, cast(this.eval(a.value, run), this.stateType.get(id)!, exprType(a.value, this.ctx(run))));
         this.afterChange();
         return "next";
       }

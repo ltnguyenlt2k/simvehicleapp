@@ -79,8 +79,11 @@ export function roundHalfAway(x: number): number {
   return Math.sign(x) * Math.round(Math.abs(x));
 }
 
-/** `type.cast` (ADR-0014 Notes §11): real ⇒ integer rounds half away from zero, NaN ⇒ 0, clamp. */
-export function cast(v: Value, to: string): Value {
+/**
+ * `type.cast` (ADR-0014 Notes §11): real ⇒ integer rounds half away from zero, NaN ⇒ 0, clamp;
+ * to string formats with the value's own static type `from` (IR_SPEC "Formatting": float 0.1 ⇒ "0.1").
+ */
+export function cast(v: Value, to: string, from?: string): Value {
   if (isIntegerType(to)) {
     const { min, max } = integerBounds(to as IntegerType);
     let b: bigint;
@@ -96,7 +99,7 @@ export function cast(v: Value, to: string): Value {
   }
   if (to === "float") return Math.fround(num(v));
   if (to === "double") return num(v);
-  if (to === "string") return format(v);
+  if (to === "string") return format(v, from);
   if (to === "boolean") return Boolean(v);
   return v;
 }
@@ -258,9 +261,9 @@ export function evaluate(e: unknown, ctx: EvalContext): Value {
       return v * num(evaluate(x.scale, ctx)) + num(evaluate(x.offset, ctx));
     }
     case "type.cast":
-      return cast(ev("value"), String(x.to));
+      return cast(ev("value"), String(x.to), exprType(x.value, ctx));
     case "json.string":
-      return JSON.stringify(String(format(ev("value"))));
+      return JSON.stringify(format(ev("value"), exprType(x.value, ctx)));
     default:
       throw new Error(`simulator: unknown expression op ${x.op}`);
   }
