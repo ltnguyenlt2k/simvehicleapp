@@ -193,6 +193,15 @@ export default function LoginPage({
             }
 
             errorHandled = true
+            // SV: a rate-limited sign-in (HTTP 429, 3 tries / 10 s) is not a wrong password
+            if (ctx.error.status === 429) {
+              setResetSuccessMessage(null)
+              setPasswordErrors([
+                'Too many sign-in attempts. Please wait a few seconds and try again.',
+              ])
+              setShowValidationError(true)
+              return
+            }
             const errorMessage: string[] = ['Invalid email or password']
 
             if (

@@ -234,3 +234,6 @@ apps/sim/lib/workflows/defaults.ts
 
 # Build — slim runtime stage (Bun + Node 22 only, no build toolchain); docs/STUDIO_BUILD.md
 docker/app.Dockerfile
+
+# M03-T13 — login shows rate limiting (429) instead of "Invalid email or password"
+apps/sim/app/(auth)/login/login-form.tsx
