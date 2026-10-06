@@ -138,21 +138,32 @@ jobs:
           } > "$RUNNER_TEMP/studio.env"
           $STACK --env-file "$RUNNER_TEMP/studio.env" \
             up -d --no-build --wait --wait-timeout 240 studio-db studio-migrations studio-realtime studio vss-catalog compiler
-      - name: E2E — M1 + M2 acceptance gates (Playwright 1.63.0)
+      - name: E2E — M1/M2/M3 acceptance gates incl. 7 goldens built on the canvas (Playwright 1.63.0)
         run: |
           docker run --rm --network host -e CI=1 -e SV_STUDIO_URL=http://localhost:3000 \
-            -v "$PWD/modules/simvehicleapp-studio/e2e":/e2e -w /e2e mcr.microsoft.com/playwright:v1.63.0-noble \
+            -e SV_REPO=/repo -e SV_GOLDEN_EXPORT=1 -v "$PWD":/repo -w /repo/modules/simvehicleapp-studio/e2e \
+            mcr.microsoft.com/playwright:v1.63.0-noble \
             bash -c "npm install --no-audit --no-fund --silent && npx playwright test --grep-invert @after-restart"
       - name: E2E — M2 gate survives a studio restart
         run: |
           $STACK --env-file "$RUNNER_TEMP/studio.env" restart studio
           $STACK --env-file "$RUNNER_TEMP/studio.env" up -d --no-build --wait --wait-timeout 120 studio
           docker run --rm --network host -e CI=1 -e SV_STUDIO_URL=http://localhost:3000 \
-            -v "$PWD/modules/simvehicleapp-studio/e2e":/e2e -w /e2e mcr.microsoft.com/playwright:v1.63.0-noble \
+            -e SV_REPO=/repo -v "$PWD":/repo -w /repo/modules/simvehicleapp-studio/e2e \
+            mcr.microsoft.com/playwright:v1.63.0-noble \
             bash -c "npm install --no-audit --no-fund --silent && npx playwright test --grep @after-restart"
       - name: Stack logs on failure
         if: failure()
         run: $STACK --env-file "$RUNNER_TEMP/studio.env" logs --tail 200
+      - name: Golden sim-state.json exported from the canvas (M03-T13; must match the committed files)
+        if: always()
+        run: git status --porcelain modules/simvehicleapp-contracts/fixtures/golden && git diff --stat modules/simvehicleapp-contracts/fixtures/golden
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: golden-sim-state
+          path: modules/simvehicleapp-contracts/fixtures/golden/*/sim-state.json
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
