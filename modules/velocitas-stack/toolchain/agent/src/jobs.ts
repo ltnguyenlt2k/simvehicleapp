@@ -41,8 +41,8 @@ export interface Step {
   env?: Record<string, string>;
   /** Runs before the command; returning false skips it. */
   when?: () => boolean | Promise<boolean>;
-  /** After a zero exit: a failure message when the expected result is missing. */
-  check?: () => string | null | Promise<string | null>;
+  /** After a zero exit: a failure message when the result is wrong (gets the step's own output lines). */
+  check?: (lines: readonly string[]) => string | null | Promise<string | null>;
   /** After success. */
   after?: () => void | Promise<void>;
 }
@@ -187,10 +187,11 @@ export class JobManager {
       if (e.cancelRequested) break;
       if (step.when && !(await step.when())) continue;
       this.system(e, `$ ${step.label}`, "info");
+      const from = e.lines.length;
       const code = await this.spawn(e, step);
       if (e.cancelRequested) break;
       let problem = code === 0 ? null : `${step.label} exited with ${code}`;
-      if (!problem && step.check) problem = await step.check();
+      if (!problem && step.check) problem = await step.check(e.lines.slice(from).filter((l) => l.stream !== "system").map((l) => l.msg));
       if (problem) {
         this.system(e, problem, "error");
         this.finish(e, "failed", code, [diag(plan.failCode, plan.failStage, problem, { kind: job.kind, step: step.label })]);

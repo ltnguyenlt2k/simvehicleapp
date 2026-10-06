@@ -155,12 +155,17 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     writeFileSync(join(dir, "app/vss/vss_rel_4.0.json"), '{"Vehicle":{"Speed":{}}}');
     expect(await model.when!()).toBe(true); // VSS changed ⇒ regenerate
     expect(plan.steps[1]).toMatchObject({ label: "./build.sh" });
-    expect(plan.steps[1]!.check!()).toBe("build/bin/app was not produced (see the build log)");
-    expect(createPlanner(cfg)("build", "comfort-app", { release: true }).steps[1]!.label).toBe("./build.sh -r");
+    expect(plan.steps[1]!.check!([])).toBe("build/bin/app was not produced (see the build log)");
     expect(() => validateJob(cfg, "run", "comfort-app", {})).toThrow("build the project first");
-    expect(() => validateJob(cfg, "build", "missing", {})).toThrow("does not exist");
     mkdirSync(join(dir, "build/bin"), { recursive: true });
-    writeFileSync(join(dir, "build/bin/app"), "");
+    writeFileSync(join(dir, "build/bin/app"), "stale");
+    // a failed build leaves the previous binary: the output decides
+    expect(plan.steps[1]!.check!(["[1/2] Building CXX", "FAILED: app/src/CMakeFiles/app.dir/x.cpp.o", "ninja: build stopped: subcommand failed."])).toBe("the build failed: FAILED: app/src/CMakeFiles/app.dir/x.cpp.o");
+    expect(plan.steps[1]!.check!(["-- Configuring incomplete, errors occurred!"])).toContain("Configuring incomplete");
+    expect(plan.steps[1]!.check!(["[2/2] Linking CXX executable bin/app"])).toBeNull();
+    expect(createPlanner(cfg)("build", "comfort-app", { release: true }).steps[1]!.label).toBe("./build.sh -r");
+    expect(() => validateJob(cfg, "run", "missing", {})).toThrow("does not exist");
+    expect(() => validateJob(cfg, "build", "missing", {})).toThrow("does not exist");
     expect(() => validateJob(cfg, "run", "comfort-app", { env: { PATH: "/x" } })).toThrow("not allowed");
     expect(createPlanner(cfg)("run", "comfort-app", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]!.env).toEqual({ SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" });
   });

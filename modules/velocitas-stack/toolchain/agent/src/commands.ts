@@ -28,7 +28,7 @@ export class PlanError extends Error {}
 const bash = (script: string) => ["bash", "-c", script];
 
 export function projectDir(cfg: AgentConfig, slug: string): string {
-  if (!/^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$/.test(slug)) throw new PlanError(`invalid project slug ${slug}`);
+  if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(slug)) throw new PlanError(`invalid project slug ${slug}`); // contracts common `slug`
   const dir = resolve(cfg.projectsDir, slug);
   if (dirname(dir) !== resolve(cfg.projectsDir)) throw new PlanError("project outside the projects directory");
   return dir;
@@ -88,6 +88,12 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
     const dir = projectDir(cfg, project);
     if (!existsSync(join(dir, ".velocitas.json"))) throw new PlanError(`project ${project} does not exist or is not a Velocitas project`);
     const artifact = (rel: string) => () => (existsSync(join(dir, rel)) ? null : `${rel} was not produced (see the build log)`);
+    // build.sh exits 0 whatever happens and a failed build leaves the previous binary in place: the
+    // build's own output decides (ninja/CMake failure lines), then the artifact must exist.
+    const built = (rel: string) => (lines: readonly string[]) => {
+      const failure = lines.find((l) => /^FAILED: |^ninja: build stopped|Configuring incomplete, errors occurred|^CMake Error/.test(l));
+      return failure ? `the build failed: ${failure}` : artifact(rel)();
+    };
     switch (kind) {
       case "init":
         // `velocitas init` runs the component hooks (download-vspec, generate-model, SDK, Conan) offline.
@@ -113,7 +119,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
               label: options.release ? "./build.sh -r" : "./build.sh",
               argv: bash(options.release ? "./build.sh -r" : "./build.sh"),
               cwd: dir,
-              check: artifact("build/bin/app"),
+              check: built("build/bin/app"),
             },
           ],
           failCode: "BUILD_FAILED",
