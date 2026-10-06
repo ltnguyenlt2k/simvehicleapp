@@ -226,5 +226,13 @@ export const svLintContract = defineRouteContract({
   response: { mode: 'json', schema: svLintResponseSchema },
 })
 
+/** `POST /api/sv/verify` — full compile without IR (S0–S6 + types/units, M04-T11, analysis/06 §3). */
+export const svVerifyContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/verify',
+  body: svLintBodySchema,
+  response: { mode: 'json', schema: svLintResponseSchema },
+})
+
 export type SvDiagnostic = z.output<typeof svDiagnosticSchema>
 export type SvLintResponse = z.output<typeof svLintResponseSchema>

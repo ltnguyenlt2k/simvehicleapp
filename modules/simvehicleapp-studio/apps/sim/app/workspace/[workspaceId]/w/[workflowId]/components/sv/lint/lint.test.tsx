@@ -88,4 +88,36 @@ describe('Problems list', () => {
     expect(render('checking')).toContain('Checking…')
     expect(render('unavailable')).toContain('Checks unavailable')
   })
+
+  it('labels a Verify result and offers the quick-fix button (M04-T11)', () => {
+    const html = renderToStaticMarkup(
+      <ProblemsList
+        diagnostics={[d('TYPE_NARROWING_REQUIRES_CAST', 'error', 'b1', 'May not fit uint8')]}
+        status='checking'
+        verified
+        blockName={() => 'Set fan'}
+        onSelect={() => {}}
+        fixFor={(x) =>
+          x.code === 'TYPE_NARROWING_REQUIRES_CAST'
+            ? { label: 'Insert Convert to uint8', run: () => {} }
+            : undefined
+        }
+      />
+    )
+    expect(html).toContain('Verified · 1 error, 0 warnings')
+    expect(html).toContain('data-sv-fix="TYPE_NARROWING_REQUIRES_CAST"')
+    expect(html).toContain('Insert Convert to uint8')
+  })
+
+  it('infos are notes, not problems', () => {
+    const html = renderToStaticMarkup(
+      <ProblemsList
+        diagnostics={[d('UNIT_ASSUMED', 'info', 'b1', '120 is read as km/h')]}
+        status='ok'
+        verified
+        blockName={() => undefined}
+      />
+    )
+    expect(html).toContain('Verified · No problems (1 note)')
+  })
 })

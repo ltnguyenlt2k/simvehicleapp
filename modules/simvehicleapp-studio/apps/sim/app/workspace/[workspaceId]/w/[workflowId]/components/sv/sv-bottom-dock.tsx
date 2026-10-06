@@ -1,36 +1,118 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { generateId } from '@sim/utils/id'
 import { Button } from '@/components/emcn'
-import { ProblemsList } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
+import type { SvDiagnostic } from '@/lib/api/contracts/sv'
+import { planConvertFix } from '@/lib/sv/quick-fix'
+import {
+  type ProblemFix,
+  ProblemsList,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
 import {
   SV_DOCK_TABS,
   type SvDockTabId,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
+import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvLintStore } from '@/stores/sv/lint/store'
+import { useSubBlockStore } from '@/stores/workflows/subblock/store'
+import { prepareBlockState } from '@/stores/workflows/utils'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 interface SvBottomDockProps {
   initialTab?: SvDockTabId
 }
 
-/** Problems tab bound to the lint store (M03-T11); clicking a problem selects its block. */
+/** Selects the block and brings the field of the problem into view (Problems click, M04-T11). */
+function focusField(blockId: string, field?: string) {
+  usePanelEditorStore.getState().setCurrentBlockId(blockId)
+  const subBlockId = field?.split(/[.[]/)[0]
+  if (!subBlockId) return
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLElement>(
+        `[data-tab-content="editor"] [data-workflow-search-subblock-id="${CSS.escape(subBlockId)}"]`
+      )
+      if (!el) return
+      el.scrollIntoView({ block: 'center' })
+      el.querySelector<HTMLElement>('textarea, input, [role="combobox"]')?.focus({
+        preventScroll: true,
+      })
+    })
+  )
+}
+
+/** Problems tab bound to the lint store (M03-T11) with Verify results and quick-fixes (M04-T11). */
 function ProblemsTab() {
   const diagnostics = useSvLintStore((s) => s.diagnostics)
   const status = useSvLintStore((s) => s.status)
+  const verified = useSvLintStore((s) => s.verifiedFresh)
   const blocks = useWorkflowStore((s) => s.blocks)
+  const {
+    collaborativeBatchAddBlocks,
+    collaborativeBatchRemoveEdges,
+    collaborativeSetSubblockValue,
+  } = useCollaborativeWorkflow()
   const blockName = useCallback((blockId: string) => blocks[blockId]?.name, [blocks])
-  const select = useCallback(
-    (blockId: string) => usePanelEditorStore.getState().setCurrentBlockId(blockId),
-    []
+
+  const fixFor = useCallback(
+    (d: SvDiagnostic): ProblemFix | undefined => {
+      const to = (d.data as { to?: unknown } | undefined)?.to
+      if (
+        d.code !== 'TYPE_NARROWING_REQUIRES_CAST' ||
+        !d.blockId ||
+        !d.field ||
+        typeof to !== 'string'
+      ) {
+        return undefined
+      }
+      const { blockId, field } = d
+      return {
+        label: `Insert Convert to ${to}`,
+        run: () => {
+          const expression = useSubBlockStore.getState().getValue(blockId, field)
+          const plan = planConvertFix({
+            blocks: useWorkflowStore.getState().blocks,
+            edges: useWorkflowStore.getState().edges,
+            blockId,
+            field,
+            to,
+            expression: expression === null || expression === undefined ? '' : String(expression),
+            newBlockId: generateId(),
+            newEdgeId: generateId,
+          })
+          if (!plan) return
+          const block = prepareBlockState({
+            ...plan.block,
+            ...(plan.block.parentId
+              ? { parentId: plan.block.parentId, extent: 'parent' as const }
+              : {}),
+          })
+          collaborativeBatchRemoveEdges(plan.removeEdgeIds)
+          collaborativeBatchAddBlocks(
+            [block],
+            plan.addEdges,
+            {},
+            {},
+            { [plan.block.id]: plan.values }
+          )
+          collaborativeSetSubblockValue(plan.field.blockId, plan.field.subBlockId, plan.field.value)
+          usePanelEditorStore.getState().setCurrentBlockId(plan.block.id)
+        },
+      }
+    },
+    [collaborativeBatchAddBlocks, collaborativeBatchRemoveEdges, collaborativeSetSubblockValue]
   )
+
   return (
     <ProblemsList
       diagnostics={diagnostics}
       status={status}
+      verified={verified}
       blockName={blockName}
-      onSelect={select}
+      onSelect={focusField}
+      fixFor={fixFor}
     />
   )
 }
@@ -39,6 +121,15 @@ function ProblemsTab() {
 export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   const [activeTab, setActiveTab] = useState<SvDockTabId>(initialTab)
   const active = SV_DOCK_TABS.find((tab) => tab.id === activeTab) ?? SV_DOCK_TABS[0]
+  const focusProblems = useSvLintStore((s) => s.focusProblems)
+  const seenFocus = useRef(focusProblems)
+
+  // Verify brings the Problems tab to the front.
+  useEffect(() => {
+    if (focusProblems === seenFocus.current) return
+    seenFocus.current = focusProblems
+    setActiveTab('problems')
+  }, [focusProblems])
 
   return (
     <div

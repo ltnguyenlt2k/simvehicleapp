@@ -1,6 +1,6 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { requestJson } from '@/lib/api/client/request'
-import { type SvLintResponse, svLintContract } from '@/lib/api/contracts/sv'
+import { type SvLintResponse, svLintContract, svVerifyContract } from '@/lib/api/contracts/sv'
 
 export const svLintKeys = {
   all: ['sv-lint'] as const,
@@ -26,5 +26,15 @@ export function useSvLint(workflowId: string | undefined, graphJson: string | un
     staleTime: 5 * 60 * 1000,
     placeholderData: keepPreviousData,
     retry: false,
+  })
+}
+
+/** Verify (M04-T11): every compiler check on the graph currently on the canvas. */
+export function useSvVerify() {
+  return useMutation({
+    mutationFn: async (graphJson: string): Promise<SvLintResponse> =>
+      requestJson(svVerifyContract, {
+        body: { graph: JSON.parse(graphJson) as Record<string, unknown> },
+      }),
   })
 }

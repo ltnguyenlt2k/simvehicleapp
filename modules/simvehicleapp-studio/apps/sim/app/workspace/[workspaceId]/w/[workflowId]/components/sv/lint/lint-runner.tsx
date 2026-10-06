@@ -35,6 +35,7 @@ export function issueToDiagnostic(issue: AdapterIssue, workflowId: string): SvDi
 /**
  * Realtime lint driver (M03-T11): adapts the canvas to a WorkflowGraph, lints it through the BFF
  * 300 ms after the last change, and publishes the result to the lint store (Problems tab, badges).
+ * It also publishes the current graph at once, for Verify (M04-T11).
  * Renders nothing. A lint outage keeps the previous result and marks the status unavailable.
  */
 export function SvLintRunner() {
@@ -59,6 +60,7 @@ export function SvLintRunner() {
   )
   const setResult = useSvLintStore((s) => s.setResult)
   const setStatus = useSvLintStore((s) => s.setStatus)
+  const setGraph = useSvLintStore((s) => s.setGraph)
 
   const adapted = useMemo(() => {
     if (!workflowId || !release) return undefined
@@ -75,6 +77,16 @@ export function SvLintRunner() {
 
   const graphJson = useMemo(() => (adapted ? JSON.stringify(adapted.graph) : undefined), [adapted])
   const debounced = useDebounce(graphJson, SV_LINT_DEBOUNCE_MS)
+
+  // Not debounced: Verify sends this graph, and any edit must invalidate a previous verify at once.
+  useEffect(() => {
+    if (!workflowId || !adapted || !graphJson) return
+    setGraph(
+      workflowId,
+      graphJson,
+      adapted.issues.map((i) => issueToDiagnostic(i, workflowId))
+    )
+  }, [workflowId, adapted, graphJson, setGraph])
   const { data, isError, isFetching } = useSvLint(workflowId, debounced)
 
   useEffect(() => {

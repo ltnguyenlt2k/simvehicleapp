@@ -2,7 +2,18 @@
  * @vitest-environment node
  */
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+const { mockMutate } = vi.hoisted(() => ({ mockMutate: vi.fn() }))
+vi.mock('@/hooks/queries/sv-lint', () => ({ useSvVerify: () => ({ mutate: mockMutate }) }))
+vi.mock('@/hooks/use-collaborative-workflow', () => ({
+  useCollaborativeWorkflow: () => ({
+    collaborativeBatchAddBlocks: vi.fn(),
+    collaborativeBatchRemoveEdges: vi.fn(),
+    collaborativeSetSubblockValue: vi.fn(),
+  }),
+}))
+
 import {
   SV_ACTIONS,
   SV_DOCK_TABS,
@@ -13,7 +24,7 @@ import {
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 
 describe('vehicle editor chrome (M01-T10)', () => {
-  it('renders the seven actions, all disabled with their target milestone', () => {
+  it('renders the seven actions; Verify (M4) waits for a graph, the others for their milestone', () => {
     const html = renderToStaticMarkup(<SvActionBar />)
     expect(SV_ACTIONS.map((a) => a.label)).toEqual([
       'Verify',
@@ -26,7 +37,11 @@ describe('vehicle editor chrome (M01-T10)', () => {
     ])
     for (const action of SV_ACTIONS) {
       expect(html).toContain(`data-sv-action="${action.id}"`)
-      expect(html).toContain(`title="${action.label} — available in ${action.milestone}"`)
+      expect(html).toContain(
+        action.id === 'verify'
+          ? 'title="Verify the workflow"'
+          : `title="${action.label} — available in ${action.milestone}"`
+      )
     }
     expect(html.match(/disabled=""/g)).toHaveLength(SV_ACTIONS.length)
   })
