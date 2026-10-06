@@ -34,7 +34,7 @@
 | [M4](#m4--compiler--ir) | Compiler & IR | 0014, 0015, 0016, 0018 | ✔ | 12/12 — gate PASS 2026-10-07 ([report](reports/M04.md); ADR-0014/0015 + review golden IR theo uỷ quyền PO, chờ xác nhận) |
 | [M5](#m5--simulator) | Simulator | 0017 | ✔ | 10/11 + T08 ↷ — gate PASS ([report](reports/M05.md)) |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ✔ | 20/20 — gate PASS ([report](reports/M06.md)) |
-| [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ☐ | 0/19 |
+| [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | 🔄 | 0/19 |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ☐ | 0/10 |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ☐ | 0/8 |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ☐ | 0/10 |
@@ -187,25 +187,25 @@ ADR: [0023](../analysis/adr/ADR-0023-velocitas-project-layout-and-manifest.md), 
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Vendor template C++ @275e858 + `UPSTREAM.md` | 0003,0025 | ☐ | Có thể bắt đầu ngay sau M0 | T01 |
-| `toolchain/cpp/Dockerfile` (theo S-1) | 0025 | ☐ | Offline build test | T02 |
-| toolchain-agent jobs (init/deps/build/test/run/…) + SSE | 0025 | ☐ | Contract test | T03 |
-| `GET /templates?lang=cpp` | 0025 | ☐ | | T04 |
-| Auto `generate-model` khi đổi VSS release | 0025 | ☐ | | T05 |
-| Path policy an toàn (ownedRoots, no symlink escape) | 0026 | ☐ | Security test | T06 |
-| Init project (template+overlay+runtime→staging→rename) | 0026 | ☐ | | T07 |
-| Commit atomic + Generation Manifest + recovery | 0026 | ☐ | Fault injection | T08 |
-| AppManifest merge v3 | 0023 | ☐ | Idempotency test | T09 |
-| `GENERATED_FILE_MODIFIED` detection | 0026 | ☐ | | T10 |
-| Rollback 10 generation gần nhất | 0026 | ☐ | | T11 |
-| Schema `sv` (Drizzle) + migration | 0007 | ☐ | | T12 |
-| Project API | 0007 | ☐ | | T13 |
-| GenerationPipeline + job queue + SSE `/events` | 0026 | ☐ | | T14 |
-| Error mapping (GCC/Clang→sourcemap→diagnostic block) | 0022,0026 | ☐ | | T15 |
-| Response format chuẩn | 0007 | ☐ | | T16 |
-| Studio: Project page | 0007 | ☐ | | T17 |
-| Nút SynCode + progress SSE + Build log + diagnostics map | 0026 | ☐ | Playwright pass/fail | T18 |
-| Generated files viewer (diff với generation trước) | 0026 | ☐ | | T19 |
+| Vendor template C++ @275e858 + `UPSTREAM.md` | 0003,0025 | 🔄 | Có thể bắt đầu ngay sau M0 (Claude Code 2026-10-07) | T01 |
+| `toolchain/cpp/Dockerfile` (theo S-1) | 0025 | 🔄 | Offline build test | T02 |
+| toolchain-agent jobs (init/deps/build/test/run/…) + SSE | 0025 | 🔄 | Contract test | T03 |
+| `GET /templates?lang=cpp` | 0025 | 🔄 | | T04 |
+| Auto `generate-model` khi đổi VSS release | 0025 | 🔄 | | T05 |
+| Path policy an toàn (ownedRoots, no symlink escape) | 0026 | 🔄 | Security test | T06 |
+| Init project (template+overlay+runtime→staging→rename) | 0026 | 🔄 | | T07 |
+| Commit atomic + Generation Manifest + recovery | 0026 | 🔄 | Fault injection | T08 |
+| AppManifest merge v3 | 0023 | 🔄 | Idempotency test | T09 |
+| `GENERATED_FILE_MODIFIED` detection | 0026 | 🔄 | | T10 |
+| Rollback 10 generation gần nhất | 0026 | 🔄 | | T11 |
+| Schema `sv` (Drizzle) + migration | 0007 | 🔄 | | T12 |
+| Project API | 0007 | 🔄 | | T13 |
+| GenerationPipeline + job queue + SSE `/events` | 0026 | 🔄 | | T14 |
+| Error mapping (GCC/Clang→sourcemap→diagnostic block) | 0022,0026 | 🔄 | | T15 |
+| Response format chuẩn | 0007 | 🔄 | | T16 |
+| Studio: Project page | 0007 | 🔄 | | T17 |
+| Nút SynCode + progress SSE + Build log + diagnostics map | 0026 | 🔄 | Playwright pass/fail | T18 |
+| Generated files viewer (diff với generation trước) | 0026 | 🔄 | | T19 |
 
 ## M8 — Live Run & Observability
 ADR: [0024](../analysis/adr/ADR-0024-databroker-api-and-runtime-stack.md), [0027](../analysis/adr/ADR-0027-live-run-logs-and-trace.md) · Phụ thuộc: M7, M5 · Chi tiết: [phases/M08](../analysis/phases/M08-live-run-observability.md)
