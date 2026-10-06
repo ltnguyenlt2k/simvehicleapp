@@ -49,7 +49,10 @@ export function generate(body: unknown): GenerateResult {
     }
   }
   const v = validator.validate("generated-fileset#/$defs/generateRequest", body);
-  if (!v.valid) return { ok: false, status: 400, diagnostics: [], error: `request does not match GenerateRequest: ${v.errors.slice(0, 3).join("; ")}` };
+  if (!v.valid) {
+    const errs = v.errors.slice(0, 3).map((e) => `${e.instancePath || "/"} ${e.message ?? ""}`.trim());
+    return { ok: false, status: 400, diagnostics: [], error: `request does not match GenerateRequest: ${errs.join("; ")}` };
+  }
   const req = body as GenerateRequest;
   if (req.project.language !== "cpp") {
     return { ok: false, status: 422, diagnostics: [diag("BACKEND_UNAVAILABLE", "backend", `This backend generates C++, not ${req.project.language}`)] };

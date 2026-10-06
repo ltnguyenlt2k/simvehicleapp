@@ -18,7 +18,7 @@ void PeriodicTelemetry::bind(rt::Runtime& runtime) {
         "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current",
         "float");
     const auto speed = w.signal("s1", "Vehicle.Speed", "float");
-    const auto topic_telemetry = w.topic("t0", "simvehicleapp/telemetry");
+    const auto topic_telemetry = w.topic("t0", rt::str("simvehicleapp/telemetry"));
 
     // n1 · event.timer · block b1
     w.onTimer(
@@ -34,7 +34,7 @@ void PeriodicTelemetry::bind(rt::Runtime& runtime) {
         {"n2", "b2"},
         topic_telemetry,
         rt::expr([current, speed](rt::Ctx& c) {
-            return (std::string("{\"speed\": ") + rt::format(c.signal<float>(speed)) + ", \"soc\": " + rt::format(c.signal<float>(current)) + "}");
+            return (rt::str("{\"speed\": ") + rt::format(c.signal<float>(speed)) + ", \"soc\": " + rt::format(c.signal<float>(current)) + "}");
         }),
         {{"error", ""}, {"next", ""}});
 }

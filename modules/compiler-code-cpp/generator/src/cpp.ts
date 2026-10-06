@@ -17,8 +17,8 @@ const KEYWORDS = new Set(
 );
 
 /**
- * A C++ string literal of `s`: `"…"` with `\\ \" \n \r \t` escaped, other control characters and
- * everything outside printable ASCII as `\u`/`\U` universal names (UTF-8 in the compiled string).
+ * A C++ string literal of `s` whose bytes are the UTF-8 of `s`: `\\ \" \n \r \t` escaped, C0/C1
+ * controls as `\x` UTF-8 bytes, other non-ASCII as `\u`/`\U` universal names (UTF-8 in the binary).
  * A `?` is escaped too so no trigraph or `??` sequence can appear.
  */
 export function cppString(s: string): string {
@@ -32,7 +32,8 @@ export function cppString(s: string): string {
     else if (ch === "\t") out += "\\t";
     else if (ch === "?") out += "\\?";
     else if (cp >= 0x20 && cp < 0x7f) out += ch;
-    else if (cp < 0xa0) out += `\\x${cp.toString(16).padStart(2, "0")}""`; // split so the next char is not a hex digit
+    else if (cp < 0x80) out += `\\x${cp.toString(16).padStart(2, "0")}""`; // split so the next char is not a hex digit
+    else if (cp < 0xa0) out += `\\x${(0xc0 | (cp >> 6)).toString(16)}\\x${(0x80 | (cp & 0x3f)).toString(16)}""`; // C1 controls as UTF-8 bytes
     else if (cp >= 0xd800 && cp <= 0xdfff) out += "\\uFFFD"; // lone surrogate
     else if (cp <= 0xffff) out += `\\u${cp.toString(16).toUpperCase().padStart(4, "0")}`;
     else out += `\\U${cp.toString(16).toUpperCase().padStart(8, "0")}`;

@@ -150,8 +150,10 @@ describe("rejections are diagnostics, never partial file sets", () => {
 
 describe("C++ text safety (ADR-0022 §7)", () => {
   /** Decodes a literal produced by cppString back to text (the escapes it uses only). */
+  /** Decodes a literal produced by cppString to the UTF-8 bytes the compiler would emit, then to text. */
   function decode(lit: string): string {
-    let out = "";
+    const bytes: number[] = [];
+    const utf8 = (cp: number) => bytes.push(...new TextEncoder().encode(String.fromCodePoint(cp)));
     let inside = false;
     for (let i = 0; i < lit.length; i++) {
       const ch = lit[i]!;
@@ -161,24 +163,24 @@ describe("C++ text safety (ADR-0022 §7)", () => {
       }
       if (!inside) throw new Error(`text outside a literal: ${lit}`);
       if (ch !== "\\") {
-        out += ch;
+        bytes.push(ch.charCodeAt(0));
         continue;
       }
       const n = lit[++i]!;
       const hex = (len: number) => {
         const v = Number.parseInt(lit.slice(i + 1, i + 1 + len), 16);
         i += len;
-        return String.fromCodePoint(v);
+        return v;
       };
-      if (n === "n") out += "\n";
-      else if (n === "r") out += "\r";
-      else if (n === "t") out += "\t";
-      else if (n === "x") out += hex(2);
-      else if (n === "u") out += hex(4);
-      else if (n === "U") out += hex(8);
-      else out += n;
+      if (n === "n") bytes.push(10);
+      else if (n === "r") bytes.push(13);
+      else if (n === "t") bytes.push(9);
+      else if (n === "x") bytes.push(hex(2));
+      else if (n === "u") utf8(hex(4));
+      else if (n === "U") utf8(hex(8));
+      else bytes.push(n.charCodeAt(0));
     }
-    return out;
+    return new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
   }
 
   test("cppString: only printable ASCII, every user string round-trips (fuzz)", () => {

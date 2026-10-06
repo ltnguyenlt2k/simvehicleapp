@@ -89,7 +89,7 @@ export class ExprEmitter {
     if (type === "float") return { code: `static_cast<float>(${doubleLiteral(Number(v))})`, kind, type };
     if (type === "double") return { code: doubleLiteral(Number(v)), kind, type };
     if (type === "boolean") return { code: v ? "true" : "false", kind, type };
-    if (type === "string") return { code: `std::string(${cppString(String(v))})`, kind, type };
+    if (type === "string") return { code: `rt::str(${cppString(String(v))})`, kind, type };
     throw new Error(`compiler-code-cpp: no literal of type ${type}`);
   }
 
@@ -113,8 +113,10 @@ export class ExprEmitter {
   }
 
   private template(parts: unknown[]): CppExpr {
-    // Only the first piece must be a std::string for `+` to concatenate; later literals stay plain.
-    const pieces = parts.map((p, i) => (typeof p === "string" ? (i === 0 ? `std::string(${cppString(p)})` : cppString(p)) : this.format(this.emit(p))));
+    // The first piece must be a std::string for `+` to concatenate; a later literal stays plain unless it
+    // holds a NUL (a plain `const char*` would stop there).
+    const lit = (p: string, first: boolean) => (first || p.includes("\u0000") ? `rt::str(${cppString(p)})` : cppString(p));
+    const pieces = parts.map((p, i) => (typeof p === "string" ? lit(p, i === 0) : this.format(this.emit(p))));
     if (pieces.length === 0) return { code: "std::string()", kind: "std::string", type: "string" };
     if (pieces.length === 1) return { code: pieces[0]!, kind: "std::string", type: "string" };
     return { code: `(${pieces.join(" + ")})`, kind: "std::string", type: "string" };

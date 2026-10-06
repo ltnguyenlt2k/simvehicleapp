@@ -15,7 +15,7 @@ void StableOverspeedWarning::bind(rt::Runtime& runtime) {
     auto& w = runtime.workflow("gw_a", "StableOverspeedWarning");
     const auto is_signaling = w.signal("s0", "Vehicle.Body.Lights.Hazard.IsSignaling", "boolean");
     const auto speed = w.signal("s1", "Vehicle.Speed", "float");
-    const auto topic_hmi = w.topic("t0", "simvehicleapp/stable-overspeed-warning/hmi");
+    const auto topic_hmi = w.topic("t0", rt::str("simvehicleapp/stable-overspeed-warning/hmi"));
 
     // n1 · event.signal_changed · block b1
     w.onSignalChanged(
@@ -62,7 +62,7 @@ void StableOverspeedWarning::bind(rt::Runtime& runtime) {
         {"n4", "b4"},
         topic_hmi,
         rt::expr([](rt::Ctx& c) {
-            return (std::string("{\"severity\":\"warning\",\"title\":") + rt::jsonString(std::string("Overspeed")) + ",\"message\":" + rt::jsonString((std::string("Speed ") + rt::format(c.out<float>("n1", "value")) + " km/h")) + ",\"ts\":" + rt::format(c.nowMs()) + "}");
+            return (rt::str("{\"severity\":\"warning\",\"title\":") + rt::jsonString(rt::str("Overspeed")) + ",\"message\":" + rt::jsonString((rt::str("Speed ") + rt::format(c.out<float>("n1", "value")) + " km/h")) + ",\"ts\":" + rt::format(c.nowMs()) + "}");
         }),
         {{"error", ""}, {"next", ""}});
 

@@ -53,7 +53,7 @@ void WelcomeSequence::bind(rt::Runtime& runtime) {
     w.log(
         {"n6", "b6"},
         std::optional<std::string>("info"),
-        rt::expr([](rt::Ctx&) { return std::string("welcome done"); }),
+        rt::expr([](rt::Ctx&) { return rt::str("welcome done"); }),
         {{"error", ""}, {"next", ""}});
 }
 

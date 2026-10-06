@@ -92,14 +92,14 @@ void WindowCloseOnRain::bind(rt::Runtime& runtime) {
     w.log(
         {"n7", "b7"},
         std::optional<std::string>("info"),
-        rt::expr([](rt::Ctx&) { return std::string("windows closed"); }),
+        rt::expr([](rt::Ctx&) { return rt::str("windows closed"); }),
         {{"error", ""}, {"next", ""}});
 
     // n8 · comm.log · block b8
     w.log(
         {"n8", "b8"},
         std::optional<std::string>("warn"),
-        rt::expr([](rt::Ctx&) { return std::string("windows did not close"); }),
+        rt::expr([](rt::Ctx&) { return rt::str("windows did not close"); }),
         {{"error", ""}, {"next", ""}});
 }
 

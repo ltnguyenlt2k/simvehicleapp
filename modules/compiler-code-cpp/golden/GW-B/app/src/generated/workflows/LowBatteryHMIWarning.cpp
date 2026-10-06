@@ -19,7 +19,7 @@ void LowBatteryHMIWarning::bind(rt::Runtime& runtime) {
         "s2",
         "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current",
         "float");
-    const auto topic_hmi = w.topic("t0", "simvehicleapp/low-battery-hmi-warning/hmi");
+    const auto topic_hmi = w.topic("t0", rt::str("simvehicleapp/low-battery-hmi-warning/hmi"));
 
     // n1 · event.signal_changed · block b1
     w.onSignalChanged(
@@ -45,7 +45,7 @@ void LowBatteryHMIWarning::bind(rt::Runtime& runtime) {
         {"n3", "b3"},
         topic_hmi,
         rt::expr([](rt::Ctx& c) {
-            return (std::string("{\"severity\":\"warning\",\"title\":") + rt::jsonString(std::string("Low battery")) + ",\"message\":" + rt::jsonString((std::string("Battery at ") + rt::format(c.out<float>("n1", "value")) + " %")) + ",\"ts\":" + rt::format(c.nowMs()) + "}");
+            return (rt::str("{\"severity\":\"warning\",\"title\":") + rt::jsonString(rt::str("Low battery")) + ",\"message\":" + rt::jsonString((rt::str("Battery at ") + rt::format(c.out<float>("n1", "value")) + " %")) + ",\"ts\":" + rt::format(c.nowMs()) + "}");
         }),
         {{"error", ""}, {"next", "n4"}});
 
@@ -53,7 +53,7 @@ void LowBatteryHMIWarning::bind(rt::Runtime& runtime) {
     w.write(
         {"n4", "b4"},
         color,
-        rt::expr([](rt::Ctx&) { return std::string("RED"); }),
+        rt::expr([](rt::Ctx&) { return rt::str("RED"); }),
         true,
         rt::OnError::Continue,
         {{"error", ""}, {"next", ""}});

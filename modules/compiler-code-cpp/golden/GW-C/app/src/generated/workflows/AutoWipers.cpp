@@ -32,7 +32,7 @@ void AutoWipers::bind(rt::Runtime& runtime) {
         {"n2", "b3"},
         mode,
         rt::expr([](rt::Ctx& c) {
-            return (rt::lt(c.out<int64_t>("n1", "value"), int64_t{10}) ? std::string("OFF") : (rt::lt(c.out<int64_t>("n1", "value"), int64_t{40}) ? std::string("INTERVAL") : (rt::lt(c.out<int64_t>("n1", "value"), int64_t{70}) ? std::string("MEDIUM") : std::string("FAST"))));
+            return (rt::lt(c.out<int64_t>("n1", "value"), int64_t{10}) ? rt::str("OFF") : (rt::lt(c.out<int64_t>("n1", "value"), int64_t{40}) ? rt::str("INTERVAL") : (rt::lt(c.out<int64_t>("n1", "value"), int64_t{70}) ? rt::str("MEDIUM") : rt::str("FAST"))));
         }),
         true,
         rt::OnError::Continue,

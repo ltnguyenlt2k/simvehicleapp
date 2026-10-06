@@ -47,7 +47,7 @@
     },
     {
       "path": "app/src/generated/workflows/LowBatteryHMIWarning.cpp",
-      "sha256": "9df0f206d85e793bd12ef6f86036573dbe157c425bb0505aa13e207fc0a5fabb",
+      "sha256": "ac14243b4a8b6029b7c6e88a5572e9f394b1f94ce4e4cb41fe1335c705d93b1f",
       "role": "source"
     },
     {

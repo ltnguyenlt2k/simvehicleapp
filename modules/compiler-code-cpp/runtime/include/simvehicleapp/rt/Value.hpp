@@ -59,6 +59,9 @@ double toNumber(const Value& v);
 /** `type.cast` of a dynamic value to `to`; `from` is the static type of the value. */
 Value castValue(const Value& v, const std::string& to, const std::string& from);
 
+/** A string literal as `std::string` with its full length — embedded NULs included (user text from the IR). */
+template <std::size_t N> std::string str(const char (&s)[N]) { return std::string(s, N - 1); }
+
 /** Template formatting of native values. */
 inline std::string format(bool v) { return v ? "true" : "false"; }
 inline std::string format(float v) { return formatFloat(v); }

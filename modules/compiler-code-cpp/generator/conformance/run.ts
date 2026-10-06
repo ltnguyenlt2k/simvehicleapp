@@ -33,6 +33,37 @@ interface Case {
   golden: boolean;
   scenario: Record<string, unknown> & { expect?: { writes?: unknown[]; trace?: Record<string, unknown>[] } };
   cls: string;
+  /** Synthetic fuzz case: the texts that must come back. */
+  fuzz?: { logs: string[]; publishes: string[] };
+}
+
+/** Driver of one case: runs the scenario on the mock vehicle and prints the result as JSON. */
+function mainCpp(cls: string): string {
+  return `#include "workflows/${cls}.hpp"
+#include "simvehicleapp/rt/Testing.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+int main(int argc, char** argv) {
+    if (argc < 3) {
+        return 2;
+    }
+    std::ifstream in(argv[1]);
+    std::stringstream text;
+    text << in.rdbuf();
+    const auto scenario = simvehicleapp::rt::Value::parse(text.str());
+    const auto r = simvehicleapp::rt::testing::runScenario(&simvehicleapp::generated::${cls}::bind, scenario, argv[2]);
+    simvehicleapp::rt::Value out = simvehicleapp::rt::Value::object();
+    out["trace"] = r.trace;
+    out["writes"] = r.writes;
+    out["publishes"] = r.publishes;
+    out["logs"] = r.logs;
+    std::cout << simvehicleapp::rt::stringify(out) << std::endl;
+    return 0;
+}
+`;
 }
 
 const cases: Case[] = [];
@@ -60,36 +91,52 @@ for (const kind of ["golden", "conformance"] as const) {
       } else if (t) writeFileSync(join(dir, t[1]!), f.content);
     }
     writeFileSync(join(dir, "scenario.json"), JSON.stringify(scenario));
-    writeFileSync(
-      join(dir, "main.cpp"),
-      `#include "workflows/${cls}.hpp"
-#include "simvehicleapp/rt/Testing.hpp"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
-int main(int argc, char** argv) {
-    if (argc < 3) {
-        return 2;
-    }
-    std::ifstream in(argv[1]);
-    std::stringstream text;
-    text << in.rdbuf();
-    const auto scenario = simvehicleapp::rt::Value::parse(text.str());
-    const auto r = simvehicleapp::rt::testing::runScenario(&simvehicleapp::generated::${cls}::bind, scenario, argv[2]);
-    simvehicleapp::rt::Value out = simvehicleapp::rt::Value::object();
-    out["trace"] = r.trace;
-    out["writes"] = r.writes;
-    out["publishes"] = r.publishes;
-    out["logs"] = r.logs;
-    std::cout << simvehicleapp::rt::stringify(out) << std::endl;
-    return 0;
-}
-`,
-    );
+    writeFileSync(join(dir, "main.cpp"), mainCpp(cls));
     cases.push({ id, dir, golden: kind === "golden", scenario, cls });
   }
+}
+
+// Synthetic case (ADR-0022 Verification "fuzz names/strings never break compile"): user text in every
+// place the contract lets it reach C++ — templates, string constants, topics (workflow and variable
+// names are identifiers by contract) — must compile and come back byte for byte.
+const FUZZ = [
+  'say "hi"\n\t\\', "*/ /* // \\", "??=??/??'", "\u0000\u0001\u001f\u007f\u0085", "Ünïcode ✓ ữ 車 🚗",
+  "R\"sv(raw)sv\"", "%s %d {} {0}", "\u2028\u2029 line seps", "#include <x>", "\\", "\"", "",
+];
+if (!only || only === "FUZZ-strings") {
+  const id = "FUZZ-strings";
+  const src = (b: string) => ({ blockId: b });
+  const nodes = FUZZ.map((text, i) => ({
+    id: `n${i + 2}`,
+    opcode: i % 2 ? "comm.mqtt_publish" : "comm.log",
+    args: i % 2 ? { topic: "t0", payload: { $template: [{ $const: text, type: "string" }] }, payloadType: "text", qos: 0, retain: false } : { level: "info", message: { $template: [text, { $state: "v0" }] } },
+    next: { next: i + 1 < FUZZ.length ? `n${i + 3}` : null },
+    src: src(`b${i + 2}`),
+  }));
+  const ir = {
+    irVersion: "1.0.0", compilerVersion: "0.1.0", workflowId: "fuzz_strings", workflowRevision: 1, name: "FuzzStrings",
+    modelHash: `sha256:${"0".repeat(64)}`, sourceGraphHash: `sha256:${"0".repeat(64)}`, irHash: `sha256:${"1".repeat(64)}`,
+    signals: [], topics: [{ id: "t0", topic: "fuzz/*/??/\"x\"", direction: "write" }],
+    state: [{ id: "v0", name: "fuzz_state", type: "string", initial: FUZZ[1]! }],
+    triggers: [{ id: "n1", opcode: "event.app_start", props: {}, outputs: {}, entry: "n2", src: src("b1") }],
+    nodes, diagnostics: [],
+  };
+  const r = generate({ project: { slug: "fuzz", appName: "FuzzApp", language: "cpp", mqttTopicPrefix: "fuzz", traceLevel: "node" }, workflows: [ir] });
+  if (!r.ok) throw new Error(`${id}: ${JSON.stringify(r)}`);
+  const dir = join(buildDir, "cases", id);
+  let cls = "";
+  for (const f of r.fileSet.files) {
+    const m = /^app\/src\/generated\/(workflows\/(\w+)\.(?:hpp|cpp))$/.exec(f.path);
+    if (!m) continue;
+    if (m[1]!.endsWith(".cpp")) cls = m[2]!;
+    mkdirSync(join(dir, "workflows"), { recursive: true });
+    writeFileSync(join(dir, m[1]!), f.content);
+  }
+  const expectLogs = FUZZ.flatMap((t, i) => (i % 2 ? [] : [t]));
+  const expectPublishes = FUZZ.flatMap((t, i) => (i % 2 ? [t] : []));
+  writeFileSync(join(dir, "scenario.json"), JSON.stringify({ scenarioVersion: "1.0.0", name: id, until: 10, inputs: [] }));
+  writeFileSync(join(dir, "main.cpp"), mainCpp(cls));
+  cases.push({ id, dir, golden: false, cls, scenario: { scenarioVersion: "1.0.0", name: id, until: 10, inputs: [] }, fuzz: { logs: expectLogs, publishes: expectPublishes } } as Case);
 }
 
 const target = (c: Case) => `case_${c.id.replace(/[^A-Za-z0-9]/g, "_")}`;
@@ -165,6 +212,13 @@ for (const c of cases) {
       }
       i++;
     }
+  }
+  if (c.fuzz) {
+    const logs = out.logs.map((l: { message: string }) => l.message);
+    const pubs = out.publishes.map((p: { payload: string }) => p.payload);
+    const want = c.fuzz.logs.map((t) => `${t}*/ /* // \\`);
+    if (!same(logs, want)) problems.push(`log texts changed: ${stringify(logs)} ≠ ${stringify(want)}`);
+    if (!same(pubs, c.fuzz.publishes)) problems.push(`publish payloads changed: ${stringify(pubs)} ≠ ${stringify(c.fuzz.publishes)}`);
   }
   if (c.golden) {
     const wantTrace = JSON.parse(readFileSync(join(fixturesDir, "golden", c.id, "expected.trace.json"), "utf8"));

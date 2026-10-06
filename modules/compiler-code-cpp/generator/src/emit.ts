@@ -200,7 +200,7 @@ export function emitWorkflow(ir: WorkflowIr, className: string, headerPath: stri
     for (const s of ir.signals) {
       w.call(`const auto ${names.get(s.id)} = w.signal`, [cppString(s.id), cppString(s.path), cppString(s.dataType)]);
     }
-    for (const t of ir.topics) w.call(`const auto ${names.get(t.id)} = w.topic`, [cppString(t.id), cppString(t.topic)]);
+    for (const t of ir.topics) w.call(`const auto ${names.get(t.id)} = w.topic`, [cppString(t.id), `rt::str(${cppString(t.topic)})`]);
     for (const v of ir.state) {
       w.call(`const auto ${names.get(v.id)} = w.state`, [cppString(v.id), cppString(v.type), `rt::Value::parse(${cppString(JSON.stringify(v.initial ?? null))})`]);
     }

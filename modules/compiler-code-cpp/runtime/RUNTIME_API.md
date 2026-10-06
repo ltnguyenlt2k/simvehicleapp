@@ -133,6 +133,8 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   Numeric value (`Number(v)`): booleans 0/1, null 0.
 - `Value castValue(const Value& v, const std::string& to, const std::string& from)`
   `type.cast` of a dynamic value to `to`; `from` is the static type of the value.
+- `template <std::size_t N> std::string str(const char (&s)[N])`
+  A string literal as `std::string` with its full length — embedded NULs included (user text from the IR).
 - `inline std::string format(bool v)`
   Template formatting of native values.
 - `inline Value toValue(bool v)`
