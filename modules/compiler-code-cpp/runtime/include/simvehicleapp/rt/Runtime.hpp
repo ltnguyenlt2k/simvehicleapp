@@ -154,39 +154,64 @@ public:
     const std::string& id() const { return m_id; }
     const std::string& name() const { return m_name; }
 
+    /** A VSS signal of the workflow (IR `signals[]`): id, path, VSS datatype. */
     SignalRef signal(const std::string& id, const std::string& path, const std::string& type);
+    /** An MQTT topic of the workflow (IR `topics[]`). */
     TopicRef topic(const std::string& id, const std::string& topic);
+    /** A workflow variable (IR `state[]`) shared by all runs of the app, with its initial value (JSON). */
     StateRef state(const std::string& id, const std::string& type, const Value& initial);
 
+    /** `event.app_start`: one run when the app starts. */
     void onAppStart(Node n, Concurrency c, Outputs outputs, const std::string& entry);
+    /** `event.signal_changed`: a run per change of `s` matching `mode` (vs `threshold`), after `debounceMs`. */
     void onSignalChanged(Node n, const SignalRef& s, Change mode, std::optional<Value> threshold,
                          int64_t debounceMs, Concurrency c, Outputs outputs, const std::string& entry);
+    /** `event.timer`: ticks every `intervalMs` from `initialDelayMs` (ticks skipped by the policy still count). */
     void onTimer(Node n, int64_t intervalMs, int64_t initialDelayMs, Concurrency c, Outputs outputs,
                  const std::string& entry);
+    /** `event.condition`: a run when `condition` becomes true (rising edge), held `debounceMs`. */
     void onCondition(Node n, Cond condition, int64_t debounceMs, Concurrency c, Outputs outputs,
                      const std::string& entry);
+    /** `event.mqtt_message`: a run per message on `t` (`+`/`#` filters); JSON payloads are parsed. */
     void onMqtt(Node n, const TopicRef& t, bool jsonPayload, Concurrency c, Outputs outputs,
                 const std::string& entry);
 
+    /** `vehicle.read`/`read_attribute`: latest value (`fresh` asks the vehicle) ⇒ outputs `value`, `timestamp`. */
     void read(Node n, const SignalRef& s, bool fresh, Next next);
+    /** `vehicle.write`: sets the actuator target; `awaitAck` waits for the databroker; errors take `error`/`onError`. */
     void write(Node n, const SignalRef& s, Expr value, bool awaitAck, OnError onError, Next next);
+    /** `control.branch`: `then` or `else`. */
     void branch(Node n, Cond condition, Next next);
+    /** `control.switch`: the first `case_i` equal to `value`, else `default`. */
     void switchOn(Node n, Expr value, std::vector<Expr> cases, Next next);
+    /** `control.wait`: continues after `durationMs` (cancelled with the run). */
     void wait(Node n, int64_t durationMs, Next next);
+    /** `control.wait_until`: `ok` as soon as `condition` holds, `timeout` after `timeoutMs`. */
     void waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next);
+    /** `control.stable_for`: `stable` if `condition` holds for `durationMs`, `broken` when it stops holding. */
     void stableFor(Node n, Cond condition, int64_t durationMs, Next next);
+    /** `control.repeat`: runs `body` `count` times (output `index`), `intervalMs` apart. */
     void repeat(Node n, int64_t count, int64_t intervalMs, const std::string& body, Next next);
+    /** `control.while`: runs `body` while `condition` holds; beyond `maxIterations` the run stops (`loop_guard`). */
     void whileLoop(Node n, Cond condition, int64_t maxIterations, int64_t intervalMs, const std::string& body,
                    Next next);
+    /** `control.parallel`: starts the branches; continues when all/any finished (`any` cancels the others) or at once (`none`). */
     void parallel(Node n, std::vector<std::string> branches, Join join, Next next);
+    /** `control.stop`: ends this run, every run of the workflow, or the app. */
     void stop(Node n, StopScope scope, Next next);
+    /** `state.get`: output `value`. */
     void stateGet(Node n, const StateRef& v, Next next);
+    /** `state.set`: assigns the variable (condition triggers and waits re-evaluate). */
     void stateSet(Node n, const StateRef& v, Expr value, Next next);
+    /** `state.counter`: increments/decrements by `step` (clamped to the type) or resets; output `value`. */
     void counter(Node n, const StateRef& v, CounterOp op, int64_t step, Next next);
     /** `logic.eval`: a pure block evaluated at this point of the run; `output` is its output name. */
     void eval(Node n, const std::string& output, Expr value, Next next);
+    /** `logic.in_range`: `low ≤ value ≤ high`, or a hysteresis switch; outputs `result`, `state`. */
     void inRange(Node n, Expr value, Expr low, Expr high, bool hysteresis, Next next);
+    /** `comm.log`: a log line and a trace `value` event. */
     void log(Node n, std::optional<std::string> level, Expr message, Next next);
+    /** `comm.mqtt_publish`: publishes `payload` on `t`. */
     void publish(Node n, const TopicRef& t, Expr payload, Next next);
 
     /** Internal: IR declarations executed by the runtime. */

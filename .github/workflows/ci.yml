@@ -250,6 +250,8 @@ jobs:
       - run: bun run check
       - name: Generator — golden C++ GW-A…G (diff = 0), determinism, contract shapes, string/identifier fuzz
         run: bun test
+      - name: runtime/RUNTIME_API.md matches the headers (M06-T10)
+        run: bun conformance/gen-runtime-api.ts --check
       - name: Runtime unit tests (gtest)
         run: |
           cmake -S ../runtime -B ../build/rt -DCMAKE_BUILD_TYPE=Debug

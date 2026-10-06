@@ -170,7 +170,7 @@ ADR: [0020](../analysis/adr/ADR-0020-backend-plugin-contract.md), [0021](../anal
 | `StateVar<T>` + loop helpers | 0021 | 🔄 | 2026-10-07 (Claude Code): state/counter, repeat/while (loop guard), parallel join all/any/none trong runtime; chờ CI | T07 |
 | `Tracer` (SVTRACE) + `AppBase` | 0021,0027 | 🔄 | 2026-10-07 (Claude Code): Tracer `SVTRACE` theo `runtimeLine` + `AppBase(appName, level)`; biên dịch `AppBase` chờ T17 | T08 |
 | Conformance runner C++ | 0042 | 🔄 | 2026-10-07 (Claude Code): `generator/conformance/conformance.sh`: sinh C++ cho 38 conformance + 7 golden, build với runtime, so writes/trace matcher + golden trace từng event — 45/45 PASS local (cả ASan/UBSan); chờ CI | T09 |
-| `docs/RUNTIME_API.md` | 0021 | ☐ | | T10 |
+| `docs/RUNTIME_API.md` | 0021 | 🔄 | 2026-10-07 (Claude Code): `runtime/RUNTIME_API.md` sinh từ doc comment của header (`generator/conformance/gen-runtime-api.ts`, `--check` trong CI), vendored vào mỗi project cùng runtime; chờ CI | T10 |
 | Server `/capabilities /generate /runtime/files` + `backend.yaml` | 0020 | 🔄 | 2026-10-07 (Claude Code): `generator/src/app.ts` + `backend.yaml`; contract test (capabilities/fileset/bundle/diagnostics) + smoke compose (S7, no-egress, read-only); chờ CI | T11 |
 | `CodeWriter` + `sanitizeIdent` | 0022 | 🔄 | 2026-10-07 (Claude Code): `CodeWriter` (source map, ≤100 cột), `cppString`/`commentText`/`sanitizeIdent` + fuzz 500 chuỗi; chờ CI
 | Naming tất định (VSS path→member, type map) | 0022 | 🔄 | 2026-10-07 (Claude Code): tên class (PascalCase + hash khi trùng), biến local snake_case, map VSS→C++, kiểu tính mirror simulator (ADR-0022 Notes §2); chờ CI | T13 |
