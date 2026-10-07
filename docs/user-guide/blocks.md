@@ -3,7 +3,7 @@
 > Sinh tự động từ `modules/simvehicleapp-core/packages/blocks/*/spec.json` và `semantics.md` bởi
 > `scripts/docs/gen_block_reference.py` — không sửa tay. Hướng dẫn bắt đầu: [tutorial.md](tutorial.md).
 
-36 khối. Biểu thức (`expression`) dùng cú pháp SVX: tham chiếu `<tênkhối.output>` hoặc `<Vehicle.Đường.Dẫn>`,
+39 khối. Biểu thức (`expression`) dùng cú pháp SVX: tham chiếu `<tênkhối.output>` hoặc `<Vehicle.Đường.Dẫn>`,
 toán tử ASCII (`== != < <= > >= && || !`), chuỗi trong nháy kép. `template` là văn bản có thể chèn tham chiếu `<…>`.
 
 ## Triggers
@@ -168,6 +168,89 @@ opcode `vehicle.read_attribute` · phiên bản 1 · vào [target] · ra [source
 - **Lỗi:** attribute không có giá trị trên databroker (không có `default` và chưa được provider ghi) ⇒ handle `error`.
   *Lệch so với bảng opcode [06 §2.2](../../analysis/06-ir-and-compiler.md#22-bảng-opcode-v1-đầy-đủ) (chỉ ghi output `value`):* thêm handle `error` vì canvas Sim luôn vẽ handle `error` cho block không phải trigger và vì trường hợp "chưa có giá trị" là có thật — ghi ở Notes ADR-0011.
 - **Side-effect:** không.
+
+## Composite
+
+### Battery status — `sv_battery_status`
+
+opcode `vehicle.read` · phiên bản 1 · vào [target] · ra [source, error]
+
+| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Giá trị |
+|---|---|---|---|---|
+| `source` | enum |  | "latest-from-trigger" | "latest-from-trigger", "fresh-read" |
+
+Đầu ra: `soc` ($signal), `voltage` ($signal), `current` ($signal), `isCharging` ($signal)
+
+- **Loại:** bước composite (category `composite`, P2); handle vào `target`, ra `source` (mọi member đọc được) và `error`.
+- **Opcode:** `vehicle.read` — compiler desugar thành một node `vehicle.read` cho mỗi member, theo thứ tự:
+
+  | Output | VSS path (v4.0 = v4.2) | Kiểu |
+  |---|---|---|
+  | `soc` | `Vehicle.Powertrain.TractionBattery.StateOfCharge.Current` | float, percent |
+  | `voltage` | `Vehicle.Powertrain.TractionBattery.CurrentVoltage` | float, V |
+  | `current` | `Vehicle.Powertrain.TractionBattery.CurrentCurrent` | float, A |
+  | `isCharging` | `Vehicle.Powertrain.TractionBattery.Charging.IsCharging` | boolean |
+
+- **`source`:** như Read signal, áp cho mọi member — `latest-from-trigger` (cache, không yield: bốn giá trị là một ảnh chụp
+  trong cùng strand) hoặc `fresh-read` (mỗi member là một yield point, timeout ⇒ `error`).
+- **Lỗi:** member đầu tiên chưa có giá trị / timeout / NOT_FOUND ⇒ handle `error` (các member sau không đọc). Không nối
+  `error` ⇒ log + đọc member tiếp theo; ref tới output của member lỗi sau đó báo lỗi `no_value` như Read signal.
+- **Catalog:** path member không có trong release của workflow ⇒ `VEHICLE_PATH_NOT_FOUND` (không có field).
+- **Side-effect:** không.
+
+### Climate status — `sv_climate_status`
+
+opcode `vehicle.read` · phiên bản 1 · vào [target] · ra [source, error]
+
+| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Giá trị |
+|---|---|---|---|---|
+| `station` | enum | có | "Row1.Driver" | "Row1.Driver", "Row1.Passenger" |
+| `source` | enum |  | "latest-from-trigger" | "latest-from-trigger", "fresh-read" |
+
+Đầu ra: `cabinTemperature` ($signal), `outsideTemperature` ($signal), `setTemperature` ($signal), `fanSpeed` ($signal), `isAirConditioningActive` ($signal)
+
+- **Loại:** bước composite (category `composite`, P2); handle vào `target`, ra `source` và `error`.
+- **Opcode:** `vehicle.read` — một node `vehicle.read` cho mỗi member, `{station}` thay bằng prop `station`:
+
+  | Output | VSS path (v4.0 = v4.2) | Kiểu |
+  |---|---|---|
+  | `cabinTemperature` | `Vehicle.Cabin.HVAC.AmbientAirTemperature` | float, celsius |
+  | `outsideTemperature` | `Vehicle.Exterior.AirTemperature` | float, celsius |
+  | `setTemperature` | `Vehicle.Cabin.HVAC.Station.{station}.Temperature` | int8, celsius (actuator) |
+  | `fanSpeed` | `Vehicle.Cabin.HVAC.Station.{station}.FanSpeed` | uint8, percent (actuator) |
+  | `isAirConditioningActive` | `Vehicle.Cabin.HVAC.IsAirConditioningActive` | boolean (actuator) |
+
+- **`station`:** `Row1.Driver` (mặc định) hoặc `Row1.Passenger`. Path không có trong release ⇒ `VEHICLE_PATH_NOT_FOUND`
+  trên field `station`.
+- **`source`:** như Read signal, áp cho mọi member.
+- **Lỗi:** như Battery status — member đầu tiên lỗi ⇒ `error`; không nối ⇒ log + member tiếp theo.
+- **Side-effect:** không.
+
+### Door status — `sv_door_status`
+
+opcode `vehicle.read` · phiên bản 1 · vào [target] · ra [source, error]
+
+| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Giá trị |
+|---|---|---|---|---|
+| `door` | enum | có | "Row1.DriverSide" | "Row1.DriverSide", "Row1.PassengerSide", "Row2.DriverSide", "Row2.PassengerSide" |
+| `source` | enum |  | "latest-from-trigger" | "latest-from-trigger", "fresh-read" |
+
+Đầu ra: `isOpen` ($signal), `isLocked` ($signal), `isChildLockActive` ($signal)
+
+- **Loại:** bước composite (category `composite`, P2); handle vào `target`, ra `source` và `error`.
+- **Opcode:** `vehicle.read` — một node `vehicle.read` cho mỗi member, `{door}` thay bằng prop `door`:
+
+  | Output | VSS path (v4.0 = v4.2) | Kiểu |
+  |---|---|---|
+  | `isOpen` | `Vehicle.Cabin.Door.{door}.IsOpen` | boolean (actuator) |
+  | `isLocked` | `Vehicle.Cabin.Door.{door}.IsLocked` | boolean (actuator) |
+  | `isChildLockActive` | `Vehicle.Cabin.Door.{door}.IsChildLockActive` | boolean (sensor) |
+
+- **`door`:** `Row1.DriverSide` (mặc định), `Row1.PassengerSide`, `Row2.DriverSide`, `Row2.PassengerSide`. Path không có
+  trong release ⇒ `VEHICLE_PATH_NOT_FOUND` trên field `door`.
+- **`source`:** như Read signal, áp cho mọi member (đọc giá trị hiện tại của actuator là hợp lệ).
+- **Lỗi:** như Battery status — member đầu tiên lỗi ⇒ `error`; không nối ⇒ log + member tiếp theo.
+- **Side-effect:** không (chỉ đọc; khoá/mở cửa dùng Set actuator).
 
 ## Logic
 

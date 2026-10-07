@@ -96,6 +96,67 @@
     },
     {
       "specVersion": "1.0.0",
+      "type": "sv_battery_status",
+      "version": 1,
+      "category": "composite",
+      "title": "Battery status",
+      "priority": "P2",
+      "opcode": "vehicle.read",
+      "props": [
+        {
+          "name": "source",
+          "kind": "enum",
+          "required": false,
+          "default": "latest-from-trigger",
+          "enum": ["latest-from-trigger", "fresh-read"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "soc",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "voltage",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "current",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "isCharging",
+          "type": "$signal"
+        }
+      ],
+      "members": [
+        {
+          "output": "soc",
+          "path": "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current"
+        },
+        {
+          "output": "voltage",
+          "path": "Vehicle.Powertrain.TractionBattery.CurrentVoltage"
+        },
+        {
+          "output": "current",
+          "path": "Vehicle.Powertrain.TractionBattery.CurrentCurrent"
+        },
+        {
+          "output": "isCharging",
+          "path": "Vehicle.Powertrain.TractionBattery.Charging.IsCharging"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source", "error"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
       "type": "sv_bool",
       "version": 1,
       "category": "logic",
@@ -164,6 +225,83 @@
         {
           "name": "result",
           "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source", "error"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_climate_status",
+      "version": 1,
+      "category": "composite",
+      "title": "Climate status",
+      "priority": "P2",
+      "opcode": "vehicle.read",
+      "props": [
+        {
+          "name": "station",
+          "kind": "enum",
+          "required": true,
+          "default": "Row1.Driver",
+          "enum": ["Row1.Driver", "Row1.Passenger"]
+        },
+        {
+          "name": "source",
+          "kind": "enum",
+          "required": false,
+          "default": "latest-from-trigger",
+          "enum": ["latest-from-trigger", "fresh-read"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cabinTemperature",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "outsideTemperature",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "setTemperature",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "fanSpeed",
+          "type": "$signal",
+          "unit": "$signal"
+        },
+        {
+          "name": "isAirConditioningActive",
+          "type": "$signal"
+        }
+      ],
+      "members": [
+        {
+          "output": "cabinTemperature",
+          "path": "Vehicle.Cabin.HVAC.AmbientAirTemperature"
+        },
+        {
+          "output": "outsideTemperature",
+          "path": "Vehicle.Exterior.AirTemperature"
+        },
+        {
+          "output": "setTemperature",
+          "path": "Vehicle.Cabin.HVAC.Station.{station}.Temperature"
+        },
+        {
+          "output": "fanSpeed",
+          "path": "Vehicle.Cabin.HVAC.Station.{station}.FanSpeed"
+        },
+        {
+          "output": "isAirConditioningActive",
+          "path": "Vehicle.Cabin.HVAC.IsAirConditioningActive"
         }
       ],
       "handles": {
@@ -319,6 +457,63 @@
         {
           "name": "value",
           "type": "int32"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source", "error"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_door_status",
+      "version": 1,
+      "category": "composite",
+      "title": "Door status",
+      "priority": "P2",
+      "opcode": "vehicle.read",
+      "props": [
+        {
+          "name": "door",
+          "kind": "enum",
+          "required": true,
+          "default": "Row1.DriverSide",
+          "enum": ["Row1.DriverSide", "Row1.PassengerSide", "Row2.DriverSide", "Row2.PassengerSide"]
+        },
+        {
+          "name": "source",
+          "kind": "enum",
+          "required": false,
+          "default": "latest-from-trigger",
+          "enum": ["latest-from-trigger", "fresh-read"]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "isOpen",
+          "type": "$signal"
+        },
+        {
+          "name": "isLocked",
+          "type": "$signal"
+        },
+        {
+          "name": "isChildLockActive",
+          "type": "$signal"
+        }
+      ],
+      "members": [
+        {
+          "output": "isOpen",
+          "path": "Vehicle.Cabin.Door.{door}.IsOpen"
+        },
+        {
+          "output": "isLocked",
+          "path": "Vehicle.Cabin.Door.{door}.IsLocked"
+        },
+        {
+          "output": "isChildLockActive",
+          "path": "Vehicle.Cabin.Door.{door}.IsChildLockActive"
         }
       ],
       "handles": {

@@ -2,12 +2,14 @@ import type { SVGProps } from 'react'
 import { createElement } from 'react'
 import {
   Activity,
+  BatteryCharging,
   Bell,
   Brackets,
   Calculator,
   CircleStop,
   Clock,
   Database,
+  DoorOpen,
   FileText,
   Gauge,
   GitBranch,
@@ -18,6 +20,7 @@ import {
   Send,
   Sigma,
   SlidersHorizontal,
+  Thermometer,
   Timer,
   ToggleLeft,
   Workflow,
@@ -54,6 +57,9 @@ export const SvIcons = {
   log: icon(FileText),
   publish: icon(Send),
   hmi: icon(Bell),
+  battery: icon(BatteryCharging),
+  door: icon(DoorOpen),
+  climate: icon(Thermometer),
 } as const
 
 /** Block colors by kind; sensors use the SimVehicleApp brand cyan. */
@@ -66,4 +72,6 @@ export const SV_BLOCK_COLORS = {
   flow: '#64748B',
   state: '#14B8A6',
   comm: '#EC4899',
+  /** Curated multi-signal blocks (analysis/05 §1: brown). */
+  composite: '#A16207',
 } as const

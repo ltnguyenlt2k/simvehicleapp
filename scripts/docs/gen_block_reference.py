@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BLOCKS = ROOT / "modules/simvehicleapp-core/packages/blocks"
 OUT = ROOT / "docs/user-guide/blocks.md"
-CATEGORY_ORDER = ["triggers", "sensors", "actuators", "attributes", "logic", "flow", "state", "comm"]
+CATEGORY_ORDER = ["triggers", "sensors", "actuators", "attributes", "composite", "logic", "flow", "state", "comm"]
 
 
 def cell(text) -> str:

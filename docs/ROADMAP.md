@@ -302,11 +302,11 @@ ADR: [0041](../analysis/adr/ADR-0041-rust-backend-feasibility.md) · Phụ thu�
 | Báo cáo feasibility (Go/No-go) | 0041 | ✔ | 2026-10-07: [rust-feasibility](spikes/rust-feasibility.md) — đề xuất Go experimental, chờ PO | T06 |
 
 ## M14 — Mở rộng sau v1.0 (backlog)
-Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). **Mỗi dòng cần viết ADR riêng trước khi bắt đầu** — chưa có ADR nào trong nhóm này được viết; cột trạng thái dùng `☐ chưa có ADR` thay cho task cụ thể.
+Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). **Mỗi dòng cần viết ADR riêng trước khi bắt đầu**; dòng chưa có ADR ghi `☐ chưa có ADR`. ADR nhóm này đều Proposed, viết theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
 
 | # | Hạng mục | ADR dự kiến | Trạng thái |
 |---|---|---|---|
-| 1 | Curated multi-VSS blocks (Battery/Door/Climate Status) | 0045 | ☐ chưa có ADR |
+| 1 | Curated multi-VSS blocks (Battery/Door/Climate Status) | [0045](../analysis/adr/ADR-0045-curated-multi-vss-blocks.md) | 🔄 Claude Code 2026-10-07: BlockSpec `members` + desugar chuỗi `vehicle.read`; 3 block; conformance C39 PASS simulator + Python (local), C++/Rust + E2E `m14-composite` chờ CI |
 | 2 | gRPC service interface | 0043 | ☐ chưa có ADR |
 | 3 | Standalone service apps | 0044 | ☐ chưa có ADR |
 | 4 | Per-run runtime stack & multi-user workspaces | 0046 | ☐ chưa có ADR |
