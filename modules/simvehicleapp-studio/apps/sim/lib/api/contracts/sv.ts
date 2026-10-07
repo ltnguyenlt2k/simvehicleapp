@@ -444,9 +444,11 @@ export const svCreateProjectBodySchema = z.object({
   slug: svProjectSlugSchema,
   vssRelease: z.string().regex(/^v[0-9]+\.[0-9]+$/, 'a VSS release like v4.0'),
   workflowIds: z.array(workflowIdSchema).max(500),
+  /** Language of the generated app (ADR-0040); the stack must have its backend and toolchain. */
+  language: z.enum(['cpp', 'python']).default('cpp'),
 })
 
-/** `POST /api/sv/projects` — create a C++ project in the workspace and assign workflows. */
+/** `POST /api/sv/projects` — create a C++ or Python project in the workspace and assign workflows. */
 export const svCreateProjectContract = defineRouteContract({
   method: 'POST',
   path: '/api/sv/projects',

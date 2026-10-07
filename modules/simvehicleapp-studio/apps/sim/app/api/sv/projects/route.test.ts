@@ -138,6 +138,21 @@ describe('/api/sv/projects (M07-T17)', () => {
       workflows: [{ simWorkflowId: 'wf-1', enabled: true }],
     })
     expect((await res.json()).workflows).toHaveLength(1)
+
+    // A Python project (ADR-0040): the language goes to the orchestrator as chosen.
+    mockCall.mockResolvedValueOnce(reply(201, project('p2', { language: 'python' })))
+    const py = await POST(
+      createMockRequest('POST', {
+        workspaceId: WS,
+        name: 'Py',
+        slug: 'py',
+        vssRelease: 'v4.0',
+        workflowIds: [],
+        language: 'python',
+      })
+    )
+    expect(py.status).toBe(200)
+    expect(mockCall.mock.calls[2][2].body).toMatchObject({ slug: 'py', language: 'python' })
   })
 
   it('refuses to create without write access and relays a taken folder name', async () => {

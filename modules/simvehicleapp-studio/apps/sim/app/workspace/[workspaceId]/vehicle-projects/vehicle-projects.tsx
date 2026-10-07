@@ -2,30 +2,23 @@
 
 import { useMemo, useState } from 'react'
 import { Button, ChipInput, ChipSelect, toast } from '@/components/emcn'
+import { installedLanguages, type SvLanguage } from '@/lib/sv/languages'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { ProjectCard } from '@/app/workspace/[workspaceId]/vehicle-projects/components/project-card'
 import { useSvCatalogReleases } from '@/hooks/queries/sv-catalog'
 import { useCreateSvProject, useSvProjects } from '@/hooks/queries/sv-projects'
+import { useSvSystemStatus } from '@/hooks/queries/sv-system'
 import { useWorkflows } from '@/hooks/queries/workflows'
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/
-
-/** Folder name of the project from its name (`My Vehicle App` → `my-vehicle-app`). */
-function slugOf(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 63)
-}
 
 interface VehicleProjectsProps {
   workspaceId: string
 }
 
 /**
- * Projects page (M07-T17): create a C++ vehicle-app project on a VSS release and choose the
- * workflows SynCode generates into it; each project shows its generated files (M07-T19).
+ * Projects page (M07-T17): create a C++ or Python (ADR-0040) vehicle-app project on a VSS release
+ * and choose the workflows SynCode generates into it; each project shows its generated files (M07-T19).
  */
 export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
   const { canEdit } = useUserPermissionsContext()
@@ -36,6 +29,9 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
   const [name, setName] = useState('')
   const [slugEdit, setSlugEdit] = useState<string | null>(null)
   const [release, setRelease] = useState<string | null>(null)
+  const [language, setLanguage] = useState<SvLanguage>('cpp')
+  const { data: system } = useSvSystemStatus()
+  const languages = installedLanguages(system?.services)
 
   const releases = catalog?.releases ?? []
   const defaultRelease = releases.find((r) => r.default)?.release ?? releases[0]?.release
@@ -50,7 +46,7 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
   const onCreate = () => {
     if (!name.trim() || !slugValid || !vssRelease) return
     createProject.mutate(
-      { workspaceId, name: name.trim(), slug, vssRelease, workflowIds: [] },
+      { workspaceId, name: name.trim(), slug, vssRelease, workflowIds: [], language },
       {
         onSuccess: (project) => {
           toast.success(`Project ${project.name} created — preparing its folder`)
@@ -68,8 +64,8 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
         <div className='flex flex-col gap-1'>
           <h1 className='font-medium text-[18px] text-[var(--text-primary)]'>Vehicle projects</h1>
           <p className='text-[13px] text-[var(--text-secondary)]'>
-            A project is a Velocitas C++ vehicle app. SynCode generates the workflows you assign
-            into it, builds it with the toolchain and runs the generated tests.
+            A project is a Velocitas vehicle app in C++ or Python. SynCode generates the workflows
+            you assign into it, builds it with the toolchain and runs the generated tests.
           </p>
         </div>
 
@@ -110,8 +106,9 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
               <span>Language</span>
               <ChipSelect
                 aria-label='Language'
-                value='cpp'
-                options={[{ label: 'C++', value: 'cpp' }]}
+                value={language}
+                onChange={(v) => setLanguage(v as SvLanguage)}
+                options={languages.map((l) => ({ label: l.label, value: l.value }))}
               />
             </div>
             <Button

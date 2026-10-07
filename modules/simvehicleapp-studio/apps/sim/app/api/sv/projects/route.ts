@@ -42,7 +42,7 @@ export const GET = withRouteHandler(async (request: NextRequest) => {
 })
 
 /**
- * Creates a C++ project for the workspace: the orchestrator creates it (the folder is prepared in
+ * Creates a C++ or Python project for the workspace: the orchestrator creates it (the folder is prepared in
  * the background, `status: creating`), the studio links it to the workspace and assigns workflows.
  */
 export const POST = withRouteHandler(async (request: NextRequest) => {
@@ -50,14 +50,14 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const parsed = await parseRequest(svCreateProjectContract, request, {})
   if (!parsed.success) return parsed.response
-  const { workspaceId, name, slug, vssRelease, workflowIds } = parsed.data.body
+  const { workspaceId, name, slug, vssRelease, workflowIds, language } = parsed.data.body
   const access = await checkWorkspaceAccess(workspaceId, session.user.id)
   if (!access.hasAccess) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
   if (!access.canWrite) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
 
   const created = await orchestrator('/projects', {
     method: 'POST',
-    body: { slug, name, language: 'cpp', vssRelease },
+    body: { slug, name, language, vssRelease },
   })
   if (created instanceof NextResponse) return created
   if (created.status !== 201) return upstreamError(created)
