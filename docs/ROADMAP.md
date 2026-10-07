@@ -40,7 +40,7 @@
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS 2026-10-07 với eval LLM thật **BYPASS** (quyết định PO, chờ API key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
-| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | 🔄 | bắt đầu 2026-10-07 (Claude Code) |
+| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | ☐ | 0/12 |
 
@@ -294,12 +294,12 @@ ADR: [0041](../analysis/adr/ADR-0041-rust-backend-feasibility.md) · Phụ thu�
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Template `vehicle-app-rust-template` | 0041 | ☐ | | T01 |
-| Runtime `simvehicleapp-runtime-rs` + conformance | 0041,0042 | 🔄 | Claude Code 2026-10-07 | T02 |
-| Client `kuksa-rust-sdk 0.2.2` | 0041 | ☐ | | T03 |
-| Generator emitters P0 → GW-A | 0041 | ☐ | | T04 |
-| toolchain-rust (cargo vendor offline) | 0041 | ☐ | | T05 |
-| Báo cáo feasibility (Go/No-go) | 0041 | ☐ | | T06 |
+| Template `vehicle-app-rust-template` | 0041 | ✔ | 2026-10-07: template của SimVehicleApp (Cargo workspace, AppManifest v3, build.rs); `templateSha` = git tree id | T01 |
+| Runtime `simvehicleapp-runtime-rs` + conformance | 0041,0042 | ✔ | 2026-10-07: conformance P1 46/46; clippy/rustfmt sạch (CI) | T02 |
+| Client `kuksa-rust-sdk 0.2.2` | 0041 | ✔ | 2026-10-07: stub `sdv.databroker.v1` của SDK + rumqttc; live GW-A trên KUKSA | T03 |
+| Generator emitters P0 → GW-A | 0041 | ✔ | 2026-10-07: 24/24 opcode, golden GW-A..G diff 0 | T04 |
+| toolchain-rust (cargo vendor offline) | 0041 | ✔ | 2026-10-07: image + agent plan Rust + profile `rust`; parity P3 7/7 qua SynCode thật | T05 |
+| Báo cáo feasibility (Go/No-go) | 0041 | ✔ | 2026-10-07: [rust-feasibility](spikes/rust-feasibility.md) — đề xuất Go experimental, chờ PO | T06 |
 
 ## M14 — Mở rộng sau v1.0 (backlog)
 Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). **Mỗi dòng cần viết ADR riêng trước khi bắt đầu** — chưa có ADR nào trong nhóm này được viết; cột trạng thái dùng `☐ chưa có ADR` thay cho task cụ thể.
