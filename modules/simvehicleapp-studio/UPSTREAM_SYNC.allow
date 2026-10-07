@@ -977,3 +977,6 @@ apps/sim/triggers/webflow/*
 apps/sim/triggers/whatsapp/*
 apps/sim/triggers/zendesk/*
 apps/sim/triggers/zoom/*
+
+# M11-T03 wave 3b — dependency security fixes (overrides for vulnerable transitive packages, ADR-0008 Notes)
+package.json
