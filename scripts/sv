@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # SimVehicleApp dev helper (dev phase: one folder per module, aggregated by docker-compose.yml)
+#   scripts/sv init             create .env from .env.example with fresh secrets (also done by build/up)
 #   scripts/sv build            build all images in dependency order
 #   scripts/sv up               start everything (runtime + toolchain + ide + studio)
 #   scripts/sv down [-v]        stop (−v also removes volumes)
@@ -12,15 +13,29 @@ cd "$(dirname "$0")/.."
 DC="docker compose"
 # Version info of every service (/version, System status): the checked-out commit.
 export SV_COMMIT="${SV_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+# .env from .env.example on a clean checkout, with random secrets for the keys compose requires.
+ensure_env() {
+  [[ -f .env ]] || { cp .env.example .env; echo "sv: created .env from .env.example"; }
+  local k
+  for k in BETTER_AUTH_SECRET ENCRYPTION_KEY API_ENCRYPTION_KEY INTERNAL_API_SECRET; do
+    if ! grep -qE "^$k=.+" .env; then
+      sed -i "/^$k=\$/d" .env
+      echo "$k=$(python3 -c 'import secrets; print(secrets.token_hex(32))')" >> .env
+      echo "sv: generated $k in .env"
+    fi
+  done
+}
 case "${1:-}" in
+  init) ensure_env ;;
   build)
+    ensure_env
     $DC build contracts                           # build-only image consumed by core, toolchain agent, services
     $DC build devcontainer-cpp toolchain-cpp      # base layers next (ide FROMs the toolchain image)
     $DC build ;;
-  up)    $DC up -d "${@:2}" ;;
+  up)    ensure_env; $DC up -d "${@:2}" ;;
   down)  $DC down "${@:2}" ;;
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;
   refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
-  *) sed -n '2,10p' "$0"; exit 1 ;;
+  *) sed -n '2,11p' "$0"; exit 1 ;;
 esac
