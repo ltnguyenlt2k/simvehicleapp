@@ -35,6 +35,12 @@ describe("orchestrator responses ⇄ openapi/orchestrator.v1.yaml", () => {
       expect(ok).toBe(true);
     }
     expect(passed).toMatchObject({ success: true, editor: { url: "http://127.0.0.1:8080/?folder=/workspace/projects/comfort" } });
+    // Open IDE (M09-T04): a ready project carries the code-server URL of its folder.
+    await repo.updateProject(p.id, { status: "ready" });
+    const withIde = createOrchestratorHandler({ repo, clients, hub: new EventHub(), ideUrl: "http://127.0.0.1:8080/", kick() {}, background() {} });
+    const ready = await (await withIde(new Request(`http://o/projects/${p.id}`), ctx)).json();
+    expect(schema("Project")(ready)).toBe(true);
+    expect(ready.editor).toEqual({ url: "http://127.0.0.1:8080/?folder=/workspace/projects/comfort" });
     expect(failed).toMatchObject({ success: false, stage: "build" });
   });
 

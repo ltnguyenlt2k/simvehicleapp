@@ -1,6 +1,8 @@
 import { createLogger, createService } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
+import { existsSync, readFileSync } from "node:fs";
 import { createOrchestratorHandler } from "./app.ts";
+import { EntitlementService, loadLicense } from "./entitlements.ts";
 import { httpClients } from "./clients.ts";
 import { EventHub } from "./events.ts";
 import { runGeneration } from "./pipeline.ts";
@@ -43,6 +45,11 @@ const clients = httpClients({
   secret,
 });
 const hub = new EventHub();
+// Licensed features (ADR-0031): SV_LICENSE_MODE=full (MVP) allows everything and logs what the license says.
+const keyFile = process.env.SV_LICENSE_PUBLIC_KEY_FILE ?? "/src/simvehicleapp-orchestrator/license-public.pem";
+const publicKey = process.env.SV_LICENSE_PUBLIC_KEY ?? (existsSync(keyFile) ? readFileSync(keyFile, "utf8") : undefined);
+const entitlements = new EntitlementService(process.env.SV_LICENSE_MODE === "enforce" ? "enforce" : "full", loadLicense(process.env.SV_LICENSE_KEY, publicKey));
+log.info("license", entitlements.status);
 // One databroker per VSS release (ADR-0024 §6), the same map the signal-gateway uses.
 const runs = new RunManager({ repo, clients, hub, databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"), log });
 const stale = await runs.recover();
@@ -67,6 +74,6 @@ const kick = () => wake?.();
 })();
 
 const background = (p: Promise<void>) => void p.catch((e) => log.error("background task failed", { err: e }));
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log }, createOrchestratorHandler({ repo, clients, hub, runs, ideUrl, kick, background }));
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

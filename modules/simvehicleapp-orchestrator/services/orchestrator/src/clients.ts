@@ -56,6 +56,8 @@ export interface Clients {
   startJob(language: string, kind: string, project: string, options?: Record<string, unknown>): Promise<Outcome<ToolchainJob>>;
   /** Follows a job's log after `afterSeq` until it ends (reconnecting on drops); resolves with the final job. */
   followJob(language: string, jobId: string, afterSeq: number, onLine: (l: LogLine) => void): Promise<ToolchainJob>;
+  /** Zip of the project folder plus `extraFiles` (workspace `exportProject`), as the raw response. */
+  exportProject(slug: string, body: { generationId?: string; extraFiles: { path: string; content: string }[] }): Promise<Response>;
   /** Actuators whose target the signal-gateway mirrors to the current value (empty = none). */
   mirror(release: string, paths: string[]): Promise<void>;
 }
@@ -123,6 +125,9 @@ export function httpClients(e: Endpoints): Clients {
     async startJob(language, kind, project, options) {
       const tc = base(e.toolchains, language, "toolchain");
       return outcome<ToolchainJob>(await call(`${tc}/jobs`, { method: "POST", body: JSON.stringify({ kind, project, ...(options ? { options } : {}) }) }));
+    },
+    async exportProject(slug, body) {
+      return call(`${e.workspace}/projects/${slug}/export`, { method: "POST", body: JSON.stringify(body) });
     },
     async mirror(release, paths) {
       if (!e.signalGateway) return;

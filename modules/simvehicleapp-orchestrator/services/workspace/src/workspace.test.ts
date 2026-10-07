@@ -223,3 +223,66 @@ describe("atomic commit (ADR-0026 §3, M07-T08/T10/T11)", () => {
     expect(() => store.projectDir("../x")).toThrow(PathRejected);
   });
 });
+
+/** Reads a zip with the central directory (what `unzip -l` + `unzip -p` see). */
+function unzip(bytes: Uint8Array): Map<string, { data: string; mode: number }> {
+  const { inflateRawSync } = require("node:zlib") as typeof import("node:zlib");
+  const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const end = bytes.byteLength - 22;
+  expect(v.getUint32(end, true)).toBe(0x06054b50);
+  const count = v.getUint16(end + 10, true);
+  let at = v.getUint32(end + 16, true);
+  const out = new Map<string, { data: string; mode: number }>();
+  for (let i = 0; i < count; i++) {
+    expect(v.getUint32(at, true)).toBe(0x02014b50);
+    const method = v.getUint16(at + 10, true);
+    const size = v.getUint32(at + 20, true);
+    const nameLen = v.getUint16(at + 28, true);
+    const mode = v.getUint32(at + 38, true) >>> 16;
+    const local = v.getUint32(at + 42, true);
+    const name = new TextDecoder().decode(bytes.subarray(at + 46, at + 46 + nameLen));
+    const localName = v.getUint16(local + 26, true);
+    const body = bytes.subarray(local + 30 + localName, local + 30 + localName + size);
+    out.set(name, { data: new TextDecoder().decode(method === 8 ? inflateRawSync(body) : body), mode });
+    at += 46 + nameLen;
+  }
+  return out;
+}
+
+describe("export (ADR-0031 §1, M09-T06)", () => {
+  test("zip of the project: no build/VCS/symlinks, .svexportignore honored, extras added, same bytes twice", async () => {
+    const { createWorkspaceHandler } = await import("./app.ts");
+    const store = new Store(join(SCRATCH, `ws${n++}`));
+    const { slug, dir } = newProject(store);
+    await store.commit(slug, "g1", fileset({ "app/src/generated/A.cpp": "int a;\n" }));
+    mkdirSync(join(dir, "build/bin"), { recursive: true });
+    writeFileSync(join(dir, "build/bin/app"), "binary");
+    mkdirSync(join(dir, ".git"), { recursive: true });
+    writeFileSync(join(dir, ".git/HEAD"), "ref");
+    mkdirSync(join(dir, "notes"), { recursive: true });
+    writeFileSync(join(dir, "notes/secret.txt"), "x");
+    writeFileSync(join(dir, "install_dependencies.sh"), "#!/bin/sh\n", { mode: 0o755 });
+    writeFileSync(join(dir, "draft.tmp"), "x");
+    writeFileSync(join(dir, ".svexportignore"), "# local only\nnotes/\n*.tmp\n");
+    symlinkSync("/etc/passwd", join(dir, "passwd-link"));
+    const ctx = { log: { info() {}, warn() {}, error() {}, debug() {}, child() { return this; } } } as never;
+    const h = createWorkspaceHandler(store, {} as never);
+    const post = (body: unknown) => h(new Request(`http://w/projects/${slug}/export`, { method: "POST", body: JSON.stringify(body) }), ctx);
+    const body = { generationId: "g1", extraFiles: [{ path: ".simvehicleapp/workflows/gw_a.graph.json", content: "{}" }, { path: "NOTICE", content: "N" }] };
+    const res = await post(body);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/zip");
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const files = unzip(bytes);
+    expect([...files.keys()]).toEqual([...files.keys()].sort());
+    expect(files.get("app/src/generated/A.cpp")?.data).toBe("int a;\n");
+    expect(files.get(".simvehicleapp/workflows/gw_a.graph.json")?.data).toBe("{}");
+    expect(files.get("NOTICE")?.data).toBe("N");
+    expect(files.get("install_dependencies.sh")?.mode).toBe(0o100755);
+    for (const gone of ["build/bin/app", ".git/HEAD", "notes/secret.txt", "draft.tmp", "passwd-link"]) expect(files.has(gone)).toBe(false);
+    expect(new Uint8Array(await (await post(body)).arrayBuffer())).toEqual(bytes); // deterministic
+    expect((await post({ generationId: "g0" })).status).toBe(409);
+    expect((await post({ extraFiles: [{ path: "app/src/x.cpp", content: "" }] })).status).toBe(400);
+    expect((await post({ extraFiles: [{ path: ".simvehicleapp/../x", content: "" }] })).status).toBe(422);
+  });
+});

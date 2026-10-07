@@ -51,6 +51,7 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
     startJob: async (_l, kind) => (calls.push(`start:${kind}`), { ok: true, value: { id: `j-${kind}`, state: "running", exitCode: null, diagnostics: [] } }),
     followJob: async (_l, id) => ({ id, state: "succeeded", exitCode: 0, diagnostics: [] }),
     mirror: async (release, paths) => void calls.push(`mirror:${release}:${paths.join(",")}`),
+    exportProject: async () => new Response(new Blob([new Uint8Array([0x50, 0x4b])]), { headers: { "content-type": "application/zip" } }),
     ...overrides,
   };
   return { clients, calls };

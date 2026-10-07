@@ -21,6 +21,10 @@ services:
       SV_SIGNAL_GATEWAY_URL: http://signal-gateway:4050
       # code-server as the browser reaches it (Appendix A `editor.url`).
       SV_IDE_URL: ${SV_IDE_PUBLIC_URL:-http://127.0.0.1:${SV_IDE_PORT:-8080}}
+      # Licensed features (ADR-0031): `full` (MVP) allows all and logs decisions; `enforce` applies SV_LICENSE_KEY.
+      SV_LICENSE_MODE: ${SV_LICENSE_MODE:-full}
+      SV_LICENSE_KEY: ${SV_LICENSE_KEY:-}
+      SV_LICENSE_PUBLIC_KEY: ${SV_LICENSE_PUBLIC_KEY:-}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
     # Internal only: the studio BFF reaches it as http://orchestrator:4030.
     networks: [sv-internal, sv-codegen]

@@ -1,11 +1,15 @@
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { InitFailed, initProject, type InitSources, ProjectExists } from "./init.ts";
-import { PathRejected, SLUG } from "./paths.ts";
+import { normalizeRelative, PathRejected, SLUG } from "./paths.ts";
 import { CommitRejected, Crash, type FileSet, type Store } from "./store.ts";
+import { zip } from "./zip.ts";
+
+/** Files the orchestrator adds to an export (ADR-0031 §1): `.simvehicleapp/**` and the top-level notices. */
+const EXPORT_EXTRA = /^(\.simvehicleapp\/.+|README\.SIMVEHICLE\.md|NOTICE|THIRD-PARTY-NOTICES)$/;
 
 /**
  * HTTP surface of the workspace (`openapi/workspace.v1.yaml`): project creation, generation commits,
- * rollback, tree, and the read-only file/generation views of the generated-files viewer.
+ * rollback, tree, the read-only file/generation views of the generated-files viewer and exports.
  */
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -96,7 +100,26 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
         const f = fs?.files.find((x) => x.path === url.searchParams.get("path"));
         return f ? json(200, { path: f.path, content: f.content }) : json(404, { error: "not_found" });
       }
-      if (op === "export" && req.method === "POST") return json(501, { error: "not_implemented", message: "export arrives with the IDE/export milestone (M9)" });
+      if (op === "export" && req.method === "POST") {
+        const b = await body(req);
+        if (b instanceof Response) return b;
+        // The folder holds one generation: exporting another one would mix sources (409).
+        const current = store.currentGeneration(slug)?.generationId ?? null;
+        if (b.generationId !== undefined && b.generationId !== current) return json(409, { error: "conflict", message: `the project holds generation ${current ?? "none"}, not ${String(b.generationId)}` });
+        const extras = b.extraFiles ?? [];
+        if (!Array.isArray(extras) || extras.length > 500) return json(400, { error: "invalid_request", message: "extraFiles: at most 500 {path, content}" });
+        const added = new Map<string, Uint8Array>();
+        for (const f of extras as { path?: unknown; content?: unknown }[]) {
+          if (typeof f?.path !== "string" || typeof f.content !== "string") return json(400, { error: "invalid_request", message: "extraFiles: [{path, content}]" });
+          const path = normalizeRelative(f.path);
+          if (!EXPORT_EXTRA.test(path)) return json(400, { error: "invalid_request", message: `${path}: extra files go under .simvehicleapp/ or are README.SIMVEHICLE.md, NOTICE, THIRD-PARTY-NOTICES` });
+          added.set(path, new TextEncoder().encode(f.content));
+        }
+        const files = store.exportFiles(slug).filter((f) => !added.has(f.path));
+        const bytes = zip([...files, ...[...added].map(([path, data]) => ({ path, data }))]);
+        ctx.log.info("project exported", { slug, files: files.length + added.size, bytes: bytes.length });
+        return new Response(new Blob([bytes as Uint8Array<ArrayBuffer>]), { headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${slug}.zip"` } });
+      }
       return json(404, { error: "not_found" });
     } catch (e) {
       if (e instanceof PathRejected) return json(422, [diag("WORKSPACE_PATH_REJECTED", e.message, { path: e.path, reason: e.reason })]);

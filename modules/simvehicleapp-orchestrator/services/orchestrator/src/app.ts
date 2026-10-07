@@ -3,6 +3,8 @@ import type { RequestContext } from "@simvehicleapp/service-kit";
 import type { Clients } from "./clients.ts";
 import { type EventHub, itemOfLine, itemOfRunEvent } from "./events.ts";
 import { present } from "./pipeline.ts";
+import type { EntitlementService, Feature } from "./entitlements.ts";
+import { exportExtras } from "./export.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
 import { ACTIVE_RUN_STATES, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
 import { RunConflict, type RunManager } from "./runs.ts";
@@ -24,13 +26,15 @@ export interface AppDeps {
   hub: EventHub;
   /** Live runs (M8); without it the run endpoints answer 503. */
   runs?: RunManager;
+  /** Licensed features (M09-T07, ADR-0031); without it everything is allowed. */
+  entitlements?: EntitlementService;
   ideUrl?: string;
   /** Wakes the generation worker. */
   kick(): void;
   background(p: Promise<void>): void;
 }
 
-const projectView = (p: Project) => ({
+const projectView = (p: Project, ideUrl?: string, ide = true) => ({
   id: p.id,
   slug: p.slug,
   name: p.name,
@@ -41,6 +45,7 @@ const projectView = (p: Project) => ({
   status: p.status,
   ...(p.statusMessage ? { statusMessage: p.statusMessage } : {}),
   workflows: p.workflows,
+  ...(p.status === "ready" && ideUrl && ide ? { editor: { url: `${ideUrl.replace(/\/$/, "")}/?folder=/workspace/projects/${p.slug}` } } : {}),
 });
 
 /** Run v1 of the contract (the toolchain job id stays internal). */
@@ -60,12 +65,20 @@ async function readBody(req: Request): Promise<Record<string, unknown> | Respons
 }
 
 export function createOrchestratorHandler(d: AppDeps) {
+  const view = (p: Project) => projectView(p, d.ideUrl, d.entitlements?.allows("ide.access", { language: p.language }) ?? true);
+  /** The PDP decision (logged); a denial is 403 with the reason (ADR-0031 §2). */
+  const entitled = (feature: Feature, ctx: { language?: string; projectCount?: number }, log: RequestContext["log"]): Response | null => {
+    if (!d.entitlements) return null;
+    const decision = d.entitlements.check(feature, ctx);
+    log.info("entitlement", { ...decision, ...ctx });
+    return decision.allowed ? null : json(403, { error: "not_entitled", feature, message: decision.reason });
+  };
   return async (req: Request, ctx: RequestContext): Promise<Response> => {
     const url = new URL(req.url);
     const parts = url.pathname.split("/").filter(Boolean);
 
     if (url.pathname === "/projects") {
-      if (req.method === "GET") return json(200, { projects: (await d.repo.projects()).map(projectView) });
+      if (req.method === "GET") return json(200, { projects: (await d.repo.projects()).map((p) => view(p)) });
       if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
       const b = await readBody(req);
       if (b instanceof Response) return b;
@@ -77,10 +90,12 @@ export function createOrchestratorHandler(d: AppDeps) {
       const s = (settings ?? {}) as Record<string, unknown>;
       if (s.traceLevel !== undefined && !["off", "trigger", "node"].includes(s.traceLevel as string)) return json(400, { error: "invalid_request", message: "settings.traceLevel must be off, trigger or node" });
       if (s.mqttTopicPrefix !== undefined && (typeof s.mqttTopicPrefix !== "string" || !/^[^#+]+$/.test(s.mqttTopicPrefix))) return json(400, { error: "invalid_request", message: "settings.mqttTopicPrefix must not contain # or +" });
+      const deniedCreate = entitled("project.create", { language: language as string, projectCount: (await d.repo.projects()).length }, ctx.log);
+      if (deniedCreate) return deniedCreate;
       try {
         const p = await createProject(d.repo, d.clients, { slug, name: name.trim(), language: language as Project["language"], vssRelease, ...(appName ? { appName: appName as string } : {}), settings: s as Partial<Project["settings"]> }, d.background);
         ctx.log.info("project created", { slug });
-        return json(201, projectView(p));
+        return json(201, view(p));
       } catch (e) {
         if (e instanceof DuplicateSlug) return json(409, { error: "conflict", message: `project ${slug} already exists` });
         throw e;
@@ -90,7 +105,7 @@ export function createOrchestratorHandler(d: AppDeps) {
     if (parts[0] === "projects" && parts[1]) {
       const project = ID.test(parts[1]) ? await d.repo.project(parts[1]) : null;
       if (!project) return json(404, { error: "not_found" });
-      if (parts.length === 2 && req.method === "GET") return json(200, projectView(project));
+      if (parts.length === 2 && req.method === "GET") return json(200, view(project));
       if (parts[2] === "workflows" && parts.length === 3 && req.method === "PUT") {
         const b = await readBody(req);
         if (b instanceof Response) return b;
@@ -99,7 +114,7 @@ export function createOrchestratorHandler(d: AppDeps) {
           return json(400, { error: "invalid_request", message: "workflows: [{simWorkflowId, enabled?}]" });
         }
         await d.repo.setWorkflows(project.id, list.map((w: { simWorkflowId: string; enabled?: boolean }) => ({ simWorkflowId: w.simWorkflowId, enabled: w.enabled !== false })));
-        return json(200, projectView((await d.repo.project(project.id))!));
+        return json(200, view((await d.repo.project(project.id))!));
       }
       if (parts[2] === "files" && parts.length === 3 && req.method === "GET") {
         // Tree + retained generations of the project folder (generated-files viewer, M07-T19).
@@ -114,6 +129,17 @@ export function createOrchestratorHandler(d: AppDeps) {
         const q = `?path=${encodeURIComponent(path)}`;
         const r = await d.clients.workspaceGet(gid ? `/projects/${project.slug}/generations/${gid}/file${q}` : `/projects/${project.slug}/file${q}`);
         return r.ok ? json(200, r.value) : json(r.status === 404 ? 404 : 502, { error: r.status === 404 ? "not_found" : "workspace_unavailable" });
+      }
+      if (parts[2] === "export" && parts.length === 3 && req.method === "POST") {
+        // Export (M09-T06): the project folder as it is, plus what it was generated from.
+        const denied = entitled("export.source", { language: project.language }, ctx.log);
+        if (denied) return denied;
+        const latest = await d.repo.latestGeneration(project.id);
+        const exported = latest?.state === "succeeded" ? latest : null;
+        const res = await d.clients.exportProject(project.slug, { ...(exported ? { generationId: exported.id } : {}), extraFiles: exportExtras(project, exported, d.entitlements?.document ?? null) });
+        if (!res.ok || !res.body) return json(res.status === 409 ? 409 : 502, { error: res.status === 409 ? "conflict" : "workspace_unavailable", message: res.status === 409 ? "SynCode is changing the project: export when it has finished" : "the workspace could not export the project" });
+        ctx.log.info("project exported", { project: project.slug, generation: exported?.id ?? null });
+        return new Response(res.body, { headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="${project.slug}.zip"` } });
       }
       if (parts[2] === "runs" && parts.length === 3 && req.method === "POST") {
         if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
@@ -135,6 +161,8 @@ export function createOrchestratorHandler(d: AppDeps) {
         }
       }
       if (parts[2] === "generations" && parts.length === 3 && req.method === "POST") {
+        const deniedSynCode = entitled("syncode", { language: project.language }, ctx.log);
+        if (deniedSynCode) return deniedSynCode;
         const b = await readBody(req);
         if (b instanceof Response) return b;
         const graphs = b.graphs;
@@ -170,6 +198,10 @@ export function createOrchestratorHandler(d: AppDeps) {
         return json(200, present(g, project, d.ideUrl));
       }
       return json(404, { error: "not_found" });
+    }
+
+    if (url.pathname === "/entitlements" && req.method === "GET") {
+      return json(200, d.entitlements?.status ?? { mode: "full", licensed: false, reason: "no EntitlementService" });
     }
 
     if (url.pathname === "/runs" && req.method === "GET") {

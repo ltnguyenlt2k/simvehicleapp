@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { ContractValidator } from "@simvehicleapp/contracts";
@@ -98,6 +98,24 @@ function fsyncDir(path: string) {
   } catch {
     // some filesystems do not allow fsync on directories
   }
+}
+
+/** `.svexportignore` lines (gitignore subset: `#` comments, `*`, `**`, trailing `/` = directory) ⇒ regexes on relative paths. */
+export function parseIgnore(text: string): RegExp[] {
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#"))
+    .map((glob) => {
+      const anchored = glob.startsWith("/") || glob.slice(0, -1).includes("/");
+      const g = glob.replace(/^\//, "");
+      const dirOnly = g.endsWith("/");
+      const body = (dirOnly ? g.slice(0, -1) : g)
+        .split("**")
+        .map((part) => part.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]"))
+        .join(".*");
+      return new RegExp(`${anchored ? "^" : "(^|/)"}${body}${dirOnly ? "/" : "(/|$)"}`);
+    });
 }
 
 function listFiles(dir: string, base = dir): string[] {
@@ -389,6 +407,31 @@ export class Store {
     return listFiles(dir)
       .filter((p) => !skip(p))
       .map((p) => ({ path: p, size: statSync(join(dir, p)).size, owned: insideRoots(p, ALLOWED_ROOTS) }));
+  }
+
+  /**
+   * Files of an export (ADR-0031 §1): the project folder without build outputs, VCS, caches and what
+   * `.svexportignore` lists (gitignore-like globs); symlinks are never followed.
+   */
+  exportFiles(slug: string): { path: string; data: Uint8Array; executable: boolean }[] {
+    const dir = this.projectDir(slug);
+    const ignoreFile = join(dir, ".svexportignore");
+    const patterns = existsSync(ignoreFile) ? parseIgnore(readFileSync(ignoreFile, "utf8")) : [];
+    const skip = (rel: string, isDir: boolean) =>
+      /^(build|build-[^/]*|\.git|\.velocitas[^/]*cache|node_modules|\.cache)(\/|$)/.test(rel) || patterns.some((re) => re.test(isDir ? `${rel}/` : rel));
+    const out: { path: string; data: Uint8Array; executable: boolean }[] = [];
+    const walk = (rel: string) => {
+      for (const name of readdirSync(rel ? join(dir, rel) : dir).sort()) {
+        const r = rel ? `${rel}/${name}` : name;
+        const st = lstatSync(join(dir, r));
+        if (st.isSymbolicLink()) continue;
+        if (st.isDirectory()) {
+          if (!skip(r, true)) walk(r);
+        } else if (st.isFile() && !skip(r, false)) out.push({ path: r, data: readFileSync(join(dir, r)), executable: (st.mode & 0o111) !== 0 });
+      }
+    };
+    walk("");
+    return out;
   }
 
   /** One text file for the read-only viewer (≤ 1 MB). */
