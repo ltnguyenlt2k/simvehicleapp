@@ -37,7 +37,7 @@
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
-| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | 🔄 | 9/10 — gate 3/4: eval ≥ 80 % chưa ổn định trên model local 9B, chờ đo với provider cloud ([report](reports/M10.md)) |
+| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS 2026-10-07 với eval LLM thật **BYPASS** (quyết định PO, chờ API key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
@@ -250,7 +250,7 @@ ADR: [0030](../analysis/adr/ADR-0030-ai-assistant-mcp.md) · Phụ thuộc: M4, 
 | MCP client (`ext.*` namespace, confirmation mặc định) | 0030 | ✔ | `ext__<server>__<tool>` (tên tool provider không cho dấu chấm), luôn SENSITIVE trừ `safeTools` | T06 |
 | Store `sv_ai` + retention | 0030 | ✔ | Postgres schema `sv_ai` (migration 0001), purge theo `SV_AI_RETENTION_DAYS`; test Postgres thật (CI job `ai`) | T07 |
 | Studio Assistant panel (patch preview diff, confirmation card) | 0030 | ✔ | Claude Code 2026-10-07: BFF `/api/sv/ai/*`, đề xuất hiện trên canvas bằng diff view (Accept/Reject), thẻ xác nhận sửa được input; vitest 11; Playwright `m10-assistant` PASS CI 37567807281 | T08 |
-| System prompt + eval set 20 prompt (VI/EN) | 0030 | 🔄 | 6 lần đo trên Ollama `qwen3.5:9b` local: 65–80 % (hai lần cuối 80 %, 75 %) — chưa đạt ổn định ≥ 80 %; cần đo lại với provider cloud ([M10](reports/M10.md)) | T09 |
+| System prompt + eval set 20 prompt (VI/EN) | 0030 | ✔ (BYPASS) | Eval với LLM thật **bypass theo quyết định PO 2026-10-07** (chưa có API key; local 9B: 65–80 %) — đo lại khi có key. Thay bằng `eval/mcp-live.sh`: 13 tool qua MCP trên stack thật 36/36 PASS ([M10](reports/M10.md)) | T09 |
 | Bảo mật AI (no key xuống browser, rate limit, redact) | 0030 | ✔ | review: key chỉ trong container, `/status` không trả key, user từ session BFF, rate limit theo user, lỗi provider che key, license `ai.assistant` (fail closed) | T10 |
 
 ## M11 — Hardening → Release v1.0
@@ -266,8 +266,8 @@ ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/ad
 | Security checklist + fuzz + osv-scanner | — | 🔄 | 2026-10-07: osv-scanner (CI, digest ghim) — 6 module của dự án sạch sau nâng ajv/grpc-js; studio (deps fork Sim) 75 gói chờ T03; container `cap_drop: ALL` + `no-new-privileges`, compiler/catalog/codegen read-only | T06 |
 | Performance benchmark (validate/compile/simulate/SynCode) | — | ✔ | 2026-10-07 `gate/bench-nfr02.sh`: validate 200 khối p95 16 ms (< 300), simulate p95 39 ms (< 1 s), SynCode project mới 13 s, tăng dần p95 5,6 s (< 60 s) — [bằng chứng](reports/evidence/M11-bench-nfr02-local.json) | T07 |
 | Docs đầy đủ (user guide + dev docs) | — | 🔄 | 2026-10-07: [tutorial](user-guide/tutorial.md), [tham chiếu khối](user-guide/blocks.md) (sinh từ BlockSpec, CI kiểm), [BLOCK_SDK](dev/BLOCK_SDK.md), [ADD_NEW_BLOCK](dev/ADD_NEW_BLOCK.md), [BACKEND_PLUGIN](dev/BACKEND_PLUGIN.md), [OPERATIONS](dev/OPERATIONS.md); IR_SPEC/DIAGNOSTICS_CATALOG/RUNTIME_API có sẵn — chờ review PO | T08 |
-| Usability test 5 người (tutorial < 10') | — | ☐ | | T09 |
-| Release v1.0.0 (split repo, bootstrap, tag, lock, images, CHANGELOG) | 0002,0009 | ☐ | Nhận M00-T03; `release-split.sh`, `modules.sh`, `lock-verify.sh`, bootstrap + clone sạch | T10 |
+| Usability test 5 người (tutorial < 10') | — | ☐ | Cần 5 người thật — chờ PO tổ chức; kịch bản: [tutorial](user-guide/tutorial.md) (E2E tự động cùng kịch bản: 1,1 phút) | T09 |
+| Release v1.0.0 (split repo, bootstrap, tag, lock, images, CHANGELOG) | 0002,0009 | 🔄 | 2026-10-07: `bootstrap.sh` (lần 2: 28 s), `modules.sh` (lock tất định), `lock-verify.sh` (PASS; từ chối SHA sai), `release-split.sh` dry-run 10/10 module đúng cây, [CHANGELOG](../CHANGELOG.md) 1.0.0-rc.1. Tách repo/tag/publish image: hành động ra ngoài — chờ PO | T10 |
 
 **Exit checklist v1.0 (đủ cả 6 mới coi MVP xong):**
 - [ ] 7 golden workflow: simulate ✔, SynCode build ✔, generated tests ✔, live run ✔ trên databroker thật, parity ✔.
