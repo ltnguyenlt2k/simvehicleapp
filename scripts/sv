@@ -10,6 +10,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DC="docker compose"
+# Version info of every service (/version, System status): the checked-out commit.
+export SV_COMMIT="${SV_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 case "${1:-}" in
   build)
     $DC build contracts                           # build-only image consumed by core, toolchain agent, services

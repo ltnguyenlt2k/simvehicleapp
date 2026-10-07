@@ -9,6 +9,7 @@ services:
       additional_contexts:
         contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       # Data owner of schema `sv` in the stack's Postgres (ADR-0007 §4); it migrates the schema itself.
       SV_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
@@ -41,6 +42,7 @@ services:
       additional_contexts:
         contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       SV_TOOLCHAINS: ${SV_TOOLCHAINS:-cpp=http://toolchain-cpp:4210}
       SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
@@ -66,6 +68,7 @@ services:
       additional_contexts:
         contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       # One databroker per VSS release (ADR-0024 §6); the same map the orchestrator uses for runs.
       SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}

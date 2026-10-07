@@ -8,6 +8,7 @@ services:
       additional_contexts:
         contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       # Data owner of schema `sv_ai` in the stack's Postgres (ADR-0007 §4); it migrates the schema itself.
       SV_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp

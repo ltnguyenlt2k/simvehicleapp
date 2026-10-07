@@ -9,6 +9,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DC="docker compose"
+# Version info of every service (/version, System status): the checked-out commit.
+export SV_COMMIT="${SV_COMMIT:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 
 has_studio_image() {

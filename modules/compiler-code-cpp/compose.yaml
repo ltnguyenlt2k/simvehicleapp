@@ -9,6 +9,7 @@ services:
       additional_contexts:
         contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
     # Pure generator (ADR-0020 §3): read-only filesystem, no network egress (internal network only).

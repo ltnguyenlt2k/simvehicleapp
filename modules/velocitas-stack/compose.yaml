@@ -22,6 +22,7 @@ services:
       args:
         CONAN_JOBS: ${SV_CONAN_JOBS:-8}
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       # Toolchain agent on :4210 (internal only): jobs for the orchestrator (ADR-0025).
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}

@@ -44,6 +44,7 @@ services:
       context: .
       dockerfile: docker/app.Dockerfile
     environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
       NEXT_PUBLIC_APP_URL: ${SV_STUDIO_URL:-http://localhost:3000}
