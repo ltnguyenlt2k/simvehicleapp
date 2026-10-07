@@ -546,6 +546,21 @@ export interface BlockSpecV1 {
     in: string[];
     out: string[];
   };
+  /**
+   * Composite blocks only (category `composite`, opcode `vehicle.read`, ADR-0045): one `vehicle.read` per member, in order. `path` may hold `{prop}` placeholders replaced by that enum prop's value; `output` names a `$signal` output.
+   *
+   * @minItems 1
+   */
+  members?: [
+    {
+      output: string;
+      path: string;
+    },
+    ...{
+      output: string;
+      path: string;
+    }[]
+  ];
   migrations?: {
     from: number;
     to: number;

@@ -235,6 +235,23 @@ describe("BlockSpec v1", () => {
     delete (bad.props[1] as { enum?: unknown }).enum;
     expect(v.validate("block-spec", bad).valid).toBe(false);
   });
+  test("composite members (ADR-0045)", () => {
+    const composite = {
+      ...clone(spec),
+      type: "sv_door_status",
+      category: "composite",
+      title: "Door status",
+      priority: "P2",
+      props: [{ name: "door", kind: "enum", required: true, enum: ["Row1.DriverSide"], default: "Row1.DriverSide" }],
+      outputs: [{ name: "isOpen", type: "$signal" }],
+      members: [{ output: "isOpen", path: "Vehicle.Cabin.Door.{door}.IsOpen" }],
+    };
+    v.assert("block-spec", composite);
+    expect(v.validate("block-spec", { ...composite, category: "sensors" }).valid).toBe(false);
+    expect(v.validate("block-spec", { ...composite, opcode: "vehicle.write" }).valid).toBe(false);
+    expect(v.validate("block-spec", { ...composite, members: [{ output: "isOpen", path: "Cabin.Door" }] }).valid).toBe(false);
+    expect(v.validate("block-spec", { ...composite, members: [] }).valid).toBe(false);
+  });
 });
 
 describe("GeneratedFileSet v1", () => {

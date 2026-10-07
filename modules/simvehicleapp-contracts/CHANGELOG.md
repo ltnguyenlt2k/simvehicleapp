@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `schemas/block-spec.v1` (additive, M14 #1, ADR-0045): optional `members: [{output, path}]` for composite blocks (category `composite`, opcode `vehicle.read`) — the compiler desugars them into one `vehicle.read` per member; `path` may hold `{prop}` placeholders. Conformance `C39-composite-status`.
 - `openapi/orchestrator.v1.yaml` (additive, M09-T06): `POST /projects/{id}/export` — project zip with the workflow graphs, generation, license and notices.
 - `openapi/workspace.v1.yaml` (M09-T06): `exportProject` implemented — `generationId` optional (409 when the folder holds another one), `extraFiles` for `.simvehicleapp/**` and the notices.
 - `openapi/orchestrator.v1.yaml` (additive, M09-T07): `GET /entitlements`; project creation, SynCode and export answer 403 `not_entitled` when the license (`SV_LICENSE_MODE=enforce`) denies them.

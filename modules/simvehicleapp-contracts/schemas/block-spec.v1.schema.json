@@ -42,6 +42,20 @@
         "out": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/handleName" } }
       }
     },
+    "members": {
+      "description": "Composite blocks only (category `composite`, opcode `vehicle.read`, ADR-0045): one `vehicle.read` per member, in order. `path` may hold `{prop}` placeholders replaced by that enum prop's value; `output` names a `$signal` output.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["output", "path"],
+        "additionalProperties": false,
+        "properties": {
+          "output": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*$" },
+          "path": { "type": "string", "pattern": "^Vehicle(\\.([A-Za-z0-9_]+|\\{[a-z][A-Za-z0-9]*\\}))+$" }
+        }
+      }
+    },
     "migrations": {
       "type": "array",
       "items": {
@@ -55,6 +69,8 @@
       }
     }
   },
+  "if": { "required": ["members"] },
+  "then": { "properties": { "category": { "const": "composite" }, "opcode": { "const": "vehicle.read" } } },
   "$defs": {
     "handleName": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
     "prop": {

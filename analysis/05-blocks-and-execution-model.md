@@ -107,7 +107,7 @@ Thuộc tính chung `concurrency` ∈ `restart` (huỷ lần chạy cũ, chạy 
 ### 2.8 Composite
 | Block | Mô tả | P |
 |---|---|---|
-| `sv_semantic_*` | Block curated đa-VSS (Battery Status, Door/Lock Status, Climate Status) — định nghĩa trong package curated, desugar thành nhiều read/write | P2 |
+| `sv_battery_status`, `sv_door_status`, `sv_climate_status` | Block curated đa-VSS (category `composite`, BlockSpec `members`) — compiler desugar thành chuỗi `vehicle.read` ([ADR-0045](adr/ADR-0045-curated-multi-vss-blocks.md)); chỉ đọc | P2 |
 | `sv_call_workflow` | Gọi workflow khác như hàm (inputs/outputs) | P2 |
 
 ---

@@ -148,7 +148,7 @@ Cột "VSS ví dụ" lấy từ `vss_rel_4.0.json` thật (đã verify tồn t�
 | `sv_hmi_notify` | Comm | `webhook_request.ts` (desugar → mqtt_publish) | — |
 | `sv_grpc_call` | Comm | `api.ts` (UI chọn method/tham số, M14) | — |
 | `sv_call_workflow` | Composite | `workflow.ts`/`workflow_input.ts` (M14) | — |
-| `sv_semantic_*` | Composite | *(curated thủ công, M14)* | ví dụ "Battery Status" gộp `Vehicle.Powertrain.TractionBattery.StateOfCharge.{Current,Displayed}` |
+| `sv_battery_status`, `sv_door_status`, `sv_climate_status` | Composite | *(curated thủ công, M14, [ADR-0045](adr/ADR-0045-curated-multi-vss-blocks.md))* | vd. "Battery status" gộp `TractionBattery.StateOfCharge.Current`, `CurrentVoltage`, `CurrentCurrent`, `Charging.IsCharging` |
 
 ---
 
