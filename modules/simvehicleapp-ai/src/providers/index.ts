@@ -1,11 +1,12 @@
 import { anthropicProvider } from "./anthropic.ts";
+import { fakeProvider } from "./fake.ts";
 import { geminiProvider } from "./gemini.ts";
 import { openaiProvider } from "./openai.ts";
 import type { LlmProvider } from "./types.ts";
 
 /**
  * Provider from the environment (ADR-0030 §2): `SV_AI_PROVIDER` (anthropic | openai | openai-compatible |
- * ollama | gemini) + `SV_AI_MODEL`, keys from `.env`. Returns why when it is not configured, so the chat
+ * ollama | gemini | fake) + `SV_AI_MODEL`, keys from `.env`. Returns why when it is not configured, so the chat
  * says so instead of failing late.
  */
 export function providerFromEnv(env: Record<string, string | undefined>): LlmProvider | { error: string } {
@@ -30,8 +31,11 @@ export function providerFromEnv(env: Record<string, string | undefined>): LlmPro
       if (!env.GEMINI_API_KEY) return { error: "GEMINI_API_KEY is not set" };
       if (!model) return { error: "SV_AI_MODEL is not set (the Gemini model to use)" };
       return geminiProvider({ apiKey: env.GEMINI_API_KEY, model });
+    case "fake":
+      // Simulated assistant: no model, no network (small machines, demos, E2E).
+      return fakeProvider();
     case "":
-      return { error: "No AI provider configured: set SV_AI_PROVIDER (anthropic, openai, openai-compatible, ollama, gemini) in .env" };
+      return { error: "No AI provider configured: set SV_AI_PROVIDER (anthropic, openai, openai-compatible, ollama, gemini, fake) in .env" };
     default:
       return { error: `Unknown SV_AI_PROVIDER "${kind}"` };
   }

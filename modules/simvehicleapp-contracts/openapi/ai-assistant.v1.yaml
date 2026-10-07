@@ -47,7 +47,7 @@ paths:
                 required: [configured, externalServers]
                 properties:
                   configured: { type: boolean }
-                  provider: { type: string, enum: [anthropic, openai, openai-compatible, ollama, gemini] }
+                  provider: { type: string, enum: [anthropic, openai, openai-compatible, ollama, gemini, fake] }
                   model: { type: string }
                   reason: { type: string, description: "Why no provider is configured." }
                   externalServers: { type: array, items: { type: string } }

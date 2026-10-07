@@ -8,6 +8,7 @@ import { createAssistantHandler, type Entitlement, entitlementFrom, RateLimiter 
 import { connectExternal, createMcpHandler, extName, sameSecret } from "./mcp.ts";
 import { applyPatch, asciiOperators, emptyGraph, normalizeName, repairOps, type WorkflowGraph } from "./patch.ts";
 import { anthropicProvider } from "./providers/anthropic.ts";
+import { fakeProvider, plan } from "./providers/fake.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
 import { type LlmProvider, type Message, ProviderError, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
@@ -195,6 +196,24 @@ describe("WorkflowPatch v1 (M10-T05)", () => {
   test("VSS search terms: everyday words map to VSS spellings", () => {
     expect(vssTerms("rear left door open")).toEqual(["rear", "Row2", "left", "DriverSide", "door", "open", "IsOpen"]);
     expect(vssTerms("Vehicle.Battery.Soc")).toEqual(["Battery", "StateOfCharge", "Soc"]);
+  });
+
+  test("simulated provider: plans apply cleanly, names stay unique, VI/EN, run goes through the confirmation gate", async () => {
+    const system = 'Open workflow: id wf, VSS v4.0. Blocks: b1 "Speed changed" (sv_on_signal_changed). Edges: none.\nProject: id p1, VSS v4.0.';
+    for (const q of ["Turn on the hazard lights when the speed stays above 120 km/h for 2 seconds", "Cảnh báo HMI khi pin dưới 20% lúc xe đang chạy", "Ghi log khi ứng dụng khởi động"]) {
+      const p = plan(q, system)!;
+      expect(p).not.toBeNull();
+      expect(applyPatch(base(), p.ops as never).problems).toEqual([]);
+    }
+    const hazard = plan("Turn on the hazard lights when the speed stays above 120 km/h for 2 seconds", system)!;
+    expect(hazard.ops[0]).toMatchObject({ name: "Speed changed 2" }); // "Speed changed" is taken
+    expect(hazard.ops[1]).toMatchObject({ type: "sv_stable_for", props: { condition: "<speedchanged2.value> > 120", durationMs: 2000 } });
+    expect(plan("Cảnh báo HMI khi pin dưới 20% lúc xe đang chạy", system)!.ops[1]).toMatchObject({ props: { condition: "<batterychanged.value> < 20 && <Vehicle.IsMoving>" } });
+    const fake = fakeProvider();
+    const run = await fake.streamTurn({ system, tools: [], messages: [{ role: "user", content: "Chạy app" }] });
+    expect(run.content).toEqual([expect.objectContaining({ type: "tool_use", name: "run_start", input: { projectId: "p1" } })]);
+    const help = await fake.streamTurn({ system, tools: [], messages: [{ role: "user", content: "hello" }] });
+    expect(help).toMatchObject({ stopReason: "end_turn", content: [{ text: expect.stringContaining("SV_AI_PROVIDER=fake") }] });
   });
 
   test("new edge ids never repeat an existing one (after a removal)", () => {
