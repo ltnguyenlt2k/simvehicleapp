@@ -475,7 +475,7 @@ jobs:
             const must = (c, m) => { if (!c) { console.error("FAIL", m); process.exit(1); } console.log("ok", m); };
             must((await fetch("http://127.0.0.1:4110/capabilities")).status === 401, "no secret => 401");
             const caps = await (await fetch("http://127.0.0.1:4110/capabilities", { headers: h })).json();
-            must(caps.id === "cpp" && caps.opcodes.length === 24, "capabilities: cpp, 24 opcodes");
+            must(caps.id === "cpp" && caps.opcodes.length === 25 && caps.opcodes.includes("state.filter"), "capabilities: cpp, 25 opcodes incl. state.filter");
             let egress = "blocked";
             try { await fetch("https://github.com", { signal: AbortSignal.timeout(5000) }); egress = "OPEN"; } catch {}
             must(egress === "blocked", "no network egress (internal network)");
@@ -501,7 +501,7 @@ jobs:
             const must = (c, m) => { if (!c) { console.error("FAIL", m); process.exit(1); } console.log("ok", m); };
             must((await fetch("http://127.0.0.1:4120/capabilities")).status === 401, "no secret => 401");
             const caps = await (await fetch("http://127.0.0.1:4120/capabilities", { headers: h })).json();
-            must(caps.id === "python" && caps.opcodes.length === 24, "capabilities: python, 24 opcodes");
+            must(caps.id === "python" && caps.opcodes.length === 25 && caps.opcodes.includes("state.filter"), "capabilities: python, 25 opcodes incl. state.filter");
             const rt = await (await fetch("http://127.0.0.1:4120/runtime/files", { headers: h })).json();
             must(rt.files.some((f) => f.path === "app/src/simvehicleapp-runtime/simvehicleapp_runtime/runtime.py") && !rt.files.some((f) => /__pycache__|\/tests\//.test(f.path)), "runtime bundle: package, no tests/caches");
             let egress = "blocked";
