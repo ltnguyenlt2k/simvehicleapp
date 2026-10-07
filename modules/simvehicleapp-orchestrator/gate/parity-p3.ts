@@ -182,7 +182,7 @@ export function withinScenario(expected: TraceEvent[], actual: TraceEvent[], unt
 
 async function main() {
   const goldens = readdirSync(ROOT).filter((d) => /^GW-[A-Z]$/.test(d) && (!only.length || only.includes(d))).sort();
-  let p = await (await post(`${O}/projects`, { slug, name: "Parity P3", language: "cpp", vssRelease: "v4.0", settings: { traceLevel: "node" } })).json();
+  let p = await (await post(`${O}/projects`, { slug, name: "Parity P3", language: process.env.SV_PARITY_LANGUAGE ?? "cpp", vssRelease: "v4.0", settings: { traceLevel: "node" } })).json();
   while (p.status === "creating") {
     await Bun.sleep(2000);
     p = await get(`${O}/projects/${p.id}`);

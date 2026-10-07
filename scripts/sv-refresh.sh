@@ -65,6 +65,8 @@ $DC build studio-migrations studio-realtime
 $DC build contracts
 $DC build vss-catalog compiler codegen-cpp
 $DC build orchestrator workspace signal-gateway toolchain-cpp ai-assistant
+# Python backend when the `python` profile is on (ADR-0040): only its agent layer rebuilds, like toolchain-cpp.
+if $DC config --services | grep -qx toolchain-python; then $DC build codegen-python toolchain-python; fi
 $DC up -d
 # Keep the running studio image and the previous one (rollback); older sha-* tags are ~2 GB each.
 # Only image tags are removed — never containers or volumes.
