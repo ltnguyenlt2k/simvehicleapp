@@ -86,7 +86,7 @@ paths:
       tags: [templates]
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
-        - { name: lang, in: query, required: true, schema: { enum: [cpp, python] } }
+        - { name: lang, in: query, required: true, schema: { enum: [cpp, python, rust] } }
       responses:
         "200":
           description: Template tar (vendored template + seeded Velocitas state).

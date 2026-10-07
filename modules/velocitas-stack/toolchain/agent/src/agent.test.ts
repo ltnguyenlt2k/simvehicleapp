@@ -149,7 +149,8 @@ describe("HTTP API (openapi/toolchain.v1.yaml)", () => {
     const run = await (await post({ kind: "run", project: "p" })).json();
     expect((await post({ kind: "run", project: "p" })).status).toBe(409);
     await handler(new Request(`http://x/jobs/${run.id}/cancel`, { method: "POST" }), ctx);
-    expect((await handler(new Request("http://x/templates?lang=rust"), ctx)).status).toBe(400);
+    expect((await handler(new Request("http://x/templates?lang=go"), ctx)).status).toBe(400);
+    expect((await handler(new Request("http://x/templates?lang=rust"), ctx)).status).toBe(404); // a language this toolchain does not seed
     expect((await handler(new Request("http://x/templates?lang=python"), ctx)).status).toBe(404);
   });
 });
