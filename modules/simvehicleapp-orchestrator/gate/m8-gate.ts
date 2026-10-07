@@ -92,7 +92,8 @@ must((await set("Vehicle.Speed", 130)).ok, "inject Speed 130, held 3 s");
 await Bun.sleep(3000);
 const on = updates.find((u) => u.path === HAZARD && u.field === "target" && u.value === true && u.ts >= injectedAt - 50);
 must(on, `Hazard.IsSignaling target became true ${on ? `${on.ts - injectedAt} ms after Speed 130 (Stable for 2 s)` : ""}`);
-must(updates.some((u) => u.path === HAZARD && u.field === "value" && u.value === true), "Hazard current value follows the target (gateway mirror)");
+const mirrored = updates.find((u) => u.path === HAZARD && u.field === "value" && u.value === true && u.ts >= injectedAt - 50);
+must(mirrored, `Hazard current value follows the target ${mirrored && on ? `(${mirrored.ts - on.ts} ms after, gateway mirror)` : ""}`);
 ctl.abort();
 
 // 4. the run's events: trace n2 → n3 on blocks b2/b3, logs; resume after Last-Event-ID (the run is

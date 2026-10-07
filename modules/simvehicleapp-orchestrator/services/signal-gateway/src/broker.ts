@@ -37,10 +37,12 @@ type ApiError = { code?: number; reason?: string; message?: string } | null | un
 
 const FIELD = { value: "FIELD_VALUE", target: "FIELD_ACTUATOR_TARGET" } as const;
 
-function updatesOf(entry: Entry | undefined, now: number): BrokerUpdate[] {
+/** Updates of an entry; `changed` (a subscription's `fields`) limits them to what changed. */
+function updatesOf(entry: Entry | undefined, now: number, changed?: string[]): BrokerUpdate[] {
   if (!entry?.path) return [];
   const out: BrokerUpdate[] = [];
   for (const [field, dp] of [["value", entry.value], ["target", entry.actuator_target]] as const) {
+    if (changed && !changed.includes(FIELD[field])) continue;
     if (dp && typeof dp.value === "string") out.push({ path: entry.path, field, value: fromDatapoint(dp), ts: timestampMs(dp.timestamp as never) ?? now });
   }
   return out;
@@ -65,10 +67,14 @@ export function grpcBroker(address: string, now: () => number = Date.now): Broke
         reject(err.code === grpc.status.UNAVAILABLE || err.code === grpc.status.DEADLINE_EXCEEDED ? new BrokerUnavailable(`databroker ${address}: ${err.details}`) : new BrokerRejected(err.details || err.message));
       }),
     );
-  const entries = (paths: string[], targets: string[]) => [
-    ...paths.map((path) => ({ path, view: "VIEW_CURRENT_VALUE", fields: [FIELD.value] })),
-    ...targets.map((path) => ({ path, view: "VIEW_TARGET_VALUE", fields: [FIELD.target] })),
-  ];
+  // One entry per path with every field wanted: the databroker keeps one entry per path, so a second
+  // entry (value + target as two entries) silently drops the first (found by the M8 live E2E).
+  const entries = (paths: string[], targets: string[]) =>
+    [...new Set([...paths, ...targets])].map((path) => ({
+      path,
+      view: "VIEW_FIELDS",
+      fields: [...(paths.includes(path) ? [FIELD.value] : []), ...(targets.includes(path) ? [FIELD.target] : [])],
+    }));
   return {
     async get(paths, targets) {
       const res = await unary<{ entries?: Entry[]; error?: ApiError; errors?: { path?: string; error?: ApiError }[] }>("Get", { entries: entries(paths, targets) });
@@ -83,9 +89,9 @@ export function grpcBroker(address: string, now: () => number = Date.now): Broke
     },
     subscribe(paths, targets, onUpdates, onError) {
       const call = client.Subscribe({ entries: entries(paths, targets) });
-      call.on("data", (res: { updates?: { entry?: Entry }[] }) => {
+      call.on("data", (res: { updates?: { entry?: Entry; fields?: string[] }[] }) => {
         const t = now();
-        const updates = (res.updates ?? []).flatMap((u) => updatesOf(u.entry, t));
+        const updates = (res.updates ?? []).flatMap((u) => updatesOf(u.entry, t, u.fields?.length ? u.fields : undefined));
         if (updates.length) onUpdates(updates);
       });
       call.on("error", (err: grpc.ServiceError) => {
