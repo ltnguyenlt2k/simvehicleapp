@@ -1,4 +1,4 @@
-import type { LlmProvider } from "./providers/types.ts";
+import { type LlmProvider, ProviderError } from "./providers/types.ts";
 import type { ContentBlock, Message, TextBlock, ToolResultBlock, ToolUseBlock } from "./providers/types.ts";
 import type { PendingAction, Store } from "./store.ts";
 import { missingRequired, type Proposal, runTool, type Tool, type ToolContext } from "./tools.ts";
@@ -74,7 +74,13 @@ export async function runTurn(d: AgentDeps, conversationId: string, userContent:
   try {
     while (steps < d.maxSteps) {
       steps++;
-      const result = await d.provider.streamTurn({ system: d.system, tools: d.tools.map(({ name, description, input_schema }) => ({ name, description, input_schema })), messages, onText: (delta) => emit({ event: "text", data: { delta } }), signal });
+      const request = { system: d.system, tools: d.tools.map(({ name, description, input_schema }) => ({ name, description, input_schema })), messages, onText: (delta: string) => emit({ event: "text", data: { delta } }), signal };
+      // A provider error before anything streamed (5xx — e.g. Ollama failing to parse the model's
+      // tool call) is retried once; the user sees nothing of the failed attempt.
+      const result = await d.provider.streamTurn(request).catch((e: unknown) => {
+        if (e instanceof ProviderError && (e.status ?? 0) >= 500 && !signal?.aborted) return d.provider.streamTurn(request);
+        throw e;
+      });
       const assistant: Message = { role: "assistant", content: result.content.length ? result.content : [{ type: "text", text: "" }] };
       messages = [...messages, assistant];
       await d.store.append(conversationId, [assistant]);

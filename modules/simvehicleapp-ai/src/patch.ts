@@ -117,13 +117,23 @@ export function applyPatch(base: WorkflowGraph, ops: readonly PatchOp[], titleOf
  * normalized name (`<socchanged.value>`), in the ops' props: the compiler resolves names only. A token
  * that already is a block name, or a VSS path (`<Vehicle.…>`), is kept.
  */
+/**
+ * Operators of an expression as the language spells them: models HTML-escape them (`&amp;&amp;`,
+ * `&gt;`) or use ≥ ≤ ≠. Only strings holding a reference (`<…>`, i.e. expressions/templates) change.
+ */
+export function asciiOperators(v: string): string {
+  const escaped = v.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  if (!/<[A-Za-z_][^<>]*>/.test(escaped)) return v;
+  return escaped.replace(/≥/g, ">=").replace(/≤/g, "<=").replace(/≠/g, "!=");
+}
+
 export function referencesByName(base: WorkflowGraph, ops: readonly PatchOp[], titleOf?: (type: string) => string): PatchOp[] {
   const { graph } = applyPatch(base, ops, titleOf);
   const names = new Set(graph.blocks.map((b) => normalizeName(b.name)));
   const byId = new Map(graph.blocks.map((b) => [b.id, normalizeName(b.name)]));
   const rewrite = (v: unknown): unknown => {
     if (typeof v === "string")
-      return v.replace(/<([A-Za-z0-9_][A-Za-z0-9_:-]*)\.(?=[A-Za-z_])/g, (all, token: string) => (names.has(token) || !byId.has(token) ? all : `<${byId.get(token)}.`));
+      return asciiOperators(v).replace(/<([A-Za-z0-9_][A-Za-z0-9_:-]*)\.(?=[A-Za-z_])/g, (all, token: string) => (names.has(token) || !byId.has(token) ? all : `<${byId.get(token)}.`));
     if (Array.isArray(v)) return v.map(rewrite);
     if (v && typeof v === "object") return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, rewrite(x)]));
     return v;
@@ -155,12 +165,25 @@ export interface HandleSpec {
  * and a connect from a handle the source does not have uses its only output handle (or then/else for
  * true/false). Nothing is guessed when more than one handle could be meant.
  */
-export function repairOps(base: WorkflowGraph, ops: readonly PatchOp[], specs: readonly HandleSpec[]): { ops: PatchOp[]; fixes: string[] } {
+export function repairOps(base: WorkflowGraph, opsIn: readonly PatchOp[], specs: readonly HandleSpec[], previous: readonly PatchOp[] = []): { ops: PatchOp[]; fixes: string[] } {
+  const fixes: string[] = [];
+  // Each proposal is the complete change, but models often send only what changed since their last
+  // one: blocks referenced here and added by the previous proposal of the turn are added again.
+  const known = new Set([...base.blocks.map((b) => b.id), ...opsIn.flatMap((o) => (o.op === "add_block" ? [o.ref] : []))]);
+  const referenced = opsIn.flatMap((o) => (o.op === "connect" ? [o.from, o.to] : o.op === "set_props" || o.op === "remove_block" ? [o.block] : []));
+  const carried = previous.filter((o): o is Extract<PatchOp, { op: "add_block" }> => o.op === "add_block" && referenced.includes(o.ref) && !known.has(o.ref));
+  if (carried.length) fixes.push(`kept from your previous proposal: ${carried.map((o) => o.ref).join(", ")} (send the complete ops each time)`);
+  // Blocks are added before they are connected or changed, whatever the order the model wrote.
+  const all = [...carried, ...opsIn];
+  const adds = all.filter((o) => o.op === "add_block");
+  const firstOther = all.findIndex((o) => o.op !== "add_block");
+  const outOfOrder = firstOther >= 0 && all.slice(firstOther).some((o) => o.op === "add_block");
+  const ops = outOfOrder ? [...adds, ...all.filter((o) => o.op !== "add_block")] : all;
+  if (ops !== all && !carried.length) fixes.push("add_block ops moved before the ops that use them");
   const typeOf = new Map(base.blocks.map((b) => [b.id, b.type]));
   for (const op of ops) if (op.op === "add_block") typeOf.set(op.ref, op.type);
   const outs = (id: string) => specs.find((s) => s.type === typeOf.get(id))?.handles?.out ?? ["source"];
   const isTrigger = (id: string) => (typeOf.get(id) ?? "").startsWith("sv_on_");
-  const fixes: string[] = [];
   const repaired = ops.map((op, i) => {
     if (op.op !== "connect") return op;
     let c = { ...op };

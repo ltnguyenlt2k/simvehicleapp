@@ -30,6 +30,8 @@ export interface ToolContext {
   conversationId: string;
   workflow?: { workflowId: string; name?: string; vssRelease: string; graph?: WorkflowGraph };
   project?: { id: string; vssRelease: string; graphs?: WorkflowGraph[]; scenarios?: { workflowId: string; scenario: unknown }[] };
+  /** Ops of the turn's previous proposal (models often send only the change since it). */
+  lastOps?: PatchOp[];
 }
 
 export interface Proposal {
@@ -120,6 +122,41 @@ const OP_SCHEMA = {
   required: ["op"],
 };
 
+/**
+ * Ops a model sent as a string: the JSON array itself, or the array followed by the rest of the
+ * tool input (`[…], "rationale": "…"}`), which some models emit. Anything else stays unparsed.
+ */
+export function opsFromString(text: string, input: Record<string, unknown>): unknown {
+  for (const candidate of [text, `{"ops":${text}`]) {
+    try {
+      const v = JSON.parse(candidate) as unknown;
+      if (Array.isArray(v)) return v;
+      if (v && typeof v === "object" && Array.isArray((v as { ops?: unknown }).ops)) {
+        const r = (v as { rationale?: unknown }).rationale;
+        if (typeof r === "string" && input.rationale === undefined) input.rationale = r;
+        return (v as { ops: unknown[] }).ops;
+      }
+    } catch {
+      /* next form */
+    }
+  }
+  return text;
+}
+
+const VSS_WORDS: Record<string, string[]> = {
+  rear: ["Row2"], back: ["Row2"], front: ["Row1"], left: ["DriverSide"], right: ["PassengerSide"],
+  driver: ["DriverSide"], passenger: ["PassengerSide"], open: ["IsOpen"], opens: ["IsOpen"], opened: ["IsOpen"],
+  lock: ["IsLocked"], locked: ["IsLocked"], unlock: ["IsLocked"], moving: ["IsMoving"], battery: ["StateOfCharge"],
+  charge: ["StateOfCharge"], soc: ["StateOfCharge"], outside: ["Exterior"], ambient: ["Exterior"], hazard: ["Hazard"],
+  heating: ["Heating"], defrost: ["Heating"],
+};
+
+/** Search terms of a VSS query: its words (no filler) and their VSS spellings. */
+export function vssTerms(query: string): string[] {
+  const words = query.split(/[^A-Za-z0-9]+/).filter((w) => w.length > 2 && !/^(vehicle|the|and|when|signal|state|is)$/i.test(w));
+  return [...new Set(words.flatMap((w) => [w, ...(VSS_WORDS[w.toLowerCase()] ?? [])]))].slice(0, 8);
+}
+
 export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
   const releaseOf = (ctx: ToolContext, input?: Record<string, unknown>) => str(input?.release) ?? ctx.workflow?.vssRelease ?? ctx.project?.vssRelease ?? "v4.0";
   /** The draft the chat works on: the editor's graph, else an empty one. */
@@ -140,14 +177,14 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
           return ((await services.get("catalog", `/search?${q}`)) as { nodes: Node[] }).nodes.filter((n) => n.kind !== "branch");
         };
         const query = String(input.query ?? "").trim();
-        let nodes = await search(query);
-        if (!nodes.length) {
-          // A guessed path ("Vehicle.Battery.Soc") or several words: search each word, rank by matches.
-          const words = [...new Set(query.split(/[^A-Za-z0-9]+/).filter((w) => w.length > 2 && !/^vehicle$/i.test(w)))].slice(0, 5);
-          const hits = new Map<string, { node: Node; n: number }>();
-          for (const w of words) for (const node of await search(w)) hits.set(node.path, { node, n: (hits.get(node.path)?.n ?? 0) + 1 });
-          nodes = [...hits.values()].sort((a, b) => b.n - a.n || a.node.path.length - b.node.path.length).map((h) => h.node);
-        }
+        // Everyday words → VSS vocabulary (rear door ⇒ Row2, left ⇒ DriverSide…); every term is also
+        // searched alone and nodes are ranked by how many terms their path holds.
+        const terms = vssTerms(query);
+        const hits = new Map<string, Node>();
+        for (const node of await search(query)) hits.set(node.path, node);
+        for (const t of terms) for (const node of await search(t)) if (!hits.has(node.path)) hits.set(node.path, node);
+        const score = (n: Node) => terms.filter((t) => n.path.toLowerCase().includes(t.toLowerCase())).length;
+        let nodes = [...hits.values()].sort((a, b) => score(b) - score(a) || a.path.length - b.path.length);
         nodes = nodes.slice(0, 15);
         if (!nodes.length) return { text: `No signal matches "${input.query}". Try other words (English VSS names: Speed, StateOfCharge, IsMoving…).` };
         return { text: nodes.map((n) => `${n.path} — ${n.kind}${n.datatype ? ` ${n.datatype}` : ""}${n.unit ? ` [${n.unit}]` : ""}${n.allowed ? ` allowed ${JSON.stringify(n.allowed)}` : ""}: ${(n.description ?? "").slice(0, 120)}`).join("\n") };
@@ -193,18 +230,13 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         if (!base) return err("No workflow is open: a patch needs the workflow open in the editor.");
         // Some models send the ops array as a JSON string.
         let opsIn: unknown = input.ops;
-        if (typeof opsIn === "string") {
-          try {
-            opsIn = JSON.parse(opsIn);
-          } catch {
-            /* reported below */
-          }
-        }
+        if (typeof opsIn === "string") opsIn = opsFromString(opsIn, input);
         const raw = Array.isArray(opsIn) ? (opsIn as PatchOp[]) : [];
         if (!raw.length) return err("ops must be a non-empty array of WorkflowPatch v1 ops.");
         const specs = await blocks.specs().catch(() => [] as BlockSpec[]);
         const title = (t: string) => specs.find((s) => s.type === t)?.title ?? t;
-        const repaired = repairOps(base, raw, specs);
+        const repaired = repairOps(base, raw, specs, ctx.lastOps);
+        ctx.lastOps = repaired.ops;
         const ops = referencesByName(base, repaired.ops, title);
         const { graph, problems } = applyPatch(base, ops, title);
         if (problems.length) return err(`The patch cannot be applied:\n${problems.join("\n")}`);

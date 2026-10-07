@@ -6,14 +6,14 @@ import { fixturesDir } from "@simvehicleapp/contracts";
 import { normalizeHistory } from "./agent.ts";
 import { createAssistantHandler, type Entitlement, entitlementFrom, RateLimiter } from "./app.ts";
 import { connectExternal, createMcpHandler, extName, sameSecret } from "./mcp.ts";
-import { applyPatch, emptyGraph, normalizeName, repairOps, type WorkflowGraph } from "./patch.ts";
+import { applyPatch, asciiOperators, emptyGraph, normalizeName, repairOps, type WorkflowGraph } from "./patch.ts";
 import { anthropicProvider } from "./providers/anthropic.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
-import { type LlmProvider, type Message, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
+import { type LlmProvider, type Message, ProviderError, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
 import type { Services } from "./services.ts";
 import { MemoryStore } from "./store.ts";
-import { BlockCatalog, createTools, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
+import { BlockCatalog, createTools, opsFromString, vssTerms, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
 
 const servers: { stop(force?: boolean): void }[] = [];
 afterAll(() => servers.forEach((s) => s.stop(true)));
@@ -154,11 +154,45 @@ describe("WorkflowPatch v1 (M10-T05)", () => {
       { op: "connect", from: "i", fromHandle: "true", to: "c" },
       { op: "connect", from: "i", fromHandle: "maybe", to: "c" },
     ], specs);
-    expect(ops[1]).toEqual({ op: "connect", from: "b1", fromHandle: "source", to: "c" });
+    // (add_block ops are hoisted first: c, i, then the four connects in order)
+    expect(ops[2]).toEqual({ op: "connect", from: "b1", fromHandle: "source", to: "c" });
     expect(ops[3]).toMatchObject({ from: "c", fromHandle: "source" });
     expect(ops[4]).toMatchObject({ from: "i", fromHandle: "then" });
     expect(ops[5]).toMatchObject({ fromHandle: "maybe" }); // ambiguous: left for the compiler to report
-    expect(fixes).toHaveLength(3);
+    expect(fixes).toHaveLength(4);
+  });
+
+  test("ops sent as a string: the array, or the array followed by the rest of the input", () => {
+    const op = { op: "add_block", ref: "x", type: "sv_log", props: {} };
+    expect(opsFromString(JSON.stringify([op]), {})).toEqual([op]);
+    const input: Record<string, unknown> = {};
+    expect(opsFromString(`${JSON.stringify([op])}, "rationale": "log it"}`, input)).toEqual([op]);
+    expect(input.rationale).toBe("log it");
+    expect(opsFromString("not json", {})).toBe("not json");
+  });
+
+  test("repairs: add_block before use; blocks referenced from the previous proposal are kept", () => {
+    const hoisted = repairOps(base(), [
+      { op: "connect", from: "b1", fromHandle: "source", to: "x" },
+      { op: "add_block", ref: "x", type: "sv_log", props: {} },
+    ], []);
+    expect(hoisted.ops.map((o) => o.op)).toEqual(["add_block", "connect"]);
+    expect(applyPatch(base(), hoisted.ops).problems).toEqual([]);
+    const previous = [{ op: "add_block" as const, ref: "x", type: "sv_log", props: { message: "hi" } }];
+    const carried = repairOps(base(), [{ op: "connect", from: "b1", fromHandle: "source", to: "x" }], [], previous);
+    expect(carried.ops).toEqual([previous[0]!, { op: "connect", from: "b1", fromHandle: "source", to: "x" }]);
+    expect(carried.fixes[0]).toContain("previous proposal");
+  });
+
+  test("expression operators: HTML entities and ≥ ≤ ≠ become ASCII; plain text is left alone", () => {
+    expect(asciiOperators("<Vehicle.Speed> &gt; 0 &amp;&amp; <Vehicle.IsMoving>")).toBe("<Vehicle.Speed> > 0 && <Vehicle.IsMoving>");
+    expect(asciiOperators("<Vehicle.Speed> ≥ 120")).toBe("<Vehicle.Speed> >= 120");
+    expect(asciiOperators("Tom &amp; Jerry ≥ 2")).toBe("Tom &amp; Jerry ≥ 2");
+  });
+
+  test("VSS search terms: everyday words map to VSS spellings", () => {
+    expect(vssTerms("rear left door open")).toEqual(["rear", "Row2", "left", "DriverSide", "door", "open", "IsOpen"]);
+    expect(vssTerms("Vehicle.Battery.Soc")).toEqual(["Battery", "StateOfCharge", "Soc"]);
   });
 
   test("new edge ids never repeat an existing one (after a removal)", () => {
@@ -219,14 +253,14 @@ function fakeServices(log: string[] = []): Services {
 const graph0 = (): WorkflowGraph => ({ ...emptyGraph("wf1", "Comfort", "v4.0"), blocks: [{ id: "b1", type: "sv_on_app_start", name: "Start", props: {} }] });
 const turnCtx = { workflow: { workflowId: "wf1", name: "Comfort", vssRelease: "v4.0", graph: graph0() }, project: { id: "p1", vssRelease: "v4.0" } };
 
-async function chatApp(turns: TurnResult[], opts: { rate?: number; entitled?: () => Promise<Entitlement> } = {}) {
+async function chatApp(turns: TurnResult[], opts: { rate?: number; entitled?: () => Promise<Entitlement>; provider?: LlmProvider } = {}) {
   const store = new MemoryStore();
   const log: string[] = [];
   const services = fakeServices(log);
   const blocks = new BlockCatalog(services);
   const provider = scripted(turns);
   let n = 0;
-  const h = createAssistantHandler({ provider, store, tools: createTools(services, blocks), blocks, external: [], maxSteps: 6, ratePerMinute: opts.rate ?? 20, pendingTtlMs: 60_000, newId: () => `id${++n}`, ...(opts.entitled ? { entitled: opts.entitled } : {}) });
+  const h = createAssistantHandler({ provider: opts.provider ?? provider, store, tools: createTools(services, blocks), blocks, external: [], maxSteps: 6, ratePerMinute: opts.rate ?? 20, pendingTtlMs: 60_000, newId: () => `id${++n}`, ...(opts.entitled ? { entitled: opts.entitled } : {}) });
   const call = async (path: string, body: unknown, user = "u1") => h(new Request(`http://ai${path}`, { method: "POST", headers: { "x-sv-user-id": user, "content-type": "application/json" }, body: JSON.stringify(body) }), ctx);
   const events = async (res: Response) =>
     (await res.text())
@@ -311,6 +345,28 @@ describe("agent loop + /chat (M10-T04, ADR-0030 §6 verification)", () => {
     expect((await down.call("/chat", { message: "hi" })).status).toBe(503);
     const ok = await chatApp([{ content: [{ type: "text", text: "Hello" }], stopReason: "end_turn" }], { entitled: () => entitlementFrom(async () => ({ allowed: true, reason: "" })) });
     expect((await ok.call("/chat", { message: "hi", context: turnCtx })).status).toBe(200);
+  });
+
+  test("a provider 5xx before streaming is retried once; a second one ends the turn with an error", async () => {
+    let calls = 0;
+    const flaky = (failures: number): LlmProvider => ({
+      name: "flaky",
+      model: "m",
+      async streamTurn() {
+        calls++;
+        if (calls <= failures) throw new ProviderError("ollama 500: XML syntax error", 500);
+        return { content: [{ type: "text", text: "Hi" }], stopReason: "end_turn" };
+      },
+    });
+    const once = await chatApp([], { provider: flaky(1) });
+    const ok = await once.events(await once.call("/chat", { message: "hi", context: turnCtx }));
+    expect(ok.some((e) => e.event === "error")).toBe(false);
+    expect(calls).toBe(2);
+    calls = 0;
+    const twice = await chatApp([], { provider: flaky(2) });
+    const failed = await twice.events(await twice.call("/chat", { message: "hi", context: turnCtx }));
+    expect(failed.find((e) => e.event === "error")?.data).toMatchObject({ message: expect.stringContaining("500") });
+    expect(calls).toBe(2);
   });
 
   test("rate limit per user: the 21st message in a minute is refused, another user is not affected", async () => {
