@@ -9,6 +9,7 @@ import { useSvAiConversations, useSvAiStatus } from '@/hooks/queries/sv-ai'
 import { type SvAiItem, useSvAssistantStore } from '@/stores/sv/assistant/store'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useWorkflowDiffStore } from '@/stores/workflow-diff'
+import { useWorkflowRegistry } from '@/stores/workflows/registry/store'
 
 /**
  * Assistant panel (M10-T08, ADR-0030): chat about the open workflow. The assistant only proposes
@@ -17,7 +18,11 @@ import { useWorkflowDiffStore } from '@/stores/workflow-diff'
  */
 export function SvAssistantPanel() {
   const workflowId = useSvLintStore((s) => s.workflowId)
-  const graphReady = useSvLintStore((s) => Boolean(s.graphJson))
+  const activeWorkflowId = useWorkflowRegistry((s) => s.activeWorkflowId)
+  /** The loaded graph of the open workflow (not the previous one's while switching). */
+  const graphReady = useSvLintStore(
+    (s) => Boolean(s.graphJson) && s.workflowId === activeWorkflowId
+  )
   const items = useSvAssistantStore((s) => s.items)
   const streaming = useSvAssistantStore((s) => s.streaming)
   const conversationId = useSvAssistantStore((s) => s.conversationId)

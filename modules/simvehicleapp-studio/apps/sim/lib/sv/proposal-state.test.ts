@@ -7,7 +7,7 @@ import type { BlockState, WorkflowState } from '@sim/workflow-types/workflow'
 import { describe, expect, it } from 'vitest'
 import { adaptWorkflow, type WorkflowGraphOut } from '@/lib/sv/graph-adapter'
 import { graphToSimState } from '@/lib/sv/graph-import'
-import { proposalToWorkflowState } from '@/lib/sv/proposal-state'
+import { proposalToWorkflowState, staleProposalBlocks } from '@/lib/sv/proposal-state'
 import specsSnapshot from '@/blocks/vehicle/block-specs.json'
 
 /**
@@ -135,5 +135,27 @@ describe('proposal on the canvas (M10-T08)', () => {
         .blocks.map((b) => b.name)
         .sort()
     ).toEqual(proposal.blocks.map((b) => b.name).sort())
+  })
+})
+
+describe('stale proposals (M15 E2E: a turn sent before the canvas loaded)', () => {
+  const current = canvasOf(gwA)
+  const names = gwA.blocks.map((b) => b.name).sort()
+
+  it('a proposal made on an empty graph would drop every block: all are reported', () => {
+    const onEmpty = { ...gwA, blocks: [], edges: [] }
+    expect(staleProposalBlocks(current, onEmpty, [])).toEqual(names)
+  })
+
+  it('a proposal on the current graph, or removing blocks on purpose, is not stale', () => {
+    expect(staleProposalBlocks(current, gwA, [])).toEqual([])
+    const [first, ...rest] = gwA.blocks
+    const removing = {
+      ...gwA,
+      blocks: rest,
+      edges: gwA.edges.filter((e) => e.from !== first!.id && e.to !== first!.id),
+    }
+    expect(staleProposalBlocks(current, removing, [first!.id])).toEqual([])
+    expect(staleProposalBlocks(current, removing, [])).toEqual([first!.name])
   })
 })

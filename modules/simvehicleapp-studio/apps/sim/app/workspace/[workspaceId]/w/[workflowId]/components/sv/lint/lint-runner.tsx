@@ -11,6 +11,7 @@ import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useDebounce } from '@/hooks/use-debounce'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useVariablesStore } from '@/stores/variables/store'
+import { useWorkflowRegistry } from '@/stores/workflows/registry/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { mergeSubblockState } from '@/stores/workflows/utils'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
@@ -23,6 +24,8 @@ export const SV_LINT_DEBOUNCE_MS = 300
  * 300 ms after the last change, and publishes the result to the lint store (Problems tab, badges).
  * It also publishes the current graph at once, for Verify (M04-T11).
  * Renders nothing. A lint outage keeps the previous result and marks the status unavailable.
+ * Nothing is published until the workflow has loaded: a graph of the half-loaded canvas would be empty, and
+ * the assistant and Verify use it (an assistant proposal on it removed every existing block, M15 E2E).
  */
 export function SvLintRunner() {
   const params = useParams<{ workspaceId?: string; workflowId?: string }>()
@@ -47,9 +50,12 @@ export function SvLintRunner() {
   const setResult = useSvLintStore((s) => s.setResult)
   const setStatus = useSvLintStore((s) => s.setStatus)
   const setGraph = useSvLintStore((s) => s.setGraph)
+  const loaded = useWorkflowRegistry(
+    (s) => s.hydration.phase === 'ready' && s.hydration.workflowId === workflowId
+  )
 
   const adapted = useMemo(() => {
-    if (!workflowId || !release) return undefined
+    if (!workflowId || !release || !loaded) return undefined
     const variables = Object.values(allVariables).filter((v) => v.workflowId === workflowId)
     return adaptWorkflow({
       workflowId,
@@ -59,7 +65,7 @@ export function SvLintRunner() {
       variables,
     })
     // subBlockValues: mergeSubblockState reads the subblock store; recompute when it changes
-  }, [workflowId, release, workflows, state, allVariables, subBlockValues])
+  }, [workflowId, release, loaded, workflows, state, allVariables, subBlockValues])
 
   const graphJson = useMemo(() => (adapted ? JSON.stringify(adapted.graph) : undefined), [adapted])
   const debounced = useDebounce(graphJson, SV_LINT_DEBOUNCE_MS)

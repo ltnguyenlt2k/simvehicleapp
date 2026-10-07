@@ -120,6 +120,11 @@ describe('block parity: studio BlockConfig ↔ core BlockSpec (M02-T09)', () => 
         } else expect(ids).toEqual(spec.handles.out)
       })
 
+      it('shows at least one field without "Show additional fields" (Sim offers no toggle otherwise)', () => {
+        if (config.subBlocks.length === 0) return
+        expect(config.subBlocks.some((sb) => sb.mode !== 'advanced')).toBe(true)
+      })
+
       it('has one subBlock per prop, in spec order', () => {
         expect(config.subBlocks.map((s) => s.id)).toEqual(spec.props.map((p) => p.name))
       })

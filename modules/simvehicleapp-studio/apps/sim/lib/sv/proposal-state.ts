@@ -20,6 +20,23 @@ function inGraph(b: BlockState): boolean {
   )
 }
 
+/**
+ * Names of current blocks a proposal would drop without removing them: the proposal was made on another
+ * version of the workflow (e.g. sent before the canvas had loaded), so applying it would delete them.
+ * `removed` = the block ids the patch removed on purpose (proposal `summary.removed`).
+ */
+export function staleProposalBlocks(
+  current: WorkflowState,
+  proposal: WorkflowGraphIn,
+  removed: readonly string[]
+): string[] {
+  const kept = new Set([...proposal.blocks.map((b) => b.id), ...removed])
+  return Object.values(current.blocks)
+    .filter((b) => inGraph(b) && !kept.has(b.id))
+    .map((b) => b.name)
+    .sort()
+}
+
 export function proposalToWorkflowState(
   current: WorkflowState,
   proposal: WorkflowGraphIn,

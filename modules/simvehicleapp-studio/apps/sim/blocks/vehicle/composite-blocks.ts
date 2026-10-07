@@ -8,7 +8,6 @@ const SOURCE: PropUi = {
     'latest-from-trigger': 'Latest known values',
     'fresh-read': 'Fresh read from the vehicle',
   },
-  advanced: true,
 }
 
 /** Curated multi-signal status blocks (ADR-0045): one step reading several VSS signals. */
@@ -39,7 +38,7 @@ export const SV_COMPOSITE_BLOCKS: Record<string, BlockConfig> = {
           'Row2.PassengerSide': 'Rear, passenger side',
         },
       },
-      source: SOURCE,
+      source: { ...SOURCE, advanced: true },
     },
   }),
   sv_climate_status: blockFromSpec('sv_climate_status', {
@@ -54,7 +53,7 @@ export const SV_COMPOSITE_BLOCKS: Record<string, BlockConfig> = {
         title: 'Seat',
         labels: { 'Row1.Driver': 'Driver', 'Row1.Passenger': 'Front passenger' },
       },
-      source: SOURCE,
+      source: { ...SOURCE, advanced: true },
     },
   }),
 }

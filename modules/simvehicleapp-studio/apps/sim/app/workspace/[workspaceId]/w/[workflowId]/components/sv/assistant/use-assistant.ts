@@ -8,7 +8,7 @@ import { toast } from '@/components/emcn'
 import type { SvAiPendingAction } from '@/lib/api/contracts/sv-ai'
 import { readSvAiEvents } from '@/lib/sv/ai-stream'
 import { isWorkflowGraph } from '@/lib/sv/graph-import'
-import { proposalToWorkflowState } from '@/lib/sv/proposal-state'
+import { proposalToWorkflowState, staleProposalBlocks } from '@/lib/sv/proposal-state'
 import { useWorkflowProject } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-workflow-project'
 import { fetchSvAiConversation, svAiKeys } from '@/hooks/queries/sv-ai'
 import { type SvAiItem, useSvAssistantStore } from '@/stores/sv/assistant/store'
@@ -32,7 +32,9 @@ export function useAssistant() {
 
   const editor = useCallback(() => {
     const { graphJson, workflowId } = useSvLintStore.getState()
-    if (!workflowId || !graphJson) return null
+    // only the loaded graph of the open workflow: a proposal replaces the canvas content it was made on
+    if (!workflowId || !graphJson || workflowId !== useWorkflowRegistry.getState().activeWorkflowId)
+      return null
     return {
       workflowId,
       graph: JSON.parse(graphJson) as Record<string, unknown>,
@@ -127,6 +129,17 @@ export function useAssistant() {
     }
     try {
       const current = captureBaselineSnapshot(workflowId)
+      const lost = staleProposalBlocks(
+        current,
+        graph,
+        item.proposal.summary.removed.map((b) => b.id)
+      )
+      if (lost.length > 0) {
+        toast.error(
+          `This proposal was made for another version of the workflow and would delete ${lost.join(', ')} — ask again`
+        )
+        return
+      }
       const proposed = proposalToWorkflowState(current, graph, generateId)
       await diff.setProposedChanges(proposed, undefined, { baselineWorkflow: current })
       useSvAssistantStore.getState().markProposal(item.key, 'previewed')
