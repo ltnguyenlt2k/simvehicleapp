@@ -100,6 +100,7 @@ function fakeToolchain() {
         end = resolve;
       }),
     mirror: async (release: string, paths: string[]) => void calls.push(`mirror ${release} [${paths.join(",")}]`),
+    system: async () => [],
   } as unknown as Clients;
   return {
     clients,

@@ -213,6 +213,10 @@ export function createOrchestratorHandler(d: AppDeps) {
       return json(200, decision);
     }
 
+    if (url.pathname === "/system" && req.method === "GET") {
+      return json(200, { services: await d.clients.system() });
+    }
+
     if (url.pathname === "/entitlements" && req.method === "GET") {
       return json(200, d.entitlements?.status ?? { mode: "full", licensed: false, reason: "no EntitlementService" });
     }

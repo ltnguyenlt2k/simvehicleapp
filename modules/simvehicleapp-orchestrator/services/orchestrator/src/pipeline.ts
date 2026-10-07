@@ -23,6 +23,13 @@ export interface PipelineDeps {
   /** IDE base URL (`editor.url` of Appendix A); the project folder is appended. */
   ideUrl?: string;
   now?: () => number;
+  /** Observability hooks (ADR-0033 §2): stage durations and generation results. */
+  metrics?: PipelineMetrics;
+}
+
+export interface PipelineMetrics {
+  stage(name: string, state: "passed" | "skipped" | "failed", ms: number): void;
+  generation(result: "succeeded" | "failed", code?: string): void;
 }
 
 const VERIFY_OF: Partial<Record<Stage, keyof Generation["verification"]>> = { ir: "ir", build: "compile", "format-check": "format", test: "tests" };
@@ -91,12 +98,14 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
     } catch (e) {
       s.state = "failed";
       s.finishedAt = now();
+      deps.metrics?.stage(name, "failed", s.finishedAt - s.startedAt!);
       const k = VERIFY_OF[name];
       if (k) verification[k] = "failed";
       throw e;
     }
     s.state = verdict === "skipped" ? "skipped" : "passed";
     s.finishedAt = now();
+    deps.metrics?.stage(name, s.state, s.finishedAt - s.startedAt!);
     const k = VERIFY_OF[name];
     if (k) verification[k] = verdict === "skipped" ? "skipped" : "passed";
     emit(`✔ ${name}${verdict === "skipped" ? " (skipped)" : ""}`);
@@ -216,6 +225,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
     for (const d of state.diagnostics as Diagnostic[]) emit(`✘ ${d.code}: ${d.message}`, "error");
   }
   state.finishedAt = now();
+  deps.metrics?.generation(state.state === "succeeded" ? "succeeded" : "failed", (state.diagnostics as Diagnostic[] | undefined)?.[0]?.code);
   await save();
   deps.events.end(gen.id);
   return (await repo.generation(gen.id))!;

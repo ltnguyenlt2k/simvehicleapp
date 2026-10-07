@@ -1,9 +1,9 @@
-import { createLogger, createService } from "@simvehicleapp/service-kit";
+import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { existsSync, readFileSync } from "node:fs";
 import { createOrchestratorHandler } from "./app.ts";
 import { EntitlementService, loadLicense } from "./entitlements.ts";
-import { httpClients } from "./clients.ts";
+import { correlation, httpClients } from "./clients.ts";
 import { EventHub } from "./events.ts";
 import { runGeneration } from "./pipeline.ts";
 import { PgRepo } from "./repo.ts";
@@ -45,6 +45,16 @@ const clients = httpClients({
   secret,
 });
 const hub = new EventHub();
+// Metrics (ADR-0033 §2): SynCode stage durations, generation results by diagnostic code, runs, trace events.
+const metrics = new Metrics();
+const stageMs = metrics.histogram("syncode_stage_duration_ms", "SynCode stage duration (ms) by stage and state.");
+const generations = metrics.counter("syncode_generations_total", "SynCode generations by result and first diagnostic code.");
+const runsEnded = metrics.counter("runs_ended_total", "Runs ended by state and first diagnostic code.");
+const traceEvents = metrics.counter("run_trace_events_total", "Trace events stored from running apps.");
+const pipelineMetrics = {
+  stage: (name: string, state: string, ms: number) => stageMs.observe({ stage: name, state }, ms),
+  generation: (result: string, code?: string) => generations.inc({ result, code: code ?? "" }),
+};
 // Licensed features (ADR-0031): SV_LICENSE_MODE=full (MVP) allows everything and logs what the license says.
 const keyFile = process.env.SV_LICENSE_PUBLIC_KEY_FILE ?? "/src/simvehicleapp-orchestrator/license-public.pem";
 // PEM text, or the PEM base64-encoded (one line, easier to pass through .env/compose).
@@ -53,7 +63,15 @@ const publicKey = rawKey && !rawKey.startsWith("-----") ? Buffer.from(rawKey, "b
 const entitlements = new EntitlementService(process.env.SV_LICENSE_MODE === "enforce" ? "enforce" : "full", loadLicense(process.env.SV_LICENSE_KEY, publicKey));
 log.info("license", entitlements.status);
 // One databroker per VSS release (ADR-0024 §6), the same map the signal-gateway uses.
-const runs = new RunManager({ repo, clients, hub, databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"), log });
+const runs = new RunManager({
+  repo,
+  clients,
+  hub,
+  databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"),
+  log,
+  metrics: { runEnded: (state, code) => runsEnded.inc({ state, code: code ?? "" }), traceEvents: (n) => traceEvents.inc({}, n) },
+});
+metrics.gauge("runs_active", "Runs starting, running or stopping.", () => runs.activeCount);
 const stale = await runs.recover();
 if (stale) log.warn("stopped runs left active by a restart", { runs: stale });
 const ideUrl = process.env.SV_IDE_URL;
@@ -70,12 +88,15 @@ const kick = () => wake?.();
       continue;
     }
     log.info("generation started", { generation: g.id });
-    const done = await runGeneration(g, { repo, clients, events: hub, ideUrl }).catch((e) => (log.error("generation crashed", { generation: g.id, err: e }), null));
+    // Every service call of this SynCode carries the generation id as its request id (log correlation).
+    const done = await correlation.run(g.id, () => runGeneration(g, { repo, clients, events: hub, ideUrl, metrics: pipelineMetrics })).catch((e) => (log.error("generation crashed", { generation: g.id, err: e }), null));
     log.info("generation finished", { generation: g.id, state: done?.state, stage: done?.stage });
   }
 })();
 
 const background = (p: Promise<void>) => void p.catch((e) => log.error("background task failed", { err: e }));
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background }));
+const app = createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background });
+// Calls made while handling a request carry its request id (from the studio BFF) to the next service.
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics }, (req, ctx) => correlation.run(ctx.requestId, () => app(req, ctx)));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

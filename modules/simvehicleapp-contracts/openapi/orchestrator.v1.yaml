@@ -245,6 +245,34 @@ paths:
                   error: { type: string }
                   message: { type: string }
                   activeRun: { $ref: "#/components/schemas/Run" }
+  /system:
+    get:
+      operationId: getSystemStatus
+      tags: [service]
+      description: "Health and version of every service the orchestrator drives (System status page, ADR-0033 §4)."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: One entry per service (compiler, workspace, signal-gateway, codegen-<lang>, toolchain-<lang>).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [services]
+                properties:
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      required: [service, status]
+                      properties:
+                        service: { type: string }
+                        status: { enum: [ok, degraded, down] }
+                        version: { type: string }
+                        commit: { type: string }
+                        contracts: { type: string }
+                        latencyMs: { type: integer, minimum: 0 }
+                        error: { type: string }
   /entitlements:
     get:
       operationId: getEntitlements

@@ -1,4 +1,11 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { internalHeaders } from "@simvehicleapp/service-kit";
+
+/**
+ * Request id the calls made inside `correlation.run(id, …)` carry (ADR-0033 §1): the SynCode worker
+ * runs a generation under its id, so every service's log lines of that SynCode share it.
+ */
+export const correlation = new AsyncLocalStorage<string>();
 import type { LogLine } from "./repo.ts";
 
 /**
@@ -60,6 +67,18 @@ export interface Clients {
   exportProject(slug: string, body: { generationId?: string; extraFiles: { path: string; content: string }[] }): Promise<Response>;
   /** Actuators whose target the signal-gateway mirrors to the current value (empty = none). */
   mirror(release: string, paths: string[]): Promise<void>;
+  /** Health and version of every service the orchestrator drives (System status, ADR-0033 §4). */
+  system(): Promise<ServiceStatus[]>;
+}
+
+export interface ServiceStatus {
+  service: string;
+  status: "ok" | "degraded" | "down";
+  version?: string;
+  commit?: string;
+  contracts?: string;
+  latencyMs?: number;
+  error?: string;
 }
 
 export interface Endpoints {
@@ -74,7 +93,7 @@ export interface Endpoints {
 export class ServiceUnavailable extends Error {}
 
 export function httpClients(e: Endpoints): Clients {
-  const headers = () => ({ ...internalHeaders(crypto.randomUUID(), e.secret), "content-type": "application/json" });
+  const headers = () => ({ ...internalHeaders(correlation.getStore() ?? crypto.randomUUID(), e.secret), "content-type": "application/json" });
   const call = async (url: string, init: RequestInit = {}) => {
     try {
       return await fetch(url, { ...init, headers: { ...headers(), ...(init.headers as Record<string, string> | undefined) } });
@@ -128,6 +147,28 @@ export function httpClients(e: Endpoints): Clients {
     },
     async exportProject(slug, body) {
       return call(`${e.workspace}/projects/${slug}/export`, { method: "POST", body: JSON.stringify(body) });
+    },
+    async system() {
+      const targets: [string, string][] = [
+        ["compiler", e.compiler],
+        ["workspace", e.workspace],
+        ...(e.signalGateway ? ([["signal-gateway", e.signalGateway]] as [string, string][]) : []),
+        ...Object.entries(e.backends).map(([l, u]) => [`codegen-${l}`, u] as [string, string]),
+        ...Object.entries(e.toolchains).map(([l, u]) => [`toolchain-${l}`, u] as [string, string]),
+      ];
+      return Promise.all(
+        targets.map(async ([service, url]): Promise<ServiceStatus> => {
+          const t0 = performance.now();
+          try {
+            const health = await fetch(`${url}/healthz`, { signal: AbortSignal.timeout(2000) });
+            const latencyMs = Math.round(performance.now() - t0);
+            const info = (await fetch(`${url}/version`, { signal: AbortSignal.timeout(2000) }).then((r) => r.json()).catch(() => ({}))) as { version?: string; commit?: string; contracts?: string };
+            return { service, status: health.ok ? "ok" : "degraded", latencyMs, ...(info.version ? { version: info.version } : {}), ...(info.commit ? { commit: info.commit } : {}), ...(info.contracts ? { contracts: info.contracts } : {}) };
+          } catch (err) {
+            return { service, status: "down", error: (err as Error).name === "TimeoutError" ? "timeout" : "unreachable" };
+          }
+        }),
+      );
     },
     async mirror(release, paths) {
       if (!e.signalGateway) return;

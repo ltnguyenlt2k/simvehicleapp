@@ -31,6 +31,8 @@ export interface RunDeps {
   startTimeoutMs?: number;
   batchMs?: number;
   log?: { info(msg: string, data?: Record<string, unknown>): void; warn(msg: string, data?: Record<string, unknown>): void };
+  /** Observability hooks (ADR-0033 §2): runs ended by state, trace events stored. */
+  metrics?: { runEnded(state: "stopped" | "crashed", code?: string): void; traceEvents(count: number): void };
 }
 
 const LEVELS = ["off", "trigger", "node"] as const;
@@ -127,7 +129,14 @@ export class RunManager {
     return this.d.repo.run(runId);
   }
 
+  /** Runs starting, running or stopping in this process. */
+  get activeCount(): number {
+    return this.live.size;
+  }
+
   private emit(runId: string, events: RunEvent[]) {
+    const traces = events.filter((e) => e.kind === "trace").length;
+    if (traces) this.d.metrics?.traceEvents(traces);
     const prev = this.chains.get(runId) ?? Promise.resolve();
     this.chains.set(
       runId,
@@ -191,6 +200,7 @@ export class RunManager {
     await this.chains.get(runId);
     const run = await this.d.repo.run(runId);
     if (!run) return;
+    this.d.metrics?.runEnded(state, diagnostics[0]?.code);
     await this.d.repo.updateRun(runId, { state, finishedAt: this.now(), ...(diagnostics.length ? { diagnostics: [...run.diagnostics, ...diagnostics] } : {}), ...(exitCode !== undefined ? { exitCode } : {}) });
     await this.d.clients.mirror(run.vssRelease, []).catch(() => {});
     this.live.delete(runId);

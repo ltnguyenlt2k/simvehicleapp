@@ -51,6 +51,7 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
     startJob: async (_l, kind) => (calls.push(`start:${kind}`), { ok: true, value: { id: `j-${kind}`, state: "running", exitCode: null, diagnostics: [] } }),
     followJob: async (_l, id) => ({ id, state: "succeeded", exitCode: 0, diagnostics: [] }),
     mirror: async (release, paths) => void calls.push(`mirror:${release}:${paths.join(",")}`),
+    system: async () => [],
     exportProject: async () => new Response(new Blob([new Uint8Array([0x50, 0x4b])]), { headers: { "content-type": "application/zip" } }),
     ...overrides,
   };
@@ -123,6 +124,17 @@ describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
     expect(calls).toEqual([]);
     expect(present(done, project)).toMatchObject({ success: false, state: "failed", stage: "ir", verification: { ir: "failed", format: "skipped", compile: "skipped", tests: "skipped" }, diagnostics: [{ ...err, workflowId: "gw_a" }] });
     expect(done.stages.map((s) => s.state)).toEqual(["failed", "skipped", "skipped", "skipped", "skipped", "skipped", "skipped"]);
+  });
+
+  test("metrics hooks: each stage that ran with its state and duration, the result with the first diagnostic code", async () => {
+    const { repo, gen } = await setup();
+    const err = { code: "VEHICLE_WRITE_READ_ONLY", severity: "error", stage: "vehicle-model", message: "Vehicle.Speed is a sensor", docs: "diagnostics#VEHICLE_WRITE_READ_ONLY" };
+    const seen: string[] = [];
+    const metrics = { stage: (n: string, st: string, ms: number) => seen.push(`${n} ${st} ${ms >= 0}`), generation: (r: string, c?: string) => seen.push(`${r} ${c}`) };
+    const g = gen();
+    await repo.createGeneration(g);
+    await runGeneration(g, { repo, clients: fakeClients({ compile: async () => ({ diagnostics: [err] }) }).clients, events, metrics });
+    expect(seen).toEqual(["ir failed true", "failed VEHICLE_WRITE_READ_ONLY"]);
   });
 
   test("a workflow for another VSS release ⇒ PROJECT_VSS_RELEASE_MISMATCH before compiling", async () => {
