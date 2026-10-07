@@ -47,7 +47,9 @@ const clients = httpClients({
 const hub = new EventHub();
 // Licensed features (ADR-0031): SV_LICENSE_MODE=full (MVP) allows everything and logs what the license says.
 const keyFile = process.env.SV_LICENSE_PUBLIC_KEY_FILE ?? "/src/simvehicleapp-orchestrator/license-public.pem";
-const publicKey = process.env.SV_LICENSE_PUBLIC_KEY ?? (existsSync(keyFile) ? readFileSync(keyFile, "utf8") : undefined);
+// PEM text, or the PEM base64-encoded (one line, easier to pass through .env/compose).
+const rawKey = process.env.SV_LICENSE_PUBLIC_KEY?.trim() || (existsSync(keyFile) ? readFileSync(keyFile, "utf8") : undefined);
+const publicKey = rawKey && !rawKey.startsWith("-----") ? Buffer.from(rawKey, "base64").toString("utf8") : rawKey;
 const entitlements = new EntitlementService(process.env.SV_LICENSE_MODE === "enforce" ? "enforce" : "full", loadLicense(process.env.SV_LICENSE_KEY, publicKey));
 log.info("license", entitlements.status);
 // One databroker per VSS release (ADR-0024 §6), the same map the signal-gateway uses.
