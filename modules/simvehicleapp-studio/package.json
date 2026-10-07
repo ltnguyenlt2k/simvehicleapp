@@ -87,7 +87,18 @@
     "baseline-browser-mapping": "2.11.0",
     "prosemirror-model": "1.25.12",
     "@tiptap/extension-bubble-menu": "3.30.5",
-    "@tiptap/extension-floating-menu": "3.30.5"
+    "@tiptap/extension-floating-menu": "3.30.5",
+    "@opentelemetry/core": "2.9.0",
+    "@opentelemetry/propagator-jaeger": "2.9.0",
+    "vitest": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/expect": "4.1.11",
+    "@vitest/mocker": "4.1.11",
+    "@vitest/pretty-format": "4.1.11",
+    "@vitest/runner": "4.1.11",
+    "@vitest/snapshot": "4.1.11",
+    "@vitest/spy": "4.1.11",
+    "@vitest/utils": "4.1.11"
   },
   "devDependencies": {
     "@biomejs/biome": "2.0.0-beta.5",
