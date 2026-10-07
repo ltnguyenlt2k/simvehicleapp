@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { expect, type Page, test } from '@playwright/test'
 import {
   connect,
@@ -17,7 +18,8 @@ import {
  *
  * M12-T06 through the UI: the Projects page offers Python when the stack runs its backend and toolchain;
  * a Python project gets the overspeed workflow (Stable for 2 s ⇒ hazard) ⇒ SynCode builds, format-checks
- * and tests it ⇒ Run starts `app/src/main.py` on KUKSA ⇒ injected speed switches the hazard lights on.
+ * and tests it ⇒ Export is a Python project ⇒ Open IDE opens ide-python on it ⇒ Run starts `app/src/main.py` on
+ * KUKSA ⇒ injected speed switches the hazard lights on.
  */
 
 const SPEED = 'Vehicle.Speed'
@@ -134,6 +136,45 @@ test('@live Python project: create ⇒ SynCode ⇒ Run on KUKSA ⇒ inject ⇒ h
   }
   const project = projects.projects?.find((p) => p.slug === slug)
   expect(project?.language).toBe('python')
+
+  // Export: the zip is a Python project with the Python README/notices (ADR-0031, ADR-0040).
+  const exportButton = page.locator('[data-sv-action="export"]')
+  await expect(exportButton).toBeEnabled()
+  const [download] = await Promise.all([page.waitForEvent('download'), exportButton.click()])
+  const zip = readFileSync(await download.path()).toString('latin1')
+  for (const name of [
+    'app/src/generated/app.py',
+    'app/src/main.py',
+    'app/src/simvehicleapp-runtime/',
+    'README.SIMVEHICLE.md',
+  ])
+    expect(zip).toContain(name)
+
+  // Open IDE: ide-python (code-server) on the project folder, the generated module in the explorer.
+  const openIde = page.locator('[data-sv-action="open-ide"]')
+  await expect(openIde).toBeEnabled()
+  const [ide] = await Promise.all([page.waitForEvent('popup'), openIde.click()])
+  await ide.waitForLoadState()
+  expect(new URL(ide.url()).port).toBe(process.env.SV_IDE_PYTHON_PORT ?? '8081')
+  const password = ide.locator('input[name="password"]')
+  if (await password.isVisible({ timeout: 15_000 }).catch(() => false)) {
+    await password.fill(process.env.SV_IDE_PASSWORD ?? 'simvehicleapp')
+    await password.press('Enter')
+  }
+  expect(decodeURIComponent(ide.url())).toContain(`folder=/workspace/projects/${slug}`)
+  const explorer = ide.locator('.explorer-folders-view')
+  for (const folder of ['app', 'src', 'generated']) {
+    const item = explorer.getByRole('treeitem', { name: folder, exact: true })
+    await expect(item).toBeVisible({ timeout: 120_000 })
+    if ((await item.getAttribute('aria-expanded')) !== 'true') await item.click()
+  }
+  const source = explorer.getByRole('treeitem', { name: 'app.py', exact: true })
+  await expect(source).toBeVisible()
+  await source.dblclick()
+  await expect(ide.locator('.monaco-editor .view-lines').first()).toContainText('WORKFLOWS', {
+    timeout: 30_000,
+  })
+  await ide.close()
 
   // Run app/src/main.py on the real databroker, inject the speed, the hazard lights switch on.
   for (const field of ['target', 'value']) {
