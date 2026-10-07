@@ -36,8 +36,8 @@
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ✔ | 20/20 — gate PASS ([report](reports/M06.md)) |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
-| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | 🔄 | 0/8 |
-| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ☐ | 0/10 |
+| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
+| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | 🔄 | 7/10 |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
 | [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
@@ -228,30 +228,30 @@ ADR: [0028](../analysis/adr/ADR-0028-ide-code-server.md), [0031](../analysis/adr
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| `ide-vscode/cpp` Dockerfile (code-server 4.139.1 + extension whitelist) | 0028 | 🔄 | Smoke — Claude Code 2026-10-07 | T01 |
-| settings/tasks/launch overlay + clangd | 0028 | 🔄 | | T02 |
-| Compose `ide-cpp` | 0028 | 🔄 | | T03 |
-| `editor.url` trong response SynCode + nút Open IDE | 0028 | 🔄 | E2E | T04 |
-| Cảnh báo IDE chạy song song Live Run | 0028 | 🔄 | | T05 |
-| Export zip (`.svexportignore`, NOTICE, THIRD-PARTY-NOTICES) | 0031 | 🔄 | Build lại trên máy sạch | T06 |
-| EntitlementService + license PDP (gắn export/IDE/SynCode/AI) | 0031,0032 | 🔄 | Unit PDP | T07 |
-| Import lại project (round-trip `.graph.json`) | 0031 | 🔄 | | T08 |
+| `ide-vscode/cpp` Dockerfile (code-server 4.139.1 + extension whitelist) | 0028 | ✔ | code-server 4.139.1 trên toolchain-cpp, extension whitelist; HEALTHCHECK riêng (/healthz) | T01 |
+| settings/tasks/launch overlay + clangd | 0028 | ✔ | tasks Build/Test/Run on stack + launch gdb mức user; gate M9 local: Build/Test xanh, Run on stack `vdb.connected`/`app.started` | T02 |
+| Compose `ide-cpp` | 0028 | ✔ | service `ide-cpp` (volume workspace chung, mật khẩu `.env`, 127.0.0.1) | T03 |
+| `editor.url` trong response SynCode + nút Open IDE | 0028 | ✔ | `Project.editor.url` + nút Open IDE; `m9-ide-export-live @live` PASS 1.2 phút (code-server mở project, thấy file sinh) | T04 |
+| Cảnh báo IDE chạy song song Live Run | 0028 | ✔ | nhắc trong Run console + `sv-run-on-stack` | T05 |
+| Export zip (`.svexportignore`, NOTICE, THIRD-PARTY-NOTICES) | 0031 | ✔ | zip tất định 95 file; build bằng `app/Dockerfile` template trên runner sạch (nightly 37559343111) | T06 |
+| EntitlementService + license PDP (gắn export/IDE/SynCode/AI) | 0031,0032 | ✔ | Ed25519 offline, `full`/`enforce`; gate: export + Python bị chặn 403, C++ được phép | T07 |
+| Import lại project (round-trip `.graph.json`) | 0031 | ✔ | `graphToSimState` round-trip 7 golden + importer Sim | T08 |
 
 ## M10 — AI Assistant & MCP
 ADR: [0030](../analysis/adr/ADR-0030-ai-assistant-mcp.md) · Phụ thuộc: M4, M5, M8 · Chi tiết: [phases/M10](../analysis/phases/M10-ai-assistant-mcp.md)
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Quyết định kiến trúc provider (spike 1 ngày) | 0030 | ☐ | Ghi ADR-0030 Notes | T01 |
-| Provider adapter (anthropic/openai/gemini/ollama) + streaming/tool-calling | 0030 | ☐ | Mock HTTP | T02 |
-| Tool registry + MCP server (12 tool v1, SAFE/SENSITIVE) | 0030 | ☐ | MCP Inspector | T03 |
-| Agent loop (max 6 step, confirmation gate) + SSE `/chat` | 0030 | ☐ | Scripted-LLM test | T04 |
-| WorkflowPatch v1 (apply-on-draft, validate, auto-fix) | 0030 | ☐ | | T05 |
-| MCP client (`ext.*` namespace, confirmation mặc định) | 0030 | ☐ | | T06 |
-| Store `sv_ai` + retention | 0030 | ☐ | | T07 |
-| Studio Assistant panel (patch preview diff, confirmation card) | 0030 | ☐ | Playwright | T08 |
-| System prompt + eval set 20 prompt (VI/EN) | 0030 | ☐ | ≥80% patch valid | T09 |
-| Bảo mật AI (no key xuống browser, rate limit, redact) | 0030 | ☐ | Review | T10 |
+| Quyết định kiến trúc provider (spike 1 ngày) | 0030 | ✔ | Claude Code 2026-10-07: adapter `fetch` riêng, không dùng provider của Sim (ADR-0030 Notes 2026-10-07 §1) | T01 |
+| Provider adapter (anthropic/openai/gemini/ollama) + streaming/tool-calling | 0030 | ✔ | anthropic/openai/openai-compatible/ollama/gemini (native), test HTTP giả; chạy thật với Ollama `qwen3.5:9b`; lỗi provider che key | T02 |
+| Tool registry + MCP server (12 tool v1, SAFE/SENSITIVE) | 0030 | ✔ | 13 tool (SAFE/SENSITIVE tĩnh), MCP Streamable HTTP stateless + bearer (so khớp hằng thời gian); test bằng client MCP SDK 1.32.1 | T03 |
+| Agent loop (max 6 step, confirmation gate) + SSE `/chat` | 0030 | ✔ | test LLM kịch bản: required-field guard, 409 khi chờ xác nhận, `editedInput` thắng, cancel; nhắc nội bộ ≤ 2 | T04 |
+| WorkflowPatch v1 (apply-on-draft, validate, auto-fix) | 0030 | ✔ | áp lên bản nháp + `/compile` verify + khối không tới được/prop lạ là lỗi, gợi ý sửa cụ thể cho model | T05 |
+| MCP client (`ext.*` namespace, confirmation mặc định) | 0030 | ✔ | `ext__<server>__<tool>` (tên tool provider không cho dấu chấm), luôn SENSITIVE trừ `safeTools` | T06 |
+| Store `sv_ai` + retention | 0030 | ✔ | Postgres schema `sv_ai` (migration 0001), purge theo `SV_AI_RETENTION_DAYS`; test Postgres thật (CI job `ai`) | T07 |
+| Studio Assistant panel (patch preview diff, confirmation card) | 0030 | 🔄 | Claude Code 2026-10-07: BFF `/api/sv/ai/*`, đề xuất hiện trên canvas bằng diff view (Accept/Reject), thẻ xác nhận sửa được input; vitest 11; Playwright `m10-assistant` chờ CI | T08 |
+| System prompt + eval set 20 prompt (VI/EN) | 0030 | 🔄 | eval 16/20 = 80 % trên Ollama `qwen3.5:9b` (2026-10-07); chạy lại sau gợi ý sửa | T09 |
+| Bảo mật AI (no key xuống browser, rate limit, redact) | 0030 | 🔄 | review: key chỉ trong container, `/status` không trả key, user từ session BFF, rate limit theo user, lỗi provider che key, license `ai.assistant` (fail closed) | T10 |
 
 ## M11 — Hardening → Release v1.0
 ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/adr/ADR-0033-observability.md), [0042](../analysis/adr/ADR-0042-semantic-parity-testing.md) · Phụ thuộc: M8, M9, M10 · Chi tiết: [phases/M11](../analysis/phases/M11-hardening-release.md)
