@@ -1,0 +1,172 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c39_composite_status",
+  "revision": 1,
+  "name": "Composite status blocks read every member, any missing one takes the error branch",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "soc",
+      "props": {
+        "path": "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_battery_status",
+      "name": "battery",
+      "props": {
+        "source": "latest-from-trigger"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_if",
+      "name": "low",
+      "props": {
+        "condition": "<battery.soc> < 20 && !<battery.isCharging>"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "hazardOn",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_set_actuator",
+      "name": "hazardOff",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": false,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_on_signal_changed",
+      "name": "doorOpened",
+      "props": {
+        "path": "Vehicle.Cabin.Door.Row1.DriverSide.IsOpen",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_door_status",
+      "name": "door",
+      "props": {
+        "door": "Row1.DriverSide",
+        "source": "latest-from-trigger"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b8",
+      "type": "sv_set_actuator",
+      "name": "horn",
+      "props": {
+        "path": "Vehicle.Body.Horn.IsActive",
+        "value": "<door.isOpen> && !<door.isLocked>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b9",
+      "type": "sv_set_actuator",
+      "name": "lowBeam",
+      "props": {
+        "path": "Vehicle.Body.Lights.Beam.Low.IsOn",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "then",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b3",
+      "fromHandle": "else",
+      "to": "b5",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b6",
+      "fromHandle": "source",
+      "to": "b7",
+      "toHandle": "target"
+    },
+    {
+      "id": "e6",
+      "from": "b7",
+      "fromHandle": "source",
+      "to": "b8",
+      "toHandle": "target"
+    },
+    {
+      "id": "e7",
+      "from": "b7",
+      "fromHandle": "error",
+      "to": "b9",
+      "toHandle": "target"
+    }
+  ]
+}

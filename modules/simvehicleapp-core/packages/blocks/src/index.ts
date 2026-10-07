@@ -3,12 +3,15 @@ import type { VehicleBlockType } from "@simvehicleapp/vss";
 import svArrayAt from "../sv_array_at/spec.json" with { type: "json" };
 import svArrayContains from "../sv_array_contains/spec.json" with { type: "json" };
 import svArrayLength from "../sv_array_length/spec.json" with { type: "json" };
+import svBatteryStatus from "../sv_battery_status/spec.json" with { type: "json" };
 import svBool from "../sv_bool/spec.json" with { type: "json" };
 import svClamp from "../sv_clamp/spec.json" with { type: "json" };
+import svClimateStatus from "../sv_climate_status/spec.json" with { type: "json" };
 import svCompare from "../sv_compare/spec.json" with { type: "json" };
 import svConstant from "../sv_constant/spec.json" with { type: "json" };
 import svConvert from "../sv_convert/spec.json" with { type: "json" };
 import svCounter from "../sv_counter/spec.json" with { type: "json" };
+import svDoorStatus from "../sv_door_status/spec.json" with { type: "json" };
 import svExpression from "../sv_expression/spec.json" with { type: "json" };
 import svHmiNotify from "../sv_hmi_notify/spec.json" with { type: "json" };
 import svIf from "../sv_if/spec.json" with { type: "json" };
@@ -43,12 +46,15 @@ const ALL = [
   svArrayAt,
   svArrayContains,
   svArrayLength,
+  svBatteryStatus,
   svBool,
   svClamp,
+  svClimateStatus,
   svCompare,
   svConstant,
   svConvert,
   svCounter,
+  svDoorStatus,
   svExpression,
   svHmiNotify,
   svIf,
@@ -89,3 +95,23 @@ export function getBlockSpec(type: string): BlockSpec | undefined {
 
 /** The four VSS-bound blocks of M2 (ADR-0011 §1); the same set `@simvehicleapp/vss` `blocksFor` returns. */
 export const VEHICLE_BLOCK_TYPES: readonly VehicleBlockType[] = ["sv_on_signal_changed", "sv_read_attribute", "sv_read_signal", "sv_set_actuator"];
+
+export interface CompositeMember {
+  output: string;
+  /** VSS path with the block's placeholder props filled in. */
+  path: string;
+  /** The prop the path depends on (diagnostic field), when it has a `{prop}` placeholder. */
+  prop?: string;
+}
+
+/** Member reads of a composite block (ADR-0045): `{prop}` placeholders replaced by the block's prop value or default. */
+export function compositeMembers(spec: BlockSpec, props: Record<string, unknown>): CompositeMember[] {
+  const value = (name: string) => {
+    const v = props[name];
+    return String(v === undefined || v === null || v === "" ? spec.props.find((p) => p.name === name)?.default : v);
+  };
+  return (spec.members ?? []).map((m) => {
+    const prop = /\{([a-zA-Z0-9]+)\}/.exec(m.path)?.[1];
+    return { output: m.output, path: m.path.replace(/\{([a-zA-Z0-9]+)\}/g, (_, name: string) => value(name)), ...(prop ? { prop } : {}) };
+  });
+}

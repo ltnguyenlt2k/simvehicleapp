@@ -1,0 +1,34 @@
+# C39-composite-status — composite status blocks (ADR-0045) read every member; a member without a value takes `error`
+# Semantics: ADR-0045 §2 (desugared into chained vehicle.read). Hand-derived expectation (M14 #1); the simulator and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C39-composite-status
+description: "Composite status blocks read every member, any missing one takes the error branch"
+vss:
+  release: v4.0
+until: 10000
+initial:
+  Vehicle.Powertrain.TractionBattery.CurrentVoltage: 400
+  Vehicle.Powertrain.TractionBattery.CurrentCurrent: 10
+  Vehicle.Powertrain.TractionBattery.Charging.IsCharging: false
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+  Vehicle.Cabin.Door.Row1.DriverSide.IsLocked: true
+  Vehicle.Body.Horn.IsActive: false
+  Vehicle.Body.Lights.Beam.Low.IsOn: false
+inputs:
+  - { t: 1000, path: "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current", value: 50 }
+  - { t: 2000, path: "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current", value: 15 }
+  - { t: 3000, path: "Vehicle.Powertrain.TractionBattery.Charging.IsCharging", value: true }
+  - { t: 4000, path: "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current", value: 14 }
+  - { t: 5000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsOpen", value: true }
+  - { t: 6000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsChildLockActive", value: false }
+  - { t: 7000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked", value: false }
+  - { t: 8000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsOpen", value: false }
+  - { t: 9000, path: "Vehicle.Cabin.Door.Row1.DriverSide.IsOpen", value: true }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }
+    - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 4000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }
+    - { t: 5000, path: "Vehicle.Body.Lights.Beam.Low.IsOn", value: true }
+    - { t: 8000, path: "Vehicle.Body.Horn.IsActive", value: false }
+    - { t: 9000, path: "Vehicle.Body.Horn.IsActive", value: true }

@@ -1,0 +1,25 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_battery_status",
+  "version": 1,
+  "category": "composite",
+  "title": "Battery status",
+  "priority": "P2",
+  "opcode": "vehicle.read",
+  "props": [
+    { "name": "source", "kind": "enum", "required": false, "default": "latest-from-trigger", "enum": ["latest-from-trigger", "fresh-read"] }
+  ],
+  "outputs": [
+    { "name": "soc", "type": "$signal", "unit": "$signal" },
+    { "name": "voltage", "type": "$signal", "unit": "$signal" },
+    { "name": "current", "type": "$signal", "unit": "$signal" },
+    { "name": "isCharging", "type": "$signal" }
+  ],
+  "members": [
+    { "output": "soc", "path": "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current" },
+    { "output": "voltage", "path": "Vehicle.Powertrain.TractionBattery.CurrentVoltage" },
+    { "output": "current", "path": "Vehicle.Powertrain.TractionBattery.CurrentCurrent" },
+    { "output": "isCharging", "path": "Vehicle.Powertrain.TractionBattery.Charging.IsCharging" }
+  ],
+  "handles": { "in": ["target"], "out": ["source", "error"] }
+}

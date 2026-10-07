@@ -1,5 +1,5 @@
 import { ContractValidator, type DiagnosticV1, type GraphBlock, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
-import { BLOCK_SPECS, type BlockSpec } from "@simvehicleapp/blocks";
+import { BLOCK_SPECS, type BlockSpec, type CompositeMember, compositeMembers } from "@simvehicleapp/blocks";
 import { type Node, parseExpression, type RefExpr } from "@simvehicleapp/expr";
 import { isIntegerType, type ValueType } from "@simvehicleapp/types";
 import { canonicalUnit } from "@simvehicleapp/units";
@@ -111,6 +111,8 @@ class Builder {
   private topics = new Map<string, "read" | "write">();
   private containerOf = new Map<string, GraphBlock>();
   private dominatingTrigger = new Map<string, GraphBlock | null>();
+  /** Composite blocks (ADR-0045): their member reads, one `vehicle.read` node each. */
+  private members = new Map<string, CompositeMember[]>();
 
   constructor(
     private readonly graph: WorkflowGraphV1,
@@ -138,6 +140,7 @@ class Builder {
   async loadVehicle(ctx: LintContext): Promise<void> {
     const paths = new Set<string>();
     for (const b of this.graph.blocks) {
+      for (const m of this.spec(b) ? compositeMembers(this.spec(b), b.props as Record<string, unknown>) : []) paths.add(m.path);
       for (const p of this.spec(b)?.props ?? []) {
         const v = (b.props as Record<string, unknown>)[p.name];
         if (p.kind === "vss-path" && typeof v === "string" && v) paths.add(v);
@@ -241,7 +244,10 @@ class Builder {
             const inl = this.inlined.get(producer.id);
             if (inl) return { expr: structuredClone(inl.expr), type: inl.info.type, unit: inl.unit };
             const out = this.outputs.get(producer.id)?.get(field);
-            return out ? { expr: { $ref: `${P.node}${producer.id}.${field}` }, type: out.type, unit: out.unit } : undefined;
+            if (!out) return undefined;
+            // a composite output is the `value` of its member's node
+            const k = this.members.get(producer.id)?.findIndex((m) => m.output === field) ?? -1;
+            return { expr: { $ref: k >= 0 ? `${P.node}${memberKey(producer.id, k)}.value` : `${P.node}${producer.id}.${field}` }, type: out.type, unit: out.unit };
           }
         }
       },
@@ -348,6 +354,14 @@ class Builder {
         break;
       }
       case "vehicle.read":
+        if (spec.members) {
+          const members = compositeMembers(spec, p);
+          for (const m of members) this.use(m.path, p.source === "fresh-read" ? "read" : "subscribe");
+          this.members.set(b.id, members);
+          this.setOutputs(b, Object.fromEntries(members.map((m) => [m.output, this.signalOut(m.path)])));
+          args.fresh = p.source === "fresh-read";
+          break;
+        }
         this.use(String(p.path), p.source === "fresh-read" ? "read" : "subscribe");
         Object.assign(args, { signal: `${P.signal}${String(p.path)}`, fresh: p.source === "fresh-read" });
         this.setOutputs(b, this.specOutputs(b, () => this.signalOut(p.path)));
@@ -550,7 +564,13 @@ class Builder {
   ir(modelHash: string, sourceGraphHash: string): Record<string, unknown> {
     const nodeId = new Map<string, string>();
     let n = 0;
-    for (const b of this.order) if (!this.inlined.has(b.id)) nodeId.set(b.id, `n${++n}`);
+    for (const b of this.order) {
+      if (this.inlined.has(b.id)) continue;
+      nodeId.set(b.id, `n${++n}`);
+      // composite members: the block's own id is its first member's node
+      const members = this.members.get(b.id) ?? [];
+      members.forEach((_, k) => nodeId.set(memberKey(b.id, k), k === 0 ? nodeId.get(b.id)! : `n${++n}`));
+    }
 
     const signalPaths = [...this.signalAccess.keys()].sort();
     const signalId = new Map(signalPaths.map((path, i) => [path, `s${i}`]));
@@ -615,6 +635,24 @@ class Builder {
         triggers.push(t);
         continue;
       }
+      const members = this.members.get(b.id);
+      if (members) {
+        // ADR-0045: one `vehicle.read` per member, chained; any failing member takes the block's `error` handle
+        const next = nextOf(b);
+        const fresh = (this.args.get(b.id) ?? {}).fresh;
+        members.forEach((m, k) => {
+          const out = this.outputs.get(b.id)!.get(m.output)!;
+          nodes.push({
+            id: nodeId.get(memberKey(b.id, k)),
+            opcode: "vehicle.read",
+            args: { signal: signalId.get(m.path), fresh },
+            next: { ...next, next: k + 1 < members.length ? nodeId.get(memberKey(b.id, k + 1))! : next.next ?? null },
+            outputs: { timestamp: { type: "timestamp" }, value: out.unit ? { type: out.type, unit: out.unit } : { type: out.type } },
+            src: k === 0 ? src : { ...src, inserted: true, reason: `composite member ${m.output}` },
+          });
+        });
+        continue;
+      }
       const opcode = PURE.has(spec.opcode) ? "logic.eval" : spec.opcode === "comm.hmi_notify" ? "comm.mqtt_publish" : spec.opcode;
       const node: Record<string, unknown> = { id, opcode, args: patch(this.args.get(b.id) ?? {}), next: nextOf(b), src };
       if (spec.opcode === "control.repeat" || spec.opcode === "control.while") node.body = { entry: follow(this.targets(b, "loop-start-source")[0]) };
@@ -657,6 +695,9 @@ class Builder {
     return JSON.parse(canonicalJson(canonical)) as Record<string, unknown>;
   }
 }
+
+/** Node key of member `k` of a composite block (`#` is not allowed in block ids, so keys never collide). */
+const memberKey = (blockId: string, k: number) => `${blockId}#${k}`;
 
 /** Stable within a run: only `$ref`, constants and pure operators (no `$signal`, `$state`, `now_ms`). */
 function isStable(e: unknown): boolean {

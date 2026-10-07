@@ -1,0 +1,28 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_climate_status",
+  "version": 1,
+  "category": "composite",
+  "title": "Climate status",
+  "priority": "P2",
+  "opcode": "vehicle.read",
+  "props": [
+    { "name": "station", "kind": "enum", "required": true, "default": "Row1.Driver", "enum": ["Row1.Driver", "Row1.Passenger"] },
+    { "name": "source", "kind": "enum", "required": false, "default": "latest-from-trigger", "enum": ["latest-from-trigger", "fresh-read"] }
+  ],
+  "outputs": [
+    { "name": "cabinTemperature", "type": "$signal", "unit": "$signal" },
+    { "name": "outsideTemperature", "type": "$signal", "unit": "$signal" },
+    { "name": "setTemperature", "type": "$signal", "unit": "$signal" },
+    { "name": "fanSpeed", "type": "$signal", "unit": "$signal" },
+    { "name": "isAirConditioningActive", "type": "$signal" }
+  ],
+  "members": [
+    { "output": "cabinTemperature", "path": "Vehicle.Cabin.HVAC.AmbientAirTemperature" },
+    { "output": "outsideTemperature", "path": "Vehicle.Exterior.AirTemperature" },
+    { "output": "setTemperature", "path": "Vehicle.Cabin.HVAC.Station.{station}.Temperature" },
+    { "output": "fanSpeed", "path": "Vehicle.Cabin.HVAC.Station.{station}.FanSpeed" },
+    { "output": "isAirConditioningActive", "path": "Vehicle.Cabin.HVAC.IsAirConditioningActive" }
+  ],
+  "handles": { "in": ["target"], "out": ["source", "error"] }
+}

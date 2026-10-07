@@ -1,5 +1,5 @@
 import { ContractValidator, type DiagnosticV1, type GraphBlock, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
-import { BLOCK_SPECS, type BlockSpec } from "@simvehicleapp/blocks";
+import { BLOCK_SPECS, type BlockSpec, compositeMembers } from "@simvehicleapp/blocks";
 import { checkRefs, collectRefs, type Node, parseExpression, type RefCheck, type RefResolver } from "@simvehicleapp/expr";
 import { isArrayType, type VssNode } from "@simvehicleapp/vss";
 import { diag, sortDiagnostics } from "./diagnostics.ts";
@@ -192,6 +192,7 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
   };
   const paths = new Set<string>();
   for (const b of known) {
+    for (const m of compositeMembers(specs.get(b.type)!, b.props as Record<string, unknown>)) paths.add(m.path);
     for (const p of specs.get(b.type)!.props) {
       const v = (b.props as Record<string, unknown>)[p.name];
       if (p.kind === "vss-path" && typeof v === "string" && v) paths.add(v);
@@ -294,6 +295,19 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
             out.push(diag("DATA_REF_NOT_DOMINATING", wfId, { blockId: b.id, field: p.name, message: `${m[0]} may not have a value yet: ${byName.get(u.ref.path[0]!)!.name} does not always run before ${b.name}`, data: { ref: m[0], span } }));
           }
         }
+      }
+    }
+
+    // S3 — member signals of a composite block (ADR-0045)
+    for (const m of compositeMembers(spec, props)) {
+      const node = vss.get(m.path);
+      const field = m.prop ? { field: m.prop } : {};
+      if (node === null || node === undefined) {
+        out.push(diag("VEHICLE_PATH_NOT_FOUND", wfId, { blockId: b.id, ...field, message: `${spec.title}: ${m.path} is not a signal of VSS ${graph.vss.release}`, data: { path: m.path, release: graph.vss.release } }));
+      } else if (node.kind === "branch") {
+        out.push(diag("VEHICLE_PATH_IS_BRANCH", wfId, { blockId: b.id, ...field, message: `${spec.title}: ${m.path} is a group of signals, not a signal`, data: { path: m.path } }));
+      } else if (node.deprecation) {
+        out.push(diag("VEHICLE_PATH_DEPRECATED", wfId, { blockId: b.id, ...field, message: `${m.path} is deprecated: ${node.deprecation}`, data: { path: m.path } }));
       }
     }
 

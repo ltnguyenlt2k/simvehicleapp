@@ -1,0 +1,24 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_door_status",
+  "version": 1,
+  "category": "composite",
+  "title": "Door status",
+  "priority": "P2",
+  "opcode": "vehicle.read",
+  "props": [
+    { "name": "door", "kind": "enum", "required": true, "default": "Row1.DriverSide", "enum": ["Row1.DriverSide", "Row1.PassengerSide", "Row2.DriverSide", "Row2.PassengerSide"] },
+    { "name": "source", "kind": "enum", "required": false, "default": "latest-from-trigger", "enum": ["latest-from-trigger", "fresh-read"] }
+  ],
+  "outputs": [
+    { "name": "isOpen", "type": "$signal" },
+    { "name": "isLocked", "type": "$signal" },
+    { "name": "isChildLockActive", "type": "$signal" }
+  ],
+  "members": [
+    { "output": "isOpen", "path": "Vehicle.Cabin.Door.{door}.IsOpen" },
+    { "output": "isLocked", "path": "Vehicle.Cabin.Door.{door}.IsLocked" },
+    { "output": "isChildLockActive", "path": "Vehicle.Cabin.Door.{door}.IsChildLockActive" }
+  ],
+  "handles": { "in": ["target"], "out": ["source", "error"] }
+}

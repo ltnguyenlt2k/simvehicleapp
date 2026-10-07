@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractValidator } from "@simvehicleapp/contracts";
 import { blocksFor, parseVssRelease, type VssNode } from "@simvehicleapp/vss";
-import { BLOCK_SPECS, getBlockSpec, VEHICLE_BLOCK_TYPES } from "./index.ts";
+import { BLOCK_SPECS, compositeMembers, getBlockSpec, VEHICLE_BLOCK_TYPES } from "./index.ts";
 
 const root = join(import.meta.dir, "..");
 const dirs = readdirSync(root).filter((d) => d.startsWith("sv_") && statSync(join(root, d)).isDirectory()).sort();
@@ -96,6 +96,32 @@ test("vssKinds agree with @simvehicleapp/vss blocksFor on every VSS 4.0/4.2 node
       }
       const bySpec = BLOCK_SPECS.filter((s) => s.vssKinds?.includes(node.kind as Exclude<VssNode["kind"], "branch">)).map((s) => s.type);
       expect([...blocksFor(node)].sort() as string[]).toEqual(bySpec);
+    }
+  }
+});
+
+test("composite blocks: members ⇔ $signal outputs, every placeholder value a signal in VSS 4.0 and 4.2 (ADR-0045)", () => {
+  const composites = BLOCK_SPECS.filter((s) => s.category === "composite");
+  expect(composites.map((s) => s.type)).toEqual(["sv_battery_status", "sv_climate_status", "sv_door_status"]);
+  const models = ["4.0", "4.2"].map((r) =>
+    parseVssRelease(JSON.parse(readFileSync(fileURLToPath(import.meta.resolve(`@simvehicleapp/contracts/fixtures/vss/vss_rel_${r}.json`)), "utf8")), `v${r}`),
+  );
+  for (const spec of composites) {
+    expect(spec.opcode).toBe("vehicle.read");
+    expect(spec.members!.map((m) => m.output)).toEqual(spec.outputs.map((o) => o.name));
+    for (const o of spec.outputs) expect(o.type).toBe("$signal");
+    const placeholders = [...new Set(spec.members!.flatMap((m) => [...m.path.matchAll(/\{([a-zA-Z0-9]+)\}/g)].map((x) => x[1]!)))];
+    const choices: Record<string, string>[] = [{}];
+    for (const name of placeholders) {
+      const prop = spec.props.find((p) => p.name === name);
+      expect(prop?.kind).toBe("enum");
+      const next = choices.flatMap((c) => (prop!.enum as string[]).map((v) => ({ ...c, [name]: v })));
+      choices.splice(0, choices.length, ...next);
+    }
+    for (const choice of choices) {
+      for (const model of models) {
+        for (const { path } of compositeMembers(spec, choice)) expect(`${path} ${model.nodes.get(path)?.kind ?? "missing"}`).toMatch(/ (sensor|actuator)$/);
+      }
     }
   }
 });
