@@ -41,8 +41,8 @@
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
-| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050 (Proposed) | 🔄 | 10/10 có ADR; #1, #7 làm xong chờ CI; #5 ADR + spike; #2–#4, #6, #8–#10 hoãn/không làm chờ PO |
-| [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | ☐ | 0/12 |
+| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050 (Proposed) | 🔄 | 10/10 có ADR; #1, #7 ✔ (CI); #5 ADR + spike; #2–#4, #6, #8–#10 hoãn/không làm chờ PO |
+| [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 4/12 ✔ (T03, T04, T06, T11), 6 🔄; chờ PO: review ma trận, xem + ký video; còn 3 lượt CI xanh liên tiếp |
 
 **MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
 
@@ -306,13 +306,13 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 
 | # | Hạng mục | ADR dự kiến | Trạng thái |
 |---|---|---|---|
-| 1 | Curated multi-VSS blocks (Battery/Door/Climate Status) | [0045](../analysis/adr/ADR-0045-curated-multi-vss-blocks.md) | 🔄 Claude Code 2026-10-07: BlockSpec `members` + desugar chuỗi `vehicle.read`; 3 block; conformance C39 PASS simulator + Python (local), C++/Rust + E2E `m14-composite` chờ CI |
+| 1 | Curated multi-VSS blocks (Battery/Door/Climate Status) | [0045](../analysis/adr/ADR-0045-curated-multi-vss-blocks.md) | ✔ 2026-10-07: BlockSpec `members` + desugar `vehicle.read`; C39 PASS simulator + C++/Python/Rust; E2E `m14-composite` + `m15-toolbar` (CI `419f2d9`); [báo cáo](reports/M14.md) |
 | 2 | gRPC service interface | [0043](../analysis/adr/ADR-0043-grpc-service-interface.md) | ⏸ hoãn (chờ PO): spike 2026-10-07 — toolchain thiếu requirements `grpc-interface-support`/protoc/grpc ⇒ chưa sinh SDK offline; điều kiện bắt đầu ghi trong ADR |
 | 3 | Standalone service apps | [0044](../analysis/adr/ADR-0044-standalone-service-apps.md) | ⏸ hoãn (chờ PO): dùng nhiều project + MQTT ngay; nhóm project sau ADR-0046 |
 | 4 | Per-run runtime stack & multi-user workspaces | [0046](../analysis/adr/ADR-0046-per-run-stack-multi-user.md) | ⏸ hoãn (**cần PO**, chạm luật docker.sock): đề xuất pool stack tĩnh trong Compose |
 | 5 | Migrate `kuksa.val.v2` | [0047](../analysis/adr/ADR-0047-kuksa-val-v2-migration.md) | 🔄 Claude Code 2026-10-07: ADR + spike PASS ([kuksa-val-v2](spikes/kuksa-val-v2/README.md): v2 song song v1 trên 0.5.0, provider stream, `UNAVAILABLE` khi thiếu provider); phát hiện databroker 0.7.0 xoá `sdv.databroker.v1` ⇒ giữ pin. Còn: signal-gateway provider, host v2 Rust → C++ → Python + P3 |
 | 6 | Quick Run interpreter app | [0048](../analysis/adr/ADR-0048-quick-run-interpreter.md) | ✖ không làm (chờ PO xác nhận): Simulate + SynCode Python đủ nhanh |
-| 7 | Sub-workflow/function, state machine block, filters | [0049](../analysis/adr/ADR-0049-filter-state-machine-subworkflow.md) | 🔄 Claude Code 2026-10-07: `sv_filter` (`state.filter` ở simulator + C++/Python/Rust), `sv_state_machine` (desugar), sửa crash biến chưa khai báo; conformance C40/C41 PASS local trên simulator + 3 backend; sub-workflow và `sv_rate` **hoãn** (ADR-0049 §4–5, chờ PO) |
+| 7 | Sub-workflow/function, state machine block, filters | [0049](../analysis/adr/ADR-0049-filter-state-machine-subworkflow.md) | ✔ (filter, state machine) 2026-10-07: C40/C41 PASS simulator + C++/Python/Rust (CI `cae5486`); sub-workflow, `sv_rate` **hoãn** chờ PO |
 | 8 | Kanto deployment | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
 | 9 | Reverse proxy + SSO forward-auth cho IDE | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
 | 10 | VSS overlay OEM (vss-tools pipeline) | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
@@ -325,15 +325,15 @@ Phụ thuộc: **toàn bộ** M0–M14 (plan, ADR, ROADMAP xong) · Chi tiết: 
 |---|---|---|---|---|
 | Ma trận kịch bản E2E `e2e/SCENARIOS.md` | — | 🔄 | Claude Code 2026-10-07: [SCENARIOS](../modules/simvehicleapp-studio/e2e/SCENARIOS.md) A–H truy ngược FR/ADR, cột test hiện có; chờ PO review | T01 |
 | Kéo thả từ toolbar: mọi block, vào/ra container, thả bị từ chối | — | 🔄 | 2026-10-07: `m15-toolbar` (38 block: node, handle, editor) — tìm ra lỗi Battery status không mở được prop (đã sửa + guard parity); còn vào/ra container, thả bị từ chối | T02 |
-| Kéo thả từ panel Vehicle: mọi kind × release v4.0/v4.2, menu đúng kind | 0010, 0011 | 🔄 | 2026-10-07: `m15-vehicle-panel` PASS local (sensor/actuator/attribute/array × v4.0/v4.2 + click) — chờ CI | T03 |
-| Nối mọi handle, nối sai bị chặn, undo/redo, copy/paste, đổi tên ⇒ ref cập nhật | 0011, 0013 | 🔄 | 2026-10-07: `m15-connect-edit` PASS local (then/else, đổi tên ⇒ `<speed.value>`, vòng bị từ chối, xoá/undo/redo, copy/paste) — chờ CI | T04 |
+| Kéo thả từ panel Vehicle: mọi kind × release v4.0/v4.2, menu đúng kind | 0010, 0011 | ✔ | 2026-10-07: `m15-vehicle-panel` PASS CI `419f2d9` (sensor/actuator/attribute/array × v4.0/v4.2 + click) | T03 |
+| Nối mọi handle, nối sai bị chặn, undo/redo, copy/paste, đổi tên ⇒ ref cập nhật | 0011, 0013 | ✔ | 2026-10-07: `m15-connect-edit` PASS CI `419f2d9` (then/else, đổi tên ⇒ `<speed.value>`, vòng bị từ chối, xoá/undo/redo, copy/paste) | T04 |
 | 7 golden dựng hoàn toàn bằng UI, Problems sạch, graph khớp golden | 0042 | ☐ | | T05 |
-| Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | 🔄 | 2026-10-07: `m15-full-flow @live` PASS local 1,1 phút; phần restart tìm ra lỗi **mất dữ liệu**: trợ lý gửi graph rỗng khi canvas chưa nạp ⇒ Accept xoá block cũ — đã sửa (lint chỉ phát graph khi workflow nạp xong + chặn proposal lệch) + E2E hồi quy `m15-assistant-reload` | T06 |
+| Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | ✔ | 2026-10-07: `m15-full-flow @live` + `@live-restart` PASS local (1,1 phút + 7 s, bản sửa `bdfd92b`); phần restart tìm ra lỗi **mất dữ liệu**: trợ lý gửi graph rỗng khi canvas chưa nạp ⇒ Accept xoá block cũ — đã sửa (lint chỉ phát graph khi workflow nạp xong + chặn proposal lệch) + E2E hồi quy `m15-assistant-reload` | T06 |
 | Cộng tác realtime + mất kết nối/restart service | — | ☐ | | T07 |
 | 3 run CI xanh liên tiếp, 0 flaky | — | ☐ | | T08 |
 | Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | 🔄 | 2026-10-07: `scripts/demo-video.sh` (Playwright image + restart + ffmpeg: freezedetect cắt chờ ⇒ mp4 720p 84 s + GIF); bản quay đầu tiên trong README | T09 |
 | Hậu kỳ + checklist xem video (PO ký) | — | 🔄 | 2026-10-07: tự kiểm (contact sheet): đủ 15 chặng có chú thích, không lỗi UI, chỉ user giả `example.com`, không secret; **chờ PO xem + ký** | T10 |
-| Video trong README tổng, kiểm hiển thị thật trên GitHub | — | ☐ | | T11 |
+| Video trong README tổng, kiểm hiển thị thật trên GitHub | — | ✔ | 2026-10-07 `b6f6a5e`: README render của GitHub (API html) có GIF động inline + link mp4 1,35 MB | T11 |
 | Báo cáo `docs/reports/M15.md` | — | ☐ | | T12 |
 
 ---

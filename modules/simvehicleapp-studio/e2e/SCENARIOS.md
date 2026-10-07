@@ -13,16 +13,16 @@
 | A2 | Tạo workflow, reload vẫn còn | URL `/w/<id>` mới, sau reload thấy lại | FR-WF-01 | `m1-gate` | ✔ |
 | A3 | Sign-up bị giới hạn tần suất (429) | form báo lỗi, chờ `X-Retry-After` rồi thành công | ADR-0032 | `lib/studio.submitAuth` (dùng trong mọi spec) | ✔ |
 | A4 | Hai phiên realtime: block thêm ở phiên 1 hiện ở phiên 2 | thấy trong ≤ 15 s | FR-WF-01 | `m1-gate` | ✔ |
-| A5 | Ba phiên cùng kéo thả, xung đột chỉnh cùng prop | state hội tụ, không mất block | — | `m15-collab` (3 phiên cùng thêm block + sửa cùng field) | ◐ (local PASS, chờ CI) |
+| A5 | Ba phiên cùng kéo thả, xung đột chỉnh cùng prop | state hội tụ, không mất block | — | `m15-collab` (3 phiên cùng thêm block + sửa cùng field) | ✔ (CI `419f2d9`) |
 | A6 | Mất kết nối realtime / catalog / compiler | UI báo đúng service, không mất dữ liệu, tự hồi phục | NFR · 0033 | `m15-collab @live` (dừng compiler: báo "Checks unavailable", sửa vẫn lưu, lint hồi phục) — 3/4 lượt PASS, 1 lượt không tái hiện được | ◐ |
 | A7 | Restart studio ⇒ workflow gate còn nguyên | graph sau restart = trước | FR-PLT-02 | `m2-gate @after-restart` | ✔ |
 
 ## B. Kéo thả — toolbar (mọi block)
 | ID | Luồng | Tiêu chí PASS | FR / ADR | Test | TT |
 |---|---|---|---|---|---|
-| B1 | Toolbar có mọi block `sv_*` (38; 3 spec container đi qua Loop/Parallel của Sim) | mỗi block thấy được và thả ra canvas được | FR-BLK-01…08 · 0011 | `m15-toolbar` (38 block) + `m3-blocks` | ◐ (local PASS, chờ CI) |
-| B2 | Mỗi block thả vào canvas rỗng (overlay) và canvas có sẵn | node mới tên `<Tên> 1`, editor mở đúng subBlock theo spec | 0011 | `m15-toolbar` (node, handle, ô đầu tiên của editor) | ◐ (local PASS, chờ CI) |
-| B3 | Kéo block vào / ra container Loop, Parallel | `parentId` đúng; container-mapping ⇒ `sv_repeat`/`sv_while`/`sv_parallel` | FR-BLK-05 · 0011 Notes M03-T10 | `m15-containers` (Loop/Parallel: thả vào ⇒ `parentId`, "Remove from Subflow" ⇒ top-level); goldens | ◐ (local PASS, chờ CI) |
+| B1 | Toolbar có mọi block `sv_*` (38; 3 spec container đi qua Loop/Parallel của Sim) | mỗi block thấy được và thả ra canvas được | FR-BLK-01…08 · 0011 | `m15-toolbar` (38 block) + `m3-blocks` | ✔ (CI `419f2d9`) |
+| B2 | Mỗi block thả vào canvas rỗng (overlay) và canvas có sẵn | node mới tên `<Tên> 1`, editor mở đúng subBlock theo spec | 0011 | `m15-toolbar` (node, handle, ô đầu tiên của editor) | ✔ (CI `419f2d9`) |
+| B3 | Kéo block vào / ra container Loop, Parallel | `parentId` đúng; container-mapping ⇒ `sv_repeat`/`sv_while`/`sv_parallel` | FR-BLK-05 · 0011 Notes M03-T10 | `m15-containers` (Loop/Parallel: thả vào ⇒ `parentId`, "Remove from Subflow" ⇒ top-level); goldens | ✔ (CI `419f2d9`) |
 | B4 | Thả bị từ chối: workflow khoá, quyền viewer | không tạo node, thông báo rõ | 0032 | — (cần user viewer thứ hai trong workspace; Sim không có "khoá workflow") | ☐ |
 | B5 | Flow block hiện handle nhánh có tên | `then/else`, `case-<i>/default`, `ok/timeout`, `stable/broken`, `changed/unchanged` | 0011 | `m3-blocks` | ◐ |
 
@@ -30,18 +30,18 @@
 | ID | Luồng | Tiêu chí PASS | FR / ADR | Test | TT |
 |---|---|---|---|---|---|
 | C1 | Kéo Speed (sensor) ⇒ menu chỉ Read/When changes, không Set | menu đúng kind | FR-BLK-01/02 · 0010 §6 | `m2-gate` | ✔ |
-| C2 | Actuator ⇒ có Set; attribute ⇒ Read attribute; array ⇒ không Set | bảng kind × menu | 0010, 0018 | `m15-vehicle-panel` | ◐ (local PASS, chờ CI) |
-| C3 | Lặp C1–C2 cho release v4.0 và v4.2 | cây đổi không rebuild | FR-VSS-02 | `m2-gate` + `m15-vehicle-panel` (v4.0, v4.2) | ◐ (local PASS, chờ CI) |
-| C4 | Click/bàn phím thay cho kéo | cùng menu, block thêm giữa viewport | 0011 Notes M02-T10 | `m15-vehicle-panel` (click mở cùng menu) | ◐ (local PASS, chờ CI) |
+| C2 | Actuator ⇒ có Set; attribute ⇒ Read attribute; array ⇒ không Set | bảng kind × menu | 0010, 0018 | `m15-vehicle-panel` | ✔ (CI `419f2d9`) |
+| C3 | Lặp C1–C2 cho release v4.0 và v4.2 | cây đổi không rebuild | FR-VSS-02 | `m2-gate` + `m15-vehicle-panel` (v4.0, v4.2) | ✔ (CI `419f2d9`) |
+| C4 | Click/bàn phím thay cho kéo | cùng menu, block thêm giữa viewport | 0011 Notes M02-T10 | `m15-vehicle-panel` (click mở cùng menu) | ✔ (CI `419f2d9`) |
 
 ## D. Nối & chỉnh sửa
 | ID | Luồng | Tiêu chí PASS | FR / ADR | Test | TT |
 |---|---|---|---|---|---|
 | D1 | Nối trigger → bước → actuator, lưu | graph lưu đúng cạnh | FR-WF-01 | `m2-gate`, `m5-simulate` | ✔ |
-| D2 | Nối mọi loại handle (nhánh, case, container start/end) | adapter ra đúng `fromHandle` | 0011 | `m3-goldens` + `m15-connect-edit` (then/else) | ◐ (local PASS, chờ CI) |
-| D3 | Nối sai bị chặn (vòng, fan-out, handle lạ) | không tạo cạnh hoặc Problems báo đúng mã | 0016 | `m15-connect-edit` (cạnh khép vòng bị canvas từ chối) | ◐ (local PASS, chờ CI) |
-| D4 | Xoá / undo / redo / copy-paste | trạng thái khôi phục đúng | — | `m15-connect-edit` (xoá/undo/redo, copy/paste) | ◐ (local PASS, chờ CI) |
-| D5 | Đổi tên block ⇒ tham chiếu `<…>` cập nhật | biểu thức đổi theo tên mới | 0013 | `m15-connect-edit` (đổi tên ⇒ `<speed.value>`) | ◐ (local PASS, chờ CI) |
+| D2 | Nối mọi loại handle (nhánh, case, container start/end) | adapter ra đúng `fromHandle` | 0011 | `m3-goldens` + `m15-connect-edit` (then/else) | ✔ (CI `419f2d9`) |
+| D3 | Nối sai bị chặn (vòng, fan-out, handle lạ) | không tạo cạnh hoặc Problems báo đúng mã | 0016 | `m15-connect-edit` (cạnh khép vòng bị canvas từ chối) | ✔ (CI `419f2d9`) |
+| D4 | Xoá / undo / redo / copy-paste | trạng thái khôi phục đúng | — | `m15-connect-edit` (xoá/undo/redo, copy/paste) | ✔ (CI `419f2d9`) |
+| D5 | Đổi tên block ⇒ tham chiếu `<…>` cập nhật | biểu thức đổi theo tên mới | 0013 | `m15-connect-edit` (đổi tên ⇒ `<speed.value>`) | ✔ (CI `419f2d9`) |
 | D6 | Editor biểu thức / thời lượng / giá trị theo kiểu | gợi ý `<`, chọn signal, đơn vị ms/s/min | 0011 §5 | `m3-blocks`, `m5-simulate` | ◐ |
 
 ## E. Kiểm tra, mô phỏng
@@ -50,7 +50,7 @@
 | E1 | 7 golden (GW-A…G) dựng hoàn toàn bằng UI | Problems sạch, adapter = `graph.json` golden | FR-WF-01/02 · 0042 | `m3-goldens` | ✔ |
 | E2 | Verify báo narrowing ⇒ quick-fix Insert Convert ⇒ sạch | đúng mã, quick-fix sửa được | FR-WF-02/04 · 0016 | `m4-verify` | ✔ |
 | E3 | Scenario ⇒ Simulate ⇒ timeline + replay overlay | write ở đúng t, badge replay | FR-RUN-01 · 0017 | `m5-simulate` | ✔ |
-| E4 | Block composite (Battery status) simulate | đọc đủ member, 1 write | FR-BLK-07 · 0045 | `m14-composite` | ◐ (chờ CI) |
+| E4 | Block composite (Battery status) simulate | đọc đủ member, 1 write | FR-BLK-07 · 0045 | `m14-composite` | ✔ |
 | E5 | Filter + State machine trên canvas, simulate | giá trị lọc/chuyển trạng thái đúng như conformance C40/C41 | FR-BLK-08 · 0049 | M15-T02 | ☐ |
 
 ## F. SynCode, Run, IDE, Export (stack thật)
@@ -67,7 +67,7 @@
 | ID | Luồng | Tiêu chí PASS | FR / ADR | Test | TT |
 |---|---|---|---|---|---|
 | G1 | Prompt ⇒ đề xuất patch trên canvas ⇒ Accept (lưu) | patch áp dụng, lưu | FR-AI-01/04 · 0030 | `m10-assistant` | ✔ |
-| G2 | Hành động có side-effect cần xác nhận (sửa input) | dialog xác nhận, input đã sửa được dùng | FR-AI-05 | `m10-assistant`; hồi quy `m15-assistant-reload` (gửi ngay sau reload giữ block; proposal lệch bị từ chối) | ◐ (local PASS, chờ CI) |
+| G2 | Hành động có side-effect cần xác nhận (sửa input) | dialog xác nhận, input đã sửa được dùng | FR-AI-05 | `m10-assistant`; hồi quy `m15-assistant-reload` (gửi ngay sau reload giữ block; proposal lệch bị từ chối) | ✔ (CI `419f2d9`) |
 | G3 | Eval với LLM thật | bộ eval đạt ngưỡng | FR-AI-02 | **bỏ qua** (chưa có API key — PO) | — |
 
 ## H. Full luồng & video
