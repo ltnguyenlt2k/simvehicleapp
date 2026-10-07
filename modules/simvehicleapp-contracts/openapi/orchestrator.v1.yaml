@@ -195,6 +195,21 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Generation" }
+  /projects/{id}/export:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    post:
+      operationId: exportProject
+      tags: [export]
+      description: "Zip of the project (ADR-0031 §1, M09-T06): the folder as the workspace exports it, plus `.simvehicleapp/workflows/*.graph.json` (re-importable), `.simvehicleapp/generation.json`, `.simvehicleapp/license.json`, README.SIMVEHICLE.md, NOTICE, THIRD-PARTY-NOTICES. Entitlement `export.source`."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Project zip.
+          content:
+            application/zip:
+              schema: { type: string, contentMediaType: application/zip }
+        "403": { description: "not_entitled (export.source)." }
+        "409": { description: "SynCode is changing the project." }
   /projects/{id}/runs:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     post:
@@ -230,6 +245,29 @@ paths:
                   error: { type: string }
                   message: { type: string }
                   activeRun: { $ref: "#/components/schemas/Run" }
+  /entitlements:
+    get:
+      operationId: getEntitlements
+      tags: [license]
+      description: "License status of the EntitlementService (ADR-0031 §2–3): mode, edition, features, limits — what clients may show; decisions are made per action."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: License status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mode, licensed]
+                properties:
+                  mode: { enum: [full, enforce] }
+                  licensed: { type: boolean }
+                  reason: { type: string }
+                  edition: { type: string }
+                  licensee: { type: string }
+                  expiry: { type: [string, "null"] }
+                  features: { $ref: "urn:simvehicleapp:contracts:license:1.0.0-alpha.1#/properties/features" }
+                  limits: { $ref: "urn:simvehicleapp:contracts:license:1.0.0-alpha.1#/properties/limits" }
   /runs:
     get:
       operationId: listRuns
@@ -342,6 +380,7 @@ components:
         status: { enum: [creating, ready, failed], description: "creating until the workspace and the toolchain prepared the folder." }
         statusMessage: { type: string }
         workflows: { type: array, items: { type: object, required: [simWorkflowId, enabled], properties: { simWorkflowId: { type: string }, enabled: { type: boolean } } } }
+        editor: { type: object, required: [url], properties: { url: { type: string } }, description: "code-server on the project folder (ADR-0028 §2), once the project is ready." }
     Verdict: { enum: [passed, failed, skipped, pending] }
     Generation:
       description: "Master Plan Appendix A (success) / Appendix B (failure: success false, stage, diagnostics)."

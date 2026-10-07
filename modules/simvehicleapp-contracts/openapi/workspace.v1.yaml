@@ -167,7 +167,7 @@ paths:
     post:
       operationId: exportProject
       tags: [export]
-      description: Zip stream honoring .svexportignore (ADR-0031). Entitlement is checked by the orchestrator before calling.
+      description: "Deterministic zip of the project folder (no build outputs, VCS, caches, symlinks; honors .svexportignore) plus the orchestrator's extra files (ADR-0031 §1). Entitlement is checked by the orchestrator before calling."
       parameters: [{ $ref: "#/components/parameters/RequestId" }]
       requestBody:
         required: true
@@ -175,9 +175,13 @@ paths:
           application/json:
             schema:
               type: object
-              required: [generationId]
               properties:
-                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id", description: "Must be the generation the folder holds (409 otherwise)." }
+                extraFiles:
+                  type: array
+                  maxItems: 500
+                  description: "Added to the zip: paths under `.simvehicleapp/`, or README.SIMVEHICLE.md, NOTICE, THIRD-PARTY-NOTICES."
+                  items: { type: object, required: [path, content], properties: { path: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/relativePath" }, content: { type: string } } }
       responses:
         "200":
           description: Project zip.
