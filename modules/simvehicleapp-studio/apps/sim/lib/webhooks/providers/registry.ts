@@ -2,7 +2,6 @@ import { createLogger } from '@sim/logger'
 import { NextResponse } from 'next/server'
 import { circlebackHandler } from '@/lib/webhooks/providers/circleback'
 import { genericHandler } from '@/lib/webhooks/providers/generic'
-import { imapHandler } from '@/lib/webhooks/providers/imap'
 import { rssHandler } from '@/lib/webhooks/providers/rss'
 import { tableProviderHandler } from '@/lib/webhooks/providers/table'
 import type { WebhookProviderHandler } from '@/lib/webhooks/providers/types'
@@ -13,7 +12,6 @@ const logger = createLogger('WebhookProviderRegistry')
 const PROVIDER_HANDLERS: Record<string, WebhookProviderHandler> = {
   circleback: circlebackHandler,
   generic: genericHandler,
-  imap: imapHandler,
   rss: rssHandler,
   table: tableProviderHandler,
 }

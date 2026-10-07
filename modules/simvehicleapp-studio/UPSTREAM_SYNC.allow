@@ -981,3 +981,18 @@ apps/sim/triggers/zoom/*
 # M11-T03 wave 3b — dependency security fixes (overrides for vulnerable transitive packages, ADR-0008 Notes)
 packages/auth/package.json
 package.json
+# M11-T03 wave 3b — IMAP email trigger removed (imapflow pulled nodemailer 7 with 13 advisories)
+apps/sim/blocks/blocks/imap.ts
+apps/sim/app/api/tools/imap/mailboxes/route.ts
+apps/sim/triggers/imap/poller.ts
+apps/sim/triggers/imap/index.ts
+apps/sim/lib/api/contracts/tools/imap.ts
+apps/sim/lib/webhooks/polling/imap.ts
+apps/sim/lib/webhooks/providers/imap.ts
+apps/sim/blocks/registry.ts
+apps/sim/triggers/registry.ts
+apps/sim/lib/webhooks/polling/registry.ts
+apps/sim/lib/webhooks/providers/registry.ts
+apps/sim/lib/api/contracts/tools/index.ts
+apps/sim/triggers/constants.ts
+apps/sim/lib/integrations/icon-mapping.ts

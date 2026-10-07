@@ -16,7 +16,6 @@ import { GenericWebhookBlock } from '@/blocks/blocks/generic_webhook'
 import { GuardrailsBlock } from '@/blocks/blocks/guardrails'
 import { HumanInTheLoopBlock } from '@/blocks/blocks/human_in_the_loop'
 import { ImageGeneratorBlock, ImageGeneratorV2Block } from '@/blocks/blocks/image_generator'
-import { ImapBlock, ImapBlockMeta } from '@/blocks/blocks/imap'
 import { InputTriggerBlock } from '@/blocks/blocks/input_trigger'
 import { KnowledgeBlock } from '@/blocks/blocks/knowledge'
 import { LogsBlock, LogsV2Block } from '@/blocks/blocks/logs'
@@ -83,7 +82,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   human_in_the_loop: HumanInTheLoopBlock,
   image_generator: ImageGeneratorBlock,
   image_generator_v2: ImageGeneratorV2Block,
-  imap: ImapBlock,
   input_trigger: InputTriggerBlock,
   knowledge: KnowledgeBlock,
   logs: LogsBlock,
@@ -136,7 +134,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
 const BLOCK_META_REGISTRY: Record<string, BlockMeta> = {
   circleback: CirclebackBlockMeta,
   enrichment: EnrichmentBlockMeta,
-  imap: ImapBlockMeta,
   rss: RssBlockMeta,
 }
 

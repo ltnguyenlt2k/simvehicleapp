@@ -1,9 +1,7 @@
-import { imapPollingHandler } from '@/lib/webhooks/polling/imap'
 import { rssPollingHandler } from '@/lib/webhooks/polling/rss'
 import type { PollingProviderHandler } from '@/lib/webhooks/polling/types'
 
 const POLLING_HANDLERS: Record<string, PollingProviderHandler> = {
-  imap: imapPollingHandler,
   rss: rssPollingHandler,
 }
 

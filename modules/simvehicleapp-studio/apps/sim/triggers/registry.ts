@@ -4,7 +4,6 @@ import {
   circlebackWebhookTrigger,
 } from '@/triggers/circleback'
 import { genericWebhookTrigger } from '@/triggers/generic'
-import { imapPollingTrigger } from '@/triggers/imap'
 import { rssPollingTrigger } from '@/triggers/rss'
 import { simWorkspaceEventTrigger } from '@/triggers/sim'
 import { tableNewRowTrigger } from '@/triggers/table'
@@ -18,5 +17,4 @@ export const TRIGGER_REGISTRY: TriggerRegistry = {
   rss_poller: rssPollingTrigger,
   sim_workspace_event: simWorkspaceEventTrigger,
   table_new_row: tableNewRowTrigger,
-  imap_poller: imapPollingTrigger,
 }
