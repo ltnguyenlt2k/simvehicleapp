@@ -40,7 +40,7 @@
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS 2026-10-07 với eval LLM thật **BYPASS** (quyết định PO, chờ API key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
-| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
+| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | 🔄 | bắt đầu 2026-10-07 (Claude Code) |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | ☐ | 0/12 |
 
@@ -295,7 +295,7 @@ ADR: [0041](../analysis/adr/ADR-0041-rust-backend-feasibility.md) · Phụ thu�
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Template `vehicle-app-rust-template` | 0041 | ☐ | | T01 |
-| Runtime `simvehicleapp-runtime-rs` + conformance | 0041,0042 | ☐ | | T02 |
+| Runtime `simvehicleapp-runtime-rs` + conformance | 0041,0042 | 🔄 | Claude Code 2026-10-07 | T02 |
 | Client `kuksa-rust-sdk 0.2.2` | 0041 | ☐ | | T03 |
 | Generator emitters P0 → GW-A | 0041 | ☐ | | T04 |
 | toolchain-rust (cargo vendor offline) | 0041 | ☐ | | T05 |

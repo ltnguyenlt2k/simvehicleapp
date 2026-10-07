@@ -1,0 +1,9 @@
+{
+    "packages": {},
+    "components": [],
+    "variables": {
+        "language": "rust",
+        "repoType": "app",
+        "appManifestPath": "app/AppManifest.json"
+    }
+}

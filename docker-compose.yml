@@ -2,6 +2,7 @@
 #   docker compose up -d                      # runtime stack + toolchain (+ ide)
 #   docker compose --profile mock up -d       # + kuksa mock-provider
 #   COMPOSE_PROFILES=python (in .env)         # + Python backend: codegen-python, toolchain-python, ide-python (ADR-0040)
+#   COMPOSE_PROFILES=rust                     # + Rust backend (experimental, ADR-0041): codegen-rust, toolchain-rust
 # Build order: devcontainer-cpp → toolchain-cpp → ide-cpp, and contracts → core services; `scripts/sv build` handles it.
 name: simvehicleapp
 include:
@@ -9,6 +10,7 @@ include:
   - modules/simvehicleapp-core/compose.yaml
   - modules/compiler-code-cpp/compose.yaml
   - modules/compiler-code-python/compose.yaml
+  - modules/compiler-code-rust/compose.yaml
   - modules/simvehicleapp-orchestrator/compose.yaml
   - modules/velocitas-stack/compose.yaml
   - modules/ide-vscode/compose.yaml

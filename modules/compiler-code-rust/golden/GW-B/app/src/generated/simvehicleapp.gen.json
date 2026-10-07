@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_b",
+      "revision": 1,
+      "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "ef0775d100252f71416a9a968044f14b432b046ce7b11aba356d686d5fd015d6",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "81b99958648f7e39f4348ad08518f6ff468d97675e0833ea8dca0789fbae1b12",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/low_battery_hmi_warning.map.json",
+      "sha256": "9cb72662b23427e753814e85193337bb28d72da8cb2f6e0c95bf7651c02a015e",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/low_battery_hmi_warning.rs",
+      "sha256": "15e749f6bf6c62635a3257fc7c00066291673712c5de2df605039b84969391bc",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "5af80056775307bd7d013f4aec2124d70eece5d6ef9809a93bc7c4045801d0f2",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "068013b13f39e580898e80dba5d12f63d2bc87bfc829186ccebf737c8d595f62",
+      "role": "test"
+    }
+  ]
+}

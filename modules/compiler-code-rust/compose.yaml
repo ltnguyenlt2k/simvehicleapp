@@ -1,0 +1,28 @@
+# compiler-code-rust — self-contained compose fragment (profile `rust`, ADR-0041). Building it needs image
+# simvehicleapp/contracts:dev (modules/simvehicleapp-contracts; `scripts/sv build` builds it first).
+services:
+  codegen-rust:
+    image: simvehicleapp/codegen-rust:dev
+    profiles: ["rust"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # Pure generator (ADR-0020 §3): read-only filesystem, no network egress (internal network only).
+    read_only: true
+    tmpfs: [/tmp]
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [sv-codegen]
+    restart: unless-stopped
+
+networks:
+  # internal: containers on it can reach each other but nothing outside the host bridge.
+  sv-codegen:
+    internal: true

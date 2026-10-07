@@ -1,0 +1,63 @@
+{
+  "file": "app/src/generated/workflows/window_close_on_rain.rs",
+  "workflowId": "gw_g",
+  "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce",
+  "ranges": [
+    {
+      "startLine": 27,
+      "endLine": 46,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 48,
+      "endLine": 56,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 58,
+      "endLine": 66,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 68,
+      "endLine": 76,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 78,
+      "endLine": 86,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 88,
+      "endLine": 127,
+      "nodeId": "n6",
+      "blockId": "b6",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 129,
+      "endLine": 135,
+      "nodeId": "n7",
+      "blockId": "b7",
+      "workflowId": "gw_g"
+    },
+    {
+      "startLine": 137,
+      "endLine": 143,
+      "nodeId": "n8",
+      "blockId": "b8",
+      "workflowId": "gw_g"
+    }
+  ]
+}

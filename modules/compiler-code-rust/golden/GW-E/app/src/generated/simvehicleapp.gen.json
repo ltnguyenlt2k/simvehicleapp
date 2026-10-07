@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_e",
+      "revision": 1,
+      "irHash": "sha256:77be02a978f54386a11eded8c64a0b9fe9e91508d154b7a6641ff7996deb1c03"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "f5016296959a039efbfbaf6682884d94bce889412379192177a08c894898c074",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "b2e6f1a955133089676b10c43de3e393a7412e812733a555d0117beccc3b2395",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/periodic_telemetry.map.json",
+      "sha256": "4bc52f9d9e67232678ebd7dc13ac043d75b412584bc5684560fd3a4033aa7cf1",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "88aa130dabd2c443d4a0e76196afb251868101c709a2843a7302ca600ccf20ee",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/periodic_telemetry.rs",
+      "sha256": "ef32b7624d1ddf942275ec3bf656a1156377a7adaa1add92e8a4bd3b51484a70",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "5f6aa74f3a52cf0b7d8f3289582006108e553b412951fd7c06fec1894d0a41d8",
+      "role": "test"
+    }
+  ]
+}

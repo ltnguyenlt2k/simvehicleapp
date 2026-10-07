@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_c",
+      "revision": 1,
+      "irHash": "sha256:bc1e3bf33a1b354a68eb7697c09be91013ccf8c1b4ae5565d86250b099429f0e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "ff692c4e54b048bb168b4213ee2729e87778f4db96b0adca3f4486af8578a7dd",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "8359fc24112da9bc83b1ec8561147f4a7d466e5b4eb845ecfe1ef3c86962b2d5",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/auto_wipers.map.json",
+      "sha256": "e417fff20d45d054fbf919558aae07b920f539904b13611978b5a1b36eadee34",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/auto_wipers.rs",
+      "sha256": "29020e2126e119042d35e61e458bb52248a43b8bb995bba165433225d6da6967",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "4a4115846d76ee7c0f46f091b834b8565513e25cf7160dc9a4982f6f18c4b4c0",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "92b419d5a94410871644608ee431ee1684617e036ed667ebc80432a4438ed58d",
+      "role": "test"
+    }
+  ]
+}

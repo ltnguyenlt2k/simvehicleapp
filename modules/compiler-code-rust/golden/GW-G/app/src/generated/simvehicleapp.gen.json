@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_g",
+      "revision": 1,
+      "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "ff0bae36ee016336eebb1f85ce6ba6372a3fbacae24e795bfb92ce71a1e2dedd",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "4f8556fae1a329bb663612a58f5acb8f5a2f99186671478996bc307465ed2981",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/window_close_on_rain.map.json",
+      "sha256": "a87048abdaa1880bd514a81c0253ae436e83567519ced1046759f1de1f8a3629",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "191c971ecaacd7ae90d4356c8a05041b5f66992b7a2cf8fdefcbe68c41ee9311",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/window_close_on_rain.rs",
+      "sha256": "ac08ae2607dda105d567a73c499735ba8b178cdd45a98ff535cec54294ec019a",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "a94c71a31797500802b0cc6455acd08c68a9ab04db6fa2500fd61440997465d5",
+      "role": "test"
+    }
+  ]
+}

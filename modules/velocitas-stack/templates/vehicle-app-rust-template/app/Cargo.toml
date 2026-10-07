@@ -1,0 +1,23 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+
+# The scenario tests SynCode generates: their own harness prints gtest-style lines (ADR-0041).
+[[test]]
+name = "generated"
+path = "tests/generated/main.rs"
+harness = false
+
+[dependencies]
+simvehicleapp-runtime = { path = "src/simvehicleapp-runtime", features = ["host"] }
+tokio = { version = "1", features = ["rt", "macros"] }

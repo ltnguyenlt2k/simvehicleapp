@@ -1,0 +1,4 @@
+{
+  "description": "Files of vehicle-app-rust-template replaced by the SimVehicleApp app (ADR-0041): the sample main.rs is overwritten by the host that runs the generated workflows; user_hooks.rs is the user's own code.",
+  "remove": []
+}

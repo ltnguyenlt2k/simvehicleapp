@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_a",
+      "revision": 1,
+      "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "8294b47fbf2134a213ab688a056a7eca908077203f584eb2a1bd0d8cf3d32034",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "a702accd70f6b068107c66dbbab4b931d6aca056576f8281ad3a6f3f9522de0a",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/stable_overspeed_warning.map.json",
+      "sha256": "306416d01131f1f64d136b8cef2efb9fca2d5bc501c7c3b92fa1cbdcad6f42c0",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "0ea105a37d7cbaef8e2dd18caab9c4b837b45fe7e77573d4533d60f6c8d2d69b",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/stable_overspeed_warning.rs",
+      "sha256": "c8c892c456ea1018bd5d91fdb248bbcb319bb0e37f13b7d488a04132810be56c",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "85a7739a7c4cc16648c5d4ea55fd6ffc2427b41186c57fba1e26e0df8ecdbfa7",
+      "role": "test"
+    }
+  ]
+}

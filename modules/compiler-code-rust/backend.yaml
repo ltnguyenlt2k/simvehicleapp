@@ -1,0 +1,44 @@
+# compiler-code-rust — Backend Plugin manifest (ADR-0020, analysis/07 §1); served as JSON by GET /capabilities.
+id: rust
+name: compiler-code-rust
+version: 0.1.0
+language: rust
+irVersions: ">=1.0.0 <2.0.0"
+contracts: ">=1.0.0-alpha.1 <2.0.0"
+opcodes:
+  - event.app_start
+  - event.signal_changed
+  - event.timer
+  - event.condition
+  - event.mqtt_message
+  - vehicle.read
+  - vehicle.read_attribute
+  - vehicle.write
+  - control.branch
+  - control.switch
+  - control.wait
+  - control.wait_until
+  - control.stable_for
+  - control.repeat
+  - control.while
+  - control.parallel
+  - control.stop
+  - state.get
+  - state.set
+  - state.counter
+  - logic.eval
+  - logic.in_range
+  - comm.log
+  - comm.mqtt_publish
+features:
+  concurrencyPolicies: [restart, ignore, queue, parallel]
+  trace: true
+  sourceMaps: true
+runtime:
+  name: simvehicleapp-runtime-rust
+  version: 0.1.0
+  vendorPath: app/src/simvehicleapp-runtime
+toolchain:
+  id: toolchain-rust
+  template: vehicle-app-rust-template
+  templateSha: c1b37654e9c856ca83c1c8a4802b9fc33def7222  # git tree id of velocitas-stack/templates/vehicle-app-rust-template (SimVehicleApp-owned, ADR-0041)

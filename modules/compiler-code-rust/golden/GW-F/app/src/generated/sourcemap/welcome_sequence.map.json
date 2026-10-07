@@ -1,0 +1,49 @@
+{
+  "file": "app/src/generated/workflows/welcome_sequence.rs",
+  "workflowId": "gw_f",
+  "irHash": "sha256:5a1b3deaee0493022195cff3b084acde7c1036d5c98b5dd5adcaf6d05b9a2195",
+  "ranges": [
+    {
+      "startLine": 23,
+      "endLine": 24,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_f"
+    },
+    {
+      "startLine": 26,
+      "endLine": 27,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_f"
+    },
+    {
+      "startLine": 29,
+      "endLine": 37,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_f"
+    },
+    {
+      "startLine": 39,
+      "endLine": 40,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_f"
+    },
+    {
+      "startLine": 42,
+      "endLine": 50,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_f"
+    },
+    {
+      "startLine": 52,
+      "endLine": 58,
+      "nodeId": "n6",
+      "blockId": "b6",
+      "workflowId": "gw_f"
+    }
+  ]
+}

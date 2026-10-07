@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_d",
+      "revision": 1,
+      "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "96c14c86e6232617ec6a4b3991e971f865950268ed83b852f58005d4460d0a9e",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "2a4d9ca8c1257987245f712a399c5170d249265cb90d10201f260e06f2254067",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/auto_door_lock.map.json",
+      "sha256": "43efed35e8419a7164fdbab4822af00f8aceedd422e9a5cbb271e28f7c4b13a0",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/auto_door_lock.rs",
+      "sha256": "1180ee590a0985f64ea574ce0b6b3e7c68de082bfd7d25a333f9419ba0954550",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "fb16aeb184220479d3c3e2bb9286412ba45211d6943991bc2bf3288f7fe5860b",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "3510cf31eb2cf87fd486fa4ee7d6759d9066e1dd738ac7ebde562b35a9534980",
+      "role": "test"
+    }
+  ]
+}

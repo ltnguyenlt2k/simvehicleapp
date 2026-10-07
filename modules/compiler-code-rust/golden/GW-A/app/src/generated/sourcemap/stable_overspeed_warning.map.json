@@ -1,0 +1,49 @@
+{
+  "file": "app/src/generated/workflows/stable_overspeed_warning.rs",
+  "workflowId": "gw_a",
+  "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8",
+  "ranges": [
+    {
+      "startLine": 20,
+      "endLine": 30,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_a"
+    },
+    {
+      "startLine": 32,
+      "endLine": 42,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_a"
+    },
+    {
+      "startLine": 44,
+      "endLine": 50,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_a"
+    },
+    {
+      "startLine": 52,
+      "endLine": 60,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_a"
+    },
+    {
+      "startLine": 62,
+      "endLine": 95,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_a"
+    },
+    {
+      "startLine": 97,
+      "endLine": 105,
+      "nodeId": "n6",
+      "blockId": "b6",
+      "workflowId": "gw_a"
+    }
+  ]
+}

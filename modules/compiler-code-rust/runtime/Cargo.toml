@@ -1,0 +1,20 @@
+[package]
+name = "simvehicleapp-runtime"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+license = "Apache-2.0"
+description = "SimVehicleApp runtime for Rust vehicle apps (ADR-0041): strand, workflow runtime, simulator value semantics."
+publish = false
+
+[features]
+default = []
+# The databroker/MQTT host of a generated app (kuksa-rust-sdk, sdv.databroker.v1).
+host = ["dep:tokio", "dep:kuksa-rust-sdk", "dep:rumqttc", "dep:tonic"]
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+tokio = { version = "1", features = ["rt", "time", "macros", "sync", "signal", "net"], optional = true }
+kuksa-rust-sdk = { version = "=0.2.2", optional = true }
+rumqttc = { version = "0.24", optional = true }
+tonic = { version = "0.14", default-features = false, features = ["transport", "channel", "codegen"], optional = true }

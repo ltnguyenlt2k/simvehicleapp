@@ -1,0 +1,42 @@
+{
+  "file": "app/src/generated/workflows/auto_door_lock.rs",
+  "workflowId": "gw_d",
+  "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca",
+  "ranges": [
+    {
+      "startLine": 22,
+      "endLine": 32,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 34,
+      "endLine": 42,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 44,
+      "endLine": 52,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 54,
+      "endLine": 62,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 64,
+      "endLine": 72,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_d"
+    }
+  ]
+}

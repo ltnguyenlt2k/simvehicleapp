@@ -1,0 +1,6 @@
+**/node_modules
+build
+golden
+runtime/target
+generator/conformance
+generator/src/**/*.test.ts

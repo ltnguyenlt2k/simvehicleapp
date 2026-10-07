@@ -1,0 +1,9 @@
+# SimVehicleApp Rust vehicle app (ADR-0041, experimental — not Velocitas tooling: Velocitas has no Rust template).
+[workspace]
+members = ["app"]
+resolver = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

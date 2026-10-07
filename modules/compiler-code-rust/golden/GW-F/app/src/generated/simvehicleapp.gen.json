@@ -1,0 +1,49 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_f",
+      "revision": 1,
+      "irHash": "sha256:5a1b3deaee0493022195cff3b084acde7c1036d5c98b5dd5adcaf6d05b9a2195"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "9f16ab6eac006e18a0f6e15e30e9f9884c92859082727e6406f5a61a86c9c55e",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "e6efcb9ea7b25a51c6e424fd7ae172befe9e667bb13ffb03eeb0e846e69d1586",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/welcome_sequence.map.json",
+      "sha256": "a5bc2866d1dd45011067a2222daaccc24b02ae5d1526feb4f8c7c83d0fcccb7b",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "a2dbc7a710198c9c4275cf5c6b78ce03a7d13daa4b2bee211e77a1e3312b507a",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/welcome_sequence.rs",
+      "sha256": "146c7e50c50b32803f5fda13acd1ca54413006f0b31bb816c8b933b9a8abaf0b",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/main.rs",
+      "sha256": "0fd34a862e54e962f27036dbda2ce121a6174f7b8d45ac290fb926e71864db0e",
+      "role": "test"
+    }
+  ]
+}
