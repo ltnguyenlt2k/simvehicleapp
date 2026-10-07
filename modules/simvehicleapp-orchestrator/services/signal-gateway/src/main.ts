@@ -33,7 +33,7 @@ const catalog = new Catalog(async (release) => {
   return res.json();
 });
 const publish = mqttPublisher(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
-const player = new Player({ set: playerSet(broker, catalog), publish, sleep: (ms) => Bun.sleep(ms), now: Date.now });
+const player = new Player({ set: playerSet(broker, catalog), publish, sleep: (ms) => Bun.sleep(ms), now: Date.now, monotonic: () => performance.now() });
 
 const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log }, createGatewayHandler({ broker, catalog, player, newId: () => `play_${crypto.randomUUID()}` }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });

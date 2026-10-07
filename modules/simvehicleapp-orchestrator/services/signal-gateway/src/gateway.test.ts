@@ -96,6 +96,30 @@ describe("scenario player (M08-T07)", () => {
     expect(done).toMatchObject({ state: "done", played: 4, total: 4 });
   });
 
+  test("inputs never play early: timers that wake early sleep again; a wall-clock step does not move them", async () => {
+    let mono = 0;
+    let wall = 1_000_000;
+    const at: number[] = [];
+    const player = new Player({
+      async set() {
+        at.push(mono);
+      },
+      async publish() {},
+      async sleep(ms) {
+        const slept = Math.max(1, Math.round(ms * 0.95)); // wakes 5 % early
+        mono += slept;
+        wall += slept + (mono > 1500 && wall < 2_000_000 ? 1_000_000 : 0); // the wall clock steps once
+      },
+      now: () => wall,
+      monotonic: () => mono,
+    });
+    await player.play("p", "v4.0", { name: "S", until: 3000, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 1 }, { t: 3000, path: "Vehicle.Speed", value: 2 }] }).finished;
+    expect(at[0]).toBeGreaterThanOrEqual(1000);
+    expect(at[0]).toBeLessThan(1005);
+    expect(at[1]).toBeGreaterThanOrEqual(3000);
+    expect(at[1]).toBeLessThan(3005);
+  });
+
   test("a new playback stops the previous one; a failed write ends it as failed", async () => {
     const { io } = fakeIo();
     const player = new Player({ ...io, sleep: () => new Promise((r) => setTimeout(r, 5)) });

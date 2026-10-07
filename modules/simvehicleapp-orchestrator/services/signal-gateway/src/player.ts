@@ -36,7 +36,10 @@ export interface PlayerIo {
   set(release: string, path: string, field: Field, value: unknown): Promise<void>;
   publish(topic: string, payload: string): Promise<void>;
   sleep(ms: number): Promise<void>;
+  /** Wall clock (the playback's `startedAt`). */
   now(): number;
+  /** Monotonic clock (ms) the inputs are scheduled on: the wall clock can step (NTP, WSL time sync). */
+  monotonic?(): number;
 }
 
 export class Player {
@@ -61,6 +64,8 @@ export class Player {
     const initial = Object.entries(scenario.initial ?? {});
     const inputs = [...scenario.inputs].map((input, i) => ({ input, i })).sort((a, b) => a.input.t - b.input.t || a.i - b.i);
     const started = this.io.now();
+    const clock = this.io.monotonic ?? this.io.now;
+    const origin = clock();
     this.current = { id, release, name: scenario.name, state: "playing", until: scenario.until, played: 0, total: initial.length + inputs.length, startedAt: started };
     const live = () => token === this.token;
     const step = (patch: Partial<Playback>) => {
@@ -75,8 +80,8 @@ export class Player {
           step({ played: ++played });
         }
         for (const { input } of inputs) {
-          const wait = started + input.t - this.io.now();
-          if (wait > 0) await this.io.sleep(wait);
+          // Timers may wake early: sleep until the input's time has really come.
+          for (let wait = origin + input.t - clock(); wait > 0 && live(); wait = origin + input.t - clock()) await this.io.sleep(wait);
           if (!live()) return this.current!;
           if (input.path) await this.io.set(release, input.path, "value", input.value);
           else if (input.topic) await this.io.publish(input.topic, typeof input.value === "string" ? input.value : JSON.stringify(input.value));
