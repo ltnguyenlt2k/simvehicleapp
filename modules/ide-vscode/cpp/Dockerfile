@@ -15,5 +15,7 @@ USER vscode
 # Extensions from Open VSX only (license-compatible with code-server; no ms-vscode.cpptools / Pylance).
 RUN sed -e 's/#.*//' -e '/^[[:space:]]*$/d' /opt/sv/ide/extensions.txt | xargs -n1 code-server --extensions-dir /opt/sv/ide/extensions --install-extension
 EXPOSE 8080
+# The toolchain image's healthcheck probes its agent (:4210), which the IDE does not run: probe code-server.
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 CMD curl -fsS http://127.0.0.1:8080/healthz >/dev/null || exit 1
 ENTRYPOINT ["sv-ide-entrypoint"]
 CMD ["/workspace"]
