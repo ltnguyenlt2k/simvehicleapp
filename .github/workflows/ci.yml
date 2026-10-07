@@ -29,6 +29,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker compose version
       - run: python3 scripts/ci/compose_lint.py
+      - name: User-guide block reference matches the BlockSpecs (M11-T08)
+        run: python3 scripts/docs/gen_block_reference.py --check
 
   contract-only-deps:
     name: contract-only-deps
