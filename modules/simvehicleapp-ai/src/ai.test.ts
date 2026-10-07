@@ -160,6 +160,8 @@ describe("WorkflowPatch v1 (M10-T05)", () => {
     expect(ops[4]).toMatchObject({ from: "i", fromHandle: "then" });
     expect(ops[5]).toMatchObject({ fromHandle: "maybe" }); // ambiguous: left for the compiler to report
     expect(fixes).toHaveLength(4);
+    const into = repairOps(base(), [{ op: "add_block", ref: "c", type: "sv_compare", props: {} }, { op: "connect", from: "b1", fromHandle: "source", to: "c", toHandle: "then" }], specs);
+    expect(into.ops[1]).toMatchObject({ toHandle: "target" });
   });
 
   test("ops sent as a string: the array, or the array followed by the rest of the input", () => {

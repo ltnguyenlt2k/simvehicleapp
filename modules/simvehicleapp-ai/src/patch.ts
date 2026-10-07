@@ -201,6 +201,11 @@ export function repairOps(base: WorkflowGraph, opsIn: readonly PatchOp[], specs:
         c = { ...c, fromHandle: handle };
       }
     }
+    const ins = specs.find((s) => s.type === typeOf.get(c.to))?.handles?.in ?? ["target"];
+    if (c.toHandle && typeOf.has(c.to) && !ins.includes(c.toHandle) && ins.length === 1) {
+      fixes.push(`ops[${i}] connect to ${c.to}: input '${c.toHandle}' does not exist, used '${ins[0]}'`);
+      c = { ...c, toHandle: ins[0] };
+    }
     return c;
   });
   return { ops: repaired, fixes };
