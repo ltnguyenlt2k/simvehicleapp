@@ -150,6 +150,13 @@ describe('POST /api/sv/projects/[id]/generations (M07-T18)', () => {
     expect(mockCall).not.toHaveBeenCalled()
   })
 
+  it('a viewer of the workspace cannot SynCode (ADR-0032 Verification)', async () => {
+    mockAccess.mockResolvedValue({ exists: true, hasAccess: true, canWrite: false })
+    const res = await POST(createMockRequest('POST', {}, {}, url), ctx)
+    expect(res.status).toBe(403)
+    expect(mockCall).not.toHaveBeenCalled()
+  })
+
   it('asks for workflows when none is assigned', async () => {
     mockCall.mockResolvedValueOnce(reply(200, project([{ simWorkflowId: 'wf-a', enabled: false }])))
     const res = await POST(createMockRequest('POST', {}, {}, url), ctx)
