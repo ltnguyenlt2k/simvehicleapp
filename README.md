@@ -7,10 +7,19 @@
 
 ## Demo
 
-![Tutorial "Overspeed warning" — canvas → Simulate → SynCode → Run trên KUKSA → inject → trợ lý AI](docs/media/demo.gif)
+![Full luồng: kéo thả GW-A → lint → Simulate → SynCode → Run trên KUKSA → IDE → Export → trợ lý AI → restart](docs/media/full-flow.gif)
 
-Video đầy đủ (720p, 84 s): [docs/media/demo.mp4](docs/media/demo.mp4) — quay tự động bằng E2E
-`modules/simvehicleapp-studio/e2e/tests/tutorial-live.spec.ts` (`SV_DEMO=1`) trên stack thật. Làm theo:
+**Video full luồng** (720p, 84 s, có chú thích từng bước): [docs/media/full-flow.mp4](docs/media/full-flow.mp4) — quay tự
+động bằng E2E `modules/simvehicleapp-studio/e2e/tests/m15-full-flow.spec.ts` trên stack thật, tái tạo bằng một lệnh:
+`scripts/sv demo-video` (cần stack đang chạy với `SV_AI_PROVIDER=fake`; khoảng chờ build được cắt tự động).
+
+Các chặng: 1 sign-up · 2–4 kéo tín hiệu VSS + block Stable for + Set actuator, nối block · 5 lint realtime sạch ·
+6 Simulate (virtual clock) · 7 tạo Velocitas project (offline) · 8 SynCode: graph → IR → C++ → build → unit test sinh ra
+(không LLM) · 9–10 Run trên KUKSA databroker, inject Speed ⇒ đèn hazard bật · 11 Export zip · 12 mở VS Code
+(code-server) đúng project · 13–14 trợ lý AI (provider giả lập offline) đề xuất patch, duyệt rồi Accept · 15 restart
+stack ⇒ workflow, project, code sinh vẫn còn.
+
+Video ngắn hơn theo tutorial "Overspeed warning": [docs/media/demo.mp4](docs/media/demo.mp4). Làm theo:
 [tutorial](docs/user-guide/tutorial.md) · Tài liệu: [docs/README.md](docs/README.md).
 
 ---

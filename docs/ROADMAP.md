@@ -331,8 +331,8 @@ Phụ thuộc: **toàn bộ** M0–M14 (plan, ADR, ROADMAP xong) · Chi tiết: 
 | Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | 🔄 | 2026-10-07: `m15-full-flow @live` PASS local 1,1 phút; phần restart tìm ra lỗi **mất dữ liệu**: trợ lý gửi graph rỗng khi canvas chưa nạp ⇒ Accept xoá block cũ — đã sửa (lint chỉ phát graph khi workflow nạp xong + chặn proposal lệch) + E2E hồi quy `m15-assistant-reload` | T06 |
 | Cộng tác realtime + mất kết nối/restart service | — | ☐ | | T07 |
 | 3 run CI xanh liên tiếp, 0 flaky | — | ☐ | | T08 |
-| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | 🔄 | 2026-10-07: `scripts/demo-video.sh` (Playwright image + restart + ffmpeg mpdecimate ⇒ mp4/GIF) | T09 |
-| Hậu kỳ + checklist xem video (PO ký) | — | ☐ | | T10 |
+| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | 🔄 | 2026-10-07: `scripts/demo-video.sh` (Playwright image + restart + ffmpeg: freezedetect cắt chờ ⇒ mp4 720p 84 s + GIF); bản quay đầu tiên trong README | T09 |
+| Hậu kỳ + checklist xem video (PO ký) | — | 🔄 | 2026-10-07: tự kiểm (contact sheet): đủ 15 chặng có chú thích, không lỗi UI, chỉ user giả `example.com`, không secret; **chờ PO xem + ký** | T10 |
 | Video trong README tổng, kiểm hiển thị thật trên GitHub | — | ☐ | | T11 |
 | Báo cáo `docs/reports/M15.md` | — | ☐ | | T12 |
 

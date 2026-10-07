@@ -46,6 +46,6 @@ case "${1:-}" in
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache simvehicleapp_sv-velocitas-python ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;
   refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
-  demo-video) exec scripts/demo-video.sh ;;
+  demo-video) exec scripts/demo-video.sh "${@:2}" ;;
   *) sed -n '2,12p' "$0"; exit 1 ;;
 esac
