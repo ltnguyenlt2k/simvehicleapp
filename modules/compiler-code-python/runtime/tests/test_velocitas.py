@@ -60,6 +60,10 @@ class FakeBroker:
         async def stream():
             path = query.removeprefix("SELECT ")
             queue = self.queue(path)
+            # Like the databroker: the first reply carries the current value (an empty datapoint when none).
+            first = SubscribeReply()
+            first.fields[path].CopyFrom(self.values.get(path, Datapoint()))
+            yield first
             while True:
                 value = await queue.get()
                 reply = SubscribeReply()
@@ -120,7 +124,6 @@ def test_app_on_the_sdk_loop():
 
         await app.on_start()
         assert app.runtime._values["Vehicle.Speed"] == 50.0  # baseline: no trigger
-        await broker.queue("Vehicle.Speed").put(Datapoint(float_value=50.0))  # the subscription's first reply = the baseline
         await broker.queue("Vehicle.Speed").put(Datapoint(float_value=130.0))
         await asyncio.sleep(0.1)
         broker.reject.add("Vehicle.Body.Lights.Hazard.IsSignaling")

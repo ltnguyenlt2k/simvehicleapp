@@ -69,6 +69,7 @@ class VelocitasVehicleAccess(VehicleAccess):
         self._strand = strand
         self._baselines: Dict[str, Any] = {}
         self._tasks: List[asyncio.Task] = []
+        self._first: List[asyncio.Event] = []
 
     async def prefetch(self, paths: Dict[str, str]) -> None:
         """Baselines before the app starts (``current`` is synchronous on the strand)."""
@@ -86,10 +87,14 @@ class VelocitasVehicleAccess(VehicleAccess):
         return self._baselines.get(path)
 
     def subscribe(self, path: str, type_: str, on_value: Callable[[Any], None]) -> None:
+        first = asyncio.Event()
+        self._first.append(first)
+
         async def forever() -> None:
             while True:
                 try:
                     async for reply in self._vdb.Subscribe(f"SELECT {path}"):
+                        first.set()
                         dp = reply.fields.get(path)
                         v = from_sdk(dp) if dp is not None else None
                         if v is not None:
@@ -99,6 +104,7 @@ class VelocitasVehicleAccess(VehicleAccess):
                 except asyncio.CancelledError:
                     raise
                 except grpc.aio.AioRpcError as e:  # type: ignore
+                    first.set()
                     if e.code() is grpc.StatusCode.INVALID_ARGUMENT:
                         logger.error("simvehicleapp: subscription to %s failed: %s", path, e.details())
                         return
@@ -106,6 +112,17 @@ class VelocitasVehicleAccess(VehicleAccess):
                     await asyncio.sleep(2.5)
 
         self._tasks.append(asyncio.get_event_loop().create_task(forever(), name=f"SELECT {path}"))
+
+    async def ready(self, timeout_s: float) -> None:
+        """Waits until every subscription delivered its first reply (or failed), at most ``timeout_s``.
+
+        The app starts after its subscriptions are open: on one event loop, opening the streams while the
+        first runs execute delays their I/O (a write acknowledged in 1 ms took 42 ms, parity P3 GW-F)."""
+        if self._first:
+            try:
+                await asyncio.wait_for(asyncio.gather(*(e.wait() for e in self._first)), timeout_s)
+            except asyncio.TimeoutError:
+                logger.warning("simvehicleapp: some subscriptions are not open after %.1f s, starting anyway", timeout_s)
 
     def get(self, path: str, type_: str, done: Callable[[Optional[Any], str], None]) -> None:
         async def call() -> None:
@@ -200,6 +217,7 @@ class SimVehicleApp(VehicleApp):
             self._on_app_start()
         self.runtime.start()
         await pubsub.register()
+        await self._vehicle.ready(2.0)
         self._lifecycle("app.started")
         self._loop_task = asyncio.get_event_loop().create_task(self._run_strand())
 
