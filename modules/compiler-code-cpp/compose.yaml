@@ -14,6 +14,9 @@ services:
     # Pure generator (ADR-0020 §3): read-only filesystem, no network egress (internal network only).
     read_only: true
     tmpfs: [/tmp]
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     networks: [sv-codegen]
     restart: unless-stopped
 

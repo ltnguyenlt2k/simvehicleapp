@@ -37,6 +37,9 @@ services:
     # external MCP servers. /mcp is published on localhost for external agents (bearer token).
     ports: ["127.0.0.1:${SV_AI_MCP_PORT:-4300}:4300"]
     extra_hosts: ["host.docker.internal:host-gateway"]
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     networks: [sv-internal, sv-edge]
     restart: unless-stopped
 

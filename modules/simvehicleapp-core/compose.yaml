@@ -17,6 +17,11 @@ services:
     volumes:
       - sv-vss:/var/cache/sv-vss
     # Internal only (openapi/vss-catalog.v1.yaml): the studio BFF reaches it as http://vss-catalog:4010.
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
     networks: [sv-internal]
     restart: unless-stopped
 
@@ -34,6 +39,11 @@ services:
       SV_BACKENDS: ${SV_BACKENDS:-cpp=http://codegen-cpp:4110}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
     # Internal only (openapi/compiler.v1.yaml): reached as http://compiler:4020; reaches backends on sv-codegen.
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: [/tmp]
     networks: [sv-internal, sv-codegen]
     restart: unless-stopped
 

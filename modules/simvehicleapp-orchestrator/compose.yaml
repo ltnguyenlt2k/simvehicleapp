@@ -27,6 +27,9 @@ services:
       SV_LICENSE_PUBLIC_KEY: ${SV_LICENSE_PUBLIC_KEY:-}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
     # Internal only: the studio BFF reaches it as http://orchestrator:4030.
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     networks: [sv-internal, sv-codegen]
     restart: unless-stopped
 
@@ -49,6 +52,9 @@ services:
     volumes:
       - sv-workspace:/workspace
     # Internal only: reached as http://workspace:4040; reaches backends on sv-codegen.
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     networks: [sv-internal, sv-codegen]
     restart: unless-stopped
 
@@ -67,6 +73,9 @@ services:
       SDV_MQTT_ADDRESS: mqtt://mqtt:1883
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
     # Internal only: the studio BFF reaches it as http://signal-gateway:4050.
+    # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     networks: [sv-internal]
     restart: unless-stopped
 
