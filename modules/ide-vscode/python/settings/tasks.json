@@ -1,0 +1,35 @@
+{
+  // SimVehicleApp tasks (ADR-0028 §4, ADR-0040), user-level so they apply to every project folder. The template's
+  // "Local Runtime" tasks need Docker-in-Docker, which this stack does not have (ADR-0005).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SimVehicleApp: Check",
+      "detail": "Requirements (offline wheelhouse) + byte-compile + the generated app against the project's VSS, like SynCode's build stage",
+      "type": "shell",
+      "command": "pip3 install -q -r app/requirements.txt -r app/tests/requirements.txt && python3 -m compileall -q app/src && PYTHONPATH=app/src:app/src/simvehicleapp-runtime python3 -m simvehicleapp_runtime.check_project .",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "SimVehicleApp: Test",
+      "detail": "Generated tests (scenarios saved with the workflows) + your unit tests",
+      "type": "shell",
+      "command": "PYTHONPATH=app/src:app/src/simvehicleapp-runtime python3 -m pytest -q app/tests/generated app/tests/unit",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "SimVehicleApp: Run on stack",
+      "detail": "Runs app/src/main.py against the stack's KUKSA databroker (of the project's VSS release) and Mosquitto",
+      "type": "shell",
+      "command": "sv-run-on-stack",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": false,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+}

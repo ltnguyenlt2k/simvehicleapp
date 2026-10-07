@@ -4,21 +4,31 @@ import { dirname, join, resolve } from "node:path";
 import type { JobKind, JobOptions, Plan, Step } from "./jobs.ts";
 
 /**
- * What each job kind runs in a C++ project (ADR-0025 §3 + Notes M0/M6). The project is
- * `<projectsDir>/<slug>`, written by the workspace service; the agent only writes build outputs and
- * the Velocitas/Conan caches.
+ * What each job kind runs in a project of this toolchain's language (ADR-0025 §3 + Notes M0/M6; Python:
+ * ADR-0040 §4). The project is `<projectsDir>/<slug>`, written by the workspace service; the agent only
+ * writes build outputs and the Velocitas/Conan/pip caches.
  */
 
 export interface AgentConfig {
   projectsDir: string;
   /** Where the hash of the VSS file the shared vehicle model was generated from is kept (in the Conan volume). */
   modelHashFile: string;
+  /** Language of the projects this toolchain builds (`SV_TOOLCHAIN`, default cpp). */
+  toolchain?: string;
 }
 
 export const defaultConfig = (): AgentConfig => ({
   projectsDir: process.env.SV_PROJECTS_DIR ?? "/workspace/projects",
   modelHashFile: process.env.SV_MODEL_HASH_FILE ?? join(process.env.HOME ?? "/home/vscode", ".conan2", ".sv-model-hash"),
+  toolchain: process.env.SV_TOOLCHAIN ?? "cpp",
 });
+
+/** What a run executes and must find first (C++: the built binary; Python: the generated app). */
+const RUN_ARTIFACT: Record<string, { file: string; missing: string }> = {
+  cpp: { file: "build/bin/app", missing: "build/bin/app is missing: build the project first" },
+  python: { file: "app/src/generated/app.py", missing: "app/src/generated/app.py is missing: SynCode the project first" },
+};
+const runArtifact = (cfg: AgentConfig) => RUN_ARTIFACT[cfg.toolchain ?? "cpp"] ?? RUN_ARTIFACT.cpp!;
 
 /** Environment a `run` may receive (ADR-0025 §3, toolchain-job `options.env`). */
 const RUN_ENV = /^(SDV_[A-Z0-9_]+|KUKSA_DATABROKER_API|SV_TRACE_LEVEL|SV_RUN_ID)$/;
@@ -79,14 +89,26 @@ export function validateJob(cfg: AgentConfig, kind: JobKind, project: string, op
   if (!existsSync(join(dir, ".velocitas.json"))) throw new PlanError(`project ${project} does not exist or is not a Velocitas project`);
   if (kind === "run") {
     for (const k of Object.keys(options.env ?? {})) if (!RUN_ENV.test(k)) throw new PlanError(`environment variable ${k} is not allowed for a run`);
-    if (!existsSync(join(dir, "build/bin/app"))) throw new PlanError("build/bin/app is missing: build the project first");
+    const art = runArtifact(cfg);
+    if (!existsSync(join(dir, art.file))) throw new PlanError(art.missing);
   }
+}
+
+/** Validated `run` environment (SDV_*, SV_TRACE_LEVEL, …). */
+function runEnv(options: JobOptions): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const [k, v] of Object.entries(options.env ?? {})) {
+    if (!RUN_ENV.test(k)) throw new PlanError(`environment variable ${k} is not allowed for a run`);
+    env[k] = v;
+  }
+  return env;
 }
 
 export function createPlanner(cfg: AgentConfig = defaultConfig()) {
   return (kind: JobKind, project: string, options: JobOptions): Plan => {
     const dir = projectDir(cfg, project);
     if (!existsSync(join(dir, ".velocitas.json"))) throw new PlanError(`project ${project} does not exist or is not a Velocitas project`);
+    if ((cfg.toolchain ?? "cpp") === "python") return pythonPlan(cfg, dir, kind, options);
     const artifact = (rel: string) => () => (existsSync(join(dir, rel)) ? null : `${rel} was not produced (see the build log)`);
     // build.sh exits 0 whatever happens and a failed build leaves the previous binary in place: the
     // build's own output decides (ninja/CMake failure lines), then the artifact must exist.
@@ -150,11 +172,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
           failStage: "build",
         };
       case "run": {
-        const env: Record<string, string> = {};
-        for (const [k, v] of Object.entries(options.env ?? {})) {
-          if (!RUN_ENV.test(k)) throw new PlanError(`environment variable ${k} is not allowed for a run`);
-          env[k] = v;
-        }
+        const env = runEnv(options);
         if (!existsSync(join(dir, "build/bin/app"))) throw new PlanError("build/bin/app is missing: build the project first");
         return {
           steps: [{ label: "build/bin/app", argv: ["build/bin/app"], cwd: dir, env }],
@@ -166,4 +184,86 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
         throw new PlanError(`job kind ${kind} has no plan`);
     }
   };
+}
+
+/** The vendored runtime of a Python project (ADR-0040; same vendor path as C++, ADR-0021 §8). */
+const PY_RUNTIME = "app/src/simvehicleapp-runtime";
+const GENERATED_PY = "app/src/generated app/tests/generated";
+
+/**
+ * Python projects (ADR-0040 §4): pip installs the template's pinned requirements from the image's
+ * wheelhouse, "build" byte-compiles the app and checks the generated app against the project's VSS (the
+ * C++ static_assert on the vehicle model), tests are the generated pytest files — reported as gtest lines
+ * so the orchestrator maps a failure to its workflow — and format-check is `ruff format --check` +
+ * `ruff check` of the generated code (laid out like ruff format by the generator).
+ */
+function pythonPlan(cfg: AgentConfig, dir: string, kind: JobKind, options: JobOptions): Plan {
+  const env = { PYTHONPATH: `${dir}/app/src:${dir}/${PY_RUNTIME}`, PYTHONDONTWRITEBYTECODE: "1" };
+  switch (kind) {
+    case "init":
+      return {
+        steps: [{ label: "velocitas init", argv: bash("velocitas init"), cwd: dir, after: () => modelStep(cfg, dir, true).after?.() }],
+        failCode: "BUILD_FAILED",
+        failStage: "build",
+      };
+    case "generate-model":
+      return { steps: [modelStep(cfg, dir, true)], failCode: "BUILD_FAILED", failStage: "build" };
+    case "deps":
+      return {
+        steps: [
+          modelStep(cfg, dir, false),
+          {
+            label: "pip3 install -r app/requirements.txt -r app/tests/requirements.txt",
+            argv: bash("pip3 install --disable-pip-version-check -q -r app/requirements.txt -r app/tests/requirements.txt"),
+            cwd: dir,
+          },
+        ],
+        failCode: "DEPS_INSTALL_FAILED",
+        failStage: "build",
+      };
+    case "build":
+      return {
+        steps: [
+          modelStep(cfg, dir, false),
+          { label: "python3 -m compileall app/src", argv: ["python3", "-m", "compileall", "-q", "app/src"], cwd: dir, env },
+          { label: "python3 -m simvehicleapp_runtime.check_project", argv: ["python3", "-m", "simvehicleapp_runtime.check_project", "."], cwd: dir, env },
+        ],
+        failCode: "BUILD_FAILED",
+        failStage: "build",
+      };
+    case "test":
+      // Exit 5 = no test collected (no workflow has a scenario yet): nothing ran, which is not a failure.
+      return {
+        steps: [
+          {
+            label: "pytest app/tests/generated",
+            argv: bash(`if [ -d app/tests/generated ]; then python3 -m pytest -q -p no:cacheprovider -p simvehicleapp_runtime.pytest_gtest app/tests/generated; rc=$?; [ $rc -eq 5 ] && exit 0; exit $rc; else echo "no app/tests/generated"; fi`),
+            cwd: dir,
+            env,
+          },
+        ],
+        failCode: "GENERATED_TEST_FAILED",
+        failStage: "test",
+      };
+    case "format-check":
+      return {
+        steps: [
+          { label: `ruff format --check ${GENERATED_PY}`, argv: bash(`ruff format --no-cache --check ${GENERATED_PY}`), cwd: dir },
+          { label: `ruff check ${GENERATED_PY}`, argv: bash(`ruff check --no-cache ${GENERATED_PY}`), cwd: dir },
+        ],
+        failCode: "BUILD_FAILED",
+        failStage: "build",
+      };
+    case "run": {
+      const runEnvVars = runEnv(options);
+      if (!existsSync(join(dir, RUN_ARTIFACT.python!.file))) throw new PlanError(RUN_ARTIFACT.python!.missing);
+      return {
+        steps: [{ label: "python3 app/src/main.py", argv: ["python3", "-u", "app/src/main.py"], cwd: dir, env: { ...runEnvVars, PYTHONDONTWRITEBYTECODE: "1" } }],
+        failCode: "RUN_CRASHED",
+        failStage: "run",
+      };
+    }
+    default:
+      throw new PlanError(`job kind ${kind} has no plan`);
+  }
 }

@@ -1,0 +1,7 @@
+# id                                      # license
+ms-python.python                          # MIT  (Open VSX build; language features come from basedpyright, never Pylance)
+detachhead.basedpyright                   # MIT  (type checking / completion)
+ms-python.debugpy                         # MIT  (debugger)
+charliermarsh.ruff                        # MIT  (format + lint, the template's formatter)
+rpdswtk.vsmqtt                            # MIT  (MQTT client, same as Velocitas devcontainer)
+bierner.markdown-mermaid                  # MIT

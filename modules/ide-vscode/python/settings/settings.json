@@ -1,0 +1,41 @@
+{
+  "python.defaultInterpreterPath": "python3",
+  "python.languageServer": "None",
+  "basedpyright.analysis.extraPaths": ["app/src", "app/src/simvehicleapp-runtime"],
+  "basedpyright.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["app/tests"],
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "files.readonlyInclude": {
+    "**/app/src/generated/**": true,
+    "**/app/tests/generated/**": true
+  },
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/app/src:${workspaceFolder}/app/src/simvehicleapp-runtime"
+  },
+  "telemetry.telemetryLevel": "off",
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "SimVehicleApp: Debug app (debugpy)",
+        "type": "debugpy",
+        "request": "launch",
+        "program": "${workspaceFolder}/app/src/main.py",
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "SDV_MIDDLEWARE_TYPE": "native",
+          "SDV_VEHICLEDATABROKER_ADDRESS": "grpc://databroker:55555",
+          "SDV_MQTT_ADDRESS": "mqtt://mqtt:1883",
+          "SV_TRACE_LEVEL": "node"
+        },
+        "justMyCode": false
+      }
+    ]
+  }
+}

@@ -26,11 +26,33 @@ services:
       - sv-velocitas:/home/vscode/.velocitas
     networks: [sv-internal, sv-edge]
 
+  # Python (ADR-0040, profile `python`): the same IDE on toolchain-python.
+  ide-python:
+    image: simvehicleapp/ide-python:dev
+    profiles: ["python"]
+    build:
+      context: .
+      dockerfile: python/Dockerfile
+      additional_contexts:
+        toolchain: docker-image://${SV_TOOLCHAIN_PYTHON_IMAGE:-simvehicleapp/toolchain-python:dev}
+    environment:
+      PASSWORD: ${SV_IDE_PASSWORD:-simvehicleapp}
+      SDV_MIDDLEWARE_TYPE: native
+      SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+      SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}
+    ports: ["127.0.0.1:${SV_IDE_PYTHON_PORT:-8081}:8080"]
+    volumes:
+      - sv-workspace:/workspace
+      - sv-velocitas-python:/home/vscode/.velocitas
+    networks: [sv-internal, sv-edge]
+
 volumes:
   sv-workspace:
   sv-ccache:
   sv-conan2:
   sv-velocitas:
+  sv-velocitas-python:
 
 networks:
   sv-internal:

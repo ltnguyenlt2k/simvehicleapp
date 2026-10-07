@@ -41,6 +41,41 @@ services:
     networks: [sv-internal, sv-edge]
     depends_on: [databroker, mqtt]
 
+  # Python (ADR-0040, M12): opt-in with the `python` profile (COMPOSE_PROFILES=python in .env, plus
+  # python=… in SV_BACKENDS/SV_TOOLCHAINS — see .env.example).
+  devcontainer-python:
+    image: simvehicleapp/devcontainer-python:dev
+    profiles: ["python"]
+    build:
+      context: ./templates/vehicle-app-python-template/.devcontainer
+    command: ["true"]            # build-stage service, like devcontainer-cpp
+    restart: "no"
+
+  toolchain-python:
+    image: simvehicleapp/toolchain-python:dev
+    profiles: ["python"]
+    build:
+      context: .
+      dockerfile: toolchain/python/Dockerfile
+      additional_contexts:
+        devcontainer: service:devcontainer-python
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
+      # Toolchain agent on :4220 (internal only): jobs for the orchestrator (ADR-0025, ADR-0040 §4).
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+      SDV_MIDDLEWARE_TYPE: native
+      SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+      VELOCITAS_OFFLINE: "1"
+    volumes:
+      - sv-workspace:/workspace
+      # Velocitas packages and per-project component venvs, shared with ide-python (same image, uid 4000).
+      - sv-velocitas-python:/home/vscode/.velocitas
+    networks: [sv-internal, sv-edge]
+    depends_on: [databroker, mqtt]
+
   databroker:
     image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
     # VSS 4.0 metadata: the image default is identical, we mount our pinned copy explicitly.
@@ -84,6 +119,7 @@ volumes:
   sv-ccache:
   sv-conan2:
   sv-velocitas:
+  sv-velocitas-python:
 
 networks:
   sv-internal:

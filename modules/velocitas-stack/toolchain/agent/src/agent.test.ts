@@ -194,6 +194,41 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     expect(createPlanner(cfg)("run", "comfort-app", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]!.env).toEqual({ SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" });
   });
 
+  test("Python projects (ADR-0040 §4): pip, compile + VSS check, pytest as gtest lines, ruff, run main.py", async () => {
+    const py = { ...cfg, toolchain: "python", modelHashFile: join(SCRATCH, "py", "model-hash") };
+    const plan = createPlanner(py);
+    expect(plan("deps", "comfort-app", {}).steps.map((s) => s.label)).toEqual(["velocitas exec vehicle-signal-interface generate-model", "pip3 install -r app/requirements.txt -r app/tests/requirements.txt"]);
+    const build = plan("build", "comfort-app", {});
+    expect(build.steps.slice(1).map((s) => s.argv)).toEqual([
+      ["python3", "-m", "compileall", "-q", "app/src"],
+      ["python3", "-m", "simvehicleapp_runtime.check_project", "."],
+    ]);
+    expect(build.steps[1]!.env).toEqual({ PYTHONPATH: `${dir}/app/src:${dir}/app/src/simvehicleapp-runtime`, PYTHONDONTWRITEBYTECODE: "1" });
+    const t = plan("test", "comfort-app", {});
+    expect(t).toMatchObject({ failCode: "GENERATED_TEST_FAILED", failStage: "test" });
+    expect(t.steps[0]!.argv.join(" ")).toContain("-p simvehicleapp_runtime.pytest_gtest app/tests/generated");
+    expect(plan("format-check", "comfort-app", {}).steps.map((s) => s.label)).toEqual(["ruff format --check app/src/generated app/tests/generated", "ruff check app/src/generated app/tests/generated"]);
+    expect(() => validateJob(py, "run", "comfort-app", {})).toThrow("SynCode the project first");
+    mkdirSync(join(dir, "app/src/generated"), { recursive: true });
+    writeFileSync(join(dir, "app/src/generated/app.py"), "WORKFLOWS = []\n");
+    expect(() => validateJob(py, "run", "comfort-app", {})).not.toThrow();
+    expect(plan("run", "comfort-app", { env: { SV_TRACE_LEVEL: "trigger" } }).steps[0]).toMatchObject({ argv: ["python3", "-u", "app/src/main.py"], env: { SV_TRACE_LEVEL: "trigger", PYTHONDONTWRITEBYTECODE: "1" } });
+    expect(() => plan("run", "comfort-app", { env: { PYTHONPATH: "/x" } })).toThrow("not allowed");
+  });
+
+  test("Python: the generated tests' gtest report decides, and no collected test is not a failure", async () => {
+    const py = { ...cfg, toolchain: "python" };
+    const proj = join(cfg.projectsDir, "py-app");
+    mkdirSync(join(proj, "app/tests/generated"), { recursive: true });
+    writeFileSync(join(proj, ".velocitas.json"), "{}");
+    const step = createPlanner(py)("test", "py-app", {}).steps[0]!;
+    // Only the shell around pytest is checked here (pytest itself runs in the toolchain image): exit 5 ⇒ 0.
+    const script = step.argv[2]!.replace("python3 -m pytest", "sh -c 'exit 5' --");
+    expect(await Bun.spawn(["bash", "-c", script], { cwd: proj }).exited).toBe(0);
+    const failing = step.argv[2]!.replace("python3 -m pytest", "sh -c 'exit 1' --");
+    expect(await Bun.spawn(["bash", "-c", failing], { cwd: proj }).exited).toBe(1);
+  });
+
   test("template tar: deterministic, no build outputs", async () => {
     const seed = join(SCRATCH, "seed");
     mkdirSync(join(seed, "app"), { recursive: true });

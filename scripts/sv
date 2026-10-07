@@ -31,10 +31,12 @@ case "${1:-}" in
     ensure_env
     $DC build contracts                           # build-only image consumed by core, toolchain agent, services
     $DC build devcontainer-cpp toolchain-cpp      # base layers next (ide FROMs the toolchain image)
+    # Python backend (profile `python` in COMPOSE_PROFILES, ADR-0040): its toolchain before ide-python.
+    if $DC config --services | grep -qx toolchain-python; then $DC build devcontainer-python toolchain-python; fi
     $DC build ;;
   up)    ensure_env; $DC up -d "${@:2}" ;;
   down)  $DC down "${@:2}" ;;
-  reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache ;;
+  reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache simvehicleapp_sv-velocitas-python ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;
   refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
   *) sed -n '2,11p' "$0"; exit 1 ;;
