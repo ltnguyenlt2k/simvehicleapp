@@ -460,5 +460,33 @@ jobs:
             const g = await fetch("http://codegen-cpp:4110/generate", { method: "POST", headers: h, body: JSON.stringify({ project: { slug: "gw-a", appName: "GwaApp", language: "cpp", mqttTopicPrefix: "x", traceLevel: "node" }, workflows: [r.ir] }) });
             const fs = await g.json();
             must(g.status === 200 && fs.files.some((f) => f.path.endsWith("workflows/StableOverspeedWarning.cpp")), "generate over the internal network");'
+      - name: Python backend image (codegen-python, profile python) — isolation and S7/generate through the compiler (M12, ADR-0040)
+        env:
+          SV_BACKENDS: cpp=http://codegen-cpp:4110,python=http://codegen-python:4120
+        run: |
+          $COMPOSE --profile python build codegen-python && $COMPOSE --profile python up -d --wait --wait-timeout 60 codegen-python compiler
+          $COMPOSE exec -T codegen-python bun -e '
+            const h = { "x-sv-internal": process.env.INTERNAL_API_SECRET };
+            const must = (c, m) => { if (!c) { console.error("FAIL", m); process.exit(1); } console.log("ok", m); };
+            must((await fetch("http://127.0.0.1:4120/capabilities")).status === 401, "no secret => 401");
+            const caps = await (await fetch("http://127.0.0.1:4120/capabilities", { headers: h })).json();
+            must(caps.id === "python" && caps.opcodes.length === 24, "capabilities: python, 24 opcodes");
+            const rt = await (await fetch("http://127.0.0.1:4120/runtime/files", { headers: h })).json();
+            must(rt.files.some((f) => f.path === "app/src/simvehicleapp-runtime/simvehicleapp_runtime/runtime.py") && !rt.files.some((f) => /__pycache__|\/tests\//.test(f.path)), "runtime bundle: package, no tests/caches");
+            let egress = "blocked";
+            try { await fetch("https://github.com", { signal: AbortSignal.timeout(5000) }); egress = "OPEN"; } catch {}
+            must(egress === "blocked", "no network egress (internal network)");
+            let writable = true;
+            try { await Bun.write("/src/probe", "x"); } catch { writable = false; }
+            must(!writable, "read-only filesystem");'
+          $COMPOSE exec -T -e G="$(base64 -w0 modules/simvehicleapp-contracts/fixtures/golden/GW-A/graph.json)" compiler bun -e '
+            const h = { "x-sv-internal": process.env.INTERNAL_API_SECRET, "content-type": "application/json" };
+            const must = (c, m) => { if (!c) { console.error("FAIL", m); process.exit(1); } console.log("ok", m); };
+            const graph = JSON.parse(Buffer.from(process.env.G, "base64").toString());
+            const r = await (await fetch("http://127.0.0.1:4020/compile", { method: "POST", headers: h, body: JSON.stringify({ graph, mode: "build", target: "python" }) })).json();
+            must(r.ir && r.diagnostics.every((d) => d.severity !== "error"), "compile GW-A with target python (S7 reads codegen-python /capabilities)");
+            const g = await fetch("http://codegen-python:4120/generate", { method: "POST", headers: h, body: JSON.stringify({ project: { slug: "gw-a", appName: "GwaApp", language: "python", mqttTopicPrefix: "x", traceLevel: "node" }, workflows: [r.ir] }) });
+            const fs = await g.json();
+            must(g.status === 200 && fs.files.some((f) => f.path.endsWith("workflows/stable_overspeed_warning.py")), "generate over the internal network");'
       - if: always()
-        run: $COMPOSE logs vss-catalog compiler codegen-cpp && $COMPOSE down -v
+        run: $COMPOSE logs vss-catalog compiler codegen-cpp codegen-python && $COMPOSE --profile python down -v
