@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-07T06:04:52.910Z",
+  "slug": "bench-1791353029960",
+  "passed": true,
+  "rows": [
+    {
+      "metric": "validate 200 blocks (compiler verify)",
+      "target": "< 300 ms",
+      "p50": 13,
+      "p95": 16,
+      "n": 30,
+      "pass": true
+    },
+    {
+      "metric": "simulate GW-A (compile + simulate)",
+      "target": "< 1000 ms",
+      "p50": 5,
+      "p95": 39,
+      "n": 20,
+      "pass": true
+    },
+    {
+      "metric": "SynCode first build of a new project",
+      "target": "< 600000 ms",
+      "p50": 13179,
+      "p95": 13179,
+      "n": 1,
+      "pass": true
+    },
+    {
+      "metric": "SynCode incremental (warm, one prop changed)",
+      "target": "< 60000 ms",
+      "p50": 5417,
+      "p95": 5613,
+      "n": 3,
+      "pass": true
+    }
+  ]
+}
