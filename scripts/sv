@@ -12,8 +12,8 @@ cd "$(dirname "$0")/.."
 DC="docker compose"
 case "${1:-}" in
   build)
-    $DC build devcontainer-cpp toolchain-cpp      # base layers first (ide FROMs the toolchain image)
-    $DC build contracts                           # build-only image consumed by core (and later services)
+    $DC build contracts                           # build-only image consumed by core, toolchain agent, services
+    $DC build devcontainer-cpp toolchain-cpp      # base layers next (ide FROMs the toolchain image)
     $DC build ;;
   up)    $DC up -d "${@:2}" ;;
   down)  $DC down "${@:2}" ;;

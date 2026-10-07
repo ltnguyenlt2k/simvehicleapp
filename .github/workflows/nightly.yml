@@ -1,6 +1,7 @@
 # Nightly live smoke (M08-T10): the whole SynCode + live-run path on a fresh stack built from source —
 # toolchain image (Velocitas devcontainer + offline Conan seed + agent), core, codegen-cpp, orchestration
-# services, KUKSA databrokers, Mosquitto — then scripts/smoke.sh (M7 + M8 gates). Too heavy for every push.
+# services, KUKSA databrokers, Mosquitto — then scripts/smoke.sh (M7 + M8 gates) and the M9 export build
+# + license PDP. Too heavy for every push.
 name: nightly
 
 on:
@@ -38,8 +39,8 @@ jobs:
           echo "SV_CONAN_JOBS=4" >> .env
       - name: Build images from source (order of scripts/sv build; no studio/IDE — the smoke drives the APIs)
         run: |
-          docker compose build devcontainer-cpp toolchain-cpp
           docker compose build contracts
+          docker compose build devcontainer-cpp toolchain-cpp
           docker compose build vss-catalog compiler codegen-cpp orchestrator workspace signal-gateway
       - name: Start the stack
         run: |
@@ -48,6 +49,8 @@ jobs:
           docker compose ps
       - name: Live smoke (scripts/smoke.sh)
         run: scripts/smoke.sh
+      - name: M9 gate — export builds outside SimVehicleApp (template app/Dockerfile on this clean runner), license PDP
+        run: SV_GATE_SKIP_IDE=1 SV_GATE_EXPORT_BUILD=1 modules/simvehicleapp-orchestrator/gate/m9-gate.sh
       - name: Stack logs on failure
         if: failure()
         run: docker compose logs --tail 300 orchestrator workspace toolchain-cpp signal-gateway codegen-cpp
