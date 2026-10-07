@@ -21,6 +21,7 @@
     "typescript": "5.9.3"
   },
   "overrides": {
-    "@simvehicleapp/contracts": "file:../simvehicleapp-contracts"
+    "@simvehicleapp/contracts": "file:../simvehicleapp-contracts",
+    "ajv": "8.18.0"
   }
 }
