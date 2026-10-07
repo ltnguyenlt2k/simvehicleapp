@@ -14,7 +14,7 @@
 | A3 | Sign-up bị giới hạn tần suất (429) | form báo lỗi, chờ `X-Retry-After` rồi thành công | ADR-0032 | `lib/studio.submitAuth` (dùng trong mọi spec) | ✔ |
 | A4 | Hai phiên realtime: block thêm ở phiên 1 hiện ở phiên 2 | thấy trong ≤ 15 s | FR-WF-01 | `m1-gate` | ✔ |
 | A5 | Ba phiên cùng kéo thả, xung đột chỉnh cùng prop | state hội tụ, không mất block | — | `m15-collab` (3 phiên cùng thêm block + sửa cùng field) | ✔ (CI `419f2d9`) |
-| A6 | Mất kết nối realtime / catalog / compiler | UI báo đúng service, không mất dữ liệu, tự hồi phục | NFR · 0033 | `m15-collab @live` — nguyên nhân flake: sau khi compiler khởi động lại, request đầu đi qua socket keep-alive chết ⇒ 502 ngay, panel không lint lại tới lần sửa sau. Sửa: BFF thử lại 1 lần khi socket bị đóng, panel lint lại mỗi 5 s khi lỗi; test chờ hồi phục **không cần sửa** | ◐ (chờ image mới) |
+| A6 | Mất kết nối realtime / catalog / compiler | UI báo đúng service, không mất dữ liệu, tự hồi phục | NFR · 0033 | `m15-collab @live` — nguyên nhân flake: sau khi compiler khởi động lại, request đầu đi qua socket keep-alive chết ⇒ 502 ngay, panel không lint lại tới lần sửa sau. Sửa: BFF thử lại 1 lần khi socket bị đóng, panel lint lại mỗi 5 s khi lỗi; test chờ hồi phục **không cần sửa** — 6/6 lượt PASS liên tiếp trên `72d14c4` | ✔ (`@live`) |
 | A7 | Restart studio ⇒ workflow gate còn nguyên | graph sau restart = trước | FR-PLT-02 | `m2-gate @after-restart` | ✔ |
 
 ## B. Kéo thả — toolbar (mọi block)
@@ -23,7 +23,7 @@
 | B1 | Toolbar có mọi block `sv_*` (38; 3 spec container đi qua Loop/Parallel của Sim) | mỗi block thấy được và thả ra canvas được | FR-BLK-01…08 · 0011 | `m15-toolbar` (38 block) + `m3-blocks` | ✔ (CI `419f2d9`) |
 | B2 | Mỗi block thả vào canvas rỗng (overlay) và canvas có sẵn | node mới tên `<Tên> 1`, editor mở đúng subBlock theo spec | 0011 | `m15-toolbar` (node, handle, ô đầu tiên của editor) | ✔ (CI `419f2d9`) |
 | B3 | Kéo block vào / ra container Loop, Parallel | `parentId` đúng; container-mapping ⇒ `sv_repeat`/`sv_while`/`sv_parallel` | FR-BLK-05 · 0011 Notes M03-T10 | `m15-containers` (Loop/Parallel: thả vào ⇒ `parentId`, "Remove from Subflow" ⇒ top-level); goldens | ✔ (CI `419f2d9`) |
-| B4 | Thả bị từ chối: workflow khoá, quyền viewer | không tạo node, thông báo rõ | 0032 | `m15-viewer` (thành viên quyền read kéo block từ toolbar ⇒ không tạo node, owner không thấy); Sim không có "khoá workflow" | ◐ (local PASS, chờ CI) |
+| B4 | Thả bị từ chối: workflow khoá, quyền viewer | không tạo node, thông báo rõ | 0032 | `m15-viewer` (thành viên quyền read kéo block từ toolbar ⇒ không tạo node, owner không thấy); Sim không có "khoá workflow" | ✔ (CI `72d14c4`) |
 | B5 | Flow block hiện handle nhánh có tên | `then/else`, `case-<i>/default`, `ok/timeout`, `stable/broken`, `changed/unchanged` | 0011 | `m3-blocks` | ◐ |
 
 ## C. Kéo thả — panel Vehicle
