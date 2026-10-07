@@ -20,3 +20,11 @@ Nightly dashboard parity; release gate 100%.
 3. **Mô hình không có provider:** expected (simulator) không có provider — giá trị current của actuator chỉ đổi khi scenario đặt. Stack dev mirror target → current (vai provider, ADR-0024): P3 tắt mirror sau khi Run khởi động, và đặt cả **target** của actuator về giá trị `initial` (target cũ còn sót bị mirror chép sang current lúc Run bật mirror — lỗi gặp ở GW-G).
 4. **Đồng hồ:** bộ phát scenario lập lịch trên đồng hồ monotonic và không bao giờ phát sớm (Bun timer thức sớm tới ~3 %; đồng hồ thực WSL nhảy ~1 s/phút) — sửa trong signal-gateway. Runner phát hiện bước nhảy đồng hồ thực trong lúc chạy (so `Date.now` với `performance.now`) và chạy lại golden đó (≤ 2 lần), ghi vào báo cáo.
 5. **Kết quả 2026-10-07 (dev stack, WSL):** 7/7 golden, lệch tối đa 7 ms — `docs/reports/evidence/M11-parity-p3-local.json`.
+
+### 2026-10-07 (2) — P3: sự kiện do input sau trigger gây ra đo từ lúc gateway phát input
+Nightly đầu tiên (run 37596169386): 6/7 golden PASS; GW-G FAIL "−66 ms" ở các sự kiện 1500 ms. Nguyên nhân là cách đo,
+không phải app: `wait_until` của GW-G được các input ở 1500 ms đánh thức, nhưng độ lệch được tính từ trigger
+(1000 ms) — trigger phản ứng chậm 66 ms trên runner CI nên mọi sự kiện sau trông "sớm" 66 ms. Sửa: sự kiện nằm sau một
+input của scenario (sau trigger gần nhất) được đo từ thời điểm gateway thực phát input đó (`startedAt` của `/play` +
+`t`, cùng đồng hồ host với `ts` của trace); sự kiện do trigger gây ra giữ tham chiếu trigger. Test
+`gate/parity-p3.test.ts`; GW-G local lại PASS (lệch tối đa 4 ms). Dung sai 30 ms giữ nguyên.

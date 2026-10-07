@@ -67,7 +67,7 @@ const key = (e: TraceEvent) => JSON.stringify([e.ev, e.wf, e.run, e.node, e.bloc
  * windows are checked against ADR-0042's ± 20 ms. Before any trigger (app start, periodic timers) the
  * origin is the median offset of all events.
  */
-export function drifts(expected: TraceEvent[], actual: TraceEvent[]): number[] {
+export function drifts(expected: TraceEvent[], actual: TraceEvent[], play?: { startedAt: number; inputs: number[] }): number[] {
   const n = Math.min(expected.length, actual.length);
   const median = (xs: number[]) => (xs.length ? [...xs].sort((x, y) => x - y)[Math.floor(xs.length / 2)]! : 0);
   const triggers = [...Array(n).keys()].filter((i) => expected[i]!.ev === "trigger");
@@ -78,16 +78,21 @@ export function drifts(expected: TraceEvent[], actual: TraceEvent[]): number[] {
     const e = expected[i]!;
     const a = actual[i]!;
     if (e.ev === "trigger") last = i;
-    out.push(e.ev === "trigger" || last < 0 ? a.ts - origin - e.ts : a.ts - actual[last]!.ts - (e.ts - expected[last]!.ts));
+    // An event after the latest trigger that a later scenario input caused (a wait resumed by it) reacts to
+    // that input: measured from when the gateway played it, not from the trigger (a slow trigger reaction
+    // would make it look early).
+    const input = play && last >= 0 ? Math.max(-Infinity, ...play.inputs.filter((t) => t > expected[last]!.ts && t <= e.ts)) : -Infinity;
+    if (e.ev !== "trigger" && Number.isFinite(input)) out.push(a.ts - (play!.startedAt + input) - (e.ts - input));
+    else out.push(e.ev === "trigger" || last < 0 ? a.ts - origin - e.ts : a.ts - actual[last]!.ts - (e.ts - expected[last]!.ts));
   }
   return out;
 }
 
 /** Differences between the expected trace and the actual one (empty ⇒ parity). */
-export function compareTraces(expected: TraceEvent[], actual: TraceEvent[]): string[] {
+export function compareTraces(expected: TraceEvent[], actual: TraceEvent[], play?: { startedAt: number; inputs: number[] }): string[] {
   const problems: string[] = [];
   const n = Math.max(expected.length, actual.length);
-  const drift = drifts(expected, actual);
+  const drift = drifts(expected, actual, play);
   for (let i = 0; i < n; i++) {
     const e = expected[i];
     const a = actual[i];
@@ -137,7 +142,7 @@ async function readEvents(url: string, until: () => boolean): Promise<{ event: s
 }
 
 /** One Run of a golden's generation with its scenario played; the run's trace events of the workflow. */
-async function playOnce(projectId: string, generationId: string, g: string, workflowId: string, scenario: { initial?: Record<string, unknown>; inputs: unknown[]; until: number; [k: string]: unknown }): Promise<TraceEvent[]> {
+async function playOnce(projectId: string, generationId: string, g: string, workflowId: string, scenario: { initial?: Record<string, unknown>; inputs: { t: number }[]; until: number; [k: string]: unknown }): Promise<{ trace: TraceEvent[]; play: { startedAt: number; inputs: number[] } }> {
   // The state the app finds: initial values, set before it starts.
   const { initial = {}, ...rest } = scenario;
   if (Object.keys(initial).length) {
@@ -163,12 +168,14 @@ async function playOnce(projectId: string, generationId: string, g: string, work
   const events = readEvents(`${O}/events?runId=${run.id}`, () => done);
   const play = await post(`${G}/play`, { release: "v4.0", scenario: { ...rest, inputs: scenario.inputs } });
   if (!play.ok) throw new Error(`play ${g}: ${play.status} ${await play.text()}`);
+  const { startedAt } = (await play.json()) as { startedAt: number };
   await Bun.sleep(scenario.until + 1500);
   await post(`${O}/runs/${run.id}/stop`, {});
   while (["running", "stopping"].includes((r = await get(`${O}/runs/${run.id}`)).state)) await Bun.sleep(200);
   await Bun.sleep(500);
   done = true;
-  return (await events).filter((e) => e.event === "trace" && e.data.wf === workflowId).map((e) => e.data);
+  const trace = (await events).filter((e) => e.event === "trace" && e.data.wf === workflowId).map((e) => e.data);
+  return { trace, play: { startedAt, inputs: scenario.inputs.map((i) => i.t) } };
 }
 
 /** The run lasts a little longer than the scenario: events after its `until` are not part of it. */
@@ -192,7 +199,7 @@ async function main() {
 
   for (const g of goldens) {
     const graph = JSON.parse(readFileSync(`${ROOT}/${g}/graph.json`, "utf8"));
-    const scenario = Bun.YAML.parse(readFileSync(`${ROOT}/${g}/scenario.yaml`, "utf8")) as { initial?: Record<string, unknown>; inputs: unknown[]; until: number; [k: string]: unknown };
+    const scenario = Bun.YAML.parse(readFileSync(`${ROOT}/${g}/scenario.yaml`, "utf8")) as { initial?: Record<string, unknown>; inputs: { t: number }[]; until: number; [k: string]: unknown };
     const expected = (JSON.parse(readFileSync(`${ROOT}/${g}/expected.trace.json`, "utf8")) as TraceEvent[]).filter((e) => e.wf === graph.workflowId);
     const t0 = Date.now();
     const queued = await (await post(`${O}/projects/${p.id}/generations`, { graphs: [graph], scenarios: [{ workflowId: graph.workflowId, scenario }] })).json();
@@ -207,18 +214,21 @@ async function main() {
     // The run's trace carries wall-clock times; a wall-clock step during the run (NTP, WSL time sync)
     // shifts them, so a golden whose run saw a step is played again (at most twice), and the report says so.
     let actual: TraceEvent[] = [];
+    let play: { startedAt: number; inputs: number[] } | undefined;
     const steps: number[] = [];
     for (let attempt = 1; attempt <= 3; attempt++) {
       const skew0 = Date.now() - performance.now();
-      actual = withinScenario(expected, await playOnce(p.id, gen.id, g, graph.workflowId, scenario), scenario.until);
+      const once = await playOnce(p.id, gen.id, g, graph.workflowId, scenario);
+      play = once.play;
+      actual = withinScenario(expected, once.trace, scenario.until);
       const step = Math.round(Date.now() - performance.now() - skew0);
       if (Math.abs(step) <= 15) break;
       steps.push(step);
       console.log(`  ${g}: wall clock stepped ${step} ms during the run — playing it again`);
     }
-    const problems = compareTraces(expected, actual);
+    const problems = compareTraces(expected, actual, play);
     if (process.env.SV_PARITY_DEBUG) for (const e of actual.filter((x) => x.ev === "trigger")) console.log(`  trigger ts=${e.ts} data=${JSON.stringify(e.data)}`);
-    const drift = drifts(expected, actual);
+    const drift = drifts(expected, actual, play);
     const maxDriftMs = Math.max(0, ...drift.map(Math.abs));
     report.push({ golden: g, pass: problems.length === 0, expected: expected.length, actual: actual.length, problems, maxDriftMs, buildMs, ...(steps.length ? { clockSteps: steps } : {}), drifts: drift.map((d, i) => `${expected[i]!.ts} ${expected[i]!.ev} ${expected[i]!.node ?? ""}: ${d} ms (actual ts ${actual[i]!.ts})`) });
     console.log(`${problems.length ? "FAIL" : "ok  "} ${g}: ${actual.length}/${expected.length} events, max drift ${maxDriftMs} ms, SynCode ${(buildMs / 1000).toFixed(0)} s${problems.length ? `\n  ${problems.slice(0, 6).join("\n  ")}` : ""}`);
