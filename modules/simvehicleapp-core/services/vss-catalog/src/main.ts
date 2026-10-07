@@ -1,4 +1,4 @@
-import { createLogger, createService } from "@simvehicleapp/service-kit";
+import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit";
 import { COVESA_PINS, CompositeSource, HttpSource, LocalFileSource, type VehicleModelSource } from "@simvehicleapp/vss";
 import pkg from "../package.json" with { type: "json" };
 import { Catalog } from "./catalog.ts";
@@ -32,7 +32,7 @@ const handler = createService(
         return { defaultRelease: "fail" };
       }
     },
-  },
+   metrics: new Metrics() },
   createCatalogHandler(catalog),
 );
 

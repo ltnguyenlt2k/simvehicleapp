@@ -1,4 +1,4 @@
-import { createLogger, createService } from "@simvehicleapp/service-kit";
+import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createAgentHandler } from "./app.ts";
 import { createPlanner, defaultConfig, validateJob } from "./commands.ts";
@@ -11,6 +11,10 @@ if (!process.env.INTERNAL_API_SECRET) log.warn("INTERNAL_API_SECRET is not set: 
 
 const cfg = defaultConfig();
 const jobs = new JobManager(createPlanner(cfg), undefined, undefined, (kind, project, options) => validateJob(cfg, kind, project, options));
-const handler = createService({ name: "toolchain-agent", version: pkg.version, logger: log }, createAgentHandler({ jobs, template: (lang) => templateTar(lang) }));
+// Build durations, cold or warm, show as deps/build job durations (ADR-0033 §2).
+const metrics = new Metrics();
+const jobMs = metrics.histogram("toolchain_job_duration_ms", "Toolchain job duration (ms) by kind and final state.");
+jobs.onFinished = (kind, state, ms) => jobMs.observe({ kind, state }, ms);
+const handler = createService({ name: "toolchain-agent", version: pkg.version, logger: log, metrics }, createAgentHandler({ jobs, template: (lang) => templateTar(lang) }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

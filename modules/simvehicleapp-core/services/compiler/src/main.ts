@@ -1,5 +1,5 @@
 import { httpCapabilities } from "@simvehicleapp/compiler";
-import { createLogger, createService, internalHeaders } from "@simvehicleapp/service-kit";
+import { createLogger, createService, internalHeaders, Metrics } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createCompilerHandler } from "./app.ts";
 import { catalogModelHash, catalogVehicleLookup } from "./vehicle-lookup.ts";
@@ -13,7 +13,7 @@ const catalog = {
   secret: process.env.INTERNAL_API_SECRET ?? "",
 };
 const handler = createService(
-  { name: "compiler", version: pkg.version, logger: log },
+  { name: "compiler", version: pkg.version, logger: log, metrics: new Metrics() },
   createCompilerHandler({
     vehicle: catalogVehicleLookup(catalog),
     modelHash: catalogModelHash(catalog),

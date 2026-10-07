@@ -1,4 +1,4 @@
-import { createLogger, createService } from "@simvehicleapp/service-kit";
+import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createWorkspaceHandler } from "./app.ts";
 import { httpSources, parseMap } from "./sources.ts";
@@ -24,6 +24,6 @@ const sources = httpSources({
   catalog: process.env.SV_CATALOG_URL ?? "http://vss-catalog:4010",
   secret,
 });
-const handler = createService({ name: "workspace", version: pkg.version, logger: log }, createWorkspaceHandler(store, sources));
+const handler = createService({ name: "workspace", version: pkg.version, logger: log, metrics: new Metrics() }, createWorkspaceHandler(store, sources));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler });
 log.info("listening", { port: server.port, root: store.root });

@@ -1,4 +1,4 @@
-import { createLogger, createService, internalHeaders } from "@simvehicleapp/service-kit";
+import { createLogger, createService, internalHeaders, Metrics } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createGatewayHandler, playerSet } from "./app.ts";
 import { type Broker, grpcBroker } from "./broker.ts";
@@ -35,6 +35,6 @@ const catalog = new Catalog(async (release) => {
 const publish = mqttPublisher(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
 const player = new Player({ set: playerSet(broker, catalog), publish, sleep: (ms) => Bun.sleep(ms), now: Date.now, monotonic: () => performance.now() });
 
-const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log }, createGatewayHandler({ broker, catalog, player, newId: () => `play_${crypto.randomUUID()}` }));
+const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, catalog, player, newId: () => `play_${crypto.randomUUID()}` }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port, databrokers: Object.fromEntries(endpoints) });

@@ -1,4 +1,4 @@
-import { createLogger, createService } from "@simvehicleapp/service-kit";
+import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createAssistantHandler, entitlementFrom } from "./app.ts";
 import { createMcpHandler, externalServers, mcpTokens, sameSecret } from "./mcp.ts";
@@ -44,7 +44,7 @@ const external = externalServers(env);
 log.info("ai provider", "error" in provider ? { configured: false, reason: provider.error } : { provider: provider.name, model: provider.model, externalServers: external.map((s) => s.name) });
 
 const handler = createService(
-  { name: "ai-assistant", version: pkg.version, logger: log },
+  { name: "ai-assistant", version: pkg.version, logger: log, metrics: new Metrics() },
   createAssistantHandler({
     provider,
     store,

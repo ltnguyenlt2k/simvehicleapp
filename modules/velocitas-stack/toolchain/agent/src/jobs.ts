@@ -93,6 +93,8 @@ export class JobManager {
   private readonly queue: string[] = [];
   private buildBusy = false;
   private activeRun: string | null = null;
+  /** Observability hook (ADR-0033 §2): a finished job's kind, state and duration (ms). */
+  onFinished?: (kind: JobKind, state: JobState, ms: number) => void;
 
   constructor(
     private readonly planner: Planner,
@@ -299,6 +301,7 @@ export class JobManager {
     e.job.exitCode = exitCode;
     e.job.finishedAt = this.now();
     e.job.diagnostics = diagnostics;
+    this.onFinished?.(e.job.kind, state, e.job.finishedAt - (e.job.startedAt ?? e.job.createdAt));
     if (this.activeRun === e.job.id) this.activeRun = null;
     for (const f of [...e.listeners]) f(null);
     e.listeners.clear();
