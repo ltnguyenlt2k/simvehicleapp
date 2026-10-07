@@ -131,3 +131,58 @@ describe("composite blocks (ADR-0045)", () => {
     ]);
   });
 });
+
+describe("state machine and filter (ADR-0049)", () => {
+  const graph = (blocks: Record<string, unknown>[], variables: Record<string, unknown>[] = []) =>
+    ({
+      graphVersion: "1.0.0",
+      workflowId: "m14",
+      revision: 1,
+      name: "M14",
+      vss: { release: "v4.0" },
+      variables,
+      blocks: [{ id: "t", type: "sv_on_app_start", name: "start", props: {} }, ...blocks].map((b) => ({ parentId: null, blockVersion: 1, ...b })),
+      edges: blocks.map((b, i) => ({ id: `e${i}`, from: i === 0 ? "t" : String(blocks[i - 1]!.id), fromHandle: i === 0 ? "source" : String(b.fromHandle ?? "source"), to: String(b.id), toHandle: "target" })),
+    }) as unknown as WorkflowGraphV1;
+  const byField = (diags: { code: string; field?: string; severity: string }[]) => diags.filter((d) => d.severity === "error").map((d) => [d.field, d.code]);
+
+  test("state machine rows: missing `when`, syntax error, a `to` of another type", async () => {
+    const g = graph(
+      [{ id: "m", type: "sv_state_machine", name: "drive", props: { name: "mode", transitions: [{ from: '"Idle"', when: "", to: '"Driving"' }, { when: "1 +", to: '"Idle"' }, { when: "true", to: "3" }] } }],
+      [{ name: "mode", type: "string", initial: "Idle" }],
+    );
+    const { ir, diagnostics } = await compile(g, ctx);
+    expect(ir).toBeUndefined();
+    expect(byField(diagnostics)).toEqual([
+      ["transitions[0].when", "BLOCK_PROPERTY_MISSING"],
+      ["transitions[1].when", "EXPR_SYNTAX"],
+      ["transitions[2].to", "TYPE_MISMATCH"],
+    ]);
+  });
+
+  test("state machine with an integer state: one branch + set per row, deterministic", async () => {
+    const g = graph(
+      [{ id: "m", type: "sv_state_machine", name: "gear", props: { name: "level", transitions: [{ from: "0", when: "<Vehicle.Speed> > 10", to: "1" }, { when: "<Vehicle.Speed> == 0", to: "0" }] } }],
+      [{ name: "level", type: "int32", initial: 0 }],
+    );
+    const { ir } = await compile(g, ctx);
+    const nodes = (ir!.nodes as { opcode: string; src: { blockId: string } }[]).filter((n) => n.src.blockId === "m");
+    expect(nodes.map((n) => n.opcode)).toEqual(["control.branch", "state.set", "control.branch", "state.set"]);
+    expect(JSON.stringify((await compile(structuredClone(g), ctx)).ir)).toBe(JSON.stringify(ir));
+  });
+
+  test("filter: numeric value only, alpha in (0, 1], only the parameter of its mode", async () => {
+    const bad = graph([
+      { id: "f1", type: "sv_filter", name: "f1", props: { value: "<Vehicle.Body.Lights.Hazard.IsSignaling>" } },
+      { id: "f2", type: "sv_filter", name: "f2", props: { value: "<Vehicle.Speed>", mode: "exponential", alpha: 0 } },
+    ]);
+    expect(byField((await compile(bad, ctx)).diagnostics)).toEqual([
+      ["value", "TYPE_MISMATCH"],
+      ["alpha", "BLOCK_PROPERTY_INVALID"],
+    ]);
+    const ok = graph([{ id: "f", type: "sv_filter", name: "f", props: { value: "<Vehicle.Speed>", mode: "exponential", alpha: 0.25 } }]);
+    const node = ((await compile(ok, ctx)).ir!.nodes as { opcode: string; args: Record<string, unknown>; outputs: unknown }[]).find((n) => n.opcode === "state.filter")!;
+    expect(Object.keys(node.args).sort()).toEqual(["alpha", "mode", "value"]);
+    expect(node.outputs).toEqual({ samples: { type: "uint32" }, value: { type: "double", unit: "km/h" } });
+  });
+});

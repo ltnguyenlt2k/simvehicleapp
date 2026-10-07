@@ -28,6 +28,8 @@ const FLOW_HANDLES: Record<string, string[]> = {
   sv_while: ["loop-start-source", "loop-end-source"],
   sv_parallel: ["parallel-start-source", "parallel-end-source"],
   sv_stop: [],
+  /** State machine (category `state`) branches like a flow block (ADR-0049 §2). */
+  sv_state_machine: ["changed", "unchanged"],
 };
 
 describe.each(dirs)("%s", (dir) => {
@@ -69,7 +71,7 @@ describe.each(dirs)("%s", (dir) => {
 
   test("handles follow the Sim canvas (triggers: source; steps: target → source/error; flow: named branches)", () => {
     if (spec.category === "triggers") expect(spec.handles).toEqual({ in: [], out: ["source"] });
-    else if (spec.category === "flow") {
+    else if (spec.category === "flow" || spec.type in FLOW_HANDLES) {
       expect(spec.handles.in).toEqual(["target"]);
       expect(spec.handles.out).toEqual(FLOW_HANDLES[spec.type] ?? ["<missing in FLOW_HANDLES>"]);
       expect(spec.container === true).toBe(/^(loop|parallel)-start-source$/.test(spec.handles.out[0] ?? ""));

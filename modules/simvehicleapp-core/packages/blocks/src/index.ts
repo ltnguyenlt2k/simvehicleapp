@@ -13,6 +13,7 @@ import svConvert from "../sv_convert/spec.json" with { type: "json" };
 import svCounter from "../sv_counter/spec.json" with { type: "json" };
 import svDoorStatus from "../sv_door_status/spec.json" with { type: "json" };
 import svExpression from "../sv_expression/spec.json" with { type: "json" };
+import svFilter from "../sv_filter/spec.json" with { type: "json" };
 import svHmiNotify from "../sv_hmi_notify/spec.json" with { type: "json" };
 import svIf from "../sv_if/spec.json" with { type: "json" };
 import svInRange from "../sv_in_range/spec.json" with { type: "json" };
@@ -32,6 +33,7 @@ import svRepeat from "../sv_repeat/spec.json" with { type: "json" };
 import svScale from "../sv_scale/spec.json" with { type: "json" };
 import svSetActuator from "../sv_set_actuator/spec.json" with { type: "json" };
 import svStableFor from "../sv_stable_for/spec.json" with { type: "json" };
+import svStateMachine from "../sv_state_machine/spec.json" with { type: "json" };
 import svStop from "../sv_stop/spec.json" with { type: "json" };
 import svSwitch from "../sv_switch/spec.json" with { type: "json" };
 import svVarGet from "../sv_var_get/spec.json" with { type: "json" };
@@ -56,6 +58,7 @@ const ALL = [
   svCounter,
   svDoorStatus,
   svExpression,
+  svFilter,
   svHmiNotify,
   svIf,
   svInRange,
@@ -75,6 +78,7 @@ const ALL = [
   svScale,
   svSetActuator,
   svStableFor,
+  svStateMachine,
   svStop,
   svSwitch,
   svVarGet,

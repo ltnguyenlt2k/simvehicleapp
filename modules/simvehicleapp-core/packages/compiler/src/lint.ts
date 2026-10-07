@@ -37,6 +37,8 @@ const validator = new ContractValidator();
 /** Sim `normalizeName` (ADR-0013 Notes): lowercase, no whitespace, no dots. */
 export const normalizeName = (name: string) => name.toLowerCase().replace(/\s+/g, "").replace(/\./g, "");
 
+/** Blocks whose `name` prop names a workflow variable. */
+const VARIABLE_BLOCKS = new Set(["sv_var_get", "sv_var_set", "sv_counter", "sv_state_machine"]);
 const isEmpty = (v: unknown) => v === undefined || v === null || (typeof v === "string" && v.trim() === "") || (Array.isArray(v) && v.length === 0);
 
 /** Inline `<ref>`s of a template prop: plain text, braces are literal (ADR-0013 Notes M03-T11). */
@@ -296,6 +298,11 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
           }
         }
       }
+    }
+
+    // S2 — the variable a state block works on is declared (ADR-0049 §3)
+    if (VARIABLE_BLOCKS.has(b.type) && typeof props.name === "string" && props.name && !variables.has(props.name)) {
+      out.push(diag("BLOCK_PROPERTY_INVALID", wfId, { blockId: b.id, field: "name", message: `${spec.title}: there is no variable '${props.name}' — declare it in the Variables panel`, data: { reason: "unknown_variable", value: props.name } }));
     }
 
     // S3 — member signals of a composite block (ADR-0045)

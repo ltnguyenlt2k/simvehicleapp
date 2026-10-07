@@ -75,6 +75,18 @@ describe("lint: each rule reports its catalog code (\"cố ý sai\", ADR-0016 Ve
     expect(c.filter((x) => x === "BLOCK_PROPERTY_INVALID")).toHaveLength(2);
   });
 
+  test("S2: a variable block naming an undeclared variable (ADR-0049 §3)", async () => {
+    const g = base();
+    g.variables = [{ name: "count", type: "int32", initial: 0 }];
+    g.blocks.push(
+      { id: "b3", type: "sv_var_set", name: "Set", props: { name: "nope", value: "1" }, parentId: null },
+      { id: "b4", type: "sv_counter", name: "Count", props: { name: "count", op: "inc", step: 1 }, parentId: null },
+    );
+    g.edges.push({ id: "e2", from: "b2", fromHandle: "source", to: "b3", toHandle: "target" }, { id: "e3", from: "b3", fromHandle: "source", to: "b4", toHandle: "target" });
+    const diags = await lint(g, { vehicle });
+    expect(diags.filter((d) => d.field === "name").map((d) => [d.blockId, d.code, (d.data as { reason?: string }).reason])).toEqual([["b3", "BLOCK_PROPERTY_INVALID", "unknown_variable"]]);
+  });
+
   test("switch case-<i> handles are accepted", async () => {
     const g = base();
     g.blocks.push({ id: "b3", type: "sv_switch", name: "Pick", props: { value: "<speedchanged.value>", cases: [{ when: "1" }] }, parentId: null });

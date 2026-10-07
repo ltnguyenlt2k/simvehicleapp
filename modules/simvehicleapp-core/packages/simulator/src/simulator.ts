@@ -128,6 +128,8 @@ class Simulator {
   private readonly conditionLast = new Map<string, boolean>();
   private readonly debounce = new Map<string, number>();
   private readonly hysteresis = new Map<string, boolean>();
+  /** `state.filter` state per node (ADR-0049 §1): the window, or the exponential value and sample count. */
+  private readonly filters = new Map<string, { window: number[]; y: number; count: number }>();
   private readonly appToken = new Token();
   private runCount = 0;
   private stopped = false;
@@ -700,6 +702,33 @@ class Simulator {
         this.state.set(id, next);
         out({ value: next });
         this.afterChange();
+        return "next";
+      }
+      case "state.filter": {
+        const x = Number(this.eval(a.value, run));
+        const f = this.filters.get(node.id) ?? { window: [], y: 0, count: 0 };
+        let y: number;
+        if (a.mode === "exponential") {
+          y = f.count === 0 ? x : f.y + Number(a.alpha) * (x - f.y);
+          f.y = y;
+          f.count = Math.min(f.count + 1, 4294967295);
+        } else {
+          f.window.push(x);
+          if (f.window.length > Number(a.window)) f.window.shift();
+          if (a.mode === "median") {
+            const sorted = [...f.window].sort((p, q) => p - q);
+            const m = sorted.length >> 1;
+            y = sorted.length % 2 === 1 ? sorted[m]! : (sorted[m - 1]! + sorted[m]!) / 2;
+          } else {
+            // summed oldest → newest: every runtime adds in the same order (same double result)
+            let sum = 0;
+            for (const v of f.window) sum += v;
+            y = sum / f.window.length;
+          }
+          f.count = f.window.length;
+        }
+        this.filters.set(node.id, f);
+        out({ value: y, samples: f.count });
         return "next";
       }
       case "logic.eval":

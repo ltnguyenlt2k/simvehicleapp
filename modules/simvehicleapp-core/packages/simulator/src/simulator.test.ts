@@ -201,3 +201,43 @@ describe("logic.eval outputs", () => {
     expect(r.logs).toEqual([{ t: 100, level: "info", message: "seats 2" }]);
   });
 });
+
+describe("state.filter (ADR-0049 §1)", () => {
+  test("samples count the window; a value that cannot be computed takes `error` and adds no sample", async () => {
+    const LOW = "Vehicle.Body.Lights.Beam.Low.IsOn";
+    const block = (id: string, type: string, name: string, props: Record<string, unknown>) => ({ id, type, name, props, parentId: null, blockVersion: 1 });
+    const set = (id: string, name: string, path: string, value: unknown) => block(id, "sv_set_actuator", name, { path, value, awaitAck: true, onError: "continue" });
+    const graph = {
+      graphVersion: "1.0.0",
+      workflowId: "filter_samples",
+      revision: 1,
+      name: "Filter samples",
+      vss: { release: "v4.0" },
+      variables: [],
+      blocks: [
+        block("b1", "sv_on_timer", "tick", { intervalMs: 1000, initialDelayMs: 1000, concurrency: "queue" }),
+        block("b2", "sv_filter", "avg", { value: "<Vehicle.Speed>", mode: "moving-average", window: 2 }),
+        set("b3", "hazard", HAZARD, "<avg.value> == 20 && <avg.samples> == 2"),
+        set("b4", "lowBeam", LOW, true),
+      ],
+      edges: [
+        { id: "e1", from: "b1", fromHandle: "source", to: "b2", toHandle: "target" },
+        { id: "e2", from: "b2", fromHandle: "source", to: "b3", toHandle: "target" },
+        { id: "e3", from: "b2", fromHandle: "error", to: "b4", toHandle: "target" },
+      ],
+    };
+    const r = simulate(await irOf(graph), {
+      until: 3500,
+      initial: { [HAZARD]: false, [LOW]: false },
+      inputs: [
+        { t: 1500, path: "Vehicle.Speed", value: 10 },
+        { t: 2500, path: "Vehicle.Speed", value: 30 },
+      ],
+    });
+    expect(r.writes).toEqual([
+      { t: 1000, path: LOW, value: true },
+      { t: 2000, path: HAZARD, value: false },
+      { t: 3000, path: HAZARD, value: true },
+    ]);
+  });
+});

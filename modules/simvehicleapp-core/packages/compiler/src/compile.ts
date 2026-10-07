@@ -94,6 +94,16 @@ interface Out {
   unit: string | null;
 }
 
+/** One IR node of a block lowered into several (ADR-0045, ADR-0049): `next` goes to another part or a block handle. */
+interface Part {
+  opcode: string;
+  args: Record<string, unknown>;
+  next: Record<string, { part: number } | { handle: string } | null>;
+  outputs?: Record<string, Out>;
+  /** `src.reason` of every part but the first. */
+  reason: string;
+}
+
 class Builder {
   readonly diagnostics: DiagnosticV1[] = [];
   private readonly byId: Map<string, GraphBlock>;
@@ -111,8 +121,10 @@ class Builder {
   private topics = new Map<string, "read" | "write">();
   private containerOf = new Map<string, GraphBlock>();
   private dominatingTrigger = new Map<string, GraphBlock | null>();
-  /** Composite blocks (ADR-0045): their member reads, one `vehicle.read` node each. */
-  private members = new Map<string, CompositeMember[]>();
+  /** Blocks lowered into several IR nodes (composite ADR-0045, state machine ADR-0049). */
+  private parts = new Map<string, Part[]>();
+  /** Output field of such a block ⇒ the part producing it and that part's output. */
+  private partOutputs = new Map<string, Map<string, { part: number; field: string }>>();
 
   constructor(
     private readonly graph: WorkflowGraphV1,
@@ -245,9 +257,9 @@ class Builder {
             if (inl) return { expr: structuredClone(inl.expr), type: inl.info.type, unit: inl.unit };
             const out = this.outputs.get(producer.id)?.get(field);
             if (!out) return undefined;
-            // a composite output is the `value` of its member's node
-            const k = this.members.get(producer.id)?.findIndex((m) => m.output === field) ?? -1;
-            return { expr: { $ref: k >= 0 ? `${P.node}${memberKey(producer.id, k)}.value` : `${P.node}${producer.id}.${field}` }, type: out.type, unit: out.unit };
+            // an output of a block lowered into several nodes comes from one of them
+            const from = this.partOutputs.get(producer.id)?.get(field);
+            return { expr: { $ref: from ? `${P.node}${partKey(producer.id, from.part)}.${from.field}` : `${P.node}${producer.id}.${field}` }, type: out.type, unit: out.unit };
           }
         }
       },
@@ -307,6 +319,10 @@ class Builder {
     const spec = this.spec(b);
     const p = this.propsOf(b);
     const args: Record<string, unknown> = {};
+    if (b.type === "sv_state_machine") {
+      this.lowerStateMachine(b, p);
+      return;
+    }
     switch (spec.opcode) {
       // triggers
       case "event.signal_changed": {
@@ -355,12 +371,8 @@ class Builder {
       }
       case "vehicle.read":
         if (spec.members) {
-          const members = compositeMembers(spec, p);
-          for (const m of members) this.use(m.path, p.source === "fresh-read" ? "read" : "subscribe");
-          this.members.set(b.id, members);
-          this.setOutputs(b, Object.fromEntries(members.map((m) => [m.output, this.signalOut(m.path)])));
-          args.fresh = p.source === "fresh-read";
-          break;
+          this.lowerComposite(b, compositeMembers(spec, p), p.source === "fresh-read");
+          return;
         }
         this.use(String(p.path), p.source === "fresh-read" ? "read" : "subscribe");
         Object.assign(args, { signal: `${P.signal}${String(p.path)}`, fresh: p.source === "fresh-read" });
@@ -459,6 +471,18 @@ class Builder {
         this.setOutputs(b, { result: { type: "boolean", unit: null }, state: { type: "boolean", unit: null } });
         break;
       }
+      case "state.filter": {
+        const v = this.doubleExpr(b, "value", p.value);
+        if (v) args.value = v.expr;
+        const mode = String(p.mode);
+        if (mode === "exponential") {
+          const alpha = Number(p.alpha);
+          if (!(alpha > 0 && alpha <= 1)) this.report(b, "alpha", { code: "BLOCK_PROPERTY_INVALID", message: "Filter: alpha must be more than 0 and at most 1", data: { value: p.alpha } });
+          Object.assign(args, { mode, alpha });
+        } else Object.assign(args, { mode, window: Number(p.window) });
+        this.setOutputs(b, { value: { type: "double", unit: v?.unit ?? null }, samples: { type: "uint32", unit: null } });
+        break;
+      }
       // communication
       case "comm.log":
         Object.assign(args, { level: p.level, message: this.template(b, "message", p.message) });
@@ -491,6 +515,75 @@ class Builder {
     // Plain-typed outputs (write `ok`/`error`…) unless the case above resolved them.
     if (!this.outputs.has(b.id)) this.setOutputs(b, this.specOutputs(b, (t) => { throw new Error(`unresolved output type ${t} of ${b.type}`); }));
     this.args.set(b.id, args);
+  }
+
+  /** A numeric expression prop as `double`, its unit kept (`state.filter`, ADR-0049). */
+  private doubleExpr(b: GraphBlock, field: string, src: unknown): Typed | undefined {
+    const ast = this.parse(b, field, src);
+    if (!ast) return undefined;
+    const t = new Typer(this.env(b));
+    let v = t.type(ast);
+    if (v && v.info.type !== "double") v = t.convert(v, "double", ast.span);
+    for (const d of t.diagnostics) this.report(b, field, d);
+    return v;
+  }
+
+  /** Composite block (ADR-0045): one `vehicle.read` per member, chained; any failing member takes `error`. */
+  private lowerComposite(b: GraphBlock, members: CompositeMember[], fresh: boolean): void {
+    const parts: Part[] = members.map((m, k) => {
+      this.use(m.path, fresh ? "read" : "subscribe");
+      return {
+        opcode: "vehicle.read",
+        args: { signal: `${P.signal}${m.path}`, fresh },
+        next: { next: k + 1 < members.length ? { part: k + 1 } : { handle: "source" }, error: { handle: "error" } },
+        outputs: { timestamp: { type: "timestamp", unit: null }, value: this.signalOut(m.path) },
+        reason: `composite member ${m.output}`,
+      };
+    });
+    this.parts.set(b.id, parts);
+    this.partOutputs.set(b.id, new Map(members.map((m, k) => [m.output, { part: k, field: "value" }])));
+    this.setOutputs(b, Object.fromEntries(members.map((m) => [m.output, this.signalOut(m.path)])));
+  }
+
+  /**
+   * State machine (ADR-0049 §2): per transition a `control.branch` on `state == from && when` and a
+   * `state.set` to `to`; the first matching transition wins, the last `else` is `unchanged`.
+   */
+  private lowerStateMachine(b: GraphBlock, p: Record<string, unknown>): void {
+    this.setOutputs(b, {});
+    const v = this.graph.variables.find((x) => x.name === p.name);
+    if (!v) return; // reported by lint (ADR-0049 §3)
+    const target = { type: v.type as ValueType, unit: null };
+    const state = `${P.state}${v.name}`;
+    const rows = Array.isArray(p.transitions) ? (p.transitions as Record<string, unknown>[]) : [];
+    const parts: Part[] = [];
+    rows.forEach((row, i) => {
+      const field = (f: string) => `transitions[${i}].${f}`;
+      const given = (f: string) => !(row[f] === undefined || row[f] === null || String(row[f]).trim() === "");
+      for (const f of ["when", "to"]) {
+        if (!given(f)) this.report(b, field(f), { code: "BLOCK_PROPERTY_MISSING", message: `State machine: transition ${i + 1} needs '${f}'` });
+      }
+      const when = given("when") ? this.rowExpr(b, field("when"), row.when, { type: "boolean", unit: null }) : undefined;
+      const to = given("to") ? this.rowExpr(b, field("to"), row.to, target) : undefined;
+      const from = given("from") ? this.rowExpr(b, field("from"), row.from, target) : undefined;
+      if (!when || !to || (given("from") && !from)) return;
+      const condition = from ? { $expr: { op: "&&", l: { $expr: { op: "==", l: { $state: state }, r: from.expr, type: "boolean" } }, r: when.expr, type: "boolean" } } : when.expr;
+      parts.push(
+        { opcode: "control.branch", args: { condition }, next: { then: { part: 2 * i + 1 }, else: i + 1 < rows.length ? { part: 2 * i + 2 } : { handle: "unchanged" } }, reason: `state machine transition ${i + 1}` },
+        { opcode: "state.set", args: { state, value: to.expr }, next: { next: { handle: "changed" }, error: null }, reason: `state machine transition ${i + 1} sets ${v.name}` },
+      );
+    });
+    if (parts.length === 2 * rows.length && rows.length) this.parts.set(b.id, parts);
+  }
+
+  /** An expression in a list row: syntax errors reported here (rows are not parsed by lint). */
+  private rowExpr(b: GraphBlock, field: string, src: unknown, target: { type: ValueType; unit: string | null }): Typed | undefined {
+    const r = parseExpression(String(src));
+    if (!r.ok) {
+      this.report(b, field, { code: r.error.code, message: r.error.message, data: { reason: r.error.reason, span: r.error.span } });
+      return undefined;
+    }
+    return this.expr(b, field, src, target);
   }
 
   /** Pure blocks: typed expression, inlined when stable and the error branch is unused (ADR-0014 Notes §11). */
@@ -567,9 +660,8 @@ class Builder {
     for (const b of this.order) {
       if (this.inlined.has(b.id)) continue;
       nodeId.set(b.id, `n${++n}`);
-      // composite members: the block's own id is its first member's node
-      const members = this.members.get(b.id) ?? [];
-      members.forEach((_, k) => nodeId.set(memberKey(b.id, k), k === 0 ? nodeId.get(b.id)! : `n${++n}`));
+      // a block lowered into several nodes: its own id is its first part's node
+      (this.parts.get(b.id) ?? []).forEach((_, k) => nodeId.set(partKey(b.id, k), k === 0 ? nodeId.get(b.id)! : `n${++n}`));
     }
 
     const signalPaths = [...this.signalAccess.keys()].sort();
@@ -612,8 +704,7 @@ class Builder {
     };
     const outputsOf = (b: GraphBlock) => {
       const outs = this.outputs.get(b.id);
-      if (!outs || outs.size === 0) return undefined;
-      return Object.fromEntries([...outs].sort(([a], [c]) => (a < c ? -1 : 1)).map(([k, o]) => [k, o.unit ? { type: o.type, unit: o.unit } : { type: o.type }]));
+      return outs && outs.size > 0 ? formatOutputs(outs) : undefined;
     };
 
     const triggers: Record<string, unknown>[] = [];
@@ -635,21 +726,20 @@ class Builder {
         triggers.push(t);
         continue;
       }
-      const members = this.members.get(b.id);
-      if (members) {
-        // ADR-0045: one `vehicle.read` per member, chained; any failing member takes the block's `error` handle
+      const parts = this.parts.get(b.id);
+      if (parts) {
         const next = nextOf(b);
-        const fresh = (this.args.get(b.id) ?? {}).fresh;
-        members.forEach((m, k) => {
-          const out = this.outputs.get(b.id)!.get(m.output)!;
-          nodes.push({
-            id: nodeId.get(memberKey(b.id, k)),
-            opcode: "vehicle.read",
-            args: { signal: signalId.get(m.path), fresh },
-            next: { ...next, next: k + 1 < members.length ? nodeId.get(memberKey(b.id, k + 1))! : next.next ?? null },
-            outputs: { timestamp: { type: "timestamp" }, value: out.unit ? { type: out.type, unit: out.unit } : { type: out.type } },
-            src: k === 0 ? src : { ...src, inserted: true, reason: `composite member ${m.output}` },
-          });
+        const handleKey = (h: string) => (h === "source" ? "next" : h.replace(/-/g, "_"));
+        parts.forEach((part, k) => {
+          const node: Record<string, unknown> = {
+            id: nodeId.get(partKey(b.id, k)),
+            opcode: part.opcode,
+            args: patch(part.args),
+            next: Object.fromEntries(Object.entries(part.next).map(([key, to]) => [key, to === null ? null : "part" in to ? nodeId.get(partKey(b.id, to.part))! : (next[handleKey(to.handle)] ?? null)])),
+            src: k === 0 ? src : { ...src, inserted: true, reason: part.reason },
+          };
+          if (part.outputs) node.outputs = formatOutputs(new Map(Object.entries(part.outputs)));
+          nodes.push(node);
         });
         continue;
       }
@@ -696,8 +786,13 @@ class Builder {
   }
 }
 
-/** Node key of member `k` of a composite block (`#` is not allowed in block ids, so keys never collide). */
-const memberKey = (blockId: string, k: number) => `${blockId}#${k}`;
+/** Node key of part `k` of a block lowered into several nodes (`#` is not allowed in block ids, so keys never collide). */
+const partKey = (blockId: string, k: number) => `${blockId}#${k}`;
+
+/** IR `outputs`: sorted by name, `unit` only when there is one. */
+function formatOutputs(outs: Map<string, Out>): Record<string, unknown> {
+  return Object.fromEntries([...outs].sort(([a], [c]) => (a < c ? -1 : 1)).map(([k, o]) => [k, o.unit ? { type: o.type, unit: o.unit } : { type: o.type }]));
+}
 
 /** Stable within a run: only `$ref`, constants and pure operators (no `$signal`, `$state`, `now_ms`). */
 function isStable(e: unknown): boolean {
