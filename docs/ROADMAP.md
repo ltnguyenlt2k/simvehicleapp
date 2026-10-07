@@ -312,7 +312,7 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 | 4 | Per-run runtime stack & multi-user workspaces | 0046 | ☐ chưa có ADR |
 | 5 | Migrate `kuksa.val.v2` | 0047 | ☐ chưa có ADR |
 | 6 | Quick Run interpreter app | 0048 | ☐ chưa có ADR (chỉ nếu nhu cầu thực tế) |
-| 7 | Sub-workflow/function, state machine block, filters | — | ☐ chưa có ADR |
+| 7 | Sub-workflow/function, state machine block, filters | [0049](../analysis/adr/ADR-0049-filter-state-machine-subworkflow.md) | 🔄 Claude Code 2026-10-07: `sv_filter` (`state.filter` ở simulator + C++/Python/Rust), `sv_state_machine` (desugar), sửa crash biến chưa khai báo; conformance C40/C41 PASS local trên simulator + 3 backend; sub-workflow và `sv_rate` **hoãn** (ADR-0049 §4–5, chờ PO) |
 | 8 | Kanto deployment | — | ☐ chưa có ADR |
 | 9 | Reverse proxy + SSO forward-auth cho IDE | — | ☐ chưa có ADR |
 | 10 | VSS overlay OEM (vss-tools pipeline) | — | ☐ chưa có ADR |

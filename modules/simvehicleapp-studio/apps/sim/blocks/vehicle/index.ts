@@ -5,8 +5,9 @@ import { SvOnSignalChangedBlock } from '@/blocks/vehicle/on-signal-changed'
 import { SvReadAttributeBlock } from '@/blocks/vehicle/read-attribute'
 import { SvReadSignalBlock } from '@/blocks/vehicle/read-signal'
 import { SvSetActuatorBlock } from '@/blocks/vehicle/set-actuator'
+import { SV_STATE_BLOCKS } from '@/blocks/vehicle/state-blocks'
 
-/** SimVehicleApp blocks (ADR-0011 §3): M2 vehicle blocks + M3 logic/flow/state/comm + M14 composite (ADR-0045), registered in `blocks/registry.ts` under `// SV:`. */
+/** SimVehicleApp blocks (ADR-0011 §3): M2 vehicle blocks + M3 logic/flow/state/comm + M14 composite (ADR-0045), filter and state machine (ADR-0049), registered in `blocks/registry.ts` under `// SV:`. */
 export const SV_VEHICLE_BLOCKS: Record<string, BlockConfig> = {
   sv_on_signal_changed: SvOnSignalChangedBlock,
   sv_read_attribute: SvReadAttributeBlock,
@@ -14,6 +15,7 @@ export const SV_VEHICLE_BLOCKS: Record<string, BlockConfig> = {
   sv_set_actuator: SvSetActuatorBlock,
   ...SV_M3_BLOCKS,
   ...SV_COMPOSITE_BLOCKS,
+  ...SV_STATE_BLOCKS,
 }
 
 export { SvOnSignalChangedBlock, SvReadAttributeBlock, SvReadSignalBlock, SvSetActuatorBlock }

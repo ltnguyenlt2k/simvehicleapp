@@ -11,6 +11,7 @@ import {
   Database,
   DoorOpen,
   FileText,
+  Filter,
   Gauge,
   GitBranch,
   Hourglass,
@@ -23,6 +24,7 @@ import {
   Thermometer,
   Timer,
   ToggleLeft,
+  Waypoints,
   Workflow,
 } from 'lucide-react'
 
@@ -60,6 +62,8 @@ export const SvIcons = {
   battery: icon(BatteryCharging),
   door: icon(DoorOpen),
   climate: icon(Thermometer),
+  filter: icon(Filter),
+  stateMachine: icon(Waypoints),
 } as const
 
 /** Block colors by kind; sensors use the SimVehicleApp brand cyan. */

@@ -3,7 +3,7 @@
 > Sinh tự động từ `modules/simvehicleapp-core/packages/blocks/*/spec.json` và `semantics.md` bởi
 > `scripts/docs/gen_block_reference.py` — không sửa tay. Hướng dẫn bắt đầu: [tutorial.md](tutorial.md).
 
-39 khối. Biểu thức (`expression`) dùng cú pháp SVX: tham chiếu `<tênkhối.output>` hoặc `<Vehicle.Đường.Dẫn>`,
+41 khối. Biểu thức (`expression`) dùng cú pháp SVX: tham chiếu `<tênkhối.output>` hoặc `<Vehicle.Đường.Dẫn>`,
 toán tử ASCII (`== != < <= > >= && || !`), chuỗi trong nháy kép. `template` là văn bản có thể chèn tham chiếu `<…>`.
 
 ## Triggers
@@ -604,6 +604,60 @@ opcode `state.counter` · phiên bản 1 · vào [target] · ra [source, error]
 - **Opcode:** `state.counter`. Bước thường, không yield.
 - **`name`:** biến số nguyên đã khai báo; **`op`:** `inc` (mặc định), `dec`, `reset` (về giá trị đầu); **`step`:** ≥ 1 (mặc định 1).
 - **Output:** `value` sau thao tác (int32); tràn miền ⇒ kẹp + `VALUE_OUT_OF_RANGE` ở trace.
+
+### Filter — `sv_filter`
+
+opcode `state.filter` · phiên bản 1 · vào [target] · ra [source, error]
+
+| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Giá trị |
+|---|---|---|---|---|
+| `value` | expression | có |  |  |
+| `mode` | enum |  | "moving-average" | "moving-average", "exponential", "median" |
+| `window` | integer |  | 5 |  |
+| `alpha` | number |  | 0.5 |  |
+
+Đầu ra: `value` (double), `samples` (uint32)
+
+- **Loại:** bước (category `state`, P2); handle vào `target`, ra `source` và `error`.
+- **Opcode:** `state.filter` (args `value`, `mode`, `window` hoặc `alpha`). Mỗi lần chạy thêm một mẫu `value` (đổi sang
+  `double`, giữ đơn vị) vào trạng thái của block rồi trả giá trị đã lọc.
+- **`value`:** biểu thức số (số nguyên/thực; boolean/chuỗi ⇒ `TYPE_MISMATCH`).
+- **`mode`:**
+  - `moving-average` (mặc định): trung bình `window` mẫu gần nhất — cộng **theo thứ tự cũ → mới** rồi chia số mẫu.
+  - `exponential` (low-pass): mẫu đầu `y = x`, sau đó `y = y + alpha · (x − y)`.
+  - `median`: trung vị `window` mẫu gần nhất (số mẫu chẵn ⇒ trung bình hai phần tử giữa).
+- **`window`:** 1…1000 (mặc định 5), cho `moving-average`/`median`. **`alpha`:** (0, 1] (mặc định 0.5), cho
+  `exponential`; ngoài khoảng ⇒ `BLOCK_PROPERTY_INVALID`.
+- **Outputs:** `value` (`double`, đơn vị của `value` vào), `samples` (số mẫu trong cửa sổ, hoặc tổng số mẫu với
+  `exponential`).
+- **Trạng thái:** theo block, sống suốt vòng đời app, mọi lượt chạy dùng chung (như In range/Hysteresis); app khởi
+  động lại ⇒ trống.
+- **Lỗi:** `value` không tính được (signal chưa có giá trị…) ⇒ handle `error`, mẫu không được thêm.
+- **Side-effect:** không (ngoài trạng thái của chính block).
+
+### State machine — `sv_state_machine`
+
+opcode `control.branch` · phiên bản 1 · vào [target] · ra [changed, unchanged]
+
+| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Giá trị |
+|---|---|---|---|---|
+| `name` | string | có |  |  |
+| `transitions` | list | có |  |  |
+
+- **Loại:** bước (category `state`, P2); handle vào `target`, ra `changed` (một chuyển trạng thái đã xảy ra) và
+  `unchanged` (không dòng nào khớp).
+- **Opcode:** `control.branch` — compiler desugar: với mỗi dòng một `control.branch` (điều kiện
+  `<biến> == from && when`) và một `state.set` (gán `to`), không opcode riêng.
+- **`name`:** biến workflow giữ trạng thái (khai báo ở panel Variables, kiểu chuỗi hoặc số nguyên thường dùng); biến
+  chưa khai báo ⇒ `BLOCK_PROPERTY_INVALID`.
+- **`transitions`:** danh sách dòng xét **theo thứ tự**, dòng đầu tiên khớp thắng (mỗi lần chạy tối đa một chuyển):
+  - `from` — giá trị trạng thái hiện tại (biểu thức, cùng kiểu biến); trống = mọi trạng thái.
+  - `when` — điều kiện boolean (có thể dùng `<Vehicle.…>`, output block khác, biến).
+  - `to` — trạng thái mới (biểu thức, cùng kiểu biến).
+  Thiếu `when`/`to` ⇒ `BLOCK_PROPERTY_MISSING`; kiểu không khớp ⇒ `TYPE_MISMATCH`.
+- **Outputs:** không — đọc trạng thái bằng biến (`Get variable` hoặc ref biến).
+- **Lỗi:** biểu thức không tính được ⇒ như If/Set variable (log + đi tiếp nhánh mặc định của node đó).
+- **Side-effect:** ghi biến `name`.
 
 ### Get variable — `sv_var_get`
 

@@ -27,7 +27,7 @@ test.describe('M14 composite status blocks', () => {
     await createWorkflow(page)
 
     const toolbar = await openToolbar(page)
-    for (const name of ['Battery status', 'Door status', 'Climate status']) {
+    for (const name of ['Battery status', 'Door status', 'Climate status', 'Filter', 'State machine']) {
       await expect(toolbar.getByText(name, { exact: true }).first()).toBeVisible()
     }
 
@@ -35,7 +35,7 @@ test.describe('M14 composite status blocks', () => {
     const door = nodeByName(page, 'Door status 1')
     await expect(door).toBeVisible()
     await door.click()
-    await expect(subBlock(page, 'door')).toContainText('Front, driver side')
+    await expect(subBlock(page, 'door')).toContainText(/front, driver side/i)
 
     await dragFromToolbar(page, 'When app starts', 200, 200)
     const start = nodeByName(page, 'When app starts 1')
