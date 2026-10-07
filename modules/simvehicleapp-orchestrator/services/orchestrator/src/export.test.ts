@@ -28,6 +28,20 @@ describe("export (M09-T06, ADR-0031 §1)", () => {
     expect(files[5]!.content).toContain("MPL-2.0");
     expect(exportExtras(project, gen, null)).toEqual(exportExtras(project, gen, null));
     expect(exportExtras(project, null, null).map((f) => f.path)).toEqual(["README.SIMVEHICLE.md", "NOTICE", "THIRD-PARTY-NOTICES"]);
+    expect(files[3]!.content).toContain("./build.sh");
+  });
+
+  test("a Python project's README and notices are about the Python template and SDK (ADR-0040)", async () => {
+    const { project, gen } = await setup();
+    const files = exportExtras({ ...project, language: "python" }, gen, null);
+    const [readme, notice, third] = files.slice(-3).map((f) => f.content);
+    expect(readme).toContain("Velocitas Python vehicle app (eclipse-velocitas/vehicle-app-python-template)");
+    expect(readme).toContain("python3 app/src/main.py");
+    expect(readme).toContain("app/src/user_hooks.py");
+    expect(readme).not.toContain("build.sh");
+    expect(notice).toContain("vehicle-app-python-template");
+    expect(third).toContain("velocitas-sdk 0.15.7");
+    expect(third).not.toContain("Conan");
   });
 
   test("POST /projects/{id}/export streams the workspace zip of the latest successful generation; a license without export.source is 403", async () => {

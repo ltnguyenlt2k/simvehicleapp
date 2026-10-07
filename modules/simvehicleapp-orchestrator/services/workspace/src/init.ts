@@ -17,6 +17,8 @@ export interface Bundle {
 }
 
 export interface InitSources {
+  /** Languages with both a backend and a toolchain in this installation (`SV_BACKENDS` ∩ `SV_TOOLCHAINS`). */
+  languages(): string[];
   /** Template tar (`GET /templates?lang=` of the language's toolchain). */
   template(language: string): Promise<ReadableStream<Uint8Array>>;
   overlay(language: string): Promise<Bundle>;
@@ -35,7 +37,8 @@ export interface ProjectRequest {
 export class ProjectExists extends Error {}
 export class InitFailed extends Error {}
 
-const RUNTIME_PREFIX: Record<string, string> = { cpp: "app/src/simvehicleapp-runtime/" };
+/** Every backend vendors its runtime here (backend.yaml `runtime.vendorPath`, ADR-0021 §8). */
+const RUNTIME_PREFIX = "app/src/simvehicleapp-runtime/";
 
 async function untar(stream: ReadableStream<Uint8Array>, dir: string) {
   mkdirSync(dir, { recursive: true });
@@ -55,7 +58,7 @@ function writeIn(dir: string, rel: string, content: string) {
 export async function initProject(store: Store, req: ProjectRequest, sources: InitSources): Promise<{ slug: string; appName: string; language: string; vssRelease: string; runtimeVersion: string }> {
   const target = store.projectDir(req.slug);
   if (existsSync(target)) throw new ProjectExists(`project ${req.slug} already exists`);
-  if (!RUNTIME_PREFIX[req.language]) throw new InitFailed(`no ${req.language} backend in this installation`);
+  if (!sources.languages().includes(req.language)) throw new InitFailed(`no ${req.language} backend in this installation`);
   const staging = join(store.metaDir, "staging", `init-${req.slug}-${crypto.randomUUID().slice(0, 8)}`);
   try {
     await untar(await sources.template(req.language), staging);
@@ -67,7 +70,7 @@ export async function initProject(store: Store, req: ProjectRequest, sources: In
 
     const runtime = await sources.runtime(req.language);
     for (const f of runtime.files) {
-      if (!f.path.startsWith(RUNTIME_PREFIX[req.language]!)) throw new PathRejected(f.path, "runtime file outside the runtime directory");
+      if (!f.path.startsWith(RUNTIME_PREFIX)) throw new PathRejected(f.path, "runtime file outside the runtime directory");
       writeIn(staging, f.path, f.content);
     }
 

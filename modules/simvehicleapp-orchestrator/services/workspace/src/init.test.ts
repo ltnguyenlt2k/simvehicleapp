@@ -27,6 +27,7 @@ writeFileSync(join(seed, "app/src/SampleApp.cpp"), "// sample\n");
 writeFileSync(join(seed, "build.sh"), "#!/bin/bash\necho build\n", { mode: 0o755 });
 
 const sources = (overrides: Partial<InitSources> = {}): InitSources => ({
+  languages: () => ["cpp", "python"],
   template: async () => Bun.spawn(["tar", "-cf", "-", "-C", seed, "."], { stdout: "pipe" }).stdout,
   overlay: async () => ({ runtimeVersion: "0.1.0", files: [{ path: "app/src/CMakeLists.txt", content: "# overlay\n" }, { path: "app/src/user/UserHooks.cpp", content: "// hooks\n" }], remove: ["app/src/SampleApp.cpp"] }),
   runtime: async () => ({ runtimeVersion: "0.1.0", files: [{ path: "app/src/simvehicleapp-runtime/VERSION", content: "0.1.0\n" }] }),
@@ -65,6 +66,9 @@ describe("project creation (ADR-0026 §2, M07-T07)", () => {
     const escape = sources({ runtime: async () => ({ runtimeVersion: "0.1.0", files: [{ path: "app/src/main.cpp", content: "x" }] }) });
     await expect(initProject(store, { slug: "c", language: "cpp", appName: "C", vssRelease: "v4.0" }, escape)).rejects.toThrow("outside the runtime");
     await expect(initProject(store, { slug: "d", language: "rust", appName: "D", vssRelease: "v4.0" }, sources())).rejects.toBeInstanceOf(InitFailed);
+    // a language is installed when it has a backend and a toolchain (SV_BACKENDS ∩ SV_TOOLCHAINS), whatever it is
+    const py = await initProject(store, { slug: "py", language: "python", appName: "Py", vssRelease: "v4.0" }, sources());
+    expect(py.language).toBe("python");
   });
 });
 

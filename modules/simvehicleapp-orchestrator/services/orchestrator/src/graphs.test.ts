@@ -42,3 +42,18 @@ describe("SynCode from the saved workflows", () => {
     expect(g?.request).toMatchObject({ graphs: [{ workflowId: graph.workflowId }], scenarios });
   });
 });
+
+describe("editor link per language (ADR-0040: ide-python)", () => {
+  test("SV_IDE_URL is one URL for every language, or one per language", async () => {
+    const { editorUrl } = await import("./pipeline.ts");
+    const cpp = { slug: "a", language: "cpp" } as never;
+    const py = { slug: "b", language: "python" } as never;
+    expect(editorUrl("http://127.0.0.1:8080/", cpp)).toBe("http://127.0.0.1:8080/?folder=/workspace/projects/a");
+    expect(editorUrl("http://127.0.0.1:8080", py)).toBe("http://127.0.0.1:8080/?folder=/workspace/projects/b");
+    const both = "cpp=http://127.0.0.1:8080,python=http://127.0.0.1:8081";
+    expect(editorUrl(both, cpp)).toBe("http://127.0.0.1:8080/?folder=/workspace/projects/a");
+    expect(editorUrl(both, py)).toBe("http://127.0.0.1:8081/?folder=/workspace/projects/b");
+    expect(editorUrl("cpp=http://127.0.0.1:8080", py)).toBeNull();
+    expect(editorUrl(undefined, cpp)).toBeNull();
+  });
+});

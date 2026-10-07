@@ -14,6 +14,7 @@ export function httpSources(opts: { toolchains: Record<string, string>; backends
     return b;
   };
   return {
+    languages: () => Object.keys(opts.backends).filter((l) => l in opts.toolchains),
     template: async (lang) => (await get(`${base(opts.toolchains, lang, "toolchain")}/templates?lang=${lang}`)).body!,
     overlay: async (lang) => (await (await get(`${base(opts.backends, lang, "backend")}/template-overlay/files`)).json()) as Bundle,
     runtime: async (lang) => (await (await get(`${base(opts.backends, lang, "backend")}/runtime/files`)).json()) as Bundle,

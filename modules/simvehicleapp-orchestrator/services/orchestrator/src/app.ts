@@ -2,7 +2,7 @@ import { ContractValidator } from "@simvehicleapp/contracts";
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import type { Clients } from "./clients.ts";
 import { type EventHub, itemOfLine, itemOfRunEvent } from "./events.ts";
-import { present } from "./pipeline.ts";
+import { editorUrl, present } from "./pipeline.ts";
 import type { EntitlementService, Feature } from "./entitlements.ts";
 import { exportExtras } from "./export.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
@@ -34,19 +34,22 @@ export interface AppDeps {
   background(p: Promise<void>): void;
 }
 
-const projectView = (p: Project, ideUrl?: string, ide = true) => ({
-  id: p.id,
-  slug: p.slug,
-  name: p.name,
-  appName: p.appName,
-  language: p.language,
-  vssRelease: p.vssRelease,
-  settings: p.settings,
-  status: p.status,
-  ...(p.statusMessage ? { statusMessage: p.statusMessage } : {}),
-  workflows: p.workflows,
-  ...(p.status === "ready" && ideUrl && ide ? { editor: { url: `${ideUrl.replace(/\/$/, "")}/?folder=/workspace/projects/${p.slug}` } } : {}),
-});
+const projectView = (p: Project, ideUrl?: string, ide = true) => {
+  const editor = editorUrl(ideUrl, p);
+  return {
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    appName: p.appName,
+    language: p.language,
+    vssRelease: p.vssRelease,
+    settings: p.settings,
+    status: p.status,
+    ...(p.statusMessage ? { statusMessage: p.statusMessage } : {}),
+    workflows: p.workflows,
+    ...(p.status === "ready" && editor && ide ? { editor: { url: editor } } : {}),
+  };
+};
 
 /** Run v1 of the contract (the toolchain job id stays internal). */
 const runView = (r: Run) => {

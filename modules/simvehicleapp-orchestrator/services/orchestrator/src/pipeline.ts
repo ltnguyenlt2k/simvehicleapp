@@ -192,7 +192,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
       if (result.state !== "succeeded") {
         const classes = new Map<string, string>();
         for (const m of files!.sourceMaps) {
-          const cls = /workflows\/(\w+)\.cpp$/.exec(m.file)?.[1];
+          const cls = /workflows\/(\w+)\.\w+$/.exec(m.file)?.[1]; // C++ class / Python module of the workflow
           const wf = m.ranges[0]?.workflowId;
           if (cls && wf) classes.set(cls, wf);
         }
@@ -231,8 +231,25 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
   return (await repo.generation(gen.id))!;
 }
 
+/**
+ * The IDE URL of a project's folder. `SV_IDE_URL` is one URL, or one per language (`cpp=http://…,python=http://…`,
+ * ADR-0040: ide-python); a language without an IDE gets no editor link.
+ */
+export function editorUrl(ideUrl: string | undefined, project: Project): string | null {
+  if (!ideUrl) return null;
+  let base: string | undefined = ideUrl;
+  if (/^[a-z]+=/.test(ideUrl)) {
+    base = ideUrl
+      .split(",")
+      .map((x) => x.trim().split("=", 2) as [string, string?])
+      .find(([lang]) => lang === project.language)?.[1];
+  }
+  return base ? `${base.replace(/\/$/, "")}/?folder=/workspace/projects/${project.slug}` : null;
+}
+
 /** Appendix A/B view of a generation (`GET …/generations/{gid}`). */
 export function present(g: Generation, project: Project, ideUrl?: string) {
+  const editor = editorUrl(ideUrl, project);
   const done = g.state === "succeeded" || g.state === "failed" || g.state === "cancelled";
   return {
     id: g.id,
@@ -250,7 +267,7 @@ export function present(g: Generation, project: Project, ideUrl?: string) {
     ...(g.modelHash ? { modelHash: g.modelHash } : {}),
     ...(g.compilerVersion ? { compilerVersion: g.compilerVersion } : {}),
     ...(g.backend ? { backend: g.backend } : {}),
-    ...(g.state === "succeeded" && ideUrl ? { editor: { url: `${ideUrl.replace(/\/$/, "")}/?folder=/workspace/projects/${project.slug}` } } : {}),
+    ...(g.state === "succeeded" && editor ? { editor: { url: editor } } : {}),
     createdAt: g.createdAt,
     ...(g.finishedAt ? { finishedAt: g.finishedAt } : {}),
   };

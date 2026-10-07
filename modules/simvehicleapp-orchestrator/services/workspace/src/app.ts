@@ -1,5 +1,5 @@
 import type { RequestContext } from "@simvehicleapp/service-kit";
-import { InitFailed, initProject, type InitSources, ProjectExists } from "./init.ts";
+import { InitFailed, initProject, type InitSources, ProjectExists, type ProjectRequest } from "./init.ts";
 import { normalizeRelative, PathRejected, SLUG } from "./paths.ts";
 import { CommitRejected, Crash, type FileSet, type Store } from "./store.ts";
 import { zip } from "./zip.ts";
@@ -40,7 +40,7 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
           return json(400, { error: "invalid_request", message: "slug, language (cpp|python|rust), appName (PascalCase) and vssRelease (vX.Y) are required" });
         }
         try {
-          const p = await initProject(store, { slug, language: language as "cpp", appName: appName!, vssRelease: vssRelease! }, sources);
+          const p = await initProject(store, { slug, language: language as ProjectRequest["language"], appName: appName!, vssRelease: vssRelease! }, sources);
           ctx.log.info("project created", { slug });
           return json(201, p);
         } catch (e) {

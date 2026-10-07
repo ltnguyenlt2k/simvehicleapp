@@ -178,6 +178,17 @@ describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
     expect(d2).toMatchObject({ stage: "test", verification: { compile: "passed", format: "passed", tests: "failed" } });
     expect(d2.diagnostics).toMatchObject([{ code: "GENERATED_TEST_FAILED", workflowId: "gw_a" }]);
 
+    // Python (ADR-0040 §4): the toolchain reports pytest as gtest lines, `<module>Test.<test>`; the module is the workflow's.
+    const pyFiles: FileSet = { ...fileset, backend: "python@0.1.0", sourceMaps: [{ file: "app/src/generated/workflows/stable_overspeed_warning.py", ranges: [{ startLine: 20, endLine: 30, nodeId: "n2", blockId: "b2", workflowId: "gw_a" }] }] };
+    const pyFailing = fakeClients(
+      { generate: async () => ({ ok: true, value: pyFiles }) },
+      { test: { state: "failed", lines: ["[ RUN      ] stable_overspeed_warningTest.test_stable_overspeed_warning_scenario_meets_its_expectations", "AssertionError: writes differ:", "[  FAILED  ] stable_overspeed_warningTest.test_stable_overspeed_warning_scenario_meets_its_expectations (0 ms)"] } },
+    );
+    const gp = gen();
+    await repo.createGeneration(gp);
+    const dp = await runGeneration(gp, { repo, clients: pyFailing.clients, events });
+    expect(dp.diagnostics).toMatchObject([{ code: "GENERATED_TEST_FAILED", workflowId: "gw_a", message: "The scenario test of this workflow failed: AssertionError: writes differ:" }]);
+
     // No scenario ⇒ no generated test binary: SynCode passes but tests are "skipped", not "passed".
     const none = fakeClients({}, { test: { state: "succeeded", lines: ["$ build/bin/app_generated_tests", "no app_generated_tests", "no app_utests"] } });
     const g3 = gen();
