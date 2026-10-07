@@ -38,7 +38,7 @@
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | 🔄 | 9/10 — gate 3/4: eval ≥ 80 % chưa ổn định trên model local 9B, chờ đo với provider cloud ([report](reports/M10.md)) |
-| [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
+| [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
@@ -258,13 +258,13 @@ ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/ad
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Parity P3 (binary thật) GW-A..G, nightly dashboard | 0042 | ☐ | 100% | T01 |
+| Parity P3 (binary thật) GW-A..G, nightly dashboard | 0042 | 🔄 | Claude Code 2026-10-07: `gate/parity-p3.sh` — **7/7 local** (lệch ≤ 7 ms, [bằng chứng](reports/evidence/M11-parity-p3-local.json)); bước nightly + artifact `parity-p3`; sửa bộ phát scenario (đồng hồ monotonic). Chờ nightly xanh | T01 |
 | Playwright E2E đầy đủ (tutorial, 7 golden, IDE, export, AI giả) | 0042 | ☐ | Nightly xanh 3 ngày | T02 |
 | Cleanup Sim đợt 3 (knip, dependency thừa) | 0008 | ☐ | Đo bundle/build time | T03 |
-| Auth/tenancy BFF permissions | 0032 | ☐ | | T04 |
-| Observability (`/metrics`, log correlation, status page) | 0033 | ☐ | | T05 |
-| Security checklist + fuzz + osv-scanner | — | ☐ | | T06 |
-| Performance benchmark (validate/compile/simulate/SynCode) | — | ☐ | NFR-02 | T07 |
+| Auth/tenancy BFF permissions | 0032 | ✔ | 2026-10-07: rà 31 route `/api/sv/*` — mọi route kiểm phiên + quyền workspace/workflow/project, route ghi đòi `write`; test viewer không SynCode/Run; service nội bộ không truy cập được từ host (curl 4010–4210 thất bại, 4300 ⇒ 401). UI SSO clean-room: follow-up | T04 |
+| Observability (`/metrics`, log correlation, status page) | 0033 | ✔ | 2026-10-07: `/metrics` mọi service (histogram stage SynCode, kết quả theo mã diagnostic, run, trace, job toolchain); một SynCode truy vết qua 6 service bằng `generationId`; trang System status (ADR-0033 Notes 2026-10-07). Profile Prometheus/Grafana: P2 | T05 |
+| Security checklist + fuzz + osv-scanner | — | 🔄 | 2026-10-07: osv-scanner (CI, digest ghim) — 6 module của dự án sạch sau nâng ajv/grpc-js; studio (deps fork Sim) 75 gói chờ T03; container `cap_drop: ALL` + `no-new-privileges`, compiler/catalog/codegen read-only | T06 |
+| Performance benchmark (validate/compile/simulate/SynCode) | — | ✔ | 2026-10-07 `gate/bench-nfr02.sh`: validate 200 khối p95 16 ms (< 300), simulate p95 39 ms (< 1 s), SynCode project mới 13 s, tăng dần p95 5,6 s (< 60 s) — [bằng chứng](reports/evidence/M11-bench-nfr02-local.json) | T07 |
 | Docs đầy đủ (user guide + dev docs) | — | ☐ | | T08 |
 | Usability test 5 người (tutorial < 10') | — | ☐ | | T09 |
 | Release v1.0.0 (split repo, bootstrap, tag, lock, images, CHANGELOG) | 0002,0009 | ☐ | Nhận M00-T03; `release-split.sh`, `modules.sh`, `lock-verify.sh`, bootstrap + clone sạch | T10 |
