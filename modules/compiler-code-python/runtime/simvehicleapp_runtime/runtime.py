@@ -221,8 +221,17 @@ class _NodeDef:
         self.join = "all"
         self.scope = "run"
         self.counter_op = "inc"
+        self.filter_mode = ""
+        self.alpha = 0.0
         self.level: Optional[str] = None
         self.output = ""
+
+
+class _FilterState:
+    def __init__(self) -> None:
+        self.window: List[float] = []
+        self.y = 0.0
+        self.count = 0
 
 
 class _Run:
@@ -452,6 +461,14 @@ class Workflow:
         d.value, d.low, d.high = value, low, high
         d.flag = hysteresis
 
+    def filter(self, n: Node, value: Expr, mode: str, window: int, alpha: float, next: Next) -> None:
+        """`state.filter` (ADR-0049 §1): moving-average / median over `window` samples, or exponential (`alpha`)."""
+        d = self._add(n, "filter", next)
+        d.value = value
+        d.filter_mode = mode
+        d.count = window
+        d.alpha = alpha
+
     def log(self, n: Node, level: Optional[str], message: Expr, next: Next) -> None:
         d = self._add(n, "log", next)
         d.level = level
@@ -552,6 +569,7 @@ class Runtime:
         self._condition_last: Dict[_TriggerDef, bool] = {}
         self._debounce: Dict[_TriggerDef, int] = {}
         self._hysteresis: Dict[str, bool] = {}
+        self._filters: Dict[str, _FilterState] = {}
         self._subscribed: set = set()
         self._current: Optional[_Fiber] = None
         self._fiber_count = 0
@@ -1133,6 +1151,38 @@ class Runtime:
                 fail(e)
                 return
             run.outputs[node.id] = {"result": result, "state": result}
+            k("next")
+            return
+        if kind == "filter":
+            try:
+                x = float(V.num(node.value(c)))
+            except EvalError as e:
+                fail(e)
+                return
+            key = f"{wf.id}/{node.id}"
+            f = self._filters.get(key)
+            if f is None:
+                f = self._filters[key] = _FilterState()
+            if node.filter_mode == "exponential":
+                y = x if f.count == 0 else f.y + node.alpha * (x - f.y)
+                f.y = y
+                f.count = min(f.count + 1, 4294967295)
+            else:
+                f.window.append(x)
+                if len(f.window) > node.count:
+                    f.window.pop(0)
+                if node.filter_mode == "median":
+                    s = sorted(f.window)
+                    m = len(s) // 2
+                    y = s[m] if len(s) % 2 == 1 else (s[m - 1] + s[m]) / 2
+                else:
+                    # summed oldest → newest like every runtime (`sum()` would compensate and differ)
+                    total = 0.0
+                    for v in f.window:
+                        total += v
+                    y = total / len(f.window)
+                f.count = len(f.window)
+            run.outputs[node.id] = {"value": y, "samples": f.count}
             k("next")
             return
         if kind == "log":

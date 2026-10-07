@@ -90,6 +90,8 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   `logic.eval`: a pure block evaluated at this point of the run; `output` is its output name.
 - `void inRange(Node n, Expr value, Expr low, Expr high, bool hysteresis, Next next)`
   `logic.in_range`: `low ≤ value ≤ high`, or a hysteresis switch; outputs `result`, `state`.
+- `void filter(Node n, Expr value, const std::string& mode, int64_t window, double alpha, Next next)`
+  `state.filter` (ADR-0049 §1): `moving-average` / `median` over the last `window` samples, or `exponential` (`alpha`); state per node for the app's lifetime; outputs `value` (double), `samples`.
 - `void log(Node n, std::optional<std::string> level, Expr message, Next next)`
   `comm.log`: a log line and a trace `value` event.
 - `void publish(Node n, const TopicRef& t, Expr payload, Next next)`

@@ -84,6 +84,7 @@ export const OPCODES = [
   "state.get",
   "state.set",
   "state.counter",
+  "state.filter",
   "logic.eval",
   "logic.in_range",
   "comm.log",
@@ -180,6 +181,11 @@ export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
         .map((k) => tuple([q(k), q(o[k]!.type)])),
     );
   const num = (v: unknown) => atom(String(Math.trunc(Number(v ?? 0))));
+  /** An `f64` literal (`0.5`, `1.0`, `1e-7`). */
+  const real = (v: unknown) => {
+    const s = String(Number(v ?? 0));
+    return atom(/[.eE]/.test(s) ? s : `${s}.0`);
+  };
   const str = (v: string | null | undefined) => q(v ?? "");
   const local = (id: string) => atom(`&${names.get(id)!}`);
   const bool = (b: boolean) => atom(b ? "true" : "false");
@@ -305,6 +311,11 @@ export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
           case "state.counter": {
             const op = a.op === "dec" ? "dec" : a.op === "reset" ? "reset" : "inc";
             stmt(call("w.counter", [id, local(String(a.state)), q(op), num(a.step ?? 1), nx]));
+            break;
+          }
+          case "state.filter": {
+            const mode = a.mode === "exponential" ? "exponential" : a.mode === "median" ? "median" : "moving-average";
+            stmt(call("w.filter", [id, value(a.value as IrExpr), q(mode), num(a.window ?? 1), real(a.alpha ?? 0), nx]));
             break;
           }
           case "logic.eval": {

@@ -26,6 +26,7 @@ opcodes:
   - state.get
   - state.set
   - state.counter
+  - state.filter
   - logic.eval
   - logic.in_range
   - comm.log

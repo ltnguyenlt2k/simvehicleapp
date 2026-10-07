@@ -83,6 +83,7 @@ export const OPCODES = [
   "state.get",
   "state.set",
   "state.counter",
+  "state.filter",
   "logic.eval",
   "logic.in_range",
   "comm.log",
@@ -179,6 +180,11 @@ export function emitWorkflow(ir: WorkflowIr, className: string, headerPath: stri
       .map((k) => `{${cppString(k)}, ${cppString(o[k]!.type)}}`)
       .join(", ")}}`;
   const num = (v: unknown) => String(Math.trunc(Number(v ?? 0)));
+  /** A `double` literal (`0.5`, `1.0`, `1e-07`). */
+  const real = (v: unknown) => {
+    const s = String(Number(v ?? 0));
+    return /[.eE]/.test(s) ? s : `${s}.0`;
+  };
   const str = (v: string | null | undefined) => cppString(v ?? "");
 
   const w = new CodeWriter();
@@ -308,6 +314,11 @@ export function emitWorkflow(ir: WorkflowIr, className: string, headerPath: stri
           case "logic.eval": {
             const out = Object.keys(n.outputs ?? {})[0] ?? "result";
             w.call("w.eval", [id, cppString(out), value(a.value), nx]);
+            break;
+          }
+          case "state.filter": {
+            const mode = a.mode === "exponential" ? "exponential" : a.mode === "median" ? "median" : "moving-average";
+            w.call("w.filter", [id, value(a.value as IrExpr), cppString(mode), num(a.window ?? 1), real(a.alpha ?? 0), nx]);
             break;
           }
           case "logic.in_range":

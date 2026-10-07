@@ -41,11 +41,46 @@ enum Kind {
     kCounter,
     kEval,
     kInRange,
+    kFilter,
     kLog,
     kPublish,
 };
 
 enum class Resume { None, Ok, Timeout, Done };
+
+/** `state.filter` state of one node (ADR-0049 §1): the window, or the exponential value and sample count. */
+struct FilterState {
+    std::deque<double> window;
+    double y = 0;
+    uint32_t count = 0;
+
+    /** Adds sample `x`; the filtered value (same double arithmetic as the simulator, no FP contraction). */
+    double add(double x, const std::string& mode, int64_t size, double alpha) {
+        if (mode == "exponential") {
+            y = count == 0 ? x : y + alpha * (x - y);
+            if (count < UINT32_MAX) {
+                ++count;
+            }
+            return y;
+        }
+        window.push_back(x);
+        if (static_cast<int64_t>(window.size()) > size) {
+            window.pop_front();
+        }
+        count = static_cast<uint32_t>(window.size());
+        if (mode == "median") {
+            std::vector<double> sorted(window.begin(), window.end());
+            std::stable_sort(sorted.begin(), sorted.end());
+            const size_t m = sorted.size() / 2;
+            return sorted.size() % 2 == 1 ? sorted[m] : (sorted[m - 1] + sorted[m]) / 2;
+        }
+        double total = 0; // summed oldest → newest like every runtime
+        for (const double v : window) {
+            total += v;
+        }
+        return total / static_cast<double>(window.size());
+    }
+};
 
 struct Token {
     bool cancelled = false;
@@ -126,6 +161,8 @@ struct Workflow::NodeDef {
     Join join = Join::All;
     StopScope scope = StopScope::Run;
     CounterOp counterOp = CounterOp::Inc;
+    std::string filterMode; // state.filter
+    double alpha = 0;
     std::optional<std::string> level;
     std::string output; // logic.eval output name
 };
@@ -193,6 +230,7 @@ struct Runtime::Impl {
     std::map<TriggerDef*, bool> conditionLast;
     std::map<TriggerDef*, TimerId> debounce;
     std::map<std::string, bool> hysteresis; // wf/node → state
+    std::map<std::string, FilterState> filters; // wf/node → state.filter window / value
     std::set<std::string> subscribedFilters;
     Fiber* current = nullptr; // fiber whose step is running
     std::set<Fiber*> live;     // every fiber not yet destroyed
@@ -1077,6 +1115,23 @@ struct Runtime::Impl {
             k(std::string("next"));
             return;
         }
+        case kFilter: {
+            double x = 0;
+            try {
+                x = toNumber(node.value(c));
+            } catch (const EvalError& e) {
+                fail(e);
+                return;
+            }
+            FilterState& f = filters[wf.id() + "/" + node.id];
+            const double y = f.add(x, node.filterMode, node.count, node.alpha);
+            Value o = Value::object();
+            o["value"] = y;
+            o["samples"] = static_cast<int64_t>(f.count);
+            run.outputs[node.id] = o;
+            k(std::string("next"));
+            return;
+        }
         case kLog: {
             std::string message;
             try {
@@ -1406,6 +1461,14 @@ void Workflow::inRange(Node n, Expr value, Expr low, Expr high, bool hysteresis,
     d.low = std::move(low);
     d.high = std::move(high);
     d.flag = hysteresis;
+}
+
+void Workflow::filter(Node n, Expr value, const std::string& mode, int64_t window, double alpha, Next next) {
+    auto& d = add(n, kFilter, std::move(next));
+    d.value = std::move(value);
+    d.filterMode = mode;
+    d.count = window;
+    d.alpha = alpha;
 }
 
 void Workflow::log(Node n, std::optional<std::string> level, Expr message, Next next) {

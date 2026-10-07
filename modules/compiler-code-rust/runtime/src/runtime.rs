@@ -203,6 +203,53 @@ impl TriggerDef {
     }
 }
 
+/// `state.filter` state of one node: the window, or the exponential value and sample count.
+#[derive(Default)]
+struct FilterState {
+    window: VecDeque<f64>,
+    y: f64,
+    count: u32,
+}
+
+impl FilterState {
+    /// Adds sample `x`; the filtered value and the sample count (same double arithmetic as the simulator).
+    fn add(&mut self, x: f64, mode: &str, window: i64, alpha: f64) -> (f64, u32) {
+        if mode == "exponential" {
+            self.y = if self.count == 0 {
+                x
+            } else {
+                self.y + alpha * (x - self.y)
+            };
+            self.count = self.count.saturating_add(1);
+            return (self.y, self.count);
+        }
+        self.window.push_back(x);
+        if self.window.len() as i64 > window {
+            self.window.pop_front();
+        }
+        self.count = self.window.len() as u32;
+        let y = if mode == "median" {
+            let mut sorted: Vec<f64> = self.window.iter().copied().collect();
+            // stable, equal values (±0) keep their order like the simulator's sort
+            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            let m = sorted.len() / 2;
+            if sorted.len() % 2 == 1 {
+                sorted[m]
+            } else {
+                (sorted[m - 1] + sorted[m]) / 2.0
+            }
+        } else {
+            // summed oldest → newest like every runtime
+            let mut total = 0.0;
+            for v in &self.window {
+                total += v;
+            }
+            total / self.window.len() as f64
+        };
+        (y, self.count)
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum NKind {
     Read,
@@ -221,6 +268,7 @@ enum NKind {
     Counter,
     Eval,
     InRange,
+    Filter,
     Log,
     Publish,
 }
@@ -249,6 +297,8 @@ struct NodeDef {
     join: &'static str,
     scope: &'static str,
     counter_op: &'static str,
+    filter_mode: &'static str,
+    alpha: f64,
     level: Option<String>,
     output: String,
 }
@@ -282,6 +332,8 @@ impl NodeDef {
             join: "all",
             scope: "run",
             counter_op: "inc",
+            filter_mode: "",
+            alpha: 0.0,
             level: None,
             output: String::new(),
         }
@@ -568,6 +620,23 @@ impl Wf {
             d.flag = hysteresis;
         });
     }
+    /// `state.filter` (ADR-0049 §1): moving-average / median over `window` samples, or exponential (`alpha`).
+    pub fn filter(
+        &self,
+        n: Node,
+        value: Expr,
+        mode: &'static str,
+        window: i64,
+        alpha: f64,
+        next: Next,
+    ) {
+        self.add(n, NKind::Filter, next, |d| {
+            d.value = Some(value);
+            d.filter_mode = mode;
+            d.count = window;
+            d.alpha = alpha;
+        });
+    }
     pub fn log(&self, n: Node, level: Option<&str>, message: Expr, next: Next) {
         self.add(n, NKind::Log, next, |d| {
             d.level = level.map(|l| l.to_string());
@@ -790,6 +859,7 @@ pub struct Inner {
     condition_last: RefCell<HashMap<String, bool>>,
     debounce: RefCell<HashMap<String, u64>>,
     hysteresis: RefCell<HashMap<String, bool>>,
+    filters: RefCell<HashMap<String, FilterState>>,
     subscribed: RefCell<HashSet<String>>,
     current: RefCell<Option<Rc<Fiber>>>,
     fiber_count: Cell<u64>,
@@ -825,6 +895,7 @@ impl Runtime {
             condition_last: RefCell::new(HashMap::new()),
             debounce: RefCell::new(HashMap::new()),
             hysteresis: RefCell::new(HashMap::new()),
+            filters: RefCell::new(HashMap::new()),
             subscribed: RefCell::new(HashSet::new()),
             current: RefCell::new(None),
             fiber_count: Cell::new(0),
@@ -1944,6 +2015,27 @@ impl Inner {
                     Value::obj(vec![
                         ("result", Value::Bool(result)),
                         ("state", Value::Bool(result)),
+                    ]),
+                );
+                k(Some("next"))
+            }
+            NKind::Filter => {
+                let x = match ev(&node.value) {
+                    Ok(v) => v::num(&v),
+                    Err(e) => return fail(e, k),
+                };
+                let key = format!("{}/{}", wf.id, node.id);
+                let (y, samples) = {
+                    let mut filters = self.filters.borrow_mut();
+                    let f = filters.entry(key).or_default();
+                    f.add(x, node.filter_mode, node.count, node.alpha)
+                };
+                Self::set_output(
+                    &run,
+                    node,
+                    Value::obj(vec![
+                        ("value", Value::Float(y)),
+                        ("samples", Value::Int(samples as i128)),
                     ]),
                 );
                 k(Some("next"))
