@@ -43,3 +43,24 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
 1. **Đợt 3a (xong):** gỡ 221 block tích hợp bên thứ ba (nhóm `tools`) cùng thư mục tool, trigger, route `app/api/tools/<dịch vụ>`, connector knowledge, webhook provider và polling handler của chúng — 5 128 file, ~794 nghìn dòng; 20 dependency chỉ chúng dùng (client AWS, stagehand, linear, mongodb, mysql2, neo4j-driver, ajv). Giữ helper mà hạ tầng OAuth/credential/selector còn import (`tools/jira`, `microsoft_excel`, `sharepoint`, `gmail`, `crowdstrike`, `triggers/slack`, `tools/mistral` cho OCR knowledge base, `app/api/tools/ssh` cho handler `pi`). Gỡ nút Deploy/Run và phím Mod+Enter của Sim khỏi panel (chạy workflow Sim trên khối xe là vô nghĩa; vehicle app chạy bằng Run/Stop của thanh hành động). Đo trên CI: image studio 392 → 302 MB (−23 %), job dựng image + E2E 17 m 47 s → 10 m 28 s, type-check + test 7 m 37 s → 5 m 25 s. Type-check sạch, 566 file / 8 378 test vitest pass, `upstream_tree_check` PASS (mọi thay đổi khai báo trong `UPSTREAM_SYNC.allow`).
 2. **Đợt 3b (follow-up, chờ PO):** block AI lõi của Sim (`agent`, `router`, `evaluator`, `guardrails`…: tham chiếu ở ~280 file executor/provider), hạ tầng OAuth/credential/selector của tích hợp đã gỡ, trang Integrations; nâng dependency lõi còn lỗ hổng (next, axios, sharp, tar, nodemailer, better-auth — cần ADR-0032 note vì better-auth đang ghim). Hiện các block đó đã ẩn khỏi toolbar (allowlist M1).
 
+
+## Notes / Deviations (2026-10-07) — đợt 3b (M11-T03), theo uỷ quyền PO 2026-10-06, chờ PO xác nhận
+1. **Phụ thuộc có lỗ hổng (osv-scanner, `bun.lock` studio): 74 → 19 gói** (1 trong 19 là false positive: advisory
+   `simstudio` CLI ≤ 0.1.19, đã sửa upstream trước v0.7.13). Làm từng lô, mỗi lô: type-check + 8 399–8 446 test vitest +
+   `upstream_tree_check` + CI (dựng image + E2E):
+   - lô 1: 24 override cho gói bắc cầu một major (tar, axios, ws, postcss, hono, dompurify, mysql2, samlify…) + undici,
+     js-yaml, echarts, mermaid;
+   - lô 2: Next.js 16.2.6 → 16.3.7, better-auth (+sso, stripe) 1.6.11 → 1.6.33 (ADR-0032 note), sharp 0.35.5,
+     nodemailer 10.0.13, MCP SDK 1.31.0, tiptap 3.30.5 (3.31 đổi round-trip markdown — giữ 3.30.5 cho mọi `@tiptap/*`);
+   - lô 3: OpenTelemetry core/propagator-jaeger 2.9.0, vitest 4.1.11, trigger.dev 4.6.4, entry lock lồng cũ (undici,
+     js-yaml, nanoid).
+   Ràng buộc fork: `bunfig.toml` `minimumReleaseAge = 7 ngày` — chọn bản vá mới nhất đã quá 7 ngày (vd. Next 16.3.7 chứ
+   không 16.3.8). Bài học: xoá entry lock lồng chỉ đúng khi bản ở gốc thoả range của cha (bun không tự thêm lại) —
+   `docx/nanoid` (cần 5.x) phải khôi phục.
+2. **Gỡ tính năng Sim kéo theo phụ thuộc lỗi:** trigger email IMAP (`imapflow` ⇒ nodemailer 7, 13 advisory) và block/
+   handler Pi coding-agent + route SSH chỉ còn phục vụ nó (`@earendil-works/pi-coding-agent` ⇒ undici 8.3.0, 22 advisory;
+   `ssh2`). Ẩn khỏi toolbar từ M1, không route SV nào dùng.
+3. **Còn lại (không sửa được trong major hoặc cần nâng major của gói cha):** braces, csv-parse, deepmerge-ts, esbuild
+   0.18 (dev), fflate, file-type, image-size, js-yaml 3, katex, postcss-selector-parser, protobufjs, sprintf-js, uuid,
+   xlsx. Phần lớn nằm trong parser file/office, tailwind, OTel/posthog. Block AI lõi của Sim (`agent`, `router`…) vẫn
+   giữ (gắn ~280 file executor) — gỡ là việc riêng.
