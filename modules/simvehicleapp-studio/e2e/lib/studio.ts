@@ -113,12 +113,30 @@ export async function openVehiclePanel(page: Page): Promise<Locator> {
   return panel
 }
 
-/** Searches the Vehicle panel and returns the row of `path`. */
+/**
+ * Searches the Vehicle panel and returns the row of `path` once the results have settled: a drag started
+ * while the list still re-renders can land on another toolbar item (seen in CI: an "In range" block was
+ * dropped instead of the signal, then the editor tab hid the panel).
+ */
 export async function findSignal(page: Page, path: string, query = path): Promise<Locator> {
   const panel = await openVehiclePanel(page)
   await panel.getByRole('textbox', { name: 'Search vehicle signals' }).fill(query)
+  await expect(panel.getByText('Searching…')).toHaveCount(0)
   const row = panel.locator(`[data-sv-panel-path="${path}"]`)
   await expect(row).toBeVisible()
+  let last = ''
+  await expect
+    .poll(
+      async () => {
+        const box = await row.boundingBox()
+        const now = box ? `${Math.round(box.x)},${Math.round(box.y)}` : ''
+        const stable = now !== '' && now === last
+        last = now
+        return stable
+      },
+      { intervals: [150], timeout: 10_000 }
+    )
+    .toBe(true)
   return row
 }
 
@@ -135,6 +153,8 @@ export async function dropSignal(
   // A synthetic HTML5 drop right after the canvas mounts is sometimes lost; drop again like a user would
   // (a lost drop creates nothing, so retrying cannot duplicate a block).
   await expect(async () => {
+    // a block created by a stray drop opens the editor tab: show the Vehicle panel again before retrying
+    await openVehiclePanel(page)
     await row
       .locator('[draggable="true"]')
       .dragTo(pane(page), { targetPosition: { x, y }, force: true })

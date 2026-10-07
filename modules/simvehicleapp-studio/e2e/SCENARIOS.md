@@ -67,13 +67,13 @@
 | ID | Luồng | Tiêu chí PASS | FR / ADR | Test | TT |
 |---|---|---|---|---|---|
 | G1 | Prompt ⇒ đề xuất patch trên canvas ⇒ Accept (lưu) | patch áp dụng, lưu | FR-AI-01/04 · 0030 | `m10-assistant` | ✔ |
-| G2 | Hành động có side-effect cần xác nhận (sửa input) | dialog xác nhận, input đã sửa được dùng | FR-AI-05 | `m10-assistant`; hồi quy `m15-assistant-reload` (gửi ngay sau reload không xoá block) | ✔ |
+| G2 | Hành động có side-effect cần xác nhận (sửa input) | dialog xác nhận, input đã sửa được dùng | FR-AI-05 | `m10-assistant`; hồi quy `m15-assistant-reload` (gửi ngay sau reload giữ block; proposal lệch bị từ chối) | ◐ (local PASS, chờ CI) |
 | G3 | Eval với LLM thật | bộ eval đạt ngưỡng | FR-AI-02 | **bỏ qua** (chưa có API key — PO) | — |
 
 ## H. Full luồng & video
 | ID | Luồng | Tiêu chí PASS | FR / ADR | Test | TT |
 |---|---|---|---|---|---|
 | H1 | Tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ inject ⇒ trợ lý | toàn luồng PASS | toàn bộ | `tutorial-live @live` | ✔ |
-| H2 | Full luồng M15-T06: signup → GW-A bằng kéo thả → lint → Simulate → SynCode → Run → Signals → IDE → Export → AI → restart | mọi chặng PASS, dữ liệu còn sau restart | toàn bộ | `m15-full-flow @live` (+ `@live-restart`) | ◐ (full flow PASS local; restart chờ bản sửa trợ lý) |
+| H2 | Full luồng M15-T06: signup → GW-A bằng kéo thả → lint → Simulate → SynCode → Run → Signals → IDE → Export → AI → restart | mọi chặng PASS, dữ liệu còn sau restart | toàn bộ | `m15-full-flow @live` (+ `@live-restart`) | ◐ (full flow + restart PASS local trên bản sửa) |
 | H3 | Video tất định `scripts/sv demo-video` (1920×1080, chú thích) | chạy lại ra cùng nội dung | — | `scripts/sv demo-video` | ◐ |
 | H4 | 3 lượt CI xanh liên tiếp, 0 flaky | — | — | M15-T08 | ☐ |
