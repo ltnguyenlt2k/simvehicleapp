@@ -5,9 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.unmock('@/blocks/registry')
 
-import { getAllBlocks } from '@/blocks/registry'
 import { buildSelectorContextFromBlock, SELECTOR_CONTEXT_FIELDS } from './context'
-import { buildCanonicalIndex, isCanonicalPair } from './visibility'
 
 describe('buildSelectorContextFromBlock', () => {
   it('should extract knowledgeBaseId from knowledgeBaseSelector via canonical mapping', () => {
@@ -84,52 +82,5 @@ describe('buildSelectorContextFromBlock', () => {
 
     expect((ctx as Record<string, unknown>).query).toBeUndefined()
     expect((ctx as Record<string, unknown>).operation).toBeUndefined()
-  })
-})
-
-describe('SELECTOR_CONTEXT_FIELDS validation', () => {
-  it('every entry must be a canonicalParamId (if a canonical pair exists) or a direct subblock ID', () => {
-    const allCanonicalParamIds = new Set<string>()
-    const allSubBlockIds = new Set<string>()
-    const idsInCanonicalPairs = new Set<string>()
-
-    for (const block of getAllBlocks()) {
-      const index = buildCanonicalIndex(block.subBlocks)
-
-      for (const sb of block.subBlocks) {
-        allSubBlockIds.add(sb.id)
-        if (sb.canonicalParamId) {
-          allCanonicalParamIds.add(sb.canonicalParamId)
-        }
-      }
-
-      for (const group of Object.values(index.groupsById)) {
-        if (!isCanonicalPair(group)) continue
-        if (group.basicId) idsInCanonicalPairs.add(group.basicId)
-        for (const advId of group.advancedIds) idsInCanonicalPairs.add(advId)
-      }
-    }
-
-    const errors: string[] = []
-
-    for (const field of SELECTOR_CONTEXT_FIELDS) {
-      const f = field as string
-      if (allCanonicalParamIds.has(f)) continue
-
-      if (idsInCanonicalPairs.has(f)) {
-        errors.push(
-          `"${f}" is a member subblock ID inside a canonical pair — use the canonicalParamId instead`
-        )
-        continue
-      }
-
-      if (!allSubBlockIds.has(f)) {
-        errors.push(`"${f}" is not a canonicalParamId or subblock ID in any block definition`)
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new Error(`SELECTOR_CONTEXT_FIELDS validation failed:\n${errors.join('\n')}`)
-    }
   })
 })

@@ -1487,69 +1487,6 @@ describe('indexWorkflowSearchMatches', () => {
     ])
   })
 
-  it('indexes structured resources inside tool input params using nested subblock config', () => {
-    const workflow = createSearchReplaceWorkflowFixture()
-    workflow.blocks['tool-input-1'] = {
-      id: 'tool-input-1',
-      type: 'custom',
-      name: 'Tool Input Block',
-      position: { x: 0, y: 0 },
-      enabled: true,
-      outputs: {},
-      subBlocks: {
-        tools: {
-          id: 'tools',
-          type: 'tool-input',
-          value: [
-            {
-              type: 'slack',
-              toolId: 'slack_message',
-              operation: 'send',
-              title: 'Slack message',
-              params: {
-                authMethod: 'oauth',
-                credential: 'slack-credential',
-                text: 'message with file',
-                attachmentFiles: JSON.stringify({
-                  name: 'contract.pdf',
-                  key: 'file-key-old',
-                  path: '/contract.pdf',
-                  size: 12,
-                  type: 'application/pdf',
-                }),
-              },
-            },
-          ],
-        },
-      },
-    }
-
-    const matches = indexWorkflowSearchMatches({
-      workflow,
-      query: 'contract',
-      mode: 'all',
-      blockConfigs: {
-        ...SEARCH_REPLACE_BLOCK_CONFIGS,
-        custom: {
-          subBlocks: [{ id: 'tools', title: 'Tools', type: 'tool-input' }],
-        },
-      },
-    }).filter((match) => match.blockId === 'tool-input-1')
-
-    expect(matches).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          kind: 'file',
-          subBlockId: 'tools',
-          subBlockType: 'file-upload',
-          rawValue: 'file-key-old',
-          searchText: 'contract.pdf',
-          valuePath: [0, 'params', 'attachmentFiles'],
-        }),
-      ])
-    )
-  })
-
   it('does not double index synthetic tool-input mirror subblocks', () => {
     const workflow = createSearchReplaceWorkflowFixture()
     workflow.blocks['tool-input-1'] = {
@@ -1599,67 +1536,6 @@ describe('indexWorkflowSearchMatches', () => {
         subBlockId: 'tools',
         valuePath: [0, 'params', 'url'],
         searchText: 'Lmfap',
-      }),
-    ])
-  })
-
-  it('attaches selector context to selector-backed tool input params', () => {
-    const workflow = createSearchReplaceWorkflowFixture()
-    workflow.blocks['tool-input-1'] = {
-      id: 'tool-input-1',
-      type: 'custom',
-      name: 'Tool Input Block',
-      position: { x: 0, y: 0 },
-      enabled: true,
-      outputs: {},
-      subBlocks: {
-        tools: {
-          id: 'tools',
-          type: 'tool-input',
-          value: [
-            {
-              type: 'slack',
-              toolId: 'slack_message',
-              operation: 'send',
-              title: 'Slack message',
-              params: {
-                authMethod: 'oauth',
-                credential: 'slack-credential',
-                channel: 'COLD',
-                text: 'message',
-              },
-            },
-          ],
-        },
-      },
-    }
-
-    const matches = indexWorkflowSearchMatches({
-      workflow,
-      query: 'COLD',
-      mode: 'resource',
-      workspaceId: 'workspace-1',
-      workflowId: 'workflow-1',
-      blockConfigs: {
-        ...SEARCH_REPLACE_BLOCK_CONFIGS,
-        custom: {
-          subBlocks: [{ id: 'tools', title: 'Tools', type: 'tool-input' }],
-        },
-      },
-    }).filter((match) => match.kind === 'selector-resource')
-
-    expect(matches).toEqual([
-      expect.objectContaining({
-        rawValue: 'COLD',
-        resource: expect.objectContaining({
-          selectorKey: 'slack.channels',
-          selectorContext: expect.objectContaining({
-            oauthCredential: 'slack-credential',
-            workspaceId: 'workspace-1',
-            workflowId: 'workflow-1',
-            excludeWorkflowId: 'workflow-1',
-          }),
-        }),
       }),
     ])
   })

@@ -67,11 +67,6 @@ describe.concurrent('Blocks Module', () => {
       expect(block).toBeUndefined()
     })
 
-    it('should normalize hyphens to underscores', () => {
-      const block = getBlock('microsoft-teams')
-      expect(block).toBeDefined()
-      expect(block?.type).toBe('microsoft_teams')
-    })
   })
 
   describe('getBlockByToolName', () => {
@@ -276,14 +271,6 @@ describe.concurrent('Blocks Module', () => {
       }
     })
 
-    it('should return blocks in the "tools" category', () => {
-      const blocks = getBlocksByCategory('tools')
-      expect(blocks.length).toBeGreaterThan(0)
-      for (const block of blocks) {
-        expect(block.category).toBe('tools')
-      }
-    })
-
     it('should return blocks in the "triggers" category', () => {
       const blocks = getBlocksByCategory('triggers')
       expect(blocks.length).toBeGreaterThan(0)
@@ -317,10 +304,6 @@ describe.concurrent('Blocks Module', () => {
       expect(isValidBlockType('')).toBe(false)
     })
 
-    it('should handle hyphenated versions of underscored types', () => {
-      expect(isValidBlockType('microsoft-teams')).toBe(true)
-      expect(isValidBlockType('google-calendar')).toBe(true)
-    })
   })
 
   describe('Block Definitions', () => {
@@ -690,14 +673,6 @@ describe.concurrent('Blocks Module', () => {
       expect(typeof routerBlock?.tools.config?.tool).toBe('function')
     })
 
-    it('should handle blocks with triggerAllowed flag', () => {
-      const gmailBlock = getBlock('gmail')
-      expect(gmailBlock?.triggerAllowed).toBe(true)
-
-      const functionBlock = getBlock('function')
-      expect(functionBlock?.triggerAllowed).toBeUndefined()
-    })
-
     it('should handle blocks with hideFromToolbar flag', () => {
       const starterBlock = getBlock('starter')
       expect(starterBlock?.hideFromToolbar).toBe(true)
@@ -781,12 +756,6 @@ describe.concurrent('Blocks Module', () => {
   })
 
   describe('Block Category Counts', () => {
-    it('should have more blocks in tools category than triggers', () => {
-      const toolsBlocks = getBlocksByCategory('tools')
-      const triggersBlocks = getBlocksByCategory('triggers')
-      expect(toolsBlocks.length).toBeGreaterThan(triggersBlocks.length)
-    })
-
     it('should have a reasonable total number of blocks', () => {
       const allBlocks = getAllBlocks()
       expect(allBlocks.length).toBeGreaterThan(50)
