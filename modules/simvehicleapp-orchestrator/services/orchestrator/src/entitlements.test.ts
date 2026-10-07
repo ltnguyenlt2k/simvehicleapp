@@ -74,4 +74,19 @@ describe("PDP on the orchestrator's actions (403 not_entitled)", () => {
     expect(await (await call("GET", "/entitlements")).json()).toMatchObject({ mode: "enforce", licensed: true, edition: "community" });
     expect(logs.filter(([m]) => m === "entitlement")).toHaveLength(3);
   });
+
+  test("GET /entitlements/ai.assistant answers the decision for the ai-assistant; other features are 404", async () => {
+    const { createOrchestratorHandler } = await import("./app.ts");
+    const { EventHub } = await import("./events.ts");
+    const { MemoryRepo } = await import("./repo.ts");
+    const ctx = { log: { info() {}, warn() {}, error() {}, debug() {}, child() { return this; } } } as never;
+    const handler = (entitlements: EntitlementService) => createOrchestratorHandler({ repo: new MemoryRepo(), clients: {} as never, hub: new EventHub(), entitlements, ideUrl: "", kick() {}, background() {} });
+    const ask = (h: ReturnType<typeof handler>, feature: string) => h(new Request(`http://o/entitlements/${feature}`), ctx);
+    const noAi = signed({ licenseVersion: "1.0.0", edition: "community", licensee: "Jane", features: { "ai.assistant": false }, limits: {}, expiry: null });
+    const enforce = handler(new EntitlementService("enforce", loadLicense(JSON.stringify(noAi), pem)));
+    expect(await (await ask(enforce, "ai.assistant")).json()).toMatchObject({ feature: "ai.assistant", allowed: false, licensed: false, mode: "enforce", reason: expect.stringContaining("ai.assistant") });
+    const full = handler(new EntitlementService("full", loadLicense(JSON.stringify(noAi), pem)));
+    expect(await (await ask(full, "ai.assistant")).json()).toMatchObject({ allowed: true, licensed: false, mode: "full" });
+    expect((await ask(enforce, "syncode")).status).toBe(404);
+  });
 });

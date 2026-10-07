@@ -64,6 +64,9 @@ async function readBody(req: Request): Promise<Record<string, unknown> | Respons
   }
 }
 
+/** Features whose decision other services ask for (the orchestrator gates its own actions itself). */
+const ENTITLED_BY_OTHERS = new Set<string>(["ai.assistant"]);
+
 export function createOrchestratorHandler(d: AppDeps) {
   const view = (p: Project) => projectView(p, d.ideUrl, d.entitlements?.allows("ide.access", { language: p.language }) ?? true);
   /** The PDP decision (logged); a denial is 403 with the reason (ADR-0031 §2). */
@@ -198,6 +201,16 @@ export function createOrchestratorHandler(d: AppDeps) {
         return json(200, present(g, project, d.ideUrl));
       }
       return json(404, { error: "not_found" });
+    }
+
+    // Decision for a feature used by another service (the ai-assistant asks for `ai.assistant` per turn).
+    if (parts[0] === "entitlements" && parts.length === 2 && req.method === "GET") {
+      const feature = decodeURIComponent(parts[1]!);
+      if (!ENTITLED_BY_OTHERS.has(feature)) return json(404, { error: "not_found", message: `No decision for ${feature}` });
+      if (!d.entitlements) return json(200, { feature, allowed: true, licensed: false, mode: "full", reason: "no EntitlementService" });
+      const decision = d.entitlements.check(feature as Feature);
+      ctx.log.info("entitlement", { ...decision });
+      return json(200, decision);
     }
 
     if (url.pathname === "/entitlements" && req.method === "GET") {
