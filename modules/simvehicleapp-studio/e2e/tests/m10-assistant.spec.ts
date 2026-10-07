@@ -165,6 +165,8 @@ test.describe('M10 Assistant panel', () => {
     await dropSignal(page, SPEED, 'sv_on_signal_changed', 200, 200)
     await expect(nodeByName(page, 'When Speed changes 1')).toBeVisible()
 
+    // The project (polled while `creating`) now holds the workflow: turns carry it.
+    await expect(page.locator('[data-sv-action="export"]')).toBeEnabled({ timeout: 20_000 })
     await page.locator('[data-tab-button="copilot"]').click()
     const panel = page.locator('[data-sv-assistant="panel"]')
     await expect(panel).toContainText('scripted · e2e')
