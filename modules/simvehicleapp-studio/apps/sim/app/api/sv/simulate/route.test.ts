@@ -64,11 +64,13 @@ describe('POST /api/sv/simulate (M05-T09/T10)', () => {
     expect(body.result.writes).toEqual(sim.writes)
     expect(mockCall).toHaveBeenNthCalledWith(1, 'compiler', '/compile', {
       method: 'POST',
+      retryOnReset: true,
       body: { graph, mode: 'build' },
       timeoutMs: 10000,
     })
     expect(mockCall).toHaveBeenNthCalledWith(2, 'compiler', '/simulate', {
       method: 'POST',
+      retryOnReset: true,
       body: { ir: { irVersion: '1.0.0' }, scenario },
       timeoutMs: 15000,
     })

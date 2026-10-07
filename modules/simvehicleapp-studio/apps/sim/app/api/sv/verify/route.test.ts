@@ -53,6 +53,7 @@ describe('POST /api/sv/verify (M04-T11)', () => {
     expect(await res.json()).toEqual({ diagnostics: [diagnostic] })
     expect(mockCall).toHaveBeenCalledWith('compiler', '/compile', {
       method: 'POST',
+      retryOnReset: true,
       body: { graph, mode: 'verify' },
       timeoutMs: 10000,
     })

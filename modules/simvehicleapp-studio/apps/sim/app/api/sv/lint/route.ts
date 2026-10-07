@@ -29,6 +29,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
   try {
     upstream = await callSvService('compiler', '/lint', {
       method: 'POST',
+      retryOnReset: true,
       body: { graph: parsed.data.body.graph },
       timeoutMs: 5000,
     })

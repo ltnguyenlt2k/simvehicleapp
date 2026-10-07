@@ -59,6 +59,38 @@ describe('sv api-client (M01-T09)', () => {
     expect(init.signal).toBeInstanceOf(AbortSignal)
   })
 
+  it('retries a pure call once when a pooled connection was reset (service restarted)', async () => {
+    mockEnv.SV_COMPILER_URL = 'http://compiler:4020'
+    const reset = Object.assign(new TypeError('fetch failed'), {
+      cause: { code: 'UND_ERR_SOCKET' },
+    })
+    mockFetch.mockRejectedValueOnce(reset).mockResolvedValueOnce(json({ diagnostics: [] }))
+    const res = await callSvService('compiler', '/lint', {
+      method: 'POST',
+      body: {},
+      retryOnReset: true,
+    })
+    expect(res.status).toBe(200)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+
+    mockFetch.mockReset()
+    mockFetch.mockRejectedValueOnce(reset)
+    await expect(callSvService('compiler', '/lint', { method: 'POST', body: {} })).rejects.toBe(
+      reset
+    )
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    mockFetch.mockReset()
+    const refused = Object.assign(new TypeError('fetch failed'), {
+      cause: { code: 'ECONNREFUSED' },
+    })
+    mockFetch.mockRejectedValue(refused)
+    await expect(
+      callSvService('compiler', '/lint', { method: 'POST', retryOnReset: true })
+    ).rejects.toBe(refused)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
   it('refuses to call an unconfigured service', async () => {
     await expect(callSvService('orchestrator', '/x')).rejects.toBeInstanceOf(
       SvServiceNotConfiguredError

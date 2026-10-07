@@ -29,6 +29,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
   try {
     upstream = await callSvService('compiler', '/compile', {
       method: 'POST',
+      retryOnReset: true,
       body: { graph: parsed.data.body.graph, mode: 'verify' },
       timeoutMs: 10000,
     })

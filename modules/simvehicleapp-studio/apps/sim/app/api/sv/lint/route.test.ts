@@ -53,6 +53,7 @@ describe('POST /api/sv/lint (M03-T11)', () => {
     expect(await res.json()).toEqual({ diagnostics: [diagnostic] })
     expect(mockCall).toHaveBeenCalledWith('compiler', '/lint', {
       method: 'POST',
+      retryOnReset: true,
       body: { graph },
       timeoutMs: 5000,
     })

@@ -46,6 +46,19 @@ export interface SvRequestOptions {
   headers?: Record<string, string>
   /** Aborts the call with the caller (a client leaving a proxied stream). */
   signal?: AbortSignal
+  /**
+   * Pure calls only (lint, compile, simulate): retry once when the pooled keep-alive connection turns out to be
+   * dead — the first call after the service restarted fails at once otherwise (found by the M15 outage E2E).
+   */
+  retryOnReset?: boolean
+}
+
+/** undici errors of a connection that was closed under us (not a refused or timed-out one). */
+const RESET_CODES = new Set(['UND_ERR_SOCKET', 'ECONNRESET', 'EPIPE'])
+
+function isConnectionReset(error: unknown): boolean {
+  const code = (error as { cause?: { code?: unknown } } | null)?.cause?.code
+  return typeof code === 'string' && RESET_CODES.has(code)
 }
 
 /**
@@ -61,6 +74,7 @@ export async function callSvService(
     timeoutMs = DEFAULT_SERVICE_TIMEOUT_MS,
     headers: extra,
     signal,
+    retryOnReset = false,
   }: SvRequestOptions = {}
 ): Promise<Response> {
   const base = getSvServiceUrl(service)
@@ -71,15 +85,22 @@ export async function callSvService(
     [REQUEST_ID_HEADER]: generateRequestId(),
   }
   if (body !== undefined) headers['content-type'] = 'application/json'
-  return fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-    signal: signal
-      ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)])
-      : AbortSignal.timeout(timeoutMs),
-    cache: 'no-store',
-  })
+  const call = () =>
+    fetch(`${base}${path.startsWith('/') ? path : `/${path}`}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(timeoutMs)])
+        : AbortSignal.timeout(timeoutMs),
+      cache: 'no-store',
+    })
+  try {
+    return await call()
+  } catch (error) {
+    if (retryOnReset && isConnectionReset(error)) return call()
+    throw error
+  }
 }
 
 export type SvServiceStatus = 'ok' | 'degraded' | 'down' | 'unconfigured'

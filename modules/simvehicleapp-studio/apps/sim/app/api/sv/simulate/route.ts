@@ -34,6 +34,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
   try {
     const compiled = await callSvService('compiler', '/compile', {
       method: 'POST',
+      retryOnReset: true,
       body: { graph, mode: 'build' },
       timeoutMs: 10000,
     })
@@ -53,6 +54,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
 
     const simulated = await callSvService('compiler', '/simulate', {
       method: 'POST',
+      retryOnReset: true,
       body: { ir: compileBody.ir, scenario },
       timeoutMs: 15000,
     })
