@@ -55,3 +55,10 @@ Chứng minh R10: diff của M12 không chạm `simvehicleapp-core`, `simvehicle
    - studio: chọn ngôn ngữ khi tạo project (trước: cố định C++), chỉ hiện ngôn ngữ có `codegen-*` + `toolchain-*` đang
      chạy (System status). Contract BFF thêm trường tuỳ chọn `language` (mặc định `cpp`), không phá tương thích.
    Core (compiler) không phải sửa. Không thêm mã diagnostic.
+9. **Byte-code ngoài project:** `app/src/generated` thuộc SynCode; `__pycache__` do `compileall`/chạy app sinh ra trong đó
+   bị workspace coi là file lạ (GENERATED_FILE_MODIFIED ở SynCode sau). Mọi tiến trình Python của toolchain/IDE dùng
+   `PYTHONPYCACHEPREFIX=/tmp/sv-pycache` (agent đặt cho từng job; image toolchain-python; env ide-python).
+10. **App bắt đầu sau khi subscription mở:** trên một event loop, mở các stream `Subscribe` cùng lúc với run đầu tiên làm
+    I/O của run chậm (ack ghi 42 ms thay vì ~1 ms, parity GW-F). `SimVehicleApp.on_start` chờ mọi subscription nhận
+    reply đầu (giá trị hiện tại; tối đa 2 s) rồi mới chạy strand — tương đương thứ tự C++ (subscribe rồi startApp),
+    không đổi ngữ nghĩa (reply đầu trùng baseline không kích hoạt trigger `any`). Parity P3 Python 7/7, lệch ≤ 3 ms.
