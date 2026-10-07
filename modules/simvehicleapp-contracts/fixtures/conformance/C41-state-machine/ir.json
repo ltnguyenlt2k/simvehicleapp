@@ -1,0 +1,402 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:ed9f146020724bbc71872fe719c057fab9a56385113ba8db84c718bd91d5a80c",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "StateMachineFirstMatchingTransitionWinsUnchangedWhenNoneMatches",
+  "nodes": [
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$expr": {
+                "l": {
+                  "$state": "v0"
+                },
+                "op": "==",
+                "r": {
+                  "$const": "Idle",
+                  "type": "string"
+                },
+                "type": "boolean"
+              }
+            },
+            "op": "&&",
+            "r": {
+              "$expr": {
+                "l": {
+                  "$ref": "n1.value"
+                },
+                "op": ">",
+                "r": {
+                  "$const": "0",
+                  "type": "int64",
+                  "unit": "km/h"
+                },
+                "type": "boolean"
+              }
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "id": "n2",
+      "next": {
+        "else": "n4",
+        "then": "n3"
+      },
+      "opcode": "control.branch",
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "state": "v0",
+        "value": {
+          "$const": "Driving",
+          "type": "string"
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": "n10"
+      },
+      "opcode": "state.set",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 1 sets mode"
+      }
+    },
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$expr": {
+                "l": {
+                  "$state": "v0"
+                },
+                "op": "==",
+                "r": {
+                  "$const": "Driving",
+                  "type": "string"
+                },
+                "type": "boolean"
+              }
+            },
+            "op": "&&",
+            "r": {
+              "$expr": {
+                "l": {
+                  "$ref": "n1.value"
+                },
+                "op": ">",
+                "r": {
+                  "$const": "120",
+                  "type": "int64",
+                  "unit": "km/h"
+                },
+                "type": "boolean"
+              }
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "id": "n4",
+      "next": {
+        "else": "n6",
+        "then": "n5"
+      },
+      "opcode": "control.branch",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 2"
+      }
+    },
+    {
+      "args": {
+        "state": "v0",
+        "value": {
+          "$const": "Speeding",
+          "type": "string"
+        }
+      },
+      "id": "n5",
+      "next": {
+        "error": null,
+        "next": "n10"
+      },
+      "opcode": "state.set",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 2 sets mode"
+      }
+    },
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$expr": {
+                "l": {
+                  "$state": "v0"
+                },
+                "op": "==",
+                "r": {
+                  "$const": "Speeding",
+                  "type": "string"
+                },
+                "type": "boolean"
+              }
+            },
+            "op": "&&",
+            "r": {
+              "$expr": {
+                "l": {
+                  "$ref": "n1.value"
+                },
+                "op": "<=",
+                "r": {
+                  "$const": "100",
+                  "type": "int64",
+                  "unit": "km/h"
+                },
+                "type": "boolean"
+              }
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "id": "n6",
+      "next": {
+        "else": "n8",
+        "then": "n7"
+      },
+      "opcode": "control.branch",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 3"
+      }
+    },
+    {
+      "args": {
+        "state": "v0",
+        "value": {
+          "$const": "Driving",
+          "type": "string"
+        }
+      },
+      "id": "n7",
+      "next": {
+        "error": null,
+        "next": "n10"
+      },
+      "opcode": "state.set",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 3 sets mode"
+      }
+    },
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$ref": "n1.value"
+            },
+            "op": "==",
+            "r": {
+              "$const": "0",
+              "type": "int64",
+              "unit": "km/h"
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "id": "n8",
+      "next": {
+        "else": "n11",
+        "then": "n9"
+      },
+      "opcode": "control.branch",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 4"
+      }
+    },
+    {
+      "args": {
+        "state": "v0",
+        "value": {
+          "$const": "Idle",
+          "type": "string"
+        }
+      },
+      "id": "n9",
+      "next": {
+        "error": null,
+        "next": "n10"
+      },
+      "opcode": "state.set",
+      "src": {
+        "blockId": "b2",
+        "inserted": true,
+        "reason": "state machine transition 4 sets mode"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$expr": {
+            "l": {
+              "$state": "v0"
+            },
+            "op": "==",
+            "r": {
+              "$const": "Speeding",
+              "type": "string"
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "id": "n10",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$const": true,
+          "type": "boolean"
+        }
+      },
+      "id": "n11",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s0",
+      "path": "Vehicle.Body.Lights.Beam.Low.IsOn",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "boolean",
+      "id": "s1",
+      "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+      "unit": null,
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s2",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:dcbc9a093e313baf6a4c8cb19e7a279bd6bf72b6308fe977b274dba1368b754f",
+  "state": [
+    {
+      "id": "v0",
+      "initial": "Idle",
+      "name": "mode",
+      "type": "string"
+    }
+  ],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "km/h"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "km/h"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s2",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c41_state_machine",
+  "workflowRevision": 1
+}

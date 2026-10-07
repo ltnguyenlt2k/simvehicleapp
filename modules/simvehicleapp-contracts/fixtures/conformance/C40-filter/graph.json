@@ -1,0 +1,224 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c40_filter",
+  "revision": 1,
+  "name": "Filter: moving average, exponential and median over the same samples",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "rain1",
+      "props": {
+        "path": "Vehicle.Body.Raindetection.Intensity",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "queue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_filter",
+      "name": "filter1",
+      "props": {
+        "value": "<rain1.value>",
+        "mode": "moving-average",
+        "window": 3
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_convert",
+      "name": "percent1",
+      "props": {
+        "value": "<filter1.value>",
+        "to": "uint8"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "fan1",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+        "value": "<percent1.result>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_on_signal_changed",
+      "name": "rain2",
+      "props": {
+        "path": "Vehicle.Body.Raindetection.Intensity",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "queue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_filter",
+      "name": "filter2",
+      "props": {
+        "value": "<rain2.value>",
+        "mode": "exponential",
+        "alpha": 0.5
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_convert",
+      "name": "percent2",
+      "props": {
+        "value": "<filter2.value>",
+        "to": "uint8"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b8",
+      "type": "sv_set_actuator",
+      "name": "fan2",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed",
+        "value": "<percent2.result>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b9",
+      "type": "sv_on_signal_changed",
+      "name": "rain3",
+      "props": {
+        "path": "Vehicle.Body.Raindetection.Intensity",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "queue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b10",
+      "type": "sv_filter",
+      "name": "filter3",
+      "props": {
+        "value": "<rain3.value>",
+        "mode": "median",
+        "window": 3
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b11",
+      "type": "sv_convert",
+      "name": "percent3",
+      "props": {
+        "value": "<filter3.value>",
+        "to": "uint8"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b12",
+      "type": "sv_set_actuator",
+      "name": "fan3",
+      "props": {
+        "path": "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed",
+        "value": "<percent3.result>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b5",
+      "fromHandle": "source",
+      "to": "b6",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b6",
+      "fromHandle": "source",
+      "to": "b7",
+      "toHandle": "target"
+    },
+    {
+      "id": "e6",
+      "from": "b7",
+      "fromHandle": "source",
+      "to": "b8",
+      "toHandle": "target"
+    },
+    {
+      "id": "e7",
+      "from": "b9",
+      "fromHandle": "source",
+      "to": "b10",
+      "toHandle": "target"
+    },
+    {
+      "id": "e8",
+      "from": "b10",
+      "fromHandle": "source",
+      "to": "b11",
+      "toHandle": "target"
+    },
+    {
+      "id": "e9",
+      "from": "b11",
+      "fromHandle": "source",
+      "to": "b12",
+      "toHandle": "target"
+    }
+  ]
+}

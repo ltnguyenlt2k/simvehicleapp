@@ -53,6 +53,7 @@ flowchart TB
     E41["0041 Rust feasibility"]
     E42["0042 Semantic parity testing"]
     E45["0045 Curated multi-VSS blocks"]
+    E49["0049 Filter, state machine, sub-workflow"]
   end
   A2 --> A7
   A2 --> A9
@@ -70,6 +71,7 @@ flowchart TB
   B14 --> B18
   C20 --> C22 & E40 & E41
   B11 --> E45
+  E45 --> E49
   C21 --> C22
   C23 --> C26
   C24 --> C27
@@ -117,6 +119,7 @@ flowchart TB
 | [0041](ADR-0041-rust-backend-feasibility.md) | Rust backend feasibility | L2 | M13 |
 | [0042](ADR-0042-semantic-parity-testing.md) | Semantic parity testing | L2 | M11 |
 | [0045](ADR-0045-curated-multi-vss-blocks.md) | Curated multi-VSS blocks (composite `members`) | L2 | M14 |
+| [0049](ADR-0049-filter-state-machine-subworkflow.md) | Filter (`state.filter`), state machine (desugar), sub-workflow (hoãn) | L2 | M14 |
 
 ADR dự kiến viết sau (M14): 0043 gRPC service interface, 0044 standalone service apps, 0046 per-run runtime stack & multi-user, 0047 migrate `kuksa.val.v2`, 0048 Quick Run interpreter (tuỳ chọn).
 

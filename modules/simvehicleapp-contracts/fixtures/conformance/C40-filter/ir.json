@@ -1,0 +1,359 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:2dea7672860629242e0bdacef37e0e5c7d6b41611cd268b35d3e8ba987d831be",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "FilterMovingAverageExponentialAndMedianOverTheSameSamples",
+  "nodes": [
+    {
+      "args": {
+        "mode": "moving-average",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "double",
+            "type": "double",
+            "unit": "percent",
+            "value": {
+              "$ref": "n1.value"
+            }
+          }
+        },
+        "window": 3
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": "n3"
+      },
+      "opcode": "state.filter",
+      "outputs": {
+        "samples": {
+          "type": "uint32"
+        },
+        "value": {
+          "type": "double",
+          "unit": "percent"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s1",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "uint8",
+            "type": "uint8",
+            "unit": "percent",
+            "value": {
+              "$ref": "n2.value"
+            }
+          }
+        }
+      },
+      "id": "n3",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    },
+    {
+      "args": {
+        "alpha": 0.5,
+        "mode": "exponential",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "double",
+            "type": "double",
+            "unit": "percent",
+            "value": {
+              "$ref": "n4.value"
+            }
+          }
+        }
+      },
+      "id": "n5",
+      "next": {
+        "error": null,
+        "next": "n6"
+      },
+      "opcode": "state.filter",
+      "outputs": {
+        "samples": {
+          "type": "uint32"
+        },
+        "value": {
+          "type": "double",
+          "unit": "percent"
+        }
+      },
+      "src": {
+        "blockId": "b6"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s2",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "uint8",
+            "type": "uint8",
+            "unit": "percent",
+            "value": {
+              "$ref": "n5.value"
+            }
+          }
+        }
+      },
+      "id": "n6",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b8"
+      }
+    },
+    {
+      "args": {
+        "mode": "median",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "double",
+            "type": "double",
+            "unit": "percent",
+            "value": {
+              "$ref": "n7.value"
+            }
+          }
+        },
+        "window": 3
+      },
+      "id": "n8",
+      "next": {
+        "error": null,
+        "next": "n9"
+      },
+      "opcode": "state.filter",
+      "outputs": {
+        "samples": {
+          "type": "uint32"
+        },
+        "value": {
+          "type": "double",
+          "unit": "percent"
+        }
+      },
+      "src": {
+        "blockId": "b10"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s3",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "uint8",
+            "type": "uint8",
+            "unit": "percent",
+            "value": {
+              "$ref": "n8.value"
+            }
+          }
+        }
+      },
+      "id": "n9",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b12"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "uint8",
+      "id": "s0",
+      "path": "Vehicle.Body.Raindetection.Intensity",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s1",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s2",
+      "path": "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "uint8",
+      "id": "s3",
+      "path": "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed",
+      "unit": "percent",
+      "vssType": "actuator"
+    }
+  ],
+  "sourceGraphHash": "sha256:abdc5495e39dc8e12433cffe8e1538e86aa8a7ae345a6b4e00d0a52eaed8b1e2",
+  "state": [],
+  "topics": [],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b1"
+      }
+    },
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n5",
+      "id": "n4",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b5"
+      }
+    },
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n8",
+      "id": "n7",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "uint8",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "uint8",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s0",
+      "src": {
+        "blockId": "b9"
+      }
+    }
+  ],
+  "workflowId": "c40_filter",
+  "workflowRevision": 1
+}

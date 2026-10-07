@@ -1,0 +1,25 @@
+# C41-state-machine — sv_state_machine (ADR-0049 §2): first matching transition wins; `changed` after a transition
+# (also Driving → Idle through the "any state" row), `unchanged` when no row matches. Hand-derived expectation (M14 #7).
+scenarioVersion: 1.0.0
+name: C41-state-machine
+description: "State machine: first matching transition wins, unchanged when none matches"
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+  Vehicle.Body.Lights.Beam.Low.IsOn: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 50 }
+  - { t: 2000, path: "Vehicle.Speed", value: 130 }
+  - { t: 3000, path: "Vehicle.Speed", value: 110 }
+  - { t: 4000, path: "Vehicle.Speed", value: 90 }
+  - { t: 5000, path: "Vehicle.Speed", value: 0 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }
+    - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 3000, path: "Vehicle.Body.Lights.Beam.Low.IsOn", value: true }
+    - { t: 4000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }
+    - { t: 5000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }

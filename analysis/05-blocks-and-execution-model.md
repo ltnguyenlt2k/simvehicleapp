@@ -92,9 +92,9 @@ Thuộc tính chung `concurrency` ∈ `restart` (huỷ lần chạy cũ, chạy 
 |---|---|---|---|
 | `sv_var_set` / `sv_var_get` | `name` (khai báo ở panel Variables với kiểu + giá trị đầu), `value` | `state.set`/`state.get` | P0 |
 | `sv_counter` | `name`, `op` inc/dec/reset, `step` | `state.counter` | P1 |
-| `sv_filter` | moving average / low-pass: `value`, `window` / `alpha` | `state.filter` | P2 |
-| `sv_rate` | rate of change per s | `state.rate` | P2 |
-| `sv_state_machine` | states, transitions (expr) | `fsm.*` | P2 |
+| `sv_filter` | moving average / low-pass (exponential) / median: `value`, `window` / `alpha` ([ADR-0049](adr/ADR-0049-filter-state-machine-subworkflow.md) §1) | `state.filter` | P2 |
+| `sv_rate` | rate of change per s — **hoãn** (ADR-0049 §5) | `state.rate` | P2 |
+| `sv_state_machine` | biến trạng thái, transitions `{from, when, to}` | desugar `control.branch` + `state.set` (ADR-0049 §2, không `fsm.*`) | P2 |
 
 ### 2.7 Communication
 | Block | Thuộc tính | Opcode | P |

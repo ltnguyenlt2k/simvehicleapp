@@ -1,0 +1,37 @@
+# C40-filter — sv_filter (ADR-0049 §1): moving average / exponential / median of the same samples, converted to uint8 %
+# Hand-derived expectation (M14 #7): MA3 10, 25, 50, 46.67→47, 50 · EMA α=0.5 10, 25, 62.5→63, 31.25→31, 40.625→41 ·
+# median3 10, 25, 40, 40, 50 (Convert rounds half away from zero). The simulator and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C40-filter
+description: "Filter: moving average, exponential and median over the same samples"
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.Body.Raindetection.Intensity: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed: 0
+  Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed: 0
+  Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed: 0
+inputs:
+  - { t: 1000, path: "Vehicle.Body.Raindetection.Intensity", value: 10 }
+  - { t: 2000, path: "Vehicle.Body.Raindetection.Intensity", value: 40 }
+  - { t: 3000, path: "Vehicle.Body.Raindetection.Intensity", value: 100 }
+  - { t: 4000, path: "Vehicle.Body.Raindetection.Intensity", value: 0 }
+  - { t: 5000, path: "Vehicle.Body.Raindetection.Intensity", value: 50 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 10 }
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed", value: 10 }
+    - { t: 1000, path: "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed", value: 10 }
+    - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 25 }
+    - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed", value: 25 }
+    - { t: 2000, path: "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed", value: 25 }
+    - { t: 3000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 50 }
+    - { t: 3000, path: "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed", value: 63 }
+    - { t: 3000, path: "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed", value: 40 }
+    - { t: 4000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 47 }
+    - { t: 4000, path: "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed", value: 31 }
+    - { t: 4000, path: "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed", value: 40 }
+    - { t: 5000, path: "Vehicle.Cabin.HVAC.Station.Row1.Driver.FanSpeed", value: 50 }
+    - { t: 5000, path: "Vehicle.Cabin.HVAC.Station.Row1.Passenger.FanSpeed", value: 41 }
+    - { t: 5000, path: "Vehicle.Cabin.HVAC.Station.Row2.Driver.FanSpeed", value: 50 }

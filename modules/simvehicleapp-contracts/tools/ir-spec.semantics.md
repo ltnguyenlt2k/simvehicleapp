@@ -44,3 +44,9 @@ Numbers use the **shortest decimal that round-trips the value's own type** (`flo
 - Containers: `control.repeat`/`control.while` run `body.entry` then continue at `next.next`; `control.parallel` starts `args.branches[*].entry` and continues according to `args.join` (`all`, `any` cancels the others, `none` continues at once).
 - Triggers carry their concurrency policy explicitly (`queue` ⇒ `queueMax`, `parallel` ⇒ `maxRuns`); execution semantics are ADR-0012 and the conformance cases in `fixtures/conformance/`.
 - Pure blocks are folded into the expressions that use them when their value cannot change within a run; otherwise they appear as `logic.eval` nodes (`args.value`, output `result`).
+
+### State that outlives a run
+
+- `logic.in_range` with `mode: hysteresis` and `state.filter` keep state **per node** for the app's lifetime; every run of the workflow shares it; it is empty again after a restart.
+- `state.filter` (ADR-0049 §1): `args.value` is a `double`; `mode` `moving-average` (mean of the last `window` samples, summed oldest → newest, then divided by their count), `median` (middle of the sorted last `window` samples, mean of the two middle ones when even) or `exponential` (first sample `y = x`, then `y = y + alpha · (x − y)`). Outputs `value` (`double`) and `samples` (samples in the window; total samples for `exponential`). IEEE-754 double arithmetic exactly as written (no fused multiply-add). A `value` that cannot be computed takes `error` and adds no sample.
+- One block may lower into several nodes sharing its `src.blockId` (composite blocks ADR-0045: chained `vehicle.read`; state machine ADR-0049 §2: `control.branch` + `state.set` per transition); all but the first carry `src.inserted: true` and a `reason`.

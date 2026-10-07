@@ -1,0 +1,112 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c41_state_machine",
+  "revision": 1,
+  "name": "State machine: first matching transition wins, unchanged when none matches",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [
+    {
+      "name": "mode",
+      "type": "string",
+      "initial": "Idle"
+    }
+  ],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "speed",
+      "props": {
+        "path": "Vehicle.Speed",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "queue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_state_machine",
+      "name": "drive",
+      "props": {
+        "name": "mode",
+        "transitions": [
+          {
+            "from": "\"Idle\"",
+            "when": "<speed.value> > 0",
+            "to": "\"Driving\""
+          },
+          {
+            "from": "\"Driving\"",
+            "when": "<speed.value> > 120",
+            "to": "\"Speeding\""
+          },
+          {
+            "from": "\"Speeding\"",
+            "when": "<speed.value> <= 100",
+            "to": "\"Driving\""
+          },
+          {
+            "from": "",
+            "when": "<speed.value> == 0",
+            "to": "\"Idle\""
+          }
+        ]
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "hazard",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": "<variable.mode> == \"Speeding\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "lowBeam",
+      "props": {
+        "path": "Vehicle.Body.Lights.Beam.Low.IsOn",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "changed",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b2",
+      "fromHandle": "unchanged",
+      "to": "b4",
+      "toHandle": "target"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- IR v1 semantics (M14 #7, ADR-0049): `state.filter` (opcode already in the enum) — args `value`/`mode`/`window`|`alpha`, outputs `value`/`samples`, state per node; one block may lower into several nodes sharing `src.blockId` (composite, state machine). Conformance `C40-filter`, `C41-state-machine`.
 - `schemas/block-spec.v1` (additive, M14 #1, ADR-0045): optional `members: [{output, path}]` for composite blocks (category `composite`, opcode `vehicle.read`) — the compiler desugars them into one `vehicle.read` per member; `path` may hold `{prop}` placeholders. Conformance `C39-composite-status`.
 - `openapi/orchestrator.v1.yaml` (additive, M09-T06): `POST /projects/{id}/export` — project zip with the workflow graphs, generation, license and notices.
 - `openapi/workspace.v1.yaml` (M09-T06): `exportProject` implemented — `generationId` optional (409 when the folder holds another one), `extraFiles` for `.simvehicleapp/**` and the notices.
