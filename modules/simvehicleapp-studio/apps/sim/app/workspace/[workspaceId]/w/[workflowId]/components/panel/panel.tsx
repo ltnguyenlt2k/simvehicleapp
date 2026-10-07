@@ -2,7 +2,6 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { createLogger } from '@sim/logger'
-import { Square } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import { useShallow } from 'zustand/react/shallow'
@@ -18,7 +17,6 @@ import {
   Duplicate,
   Layout,
   MoreHorizontal,
-  Play,
   Trash,
   toast,
 } from '@/components/emcn'
@@ -30,14 +28,10 @@ import { useRegisterGlobalCommands } from '@/app/workspace/[workspaceId]/provide
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { createCommands } from '@/app/workspace/[workspaceId]/utils/commands-utils'
 import {
-  Deploy,
   Editor,
   Toolbar,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components'
-import {
-  usePanelResize,
-  useUsageLimits,
-} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/hooks'
+import { usePanelResize } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/hooks'
 import { SvAssistantPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/assistant-panel'
 import { Variables } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/variables/variables'
 import { useAutoLayout } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks/use-auto-layout'
@@ -50,7 +44,6 @@ import { isWorkflowEffectivelyLocked } from '@/hooks/queries/utils/folder-tree'
 import { useDuplicateWorkflowMutation, useWorkflowMap } from '@/hooks/queries/workflows'
 import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
 import { usePermissionConfig } from '@/hooks/use-permission-config'
-import { useSettingsNavigation } from '@/hooks/use-settings-navigation'
 import { useChatStore } from '@/stores/chat/store'
 import type { PanelTab } from '@/stores/panel'
 import { usePanelStore } from '@/stores/panel'
@@ -121,13 +114,7 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
   const duplicateWorkflowMutation = useDuplicateWorkflowMutation()
   const { data: workflows = {} } = useWorkflowMap(workspaceId)
   const { data: folders = {} } = useFolderMap(workspaceId)
-  const { activeWorkflowId, hydration } = useWorkflowRegistry(
-    useShallow((state) => ({
-      activeWorkflowId: state.activeWorkflowId,
-      hydration: state.hydration,
-    }))
-  )
-  const isRegistryLoading = hydration.phase === 'idle' || hydration.phase === 'state-loading'
+  const activeWorkflowId = useWorkflowRegistry((state) => state.activeWorkflowId)
   const { handleAutoLayout: autoLayoutWithFitView } = useAutoLayout(activeWorkflowId || null)
 
   // Check for locked blocks (disables auto-layout)
@@ -143,7 +130,6 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
   const hasBlocks = useWorkflowStore((state) => Object.keys(state.blocks).length > 0)
 
   const { collaborativeBatchToggleLocked } = useCollaborativeWorkflow()
-  const { navigateToSettings } = useSettingsNavigation()
 
   // Delete workflow hook
   const { isDeleting, handleDeleteWorkflow } = useDeleteWorkflow({
@@ -153,42 +139,11 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
     onSuccess: () => setIsDeleteModalOpen(false),
   })
 
-  // Usage limits hook
-  const { usageExceeded } = useUsageLimits({
-    context: 'user',
-    autoRefresh: !isRegistryLoading,
-  })
-
   // Workflow execution hook
-  const { handleRunWorkflow, handleCancelExecution, isExecuting } = useWorkflowExecution()
+  const { isExecuting } = useWorkflowExecution()
 
   // Panel resize hook
   const { handleMouseDown } = usePanelResize()
-
-  /**
-   * Opens subscription settings modal
-   */
-  const openSubscriptionSettings = () => {
-    navigateToSettings({ section: 'billing' })
-  }
-
-  /**
-   * Cancels the currently executing workflow
-   */
-  const cancelWorkflow = useCallback(async () => {
-    await handleCancelExecution()
-  }, [handleCancelExecution])
-
-  /**
-   * Runs the workflow with usage limit check
-   */
-  const runWorkflow = useCallback(async () => {
-    if (usageExceeded) {
-      openSubscriptionSettings()
-      return
-    }
-    await handleRunWorkflow()
-  }, [usageExceeded, handleRunWorkflow])
 
   // Chat state
   const { isChatOpen, setIsChatOpen } = useChatStore(
@@ -348,34 +303,13 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
     setIsMenuOpen(false)
   }, [collaborativeBatchToggleLocked])
 
-  // Compute run button state
-  const canRun = userPermissions.canRead // Running only requires read permissions
-  const isLoadingPermissions = userPermissions.isLoading
-  const hasValidationErrors = false // TODO: Add validation logic if needed
-  const isWorkflowBlocked = isExecuting || hasValidationErrors
-  const isButtonDisabled = !isExecuting && (isWorkflowBlocked || (!canRun && !isLoadingPermissions))
-
   /**
    * Register global keyboard shortcuts using the central commands registry.
    *
-   * - Mod+Enter: Run / cancel workflow (matches the Run button behavior)
    * - Mod+F: Focus Toolbar tab and search input
    */
   useRegisterGlobalCommands(() =>
     createCommands([
-      {
-        id: 'run-workflow',
-        handler: () => {
-          if (isExecuting) {
-            void cancelWorkflow()
-          } else {
-            void runWorkflow()
-          }
-        },
-        overrides: {
-          allowInEditable: false,
-        },
-      },
       {
         id: 'focus-toolbar-search',
         handler: () => {
@@ -470,27 +404,7 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
               </Button>
             </div>
 
-            {/* Deploy and Run */}
-            <div className='flex gap-1.5'>
-              <Deploy
-                activeWorkflowId={activeWorkflowId}
-                userPermissions={userPermissions}
-                disabled={workflowLocked}
-              />
-              <Button
-                className='h-[30px] gap-2 px-2.5'
-                variant={isExecuting ? 'active' : 'tertiary'}
-                onClick={isExecuting ? cancelWorkflow : () => runWorkflow()}
-                disabled={!isExecuting && isButtonDisabled}
-              >
-                {isExecuting ? (
-                  <Square className='h-[11.5px] w-[11.5px] fill-current' />
-                ) : (
-                  <Play className='h-[11.5px] w-[11.5px]' />
-                )}
-                {isExecuting ? 'Stop' : 'Run'}
-              </Button>
-            </div>
+            {/* SV: Sim's Deploy and Run removed (M11-T03) — vehicle apps run with Run/Stop in the action bar. */}
           </div>
 
           {/* Tabs */}
