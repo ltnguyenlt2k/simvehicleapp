@@ -42,6 +42,10 @@ describe("export (M09-T06, ADR-0031 §1)", () => {
     expect(notice).toContain("vehicle-app-python-template");
     expect(third).toContain("velocitas-sdk 0.15.7");
     expect(third).not.toContain("Conan");
+    const [rsReadme, , rsThird] = exportExtras({ ...project, language: "rust" }, gen, null).slice(-3).map((f) => f.content);
+    expect(rsReadme).toContain("experimental, not Velocitas tooling");
+    expect(rsReadme).toContain("cargo test --release --test generated");
+    expect(rsThird).toContain("kuksa-rust-sdk 0.2.2");
   });
 
   test("POST /projects/{id}/export streams the workspace zip of the latest successful generation; a license without export.source is 403", async () => {

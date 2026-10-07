@@ -87,8 +87,29 @@ Installed with pip from app/requirements.txt, not included:
 - pytest — MIT (tests only)
 `,
   },
+  rust: {
+    app: "A Rust vehicle app (SimVehicleApp's vehicle-app-rust-template — experimental, not Velocitas tooling)",
+    own: "`app/src/user_hooks.rs`",
+    template: "the SimVehicleApp Rust template (Apache-2.0)",
+    build: `With Rust 1.98 (cmake and a C++ compiler are needed: kuksa-rust-sdk builds protoc):
+
+\`\`\`sh
+cargo build --release
+cargo test --release --test generated   # the scenarios saved with the workflows
+\`\`\``,
+    run: "target/release/app",
+    thirdParty: `Included in this project:
+- The SimVehicleApp Rust template (Cargo workspace, AppManifest) — Apache-2.0.
+- COVESA Vehicle Signal Specification document (app/vss/) — MPL-2.0, unmodified.
+
+Fetched by cargo (Cargo.lock), not included:
+- eclipse-kuksa kuksa-rust-sdk 0.2.2 — Apache-2.0
+- tokio, tonic, prost, rumqttc, serde_json and their dependencies — MIT / Apache-2.0 (see Cargo.lock)
+- protobuf (built from source by protobuf-src) — BSD-3-Clause
+`,
+  },
 } as const;
-const languageOf = (p: Project) => LANGUAGE[p.language === "python" ? "python" : "cpp"];
+const languageOf = (p: Project) => LANGUAGE[p.language === "python" ? "python" : p.language === "rust" ? "rust" : "cpp"];
 
 function readme(p: Project, g: Generation | null): string {
   const lang = languageOf(p);

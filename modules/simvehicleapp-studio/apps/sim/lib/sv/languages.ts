@@ -1,7 +1,8 @@
-/** Languages a vehicle-app project can be generated in (ADR-0020, Python: ADR-0040). */
+/** Languages a vehicle-app project can be generated in (ADR-0020; Python: ADR-0040; Rust, experimental: ADR-0041). */
 export const SV_LANGUAGES = [
   { label: 'C++', value: 'cpp' },
   { label: 'Python', value: 'python' },
+  { label: 'Rust (experimental)', value: 'rust' },
 ] as const
 
 export type SvLanguage = (typeof SV_LANGUAGES)[number]['value']

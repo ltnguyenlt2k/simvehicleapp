@@ -24,5 +24,11 @@ describe('installedLanguages (ADR-0040)', () => {
       { service: 'toolchain-python', status: 'down' },
     ]
     expect(installedLanguages(pyDown).map((l) => l.value)).toEqual(['cpp'])
+    const rust = [
+      ...cppOnly,
+      { service: 'codegen-rust', status: 'ok' },
+      { service: 'toolchain-rust', status: 'ok' },
+    ]
+    expect(installedLanguages(rust).map((l) => l.label)).toEqual(['C++', 'Rust (experimental)'])
   })
 })
