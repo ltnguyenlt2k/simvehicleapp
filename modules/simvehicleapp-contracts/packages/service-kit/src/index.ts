@@ -1,6 +1,9 @@
 // Infrastructure only — no business logic (ADR-0007 Implementation, module rule "service-kit").
 import { createHash, timingSafeEqual } from "node:crypto";
 import { CONTRACTS_VERSION, type ServiceHealth, type ServiceInfoV1 } from "@simvehicleapp/contracts";
+import { Metrics } from "./metrics.ts";
+
+export { type Counter, type Histogram, type Labels, Metrics } from "./metrics.ts";
 
 export const INTERNAL_AUTH_HEADER = "x-sv-internal";
 export const REQUEST_ID_HEADER = "x-sv-request-id";
@@ -93,6 +96,12 @@ export interface ServiceOptions extends VersionOptions {
   logger?: Logger;
   /** Readiness checks reported by /healthz; any "fail" ⇒ 503 degraded. */
   checks?: () => Promise<Record<string, "ok" | "fail">> | Record<string, "ok" | "fail">;
+  /**
+   * Registry served at `GET /metrics` (Prometheus text, ADR-0033 §2), with HTTP request counts and
+   * durations added; absent ⇒ no /metrics. Like /healthz it needs no internal header: services are
+   * only reachable on the internal network and 127.0.0.1, and metrics carry no ids or payloads.
+   */
+  metrics?: Metrics;
 }
 
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>
@@ -109,6 +118,8 @@ export function createService(
   const secret = opts.secret ?? process.env.INTERNAL_API_SECRET;
   const logger = opts.logger ?? createLogger({ service: opts.name });
   const info = versionInfo(opts);
+  const httpRequests = opts.metrics?.counter("http_requests_total", "HTTP requests by method, route and status class.");
+  const httpDuration = opts.metrics?.histogram("http_request_duration_ms", "HTTP request duration (ms; streams: until the response starts).");
 
   return async (req) => {
     const requestId = requestIdOf(req);
@@ -118,6 +129,7 @@ export function createService(
     let res: Response;
     try {
       if (req.method === "GET" && path === "/version") res = json(200, info);
+      else if (req.method === "GET" && path === "/metrics" && opts.metrics) res = new Response(opts.metrics.render(), { headers: { "content-type": "text/plain; version=0.0.4" } });
       else if (req.method === "GET" && path === "/healthz") {
         const checks = opts.checks ? await opts.checks() : undefined;
         const failed = checks && Object.values(checks).includes("fail");
@@ -130,6 +142,12 @@ export function createService(
       res = json(500, { error: "internal_error", requestId });
     }
     res.headers.set(REQUEST_ID_HEADER, requestId);
+    if (httpRequests && path !== "/metrics" && path !== "/healthz") {
+      // Route = first path segment (ids never become labels).
+      const labels = { method: req.method, route: `/${path.split("/")[1] ?? ""}`, status: `${Math.floor(res.status / 100)}xx` };
+      httpRequests.inc(labels);
+      httpDuration!.observe({ method: req.method, route: labels.route }, Math.round(performance.now() - started));
+    }
     if (path !== "/healthz") log.info("request", { method: req.method, path, status: res.status, ms: Math.round(performance.now() - started) });
     return res;
   };

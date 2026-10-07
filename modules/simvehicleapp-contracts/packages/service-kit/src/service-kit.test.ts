@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { ContractValidator } from "@simvehicleapp/contracts";
-import { createLogger, createService, internalHeaders, isInternalRequest, requestIdOf } from "./index.ts";
+import { createLogger, createService, internalHeaders, isInternalRequest, Metrics, requestIdOf } from "./index.ts";
 
 const contracts = new ContractValidator();
 const SECRET = "s3cret-value";
@@ -81,5 +81,35 @@ describe("request id + logs", () => {
     expect(out).toHaveLength(1);
     expect(out[0]).not.toContain("\n");
     expect(JSON.parse(out[0]!).value).toBe("9223372036854775807");
+  });
+});
+
+describe("metrics (ADR-0033 §2)", () => {
+  test("Prometheus text: counters, gauges, histograms; HTTP requests by route and status class, never ids", async () => {
+    const metrics = new Metrics();
+    const stages = metrics.histogram("stage_duration_ms", "Stage duration.", [100, 1000]);
+    metrics.counter("generations_total", "Generations.").inc({ result: "failed", code: "BUILD_FAILED" });
+    metrics.gauge("runs_active", "Active runs.", () => 1);
+    stages.observe({ stage: "build" }, 250);
+    stages.observe({ stage: "build" }, 50);
+    const svc = createService({ name: "x", version: "1", secret: "s", metrics, logger: createLogger({ service: "x", write: () => {} }) }, () => new Response("ok"));
+    await svc(new Request("http://x/projects/abc123", { headers: { "x-sv-internal": "s" } }));
+    await svc(new Request("http://x/projects/def456"));
+    const res = await svc(new Request("http://x/metrics"));
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toContain('sv_generations_total{code="BUILD_FAILED",result="failed"} 1');
+    expect(text).toContain("sv_runs_active 1");
+    expect(text).toContain('sv_stage_duration_ms_bucket{le="100",stage="build"} 1');
+    expect(text).toContain('sv_stage_duration_ms_bucket{le="+Inf",stage="build"} 2');
+    expect(text).toContain('sv_stage_duration_ms_sum{stage="build"} 300');
+    expect(text).toContain('sv_http_requests_total{method="GET",route="/projects",status="2xx"} 1');
+    expect(text).toContain('sv_http_requests_total{method="GET",route="/projects",status="4xx"} 1');
+    expect(text).not.toContain("abc123");
+  });
+
+  test("without a registry /metrics is an ordinary (authenticated) path", async () => {
+    const svc = createService({ name: "x", version: "1", secret: "s", logger: createLogger({ service: "x", write: () => {} }) }, () => new Response("handler"));
+    expect((await svc(new Request("http://x/metrics"))).status).toBe(401);
   });
 });
