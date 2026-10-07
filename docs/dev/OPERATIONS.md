@@ -62,7 +62,15 @@ Volume: `studio-db` (Postgres: studio + schema `sv`, `sv_ai`), workspace project
 | `modules/simvehicleapp-orchestrator/gate/parity-p3.sh [GW-A,…]` | parity P3 (ADR-0042) |
 | `modules/simvehicleapp-orchestrator/gate/bench-nfr02.sh` | hiệu năng NFR-02 |
 
-## 8. Sự cố thường gặp
+## 8. Phát hành (ADR-0002/0009)
+| Lệnh | Việc |
+|---|---|
+| `scripts/bootstrap.sh [--no-build]` | máy sạch ⇒ stack chạy (kiểm điều kiện, `.env`, build, up, chờ healthy) |
+| `scripts/modules.sh list` / `lock --release X` / `lock --check` | danh sách module; sinh `simvehicleapp.lock.yaml` (SHA cây/commit + version) |
+| `scripts/lock-verify.sh [lock] [rev]` | lock khớp repo (sai SHA ⇒ thất bại) |
+| `scripts/release-split.sh` / `--push <url>` | tách mỗi module thành repo riêng giữ lịch sử (mặc định dry-run; `--push` chỉ ở bước phát hành) |
+
+## 9. Sự cố thường gặp
 - **WSL: đồng hồ thực nhảy ~1 s/phút** — đo thời gian dài bằng giờ thực bị lệch; P3 tự phát hiện và chạy lại.
 - **Service "unhealthy" sau cập nhật**: `docker compose logs --tail 100 <service>`; `INTERNAL_API_SECRET` phải giống nhau ở mọi service.
 - **SynCode lỗi `GENERATED_FILE_MODIFIED`**: file sinh ra bị sửa tay (IDE) — SynCode lại với ghi đè, hoặc đưa thay đổi vào workflow.
