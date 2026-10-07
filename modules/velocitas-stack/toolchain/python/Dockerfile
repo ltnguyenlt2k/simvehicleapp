@@ -20,7 +20,8 @@ ENV VELOCITAS_HOME=/home/vscode \
     SV_SEED_DIR=${SEED_DIR} \
     SV_TOOLCHAIN=python \
     SV_MODEL_HASH_FILE=/home/vscode/.sv/model-hash \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PATH=/home/vscode/.local/bin:$PATH
 
 USER vscode
 WORKDIR ${SEED_DIR}
@@ -33,7 +34,8 @@ RUN python3 /usr/local/bin/sv-localize-vss ${SEED_DIR} /opt/sv/vss/vss_rel_4.0.j
 # == onCreateCommand.sh (setup-git / configure-codespaces / upgrade-cli skipped: user- and
 #    network-specific; CLI v0.13.2 is in the base image and pinned in .velocitas.json)
 RUN velocitas init -v && velocitas sync
-# == setup-dependencies.sh: pip requirements of the template, the app and its tests (online at build time)
+# == setup-dependencies.sh: pip requirements of the template, the app and its tests (online at build time;
+#    the user is not root, so pip installs into ~/.local — on PATH above)
 RUN bash .devcontainer/scripts/setup-dependencies.sh
 # Generated code is checked with the template's own ruff pin (.pre-commit-config.yaml: ruff-pre-commit v0.9.10).
 RUN pip3 install ruff==0.9.10 && ruff --version && python3 -c "import velocitas_sdk, pytest; print('sdk ok')"
