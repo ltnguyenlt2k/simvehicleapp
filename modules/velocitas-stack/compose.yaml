@@ -76,6 +76,34 @@ services:
     networks: [sv-internal, sv-edge]
     depends_on: [databroker, mqtt]
 
+  # Rust (ADR-0041, feasibility — experimental, not Velocitas tooling): opt-in with the `rust` profile and
+  # rust=… in SV_BACKENDS/SV_TOOLCHAINS. Needs image simvehicleapp/codegen-rust:dev (its runtime crate is the seed's).
+  toolchain-rust:
+    image: simvehicleapp/toolchain-rust:dev
+    profiles: ["rust"]
+    build:
+      context: .
+      dockerfile: toolchain/rust/Dockerfile
+      additional_contexts:
+        codegen: docker-image://${SV_CODEGEN_RUST_IMAGE:-simvehicleapp/codegen-rust:dev}
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+      args:
+        CARGO_JOBS: ${SV_CARGO_JOBS:-2}
+    environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
+      # Toolchain agent on :4230 (internal only).
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+      SV_CARGO_JOBS: ${SV_CARGO_JOBS:-2}
+      SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+    volumes:
+      - sv-workspace:/workspace
+      # Warm dependency builds shared by every Rust project (seeded from the image).
+      - sv-rust-target:/home/vscode/.sv-target
+    networks: [sv-internal, sv-edge]
+    depends_on: [databroker, mqtt]
+
   databroker:
     image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
     # VSS 4.0 metadata: the image default is identical, we mount our pinned copy explicitly.
@@ -120,6 +148,7 @@ volumes:
   sv-conan2:
   sv-velocitas:
   sv-velocitas-python:
+  sv-rust-target:
 
 networks:
   sv-internal:

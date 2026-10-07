@@ -67,6 +67,7 @@ $DC build vss-catalog compiler codegen-cpp
 $DC build orchestrator workspace signal-gateway toolchain-cpp ai-assistant
 # Python backend when the `python` profile is on (ADR-0040): only its agent layer rebuilds, like toolchain-cpp.
 if $DC config --services | grep -qx toolchain-python; then $DC build codegen-python toolchain-python; fi
+if $DC config --services | grep -qx toolchain-rust; then $DC build codegen-rust toolchain-rust; fi
 # Toolchains first: they seed the volumes the IDEs share (concurrent first mounts race on the copy-up).
 $DC up -d $($DC config --services | grep -x 'toolchain-[a-z]*' | tr '\n' ' ')
 $DC up -d

@@ -229,6 +229,18 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     expect(await Bun.spawn(["bash", "-c", failing], { cwd: proj }).exited).toBe(1);
   });
 
+  test("Rust projects (ADR-0041): cargo offline, binary copied into the project, generated test target, cargo fmt", () => {
+    const rs = { ...cfg, toolchain: "rust" };
+    const plan = createPlanner(rs);
+    const build = plan("build", "comfort-app", {});
+    expect(build.steps.map((s) => s.label)).toEqual(["cargo build --release", "sv-check-signals"]);
+    expect(build.steps[0]!.argv.join(" ")).toContain('cp "$CARGO_TARGET_DIR/release/app" build/bin/app');
+    expect(plan("test", "comfort-app", {}).steps[0]!.argv.join(" ")).toContain("--test generated");
+    expect(plan("format-check", "comfort-app", {}).steps[0]!.label).toBe("cargo fmt --check");
+    expect(plan("deps", "comfort-app", {})).toMatchObject({ failCode: "DEPS_INSTALL_FAILED" });
+    expect(plan("run", "comfort-app", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]).toMatchObject({ argv: ["build/bin/app"], env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } });
+  });
+
   test("template tar: deterministic, no build outputs", async () => {
     const seed = join(SCRATCH, "seed");
     mkdirSync(join(seed, "app"), { recursive: true });

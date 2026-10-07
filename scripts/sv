@@ -33,6 +33,8 @@ case "${1:-}" in
     $DC build devcontainer-cpp toolchain-cpp      # base layers next (ide FROMs the toolchain image)
     # Python backend (profile `python` in COMPOSE_PROFILES, ADR-0040): its toolchain before ide-python.
     if $DC config --services | grep -qx toolchain-python; then $DC build devcontainer-python toolchain-python; fi
+    # Rust (profile `rust`, ADR-0041): the toolchain seeds its runtime crate from the codegen-rust image.
+    if $DC config --services | grep -qx toolchain-rust; then $DC build codegen-rust toolchain-rust; fi
     $DC build ;;
   up)    ensure_env
          # Toolchains first: they seed the Velocitas/Conan volumes the IDEs share (two containers creating a

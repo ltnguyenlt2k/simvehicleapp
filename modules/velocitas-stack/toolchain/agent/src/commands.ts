@@ -27,6 +27,7 @@ export const defaultConfig = (): AgentConfig => ({
 const RUN_ARTIFACT: Record<string, { file: string; missing: string }> = {
   cpp: { file: "build/bin/app", missing: "build/bin/app is missing: build the project first" },
   python: { file: "app/src/generated/app.py", missing: "app/src/generated/app.py is missing: SynCode the project first" },
+  rust: { file: "build/bin/app", missing: "build/bin/app is missing: build the project first" },
 };
 const runArtifact = (cfg: AgentConfig) => RUN_ARTIFACT[cfg.toolchain ?? "cpp"] ?? RUN_ARTIFACT.cpp!;
 
@@ -109,6 +110,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
     const dir = projectDir(cfg, project);
     if (!existsSync(join(dir, ".velocitas.json"))) throw new PlanError(`project ${project} does not exist or is not a Velocitas project`);
     if ((cfg.toolchain ?? "cpp") === "python") return pythonPlan(cfg, dir, kind, options);
+    if (cfg.toolchain === "rust") return rustPlan(dir, kind, options);
     const artifact = (rel: string) => () => (existsSync(join(dir, rel)) ? null : `${rel} was not produced (see the build log)`);
     // build.sh exits 0 whatever happens and a failed build leaves the previous binary in place: the
     // build's own output decides (ninja/CMake failure lines), then the artifact must exist.
@@ -266,6 +268,48 @@ function pythonPlan(cfg: AgentConfig, dir: string, kind: JobKind, options: JobOp
         failCode: "RUN_CRASHED",
         failStage: "run",
       };
+    }
+    default:
+      throw new PlanError(`job kind ${kind} has no plan`);
+  }
+}
+
+/**
+ * Rust projects (ADR-0041, feasibility — no Velocitas CLI): cargo offline on the image's vendored sources and a
+ * shared warm target dir (`CARGO_TARGET_DIR`), so "build" copies the app binary into the project's `build/bin/app`
+ * (projects never share a binary). Tests are the generated test target (its harness prints gtest lines),
+ * format-check is `cargo fmt --check`.
+ */
+function rustPlan(dir: string, kind: JobKind, options: JobOptions): Plan {
+  const jobs = "-j ${SV_CARGO_JOBS:-2}";
+  switch (kind) {
+    case "init":
+      return { steps: [{ label: "cargo metadata --offline", argv: bash("cargo metadata --offline --format-version 1 --no-deps > /dev/null"), cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "generate-model":
+      return { steps: [{ label: "no vehicle model (Rust: signals by VSS path)", argv: ["true"], cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "deps":
+      return { steps: [{ label: "cargo fetch --offline", argv: bash("cargo fetch --offline"), cwd: dir }], failCode: "DEPS_INSTALL_FAILED", failStage: "build" };
+    case "build":
+      return {
+        steps: [
+          {
+            label: "cargo build --release",
+            argv: bash(`cargo build --release --offline ${jobs} --message-format short && mkdir -p build/bin && cp "$CARGO_TARGET_DIR/release/app" build/bin/app`),
+            cwd: dir,
+          },
+          { label: "sv-check-signals", argv: ["sv-check-signals", "."], cwd: dir },
+        ],
+        failCode: "BUILD_FAILED",
+        failStage: "build",
+      };
+    case "test":
+      return { steps: [{ label: "cargo test --test generated", argv: bash(`cargo test --release --offline ${jobs} --test generated`), cwd: dir }], failCode: "GENERATED_TEST_FAILED", failStage: "test" };
+    case "format-check":
+      return { steps: [{ label: "cargo fmt --check", argv: bash("cargo fmt --check"), cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "run": {
+      const env = runEnv(options);
+      if (!existsSync(join(dir, "build/bin/app"))) throw new PlanError(RUN_ARTIFACT.rust!.missing);
+      return { steps: [{ label: "build/bin/app", argv: ["build/bin/app"], cwd: dir, env }], failCode: "RUN_CRASHED", failStage: "run" };
     }
     default:
       throw new PlanError(`job kind ${kind} has no plan`);
