@@ -157,6 +157,12 @@ export function vssTerms(query: string): string[] {
   return [...new Set(words.flatMap((w) => [w, ...(VSS_WORDS[w.toLowerCase()] ?? [])]))].slice(0, 8);
 }
 
+/** A WorkflowGraph v1 shape (the compiler checks the rest). */
+function isGraph(v: unknown): v is WorkflowGraph {
+  const g = v as Partial<WorkflowGraph> | null;
+  return Boolean(g && typeof g === "object" && typeof g.workflowId === "string" && Array.isArray(g.blocks) && Array.isArray(g.edges));
+}
+
 export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
   const releaseOf = (ctx: ToolContext, input?: Record<string, unknown>) => str(input?.release) ?? ctx.workflow?.vssRelease ?? ctx.project?.vssRelease ?? "v4.0";
   /** The draft the chat works on: the editor's graph, else an empty one. */
@@ -211,11 +217,19 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
     },
     {
       name: "workflow_get",
-      description: "The workflow open in the editor as WorkflowGraph v1 (blocks with ids, names, props; edges with handles).",
-      input_schema: { type: "object", properties: { workflowId: { type: "string" } } },
+      description:
+        "The workflow open in the editor as WorkflowGraph v1 (blocks with ids, names, props; edges with handles). Without the editor (MCP): pass projectId (and workflowId) to get the workflows of the project's last SynCode.",
+      input_schema: { type: "object", properties: { workflowId: { type: "string" }, projectId: { type: "string" } } },
       async run(input, ctx) {
         const g = draft(ctx);
-        if (!g) return err("No workflow is open: workflow_get works in the studio chat of a workflow.");
+        if (!g) {
+          const id = projectId(ctx, input);
+          if (!id) return err("No workflow is open: pass projectId to read the workflows of a project's last SynCode.");
+          const saved = (await services.get("orchestrator", `/projects/${encodeURIComponent(id)}/graphs`)) as { generationId: string; graphs: WorkflowGraph[] };
+          const graphs = str(input.workflowId) ? saved.graphs.filter((x) => x.workflowId === input.workflowId) : saved.graphs;
+          if (!graphs.length) return err(`Workflow ${input.workflowId} is not in the last SynCode of project ${id}.`);
+          return { text: compact(graphs.length === 1 ? graphs[0] : graphs, 12000), structured: { generationId: saved.generationId, workflowIds: graphs.map((x) => x.workflowId) } };
+        }
         if (str(input.workflowId) && input.workflowId !== g.workflowId) return err(`Only the open workflow ${g.workflowId} is available.`);
         return { text: compact(g, 12000) };
       },
@@ -224,10 +238,14 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
       name: "workflow_propose_patch",
       description:
         "Propose a change to the open workflow as WorkflowPatch v1 ops, applied to the workflow as it is now (each call replaces the previous proposal: send the complete set of ops). The patch is validated by the compiler; fix any error diagnostic by proposing again. The user accepts it in the editor.",
-      input_schema: { type: "object", properties: { ops: { type: "array", minItems: 1, items: OP_SCHEMA }, rationale: { type: "string" } }, required: ["ops"] },
+      input_schema: {
+        type: "object",
+        properties: { ops: { type: "array", minItems: 1, items: OP_SCHEMA }, rationale: { type: "string" }, draftGraph: { type: "object", description: "Without the editor (MCP): the WorkflowGraph v1 the ops apply to." } },
+        required: ["ops"],
+      },
       async run(input, ctx) {
-        const base = draft(ctx);
-        if (!base) return err("No workflow is open: a patch needs the workflow open in the editor.");
+        const base = draft(ctx) ?? (isGraph(input.draftGraph) ? input.draftGraph : null);
+        if (!base) return err("No workflow is open: a patch needs the workflow open in the editor, or draftGraph (WorkflowGraph v1).");
         // Some models send the ops array as a JSON string.
         let opsIn: unknown = input.ops;
         if (typeof opsIn === "string") opsIn = opsFromString(opsIn, input);
@@ -299,6 +317,7 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
       description: "Run every compiler check on the open workflow (or on draftGraph) and return the diagnostics.",
       input_schema: { type: "object", properties: { draftGraph: { type: "object" } } },
       async run(input, ctx) {
+        if (input.draftGraph !== undefined && !isGraph(input.draftGraph)) return err("draftGraph must be a WorkflowGraph v1 (graphVersion, workflowId, blocks, edges).");
         const g = (input.draftGraph as WorkflowGraph | undefined) ?? draft(ctx);
         if (!g) return err("No workflow to validate: pass draftGraph or open a workflow.");
         const diagnostics = await verify(g);
@@ -310,8 +329,9 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
       description: "Simulate the open workflow (or draftGraph) with a scenario v1 (virtual time): returns the vehicle writes and a short trace.",
       input_schema: { type: "object", properties: { scenario: { type: "object" }, draftGraph: { type: "object" } }, required: ["scenario"] },
       async run(input, ctx) {
+        if (input.draftGraph !== undefined && !isGraph(input.draftGraph)) return err("draftGraph must be a WorkflowGraph v1 (graphVersion, workflowId, blocks, edges).");
         const g = (input.draftGraph as WorkflowGraph | undefined) ?? draft(ctx);
-        if (!g) return err("No workflow to simulate.");
+        if (!g) return err("No workflow to simulate: pass draftGraph or open a workflow.");
         const built = (await services.post("compiler", "/compile", { graph: g, mode: "build" })) as { ir?: unknown; diagnostics: Diagnostic[] };
         if (!built.ir) return err(`The workflow does not compile:\n${built.diagnostics.filter((d) => d.severity === "error").map((d) => `- ${d.code}: ${d.message}`).join("\n")}`);
         const sim = (await services.post("compiler", "/simulate", { ir: built.ir, scenario: input.scenario })) as { trace: unknown[]; writes: { t: number; path: string; value: unknown }[]; diagnostics: Diagnostic[] };
@@ -359,11 +379,25 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
     {
       name: "project_syncode",
       description: "SynCode: generate the C++ vehicle app of the project from its workflows, build it and run the generated tests (real toolchain). Takes minutes.",
-      input_schema: { type: "object", properties: { projectId: { type: "string" } }, required: ["projectId"] },
+      input_schema: {
+        type: "object",
+        properties: {
+          projectId: { type: "string" },
+          graphs: { type: "array", items: { type: "object" }, description: "Without the editor (MCP): the WorkflowGraphs to generate; omitted ⇒ the workflows of the project's last SynCode." },
+        },
+        required: ["projectId"],
+      },
       async run(input, ctx) {
         const id = projectId(ctx, input);
-        if (!id || !ctx.project || ctx.project.id !== id || !ctx.project.graphs?.length) return err("SynCode needs the project's workflows from the studio: run it from the chat of a workflow of that project.");
-        const g = (await services.post("orchestrator", `/projects/${id}/generations`, { graphs: ctx.project.graphs, ...(ctx.project.scenarios?.length ? { scenarios: ctx.project.scenarios } : {}) })) as { id: string };
+        if (!id) return err("projectId is required.");
+        // The studio sends the project's workflows as on the canvas; MCP callers send graphs, or reuse the last SynCode's.
+        const body =
+          ctx.project && ctx.project.id === id && ctx.project.graphs?.length
+            ? { graphs: ctx.project.graphs, ...(ctx.project.scenarios?.length ? { scenarios: ctx.project.scenarios } : {}) }
+            : Array.isArray(input.graphs) && input.graphs.length
+              ? { graphs: input.graphs }
+              : { fromGeneration: "latest" };
+        const g = (await services.post("orchestrator", `/projects/${encodeURIComponent(id)}/generations`, body)) as { id: string };
         const res = await services.raw("orchestrator", `/events?generationId=${g.id}`, { signal: AbortSignal.timeout(20 * 60_000) });
         await res.text().catch(() => "");
         const done = (await services.get("orchestrator", `/projects/${id}/generations/${g.id}`)) as { success?: boolean; stage?: string; verification: Record<string, string>; diagnostics: Diagnostic[] };
@@ -398,9 +432,15 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
     {
       name: "signal_set",
       description: "Set a VSS signal on the databroker of the project's release: a sensor's current value (inject), or an actuator's target with field=target.",
-      input_schema: { type: "object", properties: { path: { type: "string" }, value: {}, field: { type: "string", enum: ["value", "target"] } }, required: ["path", "value"] },
+      input_schema: {
+        type: "object",
+        properties: { path: { type: "string" }, value: {}, field: { type: "string", enum: ["value", "target"] }, release: { type: "string", description: "VSS release (default: the project's, else v4.0)" }, projectId: { type: "string" } },
+        required: ["path", "value"],
+      },
       async run(input, ctx) {
-        const release = releaseOf(ctx, input);
+        const pid = projectId(ctx, input);
+        const project = !str(input.release) && pid && !ctx.project ? ((await services.get("orchestrator", `/projects/${encodeURIComponent(pid)}`).catch(() => null)) as { vssRelease?: string } | null) : null;
+        const release = str(input.release) ?? project?.vssRelease ?? releaseOf(ctx, input);
         const r = (await services.post("signalGateway", "/signals", { release, path: input.path, value: input.value, field: str(input.field) ?? "value" })) as { path: string; value: unknown; ts: number };
         return { text: `${r.path} = ${JSON.stringify(r.value)} on VSS ${release}.`, structured: { path: r.path, value: r.value, ts: r.ts } };
       },

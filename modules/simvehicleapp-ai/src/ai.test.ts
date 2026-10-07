@@ -14,7 +14,7 @@ import { openaiProvider, toOpenAi } from "./providers/openai.ts";
 import { type LlmProvider, type Message, ProviderError, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
 import type { Services } from "./services.ts";
 import { MemoryStore } from "./store.ts";
-import { BlockCatalog, createTools, opsFromString, vssTerms, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
+import { BlockCatalog, createTools, opsFromString, runTool, vssTerms, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
 
 const servers: { stop(force?: boolean): void }[] = [];
 afterAll(() => servers.forEach((s) => s.stop(true)));
@@ -423,6 +423,65 @@ describe("agent loop + /chat (M10-T04, ADR-0030 §6 verification)", () => {
     t = 100;
     expect(await store.pending("c")).toBeNull();
     expect(await store.purge(50)).toBe(1);
+  });
+});
+
+describe("tools without the editor (MCP callers, M10 review)", () => {
+  /** Services answering the orchestrator calls these paths make. */
+  function services(log: string[]): Services {
+    const base = fakeServices(log);
+    return {
+      ...base,
+      async get(service, path, t) {
+        if (service === "orchestrator" && path.endsWith("/graphs")) return { generationId: "g_1", graphs: [graph0(), { ...graph0(), workflowId: "wf2" }] };
+        if (service === "orchestrator" && path === "/projects/p9") return { vssRelease: "v4.2" };
+        return base.get(service, path, t);
+      },
+      async post(service, path, body, t) {
+        if (service === "orchestrator" && path.endsWith("/generations")) {
+          log.push(`SYNCODE ${JSON.stringify(body).slice(0, 60)}`);
+          return { id: "g_2" };
+        }
+        return base.post(service, path, body, t);
+      },
+      async raw(service, path) {
+        if (path.startsWith("/events")) return new Response("");
+        return base.raw(service, path);
+      },
+    };
+  }
+  const mcpCtx = { userId: "mcp:auto", conversationId: "mcp" };
+
+  test("workflow_get by projectId (+ workflowId) reads the graphs of the last SynCode", async () => {
+    const tools = createTools(services([]), new BlockCatalog(fakeServices()));
+    const get = tools.find((t) => t.name === "workflow_get")!;
+    expect((await runTool(get, {}, mcpCtx)).isError).toBe(true);
+    const one = await runTool(get, { projectId: "p1", workflowId: "wf2" }, mcpCtx);
+    expect(JSON.parse(one.text).workflowId).toBe("wf2");
+    expect((await runTool(get, { projectId: "p1", workflowId: "nope" }, mcpCtx)).isError).toBe(true);
+  });
+
+  test("project_syncode: studio graphs, else the graphs given, else the last SynCode's", async () => {
+    const log: string[] = [];
+    const s = services(log);
+    s.get = (async (service: string, path: string) => (path.includes("/generations/") ? { success: true, verification: { ir: "passed" }, diagnostics: [] } : {})) as Services["get"];
+    const syn = createTools(s, new BlockCatalog(fakeServices())).find((t) => t.name === "project_syncode")!;
+    await runTool(syn, { projectId: "p1" }, { ...mcpCtx, project: { id: "p1", vssRelease: "v4.0", graphs: [graph0()] } });
+    await runTool(syn, { projectId: "p1", graphs: [graph0()] }, mcpCtx);
+    await runTool(syn, { projectId: "p1" }, mcpCtx);
+    expect(log.filter((l) => l.startsWith("SYNCODE")).map((l) => l.slice(8, 30))).toEqual(['{"graphs":[{"graphVers', '{"graphs":[{"graphVers', '{"fromGeneration":"lat']);
+  });
+
+  test("workflow_propose_patch on draftGraph; signal_set takes the project's release", async () => {
+    const log: string[] = [];
+    const tools = createTools(services(log), new BlockCatalog(fakeServices()));
+    const propose = tools.find((t) => t.name === "workflow_propose_patch")!;
+    const r = await runTool(propose, { draftGraph: graph0(), ops: [{ op: "add_block", ref: "c1", type: "sv_if", props: { condition: "true" } }, { op: "connect", from: "b1", fromHandle: "source", to: "c1" }] }, mcpCtx);
+    expect(r.proposal?.valid).toBe(true);
+    expect((await runTool(propose, { draftGraph: { nope: 1 }, ops: [{ op: "remove_block", block: "b1" }] }, mcpCtx)).isError).toBe(true);
+    const set = tools.find((t) => t.name === "signal_set")!;
+    const out = await runTool(set, { path: "Vehicle.Speed", value: 1, projectId: "p9" }, mcpCtx);
+    expect(out.text).toContain("on VSS v4.2");
   });
 });
 
