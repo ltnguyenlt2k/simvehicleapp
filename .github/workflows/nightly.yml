@@ -1,0 +1,53 @@
+# Nightly live smoke (M08-T10): the whole SynCode + live-run path on a fresh stack built from source —
+# toolchain image (Velocitas devcontainer + offline Conan seed + agent), core, codegen-cpp, orchestration
+# services, KUKSA databrokers, Mosquitto — then scripts/smoke.sh (M7 + M8 gates). Too heavy for every push.
+name: nightly
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  live-smoke:
+    name: live smoke (SynCode + GW-A live on the real stack)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Disk space and swap (toolchain image + Conan cache are large)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          docker system prune -af >/dev/null
+          sudo swapoff -a || true
+          sudo fallocate -l 8G /mnt/sv-swapfile && sudo chmod 600 /mnt/sv-swapfile
+          sudo mkswap /mnt/sv-swapfile && sudo swapon /mnt/sv-swapfile
+          df -h / /mnt && free -h
+      - name: .env with fresh secrets
+        run: |
+          cp .env.example .env
+          for k in BETTER_AUTH_SECRET ENCRYPTION_KEY API_ENCRYPTION_KEY INTERNAL_API_SECRET; do echo "$k=$(openssl rand -hex 32)" >> .env; done
+          echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" >> .env
+          echo "SV_CONAN_JOBS=4" >> .env
+      - name: Build images from source (order of scripts/sv build; no studio/IDE — the smoke drives the APIs)
+        run: |
+          docker compose build devcontainer-cpp toolchain-cpp
+          docker compose build contracts
+          docker compose build vss-catalog compiler codegen-cpp orchestrator workspace signal-gateway
+      - name: Start the stack
+        run: |
+          docker compose up -d --no-build --wait --wait-timeout 300 \
+            studio-db databroker databroker-v4-2 mqtt vss-catalog compiler codegen-cpp toolchain-cpp workspace orchestrator signal-gateway
+          docker compose ps
+      - name: Live smoke (scripts/smoke.sh)
+        run: scripts/smoke.sh
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose logs --tail 300 orchestrator workspace toolchain-cpp signal-gateway codegen-cpp
