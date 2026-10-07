@@ -45,6 +45,7 @@ Bổ sung theo Notes 2026-10-02: (a) test tool `sensitive` thiếu field bắt b
 6. **Contract `ai-assistant.v1` bổ sung (additive):** `GET /status`, `context` (workflow + graph hiện tại, project + graph/scenario) trên `/chat` và confirm/cancel, `GET /conversations/{id}`, confirm/cancel trả SSE (lượt tiếp tục), 503 `not_configured`.
 7. **Eval (T09) chạy trên model local** (Ollama `qwen3.5:9b` — không có key cloud trên máy dev); tiêu chí ≥80 % patch hợp lệ đo trên model này, ghi tỉ lệ và lỗi còn lại trong `docs/reports/M10.md`.
 8. **License (ADR-0031):** mọi lượt gọi LLM (`/chat`, confirm, cancel) và mọi request `/mcp` đã xác thực hỏi PDP của orchestrator `GET /entitlements/ai.assistant` (endpoint mới, additive) — orchestrator vẫn là điểm quyết định duy nhất và ghi log. Từ chối ⇒ 403 `not_entitled`; PDP không trả lời ⇒ 503 (fail closed: không kiểm được license thì không chạy).
+9. **Provider giả lập `SV_AI_PROVIDER=fake`** (yêu cầu PO 2026-10-07: không chạy model local để giảm RAM): "LLM" tất định, không mạng, hiểu vài dạng yêu cầu VI/EN (tốc độ ⇒ đèn hazard, pin ⇒ cảnh báo HMI, khởi động ⇒ log/HMI, chạy app) và đi đúng vòng lặp tool thật — patch vẫn qua compiler, hiển thị diff, hành động vẫn qua xác nhận. `/status` báo `provider: fake` để không ai nhầm là AI thật. Dùng cho máy nhỏ, demo, E2E; không thay cho eval với provider thật.
 
 ## Notes / Deviations (2026-10-02) — tham khảo kiến trúc agent/MCP thực tế từ repo riêng của PO
 
