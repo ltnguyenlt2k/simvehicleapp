@@ -35,7 +35,7 @@
 | [M5](#m5--simulator) | Simulator | 0017 | ✔ | 10/11 + T08 ↷ — gate PASS ([report](reports/M05.md)) |
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ✔ | 20/20 — gate PASS ([report](reports/M06.md)) |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
-| [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | 🔄 | 0/10 |
+| [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | 🔄 | 0/8 |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ☐ | 0/10 |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
@@ -212,16 +212,16 @@ ADR: [0024](../analysis/adr/ADR-0024-databroker-api-and-runtime-stack.md), [0027
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Compose runtime (databroker/mosquitto/mock-provider theo project) | 0024 | 🔄 | Compose smoke — Claude Code 2026-10-07 | T01 |
-| Nhiều VSS release → nhiều databroker (profile) | 0024 | 🔄 | Test 2 release | T02 |
-| RunManager + state machine | 0027 | 🔄 | | T03 |
-| toolchain `run` job (SSE stdout/stderr, exit code) | 0025,0027 | 🔄 | | T04 |
-| TraceIngest (SVTRACE parse) + run_event ring buffer | 0027 | 🔄 | Load test 2k ev/s | T05 |
-| signal-gateway (kuksa.val.v1 WS, allowlist từ catalog) | 0024 | 🔄 | Integration | T06 |
-| Scenario player trên databroker thật | 0017,0024 | 🔄 | | T07 |
-| UI Run console + Signals panel + Trace overlay | 0027 | ☐ | Playwright | T08 |
-| "Record scenario from Signals" | 0017,0027 | ☐ | | T09 |
-| `scripts/smoke.sh` đầy đủ GW-A live | — | 🔄 | CI nightly | T10 |
+| Compose runtime (databroker/mosquitto/mock-provider theo project) | 0024 | ✔ | Claude Code 2026-10-07: databroker 0.5.0 + mosquitto trong stack dev; live smoke nightly 37559343111 PASS ([M08](reports/M08.md)) | T01 |
+| Nhiều VSS release → nhiều databroker (profile) | 0024 | ✔ | databroker v4.2 bật mặc định + map `SV_DATABROKERS` (ADR-0024 Notes M8); test orchestrator chọn broker theo release | T02 |
+| RunManager + state machine | 0027 | ✔ | một Run/stack, chỉ generation mới nhất, start timeout 30 s, SIGINT→SIGKILL 5 s, RUN_CRASHED, recover; gate M8 Stop 1 050 ms | T03 |
+| toolchain `run` job (SSE stdout/stderr, exit code) | 0025,0027 | ✔ | log cuộn 50 000 dòng + seq bộ đếm (test 60 000 dòng) | T04 |
+| TraceIngest (SVTRACE parse) + run_event ring buffer | 0027 | ✔ | bỏ ANSI, validate runtimeLine, lô 50 ms + coalesce `dropped`, lưu trước khi phát; ring 20 000 (test Postgres) | T05 |
+| signal-gateway (kuksa.val.v1 WS, allowlist từ catalog) | 0024 | ✔ | SSE + POST thay WS (ADR-0027 Notes §6); 11 test + tích hợp databroker 0.5.0 thật; sửa một entry/path `1556124` | T06 |
+| Scenario player trên databroker thật | 0017,0024 | ✔ | `/play` (signal + MQTT 3.1.1), kiểm trên stack thật | T07 |
+| UI Run console + Signals panel + Trace overlay | 0027 | ✔ | `m8-run` mock PASS CI 37549237159; `m8-run-live @live` PASS 1.4 phút | T08 |
+| "Record scenario from Signals" | 0017,0027 | ✔ | Record ⇒ scenario (initial + input có thời gian) ⇒ Simulation; trong `m8-run` | T09 |
+| `scripts/smoke.sh` đầy đủ GW-A live | — | ✔ | nightly 37559343111 PASS trên runner sạch (M7+M8 live) | T10 |
 
 ## M9 — IDE & Export & License
 ADR: [0028](../analysis/adr/ADR-0028-ide-code-server.md), [0031](../analysis/adr/ADR-0031-export-and-licensing.md) · Phụ thuộc: M7 · Chi tiết: [phases/M09](../analysis/phases/M09-ide-export-license.md)
