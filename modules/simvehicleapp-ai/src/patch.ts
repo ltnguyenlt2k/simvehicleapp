@@ -142,3 +142,43 @@ export function patchSummary(base: WorkflowGraph, graph: WorkflowGraph) {
     edgesAdded: graph.edges.length - base.edges.filter((e) => graph.edges.some((x) => x.id === e.id)).length,
   };
 }
+
+/** Handles of a block type (BlockSpec `handles`); absent ⇒ Sim's default single handles. */
+export interface HandleSpec {
+  type: string;
+  handles?: { in?: string[]; out?: string[] };
+}
+
+/**
+ * Deterministic repairs of mistakes small models make, applied before validation and reported back
+ * (the user sees the repaired patch): a connect into a trigger is reversed (triggers have no input),
+ * and a connect from a handle the source does not have uses its only output handle (or then/else for
+ * true/false). Nothing is guessed when more than one handle could be meant.
+ */
+export function repairOps(base: WorkflowGraph, ops: readonly PatchOp[], specs: readonly HandleSpec[]): { ops: PatchOp[]; fixes: string[] } {
+  const typeOf = new Map(base.blocks.map((b) => [b.id, b.type]));
+  for (const op of ops) if (op.op === "add_block") typeOf.set(op.ref, op.type);
+  const outs = (id: string) => specs.find((s) => s.type === typeOf.get(id))?.handles?.out ?? ["source"];
+  const isTrigger = (id: string) => (typeOf.get(id) ?? "").startsWith("sv_on_");
+  const fixes: string[] = [];
+  const repaired = ops.map((op, i) => {
+    if (op.op !== "connect") return op;
+    let c = { ...op };
+    if (isTrigger(c.to) && !isTrigger(c.from) && typeOf.has(c.from)) {
+      c = { ...c, from: op.to, to: op.from, fromHandle: outs(op.to)[0] ?? "source" };
+      delete c.toHandle;
+      fixes.push(`ops[${i}] connect reversed: ${op.to} is a trigger (no input), so ${op.to} → ${op.from}`);
+    }
+    const available = outs(c.from);
+    if (typeOf.has(c.from) && !available.includes(c.fromHandle)) {
+      const alias: Record<string, string> = { true: "then", yes: "then", false: "else", no: "else" };
+      const handle = available.length === 1 ? available[0] : available.find((h) => h === alias[c.fromHandle?.toLowerCase?.() ?? ""]);
+      if (handle) {
+        fixes.push(`ops[${i}] connect from ${c.from}: handle '${c.fromHandle}' does not exist, used '${handle}'`);
+        c = { ...c, fromHandle: handle };
+      }
+    }
+    return c;
+  });
+  return { ops: repaired, fixes };
+}

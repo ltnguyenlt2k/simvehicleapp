@@ -6,7 +6,7 @@ import { fixturesDir } from "@simvehicleapp/contracts";
 import { normalizeHistory } from "./agent.ts";
 import { createAssistantHandler, type Entitlement, entitlementFrom, RateLimiter } from "./app.ts";
 import { connectExternal, createMcpHandler, extName, sameSecret } from "./mcp.ts";
-import { applyPatch, emptyGraph, normalizeName, type WorkflowGraph } from "./patch.ts";
+import { applyPatch, emptyGraph, normalizeName, repairOps, type WorkflowGraph } from "./patch.ts";
 import { anthropicProvider } from "./providers/anthropic.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
@@ -79,6 +79,8 @@ describe("providers (M10-T02): streaming + tool calls, canonical Anthropic block
       { role: "tool", tool_call_id: "a", content: "ERROR: nothing" },
     ]);
     expect(toOpenAi([{ role: "user", content: "x" }])).toEqual([{ role: "user", content: "x" }]);
+    // A tool-call-only assistant message has "" content (Ollama rejects null).
+    expect(toOpenAi([{ role: "assistant", content: [{ type: "tool_use", id: "c1", name: "t", input: {} }] }])[0]).toMatchObject({ role: "assistant", content: "" });
   });
 
   test("provider errors never carry a key (configured one or key-shaped), MCP tokens compare in constant time", async () => {
@@ -136,6 +138,27 @@ describe("WorkflowPatch v1 (M10-T05)", () => {
     expect(graph.blocks.map((b) => b.id)).toEqual(["b1"]);
     expect(graph.edges).toEqual([]);
     expect(normalizeName("SoC changed.v2")).toBe("socchangedv2");
+  });
+
+  test("repairs: a connect into a trigger is reversed, a missing handle becomes the only/then/else one", () => {
+    const specs = [
+      { type: "sv_on_app_start", handles: { in: [], out: ["source"] } },
+      { type: "sv_compare", handles: { in: ["target"], out: ["source"] } },
+      { type: "sv_if", handles: { in: ["target"], out: ["then", "else"] } },
+    ];
+    const { ops, fixes } = repairOps(base(), [
+      { op: "add_block", ref: "c", type: "sv_compare", props: {} },
+      { op: "connect", from: "c", fromHandle: "source", to: "b1" },
+      { op: "add_block", ref: "i", type: "sv_if", props: {} },
+      { op: "connect", from: "c", fromHandle: "then", to: "i" },
+      { op: "connect", from: "i", fromHandle: "true", to: "c" },
+      { op: "connect", from: "i", fromHandle: "maybe", to: "c" },
+    ], specs);
+    expect(ops[1]).toEqual({ op: "connect", from: "b1", fromHandle: "source", to: "c" });
+    expect(ops[3]).toMatchObject({ from: "c", fromHandle: "source" });
+    expect(ops[4]).toMatchObject({ from: "i", fromHandle: "then" });
+    expect(ops[5]).toMatchObject({ fromHandle: "maybe" }); // ambiguous: left for the compiler to report
+    expect(fixes).toHaveLength(3);
   });
 
   test("new edge ids never repeat an existing one (after a removal)", () => {

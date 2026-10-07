@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { applyPatch, emptyGraph, normalizeName, type PatchOp, patchSummary, referencesByName, type WorkflowGraph, type WorkflowPatch } from "./patch.ts";
+import { applyPatch, emptyGraph, normalizeName, repairOps, type PatchOp, patchSummary, referencesByName, type WorkflowGraph, type WorkflowPatch } from "./patch.ts";
 import type { ToolDef } from "./providers/types.ts";
 import { ServiceError, type Services } from "./services.ts";
 
@@ -191,11 +191,21 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
       async run(input, ctx) {
         const base = draft(ctx);
         if (!base) return err("No workflow is open: a patch needs the workflow open in the editor.");
-        const raw = Array.isArray(input.ops) ? (input.ops as PatchOp[]) : [];
+        // Some models send the ops array as a JSON string.
+        let opsIn: unknown = input.ops;
+        if (typeof opsIn === "string") {
+          try {
+            opsIn = JSON.parse(opsIn);
+          } catch {
+            /* reported below */
+          }
+        }
+        const raw = Array.isArray(opsIn) ? (opsIn as PatchOp[]) : [];
         if (!raw.length) return err("ops must be a non-empty array of WorkflowPatch v1 ops.");
         const specs = await blocks.specs().catch(() => [] as BlockSpec[]);
         const title = (t: string) => specs.find((s) => s.type === t)?.title ?? t;
-        const ops = referencesByName(base, raw, title);
+        const repaired = repairOps(base, raw, specs);
+        const ops = referencesByName(base, repaired.ops, title);
         const { graph, problems } = applyPatch(base, ops, title);
         if (problems.length) return err(`The patch cannot be applied:\n${problems.join("\n")}`);
         const compiled = await verify(graph);
@@ -237,12 +247,16 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
             ? ['Only sv_if (and sv_stable_for) take a condition: put an sv_if before the block and connect its "then" output to it.']
             : []),
           ...(errors.some((d) => d.code === "CONTROL_FLOW_CYCLE") ? ["Edges go forward from the trigger: never connect a block back to the trigger or to an earlier block."] : []),
+          ...(errors.some((d) => d.code === "EXPR_SYNTAX")
+            ? ['Text in an expression needs double quotes ("RED", "#FF0000"); use the signal\'s allowed values when it has them.']
+            : []),
           ...(errors.some((d) => d.code === "EXPR_UNKNOWN_REF") ? [`References that exist: ${refs || "(none: add a trigger first)"}; VSS values are <Vehicle.Path>.`] : []),
         ];
+        const fixed = repaired.fixes.length ? `Auto-fixed: ${repaired.fixes.join("; ")}.\n` : "";
         return {
-          text: errors.length
+          text: fixed + (errors.length
             ? `Proposal has ${errors.length} error(s) — fix them and propose again with the complete ops:\n${errors.map((d) => `- ${d.code}${d.blockId ? ` on ${d.blockId}` : ""}${d.field ? `.${d.field}` : ""}: ${d.message}`).join("\n")}\n${hints.length ? `How to fix:\n${hints.map((x) => `- ${x}`).join("\n")}\n` : ""}Blocks: ${names}`
-            : `Proposal is valid (${diagnostics.length} warning/info). It is shown to the user to accept. Blocks: ${names}`,
+            : `Proposal is valid (${diagnostics.length} warning/info). It is shown to the user to accept. Blocks: ${names}`),
           structured: { patch, diagnostics, valid: proposal.valid },
           proposal,
         };

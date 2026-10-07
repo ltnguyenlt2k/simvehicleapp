@@ -74,7 +74,8 @@ export function toOpenAi(messages: readonly Message[]): Record<string, unknown>[
     if (m.role === "assistant") {
       const text = m.content.filter((b) => b.type === "text").map((b) => (b as TextBlock).text).join("");
       const calls = m.content.filter((b): b is ToolUseBlock => b.type === "tool_use");
-      out.push({ role: "assistant", content: text || null, ...(calls.length ? { tool_calls: calls.map((c) => ({ id: c.id, type: "function", function: { name: c.name, arguments: JSON.stringify(c.input) } })) } : {}) });
+      // Empty string, not null: Ollama's OpenAI layer rejects null content ("invalid message content type: <nil>").
+      out.push({ role: "assistant", content: text, ...(calls.length ? { tool_calls: calls.map((c) => ({ id: c.id, type: "function", function: { name: c.name, arguments: JSON.stringify(c.input) } })) } : {}) });
       continue;
     }
     for (const b of m.content) {
