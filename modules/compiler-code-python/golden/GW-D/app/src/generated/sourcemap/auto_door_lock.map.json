@@ -1,0 +1,42 @@
+{
+  "file": "app/src/generated/workflows/auto_door_lock.py",
+  "workflowId": "gw_d",
+  "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca",
+  "ranges": [
+    {
+      "startLine": 25,
+      "endLine": 35,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 37,
+      "endLine": 45,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 47,
+      "endLine": 55,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 57,
+      "endLine": 65,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 67,
+      "endLine": 75,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_d"
+    }
+  ]
+}

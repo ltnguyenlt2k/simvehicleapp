@@ -1,0 +1,44 @@
+# compiler-code-python — Backend Plugin manifest (ADR-0020, analysis/07 §1); served as JSON by GET /capabilities.
+id: python
+name: compiler-code-python
+version: 0.1.0
+language: python
+irVersions: ">=1.0.0 <2.0.0"
+contracts: ">=1.0.0-alpha.1 <2.0.0"
+opcodes:
+  - event.app_start
+  - event.signal_changed
+  - event.timer
+  - event.condition
+  - event.mqtt_message
+  - vehicle.read
+  - vehicle.read_attribute
+  - vehicle.write
+  - control.branch
+  - control.switch
+  - control.wait
+  - control.wait_until
+  - control.stable_for
+  - control.repeat
+  - control.while
+  - control.parallel
+  - control.stop
+  - state.get
+  - state.set
+  - state.counter
+  - logic.eval
+  - logic.in_range
+  - comm.log
+  - comm.mqtt_publish
+features:
+  concurrencyPolicies: [restart, ignore, queue, parallel]
+  trace: true
+  sourceMaps: true
+runtime:
+  name: simvehicleapp-runtime-python
+  version: 0.1.0
+  vendorPath: app/src/simvehicleapp-runtime
+toolchain:
+  id: toolchain-python
+  template: vehicle-app-python-template
+  templateSha: e7082f75d1831489462f6672b6858f7ea7708256

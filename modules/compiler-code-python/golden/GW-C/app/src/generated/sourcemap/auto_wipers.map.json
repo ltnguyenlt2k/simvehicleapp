@@ -1,0 +1,21 @@
+{
+  "file": "app/src/generated/workflows/auto_wipers.py",
+  "workflowId": "gw_c",
+  "irHash": "sha256:bc1e3bf33a1b354a68eb7697c09be91013ccf8c1b4ae5565d86250b099429f0e",
+  "ranges": [
+    {
+      "startLine": 16,
+      "endLine": 26,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_c"
+    },
+    {
+      "startLine": 28,
+      "endLine": 52,
+      "nodeId": "n2",
+      "blockId": "b3",
+      "workflowId": "gw_c"
+    }
+  ]
+}

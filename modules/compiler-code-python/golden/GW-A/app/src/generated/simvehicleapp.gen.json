@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_a",
+      "revision": 1,
+      "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "d757a2837f53e682e10ec1e4657221594fabc5c2c7d5fb13f08dced08ef3aaa0",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "b6156fba3c41991ae67ff4d8c84d97351d738655ab385026fb204ad4c1d52415",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/stable_overspeed_warning.map.json",
+      "sha256": "64e03a60a7424edf700699bf565cd7e6ffbd44006dc4da13373f3b6e9cdb2baa",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "11df2ad09115fc1f5d3b5b8a9360459eda0d2a1b862a7acbab09d9ee45571f00",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/stable_overspeed_warning.py",
+      "sha256": "b9324f5d8064ed5576bf85ac9637143e87d89c7be9d0465e4ddeceec9c1bb416",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_stable_overspeed_warning.py",
+      "sha256": "fb7334499851a48d54bcecd20c95d320dbe614f043f0ce8506730145ac42ed94",
+      "role": "test"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_b",
+      "revision": 1,
+      "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "6a644f48bae1e78305f406abee8e826b2cbd908a0be61545ba2d8c9c570228f6",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "4359883d3ead4ccd3ed622252f5c01b4a0deabf48ea7db2d22b030278dc7025e",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/low_battery_hmi_warning.map.json",
+      "sha256": "e0287b823037a9b74232a3045708e70fa62786f2c04d2977e80f310b57405fce",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "b330780b73e77a64d2a402087221ea249432a00e9319d927f2e93cf605a3f6b2",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/low_battery_hmi_warning.py",
+      "sha256": "ea465171c896dd6cce400957cefa2189127400748c2eb788bf43d64ce9cf9a68",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_low_battery_hmi_warning.py",
+      "sha256": "e4c3386fe6b5f8b7d09d38cc4163877b716674f609278edb678ebbe97c4870db",
+      "role": "test"
+    }
+  ]
+}

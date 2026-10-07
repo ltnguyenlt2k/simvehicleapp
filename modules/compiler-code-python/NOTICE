@@ -1,0 +1,12 @@
+SimVehicleApp compiler-code-python
+Copyright 2026 SimVehicleApp contributors
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This module includes third-party material:
+- template-overlay/app/src/main.py is derived from app/src/main.py of
+  eclipse-velocitas/vehicle-app-python-template @ e7082f75d1831489462f6672b6858f7ea7708256
+  (Copyright (c) 2022-2025 Contributors to the Eclipse Foundation, Apache-2.0; header kept, modified).
+
+Used by generated apps, not redistributed in this repository:
+- Eclipse Velocitas vehicle-app-python-sdk (velocitas-sdk 0.15.7, Apache-2.0) and its dependencies
+  (grpcio, protobuf, paho-mqtt…), installed from the template's app/requirements.txt.

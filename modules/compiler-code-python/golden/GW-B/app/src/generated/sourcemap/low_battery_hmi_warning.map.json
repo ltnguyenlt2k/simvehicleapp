@@ -1,0 +1,35 @@
+{
+  "file": "app/src/generated/workflows/low_battery_hmi_warning.py",
+  "workflowId": "gw_b",
+  "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e",
+  "ranges": [
+    {
+      "startLine": 20,
+      "endLine": 30,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_b"
+    },
+    {
+      "startLine": 32,
+      "endLine": 39,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_b"
+    },
+    {
+      "startLine": 41,
+      "endLine": 63,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_b"
+    },
+    {
+      "startLine": 65,
+      "endLine": 73,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_b"
+    }
+  ]
+}

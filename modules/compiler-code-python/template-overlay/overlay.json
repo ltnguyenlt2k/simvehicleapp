@@ -1,0 +1,6 @@
+{
+  "description": "Files of vehicle-app-python-template replaced by the SimVehicleApp app (ADR-0040 §3): the sample app's main.py is overwritten by the overlay's (it runs the generated workflows), and the sample unit test goes with the sample app.",
+  "remove": [
+    "app/tests/unit/test_run.py"
+  ]
+}

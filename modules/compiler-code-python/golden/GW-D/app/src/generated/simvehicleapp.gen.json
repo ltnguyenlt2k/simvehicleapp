@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_d",
+      "revision": 1,
+      "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "8e426f5707efdf598170ebdd911cf891018b169e7d28af510910d3f531d3cffb",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "6f937e371945a01fbc6da78f40d5e32c724150d868c9ff62f56fab4a5bd09b92",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/auto_door_lock.map.json",
+      "sha256": "846ce1a7b82e10d49b6a4918f3409936387b02cd02b1c88519d42295103e3fbc",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "8553f687781970145d2e063566c5517eb6f89fbbcb49602d1705990056cc3e03",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/auto_door_lock.py",
+      "sha256": "ecb6b4195a9583b62445d436dd3b1e223c53f28c02a841f105bc9448fdcbc40e",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_auto_door_lock.py",
+      "sha256": "2e74e60b31aa327c0df1516a834f89c590b9d8a5957ee63601de545466b9003c",
+      "role": "test"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_e",
+      "revision": 1,
+      "irHash": "sha256:77be02a978f54386a11eded8c64a0b9fe9e91508d154b7a6641ff7996deb1c03"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "0bb534df8ace6c6990c362b7cb765d9f2ce780893457dd871737878c1d738b34",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "5b0c321006bd7674cb401033e3b35a60702c6cdda4d448f0db1765b641800cc9",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/periodic_telemetry.map.json",
+      "sha256": "775787937a7e331f14dc6cc2f9b13e0f153fa4f1ff42fdc2b5432f10ebc42ad4",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "b951277d4dd278470844c22b203501d321a4066e5066c32d4f7b3e16c1acc5a0",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/periodic_telemetry.py",
+      "sha256": "c3a4266b5471af7301a0e3b54030541e7ee22866076341fea532c20f5aa657ac",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_periodic_telemetry.py",
+      "sha256": "8942187906190ec88f2c70bbefe8af6a58138b7eb7479b1ac90680dcb0a0d678",
+      "role": "test"
+    }
+  ]
+}

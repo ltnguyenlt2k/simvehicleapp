@@ -39,7 +39,7 @@
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS 2026-10-07 với eval LLM thật **BYPASS** (quyết định PO, chờ API key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
-| [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
+| [M12](#m12--python-backend) | Python backend | 0040 | 🔄 | 0/6 ✔, 4 🔄 — bắt đầu 2026-10-07 theo uỷ quyền PO khi gate M11 còn chờ việc của PO/người thật (nightly 3 ngày, usability, release) — chờ PO xác nhận |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0048 (chưa viết) | ☐ | 0/10 |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | ☐ | 0/12 |
@@ -282,10 +282,10 @@ ADR: [0040](../analysis/adr/ADR-0040-python-backend.md) · Phụ thuộc: M11 ·
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Vendor template python @e7082f7 + toolchain Dockerfile | 0040 | ☐ | Offline build | T01 |
-| Agent jobs python (pip/pytest/ruff) | 0040 | ☐ | Contract | T02 |
-| Runtime `simvehicleapp_runtime` (asyncio) + conformance | 0040,0042 | ☐ | 100% | T03 |
-| Generator emitters Python | 0040 | ☐ | Golden GW-A..G | T04 |
+| Vendor template python @e7082f7 + toolchain Dockerfile | 0040 | 🔄 | Claude Code 2026-10-07: template đã vendor từ M0 (CI kiểm cây); Dockerfile đang làm | T01 |
+| Agent jobs python (pip/pytest/ruff) | 0040 | 🔄 | Claude Code 2026-10-07 | T02 |
+| Runtime `simvehicleapp_runtime` (asyncio) + conformance | 0040,0042 | 🔄 | Claude Code 2026-10-07: port runtime C++ (strand, fiber, policy, trace `SVTRACE` cùng định dạng) + host Velocitas SDK 0.15.7 (`sdv.databroker.v1` theo path); conformance P1 **46/46** (38 C + 7 golden toàn trace + fuzz chuỗi); unit 34/34 (gồm host SDK trên broker giả). Chờ chạy live trên KUKSA | T03 |
+| Generator emitters Python | 0040 | 🔄 | Claude Code 2026-10-07: `compiler-code-python` — golden GW-A..G diff 0, tất định, fuzz chuỗi/định danh; code sinh ổn định với `ruff format` 0.9.10 + `ruff check` sạch (198 file); pytest sinh của 7 golden PASS. Chờ SynCode end-to-end | T04 |
 | `compose.lang-python.yaml` + ide-python | 0040 | ☐ | Smoke | T05 |
 | UI language=python | 0040 | ☐ | E2E | T06 |
 

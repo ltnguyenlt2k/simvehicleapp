@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_f",
+      "revision": 1,
+      "irHash": "sha256:5a1b3deaee0493022195cff3b084acde7c1036d5c98b5dd5adcaf6d05b9a2195"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "d9f1f035b409a41ec92ecf0f00f1f40b4b63f8b0ce6d97b23435239072828ce7",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "b288886df5a5ccae6db60b4bb7a6bba1226b9201801412e3cd504652b96f7c95",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/welcome_sequence.map.json",
+      "sha256": "13867d871c73205eed58fc1c0e41c495ca898f0bc2eb4e9079dbc8dc14c4b784",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "5ddfb464bd5d98d871a87f9cc99f7cf0844ca6b2548aba7965e0653f4c40e49f",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/welcome_sequence.py",
+      "sha256": "15a67497fa98a6b35cde1dfacc28af9974d54eb8495d722555db77a54aac212b",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_welcome_sequence.py",
+      "sha256": "b81afb730ab82ae3e10eb2ef8dcd05fa085ccbd5a490bb94c22a4253e7370398",
+      "role": "test"
+    }
+  ]
+}

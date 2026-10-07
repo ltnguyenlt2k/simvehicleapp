@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_c",
+      "revision": 1,
+      "irHash": "sha256:bc1e3bf33a1b354a68eb7697c09be91013ccf8c1b4ae5565d86250b099429f0e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "432bea004cb9fff69c7dd25447037e390c4cd2a39e1f5d1b0070acafa5b308ca",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "6d497653a3ff3a808003f0c4b42e1621aba945e7e4483bf0dce5891c75ef1152",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/auto_wipers.map.json",
+      "sha256": "d0ccd35d742953c15f0d4861df871ad30c832e1a6b16f73a0ce0c588a3470079",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "b90fe494015f350d5e2caaf01e00f18806540303f000049d9ae14a1e96562584",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/auto_wipers.py",
+      "sha256": "90eef5ea725823985100dc58ad48f247b8a1619c6e1d589182d6e087c8632b4d",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_auto_wipers.py",
+      "sha256": "73b749de6abd41ad9782120ee29fe76d1eaa7113a98d9c08580005186592d4f7",
+      "role": "test"
+    }
+  ]
+}

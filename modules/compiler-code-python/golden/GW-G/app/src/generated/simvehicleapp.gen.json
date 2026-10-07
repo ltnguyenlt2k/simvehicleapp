@@ -1,0 +1,54 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "python@0.1.0",
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_g",
+      "revision": 1,
+      "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/__init__.py",
+      "sha256": "a1b71d7f36344d83c7eb0afdf483657c1bd72573ef0b6de8fcc61b7095751a7c",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/app.py",
+      "sha256": "e8cd7582c7b51ba8cc7179403aa1c02b07f3f264006050c283280537ed3d41e9",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/window_close_on_rain.map.json",
+      "sha256": "de618c84bad58138317bcf451aa9dea4d513c26d9883ef99edf2101e0600b4f3",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/__init__.py",
+      "sha256": "d7f7f2b79ce52c0ebce18fcd4bf3f50eed16aa706eae623a5250c96b8c9684be",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/window_close_on_rain.py",
+      "sha256": "e2e844a715d432a30be0ec4b2fcbe12679808cc1cad2dc566f8c3fc0b9714222",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/conftest.py",
+      "sha256": "043a55a25b1afe04e03194da45b8d6492d5eff25a52ccc56ce01abe9204c5de5",
+      "role": "test"
+    },
+    {
+      "path": "app/tests/generated/test_window_close_on_rain.py",
+      "sha256": "25788305427bb5b8c2418605de9c58fa8881f70c2c30cf4d787b27fb145f48cd",
+      "role": "test"
+    }
+  ]
+}
