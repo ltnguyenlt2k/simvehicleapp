@@ -142,4 +142,7 @@ EXPOSE 3000
 ENV PORT=3000 \
     HOSTNAME="0.0.0.0"
 
-CMD ["bun", "apps/sim/server.js"]
+# SV: the Next.js server runs on Node 22 (installed above for isolated-vm): Next 16.3's compiled server runtime fails to
+# load under Bun 1.3.13 ("Expected CommonJS module to have a function wrapper"), and 16.3 carries the Image
+# Optimization RCE fix (GHSA-2xp9-vwfh-vxw4). M11-T03 wave 3b, ADR-0008 Notes.
+CMD ["node", "apps/sim/server.js"]

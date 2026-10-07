@@ -64,3 +64,9 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
    0.18 (dev), fflate, file-type, image-size, js-yaml 3, katex, postcss-selector-parser, protobufjs, sprintf-js, uuid,
    xlsx. Phần lớn nằm trong parser file/office, tailwind, OTel/posthog. Block AI lõi của Sim (`agent`, `router`…) vẫn
    giữ (gắn ~280 file executor) — gỡ là việc riêng.
+4. **Next.js 16.3 chạy trên Node, không Bun (2026-10-08):** image studio với Next 16.3.7 trả 500 mọi trang — runtime
+   server biên dịch của Next 16.3 không nạp được dưới Bun 1.3.13 ("Expected CommonJS module to have a function
+   wrapper"). Cùng image chạy `node apps/sim/server.js` (Node 22 vốn có trong image cho isolated-vm) ⇒ `/signup` 200. Không
+   lùi về 16.2.12 vì 3 advisory chỉ sửa ở 16.3 (RCE Image Optimization GHSA-2xp9-vwfh-vxw4, RCE `next/og`). CMD của
+   `docker/app.Dockerfile` đổi sang `node`; code runtime không dùng API riêng của Bun (chỉ script build bundle).
+   libvips 1.3.4 (sharp 0.35.5): thêm ngoại lệ LGPL cùng cơ sở với bản 1.2.x PO đã duyệt.
