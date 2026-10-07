@@ -36,7 +36,7 @@
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ✔ | 20/20 — gate PASS ([report](reports/M06.md)) |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | 🔄 | 0/10 |
-| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ☐ | 0/8 |
+| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | 🔄 | 0/8 |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ☐ | 0/10 |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
 | [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
@@ -228,14 +228,14 @@ ADR: [0028](../analysis/adr/ADR-0028-ide-code-server.md), [0031](../analysis/adr
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| `ide-vscode/cpp` Dockerfile (code-server 4.139.1 + extension whitelist) | 0028 | ☐ | Smoke | T01 |
-| settings/tasks/launch overlay + clangd | 0028 | ☐ | | T02 |
-| Compose `ide-cpp` | 0028 | ☐ | | T03 |
-| `editor.url` trong response SynCode + nút Open IDE | 0028 | ☐ | E2E | T04 |
-| Cảnh báo IDE chạy song song Live Run | 0028 | ☐ | | T05 |
-| Export zip (`.svexportignore`, NOTICE, THIRD-PARTY-NOTICES) | 0031 | ☐ | Build lại trên máy sạch | T06 |
-| EntitlementService + license PDP (gắn export/IDE/SynCode/AI) | 0031,0032 | ☐ | Unit PDP | T07 |
-| Import lại project (round-trip `.graph.json`) | 0031 | ☐ | | T08 |
+| `ide-vscode/cpp` Dockerfile (code-server 4.139.1 + extension whitelist) | 0028 | 🔄 | Smoke — Claude Code 2026-10-07 | T01 |
+| settings/tasks/launch overlay + clangd | 0028 | 🔄 | | T02 |
+| Compose `ide-cpp` | 0028 | 🔄 | | T03 |
+| `editor.url` trong response SynCode + nút Open IDE | 0028 | 🔄 | E2E | T04 |
+| Cảnh báo IDE chạy song song Live Run | 0028 | 🔄 | | T05 |
+| Export zip (`.svexportignore`, NOTICE, THIRD-PARTY-NOTICES) | 0031 | 🔄 | Build lại trên máy sạch | T06 |
+| EntitlementService + license PDP (gắn export/IDE/SynCode/AI) | 0031,0032 | 🔄 | Unit PDP | T07 |
+| Import lại project (round-trip `.graph.json`) | 0031 | 🔄 | | T08 |
 
 ## M10 — AI Assistant & MCP
 ADR: [0030](../analysis/adr/ADR-0030-ai-assistant-mcp.md) · Phụ thuộc: M4, M5, M8 · Chi tiết: [phases/M10](../analysis/phases/M10-ai-assistant-mcp.md)
