@@ -9,7 +9,7 @@
 
 ![Tutorial "Overspeed warning" — canvas → Simulate → SynCode → Run trên KUKSA → inject → trợ lý AI](docs/media/demo.gif)
 
-Video đầy đủ (1080p, 84 s): [docs/media/demo.mp4](docs/media/demo.mp4) — quay tự động bằng E2E
+Video đầy đủ (720p, 84 s): [docs/media/demo.mp4](docs/media/demo.mp4) — quay tự động bằng E2E
 `modules/simvehicleapp-studio/e2e/tests/tutorial-live.spec.ts` (`SV_DEMO=1`) trên stack thật. Làm theo:
 [tutorial](docs/user-guide/tutorial.md) · Tài liệu: [docs/README.md](docs/README.md).
 
