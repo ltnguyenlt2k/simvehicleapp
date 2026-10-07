@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -19,6 +20,12 @@ export interface McpToken {
 }
 
 /** `SV_MCP_TOKENS` (JSON [{token, name, scopes}]) and/or `SV_MCP_TOKEN` (no auto actions). */
+/** Constant-time comparison of two secrets (equal-length digests, so length leaks nothing either). */
+export function sameSecret(a: string, b: string): boolean {
+  const h = (x: string) => createHash("sha256").update(x).digest();
+  return timingSafeEqual(h(a), h(b));
+}
+
 export function mcpTokens(env: Record<string, string | undefined>): McpToken[] {
   const out: McpToken[] = [];
   if (env.SV_MCP_TOKEN) out.push({ token: env.SV_MCP_TOKEN, name: "default", scopes: ["tools"] });
@@ -37,7 +44,7 @@ const toMcp = (o: ToolOutcome) => ({
 export function createMcpHandler(opts: { tools: Tool[]; sensitive(name: string): boolean; tokens: McpToken[]; version: string; log?: { info(m: string, d?: Record<string, unknown>): void } }) {
   return async (req: Request): Promise<Response> => {
     const bearer = /^Bearer (.+)$/i.exec(req.headers.get("authorization") ?? "")?.[1];
-    const token = bearer ? opts.tokens.find((t) => t.token === bearer) : undefined;
+    const token = bearer ? opts.tokens.find((t) => sameSecret(t.token, bearer)) : undefined;
     if (!token) return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { "content-type": "application/json", "www-authenticate": "Bearer" } });
     const server = new Server({ name: "simvehicleapp", version: opts.version }, { capabilities: { tools: {} } });
     server.setRequestHandler(ListToolsRequestSchema, async () => ({

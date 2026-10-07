@@ -24,7 +24,7 @@ export function openaiProvider(opts: { name?: string; apiKey?: string; model: st
           ...opts.extraBody,
         }),
       });
-      if (!res.ok) await failed(res, opts.name ?? "openai-compatible");
+      if (!res.ok) await failed(res, opts.name ?? "openai-compatible", [opts.apiKey]);
       let text = "";
       const calls: { id: string; name: string; args: string }[] = [];
       let finish = "";

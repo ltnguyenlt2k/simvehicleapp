@@ -95,7 +95,18 @@ export const textOf = (content: readonly ContentBlock[]) =>
     .map((b) => b.text)
     .join("");
 
-export async function failed(res: Response, provider: string): Promise<never> {
+/** Key-shaped strings (OpenAI/Anthropic `sk-…`, Google `AIza…`/`AQ.…`, bearer values) are masked. */
+const KEY_SHAPES = [/\bsk-[A-Za-z0-9_-]{8,}/g, /\bAIza[0-9A-Za-z_-]{20,}/g, /\bAQ\.[A-Za-z0-9_.-]{10,}/g, /(Bearer\s+)[A-Za-z0-9._~+/=-]{8,}/gi];
+
+/** Provider errors reach the user (SSE `error`): never with a key in them (ADR-0030 §T10). */
+export function redactSecrets(text: string, secrets: readonly (string | undefined)[] = []): string {
+  let out = text;
+  for (const s of secrets) if (s && s.length >= 6) out = out.split(s).join("[redacted]");
+  for (const re of KEY_SHAPES) out = out.replace(re, (_m, prefix?: string) => `${typeof prefix === "string" ? prefix : ""}[redacted]`);
+  return out;
+}
+
+export async function failed(res: Response, provider: string, secrets: readonly (string | undefined)[] = []): Promise<never> {
   const body = await res.text().catch(() => "");
-  throw new ProviderError(`${provider} ${res.status}: ${body.slice(0, 300)}`, res.status);
+  throw new ProviderError(redactSecrets(`${provider} ${res.status}: ${body.slice(0, 300)}`, secrets), res.status);
 }

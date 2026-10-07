@@ -1,7 +1,7 @@
 import { createLogger, createService } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { createAssistantHandler, entitlementFrom } from "./app.ts";
-import { createMcpHandler, externalServers, mcpTokens } from "./mcp.ts";
+import { createMcpHandler, externalServers, mcpTokens, sameSecret } from "./mcp.ts";
 import { providerFromEnv } from "./providers/index.ts";
 import { httpServices } from "./services.ts";
 import { PgStore } from "./store.ts";
@@ -71,7 +71,7 @@ const server = Bun.serve({
     if (new URL(req.url).pathname !== "/mcp" || !tokens.length) return handler(req);
     // External agents use the same licensed feature as the chat (asked once the bearer is known).
     const bearer = /^Bearer (.+)$/i.exec(req.headers.get("authorization") ?? "")?.[1];
-    if (!bearer || !tokens.some((t) => t.token === bearer)) return mcp(req);
+    if (!bearer || !tokens.some((t) => sameSecret(t.token, bearer))) return mcp(req);
     const e = await entitlementFrom(() => services.get("orchestrator", "/entitlements/ai.assistant", 3_000));
     if (!e.allowed) return Response.json({ error: e.status === 403 ? "not_entitled" : "unavailable", feature: "ai.assistant", message: e.reason }, { status: e.status });
     return mcp(req);

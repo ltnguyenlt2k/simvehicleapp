@@ -13,7 +13,7 @@ export function anthropicProvider(opts: { apiKey: string; model: string; baseUrl
         headers: { "x-api-key": opts.apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
         body: JSON.stringify({ model: opts.model, max_tokens: opts.maxTokens ?? 4096, system: req.system, tools: req.tools, messages: req.messages, stream: true }),
       });
-      if (!res.ok) await failed(res, "anthropic");
+      if (!res.ok) await failed(res, "anthropic", [opts.apiKey]);
       const blocks: ((TextBlock | ToolUseBlock) & { json?: string })[] = [];
       let stop: TurnResult["stopReason"] = "end_turn";
       for await (const { data } of sseEvents(res)) {

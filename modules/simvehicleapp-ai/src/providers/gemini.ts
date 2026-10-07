@@ -20,7 +20,7 @@ export function geminiProvider(opts: { apiKey: string; model: string; baseUrl?: 
           ...(req.tools.length ? { tools: [{ functionDeclarations: req.tools.map((t) => ({ name: t.name, description: t.description, parameters: geminiSchema(t.input_schema) })) }] } : {}),
         }),
       });
-      if (!res.ok) await failed(res, "gemini");
+      if (!res.ok) await failed(res, "gemini", [opts.apiKey]);
       let text = "";
       const calls: ToolUseBlock[] = [];
       for await (const { data } of sseEvents(res)) {

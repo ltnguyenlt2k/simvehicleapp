@@ -5,12 +5,12 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { fixturesDir } from "@simvehicleapp/contracts";
 import { normalizeHistory } from "./agent.ts";
 import { createAssistantHandler, type Entitlement, entitlementFrom, RateLimiter } from "./app.ts";
-import { connectExternal, createMcpHandler, extName } from "./mcp.ts";
+import { connectExternal, createMcpHandler, extName, sameSecret } from "./mcp.ts";
 import { applyPatch, emptyGraph, normalizeName, type WorkflowGraph } from "./patch.ts";
 import { anthropicProvider } from "./providers/anthropic.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
-import type { LlmProvider, Message, TurnRequest, TurnResult } from "./providers/types.ts";
+import { type LlmProvider, type Message, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
 import type { Services } from "./services.ts";
 import { MemoryStore } from "./store.ts";
 import { BlockCatalog, createTools, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
@@ -79,6 +79,18 @@ describe("providers (M10-T02): streaming + tool calls, canonical Anthropic block
       { role: "tool", tool_call_id: "a", content: "ERROR: nothing" },
     ]);
     expect(toOpenAi([{ role: "user", content: "x" }])).toEqual([{ role: "user", content: "x" }]);
+  });
+
+  test("provider errors never carry a key (configured one or key-shaped), MCP tokens compare in constant time", async () => {
+    const base = serve(() => Response.json({ error: { message: "Incorrect API key provided: sk-proj-abcdefgh12345678. Also AIzaSyA1234567890abcdefghijk and my-own-secret-key" } }, { status: 401 }));
+    const err = await openaiProvider({ name: "openai", apiKey: "my-own-secret-key", model: "m", baseUrl: base })
+      .streamTurn({ system: "s", tools: [], messages: [{ role: "user", content: "hi" }], onText() {} })
+      .catch((e: Error) => e.message);
+    expect(err).toContain("openai 401");
+    expect(err).not.toMatch(/sk-proj-abcdefgh|AIzaSyA123|my-own-secret-key/);
+    expect(redactSecrets("Authorization: Bearer abc.def-123456 ok")).toBe("Authorization: Bearer [redacted] ok");
+    expect(sameSecret("token-0123456789abcdef", "token-0123456789abcdef")).toBe(true);
+    expect(sameSecret("token-0123456789abcdef", "token-0123456789abcdeg")).toBe(false);
   });
 
   test("gemini: native API with x-goog-api-key, functionCall parts, schema keywords Gemini rejects are dropped", async () => {
