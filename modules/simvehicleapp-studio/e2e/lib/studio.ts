@@ -13,21 +13,38 @@ export function newUser(prefix: string, name: string): TestUser {
   return { name, email: `e2e-${prefix}-${run}@example.com`, password: `E2e-${run}-Password!` }
 }
 
+/**
+ * Submits an auth form. Better Auth allows 3 sign-ups (and 3 sign-ins) per 10 s per IP in production
+ * builds; the suite creates users faster than that, so a 429 is answered by waiting the server's
+ * `X-Retry-After` (better-auth 1.6) and submitting again. Any other failure fails the test at once.
+ */
+export async function submitAuth(page: Page, endpoint: string, done: RegExp) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const [response] = await Promise.all([
+      page.waitForResponse((r) => r.url().includes(endpoint) && r.request().method() === 'POST'),
+      page.locator('button[type="submit"]').click(),
+    ])
+    if (response.status() !== 429) break
+    const headers = response.headers()
+    const retryAfter = Number(headers['x-retry-after'] ?? headers['retry-after'] ?? '10')
+    await page.waitForTimeout((Number.isFinite(retryAfter) ? retryAfter : 10) * 1000 + 250)
+  }
+  await page.waitForURL(done, { timeout: 60_000 })
+}
+
 export async function signUp(page: Page, user: TestUser) {
   await page.goto('/signup')
   await page.locator('#name').fill(user.name)
   await page.locator('#email').fill(user.email)
   await page.locator('#password').fill(user.password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
+  await submitAuth(page, '/api/auth/sign-up/email', /\/workspace\/[^/]+\/w\/[^/?]+/)
 }
 
 export async function logIn(page: Page, user: Pick<TestUser, 'email' | 'password'>) {
   await page.goto('/login')
   await page.locator('#email').fill(user.email)
   await page.locator('#password').fill(user.password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL(/\/workspace\//, { timeout: 60_000 })
+  await submitAuth(page, '/api/auth/sign-in/email', /\/workspace\//)
 }
 
 /** Sim auto-connects a new block to the closest one; tests that wire every edge turn it off. */

@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { type Browser, expect, type Page, test } from '@playwright/test'
+import { submitAuth } from '../lib/studio'
 
 /**
  * M1 acceptance gate (analysis/phases/M01-studio-shell.md): sign up → create a workflow → reload and
@@ -25,8 +26,7 @@ async function logIn(page: Page) {
   await page.goto('/login')
   await page.locator('#email').fill(user.email)
   await page.locator('#password').fill(user.password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL(/\/workspace\//, { timeout: 60_000 })
+  await submitAuth(page, '/api/auth/sign-in/email', /\/workspace\//)
 }
 
 async function openEditor(browser: Browser, url: string): Promise<Page> {
@@ -41,8 +41,7 @@ async function signUp(page: Page) {
   await page.locator('#name').fill(user.name)
   await page.locator('#email').fill(user.email)
   await page.locator('#password').fill(user.password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL(/\/workspace\/[^/]+\/w(\/|$|\?)/, { timeout: 60_000 })
+  await submitAuth(page, '/api/auth/sign-up/email', /\/workspace\/[^/]+\/w(\/|$|\?)/)
 }
 
 test.describe

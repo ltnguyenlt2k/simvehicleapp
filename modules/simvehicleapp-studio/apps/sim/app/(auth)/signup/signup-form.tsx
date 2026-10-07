@@ -312,7 +312,8 @@ function SignupFormContent({
               errorMessage.push('Network error. Please check your connection and try again.')
               setPasswordErrors(errorMessage)
               setShowValidationError(true)
-            } else if (ctx.error.code?.includes('rate limit')) {
+            } else if (ctx.error.status === 429 || ctx.error.code?.includes('rate limit')) {
+              // SV: better-auth answers 429 (3 sign-ups / 10 s per IP) without a 'rate limit' code
               errorCode = 'rate_limited'
               errorMessage.push('Too many requests. Please wait a moment before trying again.')
               setPasswordErrors(errorMessage)

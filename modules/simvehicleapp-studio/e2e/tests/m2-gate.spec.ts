@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, type Locator, type Page, test } from '@playwright/test'
+import { submitAuth } from '../lib/studio'
 
 /**
  * M2 acceptance gate (analysis/phases/M02-vss-catalog-and-vehicle-blocks.md): the Vehicle panel
@@ -28,16 +29,14 @@ async function signUp(page: Page) {
   await page.locator('#name').fill(user.name)
   await page.locator('#email').fill(user.email)
   await page.locator('#password').fill(user.password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL(/\/workspace\/[^/]+\/w\/[^/?]+/, { timeout: 60_000 })
+  await submitAuth(page, '/api/auth/sign-up/email', /\/workspace\/[^/]+\/w\/[^/?]+/)
 }
 
 async function logIn(page: Page, email: string, password: string) {
   await page.goto('/login')
   await page.locator('#email').fill(email)
   await page.locator('#password').fill(password)
-  await page.locator('button[type="submit"]').click()
-  await page.waitForURL(/\/workspace\//, { timeout: 60_000 })
+  await submitAuth(page, '/api/auth/sign-in/email', /\/workspace\//)
 }
 
 async function createWorkflow(page: Page): Promise<string> {
