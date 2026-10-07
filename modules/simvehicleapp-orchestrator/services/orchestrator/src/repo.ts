@@ -116,6 +116,8 @@ export type RunEvent = { kind: "log"; seq: number; body: LogLine } | { kind: "tr
 
 export interface Repo {
   migrate(): Promise<void>;
+  /** Every pool connection answers a trivial query (health, watchdog). */
+  ping?(): Promise<void>;
   createProject(p: Omit<Project, "workflows" | "depsInstalled">): Promise<Project>;
   project(idOrSlug: string): Promise<Project | null>;
   projects(): Promise<Project[]>;
@@ -249,8 +251,18 @@ const parse = <T>(v: unknown): T => (typeof v === "string" ? (JSON.parse(v) as T
 export class PgRepo implements Repo {
   constructor(private readonly sql: SQL) {}
 
+  /** Pool size: also how many connections `ping` touches at once. */
+  static readonly POOL_MAX = 10;
+
   static connect(url: string): PgRepo {
-    return new PgRepo(new SQL(url));
+    // Bounded waits for a connection (60 s, then an error instead of a hang) and connections renewed
+    // hourly — a wedged connection does not live forever (seen once on the dev stack, 2026-10-07).
+    return new PgRepo(new SQL(url, { max: PgRepo.POOL_MAX, idleTimeout: 60, maxLifetime: 3600 }));
+  }
+
+  /** One trivial query per pool connection at once: resolves when every connection answers. */
+  async ping(): Promise<void> {
+    await Promise.all(Array.from({ length: PgRepo.POOL_MAX }, () => this.sql`SELECT 1`));
   }
 
   async migrate() {
@@ -308,8 +320,15 @@ export class PgRepo implements Repo {
   }
 
   async projects() {
+    // One round trip for every project and its workflows (no query per project).
     const rows = (await this.sql`SELECT * FROM sv.project ORDER BY created_at, slug`) as Row[];
-    return Promise.all(rows.map(async (r) => this.toProject(r, await this.workflowsOf(String(r.id)))));
+    const links = (await this.sql`SELECT project_id, sim_workflow_id, enabled FROM sv.project_workflow ORDER BY sim_workflow_id`) as Row[];
+    const byProject = new Map<string, Project["workflows"]>();
+    for (const l of links) {
+      const id = String(l.project_id);
+      byProject.set(id, [...(byProject.get(id) ?? []), { simWorkflowId: String(l.sim_workflow_id), enabled: Boolean(l.enabled) }]);
+    }
+    return rows.map((r) => this.toProject(r, byProject.get(String(r.id)) ?? []));
   }
 
   async updateProject(id: string, patch: Partial<Pick<Project, "status" | "statusMessage" | "depsInstalled">>) {

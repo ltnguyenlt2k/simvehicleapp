@@ -76,6 +76,19 @@ const stale = await runs.recover();
 if (stale) log.warn("stopped runs left active by a restart", { runs: stale });
 const ideUrl = process.env.SV_IDE_URL;
 
+/** Database probe: every pool connection answers within `ms`. */
+const dbAnswers = (ms: number) =>
+  Promise.race([repo.ping().then(() => true), Bun.sleep(ms).then(() => false)]).catch(() => false);
+// Watchdog: a pool whose connections stop answering would hang every request. Three probes in a row
+// over 10 s ⇒ log and exit; Compose restarts the service and recovery requeues/stops what was running.
+let stuck = 0;
+setInterval(async () => {
+  stuck = (await dbAnswers(10_000)) ? 0 : stuck + 1;
+  if (stuck === 0) return;
+  log.error("database pool does not answer", { probes: stuck });
+  if (stuck >= 3) process.exit(1);
+}, 30_000);
+
 // One worker: generations run one after another (the toolchain builds one project at a time anyway).
 let wake: (() => void) | null = null;
 const kick = () => wake?.();
@@ -97,6 +110,6 @@ const kick = () => wake?.();
 
 const background = (p: Promise<void>) => void p.catch((e) => log.error("background task failed", { err: e }));
 // Calls made while handling a request carry its request id (createService scopes it) to the next service.
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background }));
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });
