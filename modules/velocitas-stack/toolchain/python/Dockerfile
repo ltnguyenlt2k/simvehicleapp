@@ -57,7 +57,8 @@ RUN mkdir -p /home/vscode/.sv
 ENV VELOCITAS_OFFLINE=1
 COPY --from=agent /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=agent /src /src
-ENV SV_TOOLCHAIN_PORT=4220 SV_PROJECTS_DIR=/workspace/projects
+# Byte-code outside the projects: app/src/generated is SynCode-owned (a __pycache__ there would be a foreign file).
+ENV SV_TOOLCHAIN_PORT=4220 SV_PROJECTS_DIR=/workspace/projects PYTHONPYCACHEPREFIX=/tmp/sv-pycache
 WORKDIR /workspace
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \
   CMD ["bun", "-e", "fetch('http://127.0.0.1:4220/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]

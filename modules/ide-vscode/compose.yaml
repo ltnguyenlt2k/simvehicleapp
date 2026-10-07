@@ -41,6 +41,8 @@ services:
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
       SDV_MQTT_ADDRESS: mqtt://mqtt:1883
       SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}
+      # Byte-code outside the projects (app/src/generated is SynCode-owned).
+      PYTHONPYCACHEPREFIX: /tmp/sv-pycache
     ports: ["127.0.0.1:${SV_IDE_PYTHON_PORT:-8081}:8080"]
     volumes:
       - sv-workspace:/workspace

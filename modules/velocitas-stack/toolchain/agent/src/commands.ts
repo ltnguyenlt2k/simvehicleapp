@@ -189,6 +189,8 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
 /** The vendored runtime of a Python project (ADR-0040; same vendor path as C++, ADR-0021 §8). */
 const PY_RUNTIME = "app/src/simvehicleapp-runtime";
 const GENERATED_PY = "app/src/generated app/tests/generated";
+/** Where Python writes byte-code (outside every project). */
+const PY_CACHE = "/tmp/sv-pycache";
 
 /**
  * Python projects (ADR-0040 §4): pip installs the template's pinned requirements from the image's
@@ -198,7 +200,9 @@ const GENERATED_PY = "app/src/generated app/tests/generated";
  * `ruff check` of the generated code (laid out like ruff format by the generator).
  */
 function pythonPlan(cfg: AgentConfig, dir: string, kind: JobKind, options: JobOptions): Plan {
-  const env = { PYTHONPATH: `${dir}/app/src:${dir}/${PY_RUNTIME}`, PYTHONDONTWRITEBYTECODE: "1" };
+  // Byte-code caches never land in the project: `app/src/generated` is SynCode-owned, and a `__pycache__`
+  // there makes the next SynCode report GENERATED_FILE_MODIFIED (M12 parity run, 2026-10-07).
+  const env = { PYTHONPATH: `${dir}/app/src:${dir}/${PY_RUNTIME}`, PYTHONPYCACHEPREFIX: PY_CACHE };
   switch (kind) {
     case "init":
       return {
@@ -258,7 +262,7 @@ function pythonPlan(cfg: AgentConfig, dir: string, kind: JobKind, options: JobOp
       const runEnvVars = runEnv(options);
       if (!existsSync(join(dir, RUN_ARTIFACT.python!.file))) throw new PlanError(RUN_ARTIFACT.python!.missing);
       return {
-        steps: [{ label: "python3 app/src/main.py", argv: ["python3", "-u", "app/src/main.py"], cwd: dir, env: { ...runEnvVars, PYTHONDONTWRITEBYTECODE: "1" } }],
+        steps: [{ label: "python3 app/src/main.py", argv: ["python3", "-u", "app/src/main.py"], cwd: dir, env: { ...runEnvVars, PYTHONPYCACHEPREFIX: PY_CACHE } }],
         failCode: "RUN_CRASHED",
         failStage: "run",
       };

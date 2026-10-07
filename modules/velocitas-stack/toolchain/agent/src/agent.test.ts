@@ -203,7 +203,7 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
       ["python3", "-m", "compileall", "-q", "app/src"],
       ["python3", "-m", "simvehicleapp_runtime.check_project", "."],
     ]);
-    expect(build.steps[1]!.env).toEqual({ PYTHONPATH: `${dir}/app/src:${dir}/app/src/simvehicleapp-runtime`, PYTHONDONTWRITEBYTECODE: "1" });
+    expect(build.steps[1]!.env).toEqual({ PYTHONPATH: `${dir}/app/src:${dir}/app/src/simvehicleapp-runtime`, PYTHONPYCACHEPREFIX: "/tmp/sv-pycache" });
     const t = plan("test", "comfort-app", {});
     expect(t).toMatchObject({ failCode: "GENERATED_TEST_FAILED", failStage: "test" });
     expect(t.steps[0]!.argv.join(" ")).toContain("-p simvehicleapp_runtime.pytest_gtest app/tests/generated");
@@ -212,7 +212,7 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     mkdirSync(join(dir, "app/src/generated"), { recursive: true });
     writeFileSync(join(dir, "app/src/generated/app.py"), "WORKFLOWS = []\n");
     expect(() => validateJob(py, "run", "comfort-app", {})).not.toThrow();
-    expect(plan("run", "comfort-app", { env: { SV_TRACE_LEVEL: "trigger" } }).steps[0]).toMatchObject({ argv: ["python3", "-u", "app/src/main.py"], env: { SV_TRACE_LEVEL: "trigger", PYTHONDONTWRITEBYTECODE: "1" } });
+    expect(plan("run", "comfort-app", { env: { SV_TRACE_LEVEL: "trigger" } }).steps[0]).toMatchObject({ argv: ["python3", "-u", "app/src/main.py"], env: { SV_TRACE_LEVEL: "trigger", PYTHONPYCACHEPREFIX: "/tmp/sv-pycache" } });
     expect(() => plan("run", "comfort-app", { env: { PYTHONPATH: "/x" } })).toThrow("not allowed");
   });
 
