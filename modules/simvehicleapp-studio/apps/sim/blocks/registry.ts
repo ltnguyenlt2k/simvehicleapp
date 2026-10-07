@@ -24,7 +24,6 @@ import { McpBlock } from '@/blocks/blocks/mcp'
 import { MemoryBlock } from '@/blocks/blocks/memory'
 // SV: mothership block removed (proprietary copilot backend, M01-T03)
 import { NoteBlock } from '@/blocks/blocks/note'
-import { PiBlock } from '@/blocks/blocks/pi'
 import { ResponseBlock } from '@/blocks/blocks/response'
 import { RouterBlock, RouterV2Block } from '@/blocks/blocks/router'
 import { RssBlock, RssBlockMeta } from '@/blocks/blocks/rss'
@@ -90,7 +89,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   mcp: McpBlock,
   memory: MemoryBlock,
   note: NoteBlock,
-  pi: PiBlock,
   response: ResponseBlock,
   router: RouterBlock,
   router_v2: RouterV2Block,

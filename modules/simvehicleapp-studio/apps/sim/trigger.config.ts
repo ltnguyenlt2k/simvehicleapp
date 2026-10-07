@@ -56,7 +56,7 @@ export default defineConfig({
   dirs: ['./background'],
   ...(grafanaTelemetry ? { telemetry: grafanaTelemetry } : {}),
   build: {
-    external: ['isolated-vm', '@earendil-works/pi-coding-agent', 'cpu-features'],
+    external: ['isolated-vm', 'cpu-features'],
     extensions: [
       additionalFiles({
         files: [
@@ -72,7 +72,6 @@ export default defineConfig({
           'isolated-vm',
           'react-dom',
           '@react-email/render',
-          '@earendil-works/pi-coding-agent',
         ],
       }),
     ],

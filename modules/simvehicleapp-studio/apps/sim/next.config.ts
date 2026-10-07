@@ -82,7 +82,6 @@ const nextConfig: NextConfig = {
     'isolated-vm',
     '@e2b/code-interpreter',
     'e2b',
-    '@earendil-works/pi-coding-agent',
   ],
   outputFileTracingIncludes: {
     '/api/tools/stagehand/*': ['./node_modules/ws/**/*'],
