@@ -32,6 +32,25 @@ paths:
           content:
             application/json:
               schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /status:
+    get:
+      operationId: status
+      tags: [service]
+      description: "Whether a provider is configured (no key or secret is ever returned) and the external MCP servers in use."
+      responses:
+        "200":
+          description: Provider status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [configured, externalServers]
+                properties:
+                  configured: { type: boolean }
+                  provider: { type: string, enum: [anthropic, openai, openai-compatible, ollama, gemini] }
+                  model: { type: string }
+                  reason: { type: string, description: "Why no provider is configured." }
+                  externalServers: { type: array, items: { type: string } }
   /chat:
     post:
       operationId: chat
@@ -52,15 +71,19 @@ paths:
                 projectId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
                 workflowId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
                 message: { type: string, minLength: 1, maxLength: 20000 }
+                context: { $ref: "#/components/schemas/ChatContext" }
       responses:
         "200":
-          description: "SSE events: text, tool, proposal (WorkflowPatch v1 + diagnostics), pending_action, done."
+          description: "SSE events: text, tool, tool_result, proposal (WorkflowPatch v1 + resulting graph + diagnostics), pending_action, error, done."
           content:
             text/event-stream:
               schema: { type: string }
               x-sv-proposal: { $ref: "urn:simvehicleapp:contracts:workflow-patch:1.0.0-alpha.1" }
+        "404": { description: "Unknown conversation, or one of another user." }
         "409": { description: "A pending action must be confirmed or cancelled first." }
         "429": { description: "Per-user rate limit (SV_AI_RATE_LIMIT_PER_MINUTE)." }
+        "403": { description: "`not_entitled`: the license does not include `ai.assistant` (orchestrator PDP, ADR-0031)." }
+        "503": { description: "No LLM provider configured (`not_configured`), or the license check is unavailable (`unavailable`, fail closed)." }
   /conversations:
     get:
       operationId: listConversations
@@ -85,6 +108,47 @@ paths:
                       properties:
                         id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
                         title: { type: string }
+                        workflowId: { type: string }
+                        updatedAt: { type: integer, description: "Unix epoch milliseconds." }
+  /conversations/{id}:
+    parameters: [{ $ref: "#/components/parameters/ConversationId" }]
+    get:
+      operationId: getConversation
+      tags: [chat]
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/UserId" }
+      responses:
+        "200":
+          description: "Messages for display (text and tool calls) and the pending action, if any."
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, messages]
+                properties:
+                  id: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
+                  title: { type: string }
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      required: [role, text]
+                      properties:
+                        role: { type: string, enum: [user, assistant] }
+                        text: { type: string }
+                        tools:
+                          type: array
+                          items: { type: object, required: [name], properties: { name: { type: string }, input: { type: object } } }
+                  pending:
+                    type: object
+                    required: [actionId, toolName, toolInput, expiresAt]
+                    properties:
+                      actionId: { type: string }
+                      toolName: { type: string }
+                      toolInput: { type: object }
+                      expiresAt: { type: integer }
+        "404": { description: "Unknown conversation, or one of another user." }
   /conversations/{id}/actions/{actionId}/confirm:
     parameters: [{ $ref: "#/components/parameters/ConversationId" }, { $ref: "#/components/parameters/ActionId" }]
     post:
@@ -101,8 +165,13 @@ paths:
               type: object
               properties:
                 editedInput: { type: object, description: "Always overrides the input proposed by the LLM." }
+                context: { $ref: "#/components/schemas/ChatContext" }
       responses:
-        "200": { description: "Tool executed; continue reading the turn stream." }
+        "200":
+          description: "Tool executed, then the turn continues: SSE events as for /chat."
+          content:
+            text/event-stream:
+              schema: { type: string }
         "404": { description: "Unknown or expired action (TTL)." }
   /conversations/{id}/actions/{actionId}/cancel:
     parameters: [{ $ref: "#/components/parameters/ConversationId" }, { $ref: "#/components/parameters/ActionId" }]
@@ -112,8 +181,20 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
         - { $ref: "#/components/parameters/UserId" }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context: { $ref: "#/components/schemas/ChatContext" }
       responses:
-        "200": { description: "Cancelled." }
+        "200":
+          description: "Cancelled; the model is told and answers: SSE events as for /chat."
+          content:
+            text/event-stream:
+              schema: { type: string }
         "404": { description: "Unknown or expired action." }
   /mcp:
     post:
@@ -129,6 +210,29 @@ paths:
       responses:
         "200": { description: "JSON-RPC response or SSE stream." }
 components:
+  schemas:
+    ChatContext:
+      type: object
+      description: "What the studio BFF knows about the editor: the open workflow (with its current graph) and its project. Tools act on this context only."
+      properties:
+        workflow:
+          type: object
+          required: [workflowId, vssRelease]
+          properties:
+            workflowId: { type: string }
+            name: { type: string }
+            vssRelease: { type: string }
+            graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
+        project:
+          type: object
+          required: [id, vssRelease]
+          properties:
+            id: { type: string }
+            vssRelease: { type: string }
+            graphs: { type: array, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" } }
+            scenarios:
+              type: array
+              items: { type: object, required: [workflowId, scenario], properties: { workflowId: { type: string }, scenario: { type: object } } }
   securitySchemes:
     internal:
       type: apiKey

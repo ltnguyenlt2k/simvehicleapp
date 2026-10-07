@@ -268,6 +268,29 @@ paths:
                   expiry: { type: [string, "null"] }
                   features: { $ref: "urn:simvehicleapp:contracts:license:1.0.0-alpha.1#/properties/features" }
                   limits: { $ref: "urn:simvehicleapp:contracts:license:1.0.0-alpha.1#/properties/limits" }
+  /entitlements/{feature}:
+    get:
+      operationId: checkEntitlement
+      tags: [license]
+      description: "PDP decision (logged) for a feature another service gates — the ai-assistant asks for `ai.assistant` before each turn (ADR-0031 §2, ADR-0030 Notes 2026-10-07)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: feature, in: path, required: true, schema: { enum: [ai.assistant] } }
+      responses:
+        "200":
+          description: Decision; `allowed` false ⇒ the caller answers 403 `not_entitled` with `reason`.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [feature, allowed, licensed, mode, reason]
+                properties:
+                  feature: { type: string }
+                  allowed: { type: boolean }
+                  licensed: { type: boolean }
+                  mode: { enum: [full, enforce] }
+                  reason: { type: string }
+        "404": { description: Not a feature decided for other services. }
   /runs:
     get:
       operationId: listRuns
