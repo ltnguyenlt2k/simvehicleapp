@@ -12,6 +12,15 @@ import { useWorkflows } from '@/hooks/queries/workflows'
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/
 
+/** Folder name of the project from its name (`My Vehicle App` → `my-vehicle-app`). */
+function slugOf(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 63)
+}
+
 interface VehicleProjectsProps {
   workspaceId: string
 }
