@@ -22,6 +22,34 @@ export const svHealthContract = defineRouteContract({
   response: { mode: 'json', schema: svHealthResponseSchema },
 })
 
+/** One service on the System status page (ADR-0033 §4). */
+export const svSystemServiceSchema = z.object({
+  service: z.string(),
+  status: z.enum(['ok', 'degraded', 'down', 'unconfigured']),
+  version: z.string().optional(),
+  commit: z.string().optional(),
+  contracts: z.string().optional(),
+  latencyMs: z.number().int().min(0).optional(),
+  error: z.string().optional(),
+  /** Checked by the studio BFF directly, or through the orchestrator (services it drives). */
+  via: z.enum(['studio', 'orchestrator']),
+})
+
+export const svSystemStatusSchema = z.object({
+  studio: z.object({ version: z.string(), commit: z.string() }),
+  services: z.array(svSystemServiceSchema),
+})
+
+/** `GET /api/sv/system` — every SimVehicleApp service with health and version (System status page). */
+export const svSystemStatusContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/system',
+  response: { mode: 'json', schema: svSystemStatusSchema },
+})
+
+export type SvSystemStatus = z.output<typeof svSystemStatusSchema>
+export type SvSystemService = z.output<typeof svSystemServiceSchema>
+
 export type SvServiceHealthResponse = z.output<typeof svServiceHealthSchema>
 export type SvHealthResponse = z.output<typeof svHealthResponseSchema>
 

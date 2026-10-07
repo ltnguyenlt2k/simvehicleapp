@@ -259,3 +259,7 @@ apps/sim/lib/workflows/operations/import-export.ts
 # M10-T08 — Assistant panel (BFF /api/sv/ai/*, contracts sv-ai, proposal diff on the canvas, confirmation cards)
 apps/sim/lib/api/contracts/sv-ai.ts
 apps/sim/hooks/queries/sv-ai.ts
+
+# M11-T05 — System status page (BFF /api/sv/system, sidebar entry)
+apps/sim/app/workspace/[workspaceId]/system-status/*
+apps/sim/hooks/queries/sv-system.ts

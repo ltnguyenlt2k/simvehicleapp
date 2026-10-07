@@ -30,6 +30,7 @@ import {
   PanelLeft,
   Plus,
   Search,
+  Server,
   Settings,
   Table,
   Workflow,
@@ -513,6 +514,13 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
           label: 'Vehicle projects',
           icon: FolderCode,
           href: `/workspace/${workspaceId}/vehicle-projects`,
+          hidden: false,
+        },
+        {
+          id: 'system-status',
+          label: 'System status',
+          icon: Server,
+          href: `/workspace/${workspaceId}/system-status`,
           hidden: false,
         },
         {
