@@ -395,6 +395,8 @@ export const svProjectSchema = z.object({
   status: z.enum(['creating', 'ready', 'failed']),
   statusMessage: z.string().optional(),
   workflows: z.array(z.object({ simWorkflowId: z.string(), enabled: z.boolean() })),
+  /** code-server on the project folder (ADR-0028 §2) once the project is ready. */
+  editor: z.object({ url: z.string() }).optional(),
 })
 
 export const svProjectListQuerySchema = z.object({ workspaceId: workspaceIdSchema })
@@ -703,6 +705,14 @@ export const svPlayScenarioContract = defineRouteContract({
   params: svProjectParamsSchema,
   body: svPlayScenarioBodySchema,
   response: { mode: 'json', schema: svPlaybackSchema },
+})
+
+/** `GET /api/sv/projects/[id]/export` — the project zip (M09-T06): download, re-buildable outside SimVehicleApp. */
+export const svExportProjectContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/export',
+  params: svProjectParamsSchema,
+  response: { mode: 'binary' },
 })
 
 export type SvRun = z.output<typeof svRunSchema>

@@ -68,7 +68,7 @@ describe('vehicle editor chrome (M01-T10)', () => {
       expect(html).toContain(
         action.id === 'verify' || action.id === 'simulate'
           ? `title="${action.label} the workflow"`
-          : action.id === 'syncode' || action.id === 'run'
+          : ['syncode', 'run', 'open-ide', 'export'].includes(action.id)
             ? 'title="Add this workflow to a vehicle project first (Vehicle projects page)"'
             : action.id === 'stop'
               ? 'title="Nothing is running"'

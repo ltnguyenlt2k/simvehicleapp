@@ -111,7 +111,16 @@ export function RunConsole({ run, blockName }: RunConsoleProps) {
           onChange={(e) => setQuery(e.target.value)}
           className='w-[200px]'
         />
-        <span className='ml-auto text-[11px] text-[var(--text-muted)]'>
+        {(run?.state === 'starting' || run?.state === 'running') && (
+          <span
+            data-sv='ide-parallel-hint'
+            className='truncate text-[11px] text-[var(--text-muted)]'
+            title='The IDE task "SimVehicleApp: Run on stack" uses the same databroker and MQTT broker (M09-T05)'
+          >
+            Running the app from the IDE too? Both drive the same signals — stop one.
+          </span>
+        )}
+        <span className='ml-auto shrink-0 text-[11px] text-[var(--text-muted)]'>
           {`${visible.length} / ${entries.length}`}
         </span>
       </div>

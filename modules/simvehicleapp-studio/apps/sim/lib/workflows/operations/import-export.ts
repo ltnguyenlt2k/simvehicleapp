@@ -4,6 +4,7 @@ import { generateId } from '@sim/utils/id'
 import { isRecordLike } from '@sim/utils/object'
 import { ApiClientError } from '@/lib/api/client/errors'
 import { requestJson } from '@/lib/api/client/request'
+import { svUpdateWorkflowSettingsContract } from '@/lib/api/contracts/sv'
 import {
   getWorkflowStateContract,
   getWorkflowVariablesContract,
@@ -11,6 +12,7 @@ import {
   type WorkflowStateContractInput,
   workflowVariablesContract,
 } from '@/lib/api/contracts/workflows'
+import { graphToSimState, isWorkflowGraph } from '@/lib/sv/graph-import'
 import { migrateSubblockIds } from '@/lib/workflows/migrations/subblock-migrations'
 import {
   type ExportWorkflowState,
@@ -363,9 +365,13 @@ export async function extractWorkflowsFromZip(
   const zip = await JSZip.loadAsync(await zipFile.arrayBuffer())
   const workflows: ImportedWorkflow[] = []
   let metadata: WorkspaceImportMetadata | undefined
+  // SV: a SimVehicleApp project export holds its workflows as `.simvehicleapp/workflows/*.graph.json`
+  // (M09-T08); its other JSON files (AppManifest, VSS, …) are not workflows.
+  const svProject = Boolean(zip.files['.simvehicleapp/project.json'])
 
   for (const [path, file] of Object.entries(zip.files)) {
     if (file.dir) continue
+    if (svProject && !/^\.simvehicleapp\/workflows\/[^/]+\.graph\.json$/.test(path)) continue
 
     if (path === '_workspace.json') {
       try {
@@ -386,7 +392,9 @@ export async function extractWorkflowsFromZip(
 
     try {
       const content = await file.async('string')
-      const pathParts = path.split('/').filter((p) => p.length > 0)
+      const pathParts = svProject
+        ? [path.split('/').pop() || path]
+        : path.split('/').filter((p) => p.length > 0)
       const filename = pathParts.pop() || path
 
       workflows.push({
@@ -429,6 +437,12 @@ export async function extractWorkflowsFromFiles(files: File[]): Promise<Imported
 export function extractWorkflowName(content: string, filename: string): string {
   try {
     const parsed = unwrapWorkflowExportEnvelope(JSON.parse(content)) as Record<string, any>
+
+    // SV: WorkflowGraph v1 (M09-T08) carries its name at the top.
+    const graph: unknown = parsed
+    if (isWorkflowGraph(graph) && typeof graph.name === 'string' && graph.name.trim()) {
+      return graph.name.trim()
+    }
 
     if (parsed.state?.metadata?.name && typeof parsed.state.metadata.name === 'string') {
       return parsed.state.metadata.name.trim()
@@ -517,6 +531,12 @@ export function parseWorkflowJson(
     }
 
     data = unwrapWorkflowExportEnvelope(data)
+
+    // SV: a WorkflowGraph v1 (SimVehicleApp export, M09-T08) becomes studio state first.
+    if (isWorkflowGraph(data)) {
+      const { blocks, edges, loops, parallels, variables } = graphToSimState(data)
+      data = { state: { blocks, edges, loops, parallels, variables } }
+    }
 
     // Handle new export format (version/exportedAt/state) or old format (blocks/edges at root)
     let workflowData: any
@@ -752,6 +772,26 @@ export async function persistImportedWorkflow({
         throw new Error(`Failed to save variables for ${newWorkflowId}`)
       }
     }
+  }
+
+  // SV: a WorkflowGraph keeps its VSS release (M09-T08); an unknown release stays on the default.
+  const graph = (() => {
+    try {
+      return unwrapWorkflowExportEnvelope(JSON.parse(content)) as unknown
+    } catch {
+      return null
+    }
+  })()
+  const release = isWorkflowGraph(graph) ? graph.vss?.release : undefined
+  if (release) {
+    await requestJson(svUpdateWorkflowSettingsContract, {
+      params: { id: newWorkflowId },
+      body: { vssRelease: release },
+    }).catch((error: unknown) =>
+      logger.warn(`VSS release ${release} not kept for ${newWorkflowId}`, {
+        error: getErrorMessage(error),
+      })
+    )
   }
 
   logger.info(`Imported workflow: ${workflowName}`)

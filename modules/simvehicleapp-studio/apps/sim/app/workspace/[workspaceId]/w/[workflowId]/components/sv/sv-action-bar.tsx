@@ -5,14 +5,26 @@ import { Button, toast } from '@/components/emcn'
 import { RunButtons } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
 import { defaultScenario } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
 import { SV_ACTIONS } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
-import { SynCodeButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
+import {
+  ExportButton,
+  OpenIdeButton,
+  SynCodeButton,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
 import { useSvVerify } from '@/hooks/queries/sv-lint'
 import { useSaveSvScenario, useSvScenario, useSvSimulate } from '@/hooks/queries/sv-simulation'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 
 /** Actions that work today; the others stay disabled until their milestone ships. */
-const READY = new Set<string>(['verify', 'simulate', 'syncode', 'run', 'stop'])
+const READY = new Set<string>([
+  'verify',
+  'simulate',
+  'syncode',
+  'run',
+  'stop',
+  'open-ide',
+  'export',
+])
 
 /**
  * Workflow actions of the vehicle editor. Verify (M04-T11) runs every compiler check on the graph
@@ -118,6 +130,8 @@ export function SvActionBar() {
         if (action.id === 'syncode') return <SynCodeButton key={action.id} />
         if (action.id === 'run') return <RunButtons key={action.id} />
         if (action.id === 'stop') return null
+        if (action.id === 'open-ide') return <OpenIdeButton key={action.id} />
+        if (action.id === 'export') return <ExportButton key={action.id} />
         const ready = READY.has(action.id)
         const busy =
           (action.id === 'verify' && verifyStatus === 'verifying') ||
