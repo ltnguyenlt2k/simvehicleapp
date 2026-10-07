@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_auto_door_lock.py",
-      "sha256": "2e74e60b31aa327c0df1516a834f89c590b9d8a5957ee63601de545466b9003c",
+      "sha256": "83803f31dfe2751d13d3101b26298bebcf7cf6027acccc11d529c1d868fa50c9",
       "role": "test"
     }
   ]

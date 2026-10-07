@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_low_battery_hmi_warning.py",
-      "sha256": "e4c3386fe6b5f8b7d09d38cc4163877b716674f609278edb678ebbe97c4870db",
+      "sha256": "de918371cdfcb2d18405d1b516a3f745edd2e62e763651431d77fe404ca9dd28",
       "role": "test"
     }
   ]

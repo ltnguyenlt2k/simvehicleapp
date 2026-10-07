@@ -70,4 +70,5 @@ SCENARIO = {
 
 def test_window_close_on_rain_scenario_meets_its_expectations() -> None:
     result = run_scenario(window_close_on_rain.bind, SCENARIO)
-    assert check_expectations(result, SCENARIO.get("expect")) == []
+    problems = check_expectations(result, SCENARIO.get("expect"))
+    assert not problems, "\n".join(problems)

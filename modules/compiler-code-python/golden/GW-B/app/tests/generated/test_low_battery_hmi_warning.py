@@ -46,4 +46,5 @@ SCENARIO = {
 
 def test_low_battery_hmi_warning_scenario_meets_its_expectations() -> None:
     result = run_scenario(low_battery_hmi_warning.bind, SCENARIO)
-    assert check_expectations(result, SCENARIO.get("expect")) == []
+    problems = check_expectations(result, SCENARIO.get("expect"))
+    assert not problems, "\n".join(problems)

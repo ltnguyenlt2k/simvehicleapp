@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_periodic_telemetry.py",
-      "sha256": "8942187906190ec88f2c70bbefe8af6a58138b7eb7479b1ac90680dcb0a0d678",
+      "sha256": "17392dd3f7e97dec99993a06ecd6fd4f4b2012028c8b2be54562423ddaba828f",
       "role": "test"
     }
   ]

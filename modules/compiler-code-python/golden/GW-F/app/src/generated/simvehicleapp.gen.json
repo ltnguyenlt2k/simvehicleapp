@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_welcome_sequence.py",
-      "sha256": "b81afb730ab82ae3e10eb2ef8dcd05fa085ccbd5a490bb94c22a4253e7370398",
+      "sha256": "1ffdb9842fca516386faa59c659a58895b1b345e9af66c971d0f460f3828e23a",
       "role": "test"
     }
   ]

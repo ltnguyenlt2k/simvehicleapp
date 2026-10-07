@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_window_close_on_rain.py",
-      "sha256": "25788305427bb5b8c2418605de9c58fa8881f70c2c30cf4d787b27fb145f48cd",
+      "sha256": "b93e9473c749644239551259c3391809b0a40b7b9ed6b42e22053539d84a2841",
       "role": "test"
     }
   ]

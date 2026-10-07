@@ -131,7 +131,8 @@ export function generateProject(req: GenerateRequest): FileSet {
       t.line();
       t.block(`def test_${mod}_scenario_meets_its_expectations() -> None`, () => {
         t.line(`result = run_scenario(${mod}.bind, SCENARIO)`);
-        t.line('assert check_expectations(result, SCENARIO.get("expect")) == []');
+        t.line('problems = check_expectations(result, SCENARIO.get("expect"))');
+        t.line('assert not problems, "\\n".join(problems)');
       });
       files.push(file(`${TESTS}test_${mod}.py`, t.toString(), "test"));
       tests.push(mod);

@@ -1,12 +1,14 @@
 # SimVehicleApp — root compose (dev phase). Each module owns its compose fragment; this file only aggregates.
 #   docker compose up -d                      # runtime stack + toolchain (+ ide)
 #   docker compose --profile mock up -d       # + kuksa mock-provider
+#   COMPOSE_PROFILES=python (in .env)         # + Python backend: codegen-python, toolchain-python, ide-python (ADR-0040)
 # Build order: devcontainer-cpp → toolchain-cpp → ide-cpp, and contracts → core services; `scripts/sv build` handles it.
 name: simvehicleapp
 include:
   - modules/simvehicleapp-contracts/compose.yaml
   - modules/simvehicleapp-core/compose.yaml
   - modules/compiler-code-cpp/compose.yaml
+  - modules/compiler-code-python/compose.yaml
   - modules/simvehicleapp-orchestrator/compose.yaml
   - modules/velocitas-stack/compose.yaml
   - modules/ide-vscode/compose.yaml

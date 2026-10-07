@@ -35,4 +35,5 @@ SCENARIO = {
 
 def test_stable_overspeed_warning_scenario_meets_its_expectations() -> None:
     result = run_scenario(stable_overspeed_warning.bind, SCENARIO)
-    assert check_expectations(result, SCENARIO.get("expect")) == []
+    problems = check_expectations(result, SCENARIO.get("expect"))
+    assert not problems, "\n".join(problems)

@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_auto_wipers.py",
-      "sha256": "73b749de6abd41ad9782120ee29fe76d1eaa7113a98d9c08580005186592d4f7",
+      "sha256": "f136be66ad68473919df13c8ac51aa66fa3dc9d3950b362e648559cabb5192ec",
       "role": "test"
     }
   ]

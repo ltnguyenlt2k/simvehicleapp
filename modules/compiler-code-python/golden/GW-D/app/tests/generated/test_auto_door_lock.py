@@ -72,4 +72,5 @@ SCENARIO = {
 
 def test_auto_door_lock_scenario_meets_its_expectations() -> None:
     result = run_scenario(auto_door_lock.bind, SCENARIO)
-    assert check_expectations(result, SCENARIO.get("expect")) == []
+    problems = check_expectations(result, SCENARIO.get("expect"))
+    assert not problems, "\n".join(problems)

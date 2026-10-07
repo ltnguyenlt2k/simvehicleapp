@@ -4,3 +4,5 @@ golden
 runtime/tests
 generator/conformance
 generator/src/**/*.test.ts
+**/__pycache__
+**/*.pyc

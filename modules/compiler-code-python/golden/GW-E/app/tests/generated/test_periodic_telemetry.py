@@ -27,4 +27,5 @@ SCENARIO = {
 
 def test_periodic_telemetry_scenario_meets_its_expectations() -> None:
     result = run_scenario(periodic_telemetry.bind, SCENARIO)
-    assert check_expectations(result, SCENARIO.get("expect")) == []
+    problems = check_expectations(result, SCENARIO.get("expect"))
+    assert not problems, "\n".join(problems)

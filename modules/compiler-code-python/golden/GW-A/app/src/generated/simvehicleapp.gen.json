@@ -47,7 +47,7 @@
     },
     {
       "path": "app/tests/generated/test_stable_overspeed_warning.py",
-      "sha256": "fb7334499851a48d54bcecd20c95d320dbe614f043f0ce8506730145ac42ed94",
+      "sha256": "3b1c446bb5bd0f1a59925c19e4f07ca741e5f228c8a36ed7cf702cc23c8025a2",
       "role": "test"
     }
   ]
