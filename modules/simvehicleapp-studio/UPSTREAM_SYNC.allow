@@ -979,4 +979,5 @@ apps/sim/triggers/zendesk/*
 apps/sim/triggers/zoom/*
 
 # M11-T03 wave 3b — dependency security fixes (overrides for vulnerable transitive packages, ADR-0008 Notes)
+packages/auth/package.json
 package.json
