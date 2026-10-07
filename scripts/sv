@@ -8,6 +8,7 @@
 #   scripts/sv smoke            S-1/S-2 smoke: new project offline build + run app + MQTT check
 #   scripts/sv smoke live       full live smoke: M7 SynCode gate + M8 GW-A live gate (scripts/smoke.sh)
 #   scripts/sv reset-caches     drop conan/velocitas volumes after rebuilding the toolchain image
+#   scripts/sv demo-video       record the full-flow demo (Playwright + ffmpeg) into docs/media/full-flow.{mp4,gif}
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DC="docker compose"
@@ -45,5 +46,6 @@ case "${1:-}" in
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache simvehicleapp_sv-velocitas-python ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;
   refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
-  *) sed -n '2,11p' "$0"; exit 1 ;;
+  demo-video) exec scripts/demo-video.sh ;;
+  *) sed -n '2,12p' "$0"; exit 1 ;;
 esac

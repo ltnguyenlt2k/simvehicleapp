@@ -323,15 +323,15 @@ Phụ thuộc: **toàn bộ** M0–M14 (plan, ADR, ROADMAP xong) · Chi tiết: 
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Ma trận kịch bản E2E `e2e/SCENARIOS.md` | — | ☐ | truy ngược FR/ADR | T01 |
-| Kéo thả từ toolbar: mọi block, vào/ra container, thả bị từ chối | — | ☐ | | T02 |
-| Kéo thả từ panel Vehicle: mọi kind × release v4.0/v4.2, menu đúng kind | 0010, 0011 | ☐ | | T03 |
-| Nối mọi handle, nối sai bị chặn, undo/redo, copy/paste, đổi tên ⇒ ref cập nhật | 0011, 0013 | ☐ | | T04 |
+| Ma trận kịch bản E2E `e2e/SCENARIOS.md` | — | 🔄 | Claude Code 2026-10-07: [SCENARIOS](../modules/simvehicleapp-studio/e2e/SCENARIOS.md) A–H truy ngược FR/ADR, cột test hiện có; chờ PO review | T01 |
+| Kéo thả từ toolbar: mọi block, vào/ra container, thả bị từ chối | — | 🔄 | 2026-10-07: `m15-toolbar` (38 block: node, handle, editor) — tìm ra lỗi Battery status không mở được prop (đã sửa + guard parity); còn vào/ra container, thả bị từ chối | T02 |
+| Kéo thả từ panel Vehicle: mọi kind × release v4.0/v4.2, menu đúng kind | 0010, 0011 | 🔄 | 2026-10-07: `m15-vehicle-panel` PASS local (sensor/actuator/attribute/array × v4.0/v4.2 + click) — chờ CI | T03 |
+| Nối mọi handle, nối sai bị chặn, undo/redo, copy/paste, đổi tên ⇒ ref cập nhật | 0011, 0013 | 🔄 | 2026-10-07: `m15-connect-edit` PASS local (then/else, đổi tên ⇒ `<speed.value>`, vòng bị từ chối, xoá/undo/redo, copy/paste) — chờ CI | T04 |
 | 7 golden dựng hoàn toàn bằng UI, Problems sạch, graph khớp golden | 0042 | ☐ | | T05 |
-| Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | ☐ | | T06 |
+| Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | 🔄 | 2026-10-07: `m15-full-flow @live` PASS local 1,1 phút; phần restart tìm ra lỗi **mất dữ liệu**: trợ lý gửi graph rỗng khi canvas chưa nạp ⇒ Accept xoá block cũ — đã sửa (lint chỉ phát graph khi workflow nạp xong + chặn proposal lệch) + E2E hồi quy `m15-assistant-reload` | T06 |
 | Cộng tác realtime + mất kết nối/restart service | — | ☐ | | T07 |
 | 3 run CI xanh liên tiếp, 0 flaky | — | ☐ | | T08 |
-| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | ☐ | | T09 |
+| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | 🔄 | 2026-10-07: `scripts/demo-video.sh` (Playwright image + restart + ffmpeg mpdecimate ⇒ mp4/GIF) | T09 |
 | Hậu kỳ + checklist xem video (PO ký) | — | ☐ | | T10 |
 | Video trong README tổng, kiểm hiển thị thật trên GitHub | — | ☐ | | T11 |
 | Báo cáo `docs/reports/M15.md` | — | ☐ | | T12 |
