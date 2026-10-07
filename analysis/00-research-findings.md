@@ -173,6 +173,8 @@ SDV_MQTT_ADDRESS=mqtt://127.0.0.1:1883
 Cờ: `--vss <file>` / `KUKSA_DATABROKER_METADATA_FILE`, `--insecure`, `--disable-authorization`, `--port` (55555), `--enable-viss`.
 **Không trộn** provider/consumer khác protocol cho cùng actuator (Target vs Actuation là 2 kênh khác nhau).
 
+**Cập nhật 2026-10-07 (kiểm online, [spike kuksa-val-v2](../docs/spikes/kuksa-val-v2/README.md)):** databroker mới nhất 0.7.1; **0.7.0 xoá `sdv.databroker.v1`** (chỉ còn `kuksa.val.v1` + `kuksa.val.v2`); 0.6.1 sửa lỗi bảo mật `OpenProviderStream` (cần JWT để khai thác). Pin 0.5.0 giữ nguyên — lộ trình ở [ADR-0047](adr/ADR-0047-kuksa-val-v2-migration.md). `kuksa-client` 0.6.0 có stub v2; Velocitas Python SDK mới nhất vẫn v0.15.7 (chỉ v1).
+
 ### 3.9 VSS 4.0 JSON (đã tải và phân tích)
 - Cấu trúc: `{"Vehicle": {"type":"branch","children":{...}}}`; leaf có `datatype`, `type` (`sensor|actuator|attribute`), `unit`, `min`, `max`, `allowed`, `description`, `uuid`, `deprecation`.
 - Thống kê v4.0: **branch 287, actuator 425, sensor 379, attribute 106**.
