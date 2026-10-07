@@ -38,6 +38,7 @@ import {
   usePanelResize,
   useUsageLimits,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/hooks'
+import { SvAssistantPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/assistant-panel'
 import { Variables } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/variables/variables'
 import { useAutoLayout } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks/use-auto-layout'
 import { useCurrentWorkflow } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks/use-current-workflow'
@@ -549,11 +550,8 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
                 }
                 data-tab-content='copilot'
               >
-                {/* SV: the proprietary copilot chat was removed (M01-T03); the SimVehicleApp assistant arrives in M10 (ADR-0030). */}
-                <div className='flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center'>
-                  <div className='font-medium text-[var(--text-primary)] text-sm'>Assistant</div>
-                  <div className='text-[var(--text-muted)] text-small'>Coming in M10</div>
-                </div>
+                {/* SV: the proprietary copilot chat was removed (M01-T03); the SimVehicleApp assistant (M10, ADR-0030). */}
+                <SvAssistantPanel />
               </div>
             )}
             <div

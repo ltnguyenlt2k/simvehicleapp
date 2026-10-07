@@ -378,7 +378,7 @@ export type SvSimulateResponse = z.output<typeof svSimulateResponseSchema>
 const svProjectSlugSchema = z
   .string()
   .regex(/^[a-z0-9][a-z0-9-]{0,62}$/, 'lowercase letters, digits and dashes (≤ 63)')
-const svProjectIdSchema = z.string().min(1).max(128)
+export const svProjectIdSchema = z.string().min(1).max(128)
 
 export const svProjectSchema = z.object({
   id: svProjectIdSchema,

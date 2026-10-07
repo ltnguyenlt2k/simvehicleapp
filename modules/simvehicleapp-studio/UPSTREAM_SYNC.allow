@@ -255,3 +255,7 @@ apps/sim/hooks/queries/sv-runs.ts
 
 # M09-T06/T08 — export download, Open IDE, re-import of exported workflows (WorkflowGraph → studio state)
 apps/sim/lib/workflows/operations/import-export.ts
+
+# M10-T08 — Assistant panel (BFF /api/sv/ai/*, contracts sv-ai, proposal diff on the canvas, confirmation cards)
+apps/sim/lib/api/contracts/sv-ai.ts
+apps/sim/hooks/queries/sv-ai.ts
