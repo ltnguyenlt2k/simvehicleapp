@@ -161,9 +161,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [graphs]
+              anyOf: [{ required: [graphs] }, { required: [fromGeneration] }]
               properties:
                 graphs: { type: array, minItems: 1, maxItems: 100, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }, description: "Workflow graphs exported by the studio adapter." }
+                fromGeneration: { enum: [latest], description: "Without graphs: SynCode again with the graphs (and scenarios) of the project's last SynCode — for callers without the studio (MCP agents)." }
                 scenarios:
                   description: "Scenario per workflow for the generated tests (M7)."
                   type: array
@@ -180,7 +181,27 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Generation" }
+        "409": { description: "`no_previous_generation`: fromGeneration without an earlier SynCode." }
         "422": { $ref: "#/components/responses/Diagnostics" }
+  /projects/{id}/graphs:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    get:
+      operationId: getProjectGraphs
+      tags: [generations]
+      description: "The WorkflowGraphs of the project's last SynCode (what its app was generated from)."
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Graphs of the last generation.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [generationId, graphs]
+                properties:
+                  generationId: { type: string }
+                  graphs: { type: array, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" } }
+        "404": { description: "No SynCode yet." }
   /projects/{id}/generations/{gid}:
     parameters:
       - { $ref: "#/components/parameters/ProjectId" }

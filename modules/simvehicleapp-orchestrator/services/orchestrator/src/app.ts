@@ -168,6 +168,14 @@ export function createOrchestratorHandler(d: AppDeps) {
         if (deniedSynCode) return deniedSynCode;
         const b = await readBody(req);
         if (b instanceof Response) return b;
+        // `fromGeneration: "latest"`: SynCode again with the workflows (and scenarios) of the project's last
+        // SynCode — for callers without the studio's graphs (MCP agents).
+        if (b.fromGeneration === "latest" && b.graphs === undefined) {
+          const last = await d.repo.latestGeneration(project.id);
+          if (!last?.request?.graphs?.length) return json(409, { error: "no_previous_generation", message: `Project ${project.slug} has no SynCode yet: send graphs` });
+          b.graphs = last.request.graphs;
+          if (last.request.scenarios && b.scenarios === undefined) b.scenarios = last.request.scenarios;
+        }
         const graphs = b.graphs;
         if (!Array.isArray(graphs) || graphs.length === 0 || graphs.length > 100) return json(400, { error: "invalid_request", message: "graphs: 1..100 workflow graphs" });
         const bad = graphs.map((g) => validator.validate("workflow-graph", g)).find((v) => !v.valid);
@@ -194,6 +202,12 @@ export function createOrchestratorHandler(d: AppDeps) {
         d.kick();
         ctx.log.info("generation queued", { project: project.slug, generation: g.id, workflows: graphs.length });
         return json(202, present(g, project, d.ideUrl));
+      }
+      if (parts[2] === "graphs" && parts.length === 3 && req.method === "GET") {
+        // The WorkflowGraphs of the project's last SynCode (what its app was generated from).
+        const last = await d.repo.latestGeneration(project.id);
+        if (!last?.request?.graphs?.length) return json(404, { error: "not_found", message: `Project ${project.slug} has no SynCode yet` });
+        return json(200, { generationId: last.id, graphs: last.request.graphs });
       }
       if (parts[2] === "generations" && parts[3] && parts.length === 4 && req.method === "GET") {
         const g = ID.test(parts[3]) ? await d.repo.generation(parts[3]) : null;
