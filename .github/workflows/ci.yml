@@ -320,6 +320,8 @@ jobs:
   toolchain-agent:
     name: velocitas-stack toolchain-agent (jobs, SSE, plans)
     runs-on: ubuntu-24.04
+    # The suite takes ~10 s; a hung runner (2026-10-07: 2 h before cancel) must fail fast instead.
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: modules/velocitas-stack/toolchain/agent

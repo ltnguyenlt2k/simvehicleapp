@@ -34,7 +34,11 @@ case "${1:-}" in
     # Python backend (profile `python` in COMPOSE_PROFILES, ADR-0040): its toolchain before ide-python.
     if $DC config --services | grep -qx toolchain-python; then $DC build devcontainer-python toolchain-python; fi
     $DC build ;;
-  up)    ensure_env; $DC up -d "${@:2}" ;;
+  up)    ensure_env
+         # Toolchains first: they seed the Velocitas/Conan volumes the IDEs share (two containers creating a
+         # new volume at once race on the copy-up).
+         if [[ $# -eq 1 ]]; then $DC up -d $($DC config --services | grep -x 'toolchain-[a-z]*' | tr '\n' ' '); fi
+         $DC up -d "${@:2}" ;;
   down)  $DC down "${@:2}" ;;
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache simvehicleapp_sv-velocitas-python ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;

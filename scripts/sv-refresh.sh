@@ -67,6 +67,8 @@ $DC build vss-catalog compiler codegen-cpp
 $DC build orchestrator workspace signal-gateway toolchain-cpp ai-assistant
 # Python backend when the `python` profile is on (ADR-0040): only its agent layer rebuilds, like toolchain-cpp.
 if $DC config --services | grep -qx toolchain-python; then $DC build codegen-python toolchain-python; fi
+# Toolchains first: they seed the volumes the IDEs share (concurrent first mounts race on the copy-up).
+$DC up -d $($DC config --services | grep -x 'toolchain-[a-z]*' | tr '\n' ' ')
 $DC up -d
 # Keep the running studio image and the previous one (rollback); older sha-* tags are ~2 GB each.
 # Only image tags are removed — never containers or volumes.
