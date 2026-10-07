@@ -14,7 +14,8 @@ import {
 /**
  * M15-T07 (SCENARIOS A5/A6). Three sessions on one workflow add blocks at the same time and edit the same field:
  * every session converges to the same canvas, and a reload shows it. `@live` outage (host only, it stops a
- * container): with the compiler down the Problems panel says so, edits are still saved, and lint recovers.
+ * container): with the compiler down the Problems panel says so, edits are still saved, and lint recovers by itself
+ * (no edit needed) once the compiler is back.
  */
 const REPO = process.env.SV_REPO ?? fileURLToPath(new URL('../../../..', import.meta.url))
 
@@ -118,9 +119,7 @@ test.describe('M15 collaboration and outages', () => {
       compose('start', 'compiler')
     }
     compose('up', '-d', '--wait', 'compiler')
-    const again = subBlock(page, 'message').locator('textarea').first()
-    await again.fill('compiler is back')
-    await again.press('Escape')
+    // no edit: the panel lints the same graph again until the compiler answers (studio SV_LINT_RECOVERY_MS)
     await page.locator('[data-sv-tab="problems"]').click()
     await expect(summary).not.toHaveText('Checks unavailable — showing the last result', {
       timeout: 60_000,
