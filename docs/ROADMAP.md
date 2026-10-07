@@ -37,7 +37,7 @@
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
-| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | 🔄 | 7/10 |
+| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | 🔄 | 9/10 — gate 3/4: eval ≥ 80 % chưa ổn định trên model local 9B, chờ đo với provider cloud ([report](reports/M10.md)) |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | ☐ | 0/10 |
 | [M12](#m12--python-backend) | Python backend | 0040 | ☐ | 0/6 |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ☐ | 0/6 |
@@ -249,9 +249,9 @@ ADR: [0030](../analysis/adr/ADR-0030-ai-assistant-mcp.md) · Phụ thuộc: M4, 
 | WorkflowPatch v1 (apply-on-draft, validate, auto-fix) | 0030 | ✔ | áp lên bản nháp + `/compile` verify + khối không tới được/prop lạ là lỗi, gợi ý sửa cụ thể cho model | T05 |
 | MCP client (`ext.*` namespace, confirmation mặc định) | 0030 | ✔ | `ext__<server>__<tool>` (tên tool provider không cho dấu chấm), luôn SENSITIVE trừ `safeTools` | T06 |
 | Store `sv_ai` + retention | 0030 | ✔ | Postgres schema `sv_ai` (migration 0001), purge theo `SV_AI_RETENTION_DAYS`; test Postgres thật (CI job `ai`) | T07 |
-| Studio Assistant panel (patch preview diff, confirmation card) | 0030 | 🔄 | Claude Code 2026-10-07: BFF `/api/sv/ai/*`, đề xuất hiện trên canvas bằng diff view (Accept/Reject), thẻ xác nhận sửa được input; vitest 11; Playwright `m10-assistant` chờ CI | T08 |
-| System prompt + eval set 20 prompt (VI/EN) | 0030 | 🔄 | eval 16/20 = 80 % trên Ollama `qwen3.5:9b` (2026-10-07); chạy lại sau gợi ý sửa | T09 |
-| Bảo mật AI (no key xuống browser, rate limit, redact) | 0030 | 🔄 | review: key chỉ trong container, `/status` không trả key, user từ session BFF, rate limit theo user, lỗi provider che key, license `ai.assistant` (fail closed) | T10 |
+| Studio Assistant panel (patch preview diff, confirmation card) | 0030 | ✔ | Claude Code 2026-10-07: BFF `/api/sv/ai/*`, đề xuất hiện trên canvas bằng diff view (Accept/Reject), thẻ xác nhận sửa được input; vitest 11; Playwright `m10-assistant` PASS CI 37567807281 | T08 |
+| System prompt + eval set 20 prompt (VI/EN) | 0030 | 🔄 | 6 lần đo trên Ollama `qwen3.5:9b` local: 65–80 % (hai lần cuối 80 %, 75 %) — chưa đạt ổn định ≥ 80 %; cần đo lại với provider cloud ([M10](reports/M10.md)) | T09 |
+| Bảo mật AI (no key xuống browser, rate limit, redact) | 0030 | ✔ | review: key chỉ trong container, `/status` không trả key, user từ session BFF, rate limit theo user, lỗi provider che key, license `ai.assistant` (fail closed) | T10 |
 
 ## M11 — Hardening → Release v1.0
 ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/adr/ADR-0033-observability.md), [0042](../analysis/adr/ADR-0042-semantic-parity-testing.md) · Phụ thuộc: M8, M9, M10 · Chi tiết: [phases/M11](../analysis/phases/M11-hardening-release.md)
