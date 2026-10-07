@@ -41,4 +41,4 @@ runtime:
 toolchain:
   id: toolchain-rust
   template: vehicle-app-rust-template
-  templateSha: c1b37654e9c856ca83c1c8a4802b9fc33def7222  # git tree id of velocitas-stack/templates/vehicle-app-rust-template (SimVehicleApp-owned, ADR-0041)
+  templateSha: 035365b0189696e1a39c030bb421455b5aec5d16  # git tree id of velocitas-stack/templates/vehicle-app-rust-template (SimVehicleApp-owned, ADR-0041)

@@ -42,7 +42,7 @@
     },
     {
       "path": "app/tests/generated/main.rs",
-      "sha256": "5f6aa74f3a52cf0b7d8f3289582006108e553b412951fd7c06fec1894d0a41d8",
+      "sha256": "a6055a78e623e6ca183dba3270389faa229edf7a69e026a73ebea94dfacab32e",
       "role": "test"
     }
   ]

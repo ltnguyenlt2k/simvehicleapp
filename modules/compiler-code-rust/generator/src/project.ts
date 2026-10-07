@@ -122,7 +122,8 @@ export function generateProject(req: GenerateRequest): FileSet {
     const scenarios = new Map((req.scenarios ?? []).map((s) => [s.workflowId, s.scenario]));
     const t = new CodeWriter();
     t.line(header);
-    t.line("//! Scenario tests of the workflows (contracts scenario v1), run on the mock vehicle and virtual clock.");
+    // Plain comments only: the template's tests/scenarios.rs `include!`s this file.
+    t.line("// Scenario tests of the workflows (contracts scenario v1), run on the mock vehicle and virtual clock.");
     t.line();
     t.line("use simvehicleapp_runtime::testing::{check_expectations, run_scenario};");
     t.line("use simvehicleapp_runtime::values::parse_json;");
