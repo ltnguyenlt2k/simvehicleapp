@@ -1,0 +1,78 @@
+{
+  "slug": "parity-p3-1791350821",
+  "date": "2026-10-07T05:29:50.819Z",
+  "passed": 7,
+  "total": 7,
+  "toleranceMs": 30,
+  "goldens": [
+    {
+      "golden": "GW-A",
+      "pass": true,
+      "expected": 22,
+      "actual": 22,
+      "problems": [],
+      "maxDriftMs": 4,
+      "buildMs": 13813
+    },
+    {
+      "golden": "GW-B",
+      "pass": true,
+      "expected": 15,
+      "actual": 15,
+      "problems": [],
+      "maxDriftMs": 7,
+      "buildMs": 4832,
+      "clockSteps": [
+        1158
+      ]
+    },
+    {
+      "golden": "GW-C",
+      "pass": true,
+      "expected": 12,
+      "actual": 12,
+      "problems": [],
+      "maxDriftMs": 1,
+      "buildMs": 5393
+    },
+    {
+      "golden": "GW-D",
+      "pass": true,
+      "expected": 26,
+      "actual": 26,
+      "problems": [],
+      "maxDriftMs": 3,
+      "buildMs": 6093
+    },
+    {
+      "golden": "GW-E",
+      "pass": true,
+      "expected": 12,
+      "actual": 12,
+      "problems": [],
+      "maxDriftMs": 1,
+      "buildMs": 5067
+    },
+    {
+      "golden": "GW-F",
+      "pass": true,
+      "expected": 14,
+      "actual": 14,
+      "problems": [],
+      "maxDriftMs": 1,
+      "buildMs": 4899,
+      "clockSteps": [
+        1154
+      ]
+    },
+    {
+      "golden": "GW-G",
+      "pass": true,
+      "expected": 18,
+      "actual": 18,
+      "problems": [],
+      "maxDriftMs": 5,
+      "buildMs": 4885
+    }
+  ]
+}

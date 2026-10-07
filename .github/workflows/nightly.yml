@@ -51,6 +51,15 @@ jobs:
         run: scripts/smoke.sh
       - name: M9 gate — export builds outside SimVehicleApp (template app/Dockerfile on this clean runner), license PDP
         run: SV_GATE_SKIP_IDE=1 SV_GATE_EXPORT_BUILD=1 modules/simvehicleapp-orchestrator/gate/m9-gate.sh
+      - name: Parity P3 — GW-A…G as real apps on the KUKSA databroker vs the frozen traces (ADR-0042, M11-T01)
+        run: SV_PARITY_REPORT=$PWD/parity/parity-p3.json modules/simvehicleapp-orchestrator/gate/parity-p3.sh
+      - name: Parity dashboard (report artifact)
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: parity-p3
+          path: parity/parity-p3.json
+          if-no-files-found: ignore
       - name: Stack logs on failure
         if: failure()
         run: docker compose logs --tail 300 orchestrator workspace toolchain-cpp signal-gateway codegen-cpp
