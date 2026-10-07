@@ -17,7 +17,7 @@ const handler = createService(
   createCompilerHandler({
     vehicle: catalogVehicleLookup(catalog),
     modelHash: catalogModelHash(catalog),
-    capabilities: httpCapabilities({ backends: parseBackends(process.env.SV_BACKENDS ?? ""), headers: () => internalHeaders(crypto.randomUUID(), catalog.secret) }),
+    capabilities: httpCapabilities({ backends: parseBackends(process.env.SV_BACKENDS ?? ""), headers: () => internalHeaders(undefined, catalog.secret) }),
   }),
 );
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler });

@@ -28,7 +28,7 @@ const broker = (release: string) => {
 };
 const catalogUrl = process.env.SV_CATALOG_URL ?? "http://vss-catalog:4010";
 const catalog = new Catalog(async (release) => {
-  const res = await fetch(`${catalogUrl}/vss?release=${encodeURIComponent(release)}`, { headers: internalHeaders(crypto.randomUUID(), secret) });
+  const res = await fetch(`${catalogUrl}/vss?release=${encodeURIComponent(release)}`, { headers: internalHeaders(undefined, secret) });
   if (!res.ok) throw new Error(`vss-catalog /vss ⇒ ${res.status}`);
   return res.json();
 });

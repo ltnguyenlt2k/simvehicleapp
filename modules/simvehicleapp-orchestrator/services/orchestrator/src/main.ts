@@ -1,9 +1,9 @@
-import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit";
+import { createLogger, createService, Metrics, withRequestId } from "@simvehicleapp/service-kit";
 import pkg from "../package.json" with { type: "json" };
 import { existsSync, readFileSync } from "node:fs";
 import { createOrchestratorHandler } from "./app.ts";
 import { EntitlementService, loadLicense } from "./entitlements.ts";
-import { correlation, httpClients } from "./clients.ts";
+import { httpClients } from "./clients.ts";
 import { EventHub } from "./events.ts";
 import { runGeneration } from "./pipeline.ts";
 import { PgRepo } from "./repo.ts";
@@ -87,16 +87,16 @@ const kick = () => wake?.();
       wake = null;
       continue;
     }
-    log.info("generation started", { generation: g.id });
-    // Every service call of this SynCode carries the generation id as its request id (log correlation).
-    const done = await correlation.run(g.id, () => runGeneration(g, { repo, clients, events: hub, ideUrl, metrics: pipelineMetrics })).catch((e) => (log.error("generation crashed", { generation: g.id, err: e }), null));
-    log.info("generation finished", { generation: g.id, state: done?.state, stage: done?.stage });
+    // Every service call of this SynCode — and these log lines — carry the generation id as request id.
+    const glog = log.child({ requestId: g.id });
+    glog.info("generation started", { generation: g.id });
+    const done = await withRequestId(g.id, () => runGeneration(g, { repo, clients, events: hub, ideUrl, metrics: pipelineMetrics })).catch((e) => (glog.error("generation crashed", { generation: g.id, err: e }), null));
+    glog.info("generation finished", { generation: g.id, state: done?.state, stage: done?.stage });
   }
 })();
 
 const background = (p: Promise<void>) => void p.catch((e) => log.error("background task failed", { err: e }));
-const app = createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background });
-// Calls made while handling a request carry its request id (from the studio BFF) to the next service.
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics }, (req, ctx) => correlation.run(ctx.requestId, () => app(req, ctx)));
+// Calls made while handling a request carry its request id (createService scopes it) to the next service.
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

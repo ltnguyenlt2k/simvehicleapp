@@ -33,7 +33,7 @@ export function catalogVehicleLookup(opts: {
       let res: Response;
       try {
         res = await doFetch(`${base}/nodes?${qs}`, {
-          headers: internalHeaders(opts.requestId?.() ?? crypto.randomUUID(), opts.secret),
+          headers: internalHeaders(opts.requestId?.(), opts.secret),
           signal: AbortSignal.timeout(opts.timeoutMs ?? 3000),
         });
       } catch (e) {
@@ -69,7 +69,7 @@ export function catalogModelHash(opts: {
     let res: Response;
     try {
       res = await doFetch(`${base}/model-hash?${new URLSearchParams({ release })}`, {
-        headers: internalHeaders(opts.requestId?.() ?? crypto.randomUUID(), opts.secret),
+        headers: internalHeaders(opts.requestId?.(), opts.secret),
         signal: AbortSignal.timeout(opts.timeoutMs ?? 3000),
       });
     } catch (e) {

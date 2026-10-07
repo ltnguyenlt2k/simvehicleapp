@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { ContractValidator } from "@simvehicleapp/contracts";
-import { createLogger, createService, internalHeaders, isInternalRequest, Metrics, requestIdOf } from "./index.ts";
+import { createLogger, createService, currentRequestId, internalHeaders, isInternalRequest, Metrics, requestIdOf, withRequestId } from "./index.ts";
 
 const contracts = new ContractValidator();
 const SECRET = "s3cret-value";
@@ -111,5 +111,21 @@ describe("metrics (ADR-0033 §2)", () => {
   test("without a registry /metrics is an ordinary (authenticated) path", async () => {
     const svc = createService({ name: "x", version: "1", secret: "s", logger: createLogger({ service: "x", write: () => {} }) }, () => new Response("handler"));
     expect((await svc(new Request("http://x/metrics"))).status).toBe(401);
+  });
+});
+
+describe("request id propagation (ADR-0033 §1)", () => {
+  test("a handler's outgoing calls carry its request id; withRequestId scopes background work", async () => {
+    let seen: string | undefined;
+    const svc = createService({ name: "x", version: "1", secret: "s", logger: createLogger({ service: "x", write: () => {} }) }, async () => {
+      await Promise.resolve();
+      seen = internalHeaders(undefined, "s")["x-sv-request-id"];
+      return new Response("ok");
+    });
+    await svc(new Request("http://x/compile", { headers: { "x-sv-internal": "s", "x-sv-request-id": "g_abc" } }));
+    expect(seen).toBe("g_abc");
+    expect(withRequestId("g_1", () => currentRequestId())).toBe("g_1");
+    expect(currentRequestId()).toBeUndefined();
+    expect(internalHeaders("explicit", "s")["x-sv-request-id"]).toBe("explicit");
   });
 });

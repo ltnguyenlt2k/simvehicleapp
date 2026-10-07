@@ -1,11 +1,4 @@
-import { AsyncLocalStorage } from "node:async_hooks";
 import { internalHeaders } from "@simvehicleapp/service-kit";
-
-/**
- * Request id the calls made inside `correlation.run(id, …)` carry (ADR-0033 §1): the SynCode worker
- * runs a generation under its id, so every service's log lines of that SynCode share it.
- */
-export const correlation = new AsyncLocalStorage<string>();
 import type { LogLine } from "./repo.ts";
 
 /**
@@ -93,7 +86,8 @@ export interface Endpoints {
 export class ServiceUnavailable extends Error {}
 
 export function httpClients(e: Endpoints): Clients {
-  const headers = () => ({ ...internalHeaders(correlation.getStore() ?? crypto.randomUUID(), e.secret), "content-type": "application/json" });
+  // The current request id (the request being handled, or the generation the SynCode worker runs).
+  const headers = () => ({ ...internalHeaders(undefined, e.secret), "content-type": "application/json" });
   const call = async (url: string, init: RequestInit = {}) => {
     try {
       return await fetch(url, { ...init, headers: { ...headers(), ...(init.headers as Record<string, string> | undefined) } });

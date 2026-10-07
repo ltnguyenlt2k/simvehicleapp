@@ -31,7 +31,7 @@ export function httpServices(u: ServiceUrls): Services {
     const res = await fetch(`${u[service]}${path}`, {
       ...init,
       signal: init.signal ?? AbortSignal.timeout(init.timeoutMs ?? 15_000),
-      headers: { ...internalHeaders(crypto.randomUUID(), u.secret), "content-type": "application/json", ...(init.headers as Record<string, string> | undefined) },
+      headers: { ...internalHeaders(undefined, u.secret), "content-type": "application/json", ...(init.headers as Record<string, string> | undefined) },
     });
     return res;
   };

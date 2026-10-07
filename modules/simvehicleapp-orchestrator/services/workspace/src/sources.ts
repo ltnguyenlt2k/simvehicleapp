@@ -4,7 +4,7 @@ import type { Bundle, InitSources } from "./init.ts";
 /** Toolchains, backends and the catalog over the compose networks (ADR-0007). */
 export function httpSources(opts: { toolchains: Record<string, string>; backends: Record<string, string>; catalog: string; secret: string }): InitSources {
   const get = async (url: string) => {
-    const res = await fetch(url, { headers: internalHeaders(crypto.randomUUID(), opts.secret) });
+    const res = await fetch(url, { headers: internalHeaders(undefined, opts.secret) });
     if (!res.ok) throw new Error(`GET ${url} ⇒ ${res.status}`);
     return res;
   };

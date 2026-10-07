@@ -1,4 +1,5 @@
 // Infrastructure only — no business logic (ADR-0007 Implementation, module rule "service-kit").
+import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { CONTRACTS_VERSION, type ServiceHealth, type ServiceInfoV1 } from "@simvehicleapp/contracts";
 import { Metrics } from "./metrics.ts";
@@ -80,9 +81,25 @@ export function requestIdOf(req: Request): string {
   return id && REQUEST_ID.test(id) ? id : crypto.randomUUID();
 }
 
-/** Headers to forward on calls to other internal services. */
-export function internalHeaders(requestId: string, secret: string): Record<string, string> {
-  return { [INTERNAL_AUTH_HEADER]: secret, [REQUEST_ID_HEADER]: requestId };
+const requestScope = new AsyncLocalStorage<string>();
+
+/**
+ * Runs `fn` with `requestId` as the current request id (ADR-0033 §1): calls to other services made
+ * inside carry it, so one SynCode or chat turn shares one id across every service's log. Request
+ * handlers wrapped by `createService` already run in their request's scope.
+ */
+export function withRequestId<T>(requestId: string, fn: () => T): T {
+  return requestScope.run(requestId, fn);
+}
+
+/** The request id of the current scope, if any. */
+export function currentRequestId(): string | undefined {
+  return requestScope.getStore();
+}
+
+/** Headers to forward on calls to other internal services (the current request id when omitted). */
+export function internalHeaders(requestId: string | undefined, secret: string): Record<string, string> {
+  return { [INTERNAL_AUTH_HEADER]: secret, [REQUEST_ID_HEADER]: requestId ?? currentRequestId() ?? crypto.randomUUID() };
 }
 
 export interface RequestContext {
@@ -136,7 +153,7 @@ export function createService(
         const body: ServiceHealth = checks ? { status: failed ? "degraded" : "ok", checks } : { status: "ok" };
         res = json(failed ? 503 : 200, body);
       } else if (!PUBLIC_PATHS.has(path) && !isInternalRequest(req, secret)) res = json(401, { error: "unauthorized" });
-      else res = await handler(req, { requestId, log });
+      else res = await withRequestId(requestId, () => handler(req, { requestId, log }));
     } catch (err) {
       log.error("unhandled error", { err, path });
       res = json(500, { error: "internal_error", requestId });
