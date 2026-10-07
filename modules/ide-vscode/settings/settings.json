@@ -1,11 +1,46 @@
 {
-  "clangd.arguments": ["--compile-commands-dir=${workspaceFolder}/build", "--background-index", "--header-insertion=never"],
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--background-index",
+    "--header-insertion=never"
+  ],
   "C_Cpp.intelliSenseEngine": "disabled",
   "cmake.configureOnOpen": false,
   "cmake.configureOnEdit": false,
   "editor.formatOnSave": true,
-  "[cpp]": { "editor.defaultFormatter": "xaver.clang-format" },
-  "files.readonlyInclude": { "**/app/src/generated/**": true },
+  "[cpp]": {
+    "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "files.readonlyInclude": {
+    "**/app/src/generated/**": true
+  },
   "terminal.integrated.defaultProfile.linux": "zsh",
-  "telemetry.telemetryLevel": "off"
+  "telemetry.telemetryLevel": "off",
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "SimVehicleApp: Debug app (gdb)",
+        "type": "gdb",
+        "request": "launch",
+        "target": "${workspaceFolder}/build/bin/app",
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "SDV_MIDDLEWARE_TYPE": "native",
+          "SDV_VEHICLEDATABROKER_ADDRESS": "grpc://databroker:55555",
+          "SDV_MQTT_ADDRESS": "mqtt://mqtt:1883",
+          "SV_TRACE_LEVEL": "node"
+        },
+        "valuesFormatting": "prettyPrinters"
+      },
+      {
+        "name": "SimVehicleApp: Debug generated tests (gdb)",
+        "type": "gdb",
+        "request": "launch",
+        "target": "${workspaceFolder}/build/bin/app_generated_tests",
+        "cwd": "${workspaceFolder}",
+        "valuesFormatting": "prettyPrinters"
+      }
+    ]
+  }
 }

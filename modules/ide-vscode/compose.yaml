@@ -13,6 +13,8 @@ services:
       SDV_MIDDLEWARE_TYPE: native
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
       SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+      # Run on stack picks the databroker of the project's VSS release (ADR-0024 §6).
+      SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}
     ports: ["127.0.0.1:${SV_IDE_PORT:-8080}:8080"]
     volumes:
       - sv-workspace:/workspace

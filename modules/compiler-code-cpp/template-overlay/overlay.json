@@ -1,6 +1,9 @@
 {
-  "description": "Files of vehicle-app-cpp-template replaced by the SimVehicleApp app (ADR-0023 §3): the sample app and its test.",
+  "description": "Files of vehicle-app-cpp-template replaced by the SimVehicleApp app (ADR-0023 §3): the sample app and its test; and the editor configs that need the Velocitas runtime-local (Docker-in-Docker) or ms-vscode.cpptools — the IDE ships SimVehicleApp tasks and a gdb launch instead (ADR-0028 §4).",
   "remove": [
+    ".vscode/c_cpp_properties.json",
+    ".vscode/launch.json",
+    ".vscode/tasks.json",
     "app/src/Launcher.cpp",
     "app/src/SampleApp.cpp",
     "app/src/SampleApp.h",

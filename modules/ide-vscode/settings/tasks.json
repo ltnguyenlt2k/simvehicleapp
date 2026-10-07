@@ -1,0 +1,35 @@
+{
+  // SimVehicleApp tasks (ADR-0028 §4), user-level so they apply to every project folder. The template's
+  // "Local Runtime" tasks need Docker-in-Docker, which this stack does not have (ADR-0005).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SimVehicleApp: Build",
+      "detail": "Conan dependencies (offline) + CMake build, like SynCode's build stage",
+      "type": "shell",
+      "command": "./install_dependencies.sh && ./build.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "SimVehicleApp: Test",
+      "detail": "Generated tests (scenarios saved with the workflows) + your unit tests",
+      "type": "shell",
+      "command": "for t in build/bin/app_generated_tests build/bin/app_utests; do if [ -x \"$t\" ]; then \"$t\" || exit 1; else echo \"no $t\"; fi; done",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "SimVehicleApp: Run on stack",
+      "detail": "Runs build/bin/app against the stack's KUKSA databroker (of the project's VSS release) and Mosquitto",
+      "type": "shell",
+      "command": "sv-run-on-stack",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": false,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+}
