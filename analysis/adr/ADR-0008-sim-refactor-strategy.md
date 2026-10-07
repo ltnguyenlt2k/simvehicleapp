@@ -38,3 +38,8 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
 4. **License-driven** (ADR-0004): gỡ tool Speech-to-Text + `ffmpeg-static` (GPL) ở M1 thay vì M11.
 5. Toolbar allowlist qua `NEXT_PUBLIC_SV_TOOLBAR_ALLOWLIST` (cần tiền tố public vì chạy client) thay cho `SV_TOOLBAR_ALLOWLIST`.
 6. Fragment compose cần `NEXT_PUBLIC_SOCKET_URL` (CSP production) để collaboration realtime hoạt động.
+
+## Notes / Deviations (2026-10-07) — đợt 3 (M11-T03), theo uỷ quyền PO 2026-10-06, chờ PO xác nhận
+1. **Đợt 3a (xong):** gỡ 221 block tích hợp bên thứ ba (nhóm `tools`) cùng thư mục tool, trigger, route `app/api/tools/<dịch vụ>`, connector knowledge, webhook provider và polling handler của chúng — 5 128 file, ~794 nghìn dòng; 20 dependency chỉ chúng dùng (client AWS, stagehand, linear, mongodb, mysql2, neo4j-driver, ajv). Giữ helper mà hạ tầng OAuth/credential/selector còn import (`tools/jira`, `microsoft_excel`, `sharepoint`, `gmail`, `crowdstrike`, `triggers/slack`, `tools/mistral` cho OCR knowledge base, `app/api/tools/ssh` cho handler `pi`). Gỡ nút Deploy/Run và phím Mod+Enter của Sim khỏi panel (chạy workflow Sim trên khối xe là vô nghĩa; vehicle app chạy bằng Run/Stop của thanh hành động). Type-check sạch, 566 file / 8 378 test vitest pass, `upstream_tree_check` PASS (mọi thay đổi khai báo trong `UPSTREAM_SYNC.allow`).
+2. **Đợt 3b (follow-up, chờ PO):** block AI lõi của Sim (`agent`, `router`, `evaluator`, `guardrails`…: tham chiếu ở ~280 file executor/provider), hạ tầng OAuth/credential/selector của tích hợp đã gỡ, trang Integrations; nâng dependency lõi còn lỗ hổng (next, axios, sharp, tar, nodemailer, better-auth — cần ADR-0032 note vì better-auth đang ghim). Hiện các block đó đã ẩn khỏi toolbar (allowlist M1).
+
