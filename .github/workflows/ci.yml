@@ -193,6 +193,7 @@ jobs:
           bun install --frozen-lockfile --cwd modules/compiler-code-cpp/generator
           bun install --frozen-lockfile --cwd modules/velocitas-stack/toolchain/agent
           bun install --frozen-lockfile --cwd modules/simvehicleapp-orchestrator
+          bun install --frozen-lockfile --cwd modules/simvehicleapp-ai
       - run: scripts/license/scan.sh
 
   contracts:
@@ -308,6 +309,31 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run check
       - name: Unit + path security + fault injection (ADR-0026 Verification)
+        run: bun test
+
+  ai:
+    name: simvehicleapp-ai (ai-assistant, MCP)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: modules/simvehicleapp-ai
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: pg
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+    env:
+      SV_TEST_DATABASE_URL: postgres://postgres:pg@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.8
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - name: Providers (HTTP fakes), patch, tools, agent loop, MCP, Postgres store — no live LLM
         run: bun test
 
   codegen-cpp-determinism:

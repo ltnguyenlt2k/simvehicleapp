@@ -62,7 +62,7 @@ echo "refresh: building migrations/realtime, contracts, core, backend, orchestra
 $DC build studio-migrations studio-realtime
 $DC build contracts
 $DC build vss-catalog compiler codegen-cpp
-$DC build orchestrator workspace signal-gateway toolchain-cpp
+$DC build orchestrator workspace signal-gateway toolchain-cpp ai-assistant
 $DC up -d
 # Keep the running studio image and the previous one (rollback); older sha-* tags are ~2 GB each.
 # Only image tags are removed — never containers or volumes.

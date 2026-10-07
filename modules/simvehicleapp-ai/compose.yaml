@@ -1,0 +1,45 @@
+# simvehicleapp-ai — self-contained compose fragment (needs image simvehicleapp/contracts:dev).
+services:
+  ai-assistant:
+    image: simvehicleapp/ai-assistant:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # Data owner of schema `sv_ai` in the stack's Postgres (ADR-0007 §4); it migrates the schema itself.
+      SV_DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@studio-db:5432/simvehicleapp
+      SV_CATALOG_URL: http://vss-catalog:4010
+      SV_COMPILER_URL: http://compiler:4020
+      SV_ORCHESTRATOR_URL: http://orchestrator:4030
+      SV_SIGNAL_GATEWAY_URL: http://signal-gateway:4050
+      # Provider (ADR-0030 §2): anthropic | openai | openai-compatible | ollama | gemini. Keys stay in this
+      # container: they never reach the browser (M10-T10).
+      SV_AI_PROVIDER: ${SV_AI_PROVIDER:-}
+      SV_AI_MODEL: ${SV_AI_MODEL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_COMPAT_BASE_URL: ${OPENAI_COMPAT_BASE_URL:-}
+      OPENAI_COMPAT_API_KEY: ${OPENAI_COMPAT_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434/v1}
+      SV_AI_MAX_TOOL_STEPS: ${SV_AI_MAX_TOOL_STEPS:-6}
+      SV_AI_RATE_LIMIT_PER_MINUTE: ${SV_AI_RATE_LIMIT_PER_MINUTE:-20}
+      SV_AI_RETENTION_DAYS: ${SV_AI_RETENTION_DAYS:-30}
+      SV_MCP_TOKEN: ${SV_MCP_TOKEN:-}
+      SV_MCP_TOKENS: ${SV_MCP_TOKENS:-}
+      SV_MCP_CLIENTS: ${SV_MCP_CLIENTS:-}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # The only service with internet egress besides the studio (ADR-0030 §7): the LLM provider and
+    # external MCP servers. /mcp is published on localhost for external agents (bearer token).
+    ports: ["127.0.0.1:${SV_AI_MCP_PORT:-4300}:4300"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    networks: [sv-internal, sv-edge]
+    restart: unless-stopped
+
+networks:
+  sv-internal:
+  sv-edge:

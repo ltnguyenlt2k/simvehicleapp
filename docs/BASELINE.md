@@ -8,6 +8,7 @@
 | eclipse-velocitas/vehicle-app-cpp-sdk | tag `v0.7.1` (conanfile `vehicle-app-sdk/0.7.1`) | bare mirror inside toolchain image |
 | Velocitas packages | devenv-runtimes v4.1.0 · devenv-devcontainer-setup v3.0.0 · devenv-github-workflows v7.0.0 · devenv-github-templates v1.0.5 · CLI v0.13.2 | baked in toolchain image (`~/.velocitas/packages`) |
 | COVESA VSS | v4.0 `vss_rel_4.0.json` sha256 `925d9e1b5bd187694b3e03051a50777fdd5b46a5a5c4f48fd49ca270a07cdc50` | `modules/velocitas-stack/vss/` |
+| @modelcontextprotocol/sdk | `1.32.1` exact (ai-assistant MCP server + client; M10, 2026-10-07) | `modules/simvehicleapp-ai/package.json` + `bun.lock` |
 
 ## Container images (registry digests resolved 2026-10-01)
 | Image | Digest |
