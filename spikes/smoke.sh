@@ -9,12 +9,13 @@ cd "$(dirname "$0")/.."
 DC="docker compose"; P=/workspace/projects/smoke-$(date +%s)
 pass(){ echo "PASS $*"; }; fail(){ echo "FAIL $*"; exit 1; }
 $DC up -d databroker mqtt toolchain-cpp >/dev/null
+# Tester image before the MQTT subscription: a (re)build inside its 20 s window made S-2 time out.
+docker build -q -t sv-spike-databroker-tester -f spikes/s2-s4-databroker/Dockerfile.tester spikes/s2-s4-databroker >/dev/null
 $DC exec -T toolchain-cpp bash -lc "sv-new-project $P >/tmp/init.log 2>&1" && pass "S-1 offline init $P" || fail "init (see /tmp/init.log in toolchain-cpp)"
 $DC exec -T toolchain-cpp bash -lc "cd $P && ./install_dependencies.sh >/tmp/deps.log 2>&1; ./build.sh >/tmp/build.log 2>&1; test -x build/bin/app && test -f build/compile_commands.json" && pass "S-1 build artifact + compile_commands" || fail "build"
 $DC exec -T toolchain-cpp bash -lc "cd $P && ./build/bin/app_utests >/tmp/utest.log 2>&1" && pass "unit tests" || fail "unit tests"
 $DC exec -d toolchain-cpp bash -lc "cd $P && exec ./build/bin/app > /tmp/app.log 2>&1"; sleep 3
 OUT=$(mktemp); ( $DC exec -T mqtt mosquitto_sub -h localhost -t sampleapp/currentSpeed -C 1 -W 20 > "$OUT" 2>&1 & ); sleep 1
-docker build -q -t sv-spike-databroker-tester -f spikes/s2-s4-databroker/Dockerfile.tester spikes/s2-s4-databroker >/dev/null
 docker run --rm --network simvehicleapp_sv-internal --entrypoint python sv-spike-databroker-tester -c \
   "from kuksa_client.grpc import VSSClient, Datapoint; c=VSSClient('databroker',55555); c.connect(); c.set_current_values({'Vehicle.Speed': Datapoint(77.0)}); c.disconnect()"
 sleep 3; grep -q '"speed":77' "$OUT" && pass "S-2 app received injected Vehicle.Speed and published MQTT: $(cat $OUT)" || fail "S-2 no MQTT ($(cat $OUT))"
