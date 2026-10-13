@@ -4,6 +4,8 @@
 >
 > Sinh ngày 2026-10-02 từ: 34 ADR (`analysis/adr/ADR-0001`…`0042`) + 15 file `analysis/phases/M00`…`M14`. Mỗi dòng feature = 1 cụm task (ID task gốc ghi trong cột cuối) để không phải tick 150+ ô task rời.
 
+> **Repo chính từ 2026-10-13: [github.com/Blinkthor/sim-vehicle-app](https://github.com/Blinkthor/sim-vehicle-app)** — chuyển nguyên toàn bộ lịch sử (325 commit, tag `studio/baseline-v0.7.13`, cùng SHA). Link CI/commit trong các dòng ghi trước ngày này trỏ tới repo cũ `ltnguyenlt2k/simvehicleapp` (bằng chứng lịch sử, giữ nguyên).
+
 ## 1. Vòng đời cập nhật file này (bắt buộc)
 
 1. Bắt đầu làm 1 feature → đổi `☐` thành `🔄`, ghi tên người/agent + ngày bắt đầu vào cột Ghi chú.
