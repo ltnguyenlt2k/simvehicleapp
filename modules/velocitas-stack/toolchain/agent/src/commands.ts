@@ -145,11 +145,17 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
           failCode: "DEPS_INSTALL_FAILED",
           failStage: "build",
         };
-      case "build":
+      case "build": {
+        // generate-model exports a new `vehicle-model` Conan revision; the project's CMake files still name the old
+        // package until `conan install` runs again — needed when the project's VSS file changed (a custom model that
+        // gained signals, ADR-0052) or another release's model was in the shared cache.
+        const model = modelStep(cfg, dir, false);
+        let regenerated = false;
         // ./build.sh exits 0 even when CMake configure fails (M0): the artifacts decide.
         return {
           steps: [
-            modelStep(cfg, dir, false),
+            { ...model, after: () => ((regenerated = true), model.after?.()) },
+            { label: "./install_dependencies.sh (vehicle model regenerated)", argv: bash("./install_dependencies.sh"), cwd: dir, when: () => regenerated },
             {
               label: options.release ? "./build.sh -r" : "./build.sh",
               argv: bash(options.release ? "./build.sh -r" : "./build.sh"),
@@ -160,6 +166,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
           failCode: "BUILD_FAILED",
           failStage: "build",
         };
+      }
       case "test": {
         // ctest finds no test (template enables testing after add_subdirectory): run the gtest binaries.
         const run = (bin: string) => `if [ -x build/bin/${bin} ]; then build/bin/${bin} --gtest_output=xml:build/test-results/${bin}.xml; else echo "no ${bin}"; fi`;
