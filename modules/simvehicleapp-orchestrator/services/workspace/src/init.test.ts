@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractValidator } from "@simvehicleapp/contracts";
 import { createWorkspaceHandler } from "./app.ts";
-import { InitFailed, initProject, type InitSources, ProjectExists } from "./init.ts";
+import { InitFailed, initProject, type InitSources, ProjectExists, syncProjectVss } from "./init.ts";
 import { Store } from "./store.ts";
 
 const validator = new ContractValidator();
@@ -69,6 +69,38 @@ describe("project creation (ADR-0026 §2, M07-T07)", () => {
     // a language is installed when it has a backend and a toolchain (SV_BACKENDS ∩ SV_TOOLCHAINS), whatever it is
     const py = await initProject(store, { slug: "py", language: "python", appName: "Py", vssRelease: "v4.0" }, sources());
     expect(py.language).toBe("python");
+  });
+});
+
+describe("VSS sync before a build (ADR-0052)", () => {
+  test("a custom model that gained signals is written into the project; the same document is never rewritten", async () => {
+    const store = new Store(join(SCRATCH, "ws-sync"));
+    let doc = '{"Vehicle":{"children":{"Speed":{"type":"sensor"}}}}';
+    const src = sources({ vss: async () => doc });
+    await initProject(store, { slug: "acme", language: "cpp", appName: "Acme", vssRelease: "v4.0-acme" }, src);
+    const file = join(store.projectDir("acme"), "app/vss/vss_rel_4.0-acme.json");
+    expect(readFileSync(file, "utf8")).toBe(doc);
+    // same document, other formatting (the seed keeps COVESA's bytes): no write
+    writeFileSync(file, '{\n  "Vehicle": {"children": {"Speed": {"type": "sensor"}}}\n}');
+    const before = statSync(file).mtimeMs;
+    expect(await syncProjectVss(store, "acme", src)).toEqual({ release: "v4.0-acme", path: "app/vss/vss_rel_4.0-acme.json", changed: false });
+    expect(statSync(file).mtimeMs).toBe(before);
+    // the custom model gained a signal: the project follows, atomically (no temp file left)
+    doc = '{"Vehicle":{"children":{"Speed":{"type":"sensor"},"Acme":{"type":"branch"}}}}';
+    expect((await syncProjectVss(store, "acme", src)).changed).toBe(true);
+    expect(readFileSync(file, "utf8")).toBe(doc);
+    expect(readdirSync(join(store.projectDir("acme"), "app/vss"))).toEqual(["vss_rel_4.0-acme.json"]);
+    // HTTP: 200 with the result, 502 when the catalog fails, 404 for an unknown project
+    const ok = createWorkspaceHandler(store, src);
+    const post = (h: typeof ok, slug: string) => h(new Request(`http://ws/projects/${slug}/vss-sync`, { method: "POST" }), ctx);
+    const r = await post(ok, "acme");
+    expect(r.status).toBe(200);
+    expect(await r.json()).toEqual({ release: "v4.0-acme", path: "app/vss/vss_rel_4.0-acme.json", changed: false });
+    const down = createWorkspaceHandler(store, sources({ vss: async () => { throw new Error("catalog down"); } }));
+    const bad = await post(down, "acme");
+    expect(bad.status).toBe(502);
+    expect((await bad.json())[0].code).toBe("WORKSPACE_COMMIT_FAILED");
+    expect((await post(ok, "nope")).status).toBe(404);
   });
 });
 

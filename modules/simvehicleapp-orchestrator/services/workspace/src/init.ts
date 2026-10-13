@@ -101,3 +101,35 @@ export async function initProject(store: Store, req: ProjectRequest, sources: In
     rmSync(staging, { recursive: true, force: true });
   }
 }
+
+/**
+ * Keeps the project's VSS file equal to its release in vss-catalog (ADR-0052): a custom model (`vX.Y-<name>`)
+ * may gain signals after the project was created, and the toolchain regenerates the vehicle model when the
+ * file changes (sha256 vs the model cache). COVESA releases are pinned, so for them this is a no-op. The file
+ * is the one AppManifest's vehicle-signal-interface names (written by `initProject`); a remote `src` is left alone.
+ */
+export async function syncProjectVss(store: Store, slug: string, sources: Pick<InitSources, "vss">): Promise<{ release: string; path: string | null; changed: boolean }> {
+  const { vssRelease } = store.project(slug);
+  const dir = store.projectDir(slug);
+  const manifest = JSON.parse(readFileSync(join(dir, store.manifestPath(slug)), "utf8")) as { interfaces?: { type: string; config?: { src?: string } }[] };
+  const src = manifest.interfaces?.find((i) => i.type === "vehicle-signal-interface")?.config?.src;
+  if (!src || /^[a-z]+:\/\//.test(src)) return { release: vssRelease, path: null, changed: false };
+  const rel = normalizeRelative(src);
+  const abs = join(dir, rel);
+  const wanted = await sources.vss(vssRelease);
+  // Same document ⇒ no write: the seed's file keeps its original bytes while the catalog serves compact JSON, and a
+  // rewrite would only trigger a needless vehicle-model regeneration.
+  const same = (text: string) => {
+    try {
+      return JSON.stringify(JSON.parse(text)) === JSON.stringify(JSON.parse(wanted));
+    } catch {
+      return false;
+    }
+  };
+  if (existsSync(abs) && same(readFileSync(abs, "utf8"))) return { release: vssRelease, path: rel, changed: false };
+  const tmp = `${abs}.sv-sync`;
+  mkdirSync(dirname(abs), { recursive: true });
+  writeFileSync(tmp, wanted);
+  renameSync(tmp, abs);
+  return { release: vssRelease, path: rel, changed: true };
+}
