@@ -49,11 +49,29 @@ export function indexVss(doc: unknown): Map<string, SignalMeta> {
   return out;
 }
 
-/** Signals per release, loaded once from the catalog (a failed load is retried on the next call). */
+/**
+ * Signals per release, loaded once from the catalog (a failed load is retried on the next call). A custom model
+ * (`vX.Y-<name>`, ADR-0052) can gain signals while the gateway runs: `signalsWith` reloads a release once when a
+ * requested path is missing, at most every `refreshMs` per release (an unknown path stays cheap to reject).
+ */
 export class Catalog {
   private readonly cache = new Map<string, Promise<Map<string, SignalMeta>>>();
+  private readonly reloaded = new Map<string, number>();
 
-  constructor(private readonly loadDocument: (release: string) => Promise<unknown>) {}
+  constructor(
+    private readonly loadDocument: (release: string) => Promise<unknown>,
+    private readonly opts: { refreshMs?: number; now?: () => number } = {},
+  ) {}
+
+  async signalsWith(release: string, paths: readonly string[]): Promise<Map<string, SignalMeta>> {
+    const signals = await this.signals(release);
+    if (paths.every((p) => signals.has(p))) return signals;
+    const now = (this.opts.now ?? Date.now)();
+    if (now - (this.reloaded.get(release) ?? Number.NEGATIVE_INFINITY) < (this.opts.refreshMs ?? 5000)) return signals;
+    this.reloaded.set(release, now);
+    this.cache.delete(release);
+    return this.signals(release);
+  }
 
   signals(release: string): Promise<Map<string, SignalMeta>> {
     let p = this.cache.get(release);

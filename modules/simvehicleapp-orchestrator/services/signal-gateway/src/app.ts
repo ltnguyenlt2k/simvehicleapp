@@ -13,7 +13,7 @@ import { toDatapoint } from "./values.ts";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 const rejected = (status: number, error: string, message: string) => json(status, { error, message });
-const RELEASE = /^v[0-9]+\.[0-9]+$/;
+const RELEASE = /^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/;
 const MAX_PATHS = 200;
 const HEARTBEAT_MS = 15_000;
 const validator = new ContractValidator();
@@ -59,12 +59,12 @@ export function createGatewayHandler(d: GatewayDeps) {
   const now = d.now ?? Date.now;
   const mirrors = new Map<string, Mirror>();
 
-  const resolve = async (release: string | null): Promise<Resolved | Response> => {
-    if (!release || !RELEASE.test(release)) return rejected(400, "invalid_request", "release (vX.Y) is required");
+  const resolve = async (release: string | null, paths: readonly string[] = []): Promise<Resolved | Response> => {
+    if (!release || !RELEASE.test(release)) return rejected(400, "invalid_request", "release (vX.Y or vX.Y-<name>) is required");
     const broker = d.broker(release);
     if (!broker) return rejected(503, "no_databroker", `the stack has no databroker for VSS ${release}`);
     try {
-      return { broker, signals: await d.catalog.signals(release) };
+      return { broker, signals: await d.catalog.signalsWith(release, paths) };
     } catch (e) {
       return rejected(503, "catalog_unavailable", `VSS ${release} catalog is unavailable: ${(e as Error).message}`);
     }
@@ -85,9 +85,9 @@ export function createGatewayHandler(d: GatewayDeps) {
     const pathList = () => [...new Set((q.get("paths") ?? "").split(",").map((p) => p.trim()).filter(Boolean))];
 
     if (url.pathname === "/signals" && req.method === "GET") {
-      const r = await resolve(q.get("release"));
-      if (r instanceof Response) return r;
       const paths = pathList();
+      const r = await resolve(q.get("release"), paths);
+      if (r instanceof Response) return r;
       const bad = checkPaths(r, paths);
       if (bad) return rejected(400, "invalid_request", bad);
       const targets = actuators(r, paths);
@@ -135,9 +135,9 @@ export function createGatewayHandler(d: GatewayDeps) {
     }
 
     if (url.pathname === "/snapshot" && req.method === "GET") {
-      const r = await resolve(q.get("release"));
-      if (r instanceof Response) return r;
       const paths = pathList();
+      const r = await resolve(q.get("release"), paths);
+      if (r instanceof Response) return r;
       const bad = checkPaths(r, paths);
       if (bad) return rejected(400, "invalid_request", bad);
       try {
@@ -151,7 +151,7 @@ export function createGatewayHandler(d: GatewayDeps) {
     if (url.pathname === "/signals" && req.method === "POST") {
       const b = (await req.json().catch(() => null)) as { release?: string; path?: string; value?: unknown; field?: Field } | null;
       if (!b || typeof b.path !== "string" || !("value" in b) || (b.field !== "value" && b.field !== "target")) return rejected(400, "invalid_request", "release, path, value and field (value|target) are required");
-      const r = await resolve(b.release ?? null);
+      const r = await resolve(b.release ?? null, [b.path]);
       if (r instanceof Response) return r;
       const meta = r.signals.get(b.path);
       if (!meta) return rejected(400, "invalid_request", `${b.path} is not a signal of VSS ${b.release}`);
@@ -170,9 +170,9 @@ export function createGatewayHandler(d: GatewayDeps) {
     if (url.pathname === "/mirror" && req.method === "PUT") {
       const b = (await req.json().catch(() => null)) as { release?: string; paths?: unknown } | null;
       if (!b || !Array.isArray(b.paths) || !b.paths.every((p) => typeof p === "string")) return rejected(400, "invalid_request", "release and paths are required");
-      const r = await resolve(b.release ?? null);
-      if (r instanceof Response) return r;
       const paths = [...new Set(b.paths as string[])];
+      const r = await resolve(b.release ?? null, paths);
+      if (r instanceof Response) return r;
       const notActuator = paths.find((p) => r.signals.get(p)?.type !== "actuator");
       if (notActuator) return rejected(400, "invalid_request", `${notActuator} is not an actuator of VSS ${b.release}`);
       const m = mirrors.get(b.release!) ?? new Mirror();
@@ -191,10 +191,10 @@ export function createGatewayHandler(d: GatewayDeps) {
       if (req.method === "POST") {
         const b = (await req.json().catch(() => null)) as { release?: string; scenario?: Scenario } | null;
         if (!b?.scenario || !validator.validate("scenario", b.scenario).valid) return rejected(400, "invalid_request", "release and a scenario v1 are required");
-        const r = await resolve(b.release ?? null);
-        if (r instanceof Response) return r;
         // Every signal value is checked before anything is written.
         const sets = [...Object.entries(b.scenario.initial ?? {}).map(([path, value]) => ({ path, value })), ...b.scenario.inputs.filter((i) => i.path).map((i) => ({ path: i.path!, value: i.value }))];
+        const r = await resolve(b.release ?? null, sets.map((x) => x.path));
+        if (r instanceof Response) return r;
         for (const s of sets) {
           const meta = r.signals.get(s.path);
           if (!meta) return rejected(400, "invalid_request", `${s.path} is not a signal of VSS ${b.release}`);
@@ -215,7 +215,7 @@ export function playerSet(broker: (release: string) => Broker | undefined, catal
   return async (release: string, path: string, field: Field, value: unknown) => {
     const b = broker(release);
     if (!b) throw new Error(`no databroker for VSS ${release}`);
-    const meta = (await catalog.signals(release)).get(path);
+    const meta = (await catalog.signalsWith(release, [path])).get(path);
     if (!meta) throw new Error(`${path} is not a signal of VSS ${release}`);
     const dp = toDatapoint(meta, value);
     if (!dp.ok) throw new Error(dp.message);

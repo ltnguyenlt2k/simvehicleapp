@@ -15,6 +15,24 @@ const contracts = new ContractValidator();
 const ctx = { log: { info() {}, warn() {}, error() {}, debug() {}, child() { return this; } }, requestId: "t" } as never;
 
 describe("VSS catalog index", () => {
+  test("a custom model that gained a signal is reloaded once on a miss, at most every refreshMs (ADR-0052)", async () => {
+    let doc: unknown = { Vehicle: { type: "branch", children: { A: { type: "sensor", datatype: "uint8" } } } };
+    let loads = 0;
+    let t = 0;
+    const c = new Catalog(async () => (loads++, doc), { refreshMs: 5000, now: () => t });
+    expect([...(await c.signalsWith("v4.0-acme", ["Vehicle.A"])).keys()]).toEqual(["Vehicle.A"]);
+    doc = { Vehicle: { type: "branch", children: { A: { type: "sensor", datatype: "uint8" }, B: { type: "actuator", datatype: "boolean" } } } };
+    expect((await c.signalsWith("v4.0-acme", ["Vehicle.A"])).has("Vehicle.B")).toBe(false); // nothing missing ⇒ cached
+    expect((await c.signalsWith("v4.0-acme", ["Vehicle.B"])).get("Vehicle.B")?.type).toBe("actuator"); // miss ⇒ reload
+    expect(loads).toBe(2);
+    t = 1000;
+    expect((await c.signalsWith("v4.0-acme", ["Vehicle.Nope"])).has("Vehicle.Nope")).toBe(false);
+    expect(loads).toBe(2); // within refreshMs of the last reload
+    t = 6000;
+    await c.signalsWith("v4.0-acme", ["Vehicle.Nope"]);
+    expect(loads).toBe(3);
+  });
+
   test("leaf signals with type, datatype, limits and allowed values", () => {
     expect(meta("Vehicle.Speed")).toMatchObject({ type: "sensor", datatype: "float", unit: "km/h" });
     expect(meta("Vehicle.Body.Lights.Hazard.IsSignaling")).toMatchObject({ type: "actuator", datatype: "boolean" });
