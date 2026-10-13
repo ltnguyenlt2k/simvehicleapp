@@ -43,7 +43,7 @@
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
-| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050 (Proposed) | 🔄 | 10/10 có ADR; #1, #7 ✔ (CI); #5 ADR + spike; #2–#4, #6, #8–#10 hoãn/không làm chờ PO |
+| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
 
 **MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
@@ -317,7 +317,7 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 | 7 | Sub-workflow/function, state machine block, filters | [0049](../analysis/adr/ADR-0049-filter-state-machine-subworkflow.md) | ✔ (filter, state machine) 2026-10-07: C40/C41 PASS simulator + C++/Python/Rust (CI `cae5486`); sub-workflow, `sv_rate` **hoãn** chờ PO |
 | 8 | Kanto deployment | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
 | 9 | Reverse proxy + SSO forward-auth cho IDE | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
-| 10 | VSS overlay OEM (vss-tools pipeline) | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
+| 10 | VSS overlay OEM / mô hình VSS tuỳ biến | [0052](../analysis/adr/ADR-0052-custom-vss-models.md) (thay #10 của 0050) | ✔ 2026-10-14 (Claude Code, theo yêu cầu PO 2026-10-13): release `vX.Y-<name>` (file JSON riêng hoặc overlay lên COVESA), `scripts/sv vss add/use/remove/list`, `databroker-custom`, vss-sync project mỗi SynCode; gate `gate/vss-custom-gate.sh` PASS local — C++/Python/Rust lint→simulate→SynCode→Run+inject, rồi đổi model (thêm signal) trên cùng project PASS; nightly (C++). [Hướng dẫn](user-guide/custom-vss.md) — chờ PO xác nhận |
 
 
 ## M15 — E2E toàn diện + video demo (bước cuối)

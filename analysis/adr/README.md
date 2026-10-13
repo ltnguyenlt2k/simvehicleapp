@@ -61,6 +61,7 @@ flowchart TB
     E49["0049 Filter, state machine, sub-workflow"]
     E50["0050 Kanto, IDE proxy, VSS overlay (hoãn)"]
     E51["0051 Image dựng sẵn + máy cấu hình thấp"]
+    E52["0052 Mô hình VSS tuỳ biến vX.Y-name"]
   end
   A2 --> A7
   A2 --> A9
@@ -137,6 +138,7 @@ flowchart TB
 | [0049](ADR-0049-filter-state-machine-subworkflow.md) | Filter (`state.filter`), state machine (desugar), sub-workflow (hoãn) | L2 | M14 |
 | [0050](ADR-0050-kanto-ide-proxy-vss-overlay.md) | Hoãn Kanto, IDE reverse proxy + SSO, VSS overlay | L1 | M14 |
 | [0051](ADR-0051-prebuilt-images-low-spec-deploy.md) | Image dựng sẵn qua GitHub Release (`sv pull`), venv Velocitas dùng chung, `SV_BUILD_JOBS` | L0 | M11 |
+| [0052](ADR-0052-custom-vss-models.md) | Mô hình VSS tuỳ biến `vX.Y-<name>` (file riêng hoặc overlay) xuyên catalog → databroker; vss-sync project | L0 | M14 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

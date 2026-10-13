@@ -36,3 +36,4 @@ Khi làm: #9 truy cập IDE qua proxy không session ⇒ 401, user không quyề
 compile + SynCode + parity với signal của overlay.
 
 ## Notes / Deviations
+- 2026-10-14: **#10 được làm** theo yêu cầu PO 2026-10-13 — [ADR-0052](ADR-0052-custom-vss-models.md) (release `vX.Y-<name>`, overlay JSON, `scripts/sv vss`, databroker-custom, vss-sync project); #8, #9 vẫn hoãn.
