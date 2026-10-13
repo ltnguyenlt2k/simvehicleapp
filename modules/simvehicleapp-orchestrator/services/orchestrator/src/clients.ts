@@ -48,6 +48,8 @@ export interface Clients {
   generate(language: string, request: unknown): Promise<Outcome<FileSet>>;
   createProject(body: { slug: string; language: string; appName: string; vssRelease: string }): Promise<Outcome<unknown>>;
   commit(slug: string, body: { generationId: string; fileset: FileSet; overwriteModified: boolean }): Promise<Outcome<unknown>>;
+  /** Project VSS file ⇐ its release in vss-catalog (workspace `syncProjectVss`, ADR-0052); `changed` when rewritten. */
+  syncVss(slug: string): Promise<Outcome<{ release: string; path: string | null; changed: boolean }>>;
   /** Read-only views of the project folder (workspace tree/file/generations), for the files viewer. */
   workspaceGet(path: string): Promise<Outcome<unknown>>;
   /** Runs a toolchain job to its end; every log line goes to `onLine`. */
@@ -85,14 +87,29 @@ export interface Endpoints {
 
 export class ServiceUnavailable extends Error {}
 
+/** A pooled connection closed under us (Bun: ECONNRESET "socket connection was closed unexpectedly"), not a refusal. */
+export function isConnectionReset(err: unknown): boolean {
+  const e = err as { code?: unknown; cause?: { code?: unknown }; message?: unknown } | null;
+  const code = e?.code ?? e?.cause?.code;
+  return code === "ECONNRESET" || code === "EPIPE" || code === "UND_ERR_SOCKET" || /socket connection was closed unexpectedly/i.test(String(e?.message ?? ""));
+}
+
 export function httpClients(e: Endpoints): Clients {
   // The current request id (the request being handled, or the generation the SynCode worker runs).
   const headers = () => ({ ...internalHeaders(undefined, e.secret), "content-type": "application/json" });
-  const call = async (url: string, init: RequestInit = {}) => {
-    try {
-      return await fetch(url, { ...init, headers: { ...headers(), ...(init.headers as Record<string, string> | undefined) } });
-    } catch (err) {
-      throw new ServiceUnavailable(`${url}: ${(err as Error).message}`);
+  /**
+   * `retry`: the call is idempotent (pure, keyed or a read) and is sent once more when the pooled keep-alive connection
+   * turns out to be dead — the peer restarted (a rebuilt image, `sv vss use`) and Bun reports "socket connection was
+   * closed unexpectedly" before the request reached it. Toolchain job creation is never retried (a job could run twice).
+   */
+  const call = async (url: string, init: RequestInit = {}, retry = false): Promise<Response> => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await fetch(url, { ...init, headers: { ...headers(), ...(init.headers as Record<string, string> | undefined) } });
+      } catch (err) {
+        if (retry && attempt === 0 && isConnectionReset(err)) continue;
+        throw new ServiceUnavailable(`${url}: ${(err as Error).message}`);
+      }
     }
   };
   const outcome = async <T>(res: Response): Promise<Outcome<T>> => {
@@ -111,21 +128,24 @@ export function httpClients(e: Endpoints): Clients {
   };
   return {
     async compile(graph, target) {
-      const res = await call(`${e.compiler}/compile`, { method: "POST", body: JSON.stringify({ graph, mode: "build", target }) });
+      const res = await call(`${e.compiler}/compile`, { method: "POST", body: JSON.stringify({ graph, mode: "build", target }) }, true);
       if (!res.ok) throw new ServiceUnavailable(`compiler /compile ⇒ ${res.status}`);
       return (await res.json()) as CompileResult;
     },
     async generate(language, request) {
-      return outcome<FileSet>(await call(`${base(e.backends, language, "backend")}/generate`, { method: "POST", body: JSON.stringify(request) }));
+      return outcome<FileSet>(await call(`${base(e.backends, language, "backend")}/generate`, { method: "POST", body: JSON.stringify(request) }, true));
     },
     async createProject(body) {
-      return outcome(await call(`${e.workspace}/projects`, { method: "POST", body: JSON.stringify(body) }));
+      return outcome(await call(`${e.workspace}/projects`, { method: "POST", body: JSON.stringify(body) }, true)); // a repeat answers 409, which the caller accepts
     },
     async workspaceGet(path) {
-      return outcome(await call(`${e.workspace}${path}`));
+      return outcome(await call(`${e.workspace}${path}`, {}, true));
     },
     async commit(slug, body) {
-      return outcome(await call(`${e.workspace}/projects/${slug}/commits`, { method: "POST", body: JSON.stringify(body) }));
+      return outcome(await call(`${e.workspace}/projects/${slug}/commits`, { method: "POST", body: JSON.stringify(body) }, true)); // keyed by generationId
+    },
+    async syncVss(slug) {
+      return outcome(await call(`${e.workspace}/projects/${slug}/vss-sync`, { method: "POST" }, true));
     },
     async job(language, kind, project, onLine, options) {
       const created = await this.startJob(language, kind, project, options);
@@ -166,7 +186,7 @@ export function httpClients(e: Endpoints): Clients {
     },
     async mirror(release, paths) {
       if (!e.signalGateway) return;
-      const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths }) });
+      const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths }) }, true);
       if (!res.ok) throw new ServiceUnavailable(`signal-gateway /mirror ⇒ ${res.status}`);
     },
     async followJob(language, jobId, afterSeq, onLine) {

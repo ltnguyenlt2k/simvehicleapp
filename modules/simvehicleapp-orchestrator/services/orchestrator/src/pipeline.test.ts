@@ -31,6 +31,7 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
     compile: async () => (calls.push("compile"), { ir, diagnostics: [{ code: "UNIT_ASSUMED", severity: "info", stage: "units", message: "m", docs: "diagnostics#UNIT_ASSUMED" }] }),
     generate: async (_l, req) => (calls.push(`generate:${JSON.stringify((req as { scenarios?: unknown }).scenarios ?? null).length > 4 ? "with-scenarios" : "no-scenarios"}`), { ok: true, value: fileset }),
     createProject: async () => (calls.push("ws:create"), { ok: true, value: {} }),
+    syncVss: async () => (calls.push("ws:vss-sync"), { ok: true, value: { release: "v4.0", path: "app/vss/vss_rel_4.0.json", changed: false } }),
     commit: async () => (calls.push("ws:commit"), { ok: true, value: {} }),
     workspaceGet: async (path) =>
       path.endsWith("/tree")
@@ -89,13 +90,33 @@ async function setup(projectPatch: Partial<Project> = {}) {
 const events = { line() {}, end() {} };
 
 describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
+  test("VSS sync (ADR-0052): a changed custom model is logged before the commit; a failed sync fails the write stage", async () => {
+    const { repo, project, gen } = await setup();
+    const lines: string[] = [];
+    const changed = fakeClients({ syncVss: async () => ({ ok: true, value: { release: "v4.0-acme", path: "app/vss/vss_rel_4.0-acme.json", changed: true } }) });
+    const g1 = gen({ graphs: [graph] });
+    await repo.createGeneration(g1);
+    const ok = await runGeneration(g1, { repo, clients: changed.clients, events: { line: (_g: string, l: { msg: string }) => void lines.push(l.msg), end() {} } as never });
+    expect(ok.state).toBe("succeeded");
+    expect(lines).toContain("VSS v4.0-acme changed in the catalog: app/vss/vss_rel_4.0-acme.json updated, the vehicle model is regenerated");
+    const failing = fakeClients({ syncVss: async () => ({ ok: false, status: 502, diagnostics: [], message: "catalog down" }) });
+    const g2 = gen({ graphs: [graph] });
+    await repo.createGeneration(g2);
+    const bad = await runGeneration(g2, { repo, clients: failing.clients, events });
+    expect(bad.state).toBe("failed");
+    expect(bad.stage).toBe("write");
+    expect(failing.calls).not.toContain("ws:commit");
+    expect((bad.diagnostics as { code: string }[]).map((d) => d.code)).toEqual(["WORKSPACE_COMMIT_FAILED"]);
+    void project;
+  });
+
   test("pass: every stage runs in order, verification {ir, format, compile, tests} all passed; the next run skips deps", async () => {
     const { repo, project, gen } = await setup();
     const { clients, calls } = fakeClients();
     const g1 = gen({ graphs: [graph], scenarios: [{ workflowId: "gw_a", scenario: { scenarioVersion: "1.0.0", name: "s", until: 10, inputs: [] } }] });
     await repo.createGeneration(g1);
     const done = await runGeneration(g1, { repo, clients, events });
-    expect(calls).toEqual(["compile", "generate:with-scenarios", "ws:commit", "job:deps", "job:build", "job:format-check", "job:test"]);
+    expect(calls).toEqual(["compile", "generate:with-scenarios", "ws:vss-sync", "ws:commit", "job:deps", "job:build", "job:format-check", "job:test"]);
     expect(done.state).toBe("succeeded");
     expect(done.verification).toEqual({ ir: "passed", format: "passed", compile: "passed", tests: "passed" });
     expect(done.stages.map((s) => s.state)).toEqual(["passed", "passed", "passed", "passed", "passed", "passed", "passed"]);

@@ -163,6 +163,11 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
     });
 
     await stage("write", async () => {
+      // A custom VSS model may have changed since the project was created (ADR-0052): the project's file follows it,
+      // and the build regenerates the vehicle model from the new file.
+      const v = await clients.syncVss(project.slug);
+      if (!v.ok) throw new StageFailed(v.diagnostics.length ? v.diagnostics : [diag("WORKSPACE_COMMIT_FAILED", "workspace", `Updating the project's VSS file failed (${v.status}${v.message ? `: ${v.message}` : ""})`)]);
+      if (v.value.changed) emit(`VSS ${v.value.release} changed in the catalog: ${v.value.path} updated, the vehicle model is regenerated`);
       const r = await clients.commit(project.slug, { generationId: gen.id, fileset: files!, overwriteModified: gen.request.overwriteModified === true });
       if (!r.ok) throw new StageFailed(r.diagnostics.length ? r.diagnostics : [diag("WORKSPACE_COMMIT_FAILED", "workspace", `Writing the project failed (${r.status}${r.message ? `: ${r.message}` : ""})`)]);
     });
