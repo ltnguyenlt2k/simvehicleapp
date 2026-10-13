@@ -102,15 +102,27 @@ jobs:
       STACK: docker compose -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml -f modules/simvehicleapp-core/compose.yaml
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # Upstream Sim builds this image on 8-vCPU/32 GB runners; the standard runner has 16 GB,
+      # Upstream Sim builds this image on 8-vCPU/32 GB runners; standard runners have 16 GB (public) or 7 GB (private),
       # so `next build` page generation gets killed (exit 143) without extra swap.
-      - name: Add 16 GB swap
+      # Private-repo runners (the repo moved to Blinkthor/sim-vehicle-app, private) have 7 GB RAM and little free disk:
+      # a fixed 16 GB swapfile filled the disk and killed the runner. Free the preinstalled toolchains we never use,
+      # then size the swap from what is free, keeping 12 GB for the image build.
+      - name: Free disk and add swap
         run: |
+          df -h / /mnt 2>/dev/null || true; free -g
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift || true
+          sudo docker image prune -af >/dev/null 2>&1 || true
           sudo swapoff -a || true
-          sudo fallocate -l 16G /mnt/sv-swapfile
-          sudo chmod 600 /mnt/sv-swapfile
-          sudo mkswap /mnt/sv-swapfile
-          sudo swapon /mnt/sv-swapfile
+          dir=/mnt
+          avail=$( (df -BG --output=avail /mnt 2>/dev/null || echo 0) | tail -1 | tr -dc 0-9)
+          if [ "${avail:-0}" -lt 20 ]; then dir=/var/tmp; avail=$(df -BG --output=avail / | tail -1 | tr -dc 0-9); fi
+          size=$(( ${avail:-0} - 12 )); [ "$size" -gt 16 ] && size=16; [ "$size" -lt 2 ] && size=2
+          echo "swap ${size}G on ${dir}"
+          sudo fallocate -l "${size}G" "$dir/sv-swapfile"
+          sudo chmod 600 "$dir/sv-swapfile"
+          sudo mkswap "$dir/sv-swapfile"
+          sudo swapon "$dir/sv-swapfile"
+          df -h / "$dir"; free -g
           free -h
           df -h / /mnt
       - name: docker build (app.Dockerfile, not pushed)
