@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- VSS release names (widened, ADR-0052): `^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$` — `vX.Y` (COVESA) or `vX.Y-<name>` (custom model) in `schemas/workflow-graph.v1`, `schemas/scenario.v1` and the openapi of vss-catalog, workspace, orchestrator, signal-gateway.
+- `openapi/workspace.v1.yaml` (additive, ADR-0052): `POST /projects/{slug}/vss-sync` — the project's VSS file follows its release in vss-catalog (before each SynCode build).
 - IR v1 semantics (M14 #7, ADR-0049): `state.filter` (opcode already in the enum) — args `value`/`mode`/`window`|`alpha`, outputs `value`/`samples`, state per node; one block may lower into several nodes sharing `src.blockId` (composite, state machine). Conformance `C40-filter`, `C41-state-machine`.
 - `schemas/block-spec.v1` (additive, M14 #1, ADR-0045): optional `members: [{output, path}]` for composite blocks (category `composite`, opcode `vehicle.read`) — the compiler desugars them into one `vehicle.read` per member; `path` may hold `{prop}` placeholders. Conformance `C39-composite-status`.
 - `openapi/orchestrator.v1.yaml` (additive, M09-T06): `POST /projects/{id}/export` — project zip with the workflow graphs, generation, license and notices.

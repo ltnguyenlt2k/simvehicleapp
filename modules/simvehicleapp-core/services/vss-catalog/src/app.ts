@@ -3,7 +3,7 @@ import type { RequestContext } from "@simvehicleapp/service-kit";
 import { VssParseError, VssSourceError, type NodeKind } from "@simvehicleapp/vss";
 import { Catalog, lookup, search, tree, UnknownPathError, UnknownReleaseError } from "./catalog.ts";
 
-const RELEASE = /^v[0-9]+\.[0-9]+$/;
+const RELEASE = /^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/;
 /** contracts `common#/$defs/vssPath`. */
 const VSS_PATH = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$/;
 const KINDS = new Set<string>(["branch", "sensor", "actuator", "attribute"]);

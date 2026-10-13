@@ -21,7 +21,7 @@ export class VssParseError extends Error {
   }
 }
 
-const RELEASE = /^v[0-9]+\.[0-9]+$/;
+const RELEASE = /^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/;
 const ROOT_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
 const CHILD_NAME = /^[A-Za-z0-9_]+$/;
 const DECIMAL = /^-?(0|[1-9][0-9]*)$/;

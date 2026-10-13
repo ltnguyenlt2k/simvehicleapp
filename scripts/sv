@@ -6,6 +6,7 @@
 #   scripts/sv down [-v]        stop (−v also removes volumes)
 #   scripts/sv refresh [--latest]  update the running stack to the pushed HEAD (studio image from CI, keeps data)
 #   scripts/sv pull [<tag>]     load the prebuilt images of a release instead of building (low-spec hosts, ADR-0051)
+#   scripts/sv vss list|add|use|remove   custom VSS models vX.Y-<name> (own signals or an overlay, ADR-0052)
 #   scripts/sv smoke            S-1/S-2 smoke: new project offline build + run app + MQTT check
 #   scripts/sv smoke live       full live smoke: M7 SynCode gate + M8 GW-A live gate (scripts/smoke.sh)
 #   scripts/sv reset-caches     drop conan/velocitas volumes after rebuilding the toolchain image
@@ -47,10 +48,11 @@ case "${1:-}" in
          if [[ $# -eq 1 ]]; then $DC up -d "${nb[@]}" $($DC config --services | grep -x 'toolchain-[a-z]*' | tr '\n' ' '); fi
          $DC up -d "${nb[@]}" "${@:2}" ;;
   pull)  ensure_env; exec scripts/sv-pull.sh "${@:2}" ;;
+  vss)   exec python3 scripts/sv-vss.py "${@:2}" ;;
   down)  $DC down "${@:2}" ;;
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache simvehicleapp_sv-velocitas-python ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;
   refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
   demo-video) exec scripts/demo-video.sh "${@:2}" ;;
-  *) sed -n '2,13p' "$0"; exit 1 ;;
+  *) sed -n '2,14p' "$0"; exit 1 ;;
 esac

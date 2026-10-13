@@ -28,6 +28,8 @@ afterAll(() => rm(TMP, { recursive: true, force: true }));
 test("compareReleases orders numerically and rejects bad names", () => {
   expect(["v10.0", "v4.2", "v4.0", "v4.10"].sort(compareReleases)).toEqual(["v4.0", "v4.2", "v4.10", "v10.0"]);
   expect(() => compareReleases("4.0", "v4.0")).toThrow("invalid release name: 4.0");
+  expect(["v4.2", "v4.0-zeta", "v4.0", "v4.0-acme"].sort(compareReleases)).toEqual(["v4.0", "v4.0-acme", "v4.0-zeta", "v4.2"]);
+  for (const bad of ["v4.0-", "v4.0-Acme", "v4.0-a_b", "v4.0--", "v4.0-x-", `v4.0-${"a".repeat(33)}`]) expect(() => compareReleases(bad, "v4.0")).toThrow("invalid release name");
 });
 
 test("COVESA_PINS match the vendored fixture bytes", async () => {
@@ -71,6 +73,24 @@ describe("LocalFileSource (seed v4.0, v4.2)", () => {
     const files = (await src.load("v4.2"))!;
     expect(files.units).toBeString();
     expect(files.quantities).toBeUndefined();
+  });
+
+  test("custom models directory (ADR-0052): only vX.Y-<name>, may be missing, sorted after their base", async () => {
+    const dir = join(TMP, "custom");
+    await rm(dir, { recursive: true, force: true });
+    for (const r of ["v4.0-acme", "v4.0", "v4.2-lab-2"]) {
+      await mkdir(join(dir, r), { recursive: true });
+      await copyFile(fixture("vss_rel_4.0.json"), join(dir, r, `vss_rel_${r.slice(1)}.json`));
+    }
+    const skipped: string[] = [];
+    const custom = await LocalFileSource.fromDirectory(dir, { custom: true, skipped });
+    expect(await custom.releases()).toEqual(["v4.0-acme", "v4.2-lab-2"]);
+    expect(skipped).toEqual(["v4.0"]);
+    expect((await custom.load("v4.0-acme"))!.origin).toBe(`file:${join(dir, "v4.0-acme", "vss_rel_4.0-acme.json")}`);
+    expect(await (await LocalFileSource.fromDirectory(join(TMP, "no-such-dir"), { custom: true })).releases()).toEqual([]);
+    await expect(LocalFileSource.fromDirectory(join(TMP, "no-such-dir"))).rejects.toThrow();
+    const all = new CompositeSource([new LocalFileSource(SEEDS), custom]);
+    expect(await all.releases()).toEqual(["v4.0", "v4.0-acme", "v4.2", "v4.2-lab-2"]);
   });
 
   test("invalid JSON is a VssSourceError naming the file", async () => {

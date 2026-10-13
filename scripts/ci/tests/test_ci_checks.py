@@ -424,3 +424,56 @@ class ImageGroups(unittest.TestCase):
     def test_duplicate_group_is_rejected(self):
         with self.assertRaises(ValueError):
             image_groups.parse_groups("a x:1\na y:1")
+
+
+def _load_sv_vss():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sv_vss", HERE.parents[1] / "sv-vss.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+sv_vss = _load_sv_vss()
+
+
+class SvVss(unittest.TestCase):
+    """Custom VSS models (scripts/sv-vss.py, ADR-0052): overlay merge and .env edits, without a stack."""
+
+    BASE = {"Vehicle": {"type": "branch", "description": "root", "children": {
+        "Speed": {"type": "sensor", "datatype": "float", "unit": "km/h", "description": "speed"},
+        "Body": {"type": "branch", "description": "body", "children": {}}}}}
+
+    def test_overlay_adds_in_order_and_overrides_attributes_only(self):
+        overlay = {"Vehicle": {"children": {
+            "Speed": {"max": 250},
+            "Acme": {"type": "branch", "description": "vendor", "children": {
+                "WarningLevel": {"type": "actuator", "datatype": "uint8", "description": "level"}}}}}}
+        out = sv_vss.merge(self.BASE, overlay)
+        kids = out["Vehicle"]["children"]
+        self.assertEqual(list(kids), ["Speed", "Body", "Acme"])
+        self.assertEqual(kids["Speed"], {**self.BASE["Vehicle"]["children"]["Speed"], "max": 250})
+        self.assertEqual(kids["Acme"]["children"]["WarningLevel"]["datatype"], "uint8")
+        self.assertEqual(self.BASE["Vehicle"]["children"]["Speed"].get("max"), None)  # base untouched
+
+    def test_incomplete_new_nodes_are_rejected(self):
+        for bad, why in [({"type": "signal", "description": "d"}, "type must be"),
+                         ({"type": "sensor", "description": "d"}, "datatype is required"),
+                         ({"type": "branch"}, "description is required")]:
+            with self.assertRaisesRegex(sv_vss.Fail, why):
+                sv_vss.merge(self.BASE, {"Vehicle": {"children": {"X": bad}}})
+
+    def test_release_names(self):
+        for ok in ["v4.0-acme", "v4.2-lab-2", "v10.1-x"]:
+            sv_vss.check_release(ok)
+        for bad in ["v4.0", "v4.0-Acme", "v4.0-", "v4.0-a_b", "4.0-acme", "v4.0-x-"]:
+            with self.assertRaises(sv_vss.Fail):
+                sv_vss.check_release(bad)
+
+    def test_env_edits_keep_other_entries_and_one_custom_broker(self):
+        b = sv_vss.brokers_with("v4.0=databroker:55555,v4.2=databroker-v4-2:55555,v4.0-old=databroker-custom:55555", "v4.0-acme")
+        self.assertEqual(b, "v4.0=databroker:55555,v4.2=databroker-v4-2:55555,v4.0-acme=databroker-custom:55555")
+        self.assertEqual(sv_vss.brokers_with(b, None), "v4.0=databroker:55555,v4.2=databroker-v4-2:55555")
+        self.assertEqual(sv_vss.profiles_with("python,rust", True), "python,rust,vss-custom")
+        self.assertEqual(sv_vss.profiles_with("python,vss-custom", True), "python,vss-custom")
+        self.assertEqual(sv_vss.profiles_with("vss-custom", False), "")

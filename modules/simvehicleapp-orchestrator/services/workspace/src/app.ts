@@ -1,5 +1,5 @@
 import type { RequestContext } from "@simvehicleapp/service-kit";
-import { InitFailed, initProject, type InitSources, ProjectExists, type ProjectRequest } from "./init.ts";
+import { InitFailed, initProject, type InitSources, ProjectExists, type ProjectRequest, syncProjectVss } from "./init.ts";
 import { normalizeRelative, PathRejected, SLUG } from "./paths.ts";
 import { CommitRejected, Crash, type FileSet, type Store } from "./store.ts";
 import { zip } from "./zip.ts";
@@ -36,8 +36,8 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
         const b = await body(req);
         if (b instanceof Response) return b;
         const { slug, language, appName, vssRelease } = b as Record<string, string>;
-        if (typeof slug !== "string" || !SLUG.test(slug) || !["cpp", "python", "rust"].includes(language!) || !/^[A-Z][A-Za-z0-9]*$/.test(appName ?? "") || !/^v[0-9]+\.[0-9]+$/.test(vssRelease ?? "")) {
-          return json(400, { error: "invalid_request", message: "slug, language (cpp|python|rust), appName (PascalCase) and vssRelease (vX.Y) are required" });
+        if (typeof slug !== "string" || !SLUG.test(slug) || !["cpp", "python", "rust"].includes(language!) || !/^[A-Z][A-Za-z0-9]*$/.test(appName ?? "") || !/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/.test(vssRelease ?? "")) {
+          return json(400, { error: "invalid_request", message: "slug, language (cpp|python|rust), appName (PascalCase) and vssRelease (vX.Y or vX.Y-<name>) are required" });
         }
         try {
           const p = await initProject(store, { slug, language: language as ProjectRequest["language"], appName: appName!, vssRelease: vssRelease! }, sources);
@@ -72,6 +72,17 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
           }
           if (e instanceof PathRejected) return json(422, [diag("WORKSPACE_PATH_REJECTED", e.message, { path: e.path, reason: e.reason })]);
           throw e;
+        }
+      }
+      if (op === "vss-sync" && req.method === "POST") {
+        // Before each SynCode build (orchestrator): the project's VSS file follows its release in the catalog.
+        try {
+          const r = await store.serialize(slug, () => syncProjectVss(store, slug, sources));
+          if (r.changed) ctx.log.info("project VSS updated from the catalog", { slug, release: r.release, path: r.path });
+          return json(200, r);
+        } catch (e) {
+          if (e instanceof PathRejected) return json(422, [diag("WORKSPACE_PATH_REJECTED", e.message, { path: e.path, reason: e.reason })]);
+          return json(502, [diag("WORKSPACE_COMMIT_FAILED", `VSS sync failed: ${(e as Error).message}`)]);
         }
       }
       if (op === "rollback" && req.method === "POST") {

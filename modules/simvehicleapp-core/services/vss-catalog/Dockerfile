@@ -16,7 +16,8 @@ COPY --from=build /src /src
 COPY --from=contracts /fixtures/vss/vss_rel_4.0.json /fixtures/vss/units.yaml /opt/sv/vss/v4.0/
 COPY --from=contracts /fixtures/vss/vss_rel_4.2.json /fixtures/vss/v4.2/units.yaml /fixtures/vss/v4.2/quantities.yaml /opt/sv/vss/v4.2/
 COPY --from=contracts /fixtures/vss/LICENSE.VSS /fixtures/vss/PROVENANCE.md /opt/sv/vss/
-RUN mkdir -p /var/cache/sv-vss && chown bun:bun /var/cache/sv-vss
+# /var/lib/sv-vss-custom: custom models (ADR-0052, volume sv-vss-custom, written by `scripts/sv vss add`).
+RUN mkdir -p /var/cache/sv-vss /var/lib/sv-vss-custom && chown bun:bun /var/cache/sv-vss /var/lib/sv-vss-custom
 USER bun
 WORKDIR /src/simvehicleapp-core/services/vss-catalog
 EXPOSE 4010

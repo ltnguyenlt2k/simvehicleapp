@@ -1,10 +1,11 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import Ajv2020, { type ValidateFunction } from "ajv/dist/2020.js";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSchema, SCHEMA_NAMES } from "@simvehicleapp/contracts";
 import { createLogger, createService } from "@simvehicleapp/service-kit";
-import { LocalFileSource, type ReleaseFiles, type VehicleModelSource } from "@simvehicleapp/vss";
+import { CompositeSource, LocalFileSource, type ReleaseFiles, type VehicleModelSource } from "@simvehicleapp/vss";
 import { Catalog } from "./catalog.ts";
 import { createCatalogHandler } from "./app.ts";
 
@@ -151,6 +152,38 @@ describe("ETag (ADR-0010 §7)", () => {
     expect(c.headers.get("etag")).toBe(etag);
     const other = await get("/tree?prefix=Vehicle.Cabin&release=v4.2");
     expect(other.headers.get("etag")).not.toBe(etag);
+  });
+});
+
+describe("custom models vX.Y-<name> (ADR-0052)", () => {
+  test("listed after their base, served like a release: tree, nodes, document; bad suffix ⇒ 400", async () => {
+    const tmp = mkdtempSync(join(import.meta.dir, "../.test-custom-"));
+    try {
+      const doc = JSON.parse(readFileSync(contractFile("fixtures/vss/vss_rel_4.0.json"), "utf8"));
+      doc.Vehicle.children.AcmeDemo = {
+        type: "branch",
+        description: "Vendor signals of the demo overlay.",
+        children: { WarningLevel: { type: "actuator", datatype: "uint8", min: 0, max: 3, description: "HMI warning level." } },
+      };
+      const file = join(tmp, "vss_rel_4.0-acme.json");
+      writeFileSync(file, JSON.stringify(doc));
+      const h = app(new CompositeSource([seeded, new LocalFileSource([{ release: "v4.0-acme", json: file }])]));
+      const req = (path: string) => h(new Request(`http://vss-catalog:4010${path}`, { headers: { "x-sv-internal": SECRET } }));
+      expect((await (await req("/releases")).json()).releases).toEqual([{ release: "v4.0", default: true }, { release: "v4.0-acme" }, { release: "v4.2" }]);
+      const nodes = await (await req("/nodes?paths=Vehicle.AcmeDemo.WarningLevel,Vehicle.Speed&release=v4.0-acme")).json();
+      expect(nodes.nodes.map((n: { path: string; kind: string; datatype: string }) => [n.path, n.kind, n.datatype])).toEqual([
+        ["Vehicle.AcmeDemo.WarningLevel", "actuator", "uint8"],
+        ["Vehicle.Speed", "sensor", "float"],
+      ]);
+      expect((await (await req("/nodes?paths=Vehicle.AcmeDemo.WarningLevel&release=v4.0")).json()).unknown).toEqual(["Vehicle.AcmeDemo.WarningLevel"]);
+      const vss = await req("/vss?release=v4.0-acme");
+      expect(vss.headers.get("x-sv-release")).toBe("v4.0-acme");
+      expect((await vss.json()).Vehicle.children.AcmeDemo.children.WarningLevel.datatype).toBe("uint8");
+      expect((await req("/tree?release=v4.0-Acme")).status).toBe(400);
+      expect((await req("/tree?release=v4.0-other")).status).toBe(404);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
 

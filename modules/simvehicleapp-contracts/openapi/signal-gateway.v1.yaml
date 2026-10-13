@@ -64,7 +64,7 @@ paths:
               required: [release, path, value, field]
               additionalProperties: false
               properties:
-                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
                 path: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" }
                 value: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
                 field: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1#/$defs/field" }
@@ -92,7 +92,7 @@ paths:
               required: [release, paths]
               additionalProperties: false
               properties:
-                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
                 paths: { type: array, maxItems: 500, uniqueItems: true, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
       responses:
         "204": { description: Mirroring updated. }
@@ -112,7 +112,7 @@ paths:
               required: [release, scenario]
               additionalProperties: false
               properties:
-                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
                 scenario: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1" }
       responses:
         "202":
@@ -175,7 +175,7 @@ components:
       in: query
       required: true
       description: "Selects the databroker for this VSS release (SV_DATABROKERS)."
-      schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+      schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
     Paths:
       name: paths
       in: query

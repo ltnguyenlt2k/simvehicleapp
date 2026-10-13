@@ -50,7 +50,7 @@ paths:
                 slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
                 language: { enum: [cpp, python, rust] }
                 appName: { type: string, pattern: "^[A-Z][A-Za-z0-9]*$" }
-                vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
       responses:
         "201": { description: "Project created." }
         "409": { description: "Slug already exists." }
@@ -210,6 +210,32 @@ paths:
             application/json:
               schema: { $ref: "urn:simvehicleapp:contracts:generation-manifest:1.0.0-alpha.1" }
         "404": { description: "Generation not retained (last 10 are kept)." }
+  /projects/{slug}/vss-sync:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    post:
+      operationId: syncProjectVss
+      tags: [projects]
+      summary: Make the project's VSS file equal to its release in vss-catalog (ADR-0052, before each SynCode build).
+      description: >-
+        A custom model (`vX.Y-<name>`) may gain signals after the project was created; the file named by the
+        AppManifest vehicle-signal-interface is rewritten atomically when the catalog's document differs (compared as
+        JSON, formatting ignored), so the toolchain regenerates the vehicle model. A remote `src` is left alone.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Sync result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [release, path, changed]
+                properties:
+                  release: { type: string }
+                  path: { type: [string, "null"], description: "Project-relative VSS file; null when the AppManifest names a remote source." }
+                  changed: { type: boolean }
+        "404": { description: "No such project." }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+        "502": { description: "vss-catalog failed (diagnostics, WORKSPACE_COMMIT_FAILED)." }
 components:
   securitySchemes:
     internal:

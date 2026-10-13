@@ -17,6 +17,8 @@ services:
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
     volumes:
       - sv-vss:/var/cache/sv-vss
+      # Custom VSS models vX.Y-<name> (ADR-0052): `scripts/sv vss add` copies them in, the catalog only reads.
+      - sv-vss-custom:/var/lib/sv-vss-custom
     # Internal only (openapi/vss-catalog.v1.yaml): the studio BFF reaches it as http://vss-catalog:4010.
     # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
     cap_drop: [ALL]
@@ -51,6 +53,7 @@ services:
 
 volumes:
   sv-vss:
+  sv-vss-custom:
 
 networks:
   sv-internal:

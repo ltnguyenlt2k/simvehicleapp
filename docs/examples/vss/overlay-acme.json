@@ -1,0 +1,38 @@
+{
+  "Vehicle": {
+    "children": {
+      "Acme": {
+        "type": "branch",
+        "description": "Example vendor signals (docs/DEPLOY.md, ADR-0052): driver monitoring and an HMI warning level.",
+        "children": {
+          "DriverMonitor": {
+            "type": "branch",
+            "description": "Driver monitoring camera.",
+            "children": {
+              "DrowsinessLevel": {
+                "type": "sensor",
+                "datatype": "uint8",
+                "min": 0,
+                "max": 3,
+                "description": "Drowsiness estimate: 0 = alert, 1 = slight, 2 = drowsy, 3 = asleep."
+              }
+            }
+          },
+          "Hmi": {
+            "type": "branch",
+            "description": "Cluster warnings of the example vendor.",
+            "children": {
+              "WarningLevel": {
+                "type": "actuator",
+                "datatype": "uint8",
+                "min": 0,
+                "max": 3,
+                "description": "Warning shown on the cluster: 0 = none, 1 = info, 2 = warning, 3 = critical."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

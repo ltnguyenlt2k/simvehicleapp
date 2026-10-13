@@ -56,7 +56,7 @@ export type SvHealthResponse = z.output<typeof svHealthResponseSchema>
 /** VSS release tag, e.g. `v4.0` (openapi/vss-catalog.v1.yaml `Release`). */
 export const svVssReleaseSchema = z
   .string()
-  .regex(/^v[0-9]+\.[0-9]+$/, 'release must look like v4.0')
+  .regex(/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/, 'release must look like v4.0')
 /** VSS path below the root branch (contracts `common#/$defs/vssPath`). */
 export const svVssPathSchema = z
   .string()
@@ -442,7 +442,7 @@ export const svCreateProjectBodySchema = z.object({
   workspaceId: workspaceIdSchema,
   name: z.string().trim().min(1, 'name is required').max(200),
   slug: svProjectSlugSchema,
-  vssRelease: z.string().regex(/^v[0-9]+\.[0-9]+$/, 'a VSS release like v4.0'),
+  vssRelease: z.string().regex(/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/, 'a VSS release like v4.0'),
   workflowIds: z.array(workflowIdSchema).max(500),
   /** Language of the generated app (ADR-0040, ADR-0041); the stack must have its backend and toolchain. */
   language: z.enum(['cpp', 'python', 'rust']).default('cpp'),

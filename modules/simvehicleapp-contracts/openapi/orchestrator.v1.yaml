@@ -62,7 +62,7 @@ paths:
                 slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
                 name: { type: string, minLength: 1, maxLength: 200 }
                 language: { enum: [cpp, python, rust] }
-                vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+                vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
                 appName: { type: string, pattern: "^[A-Z][A-Za-z0-9]*$", description: "Default: PascalCase of the name." }
                 settings: { $ref: "#/components/schemas/ProjectSettings" }
       responses:
@@ -503,7 +503,7 @@ components:
         projectId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         generationId: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
         state: { enum: [starting, running, stopping, stopped, crashed] }
-        vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+$" }
+        vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
         traceLevel: { enum: ["off", trigger, node] }
         exitCode: { type: integer }
         diagnostics: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }

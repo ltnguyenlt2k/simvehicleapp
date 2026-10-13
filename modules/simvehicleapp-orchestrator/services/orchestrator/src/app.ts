@@ -89,8 +89,8 @@ export function createOrchestratorHandler(d: AppDeps) {
       const b = await readBody(req);
       if (b instanceof Response) return b;
       const { slug, name, language, vssRelease, appName, settings } = b as Record<string, unknown>;
-      if (typeof slug !== "string" || !SLUG.test(slug) || typeof name !== "string" || !name.trim() || name.length > 200 || !["cpp", "python", "rust"].includes(language as string) || typeof vssRelease !== "string" || !/^v[0-9]+\.[0-9]+$/.test(vssRelease)) {
-        return json(400, { error: "invalid_request", message: "slug, name, language (cpp|python|rust) and vssRelease (vX.Y) are required" });
+      if (typeof slug !== "string" || !SLUG.test(slug) || typeof name !== "string" || !name.trim() || name.length > 200 || !["cpp", "python", "rust"].includes(language as string) || typeof vssRelease !== "string" || !/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/.test(vssRelease)) {
+        return json(400, { error: "invalid_request", message: "slug, name, language (cpp|python|rust) and vssRelease (vX.Y or vX.Y-<name>) are required" });
       }
       if (appName !== undefined && (typeof appName !== "string" || !/^[A-Z][A-Za-z0-9]*$/.test(appName))) return json(400, { error: "invalid_request", message: "appName must be PascalCase" });
       const s = (settings ?? {}) as Record<string, unknown>;

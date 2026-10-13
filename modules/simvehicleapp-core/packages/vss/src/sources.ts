@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { Dirent } from "node:fs";
 import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -33,14 +34,20 @@ export class VssSourceError extends Error {
   }
 }
 
-const RELEASE = /^v([0-9]+)\.([0-9]+)$/;
+/**
+ * `vX.Y` (a COVESA release) or `vX.Y-<name>` (a custom model: a vendor file or a COVESA release plus an overlay,
+ * ADR-0052). The suffix is lowercase letters, digits and inner dashes, at most 32 characters.
+ */
+const RELEASE = /^v([0-9]+)\.([0-9]+)(?:-([a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?))?$/;
 
-/** Sorts `v4.0 < v4.2 < v10.0`; throws on a malformed release name. */
+/** Sorts `v4.0 < v4.0-acme < v4.2 < v10.0` (a custom model right after its base); throws on a malformed name. */
 export function compareReleases(a: string, b: string): number {
   const pa = RELEASE.exec(a);
   const pb = RELEASE.exec(b);
   if (!pa || !pb) throw new TypeError(`invalid release name: ${pa ? b : a}`);
-  return Number(pa[1]) - Number(pb[1]) || Number(pa[2]) - Number(pb[2]);
+  const sa = pa[3] ?? "";
+  const sb = pb[3] ?? "";
+  return Number(pa[1]) - Number(pb[1]) || Number(pa[2]) - Number(pb[2]) || (sa < sb ? -1 : sa > sb ? 1 : 0);
 }
 
 const sha256 = (bytes: Uint8Array | string) => createHash("sha256").update(bytes).digest("hex");
@@ -90,11 +97,24 @@ export class LocalFileSource implements VehicleModelSource {
 
   /**
    * Directory layout `<dir>/<vX.Y>/vss_rel_<X.Y>.json` (+ optional `units.yaml`, `quantities.yaml`).
-   * Subdirectories that do not match the layout are ignored.
+   * Subdirectories that do not match the layout are ignored. `custom` (the custom-models directory, ADR-0052):
+   * the directory may be missing (no custom model yet) and only `vX.Y-<name>` releases are taken, so a custom
+   * model never shadows a COVESA release; the names it skipped are reported in `skipped`.
    */
-  static async fromDirectory(dir: string): Promise<LocalFileSource> {
+  static async fromDirectory(dir: string, opts: { custom?: boolean; skipped?: string[] } = {}): Promise<LocalFileSource> {
     const entries: LocalReleaseEntry[] = [];
-    for (const d of (await readdir(dir, { withFileTypes: true })).filter((d) => d.isDirectory() && RELEASE.test(d.name))) {
+    let listing: Dirent[];
+    try {
+      listing = await readdir(dir, { withFileTypes: true });
+    } catch (e) {
+      if (opts.custom && (e as NodeJS.ErrnoException).code === "ENOENT") return new LocalFileSource([]);
+      throw e;
+    }
+    for (const d of listing.filter((d) => d.isDirectory() && RELEASE.test(d.name))) {
+      if (opts.custom && !d.name.includes("-")) {
+        opts.skipped?.push(d.name);
+        continue;
+      }
       const base = join(dir, d.name);
       const json = join(base, `vss_rel_${d.name.slice(1)}.json`);
       const files = new Set(await readdir(base));
