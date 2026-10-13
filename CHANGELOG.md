@@ -3,6 +3,13 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/); phiên bản theo SemVer. Chi tiết từng milestone:
 [docs/reports/](docs/reports/), trạng thái: [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [baseline-2026-10-13] — 2026-10-13 (pre-release)
+
+Mốc baseline tại commit `7487f17` — CI [run 38423365394](https://github.com/Blinkthor/sim-vehicle-app/actions/runs/38423365394)
+xanh 16/16 job trên runner private 2 vCPU / 7 GB. Release: [baseline-2026-10-13](https://github.com/Blinkthor/sim-vehicle-app/releases/tag/baseline-2026-10-13).
+Nội dung = mục 1.0.0-rc.1 bên dưới + M12–M15 (backend Python/Rust, `sv_filter`, `sv_state_machine`, khối composite,
+E2E Playwright toàn diện) + CI chọn job theo đường dẫn (`scripts/ci/changes.py`). Không phải v1.0: mục còn mở ở phần "Đã biết".
+
 ## [1.0.0-rc.1] — chưa phát hành
 
 Ứng viên v1.0 (MVP = M0→M11). Phát hành thật (tách repo, tag, lock, image) chờ PO xác nhận — `scripts/release-split.sh`.
