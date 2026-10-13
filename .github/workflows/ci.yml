@@ -65,6 +65,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/ci/tests -v
       - name: Compose lint
         run: docker compose version && python3 scripts/ci/compose_lint.py
+      - name: Release image groups cover every built image (deploy/image-groups.txt, ADR-0051)
+        run: python3 scripts/ci/image_groups.py
       - name: User-guide block reference matches the BlockSpecs (M11-T08)
         run: python3 scripts/docs/gen_block_reference.py --check
       - name: Contract-only dependencies

@@ -170,6 +170,8 @@ scripts/sv up                   # docker compose up -d
 scripts/sv smoke                # S-1/S-2/S-3: tạo project offline → build → chạy app ↔ databroker/MQTT
 ```
 
+Máy cấu hình thấp / chỉ để chạy: dùng image dựng sẵn của release (`scripts/sv pull <tag>`) thay vì `sv build` — xem [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 > Giai đoạn hiện tại chỉ có hạ tầng (`velocitas-stack`, `ide-vscode`, snapshot `simvehicleapp-studio`) — chưa có UI vehicle thật (bắt đầu từ M1). Chi tiết lệnh/bẫy đã gặp: [`.claude/skills/docker-compose-stack/SKILL.md`](.claude/skills/docker-compose-stack/SKILL.md).
 
 ## 7. Đọc tiếp / Where to go next

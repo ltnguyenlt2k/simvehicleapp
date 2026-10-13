@@ -1,0 +1,98 @@
+# Prebuilt images for a release (ADR-0051): every group of deploy/image-groups.txt is built from the release tag,
+# saved with `docker save | zstd` and attached to the GitHub Release as images-<group>.tar.zst (+ .sha256), so a
+# low-spec host runs `scripts/sv pull <tag>` instead of building (the C++ toolchain build alone needs hours and
+# several GB of RAM). Release assets do not count against the private repository's 500 MB package/artifact storage.
+# Runs only when a release is published (or by hand for an existing tag), never on push.
+name: release-images
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and attach the images to
+        required: true
+      groups:
+        description: Comma-separated groups of deploy/image-groups.txt
+        default: core,studio,cpp,python,rust
+permissions:
+  contents: read
+concurrency:
+  group: release-images-${{ inputs.tag || github.event.release.tag_name }}
+  cancel-in-progress: false
+env:
+  TAG: ${{ inputs.tag || github.event.release.tag_name }}
+jobs:
+  plan:
+    name: groups to build
+    runs-on: ubuntu-24.04
+    outputs:
+      groups: ${{ steps.plan.outputs.groups }}
+    steps:
+      - id: plan
+        env:
+          GROUPS: ${{ inputs.groups || 'core,studio,cpp,python,rust' }}
+        run: echo "groups=$(python3 -c 'import json,os; print(json.dumps([g.strip() for g in os.environ["GROUPS"].split(",") if g.strip()]))')" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: images-${{ matrix.group }}
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    permissions:
+      contents: write # upload release assets
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        group: ${{ fromJSON(needs.plan.outputs.groups) }}
+    env:
+      # Dummy secrets only satisfy compose interpolation; no build argument reads them.
+      DC: docker compose --env-file scripts/ci/ci.env --profile python --profile rust
+      SV_CONAN_JOBS: "4"
+      GROUP: ${{ matrix.group }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+      # Same sizing as ci.yml studio-image: private-repo runners have 7 GB RAM and little disk.
+      - name: Free disk and add swap
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift || true
+          sudo docker image prune -af >/dev/null 2>&1 || true
+          sudo swapoff -a || true
+          dir=/mnt
+          avail=$( (df -BG --output=avail /mnt 2>/dev/null || echo 0) | tail -1 | tr -dc 0-9)
+          if [ "${avail:-0}" -lt 20 ]; then dir=/var/tmp; avail=$(df -BG --output=avail / | tail -1 | tr -dc 0-9); fi
+          size=$(( ${avail:-0} - 14 )); [ "$size" -gt 12 ] && size=12; [ "$size" -lt 2 ] && size=2
+          sudo fallocate -l "${size}G" "$dir/sv-swapfile" && sudo chmod 600 "$dir/sv-swapfile"
+          sudo mkswap "$dir/sv-swapfile" && sudo swapon "$dir/sv-swapfile"
+          df -h / "$dir"; free -h
+      - name: Build (order of scripts/sv build)
+        run: |
+          case "$GROUP" in
+            core)   $DC build contracts
+                    $DC build vss-catalog compiler codegen-cpp codegen-python codegen-rust orchestrator workspace signal-gateway ai-assistant ;;
+            studio) $DC build studio studio-migrations studio-realtime ;;
+            cpp)    $DC build contracts && $DC build devcontainer-cpp toolchain-cpp && $DC build ide-cpp ;;
+            python) $DC build contracts && $DC build devcontainer-python toolchain-python && $DC build ide-python ;;
+            rust)   $DC build contracts && $DC build codegen-rust toolchain-rust ;;
+            *) echo "unknown group $GROUP"; exit 1 ;;
+          esac
+      - name: Save, compress, checksum
+        run: |
+          images=$(awk -v g="$GROUP" '$1 == g { $1 = ""; print }' deploy/image-groups.txt)
+          [ -n "$images" ] || { echo "group $GROUP not in deploy/image-groups.txt"; exit 1; }
+          docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}' | grep -F "$(echo $images | tr ' ' '\n')" || true
+          docker save $images | zstd -T0 -10 -q -o "images-$GROUP.tar.zst"
+          docker image prune -af >/dev/null 2>&1 || true
+          # GitHub release assets are limited to 2 GiB each.
+          if [ "$(stat -c %s "images-$GROUP.tar.zst")" -gt $((1900 * 1024 * 1024)) ]; then
+            split -b 1900M -d -a 2 "images-$GROUP.tar.zst" "images-$GROUP.tar.zst."
+            rm "images-$GROUP.tar.zst"
+          fi
+          sha256sum images-"$GROUP".tar.zst* > "images-$GROUP.sha256"
+          ls -l images-"$GROUP".*
+      - name: Attach to the release
+        run: gh release upload "$TAG" images-"$GROUP".* --clobber -R "${{ github.repository }}"

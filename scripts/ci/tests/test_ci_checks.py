@@ -19,6 +19,7 @@ import block_specs_sync  # noqa: E402
 import contract_only_deps  # noqa: E402
 import diagnostics_guard  # noqa: E402
 import golden_sync  # noqa: E402
+import image_groups  # noqa: E402
 import license_scan  # noqa: E402
 
 LICENSE_DIR = HERE.parents[1] / "license"
@@ -399,3 +400,27 @@ class Changes(unittest.TestCase):
         self.assertIsNone(changes.changed_paths("0" * 40, "HEAD"))
         self.assertIsNone(changes.changed_paths("f" * 40, "HEAD"))
 
+
+
+class ImageGroups(unittest.TestCase):
+    """deploy/image-groups.txt vs the compose images (scripts/ci/image_groups.py, ADR-0051)."""
+
+    COMPOSE = {"simvehicleapp/compiler:dev", "simvehicleapp/studio:dev", "simvehicleapp/contracts:dev", "pgvector/pgvector:pg17"}
+
+    def test_exact_cover_passes(self):
+        groups = image_groups.parse_groups("# c\ncore simvehicleapp/compiler:dev\nstudio simvehicleapp/studio:dev # ui\n")
+        self.assertEqual(image_groups.problems(groups, self.COMPOSE), [])
+
+    def test_missing_image_is_rejected(self):
+        found = image_groups.problems(image_groups.parse_groups("core simvehicleapp/compiler:dev"), self.COMPOSE)
+        self.assertEqual(found, ["simvehicleapp/studio:dev is built by compose but in no group"])
+
+    def test_image_in_two_groups_and_unknown_image_are_rejected(self):
+        groups = image_groups.parse_groups("a simvehicleapp/compiler:dev simvehicleapp/studio:dev\nb simvehicleapp/studio:dev simvehicleapp/gone:dev")
+        found = image_groups.problems(groups, self.COMPOSE)
+        self.assertIn("simvehicleapp/studio:dev is in groups a and b", found)
+        self.assertIn("simvehicleapp/gone:dev (group b) is not a compose image", found)
+
+    def test_duplicate_group_is_rejected(self):
+        with self.assertRaises(ValueError):
+            image_groups.parse_groups("a x:1\na y:1")

@@ -60,6 +60,7 @@ flowchart TB
     E48["0048 Quick Run interpreter (không làm)"]
     E49["0049 Filter, state machine, sub-workflow"]
     E50["0050 Kanto, IDE proxy, VSS overlay (hoãn)"]
+    E51["0051 Image dựng sẵn + máy cấu hình thấp"]
   end
   A2 --> A7
   A2 --> A9
@@ -135,6 +136,7 @@ flowchart TB
 | [0048](ADR-0048-quick-run-interpreter.md) | Không làm Quick Run interpreter | L2 | M14 |
 | [0049](ADR-0049-filter-state-machine-subworkflow.md) | Filter (`state.filter`), state machine (desugar), sub-workflow (hoãn) | L2 | M14 |
 | [0050](ADR-0050-kanto-ide-proxy-vss-overlay.md) | Hoãn Kanto, IDE reverse proxy + SSO, VSS overlay | L1 | M14 |
+| [0051](ADR-0051-prebuilt-images-low-spec-deploy.md) | Image dựng sẵn qua GitHub Release (`sv pull`), venv Velocitas dùng chung, `SV_BUILD_JOBS` | L0 | M11 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

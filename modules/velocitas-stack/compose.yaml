@@ -30,6 +30,8 @@ services:
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
       SDV_MQTT_ADDRESS: mqtt://mqtt:1883
       VELOCITAS_OFFLINE: "1"
+      # Parallel compile jobs of the app build (Ninja; empty = Ninja default, nproc + 2). Low-RAM hosts: 2.
+      CMAKE_BUILD_PARALLEL_LEVEL: ${SV_BUILD_JOBS:-}
     volumes:
       - sv-workspace:/workspace
       - sv-ccache:/home/vscode/.ccache
