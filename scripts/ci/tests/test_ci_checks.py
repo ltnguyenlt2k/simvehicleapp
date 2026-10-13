@@ -13,6 +13,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE.parent), str(HERE.parents[1] / "license")]
 
+import changes  # noqa: E402
 import compose_lint  # noqa: E402
 import block_specs_sync  # noqa: E402
 import contract_only_deps  # noqa: E402
@@ -359,3 +360,42 @@ class ScratchDenylistTest(TempRepo):
     def test_upstream_sim_code_is_out_of_scope(self):
         self.write("modules/simvehicleapp-studio/apps/sim/lib/db/x.ts", "const c = 'event_type'\n")
         self.assertEqual(scratch_denylist.run(self.root), [])
+
+
+class Changes(unittest.TestCase):
+    """Path-based job selection (scripts/ci/changes.py): heavy jobs only when what they test changed."""
+
+    def ran(self, *paths):
+        return {job for job, run in changes.jobs_for(list(paths)).items() if run}
+
+    def test_docs_only_runs_no_module_job(self):
+        self.assertEqual(self.ran("docs/ROADMAP.md", "analysis/adr/ADR-0049-x.md", "README.md"), set())
+
+    def test_contracts_run_every_module(self):
+        self.assertEqual(self.ran("modules/simvehicleapp-contracts/schemas/ir.v1.schema.json"),
+                         set(changes.JOBS) - {"deps"})
+
+    def test_studio_source_runs_studio_and_its_image_only(self):
+        self.assertEqual(self.ran("modules/simvehicleapp-studio/apps/sim/lib/sv/ai.ts"), {"studio", "studio_image"})
+
+    def test_core_runs_the_studio_e2e_but_not_the_backends(self):
+        self.assertEqual(self.ran("modules/simvehicleapp-core/packages/compiler/src/compile.ts"),
+                         {"core", "core_image", "studio_image"})
+
+    def test_macos_determinism_only_for_the_cpp_backend(self):
+        self.assertIn("cpp_macos", self.ran("modules/compiler-code-cpp/generator/src/emit.ts"))
+        self.assertNotIn("cpp_macos", self.ran("modules/compiler-code-rust/runtime/src/runtime.rs"))
+
+    def test_dependency_manifests_run_license_and_osv(self):
+        self.assertIn("deps", self.ran("modules/simvehicleapp-studio/bun.lock"))
+        self.assertIn("deps", self.ran("modules/compiler-code-rust/runtime/Cargo.toml"))
+        self.assertNotIn("deps", self.ran("modules/simvehicleapp-studio/apps/sim/app/page.tsx"))
+
+    def test_ci_changes_run_everything(self):
+        self.assertEqual(self.ran(".github/workflows/ci.yml"), set(changes.JOBS))
+
+    def test_unusable_base_runs_everything(self):
+        self.assertIsNone(changes.changed_paths("", "HEAD"))
+        self.assertIsNone(changes.changed_paths("0" * 40, "HEAD"))
+        self.assertIsNone(changes.changed_paths("f" * 40, "HEAD"))
+

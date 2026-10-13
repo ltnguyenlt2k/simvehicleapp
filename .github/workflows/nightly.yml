@@ -17,6 +17,24 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Pushes scan dependencies only when a lockfile changes (ci.yml `deps`); new advisories appear without any
+  # change on our side, so every lockfile is scanned each night as well.
+  osv-scan:
+    name: dependency vulnerabilities (osv-scanner, nightly)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: SimVehicleApp modules — no known vulnerability (M11-T06)
+        run: |
+          for f in modules/simvehicleapp-contracts/bun.lock modules/simvehicleapp-core/bun.lock modules/simvehicleapp-orchestrator/bun.lock \
+                   modules/simvehicleapp-ai/bun.lock modules/compiler-code-cpp/generator/bun.lock modules/compiler-code-python/generator/bun.lock modules/compiler-code-rust/generator/bun.lock \
+                   modules/velocitas-stack/toolchain/agent/bun.lock; do
+            docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/$f
+          done
+      - name: Studio (Sim fork dependencies) — report only (ADR-0008 wave 3b)
+        continue-on-error: true
+        run: docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/modules/simvehicleapp-studio/bun.lock
+
   live-smoke:
     name: live smoke (SynCode + GW-A live on the real stack)
     runs-on: ubuntu-24.04

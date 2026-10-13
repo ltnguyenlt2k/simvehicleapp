@@ -4,7 +4,7 @@
 #   scripts/sv refresh --latest   use the newest main run that has a studio image
 #
 # The studio image cannot be built on small hosts, so it comes from CI (artifact `studio-image`, kept
-# 3 days); contracts and core images are small and are built locally. Containers are recreated with
+# 3 days, only the newest one; a push that does not touch the studio reuses it); contracts and core images are small and are built locally. Containers are recreated with
 # `docker compose up -d` — volumes (studio DB, workspace, caches) are NEVER removed here.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -18,26 +18,38 @@ has_studio_image() {
     --jq '[.artifacts[] | select(.name == "studio-image" and .expired == false)] | length'
 }
 
-if [[ "${1:-}" == "--latest" ]]; then
-  run=""
-  for r in $(gh run list --branch main --limit 15 --json databaseId --jq '.[].databaseId'); do
-    if [[ "$(has_studio_image "$r")" == 1 ]]; then run=$r; break; fi
+# Newest main run that still has a studio image (CI keeps only the latest one).
+latest_image_run() {
+  for r in $(gh run list --workflow ci.yml --branch main --limit 30 --json databaseId --jq '.[].databaseId'); do
+    if [[ "$(has_studio_image "$r")" == 1 ]]; then echo "$r"; return; fi
   done
-  [[ -n "$run" ]] || { echo "refresh: no main run with a studio image in the last 15 runs" >&2; exit 1; }
+}
+
+if [[ "${1:-}" == "--latest" ]]; then
+  run=$(latest_image_run)
+  [[ -n "$run" ]] || { echo "refresh: no main run with a studio image in the last 30 runs" >&2; exit 1; }
 else
   sha=$(git rev-parse HEAD)
   if [[ "$(git rev-parse '@{u}' 2>/dev/null || true)" != "$sha" ]]; then
     echo "refresh: HEAD $sha is not pushed yet — push first (CI builds the studio image)" >&2
     exit 1
   fi
-  run=$(gh run list --branch main --commit "$sha" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+  run=$(gh run list --workflow ci.yml --branch main --commit "$sha" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
   [[ -n "$run" ]] || { echo "refresh: no CI run for $sha yet — retry in a minute" >&2; exit 1; }
   echo "refresh: waiting for CI run $run ($sha)…"
   gh run watch "$run" --exit-status >/dev/null || true
   if [[ "$(has_studio_image "$run")" != 1 ]]; then
-    echo "refresh: run $run produced no studio image (job failed or cancelled):" >&2
-    gh run view "$run" --json jobs --jq '.jobs[] | select(.conclusion != "success") | "  " + .conclusion + "  " + .name' >&2
-    exit 1
+    studio_job=$(gh run view "$run" --json jobs --jq '.jobs[] | select(.name | startswith("studio image")) | .conclusion')
+    if [[ "$studio_job" == "skipped" ]]; then
+      # Path-based CI (scripts/ci/changes.py): the studio did not change in this push, so the newest image is current.
+      run=$(latest_image_run)
+      [[ -n "$run" ]] || { echo "refresh: studio unchanged but no studio image found in the last 30 runs" >&2; exit 1; }
+      echo "refresh: studio unchanged in ${sha:0:12} — using the studio image of run $run"
+    else
+      echo "refresh: run $run produced no studio image (job failed or cancelled):" >&2
+      gh run view "$run" --json jobs --jq '.jobs[] | select(.conclusion != "success" and .conclusion != "skipped") | "  " + .conclusion + "  " + .name' >&2
+      exit 1
+    fi
   fi
 fi
 

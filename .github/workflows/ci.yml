@@ -15,41 +15,64 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci-selftest:
-    name: CI checks reject violations
+  changes:
+    name: what changed (path-based job selection)
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read # last successful run of this workflow = the diff base
+    outputs:
+      studio: ${{ steps.c.outputs.studio }}
+      studio_image: ${{ steps.c.outputs.studio_image }}
+      core: ${{ steps.c.outputs.core }}
+      core_image: ${{ steps.c.outputs.core_image }}
+      contracts: ${{ steps.c.outputs.contracts }}
+      cpp: ${{ steps.c.outputs.cpp }}
+      cpp_macos: ${{ steps.c.outputs.cpp_macos }}
+      python: ${{ steps.c.outputs.python }}
+      rust: ${{ steps.c.outputs.rust }}
+      agent: ${{ steps.c.outputs.agent }}
+      orchestrator: ${{ steps.c.outputs.orchestrator }}
+      ai: ${{ steps.c.outputs.ai }}
+      deps: ${{ steps.c.outputs.deps }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: python3 -m unittest discover -s scripts/ci/tests -v
+        with:
+          fetch-depth: 0
+      # Base = the last commit whose whole CI run succeeded (push) or the PR base: changes of a cancelled or
+      # failed run are tested again by the next run instead of being lost (cancel-in-progress is on).
+      - id: c
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          base="$PR_BASE"
+          if [ -z "$base" ]; then
+            base=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty' || true)
+          fi
+          echo "base: ${base:-none}"
+          python3 scripts/ci/changes.py --base "$base" | tee -a "$GITHUB_OUTPUT"
 
-  compose-lint:
-    name: compose lint
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: docker compose version
-      - run: python3 scripts/ci/compose_lint.py
-      - name: User-guide block reference matches the BlockSpecs (M11-T08)
-        run: python3 scripts/docs/gen_block_reference.py --check
-
-  contract-only-deps:
-    name: contract-only-deps
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: python3 scripts/ci/contract_only_deps.py
-      - name: Studio BlockSpec snapshot matches core (block-parity input, ADR-0011)
-        run: python3 scripts/ci/block_specs_sync.py
-      - name: Studio golden copy matches contracts (graph-adapter golden test input, M04-T01)
-        run: python3 scripts/ci/golden_sync.py
-
-  vendored-trees:
-    name: vendored trees match upstream pins
+  # The repo-wide checks take seconds each: one job instead of five (each job is billed at least a minute).
+  repo-checks:
+    name: repo checks (CI self-test, compose lint, contract-only deps, vendored trees, license guards)
     runs-on: ubuntu-24.04
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: CI checks reject violations
+        run: python3 -m unittest discover -s scripts/ci/tests -v
+      - name: Compose lint
+        run: docker compose version && python3 scripts/ci/compose_lint.py
+      - name: User-guide block reference matches the BlockSpecs (M11-T08)
+        run: python3 scripts/docs/gen_block_reference.py --check
+      - name: Contract-only dependencies
+        run: python3 scripts/ci/contract_only_deps.py
+      - name: Studio BlockSpec snapshot matches core (block-parity input, ADR-0011)
+        run: python3 scripts/ci/block_specs_sync.py
+      - name: Studio golden copy matches contracts (graph-adapter golden test input, M04-T01)
+        run: python3 scripts/ci/golden_sync.py
       - name: Sim v0.7.13 (declared changes only, UPSTREAM_SYNC.allow)
         run: >-
           python3 scripts/upstream_tree_check.py --repo simstudioai/sim
@@ -63,18 +86,15 @@ jobs:
         run: >-
           python3 scripts/upstream_tree_check.py --repo eclipse-velocitas/vehicle-app-python-template
           --commit e7082f75d1831489462f6672b6858f7ea7708256 --path modules/velocitas-stack/templates/vehicle-app-python-template
-
-  studio-guards:
-    name: studio license guards (no apps/sim/ee, no @/ee/, no Scratch opcodes)
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: python3 scripts/ci/studio_guards.py
+      - name: Studio license guards (no apps/sim/ee, no @/ee/)
+        run: python3 scripts/ci/studio_guards.py
       - name: Scratch opcode denylist (ADR-0004 clean-room)
         run: python3 scripts/ci/scratch_denylist.py
 
   studio:
     name: simvehicleapp-studio type-check + tests
+    needs: changes
+    if: needs.changes.outputs.studio == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -96,7 +116,12 @@ jobs:
 
   studio-image:
     name: studio image builds from source + E2E
+    needs: changes
+    if: needs.changes.outputs.studio_image == 'true'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write # delete superseded studio-image artifacts (private-repo storage is 500 MB)
     env:
       # Studio + core fragments share the sv-internal network, as in the root compose.
       STACK: docker compose -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml -f modules/simvehicleapp-core/compose.yaml
@@ -125,10 +150,18 @@ jobs:
           df -h / "$dir"; free -g
           free -h
           df -h / /mnt
-      - name: docker build (app.Dockerfile, not pushed)
-        run: >-
-          docker build --file modules/simvehicleapp-studio/docker/app.Dockerfile
-          --tag simvehicleapp/studio:dev modules/simvehicleapp-studio
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      # Layers cached in the GitHub Actions cache: the dependency stage (bun install + isolated-vm build, the
+      # slowest and most memory-hungry part) is reused until package.json/bun.lock change; only `next build` reruns.
+      - name: docker build (app.Dockerfile, not pushed; layer cache in the Actions cache)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: modules/simvehicleapp-studio
+          file: modules/simvehicleapp-studio/docker/app.Dockerfile
+          tags: simvehicleapp/studio:dev
+          load: true
+          cache-from: type=gha,scope=studio
+          cache-to: type=gha,scope=studio,mode=max
       - name: Studio image size (docs/STUDIO_BUILD.md)
         run: docker image ls simvehicleapp/studio:dev --format '{{.Repository}}:{{.Tag}} {{.Size}}'
       - name: Export image for local verification (main only, 3 days; before E2E so a failing gate can still be previewed and debugged locally)
@@ -141,6 +174,14 @@ jobs:
           path: studio-image.tar.gz
           retention-days: 3
           compression-level: 0
+      - name: Keep one studio image (delete the artifacts of older runs; `scripts/sv refresh` uses the newest)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/artifacts?name=studio-image&per_page=100" \
+            --jq '.artifacts[] | select(.workflow_run.id != ${{ github.run_id }}) | .id' |
+            while read -r id; do gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" && echo "deleted artifact $id"; done
       - name: Build migrations and realtime images from source
         run: docker compose -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml --env-file scripts/ci/ci.env build studio-migrations studio-realtime
       - name: Build contracts + core images (vss-catalog, compiler behind the studio BFF)
@@ -181,17 +222,20 @@ jobs:
         with:
           name: golden-sim-state
           path: modules/simvehicleapp-contracts/fixtures/golden/*/sim-state.json
+          retention-days: 3
           if-no-files-found: ignore
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: e2e-report
           path: modules/simvehicleapp-studio/e2e/playwright-report
-          retention-days: 7
+          retention-days: 3
           if-no-files-found: ignore
 
   license-scan:
     name: license scan
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -214,6 +258,8 @@ jobs:
 
   osv-scan:
     name: dependency vulnerabilities (osv-scanner)
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -230,6 +276,8 @@ jobs:
 
   contracts:
     name: simvehicleapp-contracts
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -255,6 +303,8 @@ jobs:
 
   core:
     name: simvehicleapp-core
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -272,6 +322,8 @@ jobs:
 
   codegen-cpp:
     name: compiler-code-cpp (generator, runtime, conformance P1)
+    needs: changes
+    if: needs.changes.outputs.cpp == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -305,6 +357,8 @@ jobs:
 
   codegen-python:
     name: compiler-code-python (generator, runtime, conformance P1)
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -332,6 +386,8 @@ jobs:
 
   codegen-rust:
     name: compiler-code-rust (generator, runtime, conformance P1 — feasibility)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -360,6 +416,8 @@ jobs:
 
   toolchain-agent:
     name: velocitas-stack toolchain-agent (jobs, SSE, plans)
+    needs: changes
+    if: needs.changes.outputs.agent == 'true'
     runs-on: ubuntu-24.04
     # The suite takes ~10 s; a hung runner (2026-10-07: 2 h before cancel) must fail fast instead.
     timeout-minutes: 10
@@ -377,6 +435,8 @@ jobs:
 
   orchestrator:
     name: simvehicleapp-orchestrator (workspace, orchestrator)
+    needs: changes
+    if: needs.changes.outputs.orchestrator == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -402,6 +462,8 @@ jobs:
 
   ai:
     name: simvehicleapp-ai (ai-assistant, MCP)
+    needs: changes
+    if: needs.changes.outputs.ai == 'true'
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -427,6 +489,8 @@ jobs:
 
   codegen-cpp-determinism:
     name: compiler-code-cpp determinism on a second OS (M06-T20)
+    needs: changes
+    if: needs.changes.outputs.cpp_macos == 'true'
     runs-on: macos-14
     defaults:
       run:
@@ -442,6 +506,8 @@ jobs:
 
   core-image:
     name: core images build + vss-catalog/compiler smoke
+    needs: changes
+    if: needs.changes.outputs.core_image == 'true'
     runs-on: ubuntu-24.04
     env:
       # Own project name: `down -v` must never touch the developer stack (project "simvehicleapp") if run locally.
