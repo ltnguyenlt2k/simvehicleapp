@@ -38,6 +38,17 @@ export class PlanError extends Error {}
 
 const bash = (script: string) => ["bash", "-c", script];
 
+/**
+ * Velocitas keeps one Python venv per project in `~/.velocitas/projects/md5(<project path>)/pyvenv` (C++ ~200 MB,
+ * Python ~150 MB) although every project pins the seed's packages: before `velocitas init`, link it to the seed
+ * project's venv baked into the image, so a project costs a few MB (ADR-0051; init/build/tests verified with the
+ * link, the seed venv is not written). A project that already has its own venv keeps it.
+ */
+export const SHARE_SEED_VENV =
+  'seed="$HOME/.velocitas/projects/$(printf %s "${SV_SEED_DIR:-}" | md5sum | cut -c1-32)/pyvenv"; ' +
+  'own="$HOME/.velocitas/projects/$(pwd -P | tr -d \'\\n\' | md5sum | cut -c1-32)"; ' +
+  'if [ -n "${SV_SEED_DIR:-}" ] && [ -d "$seed" ] && [ ! -e "$own/pyvenv" ]; then mkdir -p "$own" && ln -s "$seed" "$own/pyvenv"; fi';
+
 export function projectDir(cfg: AgentConfig, slug: string): string {
   if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(slug)) throw new PlanError(`invalid project slug ${slug}`); // contracts common `slug`
   const dir = resolve(cfg.projectsDir, slug);
@@ -122,7 +133,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
       case "init":
         // `velocitas init` runs the component hooks (download-vspec, generate-model, SDK, Conan) offline.
         return {
-          steps: [{ label: "velocitas init", argv: bash("velocitas init"), cwd: dir, after: () => modelStep(cfg, dir, true).after?.() }],
+          steps: [{ label: "velocitas init", argv: bash(`${SHARE_SEED_VENV}; velocitas init`), cwd: dir, after: () => modelStep(cfg, dir, true).after?.() }],
           failCode: "BUILD_FAILED",
           failStage: "build",
         };
@@ -208,7 +219,7 @@ function pythonPlan(cfg: AgentConfig, dir: string, kind: JobKind, options: JobOp
   switch (kind) {
     case "init":
       return {
-        steps: [{ label: "velocitas init", argv: bash("velocitas init"), cwd: dir, after: () => modelStep(cfg, dir, true).after?.() }],
+        steps: [{ label: "velocitas init", argv: bash(`${SHARE_SEED_VENV}; velocitas init`), cwd: dir, after: () => modelStep(cfg, dir, true).after?.() }],
         failCode: "BUILD_FAILED",
         failStage: "build",
       };

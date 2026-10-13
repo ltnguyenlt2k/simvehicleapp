@@ -1,10 +1,11 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readlinkSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractValidator } from "@simvehicleapp/contracts";
 import { createAgentHandler } from "./app.ts";
-import { createPlanner, PlanError, projectDir, validateJob, vssFile } from "./commands.ts";
+import { createPlanner, PlanError, projectDir, SHARE_SEED_VENV, validateJob, vssFile } from "./commands.ts";
 import { type JobKind, JobManager, type Plan } from "./jobs.ts";
 import { templateTar } from "./templates.ts";
 
@@ -193,6 +194,41 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     expect(() => validateJob(cfg, "build", "missing", {})).toThrow("does not exist");
     expect(() => validateJob(cfg, "run", "comfort-app", { env: { PATH: "/x" } })).toThrow("not allowed");
     expect(createPlanner(cfg)("run", "comfort-app", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]!.env).toEqual({ SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" });
+  });
+
+  test("init links the project's Velocitas venv to the seed's (ADR-0051): ~200 MB → a few MB per project", () => {
+    const root = mkdtempSync(join(SCRATCH, "venv-"));
+    const home = join(root, "home");
+    const md5 = (p: string) => createHash("md5").update(p).digest("hex");
+    const seedDir = join(root, "seed");
+    const seedVenv = join(home, ".velocitas", "projects", md5(seedDir), "pyvenv");
+    mkdirSync(seedVenv, { recursive: true });
+    const proj = (name: string) => {
+      const d = join(root, name);
+      mkdirSync(d);
+      return realpathSync(d);
+    };
+    const share = (cwd: string, env: Record<string, string> = { SV_SEED_DIR: seedDir }) =>
+      Bun.spawnSync(["bash", "-c", SHARE_SEED_VENV], { cwd, env: { HOME: home, PATH: process.env.PATH ?? "/usr/bin:/bin", ...env } }).exitCode;
+    // new project: its venv is a link to the seed's (Velocitas keys the cache by md5 of the physical path)
+    const a = proj("a");
+    expect(share(a)).toBe(0);
+    const own = join(home, ".velocitas", "projects", md5(a), "pyvenv");
+    expect(lstatSync(own).isSymbolicLink() && readlinkSync(own)).toBe(seedVenv);
+    // a project with its own venv keeps it; no seed (or no SV_SEED_DIR) ⇒ nothing is created
+    const b = proj("b");
+    const bVenv = join(home, ".velocitas", "projects", md5(b), "pyvenv");
+    mkdirSync(bVenv, { recursive: true });
+    expect(share(b)).toBe(0);
+    expect(lstatSync(bVenv).isSymbolicLink()).toBe(false);
+    const c = proj("c");
+    expect(share(c, {})).toBe(0);
+    expect(share(c, { SV_SEED_DIR: join(root, "no-seed") })).toBe(0);
+    expect(existsSync(join(home, ".velocitas", "projects", md5(c)))).toBe(false);
+    // the init plans run it right before `velocitas init`
+    const plan = createPlanner(cfg)("init", "comfort-app", {});
+    expect(plan.steps[0]!.argv).toEqual(["bash", "-c", `${SHARE_SEED_VENV}; velocitas init`]);
+    rmSync(root, { recursive: true, force: true });
   });
 
   test("Python projects (ADR-0040 §4): pip, compile + VSS check, pytest as gtest lines, ruff, run main.py", async () => {
