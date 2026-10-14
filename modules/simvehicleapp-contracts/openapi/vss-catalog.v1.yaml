@@ -124,6 +124,23 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/UnknownRelease" }
         "503": { $ref: "#/components/responses/ReleaseUnavailable" }
+  /units:
+    get:
+      operationId: getVssUnits
+      tags: [catalog]
+      description: "The release's units.yaml — vendored into a new project as app/vss/units.yaml and named in the AppManifest `unit_src`, so the vehicle-model generator knows the units of that release (VSS 4.2 added `iso8601`). Additive 2026-10-14."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { $ref: "#/components/parameters/ReleaseQuery" }
+      responses:
+        "200":
+          description: The units file; `x-sv-release` names the release.
+          content:
+            application/yaml:
+              schema: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { description: "Unknown release, or the release ships no units.yaml (`no_units`)." }
+        "503": { $ref: "#/components/responses/ReleaseUnavailable" }
   /model-hash:
     get:
       operationId: getModelHash

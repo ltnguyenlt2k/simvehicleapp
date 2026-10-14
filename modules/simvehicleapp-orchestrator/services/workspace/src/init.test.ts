@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ContractValidator } from "@simvehicleapp/contracts";
 import { createWorkspaceHandler } from "./app.ts";
-import { InitFailed, initProject, type InitSources, ProjectExists, syncProjectVss } from "./init.ts";
+import { InitFailed, initProject, type InitSources, ProjectExists, syncProjectVss, velocitasUnits } from "./init.ts";
 import { Store } from "./store.ts";
 
 const validator = new ContractValidator();
@@ -55,6 +55,21 @@ describe("project creation (ADR-0026 §2, M07-T07)", () => {
     await expect(initProject(store, { slug: "comfort-app", language: "cpp", appName: "X", vssRelease: "v4.0" }, sources())).rejects.toBeInstanceOf(ProjectExists);
   });
 
+  test("a release that ships units gets them in the project, named by the AppManifest unit_src (VSS 4.2: iso8601)", async () => {
+    const store = new Store(join(SCRATCH, "ws-units"));
+    const asked: string[] = [];
+    const src = sources({ units: async (r) => (asked.push(r), r === "v4.2" ? "iso8601:\n  definition: date and time\n  unit: ISO 8601\n  quantity: datetime\n" : null) });
+    await initProject(store, { slug: "u42", language: "cpp", appName: "U42", vssRelease: "v4.2" }, src);
+    const dir = store.projectDir("u42");
+    expect(Bun.YAML.parse(readFileSync(join(dir, "app/vss/units.yaml"), "utf8"))).toEqual({ units: { iso8601: { label: "ISO 8601", description: "date and time", domain: "datetime" } } });
+    expect(JSON.parse(readFileSync(join(dir, "app/AppManifest.json"), "utf8")).interfaces[0].config).toEqual({ src: "app/vss/vss_rel_4.2.json", unit_src: ["app/vss/units.yaml"], datapoints: { required: [] } });
+    // no units for the release: Velocitas' default stays; the seed's own release is not touched at all
+    await initProject(store, { slug: "acme", language: "cpp", appName: "Acme", vssRelease: "v4.0-acme" }, src);
+    expect(existsSync(join(store.projectDir("acme"), "app/vss/units.yaml"))).toBe(false);
+    await initProject(store, { slug: "seed", language: "cpp", appName: "Seed", vssRelease: "v4.0" }, src);
+    expect(asked).toEqual(["v4.2", "v4.0-acme"]);
+  });
+
   test("the seed's own VSS release is kept as is; a failing source leaves no project and no staging", async () => {
     const store = new Store(join(SCRATCH, "ws2"));
     await initProject(store, { slug: "a", language: "cpp", appName: "A", vssRelease: "v4.0" }, sources({ vss: async () => { throw new Error("catalog must not be called"); } }));
@@ -69,6 +84,18 @@ describe("project creation (ADR-0026 §2, M07-T07)", () => {
     // a language is installed when it has a backend and a toolchain (SV_BACKENDS ∩ SV_TOOLCHAINS), whatever it is
     const py = await initProject(store, { slug: "py", language: "python", appName: "Py", vssRelease: "v4.0" }, sources());
     expect(py.language).toBe("python");
+  });
+});
+
+describe("units for Velocitas' generator", () => {
+  test("VSS 4.2 format is converted to the vss-tools 4.0 format; the old format is kept", () => {
+    const v42 = "# c\nmm:\n  definition: Length measured in millimeters\n  unit: millimeter\n  quantity: length\n  allowed-datatypes: ['numeric']\niso8601:\n  definition: Date and Time\n  unit: ISO 8601\n  quantity: datetime\n";
+    expect(Bun.YAML.parse(velocitasUnits(v42))).toEqual({
+      units: { mm: { label: "millimeter", description: "Length measured in millimeters", domain: "length" }, iso8601: { label: "ISO 8601", description: "Date and Time", domain: "datetime" } },
+    });
+    expect(velocitasUnits(v42)).toBe(velocitasUnits(v42));
+    const old = "units:\n  mm:\n    label: millimeter\n";
+    expect(velocitasUnits(old)).toBe(old);
   });
 });
 

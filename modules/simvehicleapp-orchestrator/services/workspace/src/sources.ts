@@ -19,6 +19,12 @@ export function httpSources(opts: { toolchains: Record<string, string>; backends
     overlay: async (lang) => (await (await get(`${base(opts.backends, lang, "backend")}/template-overlay/files`)).json()) as Bundle,
     runtime: async (lang) => (await (await get(`${base(opts.backends, lang, "backend")}/runtime/files`)).json()) as Bundle,
     vss: async (release) => (await get(`${opts.catalog}/vss?release=${encodeURIComponent(release)}`)).text(),
+    units: async (release) => {
+      const res = await fetch(`${opts.catalog}/units?release=${encodeURIComponent(release)}`, { headers: internalHeaders(undefined, opts.secret) });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`GET ${opts.catalog}/units ⇒ ${res.status}`);
+      return res.text();
+    },
   };
 }
 

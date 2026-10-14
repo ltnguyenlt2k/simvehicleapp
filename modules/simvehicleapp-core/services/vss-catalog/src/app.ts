@@ -95,6 +95,13 @@ export function createCatalogHandler(catalog: Catalog) {
           return new Response(loaded.documentJson, { headers: { etag, "cache-control": "no-cache", "content-type": "application/json", "x-sv-release": loaded.model.release } });
         }
 
+        case "/units": {
+          // The release's units.yaml, vendored next to its document (AppManifest `unit_src`, ADR-0052 Notes).
+          const loaded = await catalog.get(releaseParam(url));
+          if (!loaded.unitsYaml) return errorJson(404, "no_units", `VSS ${loaded.model.release} ships no units.yaml`);
+          return new Response(loaded.unitsYaml, { headers: { "cache-control": "no-cache", "content-type": "application/yaml", "x-sv-release": loaded.model.release } });
+        }
+
         case "/model-hash": {
           const { model } = await catalog.get(releaseParam(url));
           return cachedJson(req, { release: model.release, modelHash: model.modelHash });

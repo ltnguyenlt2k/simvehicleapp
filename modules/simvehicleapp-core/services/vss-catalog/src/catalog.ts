@@ -18,6 +18,9 @@ export interface LoadedRelease {
   origin: string;
   /** The release document as JSON text (vendored into projects, `GET /vss`). */
   documentJson: string;
+  /** The release's `units.yaml` when it ships one (`GET /units`): the vehicle-model generator needs the units of
+   * the release it reads — VSS 4.2 added `iso8601`, unknown to Velocitas' bundled (4.0) units file. */
+  unitsYaml?: string;
 }
 
 export class UnknownReleaseError extends Error {
@@ -66,7 +69,7 @@ export class Catalog {
     const files = await this.source.load(release);
     if (!files) throw new UnknownReleaseError(release);
     const model = parseVssRelease(files.document, release);
-    return { model, index: buildSearchIndex(model), origin: files.origin, documentJson: JSON.stringify(files.document) };
+    return { model, index: buildSearchIndex(model), origin: files.origin, documentJson: JSON.stringify(files.document), ...(files.units ? { unitsYaml: files.units } : {}) };
   }
 }
 

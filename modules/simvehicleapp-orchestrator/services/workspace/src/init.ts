@@ -25,6 +25,8 @@ export interface InitSources {
   runtime(language: string): Promise<Bundle>;
   /** VSS release document text (`GET /vss?release=` of vss-catalog). */
   vss(release: string): Promise<string>;
+  /** The release's units.yaml (`GET /units?release=`), or null when it ships none (the generator's default applies). */
+  units?(release: string): Promise<string | null>;
 }
 
 export interface ProjectRequest {
@@ -36,6 +38,9 @@ export interface ProjectRequest {
 
 export class ProjectExists extends Error {}
 export class InitFailed extends Error {}
+
+/** Units file of the project's VSS release (AppManifest vehicle-signal-interface `unit_src`). */
+const UNITS_REL = "app/vss/units.yaml";
 
 /** Every backend vendors its runtime here (backend.yaml `runtime.vendorPath`, ADR-0021 §8). */
 const RUNTIME_PREFIX = "app/src/simvehicleapp-runtime/";
@@ -78,7 +83,7 @@ export async function initProject(store: Store, req: ProjectRequest, sources: In
     const velocitas = JSON.parse(readFileSync(join(staging, ".velocitas.json"), "utf8")) as { variables?: { appManifestPath?: string } };
     const manifestRel = normalizeRelative(velocitas.variables?.appManifestPath ?? "app/AppManifest.json");
     const manifest = JSON.parse(resetSampleEntries(readFileSync(join(staging, manifestRel), "utf8"), req.appName)) as {
-      interfaces: { type: string; config: { src?: string } }[];
+      interfaces: { type: string; config: { src?: string; unit_src?: string[] } }[];
     };
     const vsi = manifest.interfaces.find((i) => i.type === "vehicle-signal-interface");
     if (!vsi) throw new InitFailed("the template AppManifest has no vehicle-signal-interface");
@@ -88,6 +93,13 @@ export async function initProject(store: Store, req: ProjectRequest, sources: In
       writeIn(staging, vssRel, await sources.vss(req.vssRelease));
       if (old && old !== vssRel) rmSync(join(staging, normalizeRelative(old)), { force: true });
       vsi.config.src = vssRel;
+      // The model generator checks every unit against a units file — by default Velocitas' own, from VSS 4.0:
+      // a release with new units (4.2: `iso8601`) needs its own file, or `velocitas init` fails in generate-model.
+      const units = sources.units ? await sources.units(req.vssRelease) : null;
+      if (units) {
+        writeIn(staging, UNITS_REL, velocitasUnits(units));
+        vsi.config.unit_src = [UNITS_REL];
+      }
     }
     writeFileSync(join(staging, manifestRel), `${JSON.stringify(manifest, null, 4)}\n`);
 
@@ -132,4 +144,23 @@ export async function syncProjectVss(store: Store, slug: string, sources: Pick<I
   writeFileSync(tmp, wanted);
   renameSync(tmp, abs);
   return { release: vssRelease, path: rel, changed: true };
+}
+
+/**
+ * A units file in the format of Velocitas' model generator (vss-tools 4.0: `units: {<id>: {label, description,
+ * domain}}`). VSS ≥ 4.1 ships `<id>: {definition, unit, quantity, allowed-datatypes}` at the top level, which that
+ * generator reads as "no units" — converted here; a file already in the old format is kept. Deterministic output
+ * (ids in file order, JSON-quoted strings, which YAML reads as such).
+ */
+export function velocitasUnits(text: string): string {
+  const doc = (Bun.YAML.parse(text) ?? {}) as Record<string, unknown>;
+  if (doc.units && typeof doc.units === "object") return text;
+  const q = (v: unknown) => JSON.stringify(String(v ?? ""));
+  const lines = ["# Converted from the VSS release's units.yaml for Velocitas' vehicle-model generator (vss-tools 4.0 format).", "units:"];
+  for (const [id, def] of Object.entries(doc)) {
+    if (!def || typeof def !== "object") continue;
+    const d = def as Record<string, unknown>;
+    lines.push(`  ${q(id)}:`, `    label: ${q(d.unit ?? id)}`, `    description: ${q(d.definition)}`, `    domain: ${q(d.quantity)}`);
+  }
+  return `${lines.join("\n")}\n`;
 }

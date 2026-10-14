@@ -57,7 +57,7 @@ async function conforming(path: string, query = "", status = "200") {
 
 describe("contract conformance (openapi/vss-catalog.v1.yaml)", () => {
   test("every documented operation is served", () => {
-    expect(Object.keys(openapi.paths).sort()).toEqual(["/healthz", "/model-hash", "/nodes", "/releases", "/search", "/tree", "/version", "/vss"]);
+    expect(Object.keys(openapi.paths).sort()).toEqual(["/healthz", "/model-hash", "/nodes", "/releases", "/search", "/tree", "/units", "/version", "/vss"]);
   });
 
   test("/healthz and /version are public", async () => {
@@ -152,6 +152,25 @@ describe("ETag (ADR-0010 §7)", () => {
     expect(c.headers.get("etag")).toBe(etag);
     const other = await get("/tree?prefix=Vehicle.Cabin&release=v4.2");
     expect(other.headers.get("etag")).not.toBe(etag);
+  });
+});
+
+describe("units (GET /units)", () => {
+  test("the release's units.yaml when it ships one, 404 no_units otherwise", async () => {
+    const withUnits = new LocalFileSource([
+      { release: "v4.0", json: contractFile("fixtures/vss/vss_rel_4.0.json") },
+      { release: "v4.2", json: contractFile("fixtures/vss/vss_rel_4.2.json"), units: contractFile("fixtures/vss/v4.2/units.yaml") },
+    ]);
+    const h = app(withUnits);
+    const req = (path: string) => h(new Request(`http://vss-catalog:4010${path}`, { headers: { "x-sv-internal": SECRET } }));
+    const r = await req("/units?release=v4.2");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("application/yaml");
+    expect(await r.text()).toContain("iso8601");
+    const none = await req("/units?release=v4.0");
+    expect(none.status).toBe(404);
+    expect((await none.json()).error).toBe("no_units");
+    expect((await req("/units?release=v9.9")).status).toBe(404);
   });
 });
 
