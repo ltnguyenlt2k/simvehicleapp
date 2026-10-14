@@ -164,14 +164,6 @@ async function playOnce(projectId: string, generationId: string, g: string, work
   // sets it. Dev runs mirror the app's targets to current values (the provider role, ADR-0024): off here.
   const mirror = await fetch(`${G}/mirror`, { method: "PUT", headers: h, body: JSON.stringify({ release: "v4.0", paths: [] }) });
   if (!mirror.ok) throw new Error(`${g}: mirror off ${mirror.status}`);
-  // Warm-up: the first notification a freshly started app gets from the databroker can be tens of ms late on a
-  // cold runner (nightly 38529021603: GW-A's first trigger +61 ms, every later event ≤ 24 ms). Setting the initial
-  // values again (equal values: no trigger fires, C01/C08) primes that path; the scenario's first input comes later.
-  if (Object.keys(initial).length) {
-    const warm = await post(`${G}/play`, { release: "v4.0", scenario: { ...rest, name: `${g} warm-up`, initial, inputs: [], until: 0 } });
-    if (!warm.ok) throw new Error(`warm-up of ${g}: ${warm.status} ${await warm.text()}`);
-    // No pause: timers start with the app (GW-E), so the scenario must start right after the run as before.
-  }
   let done = false;
   const events = readEvents(`${O}/events?runId=${run.id}`, () => done);
   const play = await post(`${G}/play`, { release: "v4.0", scenario: { ...rest, inputs: scenario.inputs } });
@@ -221,6 +213,10 @@ async function main() {
     }
     // The run's trace carries wall-clock times; a wall-clock step during the run (NTP, WSL time sync)
     // shifts them, so a golden whose run saw a step is played again (at most twice), and the report says so.
+    // Warm-up: the first golden of a series ran late only on its first trigger on a cold CI runner (nightly
+    // 38529021603 +61 ms, 38533161549 +95 ms; every later event and every later golden ≤ 24 ms, although each
+    // golden is a new app process — the cold part is the stack, not the app). One discarded play first.
+    if (g === goldens[0]) await playOnce(p.id, gen.id, g, graph.workflowId, scenario);
     let actual: TraceEvent[] = [];
     let play: { startedAt: number; inputs: number[] } | undefined;
     const steps: number[] = [];
