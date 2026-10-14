@@ -318,6 +318,7 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 | 8 | Kanto deployment | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
 | 9 | Reverse proxy + SSO forward-auth cho IDE | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
 | 10 | VSS overlay OEM / mô hình VSS tuỳ biến | [0052](../analysis/adr/ADR-0052-custom-vss-models.md) (thay #10 của 0050) | ✔ 2026-10-14 (Claude Code, theo yêu cầu PO 2026-10-13): release `vX.Y-<name>` (file JSON riêng hoặc overlay lên COVESA), `scripts/sv vss add/use/remove/list`, `databroker-custom`, vss-sync project mỗi SynCode; gate `gate/vss-custom-gate.sh` PASS local — C++/Python/Rust lint→simulate→SynCode→Run+inject, rồi đổi model (thêm signal) trên cùng project PASS; nightly (C++). [Hướng dẫn](user-guide/custom-vss.md) — chờ PO xác nhận |
+| 11 | Bộ kịch bản tín hiệu thật (speed > 60 → HMI + phanh; ADAS) | [0052](../analysis/adr/ADR-0052-custom-vss-models.md) Notes | ✔ 2026-10-14 (Claude Code, yêu cầu PO 2026-10-13): conformance C42–C45 + `expect.publishes` (nội dung HMI giống hệt ở simulator/C++/Python/Rust); local: simulator 1132/1132, C++/Python/Rust conformance 53/53; [hướng dẫn](user-guide/scenarios.md) |
 
 
 ## M15 — E2E toàn diện + video demo (bước cuối)
