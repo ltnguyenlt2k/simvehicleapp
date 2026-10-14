@@ -39,7 +39,7 @@
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
 | [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
-| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS 2026-10-07 với eval LLM thật **BYPASS** (quyết định PO, chờ API key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
+| [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS; eval LLM thật đo 2026-10-14: **20/20 = 100 %** (provider openai-compatible của PO; trước đó BYPASS chờ key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
