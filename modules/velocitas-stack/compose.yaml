@@ -32,6 +32,8 @@ services:
       VELOCITAS_OFFLINE: "1"
       # Parallel compile jobs of the app build (Ninja; empty = Ninja default, nproc + 2). Low-RAM hosts: 2.
       CMAKE_BUILD_PARALLEL_LEVEL: ${SV_BUILD_JOBS:-}
+      # Shared compiler cache, LRU-trimmed by ccache at this size (ADR-0053 §9).
+      CCACHE_MAXSIZE: ${SV_CCACHE_MAX:-2G}
     volumes:
       - sv-workspace:/workspace
       - sv-ccache:/home/vscode/.ccache

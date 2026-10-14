@@ -93,6 +93,46 @@ paths:
           content:
             application/x-tar:
               schema: { type: string, contentMediaType: application/x-tar }
+  /projects/{slug}/forget:
+    post:
+      operationId: forgetProject
+      tags: [projects]
+      summary: Remove this toolchain's per-project cache of a deleted project (ADR-0053).
+      description: >-
+        The Velocitas project cache `~/.velocitas/projects/md5(<project path>)` (vehicle model, cache.json, the venv link).
+        The seed's shared venv is never removed. Idempotent.
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: slug, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" } }
+      responses:
+        "204": { description: "Forgotten (or nothing to forget)." }
+        "400": { description: "Invalid slug." }
+  /gc:
+    post:
+      operationId: collectGarbage
+      tags: [projects]
+      summary: Remove the per-project caches of every project not in `keep` (ADR-0053 §9).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [keep]
+              properties:
+                keep: { type: array, maxItems: 10000, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" } }
+      responses:
+        "200":
+          description: What was removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [removed, freedBytes]
+                properties:
+                  removed: { type: integer, minimum: 0 }
+                  freedBytes: { type: integer, minimum: 0 }
 components:
   securitySchemes:
     internal:

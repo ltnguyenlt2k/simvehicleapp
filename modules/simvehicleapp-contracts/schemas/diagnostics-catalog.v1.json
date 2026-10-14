@@ -2,6 +2,14 @@
   "catalogVersion": "1.0.0-alpha.1",
   "codes": [
     {
+      "code": "APP_QUOTA_EXCEEDED",
+      "severity": "error",
+      "stage": "workspace",
+      "title": "Vehicle app quota reached (workspace or host): delete or reuse an app",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0053"
+    },
+    {
       "code": "ARRAY_ELEMENT_TYPE_MISMATCH",
       "severity": "error",
       "stage": "types",
@@ -226,6 +234,14 @@
       "adr": "ADR-0016"
     },
     {
+      "code": "HOST_DISK_LOW",
+      "severity": "error",
+      "stage": "workspace",
+      "title": "Free disk space on the host is below the configured threshold",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0053"
+    },
+    {
       "code": "IR_VERSION_UNSUPPORTED",
       "severity": "error",
       "stage": "backend",
@@ -312,6 +328,14 @@
       "title": "Simulation stopped at its event limit (1e6 events)",
       "since": "1.0.0-alpha.1",
       "adr": "ADR-0017"
+    },
+    {
+      "code": "SYNCODE_QUEUE_FULL",
+      "severity": "error",
+      "stage": "build",
+      "title": "Too many SynCode runs are waiting: try again shortly",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0053"
     },
     {
       "code": "TRIGGER_WITHOUT_ACTION",

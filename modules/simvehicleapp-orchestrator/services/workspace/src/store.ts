@@ -20,7 +20,24 @@ import { insideRoots, normalizeRelative, PathRejected, resolveInside, SLUG, vali
 
 /** Owned roots a backend may write (ADR-0023 §3). */
 export const ALLOWED_ROOTS = ["app/src/generated/", "app/tests/generated/"];
-export const KEEP_GENERATIONS = 10;
+/** Generations whose file set is kept for rollback (ADR-0026; `SV_KEEP_GENERATIONS`, ADR-0053 §6). */
+export const KEEP_GENERATIONS = Math.max(1, Number(process.env.SV_KEEP_GENERATIONS ?? 10) || 10);
+
+/**
+ * Top-level entries of a project that a build recreates (ADR-0053 `clean`): the C++ `build-<arch>/` folders and their
+ * `build` link, the binaries Rust/Python builds copy into `build/`. Sources and generated code stay.
+ */
+export const BUILD_OUTPUT = /^(build|build-[^/]+)$/;
+
+/** Bytes under `path` (files and dirs, never following a symlink; a link counts as itself). */
+export function diskBytes(path: string): number {
+  const st = lstatSync(path, { throwIfNoEntry: false });
+  if (!st) return 0;
+  if (!st.isDirectory()) return st.size;
+  let total = 0;
+  for (const name of readdirSync(path)) total += diskBytes(join(path, name));
+  return total;
+}
 
 export interface FileSet {
   backend: string;
@@ -123,8 +140,9 @@ function listFiles(dir: string, base = dir): string[] {
   const out: string[] = [];
   for (const name of readdirSync(dir).sort()) {
     const p = join(dir, name);
-    const st = statSync(p, { throwIfNoEntry: false });
-    if (!st) continue;
+    // lstat: a symlink (e.g. `ln -s / x` made in the IDE) is never followed out of the project.
+    const st = lstatSync(p, { throwIfNoEntry: false });
+    if (!st || st.isSymbolicLink()) continue;
     if (st.isDirectory()) out.push(...listFiles(p, base));
     else out.push(relative(base, p).split("\\").join("/"));
   }
@@ -346,6 +364,7 @@ export class Store {
     const next = [...index.filter((x) => x !== gid), gid];
     for (const old of next.slice(0, Math.max(0, next.length - KEEP_GENERATIONS))) {
       rmSync(join(g, `${old}.fileset.json.gz`), { force: true });
+      rmSync(join(this.metaDir, "backup", old), { recursive: true, force: true });
     }
     writeDurable(indexPath, JSON.stringify(next));
     writeDurable(join(g, "current"), `${gid}\n`);
@@ -398,6 +417,42 @@ export class Store {
     const fs = this.storedFileSet(slug, gid);
     if (!fs) return Promise.resolve(null);
     return this.commit(slug, gid, fs, true);
+  }
+
+  // ---- lifecycle (ADR-0053) -------------------------------------------------------------------
+  /**
+   * Removes the project folder, its generation records and the backups of its generations. Serialized with its
+   * commits; never touches another project; a project already gone is not an error.
+   */
+  deleteProject(slug: string): Promise<void> {
+    const dir = this.projectDir(slug);
+    return this.serialize(slug, () => {
+      const g = this.genDir(slug);
+      const gids = existsSync(g) ? readdirSync(g).filter((f) => f.endsWith(".json") && f !== "index.json").map((f) => f.slice(0, -".json".length)) : [];
+      for (const gid of gids) rmSync(join(this.metaDir, "backup", gid), { recursive: true, force: true });
+      rmSync(g, { recursive: true, force: true });
+      rmSync(dir, { recursive: true, force: true });
+    });
+  }
+
+  /** Removes the build outputs (`BUILD_OUTPUT`) of the project, keeps sources; bytes freed. */
+  cleanProject(slug: string): Promise<number> {
+    const dir = this.projectDir(slug);
+    return this.serialize(slug, () => {
+      let freed = 0;
+      for (const name of readdirSync(dir).filter((n) => BUILD_OUTPUT.test(n))) {
+        freed += diskBytes(join(dir, name));
+        rmSync(join(dir, name), { recursive: true, force: true });
+      }
+      return freed;
+    });
+  }
+
+  /** Disk usage of the project folder and the part `cleanProject` would free. */
+  projectSize(slug: string): { bytes: number; buildBytes: number } {
+    const dir = this.projectDir(slug);
+    const buildBytes = readdirSync(dir).filter((n) => BUILD_OUTPUT.test(n)).reduce((t, n) => t + diskBytes(join(dir, n)), 0);
+    return { bytes: diskBytes(dir), buildBytes };
   }
 
   /** Files of the project for the UI (no build outputs, no VCS). */

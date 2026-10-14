@@ -72,6 +72,8 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Project" }
         "403": { description: "Denied by EntitlementService (LICENSE_FEATURE_DENIED)." }
+        "409": { description: "The slug exists, or the host app quota is reached (diagnostics `APP_QUOTA_EXCEEDED`, `data.scope` = host; ADR-0053)." }
+        "507": { description: "Free disk below the high threshold: no new app (diagnostics `HOST_DISK_LOW`, `data.level`, `data.freeBytes`; ADR-0053)." }
   /projects/{id}:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     get:
@@ -85,6 +87,63 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Project" }
         "404": { description: "Unknown project." }
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete the app — stops its run, removes its folder, toolchain cache and records (ADR-0053). Idempotent.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "204": { description: "Deleted (or already absent)." }
+        "409": { description: "A SynCode of the app is queued or running: wait for it or cancel it first." }
+  /projects/{id}/repair:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    post:
+      operationId: repairProject
+      tags: [projects]
+      summary: Re-create a failed app from scratch, keeping its workflows and settings (ADR-0053).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "202":
+          description: Repair started; the app is `creating` again.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "404": { description: "Unknown project." }
+        "409": { description: "Only a `failed` app can be repaired." }
+        "507": { description: "Free disk below the high threshold (`HOST_DISK_LOW`)." }
+  /projects/{id}/clean:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    post:
+      operationId: cleanProject
+      tags: [projects]
+      summary: Remove the app's build outputs, keep its sources; the next build starts from scratch (ADR-0053).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Bytes freed.
+          content:
+            application/json:
+              schema: { type: object, required: [freedBytes], properties: { freedBytes: { type: integer, minimum: 0 } } }
+        "404": { description: "Unknown project." }
+        "409": { description: "A SynCode or a run of the app is active." }
+  /capacity:
+    get:
+      operationId: getCapacity
+      tags: [system]
+      summary: Host capacity for the studio (System status, Vehicle apps) — disk level, apps and SynCode queue (ADR-0053).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Capacity.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [disk, apps, queue]
+                properties:
+                  disk: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue", description: "workspace `Capacity` (freeBytes, totalBytes, level, thresholds); null when the workspace cannot be reached." }
+                  apps: { type: object, required: [total, limit], properties: { total: { type: integer, minimum: 0 }, limit: { type: integer, minimum: 0 } } }
+                  queue: { type: object, required: [queued, limit], properties: { queued: { type: integer, minimum: 0 }, limit: { type: integer, minimum: 0 } } }
   /projects/{id}/workflows:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     put:
@@ -183,6 +242,8 @@ paths:
               schema: { $ref: "#/components/schemas/Generation" }
         "409": { description: "`no_previous_generation`: fromGeneration without an earlier SynCode." }
         "422": { $ref: "#/components/responses/Diagnostics" }
+        "429": { description: "SynCode queue full (`SYNCODE_QUEUE_FULL`, ADR-0053). A newer request of the same app replaces its queued one instead." }
+        "507": { description: "Free disk below the flood threshold: no SynCode (`HOST_DISK_LOW`)." }
   /projects/{id}/graphs:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     get:
@@ -428,10 +489,10 @@ components:
       schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" }
   responses:
     Diagnostics:
-      description: Request understood but rejected; see diagnostics (ADR-0016).
+      description: Request understood but rejected; the body is the array of diagnostics (ADR-0016) — what the services return since M07 (corrected 2026-10-14, it was documented as `{diagnostics}`).
       content:
         application/json:
-          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+          schema: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
   schemas:
     ProjectSettings:
       type: object

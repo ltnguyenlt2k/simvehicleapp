@@ -1,6 +1,7 @@
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { InitFailed, initProject, type InitSources, ProjectExists, type ProjectRequest, syncProjectVss } from "./init.ts";
 import { normalizeRelative, PathRejected, SLUG } from "./paths.ts";
+import type { Capacity } from "./capacity.ts";
 import { CommitRejected, Crash, type FileSet, type Store } from "./store.ts";
 import { zip } from "./zip.ts";
 
@@ -27,7 +28,7 @@ async function body(req: Request): Promise<Record<string, unknown> | Response> {
   }
 }
 
-export function createWorkspaceHandler(store: Store, sources: InitSources) {
+export function createWorkspaceHandler(store: Store, sources: InitSources, capacity?: () => Capacity) {
   return async (req: Request, ctx: RequestContext): Promise<Response> => {
     const url = new URL(req.url);
     const parts = url.pathname.split("/").filter(Boolean);
@@ -49,8 +50,19 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
           throw e;
         }
       }
+      if (url.pathname === "/capacity" && req.method === "GET") {
+        if (!capacity) return json(503, { error: "unavailable", message: "capacity is not measured here" });
+        return json(200, capacity());
+      }
       if (parts[0] !== "projects" || !parts[1]) return json(404, { error: "not_found" });
       const slug = parts[1];
+      // Delete is idempotent (ADR-0053): a project already gone answers 204 too, so it is handled before the existence check.
+      if (parts.length === 2 && req.method === "DELETE") {
+        if (!SLUG.test(slug)) return json(422, [diag("WORKSPACE_PATH_REJECTED", `invalid project slug ${slug}`, { path: slug, reason: "invalid project slug" })]);
+        await store.deleteProject(slug);
+        ctx.log.info("project deleted", { slug });
+        return new Response(null, { status: 204 });
+      }
       if (!SLUG.test(slug) || !store.exists(slug)) return json(404, { error: "not_found", message: `no project ${slug}` });
       const op = parts.slice(2).join("/");
 
@@ -74,6 +86,12 @@ export function createWorkspaceHandler(store: Store, sources: InitSources) {
           throw e;
         }
       }
+      if (op === "clean" && req.method === "POST") {
+        const freedBytes = await store.cleanProject(slug);
+        ctx.log.info("project cleaned", { slug, freedBytes });
+        return json(200, { freedBytes });
+      }
+      if (op === "size" && req.method === "GET") return json(200, store.projectSize(slug));
       if (op === "vss-sync" && req.method === "POST") {
         // Before each SynCode build (orchestrator): the project's VSS file follows its release in the catalog.
         try {

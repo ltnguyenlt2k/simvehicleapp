@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Vehicle app lifecycle and host capacity (additive, ADR-0053, M16-T02): workspace `DELETE /projects/{slug}`, `POST /projects/{slug}/clean`, `GET /projects/{slug}/size`, `GET /capacity` (schema `Capacity`); toolchain `POST /projects/{slug}/forget`, `POST /gc`; orchestrator `DELETE /projects/{id}`, `POST /projects/{id}/repair`, `POST /projects/{id}/clean`, `GET /capacity`, and 409/507/429 on project creation and SynCode. Diagnostics catalog: `APP_QUOTA_EXCEEDED`, `HOST_DISK_LOW`, `SYNCODE_QUEUE_FULL`.
+- Documentation fix: the `Diagnostics` (422) response of `workspace` and `orchestrator` is an **array** of diagnostics — what the services return since M07 (it was documented as `{diagnostics}`).
 - `openapi/vss-catalog.v1.yaml` (additive): `GET /units?release=` — the release's units.yaml; new projects on a release other than the template's vendor it as `app/vss/units.yaml` (AppManifest `unit_src`) — C++/Python init on VSS 4.2 failed on the unit `iso8601`.
 - `schemas/scenario.v1` (additive): `expect.publishes` — exact MQTT publishes `{t, topic, payload}` (HMI notifications included), checked by the simulator and the C++/Python/Rust conformance runners and runtimes. Conformance C42–C45 (scenario suite): overspeed > 60 km/h ⇒ HMI + brake light + cruise limit with hysteresis; forward-collision warning; lane-departure/drowsiness escalation with a variable counter; low-friction moving average ⇒ cruise limit (float text formatting across backends).
 - VSS release names (widened, ADR-0052): `^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$` — `vX.Y` (COVESA) or `vX.Y-<name>` (custom model) in `schemas/workflow-graph.v1`, `schemas/scenario.v1` and the openapi of vss-catalog, workspace, orchestrator, signal-gateway.

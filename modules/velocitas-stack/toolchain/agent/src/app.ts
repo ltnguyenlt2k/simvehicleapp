@@ -1,12 +1,13 @@
 import { ContractValidator } from "@simvehicleapp/contracts";
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { ConflictError, diag, type JobKind, type JobManager, type JobOptions } from "./jobs.ts";
+import { type CacheConfig, forget, gc } from "./cache.ts";
 import { PlanError } from "./commands.ts";
 
 /**
  * HTTP surface of the toolchain agent (`openapi/toolchain.v1.yaml`): /jobs, /jobs/:id,
- * /jobs/:id/stream (SSE of LogLine v1, resumable), /jobs/:id/cancel, /templates. Auth, /healthz and
- * /version come from service-kit.
+ * /jobs/:id/stream (SSE of LogLine v1, resumable), /jobs/:id/cancel, /templates, and the per-project cache
+ * clean-up of deleted apps /projects/:slug/forget, /gc (ADR-0053). Auth, /healthz and /version come from service-kit.
  */
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -16,7 +17,11 @@ export interface AgentDeps {
   jobs: JobManager;
   /** Template tar of a language, or null when this toolchain has none. */
   template(lang: string): ReadableStream<Uint8Array> | null;
+  /** Per-project Velocitas caches (ADR-0053); absent ⇒ nothing to forget. */
+  cache?: CacheConfig;
 }
+
+const SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/;
 
 export function createAgentHandler(deps: AgentDeps) {
   return async (req: Request, ctx: RequestContext): Promise<Response> => {
@@ -51,6 +56,22 @@ export function createAgentHandler(deps: AgentDeps) {
       if (parts[2] === "cancel" && req.method === "POST") return json(200, deps.jobs.cancel(id));
       if (parts[2] === "stream" && req.method === "GET") return stream(deps.jobs, id, req);
       return json(405, { error: "method_not_allowed" });
+    }
+    if (parts[0] === "projects" && parts[1] && parts[2] === "forget" && parts.length === 3) {
+      if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+      if (!SLUG.test(parts[1])) return json(400, { error: "invalid_request", message: "invalid project slug" });
+      const had = deps.cache ? forget(deps.cache, parts[1]) : false;
+      if (had) ctx.log.info("project cache forgotten", { project: parts[1] });
+      return new Response(null, { status: 204 });
+    }
+    if (url.pathname === "/gc") {
+      if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+      const body = (await req.json().catch(() => null)) as { keep?: unknown } | null;
+      const keep = body?.keep;
+      if (!Array.isArray(keep) || keep.length > 10_000 || !keep.every((k) => typeof k === "string" && SLUG.test(k))) return json(400, { error: "invalid_request", message: "keep: array of project slugs" });
+      const r = deps.cache ? gc(deps.cache, keep as string[]) : { removed: 0, freedBytes: 0 };
+      if (r.removed) ctx.log.info("project caches collected", r);
+      return json(200, r);
     }
     if (url.pathname === "/templates") {
       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });

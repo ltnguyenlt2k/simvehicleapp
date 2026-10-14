@@ -15,6 +15,6 @@ const jobs = new JobManager(createPlanner(cfg), undefined, undefined, (kind, pro
 const metrics = new Metrics();
 const jobMs = metrics.histogram("toolchain_job_duration_ms", "Toolchain job duration (ms) by kind and final state.");
 jobs.onFinished = (kind, state, ms) => jobMs.observe({ kind, state }, ms);
-const handler = createService({ name: "toolchain-agent", version: pkg.version, logger: log, metrics }, createAgentHandler({ jobs, template: (lang) => templateTar(lang) }));
+const handler = createService({ name: "toolchain-agent", version: pkg.version, logger: log, metrics }, createAgentHandler({ jobs, template: (lang) => templateTar(lang), cache: { home: process.env.HOME ?? "/home/vscode", projectsDir: cfg.projectsDir, seedDir: process.env.SV_SEED_DIR } }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

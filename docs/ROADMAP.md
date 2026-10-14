@@ -45,7 +45,7 @@
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
-| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 1/10 (T01 thiết kế) — yêu cầu PO 2026-10-14 |
+| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 2/10 (T01 thiết kế, T02 nền tảng vòng đời) — yêu cầu PO 2026-10-14 |
 
 **MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
 
@@ -347,7 +347,7 @@ Yêu cầu PO 2026-10-14 · Thiết kế: [M16](design/M16-ux-and-capacity.md) �
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Thiết kế + ADR + kế hoạch | 0053–0055 | ✔ | 2026-10-14 (Claude Code): khảo sát source (không có xoá project ở mọi tầng, hàng đợi không giới hạn, rác khi xoá workspace, nút ghost không trạng thái, module Sim thừa, block thẻ chung) + đối chiếu thực hành (watermark ES/kubelet, LRU/TTL cache, ResourceQuota, cancel-in-progress) | T01 |
-| Nền tảng vòng đời (contracts, workspace, toolchain) | 0053 | ☐ | | T02 |
+| Nền tảng vòng đời (contracts, workspace, toolchain) | 0053 | ✔ | 2026-10-14: contracts (workspace delete/clean/size/capacity, toolchain forget/gc, orchestrator delete/repair/clean/capacity, 3 mã diagnostic, sửa tài liệu 422 = mảng); workspace + agent: unit 29 + 16 PASS. Trên stack thật: clean giải phóng 183 MB/app (184 MB → 0,6 MB, giữ mã nguồn), delete idempotent (204 ×2), forget xoá cache 200 MB, venv dùng chung còn nguyên, capacity 794 GB `ok`. Lỗi phát hiện kèm sửa: `tree` đi theo symlink ra ngoài project, backup generation cũ không bao giờ bị xoá. ccache cap `SV_CCACHE_MAX` | T02 |
 | Orchestrator: vòng đời, quota, ngưỡng đĩa, hàng đợi, sweeper, metrics | 0053 | ☐ | | T03 |
 | Trang Vehicle apps: xoá/repair/clean/dung lượng/quota/reconcile | 0053 | ☐ | | T04 |
 | Tự tạo app từ SynCode + System status dung lượng + DEPLOY | 0053 | ☐ | | T05 |

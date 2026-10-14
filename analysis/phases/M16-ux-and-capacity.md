@@ -45,28 +45,28 @@
 ## Checklist chi tiết từng task (đánh dấu khi làm xong, kèm bằng chứng ở ROADMAP)
 
 ### T02: Nền tảng vòng đời (contracts, workspace, toolchain)
-- [ ] **Contracts:**
+- [x] **Contracts:**
   - workspace `DELETE /projects/{slug}`, `POST /projects/{slug}/clean`, `GET /projects/{slug}/size`, `GET /capacity`;
   - toolchain `POST /projects/{slug}/forget`, `POST /gc`;
   - orchestrator `DELETE /projects/{id}`, `POST /projects/{id}/repair`, `POST /projects/{id}/clean`, `GET /capacity`;
   - CHANGELOG ghi rõ đây là thay đổi additive.
-- [ ] **Diagnostics catalog** (chỉ thêm, sinh lại `DIAGNOSTICS_CATALOG.md`): `APP_QUOTA_EXCEEDED`, `HOST_DISK_LOW`, `SYNCODE_QUEUE_FULL`.
-- [ ] **Workspace delete:**
+- [x] **Diagnostics catalog** (chỉ thêm, sinh lại `DIAGNOSTICS_CATALOG.md`): `APP_QUOTA_EXCEEDED`, `HOST_DISK_LOW`, `SYNCODE_QUEUE_FULL`.
+- [x] **Workspace delete:**
   - kiểm slug (`SLUG`), chặn path traversal;
   - xoá `projects/<slug>`, `.sv/generations/<slug>`, `.sv/backup/*` của các generation thuộc slug;
   - không đụng project khác;
   - idempotent (404 → coi như đã xoá) và chạy trong `store.serialize(slug)` để không xoá giữa lúc commit;
   - sau khi xoá, tạo lại app trùng slug vẫn được.
-- [ ] **Workspace clean:** xoá `build*/` (C++), cache Python, `target/` (Rust) trong project; giữ mã nguồn và generated; xoá trong lúc build đang chạy thì trả 409 (orchestrator kiểm).
-- [ ] **Workspace size/capacity:**
+- [x] **Workspace clean:** xoá `build*/` (C++), cache Python, `target/` (Rust) trong project; giữ mã nguồn và generated; xoá trong lúc build đang chạy thì trả 409 (orchestrator kiểm).
+- [x] **Workspace size/capacity:**
   - size = tổng byte của thư mục project, có giới hạn thời gian đo;
   - capacity = `statfs` của root (free/total), kèm 3 mức ngưỡng tính từ env.
-- [ ] **Toolchain forget/gc:**
+- [x] **Toolchain forget/gc:**
   - forget xoá `~/.velocitas/projects/md5(path)` (không theo symlink của venv dùng chung);
   - gc nhận danh sách đường dẫn còn sống và xoá mọi thư mục cache khác **trừ** cache của seed (venv dùng chung);
   - test thật bằng bash trên HOME tạm.
-- [ ] **ccache:** `CCACHE_MAXSIZE=${SV_CCACHE_MAX:-2G}` trong compose (toolchain-cpp, ide-cpp).
-- [ ] Unit test: mỗi route có ca thành công, ca slug sai, ca idempotent; module `check` + `test` xanh.
+- [x] **ccache:** `CCACHE_MAXSIZE=${SV_CCACHE_MAX:-2G}` trong compose (toolchain-cpp, ide-cpp).
+- [x] Unit test: mỗi route có ca thành công, ca slug sai, ca idempotent; module `check` + `test` xanh.
 
 ### T03: Orchestrator
 - [ ] **Delete:**

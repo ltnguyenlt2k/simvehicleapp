@@ -16,6 +16,8 @@ services:
       # Run on stack picks the databroker of the project's VSS release (ADR-0024 §6).
       SV_DATABROKERS: ${SV_DATABROKERS:-v4.0=databroker:55555,v4.2=databroker-v4-2:55555}
       CMAKE_BUILD_PARALLEL_LEVEL: ${SV_BUILD_JOBS:-}
+      # Shared compiler cache, LRU-trimmed by ccache at this size (ADR-0053 §9).
+      CCACHE_MAXSIZE: ${SV_CCACHE_MAX:-2G}
     ports: ["127.0.0.1:${SV_IDE_PORT:-8080}:8080"]
     volumes:
       - sv-workspace:/workspace

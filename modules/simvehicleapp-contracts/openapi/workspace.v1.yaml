@@ -55,6 +55,63 @@ paths:
         "201": { description: "Project created." }
         "409": { description: "Slug already exists." }
         "422": { $ref: "#/components/responses/Diagnostics" }
+  /projects/{slug}:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Remove the project folder, its generation records and backups (ADR-0053). Idempotent.
+      description: >-
+        Serialized with commits of the same project (never deletes in the middle of one). Other projects are never
+        touched. A project that does not exist answers 204 as well.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "204": { description: "Deleted (or already absent)." }
+        "422": { $ref: "#/components/responses/Diagnostics" }
+  /projects/{slug}/clean:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    post:
+      operationId: cleanProject
+      tags: [projects]
+      summary: Remove the build outputs of the project (build*/, target/, caches), keep its sources (ADR-0053).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Bytes freed.
+          content:
+            application/json:
+              schema: { type: object, required: [freedBytes], properties: { freedBytes: { type: integer, minimum: 0 } } }
+        "404": { description: "No such project." }
+  /projects/{slug}/size:
+    parameters: [{ $ref: "#/components/parameters/Slug" }]
+    get:
+      operationId: getProjectSize
+      tags: [projects]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Disk usage of the project folder (sources + build outputs).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [bytes, buildBytes]
+                properties:
+                  bytes: { type: integer, minimum: 0 }
+                  buildBytes: { type: integer, minimum: 0, description: "Part that `clean` would free." }
+        "404": { description: "No such project." }
+  /capacity:
+    get:
+      operationId: getCapacity
+      tags: [projects]
+      summary: Free space of the projects volume and the threshold level reached (ADR-0053 §4).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Capacity.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Capacity" }
   /projects/{slug}/commits:
     parameters: [{ $ref: "#/components/parameters/Slug" }]
     post:
@@ -257,7 +314,22 @@ components:
       schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
   responses:
     Diagnostics:
-      description: Request understood but rejected; see diagnostics (ADR-0016).
+      description: Request understood but rejected; the body is the array of diagnostics (ADR-0016) — what the services return since M07 (corrected 2026-10-14, it was documented as `{diagnostics}`).
       content:
         application/json:
-          schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
+          schema: { type: array, items: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+  schemas:
+    Capacity:
+      type: object
+      required: [freeBytes, totalBytes, level, thresholds]
+      properties:
+        freeBytes: { type: integer, minimum: 0 }
+        totalBytes: { type: integer, minimum: 0 }
+        level: { enum: [ok, low, high, flood], description: "low = warn; high = no new app; flood = no SynCode." }
+        thresholds:
+          type: object
+          required: [lowBytes, highBytes, floodBytes]
+          properties:
+            lowBytes: { type: integer, minimum: 0 }
+            highBytes: { type: integer, minimum: 0 }
+            floodBytes: { type: integer, minimum: 0 }
