@@ -28,3 +28,4 @@ không phải app: `wait_until` của GW-G được các input ở 1500 ms đán
 input của scenario (sau trigger gần nhất) được đo từ thời điểm gateway thực phát input đó (`startedAt` của `/play` +
 `t`, cùng đồng hồ host với `ts` của trace); sự kiện do trigger gây ra giữ tham chiếu trigger. Test
 `gate/parity-p3.test.ts`; GW-G local lại PASS (lệch tối đa 4 ms). Dung sai 30 ms giữ nguyên.
+- 2026-10-14: nightly 38529021603 (repo mới, runner 2 vCPU lạnh) FAIL chỉ ở sự kiện #0 của GW-A (trigger đầu tiên +61 ms; mọi sự kiện khác của 7 golden ≤ 24 ms) — độ trễ lần giao tín hiệu đầu tiên tới app vừa khởi động, không phải logic thời gian. `parity-p3.ts` mồi đường databroker → app bằng cách đặt lại giá trị `initial` (giá trị bằng nhau: không trigger nào chạy, C01/C08) ngay sau khi run `running`, **không** chờ thêm (timer tính từ lúc app khởi động — GW-E — không bị lệch). Local 7/7 hai lần liên tiếp (lệch ≤ 18 ms). Dung sai ±20 ms giữ nguyên.
