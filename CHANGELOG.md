@@ -3,6 +3,16 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/); phiên bản theo SemVer. Chi tiết từng milestone:
 [docs/reports/](docs/reports/), trạng thái: [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [baseline-2026-10-14] — 2026-10-14 (pre-release)
+
+Tại commit `12e803a` — CI xanh (run 38436298021 toàn bộ @ `89a8eb1`, 38490652578 @ `424d8ff`, 38491940778 @ `12e803a`).
+Release: [baseline-2026-10-14](https://github.com/Blinkthor/sim-vehicle-app/releases/tag/baseline-2026-10-14), kèm image dựng sẵn (`scripts/sv pull`).
+- Mô hình VSS tuỳ biến `vX.Y-<tên>`: file riêng hoặc overlay, `scripts/sv vss`, databroker-custom, project tự theo model mới (ADR-0052).
+- Bộ kịch bản C42–C45 (vượt 60 km/h → HMI + đèn phanh; 3 kịch bản ADAS) + `expect.publishes`: nội dung HMI giống hệt ở 4 runtime.
+- Trợ lý AI với model thật: eval 20/20, gate M10 3/3; sửa parser stream tool call song song.
+- Triển khai máy yếu: image dựng sẵn qua release, venv Velocitas dùng chung (~200 MB → ~4 MB mỗi project), `SV_BUILD_JOBS` (ADR-0051).
+- Độ bền: orchestrator retry khi keep-alive chết, signal-gateway nạp lại signal mới, build C++ cài lại deps khi model đổi.
+
 ## [baseline-2026-10-13] — 2026-10-13 (pre-release)
 
 Mốc baseline tại commit `7487f17` — CI [run 38423365394](https://github.com/Blinkthor/sim-vehicle-app/actions/runs/38423365394)
