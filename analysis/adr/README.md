@@ -62,6 +62,9 @@ flowchart TB
     E50["0050 Kanto, IDE proxy, VSS overlay (hoãn)"]
     E51["0051 Image dựng sẵn + máy cấu hình thấp"]
     E52["0052 Mô hình VSS tuỳ biến vX.Y-name"]
+    E53["0053 Vehicle app + kiểm soát tài nguyên"]
+    E54["0054 Thanh hành động + UI tập trung"]
+    E55["0055 Block thể hiện logic bằng hình"]
   end
   A2 --> A7
   A2 --> A9
@@ -139,6 +142,9 @@ flowchart TB
 | [0050](ADR-0050-kanto-ide-proxy-vss-overlay.md) | Hoãn Kanto, IDE reverse proxy + SSO, VSS overlay | L1 | M14 |
 | [0051](ADR-0051-prebuilt-images-low-spec-deploy.md) | Image dựng sẵn qua GitHub Release (`sv pull`), venv Velocitas dùng chung, `SV_BUILD_JOBS` | L0 | M11 |
 | [0052](ADR-0052-custom-vss-models.md) | Mô hình VSS tuỳ biến `vX.Y-<name>` (file riêng hoặc overlay) xuyên catalog → databroker; vss-sync project | L0 | M14 |
+| [0053](ADR-0053-vehicle-app-lifecycle-and-capacity.md) | Vehicle app tự cấp phát, xoá/repair/clean, quota, ngưỡng đĩa, hàng đợi, sweeper | L0 | M16 |
+| [0054](ADR-0054-editor-actions-and-focused-ui.md) | Thanh hành động có trạng thái, UI chỉ giữ phần toolchain | L1 | M16 |
+| [0055](ADR-0055-block-visual-semantics.md) | Block: câu tóm tắt, màu loại, nhãn cổng/cạnh, chip dữ liệu | L2 | M16 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

@@ -22,3 +22,4 @@
 | [M13-rust-backend.md](M13-rust-backend.md) | Rust feasibility |
 | [M14-services-curated-multiuser.md](M14-services-curated-multiuser.md) | Mở rộng sau v1.0 |
 | [M15-final-e2e-demo-video.md](M15-final-e2e-demo-video.md) | **Bước cuối:** E2E Playwright toàn diện (kéo thả, full luồng) + video demo trong README |
+- [M16 — Trải nghiệm end-user + kiểm soát tài nguyên](M16-ux-and-capacity.md) (PO 2026-10-14)
