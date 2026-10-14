@@ -232,7 +232,7 @@ def cmd_use(release: str) -> None:
     # would rebuild the toolchains' `service:` build contexts and restart them under running jobs.
     running = set(compose("ps", "--services", capture=True).stdout.split())
     services = ["databroker-custom", *(s for s in ("orchestrator", "signal-gateway", "ide-cpp", "ide-python") if s in running)]
-    p = compose("up", "-d", "--no-build", "--no-deps", *services, capture=True)
+    p = compose("up", "-d", "--no-build", "--no-deps", "--wait", "--wait-timeout", "180", *services, capture=True)
     if p.returncode != 0:
         raise Fail(f"restarting {', '.join(services)} failed: {p.stderr.strip()[-400:]}")
     print(f"sv vss: {release} is live on databroker-custom ({', '.join(services)} updated)")
