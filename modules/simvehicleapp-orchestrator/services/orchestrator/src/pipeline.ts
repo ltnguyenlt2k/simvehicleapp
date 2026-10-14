@@ -132,7 +132,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
         const workflowId = String(graph.workflowId ?? "");
         const release = (graph.vss as { release?: string } | undefined)?.release;
         if (release && release !== project.vssRelease) {
-          problems.push(diag("PROJECT_VSS_RELEASE_MISMATCH", "codegen", `Workflow ${String(graph.name ?? workflowId)} uses VSS ${release}, the project uses ${project.vssRelease}`, { workflowId, data: { workflow: release, project: project.vssRelease } }));
+          problems.push(diag("PROJECT_VSS_RELEASE_MISMATCH", "codegen", `Workflow ${String(graph.name ?? workflowId)} uses VSS ${release}, the project uses ${project.vssRelease}: switch the workflow to VSS ${project.vssRelease} in its editor (if its signals exist there) or generate it into a ${release} project`, { workflowId, data: { workflow: release, project: project.vssRelease } }));
           continue;
         }
         const r = await clients.compile(graph, project.language);

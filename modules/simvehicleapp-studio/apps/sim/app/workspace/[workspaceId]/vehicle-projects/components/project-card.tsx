@@ -3,14 +3,19 @@
 import { useState } from 'react'
 import { Badge, Button, Checkbox, toast } from '@/components/emcn'
 import type { SvProject } from '@/lib/api/contracts/sv'
+import { cn } from '@/lib/core/utils/cn'
 import { GeneratedFiles } from '@/app/workspace/[workspaceId]/vehicle-projects/components/generated-files'
 import { useUpdateSvProjectWorkflows } from '@/hooks/queries/sv-projects'
+import { useSvWorkflowSettings } from '@/hooks/queries/sv-workflow-settings'
 
 const STATUS = {
   creating: { label: 'Preparing…', variant: 'amber' },
   ready: { label: 'Ready', variant: 'green' },
   failed: { label: 'Failed', variant: 'red' },
 } as const
+
+/** Display names of the project languages. */
+const LANGUAGE: Record<string, string> = { cpp: 'C++', python: 'Python', rust: 'Rust' }
 
 interface ProjectCardProps {
   project: SvProject
@@ -50,7 +55,7 @@ export function ProjectCard({ project, workflows, canEdit }: ProjectCardProps) {
           {status.label}
         </Badge>
         <span className='text-[12px] text-[var(--text-muted)]'>
-          {`/workspace/projects/${project.slug} · C++ · VSS ${project.vssRelease} · ${project.appName}`}
+          {`/workspace/projects/${project.slug} · ${LANGUAGE[project.language] ?? project.language} · VSS ${project.vssRelease} · ${project.appName}`}
         </span>
         <div className='ml-auto'>
           <Button
@@ -78,27 +83,79 @@ export function ProjectCard({ project, workflows, canEdit }: ProjectCardProps) {
         ) : (
           <div className='flex flex-wrap gap-x-4 gap-y-1'>
             {workflows.map((w) => (
-              <label
+              <WorkflowOption
                 key={w.id}
-                htmlFor={`sv-project-${project.id}-${w.id}`}
-                className='flex items-center gap-1.5 text-[13px] text-[var(--text-primary)]'
-              >
-                <Checkbox
-                  id={`sv-project-${project.id}-${w.id}`}
-                  size='sm'
-                  aria-label={`Generate ${w.name}`}
-                  data-sv-workflow={w.id}
-                  checked={assigned.has(w.id)}
-                  disabled={!canEdit || updateWorkflows.isPending}
-                  onCheckedChange={(v) => toggle(w.id, v === true)}
-                />
-                {w.name}
-              </label>
+                projectId={project.id}
+                projectRelease={project.vssRelease}
+                workflow={w}
+                checked={assigned.has(w.id)}
+                disabled={!canEdit || updateWorkflows.isPending}
+                onToggle={(on) => toggle(w.id, on)}
+              />
             ))}
           </div>
         )}
       </div>
       {showFiles && <GeneratedFiles projectId={project.id} />}
     </div>
+  )
+}
+
+interface WorkflowOptionProps {
+  projectId: string
+  projectRelease: string
+  workflow: { id: string; name: string }
+  checked: boolean
+  disabled: boolean
+  onToggle: (on: boolean) => void
+}
+
+/**
+ * One workflow of the project: its VSS release next to the name. A workflow pinned to another release than
+ * the project cannot be generated into it (SynCode fails with PROJECT_VSS_RELEASE_MISMATCH), so it cannot be
+ * ticked — only unticked if it already is — and says why.
+ */
+function WorkflowOption({
+  projectId,
+  projectRelease,
+  workflow,
+  checked,
+  disabled,
+  onToggle,
+}: WorkflowOptionProps) {
+  const { data: settings } = useSvWorkflowSettings(workflow.id)
+  const release = settings?.vssRelease ?? projectRelease
+  const mismatch = release !== projectRelease
+  const id = `sv-project-${projectId}-${workflow.id}`
+  return (
+    <label
+      htmlFor={id}
+      title={
+        mismatch
+          ? `${workflow.name} is designed on VSS ${release}; this project uses VSS ${projectRelease}. Change the workflow's VSS release in its editor, or use a ${release} project.`
+          : undefined
+      }
+      className='flex items-center gap-1.5 text-[13px] text-[var(--text-primary)]'
+    >
+      <Checkbox
+        id={id}
+        size='sm'
+        aria-label={`Generate ${workflow.name}`}
+        data-sv-workflow={workflow.id}
+        data-sv-release-mismatch={mismatch ? 'true' : undefined}
+        checked={checked}
+        disabled={disabled || (mismatch && !checked)}
+        onCheckedChange={(v) => onToggle(v === true)}
+      />
+      {workflow.name}
+      <span
+        className={cn(
+          'text-[12px]',
+          mismatch ? 'text-[var(--text-error)]' : 'text-[var(--text-muted)]'
+        )}
+      >
+        {mismatch ? `VSS ${release} — needs a ${release} project` : `VSS ${release}`}
+      </span>
+    </label>
   )
 }
