@@ -64,6 +64,22 @@ export interface Clients {
   mirror(release: string, paths: string[]): Promise<void>;
   /** Health and version of every service the orchestrator drives (System status, ADR-0033 §4). */
   system(): Promise<ServiceStatus[]>;
+  /** App lifecycle on the workspace (ADR-0053): delete is idempotent, clean frees build outputs. */
+  workspaceDelete(slug: string): Promise<Outcome<null>>;
+  workspaceClean(slug: string): Promise<Outcome<{ freedBytes: number }>>;
+  workspaceSize(slug: string): Promise<Outcome<{ bytes: number; buildBytes: number }>>;
+  /** Free space of the projects volume and its threshold level (workspace `Capacity`). */
+  workspaceCapacity(): Promise<Outcome<WorkspaceCapacity>>;
+  /** Per-project toolchain caches of a deleted app; `gc` keeps only the live apps of that language. */
+  toolchainForget(language: string, slug: string): Promise<Outcome<null>>;
+  toolchainGc(language: string, keep: string[]): Promise<Outcome<{ removed: number; freedBytes: number }>>;
+}
+
+export interface WorkspaceCapacity {
+  freeBytes: number;
+  totalBytes: number;
+  level: "ok" | "low" | "high" | "flood";
+  thresholds: { lowBytes: number; highBytes: number; floodBytes: number };
 }
 
 export interface ServiceStatus {
@@ -140,6 +156,26 @@ export function httpClients(e: Endpoints): Clients {
     },
     async workspaceGet(path) {
       return outcome(await call(`${e.workspace}${path}`, {}, true));
+    },
+    async workspaceDelete(slug) {
+      const res = await call(`${e.workspace}/projects/${slug}`, { method: "DELETE" }, true);
+      return res.status === 204 ? { ok: true, value: null } : outcome<null>(res);
+    },
+    async workspaceClean(slug) {
+      return outcome(await call(`${e.workspace}/projects/${slug}/clean`, { method: "POST" }, true));
+    },
+    async workspaceSize(slug) {
+      return outcome(await call(`${e.workspace}/projects/${slug}/size`, {}, true));
+    },
+    async workspaceCapacity() {
+      return outcome(await call(`${e.workspace}/capacity`, {}, true));
+    },
+    async toolchainForget(language, slug) {
+      const res = await call(`${base(e.toolchains, language, "toolchain")}/projects/${slug}/forget`, { method: "POST" }, true);
+      return res.status === 204 ? { ok: true, value: null } : outcome<null>(res);
+    },
+    async toolchainGc(language, keep) {
+      return outcome(await call(`${base(e.toolchains, language, "toolchain")}/gc`, { method: "POST", body: JSON.stringify({ keep }) }, true));
     },
     async commit(slug, body) {
       return outcome(await call(`${e.workspace}/projects/${slug}/commits`, { method: "POST", body: JSON.stringify(body) }, true)); // keyed by generationId

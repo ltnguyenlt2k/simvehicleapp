@@ -54,6 +54,12 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
     mirror: async (release, paths) => void calls.push(`mirror:${release}:${paths.join(",")}`),
     system: async () => [],
     exportProject: async () => new Response(new Blob([new Uint8Array([0x50, 0x4b])]), { headers: { "content-type": "application/zip" } }),
+    workspaceDelete: async (slug) => (calls.push(`ws:delete:${slug}`), { ok: true, value: null }),
+    workspaceClean: async (slug) => (calls.push(`ws:clean:${slug}`), { ok: true, value: { freedBytes: 1000 } }),
+    workspaceSize: async () => ({ ok: true, value: { bytes: 2000, buildBytes: 1000 } }),
+    workspaceCapacity: async () => ({ ok: true, value: { freeBytes: 100 * 1024 ** 3, totalBytes: 200 * 1024 ** 3, level: "ok", thresholds: { lowBytes: 10 * 1024 ** 3, highBytes: 5 * 1024 ** 3, floodBytes: 2 * 1024 ** 3 } } }),
+    toolchainForget: async (l, slug) => (calls.push(`tc:forget:${l}:${slug}`), { ok: true, value: null }),
+    toolchainGc: async (l, keep) => (calls.push(`tc:gc:${l}:${keep.length}`), { ok: true, value: { removed: 0, freedBytes: 0 } }),
     ...overrides,
   };
   return { clients, calls };

@@ -69,30 +69,30 @@
 - [x] Unit test: mỗi route có ca thành công, ca slug sai, ca idempotent; module `check` + `test` xanh.
 
 ### T03: Orchestrator
-- [ ] **Delete:**
+- [x] **Delete:**
   - đang có generation `queued/running` ⇒ 409;
   - có run active ⇒ stop trước (chờ tối đa 10 s);
   - gọi workspace delete → toolchain forget (lỗi toolchain không chặn; sweeper dọn sau) → xoá DB (cascade);
   - idempotent.
-- [ ] **Repair:** chỉ app `failed`; xoá thư mục; tạo lại qua đường tạo app sẵn có, giữ workflows/settings; trạng thái `creating` → `ready/failed`.
-- [ ] **Clean:** từ chối khi đang SynCode/Run; sau clean đặt `depsInstalled=false` để lần build sau cài lại dependency.
-- [ ] **Quota toàn host + workflow/app** (`APP_QUOTA_EXCEEDED`, `scope: host`).
-- [ ] **Ngưỡng đĩa:**
+- [x] **Repair:** chỉ app `failed`; xoá thư mục; tạo lại qua đường tạo app sẵn có, giữ workflows/settings; trạng thái `creating` → `ready/failed`.
+- [x] **Clean:** từ chối khi đang SynCode/Run; sau clean đặt `depsInstalled=false` để lần build sau cài lại dependency.
+- [x] **Quota toàn host + workflow/app** (`APP_QUOTA_EXCEEDED`, `scope: host`).
+- [x] **Ngưỡng đĩa:**
   - đọc capacity của workspace (cache 30 s);
   - dưới high ⇒ chặn tạo/repair; dưới flood ⇒ chặn SynCode (`HOST_DISK_LOW`);
   - workspace không trả lời ⇒ fail-open có log cảnh báo (không chặn người dùng vì lỗi đo).
-- [ ] **Hàng đợi:**
+- [x] **Hàng đợi:**
   - generation mới của app có sẵn một `queued` ⇒ cái cũ `cancelled` (sự kiện SSE báo người đang theo dõi);
   - tổng `queued` ≥ giới hạn ⇒ 429 `SYNCODE_QUEUE_FULL`.
-- [ ] **Sweeper** mỗi giờ (đồng hồ inject được):
+- [x] **Sweeper** mỗi giờ (đồng hồ inject được):
   - clean app nhàn rỗi;
   - delete app `failed` quá TTL;
   - toolchain `gc` với danh sách app còn sống.
 
   Ghi log + metrics số app/dung lượng đã thu hồi.
-- [ ] **`/metrics`:** `sv_workspace_free_bytes`, `sv_apps_total`, `sv_generation_queue_length`, `sv_reclaimed_bytes_total`. **`GET /capacity`** cho studio/System status.
-- [ ] **AI tool `project_syncode`:** lỗi 409/429 trả về chữ dễ hiểu cho LLM (test có sẵn trong `simvehicleapp-ai`).
-- [ ] Unit test mọi nhánh trên; PG test (CI) cho cascade.
+- [x] **`/metrics`:** `sv_workspace_free_bytes`, `sv_apps_total`, `sv_generation_queue_length`, `sv_reclaimed_bytes_total`. **`GET /capacity`** cho studio/System status.
+- [x] **AI tool `project_syncode`:** lỗi 409/429 trả về chữ dễ hiểu cho LLM (test có sẵn trong `simvehicleapp-ai`).
+- [x] Unit test mọi nhánh trên; PG test (CI) cho cascade.
 
 ### T04: Studio BFF + trang Vehicle apps
 - [ ] Contract studio (`lib/api/contracts/sv.ts`) cho delete/repair/clean/size/capacity; route bọc `withRouteHandler`, kiểm quyền: delete/repair/clean cần `write` (admin của workspace).

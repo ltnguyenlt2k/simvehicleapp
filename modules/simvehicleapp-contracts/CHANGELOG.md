@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (additive, M16-T03): `Project.createdAt`/`updatedAt`; `POST /projects/{id}/generations` answers 409 `not_ready` for an app still creating or failed; `PUT /projects/{id}/workflows` answers 409 `APP_QUOTA_EXCEEDED` over the per-app workflow limit.
 - Vehicle app lifecycle and host capacity (additive, ADR-0053, M16-T02): workspace `DELETE /projects/{slug}`, `POST /projects/{slug}/clean`, `GET /projects/{slug}/size`, `GET /capacity` (schema `Capacity`); toolchain `POST /projects/{slug}/forget`, `POST /gc`; orchestrator `DELETE /projects/{id}`, `POST /projects/{id}/repair`, `POST /projects/{id}/clean`, `GET /capacity`, and 409/507/429 on project creation and SynCode. Diagnostics catalog: `APP_QUOTA_EXCEEDED`, `HOST_DISK_LOW`, `SYNCODE_QUEUE_FULL`.
 - Documentation fix: the `Diagnostics` (422) response of `workspace` and `orchestrator` is an **array** of diagnostics — what the services return since M07 (it was documented as `{diagnostics}`).
 - `openapi/vss-catalog.v1.yaml` (additive): `GET /units?release=` — the release's units.yaml; new projects on a release other than the template's vendor it as `app/vss/units.yaml` (AppManifest `unit_src`) — C++/Python init on VSS 4.2 failed on the unit `iso8601`.

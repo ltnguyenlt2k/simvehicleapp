@@ -3,7 +3,9 @@ import pkg from "../package.json" with { type: "json" };
 import { existsSync, readFileSync } from "node:fs";
 import { createOrchestratorHandler } from "./app.ts";
 import { EntitlementService, loadLicense } from "./entitlements.ts";
-import { httpClients } from "./clients.ts";
+import { httpClients, type WorkspaceCapacity } from "./clients.ts";
+import { CapacityProbe, limitsFromEnv } from "./governance.ts";
+import { sweep } from "./lifecycle.ts";
 import { EventHub } from "./events.ts";
 import { runGeneration } from "./pipeline.ts";
 import { PgRepo } from "./repo.ts";
@@ -110,6 +112,45 @@ const kick = () => wake?.();
 
 const background = (p: Promise<void>) => void p.catch((e) => log.error("background task failed", { err: e }));
 // Calls made while handling a request carry its request id (createService scopes it) to the next service.
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background }));
+// Host capacity governance (ADR-0053): limits, the workspace's free disk, the hourly sweeper and their metrics.
+const limits = limitsFromEnv();
+const probe = new CapacityProbe(clients, { onError: (e) => log.warn("capacity unavailable (checks let requests through)", { err: (e as Error).message }) });
+log.info("capacity limits", { ...limits });
+let capacity: WorkspaceCapacity | null = null;
+let appsTotal = 0;
+let queueLength = 0;
+const refreshCapacity = async () => {
+  capacity = await probe.get();
+  appsTotal = (await repo.projects()).length;
+  queueLength = (await repo.pendingGenerations()).filter((g) => g.state === "queued").length;
+};
+metrics.gauge("workspace_free_bytes", "Free bytes of the projects volume (ADR-0053).", () => capacity?.freeBytes ?? 0);
+metrics.gauge("apps_total", "Vehicle apps on the host.", () => appsTotal);
+metrics.gauge("generation_queue_length", "SynCode runs waiting in the queue.", () => queueLength);
+const reclaimed = metrics.counter("reclaimed_bytes_total", "Bytes freed by the sweeper (idle app builds, failed apps, orphan toolchain caches).");
+refreshCapacity().catch(() => {});
+setInterval(() => refreshCapacity().catch(() => {}), 60_000);
+const sweepEveryMs = Math.max(1, Number(process.env.SV_SWEEP_INTERVAL_MIN ?? 60) || 60) * 60_000;
+let sweeping = false;
+const runSweep = async () => {
+  if (sweeping) return; // never two sweeps at once
+  sweeping = true;
+  try {
+    const r = await sweep({ repo, clients, runs, probe, log }, limits);
+    if (r.freedBytes) reclaimed.inc({}, r.freedBytes);
+    if (r.errors.length) log.warn("sweep errors", { errors: r.errors });
+  } catch (e) {
+    log.error("sweep failed", { err: e });
+  } finally {
+    sweeping = false;
+  }
+};
+// First sweep a few minutes after start (not during recovery), then every SV_SWEEP_INTERVAL_MIN (60).
+setTimeout(() => {
+  runSweep();
+  setInterval(runSweep, sweepEveryMs);
+}, 5 * 60_000);
+
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

@@ -12,7 +12,7 @@ import { fakeProvider, plan } from "./providers/fake.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
 import { type LlmProvider, type Message, ProviderError, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
-import type { Services } from "./services.ts";
+import { httpServices, type Services } from "./services.ts";
 import { MemoryStore } from "./store.ts";
 import { BlockCatalog, createTools, opsFromString, runTool, vssTerms, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
 
@@ -580,5 +580,33 @@ describe("references by name (M10-T05)", () => {
     ]);
     expect((ops[1] as unknown as { props: { condition: string } }).props.condition).toBe("<socchanged.value> < 20 && <Vehicle.IsMoving> && <socchanged.value> > 0 && <everysecond.tick> > 1");
     expect((ops[2] as unknown as { props: { list: { v: string }[] } }).props.list[0]!.v).toBe("<socchanged.previous>");
+  });
+});
+
+describe("capacity limits reach the LLM as plain text (ADR-0053)", () => {
+  test("project_syncode on a full queue (429) or a full disk (507): readable error, no crash", async () => {
+    const answers: Record<string, unknown[]> = {
+      q: [{ code: "SYNCODE_QUEUE_FULL", severity: "error", stage: "build", message: "20 SynCode runs are already waiting: try again in a few minutes.", docs: "diagnostics#SYNCODE_QUEUE_FULL" }],
+      d: [{ code: "HOST_DISK_LOW", severity: "error", stage: "workspace", message: "Only 1.5 GB free on the host: SynCode is paused until space is freed.", docs: "diagnostics#HOST_DISK_LOW" }],
+    };
+    const server = Bun.serve({
+      port: 0,
+      fetch: (req) => {
+        const which = new URL(req.url).pathname.includes("/projects/q/") ? "q" : "d";
+        return Response.json(answers[which], { status: which === "q" ? 429 : 507 });
+      },
+    });
+    try {
+      const base = `http://127.0.0.1:${server.port}`;
+      const services = httpServices({ compiler: base, catalog: base, orchestrator: base, signalGateway: base, secret: "s" });
+      const syn = createTools(services, new BlockCatalog(services)).find((t) => t.name === "project_syncode")!;
+      const full = await runTool(syn, { projectId: "q", graphs: [{}] }, {} as never);
+      expect(full.isError).toBe(true);
+      expect(full.text).toContain("429: 20 SynCode runs are already waiting");
+      const disk = await runTool(syn, { projectId: "d", graphs: [{}] }, {} as never);
+      expect(disk.text).toContain("507: Only 1.5 GB free on the host");
+    } finally {
+      server.stop(true);
+    }
   });
 });

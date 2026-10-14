@@ -5,13 +5,16 @@ import { type EventHub, itemOfLine, itemOfRunEvent } from "./events.ts";
 import { editorUrl, present } from "./pipeline.ts";
 import type { EntitlementService, Feature } from "./entitlements.ts";
 import { exportExtras } from "./export.ts";
+import { type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quotaExceeded } from "./governance.ts";
+import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp } from "./lifecycle.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
 import { ACTIVE_RUN_STATES, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
 import { RunConflict, type RunManager } from "./runs.ts";
 
 /**
- * HTTP surface of the orchestrator (`openapi/orchestrator.v1.yaml`): projects, their workflows,
- * SynCode generations (queued; the worker runs them) and the event stream.
+ * HTTP surface of the orchestrator (`openapi/orchestrator.v1.yaml`): projects (vehicle apps) and their lifecycle
+ * (delete, repair, clean, ADR-0053), their workflows, SynCode generations (queued; the worker runs them), the event
+ * stream, and the host capacity checks made before an app is created or a SynCode is queued.
  */
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -29,6 +32,10 @@ export interface AppDeps {
   /** Licensed features (M09-T07, ADR-0031); without it everything is allowed. */
   entitlements?: EntitlementService;
   ideUrl?: string;
+  /** Host limits (ADR-0053); default from the environment. */
+  limits?: Limits;
+  /** Free disk of the projects volume; without it the disk thresholds are not checked. */
+  probe?: CapacityProbe;
   /** Wakes the generation worker. */
   kick(): void;
   background(p: Promise<void>): void;
@@ -48,6 +55,8 @@ const projectView = (p: Project, ideUrl?: string, ide = true) => {
     ...(p.statusMessage ? { statusMessage: p.statusMessage } : {}),
     workflows: p.workflows,
     ...(p.status === "ready" && editor && ide ? { editor: { url: editor } } : {}),
+    ...(p.createdAt ? { createdAt: p.createdAt } : {}),
+    ...(p.updatedAt ? { updatedAt: p.updatedAt } : {}),
   };
 };
 
@@ -71,6 +80,15 @@ async function readBody(req: Request): Promise<Record<string, unknown> | Respons
 const ENTITLED_BY_OTHERS = new Set<string>(["ai.assistant"]);
 
 export function createOrchestratorHandler(d: AppDeps) {
+  const limits = d.limits ?? limitsFromEnv();
+  const lifecycle = { repo: d.repo, clients: d.clients, runs: d.runs, probe: d.probe };
+  /** Free disk at or below `level` (high: no new app, flood: no SynCode) ⇒ the 507 to answer, else null. */
+  const diskBlocks = async (blocked: "app" | "syncode"): Promise<Response | null> => {
+    const c = await d.probe?.get();
+    if (!c) return null;
+    const blocking = blocked === "app" ? c.level === "high" || c.level === "flood" : c.level === "flood";
+    return blocking ? json(507, [diskLow(c, blocked)]) : null;
+  };
   const view = (p: Project) => projectView(p, d.ideUrl, d.entitlements?.allows("ide.access", { language: p.language }) ?? true);
   /** The PDP decision (logged); a denial is 403 with the reason (ADR-0031 §2). */
   const entitled = (feature: Feature, ctx: { language?: string; projectCount?: number }, log: RequestContext["log"]): Response | null => {
@@ -96,8 +114,15 @@ export function createOrchestratorHandler(d: AppDeps) {
       const s = (settings ?? {}) as Record<string, unknown>;
       if (s.traceLevel !== undefined && !["off", "trigger", "node"].includes(s.traceLevel as string)) return json(400, { error: "invalid_request", message: "settings.traceLevel must be off, trigger or node" });
       if (s.mqttTopicPrefix !== undefined && (typeof s.mqttTopicPrefix !== "string" || !/^[^#+]+$/.test(s.mqttTopicPrefix))) return json(400, { error: "invalid_request", message: "settings.mqttTopicPrefix must not contain # or +" });
-      const deniedCreate = entitled("project.create", { language: language as string, projectCount: (await d.repo.projects()).length }, ctx.log);
+      const appCount = (await d.repo.projects()).length;
+      const deniedCreate = entitled("project.create", { language: language as string, projectCount: appCount }, ctx.log);
       if (deniedCreate) return deniedCreate;
+      if (appCount >= limits.maxAppsTotal) {
+        ctx.log.warn("app quota reached", { scope: "host", limit: limits.maxAppsTotal });
+        return json(409, [quotaExceeded("host", limits.maxAppsTotal, `This host already has ${appCount} vehicle apps`)]);
+      }
+      const noDisk = await diskBlocks("app");
+      if (noDisk) return noDisk;
       try {
         const p = await createProject(d.repo, d.clients, { slug, name: name.trim(), language: language as Project["language"], vssRelease, ...(appName ? { appName: appName as string } : {}), settings: s as Partial<Project["settings"]> }, d.background);
         ctx.log.info("project created", { slug });
@@ -112,6 +137,34 @@ export function createOrchestratorHandler(d: AppDeps) {
       const project = ID.test(parts[1]) ? await d.repo.project(parts[1]) : null;
       if (!project) return json(404, { error: "not_found" });
       if (parts.length === 2 && req.method === "GET") return json(200, view(project));
+      if (parts.length === 2 && req.method === "DELETE") {
+        try {
+          await deleteApp({ ...lifecycle, log: ctx.log }, project);
+          return new Response(null, { status: 204 });
+        } catch (e) {
+          if (e instanceof AppBusy) return json(409, { error: "conflict", message: e.message });
+          ctx.log.error("delete failed", { app: project.slug, err: (e as Error).message });
+          return json(502, { error: "unavailable", message: (e as Error).message });
+        }
+      }
+      if (parts[2] === "repair" && parts.length === 3 && req.method === "POST") {
+        const noDisk = await diskBlocks("app");
+        if (noDisk) return noDisk;
+        try {
+          return json(202, view(await repairApp({ ...lifecycle, log: ctx.log }, project, d.background)));
+        } catch (e) {
+          if (e instanceof AppNotFailed || e instanceof AppBusy) return json(409, { error: "conflict", message: e.message });
+          return json(502, { error: "unavailable", message: (e as Error).message });
+        }
+      }
+      if (parts[2] === "clean" && parts.length === 3 && req.method === "POST") {
+        try {
+          return json(200, await cleanApp({ ...lifecycle, log: ctx.log }, project));
+        } catch (e) {
+          if (e instanceof AppBusy) return json(409, { error: "conflict", message: e.message });
+          return json(502, { error: "unavailable", message: (e as Error).message });
+        }
+      }
       if (parts[2] === "workflows" && parts.length === 3 && req.method === "PUT") {
         const b = await readBody(req);
         if (b instanceof Response) return b;
@@ -119,6 +172,8 @@ export function createOrchestratorHandler(d: AppDeps) {
         if (!Array.isArray(list) || list.length > 500 || !list.every((w) => w && typeof w.simWorkflowId === "string" && ID.test(w.simWorkflowId) && (w.enabled === undefined || typeof w.enabled === "boolean"))) {
           return json(400, { error: "invalid_request", message: "workflows: [{simWorkflowId, enabled?}]" });
         }
+        const enabledCount = list.filter((w: { enabled?: boolean }) => w.enabled !== false).length;
+        if (enabledCount > limits.maxWorkflowsPerApp) return json(409, [quotaExceeded("app", limits.maxWorkflowsPerApp, `${enabledCount} workflows in one app`)]);
         await d.repo.setWorkflows(project.id, list.map((w: { simWorkflowId: string; enabled?: boolean }) => ({ simWorkflowId: w.simWorkflowId, enabled: w.enabled !== false })));
         return json(200, view((await d.repo.project(project.id))!));
       }
@@ -169,6 +224,9 @@ export function createOrchestratorHandler(d: AppDeps) {
       if (parts[2] === "generations" && parts.length === 3 && req.method === "POST") {
         const deniedSynCode = entitled("syncode", { language: project.language }, ctx.log);
         if (deniedSynCode) return deniedSynCode;
+        if (project.status !== "ready") return json(409, { error: "not_ready", message: project.status === "creating" ? `${project.name} is still being prepared: SynCode when it is ready` : `${project.name} failed to initialise: repair it first` });
+        const noDisk = await diskBlocks("syncode");
+        if (noDisk) return noDisk;
         const b = await readBody(req);
         if (b instanceof Response) return b;
         // `fromGeneration: "latest"`: SynCode again with the workflows (and scenarios) of the project's last
@@ -201,6 +259,15 @@ export function createOrchestratorHandler(d: AppDeps) {
           request: { graphs: graphs as Record<string, unknown>[], ...(scenarios ? { scenarios: scenarios as never } : {}), ...(b.overwriteModified === true ? { overwriteModified: true } : {}) },
           createdAt: Date.now(),
         };
+        // ADR-0053: one queued SynCode per app (a newer request replaces it), a bounded queue, enough disk.
+        for (const q of await d.repo.pendingGenerations(project.id)) {
+          if (q.state === "queued" && (await d.repo.cancelQueued(q.id, Date.now()))) ctx.log.info("queued generation replaced", { project: project.slug, generation: q.id, by: g.id });
+        }
+        const queued = (await d.repo.pendingGenerations()).filter((q) => q.state === "queued").length;
+        if (queued >= limits.maxQueued) {
+          ctx.log.warn("SynCode queue full", { queued, limit: limits.maxQueued });
+          return json(429, [queueFull(limits.maxQueued)]);
+        }
         await d.repo.createGeneration(g);
         d.kick();
         ctx.log.info("generation queued", { project: project.slug, generation: g.id, workflows: graphs.length });
@@ -230,6 +297,14 @@ export function createOrchestratorHandler(d: AppDeps) {
       return json(200, decision);
     }
 
+    if (url.pathname === "/capacity" && req.method === "GET") {
+      const [disk, apps, pending] = await Promise.all([d.probe?.get() ?? Promise.resolve(null), d.repo.projects(), d.repo.pendingGenerations()]);
+      return json(200, {
+        disk,
+        apps: { total: apps.length, limit: limits.maxAppsTotal },
+        queue: { queued: pending.filter((q) => q.state === "queued").length, limit: limits.maxQueued },
+      });
+    }
     if (url.pathname === "/system" && req.method === "GET") {
       return json(200, { services: await d.clients.system() });
     }

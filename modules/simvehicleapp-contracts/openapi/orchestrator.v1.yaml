@@ -173,6 +173,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Project" }
+        "409": { description: "More enabled workflows than the per-app limit (`APP_QUOTA_EXCEEDED`, `data.scope` = app; ADR-0053)." }
   /projects/{id}/files:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     get:
@@ -240,7 +241,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Generation" }
-        "409": { description: "`no_previous_generation`: fromGeneration without an earlier SynCode." }
+        "409": { description: "`no_previous_generation`: fromGeneration without an earlier SynCode; `not_ready`: the app is still being created or failed (repair it)." }
         "422": { $ref: "#/components/responses/Diagnostics" }
         "429": { description: "SynCode queue full (`SYNCODE_QUEUE_FULL`, ADR-0053). A newer request of the same app replaces its queued one instead." }
         "507": { description: "Free disk below the flood threshold: no SynCode (`HOST_DISK_LOW`)." }
@@ -514,6 +515,8 @@ components:
         statusMessage: { type: string }
         workflows: { type: array, items: { type: object, required: [simWorkflowId, enabled], properties: { simWorkflowId: { type: string }, enabled: { type: boolean } } } }
         editor: { type: object, required: [url], properties: { url: { type: string } }, description: "code-server on the project folder (ADR-0028 §2), once the project is ready." }
+        createdAt: { type: integer, description: "Epoch ms (additive, ADR-0053)." }
+        updatedAt: { type: integer, description: "Epoch ms of the last status change (additive, ADR-0053)." }
     Verdict: { enum: [passed, failed, skipped, pending] }
     Generation:
       description: "Master Plan Appendix A (success) / Appendix B (failure: success false, stage, diagnostics)."

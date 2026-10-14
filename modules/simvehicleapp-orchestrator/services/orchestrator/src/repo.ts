@@ -29,6 +29,17 @@ export interface Project {
   statusMessage?: string;
   depsInstalled: boolean;
   workflows: { simWorkflowId: string; enabled: boolean }[];
+  /** Epoch ms (ADR-0053: the sweeper's age of a failed app; shown in Vehicle apps). */
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+/** A generation waiting or building (ADR-0053: delete, queue coalescing, queue limit). */
+export interface PendingGeneration {
+  id: string;
+  projectId: string;
+  state: "queued" | "running";
+  createdAt: number;
 }
 
 export interface StageInfo {
@@ -141,6 +152,14 @@ export interface Repo {
   updateRun(id: string, patch: Partial<Omit<Run, "id" | "projectId" | "generationId" | "createdAt">>): Promise<void>;
   appendRunEvents(runId: string, events: RunEvent[]): Promise<void>;
   runEvents(runId: string, afterSeq: number, limit?: number): Promise<RunEvent[]>;
+  /** Removes the app and, by cascade, its workflows, generations, events and runs (ADR-0053). */
+  deleteProject(id: string): Promise<void>;
+  /** Queued and running generations, oldest first (of one app when given). */
+  pendingGenerations(projectId?: string): Promise<PendingGeneration[]>;
+  /** Last activity of every app: the latest of its update, SynCode and run (epoch ms; ADR-0053 sweeper). */
+  lastActivity(): Promise<{ projectId: string; lastAt: number }[]>;
+  /** `queued` ⇒ `cancelled`, atomically; false when the worker claimed it first (or it is gone). */
+  cancelQueued(id: string, at: number): Promise<boolean>;
 }
 
 export const initialVerification = (): Generation["verification"] => ({ ir: "pending", format: "pending", compile: "pending", tests: "pending" });
@@ -155,7 +174,8 @@ export class MemoryRepo implements Repo {
   async migrate() {}
   async createProject(p: Omit<Project, "workflows" | "depsInstalled">) {
     if ([...this.projectsById.values()].some((x) => x.slug === p.slug)) throw new DuplicateSlug(p.slug);
-    const full: Project = { ...p, depsInstalled: false, workflows: [] };
+    const at = Date.now();
+    const full: Project = { createdAt: at, updatedAt: at, ...p, depsInstalled: false, workflows: [] };
     this.projectsById.set(p.id, full);
     return structuredClone(full);
   }
@@ -167,7 +187,7 @@ export class MemoryRepo implements Repo {
     return [...this.projectsById.values()].map((p) => structuredClone(p));
   }
   async updateProject(id: string, patch: Partial<Project>) {
-    Object.assign(this.projectsById.get(id)!, patch);
+    Object.assign(this.projectsById.get(id)!, { ...patch, updatedAt: Date.now() });
   }
   async setWorkflows(id: string, workflows: Project["workflows"]) {
     this.projectsById.get(id)!.workflows = structuredClone(workflows);
@@ -235,6 +255,31 @@ export class MemoryRepo implements Repo {
   async runEvents(id: string, after: number, limit = 5000) {
     return (this.runLogs.get(id) ?? []).filter((e) => e.seq > after).slice(0, limit);
   }
+  async deleteProject(id: string) {
+    this.projectsById.delete(id);
+    for (const [gid, g] of this.gens) if (g.projectId === id) (this.gens.delete(gid), this.logs.delete(gid));
+    for (const [rid, r] of this.runsById) if (r.projectId === id) (this.runsById.delete(rid), this.runLogs.delete(rid));
+  }
+  async pendingGenerations(projectId?: string) {
+    return [...this.gens.values()]
+      .filter((g) => (g.state === "queued" || g.state === "running") && (!projectId || g.projectId === projectId))
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map((g) => ({ id: g.id, projectId: g.projectId, state: g.state as "queued" | "running", createdAt: g.createdAt }));
+  }
+  async cancelQueued(id: string, at: number) {
+    const g = this.gens.get(id);
+    if (!g || g.state !== "queued") return false;
+    g.state = "cancelled";
+    g.finishedAt = at;
+    return true;
+  }
+  async lastActivity() {
+    return [...this.projectsById.values()].map((p) => {
+      const gens = [...this.gens.values()].filter((g) => g.projectId === p.id).map((g) => g.createdAt);
+      const runs = [...this.runsById.values()].filter((r) => r.projectId === p.id).map((r) => r.createdAt);
+      return { projectId: p.id, lastAt: Math.max(p.updatedAt ?? 0, p.createdAt ?? 0, ...gens, ...runs) };
+    });
+  }
 }
 
 export class DuplicateSlug extends Error {}
@@ -294,6 +339,8 @@ export class PgRepo implements Repo {
       ...(r.status_message ? { statusMessage: String(r.status_message) } : {}),
       depsInstalled: Boolean(r.deps_installed),
       workflows,
+      ...(r.created_at ? { createdAt: ms(r.created_at) } : {}),
+      ...(r.updated_at ? { updatedAt: ms(r.updated_at) } : {}),
     };
   }
 
@@ -481,5 +528,31 @@ export class PgRepo implements Repo {
   async runEvents(id: string, after: number, limit = 5000) {
     const rows = (await this.sql`SELECT seq, kind, body FROM sv.run_event WHERE run_id = ${id} AND seq > ${after} ORDER BY seq LIMIT ${limit}`) as Row[];
     return rows.map((r) => ({ kind: r.kind, seq: Number(r.seq), body: parse(r.body) }) as RunEvent);
+  }
+
+  async deleteProject(id: string) {
+    // project_workflow, generation (→ generation_event), run (→ run_event) go by ON DELETE CASCADE.
+    await this.sql`DELETE FROM sv.project WHERE id = ${id}`;
+  }
+
+  async pendingGenerations(projectId?: string) {
+    const rows = (projectId
+      ? await this.sql`SELECT id, project_id, state, created_at FROM sv.generation WHERE state IN ('queued', 'running') AND project_id = ${projectId} ORDER BY created_at`
+      : await this.sql`SELECT id, project_id, state, created_at FROM sv.generation WHERE state IN ('queued', 'running') ORDER BY created_at`) as Row[];
+    return rows.map((r) => ({ id: String(r.id), projectId: String(r.project_id), state: r.state as "queued" | "running", createdAt: ms(r.created_at)! }));
+  }
+
+  async cancelQueued(id: string, at: number) {
+    const rows = (await this.sql`UPDATE sv.generation SET state = 'cancelled', finished_at = ${new Date(at)} WHERE id = ${id} AND state = 'queued' RETURNING id`) as Row[];
+    return rows.length === 1;
+  }
+
+  async lastActivity() {
+    // Scalar subqueries (one index lookup each), not a join of generations × runs; GREATEST ignores NULLs.
+    const rows = (await this.sql`SELECT p.id, GREATEST(p.updated_at,
+        (SELECT MAX(g.created_at) FROM sv.generation g WHERE g.project_id = p.id),
+        (SELECT MAX(r.created_at) FROM sv.run r WHERE r.project_id = p.id)) AS last_at
+      FROM sv.project p`) as Row[];
+    return rows.map((r) => ({ projectId: String(r.id), lastAt: ms(r.last_at)! }));
   }
 }

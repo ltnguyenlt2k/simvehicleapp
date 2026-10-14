@@ -140,3 +140,19 @@ flowchart LR
   - Delete/Clean đo bằng `du` trả lại dung lượng;
   - repair app `failed` ⇒ `ready`.
 - **E2E:** SynCode trên workflow mới ⇒ hộp thoại tạo app ⇒ build xanh ⇒ Delete ⇒ app biến mất.
+
+## Notes / Deviations
+- 2026-10-14 (M16-T03, theo uỷ quyền PO — chờ xác nhận): những chỗ khác với Decision ban đầu, mỗi chỗ đều có lý do và test.
+  - **Delete khi có SynCode `queued`:** huỷ nó (thay cho 409); chỉ trả 409 khi SynCode đang `running`. Huỷ bằng SQL có điều kiện (`WHERE state='queued'`); kiểm lại sau khi huỷ phòng trường hợp worker vừa nhận việc.
+  - **Mã HTTP:** hết đĩa = **507** (Insufficient Storage), quota = 409, hàng đợi đầy = 429. Body là mảng diagnostics như các lỗi 422 khác.
+  - **Đo đĩa lỗi thì cho qua** (fail-open, có log). Không chặn người dùng chỉ vì không đo được. Kết quả đo được cache 30 s và làm mới sau clean/delete.
+  - **Sweeper:**
+    - bỏ qua app đang chạy hoặc có SynCode trong hàng đợi: một demo chạy nhiều tuần không bị coi là "nhàn rỗi";
+    - lỗi của một app không làm dừng cả lượt quét;
+    - chạy lần đầu 5 phút sau khi khởi động, sau đó mỗi `SV_SWEEP_INTERVAL_MIN`; không bao giờ chạy hai lượt cùng lúc.
+  - **SynCode trên app chưa `ready`:** trả 409 `not_ready` (trước đây vẫn xếp hàng rồi hỏng trong pipeline). Áp dụng cho cả AI và MCP.
+  - **Kiểm chứng trên stack thật:**
+    - clean giải phóng 149 MB, SynCode ngay sau đó cài lại dependency và đạt 4/4;
+    - delete idempotent qua nhiều service (folder đã mất ⇒ 204);
+    - delete app đầy đủ trả lại 135 MB;
+    - `/capacity`: 89/100 app, hàng đợi 0/20.

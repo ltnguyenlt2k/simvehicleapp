@@ -33,20 +33,24 @@ export async function createProject(repo: Repo, clients: Clients, req: CreatePro
     settings: { mqttTopicPrefix: req.settings?.mqttTopicPrefix ?? `simvehicleapp/${req.slug}`, traceLevel: req.settings?.traceLevel ?? "node" },
     status: "creating",
   });
-  background(
-    (async () => {
-      try {
-        const ws = await clients.createProject({ slug: project.slug, language: project.language, appName: project.appName, vssRelease: project.vssRelease });
-        if (!ws.ok && ws.status !== 409) throw new Error(ws.diagnostics[0]?.message ?? ws.message ?? `workspace ⇒ ${ws.status}`);
-        const init = await clients.job(project.language, "init", project.slug, () => {});
-        if (init.state !== "succeeded") throw new Error(init.diagnostics[0]?.message ?? "velocitas init failed");
-        await repo.updateProject(project.id, { status: "ready", statusMessage: undefined });
-      } catch (e) {
-        await repo.updateProject(project.id, { status: "failed", statusMessage: (e as Error).message });
-      }
-    })(),
-  );
+  background(provision(repo, clients, project));
   return project;
+}
+
+/**
+ * Builds the app folder and initialises it (workspace, then the toolchain's offline `velocitas init`); the app becomes
+ * `ready`, or `failed` with the reason. Used by creation and by repair (ADR-0053), which first removes the old folder.
+ */
+export async function provision(repo: Repo, clients: Clients, project: Project): Promise<void> {
+  try {
+    const ws = await clients.createProject({ slug: project.slug, language: project.language, appName: project.appName, vssRelease: project.vssRelease });
+    if (!ws.ok && ws.status !== 409) throw new Error(ws.diagnostics[0]?.message ?? ws.message ?? `workspace ⇒ ${ws.status}`);
+    const init = await clients.job(project.language, "init", project.slug, () => {});
+    if (init.state !== "succeeded") throw new Error(init.diagnostics[0]?.message ?? "velocitas init failed");
+    await repo.updateProject(project.id, { status: "ready", statusMessage: undefined });
+  } catch (e) {
+    await repo.updateProject(project.id, { status: "failed", statusMessage: (e as Error).message });
+  }
 }
 
 export { DuplicateSlug };

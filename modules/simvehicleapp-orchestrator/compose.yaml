@@ -27,6 +27,13 @@ services:
       SV_LICENSE_KEY: ${SV_LICENSE_KEY:-}
       SV_LICENSE_PUBLIC_KEY: ${SV_LICENSE_PUBLIC_KEY:-}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+      # Host capacity governance (ADR-0053, docs/DEPLOY.md): app quota, workflows per app, SynCode queue, sweeper.
+      SV_MAX_APPS_TOTAL: ${SV_MAX_APPS_TOTAL:-100}
+      SV_MAX_WORKFLOWS_PER_APP: ${SV_MAX_WORKFLOWS_PER_APP:-20}
+      SV_MAX_QUEUED_GENERATIONS: ${SV_MAX_QUEUED_GENERATIONS:-20}
+      SV_IDLE_CLEAN_DAYS: ${SV_IDLE_CLEAN_DAYS:-14}
+      SV_FAILED_TTL_DAYS: ${SV_FAILED_TTL_DAYS:-7}
+      SV_SWEEP_INTERVAL_MIN: ${SV_SWEEP_INTERVAL_MIN:-60}
     # Internal only: the studio BFF reaches it as http://orchestrator:4030.
     # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
     cap_drop: [ALL]

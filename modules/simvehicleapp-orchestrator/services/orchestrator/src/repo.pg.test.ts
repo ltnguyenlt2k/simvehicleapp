@@ -62,4 +62,32 @@ describe.skipIf(!url)("PgRepo (schema sv on Postgres)", () => {
     expect(kept[0]!.seq).toBeGreaterThan(0);
     expect(kept.at(-1)!.seq).toBe(21_004);
   });
+
+  test("app lifecycle (ADR-0053): timestamps, pending generations, atomic cancel, last activity, delete cascades", async () => {
+    const repo = PgRepo.connect(url!);
+    await repo.migrate();
+    const p = await repo.createProject({ id: crypto.randomUUID(), slug: "lifecycle", name: "L", appName: "L", language: "cpp", vssRelease: "v4.0", settings: { mqttTopicPrefix: "x", traceLevel: "node" }, status: "ready" });
+    expect(p.createdAt).toBeGreaterThan(0);
+    expect(p.updatedAt).toBeGreaterThanOrEqual(p.createdAt!);
+    const mk = (id: string, state: "queued" | "running", createdAt: number) => ({ id, projectId: p.id, state, stages: STAGES.map((name) => ({ name, state: "pending" as const })), verification: initialVerification(), diagnostics: [], generatedFiles: [], workflows: [], request: { graphs: [] }, createdAt });
+    const t0 = Date.now() + 60_000;
+    await repo.createGeneration(mk("lq", "queued", t0));
+    await repo.createGeneration(mk("lr", "queued", t0 + 1));
+    await repo.updateGeneration("lr", { state: "running" });
+    expect((await repo.pendingGenerations(p.id)).map((g) => [g.id, g.state])).toEqual([["lq", "queued"], ["lr", "running"]]);
+    expect(await repo.cancelQueued("lr", t0)).toBe(false); // running: not cancelled
+    expect(await repo.cancelQueued("lq", t0)).toBe(true);
+    expect(await repo.cancelQueued("lq", t0)).toBe(false);
+    expect((await repo.generation("lq"))!.state).toBe("cancelled");
+    expect((await repo.lastActivity()).find((a) => a.projectId === p.id)!.lastAt).toBe(t0 + 1);
+    await repo.createRun({ id: "lrun", projectId: p.id, generationId: "lr", state: "stopped", vssRelease: "v4.0", traceLevel: "node", diagnostics: [], createdAt: t0 + 5 });
+    await repo.appendRunEvents("lrun", [{ kind: "log", seq: 0, body: { msg: "x" } } as never]);
+    expect((await repo.lastActivity()).find((a) => a.projectId === p.id)!.lastAt).toBe(t0 + 5);
+    await repo.deleteProject(p.id);
+    expect(await repo.project(p.id)).toBeNull();
+    expect(await repo.generation("lq")).toBeNull();
+    expect(await repo.run("lrun")).toBeNull();
+    expect(await repo.runEvents("lrun", -1)).toEqual([]);
+    expect(await repo.pendingGenerations(p.id)).toEqual([]);
+  });
 });
