@@ -97,3 +97,4 @@ flowchart LR
 
 ## Notes / Deviations
 - 2026-10-13: viết theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
+- 2026-10-14: release đầu tiên có image [baseline-2026-10-14](https://github.com/Blinkthor/sim-vehicle-app/releases/tag/baseline-2026-10-14) (workflow run 38492369078). `scripts/sv pull baseline-2026-10-14 --groups core`: tải + sha256 + load 9 image trong 12 s; `scripts/sv up` với `SV_PREBUILT` không build gì (0 dòng "Building"); `scripts/sv smoke live` (cổng M7 + M8) PASS trên image tải về.
