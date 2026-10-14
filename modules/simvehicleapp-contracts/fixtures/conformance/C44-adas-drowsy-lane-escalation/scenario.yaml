@@ -1,0 +1,31 @@
+# C44-adas-drowsy-lane-escalation — Lane departure or drowsiness held 1 s above 60 km/h counts a warning; the third turns the hazard lights on and cancels cruise
+# Scenario suite (ADAS). Hand-derived: warnings at 2000 (lane 1000–2500) and 4000 (DMS 3000–4200); the 300 ms lane blip at 5000 breaks
+# Stable for (not counted); the third at 7000 (lane from 6000) escalates. The counter is a workflow variable (int32).
+scenarioVersion: 1.0.0
+name: C44-adas-drowsy-lane-escalation
+description: "Lane departure or drowsiness held 1 s above 60 km/h counts a warning; the third turns the hazard lights on and cancels cruise"
+vss:
+  release: v4.0
+until: 8000
+initial:
+  Vehicle.Speed: 80
+  Vehicle.ADAS.LaneDepartureDetection.IsWarning: false
+  Vehicle.ADAS.DMS.IsWarning: false
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+  Vehicle.ADAS.CruiseControl.IsActive: true
+inputs:
+  - { t: 1000, path: "Vehicle.ADAS.LaneDepartureDetection.IsWarning", value: true }
+  - { t: 2500, path: "Vehicle.ADAS.LaneDepartureDetection.IsWarning", value: false }
+  - { t: 3000, path: "Vehicle.ADAS.DMS.IsWarning", value: true }
+  - { t: 4200, path: "Vehicle.ADAS.DMS.IsWarning", value: false }
+  - { t: 5000, path: "Vehicle.ADAS.LaneDepartureDetection.IsWarning", value: true }
+  - { t: 5300, path: "Vehicle.ADAS.LaneDepartureDetection.IsWarning", value: false }
+  - { t: 6000, path: "Vehicle.ADAS.LaneDepartureDetection.IsWarning", value: true }
+expect:
+  writes:
+    - { t: 7000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 7000, path: "Vehicle.ADAS.CruiseControl.IsActive", value: false }
+  publishes:
+    - { t: 2000, topic: "simvehicleapp/driver-attention/hmi", payload: "{\"severity\":\"warning\",\"title\":\"Driver attention\",\"message\":\"Warning 1 of 3\",\"ts\":2000}" }
+    - { t: 4000, topic: "simvehicleapp/driver-attention/hmi", payload: "{\"severity\":\"warning\",\"title\":\"Driver attention\",\"message\":\"Warning 2 of 3\",\"ts\":4000}" }
+    - { t: 7000, topic: "simvehicleapp/driver-attention/hmi", payload: "{\"severity\":\"critical\",\"title\":\"Driver attention\",\"message\":\"Warning 3: hazard on, cruise off\",\"ts\":7000}" }

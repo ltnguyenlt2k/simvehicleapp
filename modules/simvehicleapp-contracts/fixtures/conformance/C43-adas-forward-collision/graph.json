@@ -1,0 +1,153 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c43_fcw",
+  "revision": 1,
+  "name": "Forward collision",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_condition",
+      "name": "risk",
+      "props": {
+        "expr": "<Vehicle.ADAS.ObstacleDetection.IsWarning> && <Vehicle.Speed> > 30",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_if",
+      "name": "notBraking",
+      "props": {
+        "condition": "<Vehicle.Chassis.Brake.PedalPosition> < 10"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_hmi_notify",
+      "name": "alert",
+      "props": {
+        "severity": "critical",
+        "title": "Collision risk",
+        "message": "Brake now: <Vehicle.Speed> km/h"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "brakeLight",
+      "props": {
+        "path": "Vehicle.Body.Lights.Brake.IsActive",
+        "value": "\"ACTIVE\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_set_actuator",
+      "name": "cruiseOff",
+      "props": {
+        "path": "Vehicle.ADAS.CruiseControl.IsActive",
+        "value": false,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_hmi_notify",
+      "name": "braking",
+      "props": {
+        "severity": "info",
+        "title": "Driver braking",
+        "message": "Pedal <Vehicle.Chassis.Brake.PedalPosition> %"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_on_condition",
+      "name": "clear",
+      "props": {
+        "expr": "!<Vehicle.ADAS.ObstacleDetection.IsWarning>",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b8",
+      "type": "sv_set_actuator",
+      "name": "brakeOff",
+      "props": {
+        "path": "Vehicle.Body.Lights.Brake.IsActive",
+        "value": "\"INACTIVE\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "then",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b4",
+      "fromHandle": "source",
+      "to": "b5",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b2",
+      "fromHandle": "else",
+      "to": "b6",
+      "toHandle": "target"
+    },
+    {
+      "id": "e6",
+      "from": "b7",
+      "fromHandle": "source",
+      "to": "b8",
+      "toHandle": "target"
+    }
+  ]
+}

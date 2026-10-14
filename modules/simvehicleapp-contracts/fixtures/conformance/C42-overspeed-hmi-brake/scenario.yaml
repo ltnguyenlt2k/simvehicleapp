@@ -1,0 +1,31 @@
+# C42-overspeed-hmi-brake — Speed above 60 km/h: HMI warning, brake light on, cruise set speed limited to 60; cleared at 55 km/h
+# Scenario suite (PO 2026-10-13, ADR-0052 Notes). Hand-derived: on_condition fires on the false→true edge only, so 80 does not
+# fire again and 57 (inside the 55…60 band) does nothing; the message formats the float 72.5 and the integers 54/61 like JavaScript.
+# VSS 4.0 has no service-brake actuator (pedal and EBA are sensors): the app lights the brake lights and limits cruise control.
+scenarioVersion: 1.0.0
+name: C42-overspeed-hmi-brake
+description: "Speed above 60 km/h: HMI warning, brake light on, cruise set speed limited to 60; cleared at 55 km/h"
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.Speed: 58
+  Vehicle.Body.Lights.Brake.IsActive: "INACTIVE"
+  Vehicle.ADAS.CruiseControl.SpeedSet: 100
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 72.5 }
+  - { t: 2000, path: "Vehicle.Speed", value: 80 }
+  - { t: 3000, path: "Vehicle.Speed", value: 57 }
+  - { t: 4000, path: "Vehicle.Speed", value: 54 }
+  - { t: 5000, path: "Vehicle.Speed", value: 61 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Brake.IsActive", value: "ACTIVE" }
+    - { t: 1000, path: "Vehicle.ADAS.CruiseControl.SpeedSet", value: 60 }
+    - { t: 4000, path: "Vehicle.Body.Lights.Brake.IsActive", value: "INACTIVE" }
+    - { t: 5000, path: "Vehicle.Body.Lights.Brake.IsActive", value: "ACTIVE" }
+    - { t: 5000, path: "Vehicle.ADAS.CruiseControl.SpeedSet", value: 60 }
+  publishes:
+    - { t: 1000, topic: "simvehicleapp/overspeed-60/hmi", payload: "{\"severity\":\"warning\",\"title\":\"Overspeed\",\"message\":\"Speed 72.5 km/h > 60\",\"ts\":1000}" }
+    - { t: 4000, topic: "simvehicleapp/overspeed-60/hmi", payload: "{\"severity\":\"info\",\"title\":\"Speed OK\",\"message\":\"Speed 54 km/h\",\"ts\":4000}" }
+    - { t: 5000, topic: "simvehicleapp/overspeed-60/hmi", payload: "{\"severity\":\"warning\",\"title\":\"Overspeed\",\"message\":\"Speed 61 km/h > 60\",\"ts\":5000}" }

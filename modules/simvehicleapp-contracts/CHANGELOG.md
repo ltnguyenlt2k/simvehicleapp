@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `schemas/scenario.v1` (additive): `expect.publishes` — exact MQTT publishes `{t, topic, payload}` (HMI notifications included), checked by the simulator and the C++/Python/Rust conformance runners and runtimes. Conformance C42–C45 (scenario suite): overspeed > 60 km/h ⇒ HMI + brake light + cruise limit with hysteresis; forward-collision warning; lane-departure/drowsiness escalation with a variable counter; low-friction moving average ⇒ cruise limit (float text formatting across backends).
 - VSS release names (widened, ADR-0052): `^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$` — `vX.Y` (COVESA) or `vX.Y-<name>` (custom model) in `schemas/workflow-graph.v1`, `schemas/scenario.v1` and the openapi of vss-catalog, workspace, orchestrator, signal-gateway.
 - `openapi/workspace.v1.yaml` (additive, ADR-0052): `POST /projects/{slug}/vss-sync` — the project's VSS file follows its release in vss-catalog (before each SynCode build).
 - IR v1 semantics (M14 #7, ADR-0049): `state.filter` (opcode already in the enum) — args `value`/`mode`/`window`|`alpha`, outputs `value`/`samples`, state per node; one block may lower into several nodes sharing `src.blockId` (composite, state machine). Conformance `C40-filter`, `C41-state-machine`.

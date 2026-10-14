@@ -23,7 +23,7 @@ async function run(id: string) {
     until: number;
     initial?: Record<string, unknown>;
     inputs: { t: number; path?: string; topic?: string; value: unknown }[];
-    expect?: { writes?: { t: number; path: string; value: unknown }[]; trace?: Record<string, unknown>[] };
+    expect?: { writes?: { t: number; path: string; value: unknown }[]; publishes?: { t: number; topic: string; payload: string }[]; trace?: Record<string, unknown>[] };
   };
   const { ir, diagnostics } = await compile(graph, ctx);
   if (!ir) throw new Error(`${id}: ${diagnostics.map((d) => d.code).join(", ")}`);

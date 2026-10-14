@@ -379,6 +379,28 @@ pub fn check_expectations(result: &ScenarioResult, expect: Option<&Value>) -> Ve
             ));
         }
     }
+    if let Some(want) = expect.get("publishes") {
+        let have = Value::Array(
+            result
+                .publishes
+                .iter()
+                .map(|p| {
+                    Value::obj(vec![
+                        ("t", p.get("t").cloned().unwrap_or(Value::Null)),
+                        ("topic", p.get("topic").cloned().unwrap_or(Value::Null)),
+                        ("payload", p.get("payload").cloned().unwrap_or(Value::Null)),
+                    ])
+                })
+                .collect(),
+        );
+        if v::js_json(&have) != v::js_json(want) {
+            out.push(format!(
+                "publishes differ:\n  expected {}\n  actual   {}",
+                v::js_json(want),
+                v::js_json(&have)
+            ));
+        }
+    }
     if let Some(Value::Array(matchers)) = expect.get("trace") {
         let mut i = 0;
         for m in matchers {

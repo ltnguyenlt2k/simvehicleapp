@@ -1,0 +1,283 @@
+{
+  "compilerVersion": "0.1.0",
+  "diagnostics": [],
+  "irHash": "sha256:2d1e94815c9462549f42c5c00891bbdfd32213c0de8f664ee53bbc5a031d087a",
+  "irVersion": "1.0.0",
+  "modelHash": "sha256:0b361c65e583962efcb6548c21f662b90895463ba5d0c8b35e3a717e7a9f9771",
+  "name": "LowGripLimit",
+  "nodes": [
+    {
+      "args": {
+        "mode": "moving-average",
+        "value": {
+          "$expr": {
+            "op": "type.cast",
+            "to": "double",
+            "type": "double",
+            "unit": "percent",
+            "value": {
+              "$ref": "n1.value"
+            }
+          }
+        },
+        "window": 3
+      },
+      "id": "n2",
+      "next": {
+        "error": null,
+        "next": "n3"
+      },
+      "opcode": "state.filter",
+      "outputs": {
+        "samples": {
+          "type": "uint32"
+        },
+        "value": {
+          "type": "double",
+          "unit": "percent"
+        }
+      },
+      "src": {
+        "blockId": "b2"
+      }
+    },
+    {
+      "args": {
+        "condition": {
+          "$expr": {
+            "l": {
+              "$expr": {
+                "l": {
+                  "$ref": "n2.value"
+                },
+                "op": "<",
+                "r": {
+                  "$const": "30",
+                  "type": "int64",
+                  "unit": "percent"
+                },
+                "type": "boolean"
+              }
+            },
+            "op": "&&",
+            "r": {
+              "$expr": {
+                "l": {
+                  "$signal": "s2"
+                },
+                "op": ">",
+                "r": {
+                  "$const": "50",
+                  "type": "int64",
+                  "unit": "km/h"
+                },
+                "type": "boolean"
+              }
+            },
+            "type": "boolean"
+          }
+        }
+      },
+      "id": "n3",
+      "next": {
+        "else": null,
+        "then": "n4"
+      },
+      "opcode": "control.branch",
+      "src": {
+        "blockId": "b3"
+      }
+    },
+    {
+      "args": {
+        "awaitAck": true,
+        "onError": "continue",
+        "signal": "s0",
+        "value": {
+          "$expr": {
+            "args": [
+              {
+                "$expr": {
+                  "l": {
+                    "$signal": "s2"
+                  },
+                  "op": "-",
+                  "r": {
+                    "$const": "20",
+                    "type": "int64",
+                    "unit": "km/h"
+                  },
+                  "type": "double",
+                  "unit": "km/h"
+                }
+              },
+              {
+                "$const": "30",
+                "type": "int64",
+                "unit": "km/h"
+              },
+              {
+                "$const": "50",
+                "type": "int64",
+                "unit": "km/h"
+              }
+            ],
+            "op": "clamp",
+            "type": "double",
+            "unit": "km/h"
+          }
+        }
+      },
+      "id": "n4",
+      "next": {
+        "error": null,
+        "next": "n5"
+      },
+      "opcode": "vehicle.write",
+      "outputs": {
+        "error": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        }
+      },
+      "src": {
+        "blockId": "b4"
+      }
+    },
+    {
+      "args": {
+        "payload": {
+          "$template": [
+            "{\"severity\":\"warning\",\"title\":",
+            {
+              "$expr": {
+                "op": "json.string",
+                "type": "string",
+                "value": {
+                  "$template": [
+                    "Low grip"
+                  ]
+                }
+              }
+            },
+            ",\"message\":",
+            {
+              "$expr": {
+                "op": "json.string",
+                "type": "string",
+                "value": {
+                  "$template": [
+                    "Friction ",
+                    {
+                      "$ref": "n2.value"
+                    },
+                    " %, cruise limited"
+                  ]
+                }
+              }
+            },
+            ",\"ts\":",
+            {
+              "$expr": {
+                "args": [],
+                "op": "now_ms",
+                "type": "timestamp"
+              }
+            },
+            "}"
+          ]
+        },
+        "payloadType": "json",
+        "qos": 0,
+        "retain": false,
+        "topic": "t0"
+      },
+      "id": "n5",
+      "next": {
+        "error": null,
+        "next": null
+      },
+      "opcode": "comm.mqtt_publish",
+      "src": {
+        "blockId": "b5"
+      }
+    }
+  ],
+  "signals": [
+    {
+      "access": [
+        "write"
+      ],
+      "dataType": "float",
+      "id": "s0",
+      "path": "Vehicle.ADAS.CruiseControl.SpeedSet",
+      "unit": "km/h",
+      "vssType": "actuator"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s1",
+      "path": "Vehicle.ADAS.ESC.RoadFriction.MostProbable",
+      "unit": "percent",
+      "vssType": "sensor"
+    },
+    {
+      "access": [
+        "subscribe"
+      ],
+      "dataType": "float",
+      "id": "s2",
+      "path": "Vehicle.Speed",
+      "unit": "km/h",
+      "vssType": "sensor"
+    }
+  ],
+  "sourceGraphHash": "sha256:a0bca7176935a759bbcdaf08da3d8486dcf3a911cc3a4085a2a46a6052bddcc0",
+  "state": [],
+  "topics": [
+    {
+      "direction": "write",
+      "id": "t0",
+      "topic": "simvehicleapp/low-grip-limit/hmi"
+    }
+  ],
+  "triggers": [
+    {
+      "concurrency": {
+        "policy": "queue",
+        "queueMax": 8
+      },
+      "entry": "n2",
+      "id": "n1",
+      "opcode": "event.signal_changed",
+      "outputs": {
+        "previous": {
+          "type": "float",
+          "unit": "percent"
+        },
+        "timestamp": {
+          "type": "timestamp"
+        },
+        "value": {
+          "type": "float",
+          "unit": "percent"
+        }
+      },
+      "props": {
+        "debounceMs": 0,
+        "mode": "any"
+      },
+      "signal": "s1",
+      "src": {
+        "blockId": "b1"
+      }
+    }
+  ],
+  "workflowId": "c45_grip",
+  "workflowRevision": 1
+}

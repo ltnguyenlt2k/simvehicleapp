@@ -892,6 +892,10 @@ export interface ScenarioV1 {
   expect?: {
     writes?: ScenarioWrite[];
     /**
+     * Exact MQTT publishes (time, topic, payload text; HMI notifications are JSON on <prefix>/hmi), identical in the simulator and every backend.
+     */
+    publishes?: ScenarioPublish[];
+    /**
      * Partial TraceEvent matchers (fields compared when present).
      */
     trace?: {}[];
@@ -901,6 +905,11 @@ export interface ScenarioWrite {
   t: number;
   path: string;
   value: JsonValue;
+}
+export interface ScenarioPublish {
+  t: number;
+  topic: string;
+  payload: string;
 }
 /**
  * The only way the AI assistant changes a workflow (ADR-0030 §5, analysis/09 §5). `ref` is a temporary id mapped by the studio on apply; a stale `baseRevision` is rebased or rejected.

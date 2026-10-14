@@ -1,0 +1,136 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c42_overspeed",
+  "revision": 1,
+  "name": "Overspeed 60",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_condition",
+      "name": "over",
+      "props": {
+        "expr": "<Vehicle.Speed> > 60",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_hmi_notify",
+      "name": "warn",
+      "props": {
+        "severity": "warning",
+        "title": "Overspeed",
+        "message": "Speed <Vehicle.Speed> km/h > 60"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "brakeLight",
+      "props": {
+        "path": "Vehicle.Body.Lights.Brake.IsActive",
+        "value": "\"ACTIVE\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_set_actuator",
+      "name": "limit",
+      "props": {
+        "path": "Vehicle.ADAS.CruiseControl.SpeedSet",
+        "value": 60,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_on_condition",
+      "name": "back",
+      "props": {
+        "expr": "<Vehicle.Speed> <= 55",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_set_actuator",
+      "name": "brakeOff",
+      "props": {
+        "path": "Vehicle.Body.Lights.Brake.IsActive",
+        "value": "\"INACTIVE\"",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_hmi_notify",
+      "name": "ok",
+      "props": {
+        "severity": "info",
+        "title": "Speed OK",
+        "message": "Speed <Vehicle.Speed> km/h"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b5",
+      "fromHandle": "source",
+      "to": "b6",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b6",
+      "fromHandle": "source",
+      "to": "b7",
+      "toHandle": "target"
+    }
+  ]
+}

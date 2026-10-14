@@ -2,7 +2,8 @@
  * Runtime conformance P1 (ADR-0042, M06-T09/T18): every golden and conformance case of the
  * contracts fixtures is generated to C++ by this backend, compiled with the runtime and run on the
  * mock vehicle/virtual clock. It passes when
- *   - the writes are exactly `scenario.expect.writes` and the `expect.trace` matchers appear in order;
+ *   - the writes are exactly `scenario.expect.writes`, the publishes exactly `expect.publishes` (topic and payload
+ *     text) and the `expect.trace` matchers appear in order;
  *   - for goldens, writes and the whole trace equal `expected.writes.json` / `expected.trace.json`;
  *   - the generated gtest of each golden passes (the test a project gets from SynCode).
  *
@@ -31,7 +32,7 @@ interface Case {
   id: string;
   dir: string;
   golden: boolean;
-  scenario: Record<string, unknown> & { expect?: { writes?: unknown[]; trace?: Record<string, unknown>[] } };
+  scenario: Record<string, unknown> & { expect?: { writes?: unknown[]; publishes?: unknown[]; trace?: Record<string, unknown>[] } };
   cls: string;
   /** Synthetic fuzz case: the texts that must come back. */
   fuzz?: { logs: string[]; publishes: string[] };
@@ -201,6 +202,11 @@ for (const c of cases) {
   if (exp?.writes) {
     const have = out.writes.map((w: { t: number; path: string; value: unknown }) => ({ t: w.t, path: w.path, value: w.value }));
     if (!same(have, exp.writes)) problems.push(`writes differ: expected ${stringify(exp.writes)} actual ${stringify(have)}`);
+  }
+  if (exp?.publishes) {
+    // MQTT/HMI payload text must match the simulator exactly (number formatting included).
+    const have = out.publishes.map((p: { t: number; topic: string; payload: string }) => ({ t: p.t, topic: p.topic, payload: p.payload }));
+    if (!same(have, exp.publishes)) problems.push(`publishes differ: expected ${stringify(exp.publishes)} actual ${stringify(have)}`);
   }
   if (exp?.trace) {
     let i = 0;

@@ -41,6 +41,7 @@
       "additionalProperties": false,
       "properties": {
         "writes": { "type": "array", "items": { "$ref": "#/$defs/write" } },
+        "publishes": { "type": "array", "items": { "$ref": "#/$defs/publish" }, "description": "Exact MQTT publishes (time, topic, payload text; HMI notifications are JSON on <prefix>/hmi), identical in the simulator and every backend." },
         "trace": { "type": "array", "items": { "type": "object" }, "description": "Partial TraceEvent matchers (fields compared when present)." }
       }
     }
@@ -71,6 +72,17 @@
           }
         }
       ]
+    },
+    "publish": {
+      "title": "ScenarioPublish",
+      "type": "object",
+      "required": ["t", "topic", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "t": { "$ref": "#/$defs/time" },
+        "topic": { "type": "string", "minLength": 1 },
+        "payload": { "type": "string" }
+      }
     },
     "write": {
       "title": "ScenarioWrite",

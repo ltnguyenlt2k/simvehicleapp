@@ -177,7 +177,7 @@ def _subset(want: Any, have: Any) -> bool:
 
 
 def check_expectations(result: Dict[str, List[Any]], expect: Optional[Dict[str, Any]]) -> List[str]:
-    """Problems of a result against ``scenario.expect`` (writes exactly, trace matchers in order)."""
+    """Problems of a result against ``scenario.expect`` (writes and publishes exactly, trace matchers in order)."""
     out: List[str] = []
     if not expect:
         return out
@@ -185,6 +185,10 @@ def check_expectations(result: Dict[str, List[Any]], expect: Optional[Dict[str, 
         have = [{"t": w["t"], "path": w["path"], "value": w["value"]} for w in result["writes"]]
         if V.js_json(have) != V.js_json(expect["writes"]):
             out.append(f"writes differ:\n  expected {V.js_json(expect['writes'])}\n  actual   {V.js_json(have)}")
+    if "publishes" in expect:
+        pubs = [{"t": p["t"], "topic": p["topic"], "payload": p["payload"]} for p in result["publishes"]]
+        if V.js_json(pubs) != V.js_json(expect["publishes"]):
+            out.append(f"publishes differ:\n  expected {V.js_json(expect['publishes'])}\n  actual   {V.js_json(pubs)}")
     if "trace" in expect:
         i = 0
         trace = result["trace"]

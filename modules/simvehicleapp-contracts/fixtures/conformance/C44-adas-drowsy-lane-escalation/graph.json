@@ -1,0 +1,163 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c44_attention",
+  "revision": 1,
+  "name": "Driver attention",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [
+    {
+      "name": "warnings",
+      "type": "int32",
+      "initial": 0
+    }
+  ],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_condition",
+      "name": "attention",
+      "props": {
+        "expr": "(<Vehicle.ADAS.LaneDepartureDetection.IsWarning> || <Vehicle.ADAS.DMS.IsWarning>) && <Vehicle.Speed> > 60",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_stable_for",
+      "name": "held",
+      "props": {
+        "condition": "(<Vehicle.ADAS.LaneDepartureDetection.IsWarning> || <Vehicle.ADAS.DMS.IsWarning>) && <Vehicle.Speed> > 60",
+        "durationMs": 1000
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_var_set",
+      "name": "count",
+      "props": {
+        "name": "warnings",
+        "value": "clamp(<variable.warnings> + 1, 0, 1000)"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b4",
+      "type": "sv_if",
+      "name": "third",
+      "props": {
+        "condition": "<variable.warnings> >= 3"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b5",
+      "type": "sv_hmi_notify",
+      "name": "escalate",
+      "props": {
+        "severity": "critical",
+        "title": "Driver attention",
+        "message": "Warning <variable.warnings>: hazard on, cruise off"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b6",
+      "type": "sv_set_actuator",
+      "name": "hazard",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": true,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b7",
+      "type": "sv_set_actuator",
+      "name": "cruiseOff",
+      "props": {
+        "path": "Vehicle.ADAS.CruiseControl.IsActive",
+        "value": false,
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b8",
+      "type": "sv_hmi_notify",
+      "name": "remind",
+      "props": {
+        "severity": "warning",
+        "title": "Driver attention",
+        "message": "Warning <variable.warnings> of 3"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "stable",
+      "to": "b3",
+      "toHandle": "target"
+    },
+    {
+      "id": "e3",
+      "from": "b3",
+      "fromHandle": "source",
+      "to": "b4",
+      "toHandle": "target"
+    },
+    {
+      "id": "e4",
+      "from": "b4",
+      "fromHandle": "then",
+      "to": "b5",
+      "toHandle": "target"
+    },
+    {
+      "id": "e5",
+      "from": "b5",
+      "fromHandle": "source",
+      "to": "b6",
+      "toHandle": "target"
+    },
+    {
+      "id": "e6",
+      "from": "b6",
+      "fromHandle": "source",
+      "to": "b7",
+      "toHandle": "target"
+    },
+    {
+      "id": "e7",
+      "from": "b4",
+      "fromHandle": "else",
+      "to": "b8",
+      "toHandle": "target"
+    }
+  ]
+}

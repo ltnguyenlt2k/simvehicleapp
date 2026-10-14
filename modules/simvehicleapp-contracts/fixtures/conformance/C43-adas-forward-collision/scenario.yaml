@@ -1,0 +1,34 @@
+# C43-adas-forward-collision — Forward collision: obstacle warning above 30 km/h; brake light and cruise cancel unless the driver already brakes
+# Scenario suite (ADAS). Hand-derived: t1000 pedal 0 ⇒ then-branch (critical HMI, brake light, cruise off); t3500 pedal 40 ⇒ else-branch
+# (info only); clearing the warning switches the brake light off; t5500 at 20 km/h the condition stays false ⇒ nothing.
+# `!<warning>` is already true at start: on_condition does not fire for an initial value, only on a change.
+scenarioVersion: 1.0.0
+name: C43-adas-forward-collision
+description: "Forward collision: obstacle warning above 30 km/h; brake light and cruise cancel unless the driver already brakes"
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.ADAS.ObstacleDetection.IsWarning: false
+  Vehicle.Speed: 50
+  Vehicle.Chassis.Brake.PedalPosition: 0
+  Vehicle.Body.Lights.Brake.IsActive: "INACTIVE"
+  Vehicle.ADAS.CruiseControl.IsActive: true
+inputs:
+  - { t: 1000, path: "Vehicle.ADAS.ObstacleDetection.IsWarning", value: true }
+  - { t: 2000, path: "Vehicle.ADAS.ObstacleDetection.IsWarning", value: false }
+  - { t: 3000, path: "Vehicle.Chassis.Brake.PedalPosition", value: 40 }
+  - { t: 3500, path: "Vehicle.ADAS.ObstacleDetection.IsWarning", value: true }
+  - { t: 4000, path: "Vehicle.ADAS.ObstacleDetection.IsWarning", value: false }
+  - { t: 4500, path: "Vehicle.Speed", value: 20 }
+  - { t: 5000, path: "Vehicle.Chassis.Brake.PedalPosition", value: 0 }
+  - { t: 5500, path: "Vehicle.ADAS.ObstacleDetection.IsWarning", value: true }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Brake.IsActive", value: "ACTIVE" }
+    - { t: 1000, path: "Vehicle.ADAS.CruiseControl.IsActive", value: false }
+    - { t: 2000, path: "Vehicle.Body.Lights.Brake.IsActive", value: "INACTIVE" }
+    - { t: 4000, path: "Vehicle.Body.Lights.Brake.IsActive", value: "INACTIVE" }
+  publishes:
+    - { t: 1000, topic: "simvehicleapp/forward-collision/hmi", payload: "{\"severity\":\"critical\",\"title\":\"Collision risk\",\"message\":\"Brake now: 50 km/h\",\"ts\":1000}" }
+    - { t: 3500, topic: "simvehicleapp/forward-collision/hmi", payload: "{\"severity\":\"info\",\"title\":\"Driver braking\",\"message\":\"Pedal 40 %\",\"ts\":3500}" }

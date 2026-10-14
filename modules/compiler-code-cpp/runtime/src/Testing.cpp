@@ -247,6 +247,20 @@ std::vector<std::string> checkExpectations(const ScenarioResult& result, const V
                           stringify(have));
         }
     }
+    if (expect.contains("publishes")) {
+        Value have = Value::array();
+        for (const auto& p : result.publishes) {
+            Value o = Value::object();
+            o["t"] = p["t"];
+            o["topic"] = p["topic"];
+            o["payload"] = p["payload"];
+            have.push_back(o);
+        }
+        if (!same(have, expect["publishes"])) {
+            out.push_back("publishes differ:\n  expected " + stringify(expect["publishes"]) + "\n  actual   " +
+                          stringify(have));
+        }
+    }
     if (expect.contains("trace")) {
         size_t i = 0;
         for (const auto& m : expect["trace"]) {

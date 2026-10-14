@@ -3,15 +3,17 @@ import type { SimulationResult, TraceEvent } from "./simulator.ts";
 /**
  * Scenario v1 expectations (contracts `scenario`, ADR-0017 §3): `expect.writes` is the exact,
  * ordered list of actuator writes; `expect.trace` entries are partial TraceEvent matchers that must
- * appear in that order (fields compared when present, `data` compared recursively as a subset).
+ * appear in that order (fields compared when present, `data` compared recursively as a subset);
+ * `expect.publishes` is the exact, ordered list of MQTT publishes (time, topic, payload text).
  */
 export interface ScenarioExpect {
   writes?: { t: number; path: string; value: unknown }[];
+  publishes?: { t: number; topic: string; payload: string }[];
   trace?: Record<string, unknown>[];
 }
 
 export interface ExpectMismatch {
-  kind: "writes" | "trace";
+  kind: "writes" | "publishes" | "trace";
   message: string;
 }
 
@@ -32,6 +34,13 @@ export function checkExpectations(result: SimulationResult, expect: ScenarioExpe
     const have = result.writes.map((w) => ({ t: w.t, path: w.path, value: w.value }));
     if (!same(have, expect.writes)) {
       out.push({ kind: "writes", message: `writes differ:\n  expected ${JSON.stringify(expect.writes)}\n  actual   ${JSON.stringify(have)}` });
+    }
+  }
+  if (expect.publishes) {
+    // Exact text: the HMI/MQTT payload a vehicle app sends must be the same in every backend (number formatting included).
+    const have = result.publishes.map((p) => ({ t: p.t, topic: p.topic, payload: p.payload }));
+    if (!same(have, expect.publishes)) {
+      out.push({ kind: "publishes", message: `publishes differ:\n  expected ${JSON.stringify(expect.publishes)}\n  actual   ${JSON.stringify(have)}` });
     }
   }
   if (expect.trace) {

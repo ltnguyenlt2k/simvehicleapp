@@ -1,0 +1,26 @@
+# C45-adas-low-friction-speed-limit — Road friction averaged over 3 samples below 30 % above 50 km/h limits the cruise speed to clamp(speed − 20, 30, 50)
+# Scenario suite (ADAS). Hand-derived: averages 20, 30, 26.666666666666668 ((20+40+20)/3), 23.333333333333332; only 20 and 26.67 are
+# below 30 while above 50 km/h (speed 40 from 4000) ⇒ SpeedSet clamp(90−20, 30, 50) = 50 twice; the HMI text prints the double like JavaScript.
+scenarioVersion: 1.0.0
+name: C45-adas-low-friction-speed-limit
+description: "Road friction averaged over 3 samples below 30 % above 50 km/h limits the cruise speed to clamp(speed − 20, 30, 50)"
+vss:
+  release: v4.0
+until: 6000
+initial:
+  Vehicle.ADAS.ESC.RoadFriction.MostProbable: 80
+  Vehicle.Speed: 90
+  Vehicle.ADAS.CruiseControl.SpeedSet: 120
+inputs:
+  - { t: 1000, path: "Vehicle.ADAS.ESC.RoadFriction.MostProbable", value: 20 }
+  - { t: 2000, path: "Vehicle.ADAS.ESC.RoadFriction.MostProbable", value: 40 }
+  - { t: 3000, path: "Vehicle.ADAS.ESC.RoadFriction.MostProbable", value: 20 }
+  - { t: 4000, path: "Vehicle.Speed", value: 40 }
+  - { t: 5000, path: "Vehicle.ADAS.ESC.RoadFriction.MostProbable", value: 10 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.ADAS.CruiseControl.SpeedSet", value: 50 }
+    - { t: 3000, path: "Vehicle.ADAS.CruiseControl.SpeedSet", value: 50 }
+  publishes:
+    - { t: 1000, topic: "simvehicleapp/low-grip-limit/hmi", payload: "{\"severity\":\"warning\",\"title\":\"Low grip\",\"message\":\"Friction 20 %, cruise limited\",\"ts\":1000}" }
+    - { t: 3000, topic: "simvehicleapp/low-grip-limit/hmi", payload: "{\"severity\":\"warning\",\"title\":\"Low grip\",\"message\":\"Friction 26.666666666666668 %, cruise limited\",\"ts\":3000}" }
