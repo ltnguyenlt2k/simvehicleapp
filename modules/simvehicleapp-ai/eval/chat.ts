@@ -10,11 +10,13 @@ export interface TurnOutput {
 }
 export async function chat(message: string, opts: { user?: string; release?: string; workflowId?: string; graph?: unknown; projectId?: string } = {}): Promise<TurnOutput> {
   const t0 = Date.now();
+  // A slow model (self-hosted, reasoning) can take minutes per turn: no client timeout (Bun's default is 5 min).
   const res = await fetch(`${AI}/chat`, {
+    timeout: false, // Bun option, not in RequestInit
     method: "POST",
     headers: { "x-sv-internal": process.env.INTERNAL_API_SECRET ?? "", "x-sv-user-id": opts.user ?? "eval", "content-type": "application/json" },
     body: JSON.stringify({ message, context: { workflow: { workflowId: opts.workflowId ?? "wf_eval", name: "Eval", vssRelease: opts.release ?? "v4.0", ...(opts.graph ? { graph: opts.graph } : {}) }, ...(opts.projectId ? { project: { id: opts.projectId, vssRelease: opts.release ?? "v4.0" } } : {}) } }),
-  });
+  } as RequestInit);
   if (!res.ok) return { text: "", tools: [], error: `${res.status} ${await res.text()}`, ms: Date.now() - t0 };
   const out: TurnOutput = { text: "", tools: [], ms: 0 };
   for (const block of (await res.text()).split("\n\n")) {

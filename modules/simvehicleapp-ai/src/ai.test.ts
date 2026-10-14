@@ -53,6 +53,26 @@ describe("providers (M10-T02): streaming + tool calls, canonical Anthropic block
     expect(body).toMatchObject({ model: "m", system: "s", stream: true });
   });
 
+  test("openai-compatible: parallel calls streamed whole under one index stay separate calls (LiteLLM proxy)", async () => {
+    const base = serve(async () =>
+      sseBody([
+        { choices: [{ delta: { reasoning_content: "Two lookups" } }] },
+        { choices: [{ delta: { tool_calls: [{ index: 0, id: "u1", type: "function", function: { name: "vss_search", arguments: '{"query": "brake light"}' } }] } }] },
+        { choices: [{ delta: { tool_calls: [{ index: 0, id: "u2", type: "function", function: { name: "vss_get_signal", arguments: '{"path": "Vehicle.Speed"}' } }] } }] },
+        { choices: [{ delta: {}, finish_reason: "stop" }] },
+        "[DONE]",
+      ]),
+    );
+    const r = await openaiProvider({ model: "local-agent", baseUrl: base }).streamTurn({ system: "s", tools: [], messages: [{ role: "user", content: "brake when fast" }] });
+    expect(r).toEqual({
+      content: [
+        { type: "tool_use", id: "u1", name: "vss_search", input: { query: "brake light" } },
+        { type: "tool_use", id: "u2", name: "vss_get_signal", input: { path: "Vehicle.Speed" } },
+      ],
+      stopReason: "tool_use",
+    });
+  });
+
   test("openai-compatible (Ollama too): tool_calls assembled from deltas; history translated", async () => {
     let body: { messages: unknown[]; tools?: unknown[]; reasoning_effort?: string } = { messages: [] };
     const base = serve(async (req) => {

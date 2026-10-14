@@ -27,6 +27,7 @@ export function openaiProvider(opts: { name?: string; apiKey?: string; model: st
       if (!res.ok) await failed(res, opts.name ?? "openai-compatible", [opts.apiKey]);
       let text = "";
       const calls: { id: string; name: string; args: string }[] = [];
+      const slots = new Map<number, number>();
       let finish = "";
       for await (const { data } of sseEvents(res)) {
         if (data === "[DONE]") break;
@@ -38,8 +39,16 @@ export function openaiProvider(opts: { name?: string; apiKey?: string; model: st
           req.onText?.(choice.delta.content);
         }
         for (const tc of choice.delta?.tool_calls ?? []) {
-          const i = tc.index ?? calls.length;
-          calls[i] ??= { id: tc.id ?? `call_${i}`, name: "", args: "" };
+          const index = tc.index ?? calls.length;
+          let i = slots.get(index);
+          // OpenAI streams one call per index, its id in the first delta only. Some OpenAI-compatible servers
+          // (a LiteLLM proxy in front of a local model) stream each parallel call whole under index 0: a new id
+          // at an index in use is a new call, or the calls merge into `vss_searchvss_get_signal`.
+          if (i === undefined || (tc.id && calls[i]!.id !== tc.id && calls[i]!.name)) {
+            i = calls.length;
+            slots.set(index, i);
+            calls[i] = { id: tc.id ?? `call_${i}`, name: "", args: "" };
+          }
           if (tc.id) calls[i]!.id = tc.id;
           if (tc.function?.name) calls[i]!.name += tc.function.name;
           if (tc.function?.arguments) calls[i]!.args += tc.function.arguments;
