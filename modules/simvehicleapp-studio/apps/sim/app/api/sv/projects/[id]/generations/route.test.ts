@@ -143,6 +143,27 @@ describe('POST /api/sv/projects/[id]/generations (M07-T18)', () => {
     expect(mockAdapt).toHaveBeenCalledTimes(1)
   })
 
+  it('skips a deleted workflow (ADR-0053); an app whose workflows were all deleted says so', async () => {
+    dbState.tables.workflow = [{ id: 'wf-b', name: 'B', variables: {} }]
+    const both = project([
+      { simWorkflowId: 'wf-a', enabled: true },
+      { simWorkflowId: 'wf-b', enabled: true },
+    ])
+    mockCall.mockResolvedValueOnce(reply(200, both)).mockResolvedValueOnce(reply(202, generation))
+    const res = await POST(createMockRequest('POST', {}, {}, url), ctx)
+    expect(res.status).toBe(202)
+    expect(
+      mockCall.mock.calls[1][2].body.graphs.map((g: { workflowId: string }) => g.workflowId)
+    ).toEqual(['wf-b'])
+
+    dbState.tables.workflow = []
+    mockCall.mockResolvedValueOnce(reply(200, both))
+    const none = await POST(createMockRequest('POST', {}, {}, url), ctx)
+    expect(none.status).toBe(400)
+    expect((await none.json()).error).toContain('were deleted')
+    expect(mockCall).toHaveBeenCalledTimes(3)
+  })
+
   it('refuses a project of a workspace the user cannot access', async () => {
     mockAccess.mockResolvedValue({ exists: true, hasAccess: false, canWrite: false })
     const res = await POST(createMockRequest('POST', {}, {}, url), ctx)

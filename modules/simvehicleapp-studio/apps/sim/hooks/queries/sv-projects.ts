@@ -6,12 +6,18 @@ import {
   type SvGeneration,
   type SvProject,
   type SvStartGenerationBody,
+  svCapacityContract,
+  svCleanProjectContract,
   svCreateProjectContract,
+  svDeleteProjectContract,
   svGetGenerationContract,
   svGetProjectContract,
   svListProjectsContract,
   svProjectFileContract,
   svProjectFilesContract,
+  svProjectSizeContract,
+  svReconcileContract,
+  svRepairProjectContract,
   svStartGenerationContract,
   svUpdateProjectWorkflowsContract,
 } from '@/lib/api/contracts/sv'
@@ -26,6 +32,10 @@ export const svProjectKeys = {
   generation: (projectId?: string, generationId?: string) =>
     [...svProjectKeys.generations(), projectId ?? '', generationId ?? ''] as const,
   files: (projectId?: string) => [...svProjectKeys.all, 'files', projectId ?? ''] as const,
+  sizes: () => [...svProjectKeys.all, 'size'] as const,
+  size: (projectId?: string) => [...svProjectKeys.sizes(), projectId ?? ''] as const,
+  capacity: (workspaceId?: string) =>
+    [...svProjectKeys.all, 'capacity', workspaceId ?? ''] as const,
   file: (projectId?: string, path?: string, generationId?: string) =>
     [...svProjectKeys.all, 'file', projectId ?? '', path ?? '', generationId ?? ''] as const,
 }
@@ -158,5 +168,87 @@ export function useSvProjectFile(projectId?: string, path?: string, generationId
     enabled: Boolean(projectId && path),
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
+  })
+}
+
+/** Disk usage of a vehicle app (ADR-0053); measured on demand, kept a minute. */
+export function useSvProjectSize(projectId?: string, enabled = true) {
+  return useQuery({
+    queryKey: svProjectKeys.size(projectId),
+    queryFn: ({ signal }) =>
+      requestJson(svProjectSizeContract, { params: { id: projectId as string }, signal }),
+    enabled: Boolean(projectId) && enabled,
+    staleTime: 60 * 1000,
+  })
+}
+
+/** Free disk, app quotas and SynCode queue of the host (ADR-0053). */
+export function useSvCapacity(workspaceId?: string) {
+  return useQuery({
+    queryKey: svProjectKeys.capacity(workspaceId),
+    queryFn: ({ signal }) =>
+      requestJson(svCapacityContract, { query: { workspaceId: workspaceId as string }, signal }),
+    enabled: Boolean(workspaceId),
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  })
+}
+
+interface SvProjectActionVariables {
+  projectId: string
+  workspaceId: string
+}
+
+/** After a lifecycle action: the list, the app, its size and the capacity changed. */
+function useAfterLifecycle() {
+  const queryClient = useQueryClient()
+  return (variables: SvProjectActionVariables) => {
+    queryClient.invalidateQueries({ queryKey: svProjectKeys.list(variables.workspaceId) })
+    queryClient.invalidateQueries({ queryKey: svProjectKeys.detail(variables.projectId) })
+    queryClient.invalidateQueries({ queryKey: svProjectKeys.size(variables.projectId) })
+    queryClient.invalidateQueries({ queryKey: svProjectKeys.capacity(variables.workspaceId) })
+  }
+}
+
+/** Deletes a vehicle app: run stopped, folder, caches and history removed (ADR-0053). */
+export function useDeleteSvProject() {
+  const after = useAfterLifecycle()
+  return useMutation({
+    mutationFn: ({ projectId }: SvProjectActionVariables) =>
+      requestJson(svDeleteProjectContract, { params: { id: projectId } }),
+    onSettled: (_data, _error, variables) => after(variables),
+  })
+}
+
+/** Re-creates a failed vehicle app, keeping its workflows. */
+export function useRepairSvProject() {
+  const after = useAfterLifecycle()
+  return useMutation({
+    mutationFn: ({ projectId }: SvProjectActionVariables) =>
+      requestJson(svRepairProjectContract, { params: { id: projectId } }),
+    onSettled: (_data, _error, variables) => after(variables),
+  })
+}
+
+/** Removes a vehicle app's build outputs; sources stay. */
+export function useCleanSvProject() {
+  const after = useAfterLifecycle()
+  return useMutation({
+    mutationFn: ({ projectId }: SvProjectActionVariables) =>
+      requestJson(svCleanProjectContract, { params: { id: projectId } }),
+    onSettled: (_data, _error, variables) => after(variables),
+  })
+}
+
+/** Drops apps of archived workspaces and links to vanished apps (the server does it at most once an hour). */
+export function useSvReconcile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => requestJson(svReconcileContract, {}),
+    onSuccess: (result) => {
+      if (result.deletedApps || result.droppedLinks) {
+        queryClient.invalidateQueries({ queryKey: svProjectKeys.lists() })
+      }
+    },
   })
 }

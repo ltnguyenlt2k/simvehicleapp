@@ -1,8 +1,14 @@
 import { db } from '@sim/db'
-import { svProjects, svWorkflowScenarios, svWorkflowSettings, workflow } from '@sim/db/schema'
+import {
+  svProjects,
+  svWorkflowScenarios,
+  svWorkflowSettings,
+  workflow,
+  workspace,
+} from '@sim/db/schema'
 import { createLogger } from '@sim/logger'
 import type { Variable } from '@sim/workflow-types/workflow'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, count, eq, inArray, isNotNull, isNull } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import {
   type SvDiagnostic,
@@ -83,8 +89,8 @@ export function orchestrator(
 }
 
 /**
- * An orchestrator error relayed to the browser: 404/409/422 keep their status (422 carries the
- * diagnostics), anything else is a 502.
+ * An orchestrator error relayed to the browser: 400/404/409/422/429/507 keep their status (a diagnostics body is
+ * relayed as `{ error, diagnostics }`), anything else is a 502.
  */
 export function upstreamError(res: { status: number; body: unknown }): NextResponse {
   const body = res.body as { message?: unknown; error?: unknown } | null
@@ -94,17 +100,19 @@ export function upstreamError(res: { status: number; body: unknown }): NextRespo
       : typeof body?.error === 'string'
         ? body.error
         : `Orchestrator error ${res.status}`
-  if (res.status === 422 && Array.isArray(res.body)) {
+  // Diagnostics arrays: 422 (rejected), 409 quota, 429 queue full, 507 disk low (ADR-0053) keep their status and
+  // their message — before this, a 409/429/507 array became a bare 502 "Orchestrator error".
+  if ([409, 422, 429, 507].includes(res.status) && Array.isArray(res.body)) {
     const diagnostics = res.body.flatMap((d) => {
       const v = svDiagnosticSchema.safeParse(d)
       return v.success ? [v.data] : []
     })
     return NextResponse.json(
       { error: diagnostics[0]?.message ?? 'Invalid request', diagnostics },
-      { status: 422 }
+      { status: res.status }
     )
   }
-  if ([400, 404, 409, 422].includes(res.status) && !Array.isArray(res.body)) {
+  if ([400, 404, 409, 422, 429, 507].includes(res.status) && !Array.isArray(res.body)) {
     return NextResponse.json({ error: message }, { status: res.status })
   }
   logger.warn('orchestrator error', { status: res.status })
@@ -152,7 +160,13 @@ export async function workflowsInWorkspace(workspaceId: string, ids: string[]): 
   const rows = await db
     .select({ id: workflow.id })
     .from(workflow)
-    .where(and(eq(workflow.workspaceId, workspaceId), inArray(workflow.id, ids)))
+    .where(
+      and(
+        eq(workflow.workspaceId, workspaceId),
+        inArray(workflow.id, ids),
+        isNull(workflow.archivedAt)
+      )
+    )
   const found = new Set(rows.map((r) => r.id))
   return ids.filter((id) => found.has(id))
 }
@@ -223,4 +237,64 @@ export async function scenariosFor(workflowIds: string[]) {
     const parsed = svScenarioSchema.safeParse(r.scenario)
     return parsed.success ? [{ workflowId: r.workflowId, scenario: parsed.data }] : []
   })
+}
+
+/** Vehicle apps a workspace may have (`SV_MAX_APPS_PER_WORKSPACE`, default 10; ADR-0053 §B.3). */
+export function workspaceAppLimit(): number {
+  const v = Number(process.env.SV_MAX_APPS_PER_WORKSPACE)
+  return Number.isInteger(v) && v >= 1 ? v : 10
+}
+
+/** Number of vehicle apps linked to the workspace. */
+export async function workspaceAppCount(workspaceId: string): Promise<number> {
+  const [row] = await db
+    .select({ n: count() })
+    .from(svProjects)
+    .where(eq(svProjects.workspaceId, workspaceId))
+  return Number(row?.n ?? 0)
+}
+
+const RECONCILE_EVERY_MS = 60 * 60 * 1000
+let lastReconcile = 0
+
+/**
+ * Removes what nothing can reach any more (ADR-0053 §B.7): apps of archived workspaces (Sim archives a deleted
+ * workspace, so the `sv_projects` cascade never fires) are deleted in the orchestrator, and links to apps the
+ * orchestrator no longer has are dropped. Apps the studio never linked (gates, scripts) are never touched here.
+ * Runs at most once an hour per server process unless `force`.
+ */
+export async function reconcileApps(
+  force = false
+): Promise<{ deletedApps: number; droppedLinks: number }> {
+  const result = { deletedApps: 0, droppedLinks: 0 }
+  if (!force && Date.now() - lastReconcile < RECONCILE_EVERY_MS) return result
+  lastReconcile = Date.now()
+  const listed = await orchestrator('/projects')
+  if (listed instanceof NextResponse || listed.status !== 200) return result
+  const known = new Set(
+    ((listed.body as { projects?: { id?: unknown }[] } | null)?.projects ?? []).map((p) =>
+      String(p.id)
+    )
+  )
+  const archived = await db
+    .select({ id: svProjects.id })
+    .from(svProjects)
+    .innerJoin(workspace, eq(workspace.id, svProjects.workspaceId))
+    .where(isNotNull(workspace.archivedAt))
+  for (const { id } of archived) {
+    if (known.has(id)) {
+      const del = await orchestrator(`/projects/${id}`, { method: 'DELETE', timeoutMs: 30000 })
+      if (del instanceof NextResponse || (del.status !== 204 && del.status !== 404)) continue
+      result.deletedApps++
+    }
+    await db.delete(svProjects).where(eq(svProjects.id, id))
+  }
+  const links = await db.select({ id: svProjects.id }).from(svProjects)
+  const stale = links.map((l) => l.id).filter((id) => !known.has(id))
+  if (stale.length) {
+    await db.delete(svProjects).where(inArray(svProjects.id, stale))
+    result.droppedLinks = stale.length
+  }
+  if (result.deletedApps || result.droppedLinks) logger.info('apps reconciled', result)
+  return result
 }

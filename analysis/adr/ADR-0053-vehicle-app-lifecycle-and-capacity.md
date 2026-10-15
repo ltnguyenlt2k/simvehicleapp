@@ -156,3 +156,9 @@ flowchart LR
     - delete idempotent qua nhiều service (folder đã mất ⇒ 204);
     - delete app đầy đủ trả lại 135 MB;
     - `/capacity`: 89/100 app, hàng đợi 0/20.
+- **2026-10-15 — T04 (studio BFF + trang Vehicle apps):**
+  - **Reconcile:** dòng `sv_projects` của workspace bị xoá vẫn còn (Sim chỉ đặt `archivedAt`, không cascade), nên chính dòng đó là "tombstone" chứng minh studio từng biết app. Reconcile chỉ xoá app có dòng `sv_projects` thuộc workspace đã archive, và xoá dòng trỏ tới app orchestrator không còn. App không có dòng (gate, script, MCP) **không bao giờ** bị reconcile chạm; app gate được dọn ở T05 (`sv apps prune`, gate tự dọn).
+  - **Không có nút "Reclaim" riêng:** reconcile chạy khi mở trang (server giới hạn 1 lần/giờ/tiến trình) và có `POST /api/sv/reconcile`. Phần còn lại do sweeper và `sv apps prune` (T05) lo. Nút cho admin không thêm giá trị vì reconcile không phụ thuộc người bấm.
+  - **Workflow đã xoá:** Sim xoá mềm workflow (`archivedAt`, khôi phục được). Trước đây `workflowsInWorkspace` không lọc `archivedAt`, nên SynCode vẫn sinh code từ workflow người dùng đã xoá. Còn nếu workflow bị xoá cứng thì SynCode của app hỏng hẳn với 409 "Workflows no longer exist". Sửa: workflow đã xoá bị bỏ qua lúc SynCode và bị ẩn khỏi trang. Danh sách gán trong orchestrator giữ nguyên, nên khôi phục workflow là nó quay lại app. App không còn workflow nào ⇒ SynCode trả 400 với hướng dẫn, và trang hiện nhãn "Unused".
+  - **"Lần SynCode cuối":** contract project chưa có trường này. Trang hiện "updated … ago" từ `updatedAt`; chỉ thêm trường mới khi thật sự cần.
+  - **Mã lỗi relay:** BFF trả nguyên 409/422/429/507 kèm mảng diagnostics (trước đây thành 502), để UI hiển thị đúng lý do.

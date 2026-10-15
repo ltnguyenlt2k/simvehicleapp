@@ -58,15 +58,21 @@ export const POST = withRouteHandler(async (request: NextRequest, context: Route
     open
   )
   if (missing.length > 0) {
+    logger.info('SynCode skips deleted workflows', { project: auth.row.slug, missing })
+  }
+  if (graphs.length === 0) {
     return NextResponse.json(
-      { error: `Workflows no longer exist: ${missing.join(', ')}` },
-      { status: 409 }
+      {
+        error:
+          'The workflows of this app were deleted: tick a workflow of the app in Vehicle apps, or restore it from Recently deleted',
+      },
+      { status: 400 }
     )
   }
   if (issues.length > 0) {
     return NextResponse.json({ error: issues[0].message, diagnostics: issues }, { status: 422 })
   }
-  const scenarios = await scenariosFor(enabled)
+  const scenarios = await scenariosFor(enabled.filter((id) => !missing.includes(id)))
   const res = await orchestrator(`/projects/${auth.row.id}/generations`, {
     method: 'POST',
     body: {

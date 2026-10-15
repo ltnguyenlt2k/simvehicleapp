@@ -95,22 +95,23 @@
 - [x] Unit test mọi nhánh trên; PG test (CI) cho cascade.
 
 ### T04: Studio BFF + trang Vehicle apps
-- [ ] Contract studio (`lib/api/contracts/sv.ts`) cho delete/repair/clean/size/capacity; route bọc `withRouteHandler`, kiểm quyền: delete/repair/clean cần `write` (admin của workspace).
-- [ ] Quota workspace trong BFF lúc tạo app (đếm `sv_projects`) ⇒ `APP_QUOTA_EXCEEDED` (`scope: workspace`).
-- [ ] Xoá app ⇒ xoá dòng `sv_projects` sau khi orchestrator báo thành công. Lỗi giữa chừng không để lại trạng thái lệch: orchestrator idempotent, retry an toàn.
-- [ ] **Reconcile:**
+- [x] Contract studio (`lib/api/contracts/sv.ts`) cho delete/repair/clean/size/capacity; route bọc `withRouteHandler`, kiểm quyền: delete/repair/clean cần `write` (admin của workspace).
+- [x] Quota workspace trong BFF lúc tạo app (đếm `sv_projects`) ⇒ `APP_QUOTA_EXCEEDED` (`scope: workspace`).
+- [x] Xoá app ⇒ xoá dòng `sv_projects` sau khi orchestrator báo thành công. Lỗi giữa chừng không để lại trạng thái lệch: orchestrator idempotent, retry an toàn.
+- [x] **Reconcile:**
   - app trong orchestrator không còn dòng `sv_projects` (workspace bị xoá) ⇒ delete;
   - dòng `sv_projects` mà orchestrator không còn ⇒ xoá dòng;
   - chạy tối đa 1 lần/giờ/tiến trình khi tải trang + nút "Reclaim" cho admin;
   - **không** bao giờ xoá app của workspace khác đang tồn tại;
   - app do gate/AI tạo không qua studio không có dòng `sv_projects` ⇒ reconcile chỉ xoá app có tiền tố gate/test hoặc khi admin xác nhận. Bảo vệ: chỉ xoá app orchestrator mà studio **từng** biết (lưu tombstone) + app gate theo tiền tố.
-- [ ] **Trang Vehicle apps:**
+- [x] **Trang Vehicle apps:**
   - tiêu đề + câu giải thích "Vehicle app là chương trình chạy trên xe sinh từ workflow…";
   - mỗi app: trạng thái, ngôn ngữ thật, VSS, kích thước, lần SynCode cuối, workflow kèm release (đã có);
   - menu Repair (khi failed) / Clean / Delete (hộp thoại gõ tên);
   - thanh quota "3/10 app · 1,2 GB".
-- [ ] Workflow đã xoá ⇒ tự bỏ khỏi app (lúc tải trang + lúc SynCode); app không còn workflow ⇒ nhãn "unused".
-- [ ] Vitest cho route (quyền, quota, reconcile an toàn); E2E: tạo → xoá → biến mất.
+- [x] Workflow đã xoá ⇒ tự bỏ khỏi app (lúc tải trang + lúc SynCode); app không còn workflow ⇒ nhãn "unused".
+- [x] Vitest cho route (quyền, quota, reconcile an toàn); E2E: tạo → xoá → biến mất.
+- Bằng chứng 2026-10-15: vitest studio `app/api/sv` 13 file / 65 test PASS (gồm 11 test vòng đời, quota workspace, relay 409/507, bỏ qua workflow đã xoá); orchestrator 103 PASS (`GET /projects/{id}/size`); biome + `check:api-validation:strict` PASS; E2E `m7-syncode.spec.ts` thêm luồng xoá (gõ tên ⇒ thẻ biến mất). Lệch so với checklist (nút Reclaim, app gate, lần SynCode cuối): ADR-0053 Notes 2026-10-15.
 
 ### T05: Tự tạo app + System status + DEPLOY + dọn dữ liệu cũ
 - [ ] SynCode trên workflow chưa có app ⇒ hộp thoại `ChipModal`:

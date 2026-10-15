@@ -425,6 +425,9 @@ export const svProjectSchema = z.object({
   workflows: z.array(z.object({ simWorkflowId: z.string(), enabled: z.boolean() })),
   /** code-server on the project folder (ADR-0028 §2) once the project is ready. */
   editor: z.object({ url: z.string() }).optional(),
+  /** Epoch ms (ADR-0053). */
+  createdAt: z.number().int().optional(),
+  updatedAt: z.number().int().optional(),
 })
 
 export const svProjectListQuerySchema = z.object({ workspaceId: workspaceIdSchema })
@@ -442,7 +445,9 @@ export const svCreateProjectBodySchema = z.object({
   workspaceId: workspaceIdSchema,
   name: z.string().trim().min(1, 'name is required').max(200),
   slug: svProjectSlugSchema,
-  vssRelease: z.string().regex(/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/, 'a VSS release like v4.0'),
+  vssRelease: z
+    .string()
+    .regex(/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/, 'a VSS release like v4.0'),
   workflowIds: z.array(workflowIdSchema).max(500),
   /** Language of the generated app (ADR-0040, ADR-0041); the stack must have its backend and toolchain. */
   language: z.enum(['cpp', 'python', 'rust']).default('cpp'),
@@ -464,6 +469,84 @@ export const svGetProjectContract = defineRouteContract({
   path: '/api/sv/projects/[id]',
   params: svProjectParamsSchema,
   response: { mode: 'json', schema: svProjectSchema },
+})
+
+/** `DELETE /api/sv/projects/[id]` — deletes the vehicle app: its run, folder, caches and history (ADR-0053). */
+export const svDeleteProjectContract = defineRouteContract({
+  method: 'DELETE',
+  path: '/api/sv/projects/[id]',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: z.object({ deleted: z.literal(true) }) },
+})
+
+/** `POST /api/sv/projects/[id]/repair` — re-creates a failed vehicle app, keeping its workflows (ADR-0053). */
+export const svRepairProjectContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/repair',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: svProjectSchema },
+})
+
+export const svFreedSchema = z.object({ freedBytes: z.number().int().min(0) })
+
+/** `POST /api/sv/projects/[id]/clean` — removes the app's build outputs; sources stay (ADR-0053). */
+export const svCleanProjectContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/clean',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: svFreedSchema },
+})
+
+export const svProjectSizeSchema = z.object({
+  bytes: z.number().int().min(0),
+  /** What clean would free. */
+  buildBytes: z.number().int().min(0),
+})
+
+/** `GET /api/sv/projects/[id]/size` — disk usage of the vehicle app (ADR-0053). */
+export const svProjectSizeContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/size',
+  params: svProjectParamsSchema,
+  response: { mode: 'json', schema: svProjectSizeSchema },
+})
+
+export const svCapacityLevelSchema = z.enum(['ok', 'low', 'high', 'flood'])
+
+export const svCapacitySchema = z.object({
+  /** Free disk of the host's projects volume; null when it cannot be measured right now. */
+  disk: z
+    .object({
+      freeBytes: z.number().int().min(0),
+      totalBytes: z.number().int().min(0),
+      level: svCapacityLevelSchema,
+    })
+    .nullable(),
+  host: z.object({ apps: z.number().int().min(0), limit: z.number().int().min(0) }),
+  workspace: z.object({ apps: z.number().int().min(0), limit: z.number().int().min(0) }),
+  queue: z.object({ queued: z.number().int().min(0), limit: z.number().int().min(0) }),
+})
+export type SvCapacity = z.output<typeof svCapacitySchema>
+
+/** `POST /api/sv/reconcile` — drops apps of archived workspaces and links to vanished apps (≤ once an hour; ADR-0053). */
+export const svReconcileContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/reconcile',
+  response: {
+    mode: 'json',
+    schema: z.object({
+      deletedApps: z.number().int().min(0),
+      droppedLinks: z.number().int().min(0),
+    }),
+  },
+})
+
+/** `GET /api/sv/capacity?workspaceId=` — disk, app quotas and SynCode queue (Vehicle apps, System status; ADR-0053). */
+export const svCapacityContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/capacity',
+  query: z.object({ workspaceId: workspaceIdSchema }),
+  response: { mode: 'json', schema: svCapacitySchema },
 })
 
 export const svUpdateProjectWorkflowsBodySchema = z.object({

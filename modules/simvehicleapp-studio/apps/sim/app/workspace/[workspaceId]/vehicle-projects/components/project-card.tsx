@@ -4,8 +4,10 @@ import { useState } from 'react'
 import { Badge, Button, Checkbox, toast } from '@/components/emcn'
 import type { SvProject } from '@/lib/api/contracts/sv'
 import { cn } from '@/lib/core/utils/cn'
+import { formatFileSize } from '@/lib/uploads/utils/file-utils'
+import { AppActions } from '@/app/workspace/[workspaceId]/vehicle-projects/components/app-actions'
 import { GeneratedFiles } from '@/app/workspace/[workspaceId]/vehicle-projects/components/generated-files'
-import { useUpdateSvProjectWorkflows } from '@/hooks/queries/sv-projects'
+import { useSvProjectSize, useUpdateSvProjectWorkflows } from '@/hooks/queries/sv-projects'
 import { useSvWorkflowSettings } from '@/hooks/queries/sv-workflow-settings'
 
 const STATUS = {
@@ -17,18 +19,49 @@ const STATUS = {
 /** Display names of the project languages. */
 const LANGUAGE: Record<string, string> = { cpp: 'C++', python: 'Python', rust: 'Rust' }
 
+/** `Updated 3 days ago` from epoch ms; coarse on purpose (the list is not live). */
+function updatedAgo(at?: number): string | null {
+  if (!at) return null
+  const minutes = Math.max(0, Math.round((Date.now() - at) / 60_000))
+  if (minutes < 1) return 'updated just now'
+  if (minutes < 60) return `updated ${minutes} min ago`
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) return `updated ${hours} h ago`
+  const days = Math.round(hours / 24)
+  return `updated ${days} day${days === 1 ? '' : 's'} ago`
+}
+
 interface ProjectCardProps {
   project: SvProject
+  workspaceId: string
   workflows: { id: string; name: string }[]
   canEdit: boolean
 }
 
-/** One project: status, assigned workflows (checkboxes) and its generated files. */
-export function ProjectCard({ project, workflows, canEdit }: ProjectCardProps) {
+/**
+ * One vehicle app: status, language, VSS release, disk usage, assigned workflows (checkboxes), its generated
+ * files and its lifecycle actions (ADR-0053). Workflows deleted from the workspace are not listed; an app with no
+ * workflow left is marked unused.
+ */
+export function ProjectCard({ project, workspaceId, workflows, canEdit }: ProjectCardProps) {
   const updateWorkflows = useUpdateSvProjectWorkflows()
+  const { data: size } = useSvProjectSize(project.id, project.status === 'ready')
   const [showFiles, setShowFiles] = useState(false)
-  const assigned = new Set(project.workflows.filter((w) => w.enabled).map((w) => w.simWorkflowId))
+  const existing = new Set(workflows.map((w) => w.id))
+  const assigned = new Set(
+    project.workflows
+      .filter((w) => w.enabled && existing.has(w.simWorkflowId))
+      .map((w) => w.simWorkflowId)
+  )
   const status = STATUS[project.status]
+  const details = [
+    `/workspace/projects/${project.slug}`,
+    LANGUAGE[project.language] ?? project.language,
+    `VSS ${project.vssRelease}`,
+    project.appName,
+    size ? formatFileSize(size.bytes) : null,
+    updatedAgo(project.updatedAt ?? project.createdAt),
+  ].filter(Boolean)
 
   const toggle = (workflowId: string, on: boolean) => {
     const next = new Set(assigned)
@@ -54,10 +87,15 @@ export function ProjectCard({ project, workflows, canEdit }: ProjectCardProps) {
         <Badge variant={status.variant} size='sm' data-sv='project-status'>
           {status.label}
         </Badge>
-        <span className='text-[12px] text-[var(--text-muted)]'>
-          {`/workspace/projects/${project.slug} · ${LANGUAGE[project.language] ?? project.language} · VSS ${project.vssRelease} · ${project.appName}`}
+        {project.status === 'ready' && assigned.size === 0 && (
+          <Badge variant='gray' size='sm' data-sv='project-unused'>
+            Unused
+          </Badge>
+        )}
+        <span className='min-w-0 truncate text-[12px] text-[var(--text-muted)]'>
+          {details.join(' · ')}
         </span>
-        <div className='ml-auto'>
+        <div className='ml-auto flex items-center gap-1'>
           <Button
             variant='ghost'
             size='sm'
@@ -67,6 +105,9 @@ export function ProjectCard({ project, workflows, canEdit }: ProjectCardProps) {
           >
             {showFiles ? 'Hide files' : 'Generated files'}
           </Button>
+          {canEdit && (
+            <AppActions project={project} workspaceId={workspaceId} buildBytes={size?.buildBytes} />
+          )}
         </div>
       </div>
       {project.status === 'failed' && project.statusMessage && (

@@ -169,6 +169,54 @@ describe('/api/sv/projects (M07-T17)', () => {
     expect(dbState.inserts).toEqual([])
   })
 
+  it('refuses a new app over the workspace quota without calling the orchestrator (ADR-0053)', async () => {
+    dbState.tables.sv_projects = [{ n: 10 }]
+    const res = await POST(
+      createMockRequest('POST', {
+        workspaceId: WS,
+        name: 'A',
+        slug: 'a',
+        vssRelease: 'v4.0',
+        workflowIds: [],
+      })
+    )
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body.diagnostics[0]).toMatchObject({
+      code: 'APP_QUOTA_EXCEEDED',
+      data: { scope: 'workspace', limit: 10 },
+    })
+    expect(body.error).toContain('the limit is 10')
+    expect(mockCall).not.toHaveBeenCalled()
+  })
+
+  it('relays the orchestrator quota and disk diagnostics with their status, not as a bare 502', async () => {
+    const body = { workspaceId: WS, name: 'A', slug: 'a', vssRelease: 'v4.0', workflowIds: [] }
+    const diag = (code: string, message: string) => ({
+      code,
+      severity: 'error',
+      stage: 'workspace',
+      message,
+      docs: `diagnostics#${code}`,
+    })
+    mockCall.mockResolvedValueOnce(
+      reply(409, [diag('APP_QUOTA_EXCEEDED', 'This host already has 100 vehicle apps')])
+    )
+    const quota = await POST(createMockRequest('POST', body))
+    expect(quota.status).toBe(409)
+    expect(await quota.json()).toMatchObject({
+      error: 'This host already has 100 vehicle apps',
+      diagnostics: [{ code: 'APP_QUOTA_EXCEEDED' }],
+    })
+    mockCall.mockResolvedValueOnce(
+      reply(507, [diag('HOST_DISK_LOW', 'Only 3.0 GB free on the host')])
+    )
+    const disk = await POST(createMockRequest('POST', body))
+    expect(disk.status).toBe(507)
+    expect((await disk.json()).diagnostics[0].code).toBe('HOST_DISK_LOW')
+    expect(dbState.inserts).toEqual([])
+  })
+
   it('reports an unreachable orchestrator as 502', async () => {
     mockCall.mockRejectedValue(new TypeError('fetch failed'))
     const res = await POST(

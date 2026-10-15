@@ -7,7 +7,14 @@ import { svCreateProjectContract, svListProjectsContract } from '@/lib/api/contr
 import { parseRequest } from '@/lib/api/server'
 import { getSession } from '@/lib/auth'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
-import { orchestrator, parseProject, upstreamError, workflowsInWorkspace } from '@/lib/sv/projects'
+import {
+  orchestrator,
+  parseProject,
+  upstreamError,
+  workflowsInWorkspace,
+  workspaceAppCount,
+  workspaceAppLimit,
+} from '@/lib/sv/projects'
 import { checkWorkspaceAccess } from '@/lib/workspaces/permissions/utils'
 
 const logger = createLogger('SvProjectsAPI')
@@ -54,6 +61,27 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
   const access = await checkWorkspaceAccess(workspaceId, session.user.id)
   if (!access.hasAccess) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
   if (!access.canWrite) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+  const limit = workspaceAppLimit()
+  const existing = await workspaceAppCount(workspaceId)
+  if (existing >= limit) {
+    const message = `This workspace already has ${existing} vehicle apps: the limit is ${limit}. Delete or reuse an app (Vehicle apps), or ask the administrator to raise it.`
+    return NextResponse.json(
+      {
+        error: message,
+        diagnostics: [
+          {
+            code: 'APP_QUOTA_EXCEEDED',
+            severity: 'error',
+            stage: 'workspace',
+            message,
+            docs: 'diagnostics#APP_QUOTA_EXCEEDED',
+            data: { scope: 'workspace', limit },
+          },
+        ],
+      },
+      { status: 409 }
+    )
+  }
 
   const created = await orchestrator('/projects', {
     method: 'POST',

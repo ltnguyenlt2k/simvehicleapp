@@ -134,7 +134,11 @@ test.describe('M7 SynCode', () => {
 
   test('Projects page creates a project and assigns the workflow', async ({ page }) => {
     const { workflowId } = await workflowWithTrigger(page, 'm7p')
-    const state = { projects: [] as ReturnType<typeof project>[], created: null as unknown }
+    const state = {
+      projects: [] as ReturnType<typeof project>[],
+      created: null as unknown,
+      deleted: false,
+    }
     await page.route(/\/api\/sv\/projects(\?|$)/, async (route) => {
       if (route.request().method() === 'POST') {
         state.created = route.request().postDataJSON()
@@ -148,10 +152,32 @@ test.describe('M7 SynCode', () => {
       state.projects = [project(workflowIds)]
       return route.fulfill({ json: state.projects[0] })
     })
+    await page.route(`**/api/sv/projects/${PROJECT_ID}`, (route) => {
+      if (route.request().method() !== 'DELETE') return route.fallback()
+      state.deleted = true
+      state.projects = []
+      return route.fulfill({ json: { deleted: true } })
+    })
+    await page.route(`**/api/sv/projects/${PROJECT_ID}/size`, (route) =>
+      route.fulfill({ json: { bytes: 150 * 1024 ** 2, buildBytes: 140 * 1024 ** 2 } })
+    )
+    await page.route(/\/api\/sv\/capacity(\?|$)/, (route) =>
+      route.fulfill({
+        json: {
+          disk: { freeBytes: 50 * 1024 ** 3, totalBytes: 100 * 1024 ** 3, level: 'ok' },
+          host: { apps: state.projects.length, limit: 100 },
+          workspace: { apps: state.projects.length, limit: 10 },
+          queue: { queued: 0, limit: 20 },
+        },
+      })
+    )
 
     await page.getByRole('link', { name: 'Vehicle projects' }).click()
     const pageRoot = page.locator('[data-sv="projects-page"]')
-    await expect(pageRoot).toContainText('No vehicle projects yet')
+    await expect(pageRoot).toContainText('No vehicle apps yet')
+    await expect(pageRoot.locator('[data-sv="capacity-apps"]')).toHaveText(
+      '0/10 apps in this workspace'
+    )
     await page.getByRole('textbox', { name: 'Project name' }).fill('Hazard App')
     await expect(page.getByRole('textbox', { name: 'Project folder' })).toHaveValue('hazard-app')
     await page.locator('[data-sv="project-create-submit"]').click()
@@ -164,6 +190,19 @@ test.describe('M7 SynCode', () => {
     await box.click()
     await expect(box).toHaveAttribute('data-state', 'checked')
     expect(state.projects[0].workflows).toEqual([{ simWorkflowId: workflowId, enabled: true }])
+    await expect(card).toContainText('150 MB')
+
+    // ADR-0053: Delete asks for the app's name before removing it.
+    await card.locator('[data-sv="project-actions"]').click()
+    await page.locator('[data-sv="project-delete"]').click()
+    const dialog = page.getByRole('dialog')
+    const confirm = dialog.getByRole('button', { name: 'Delete' })
+    await expect(confirm).toBeDisabled()
+    await dialog.getByRole('textbox').fill('Hazard App')
+    await confirm.click()
+    await expect(card).toHaveCount(0)
+    expect(state.deleted).toBe(true)
+    await expect(pageRoot).toContainText('No vehicle apps yet')
   })
 
   test('SynCode pass: stages, build log, verification and the IDE link', async ({ page }) => {
