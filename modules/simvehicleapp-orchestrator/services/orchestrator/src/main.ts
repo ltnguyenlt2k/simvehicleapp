@@ -133,24 +133,27 @@ setInterval(() => refreshCapacity().catch(() => {}), 60_000);
 const sweepEveryMs = Math.max(1, Number(process.env.SV_SWEEP_INTERVAL_MIN ?? 60) || 60) * 60_000;
 let sweeping = false;
 const runSweep = async () => {
-  if (sweeping) return; // never two sweeps at once
+  if (sweeping) return null; // never two sweeps at once
   sweeping = true;
   try {
     const r = await sweep({ repo, clients, runs, probe, log }, limits);
     if (r.freedBytes) reclaimed.inc({}, r.freedBytes);
     if (r.errors.length) log.warn("sweep errors", { errors: r.errors });
+    return r;
   } catch (e) {
     log.error("sweep failed", { err: e });
+    throw e;
   } finally {
     sweeping = false;
   }
 };
 // First sweep a few minutes after start (not during recovery), then every SV_SWEEP_INTERVAL_MIN (60).
+const sweepQuietly = () => runSweep().catch(() => {});
 setTimeout(() => {
-  runSweep();
-  setInterval(runSweep, sweepEveryMs);
+  sweepQuietly();
+  setInterval(sweepQuietly, sweepEveryMs);
 }, 5 * 60_000);
 
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe }));
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe, sweep: runSweep }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (additive, M16-T10): `POST /sweep` — runs the sweeper now and answers what it did (409 while one runs).
 - `openapi/orchestrator.v1.yaml` (additive, M16-T03): `Project.createdAt`/`updatedAt`; `POST /projects/{id}/generations` answers 409 `not_ready` for an app still creating or failed; `PUT /projects/{id}/workflows` answers 409 `APP_QUOTA_EXCEEDED` over the per-app workflow limit.
 - Vehicle app lifecycle and host capacity (additive, ADR-0053, M16-T02): workspace `DELETE /projects/{slug}`, `POST /projects/{slug}/clean`, `GET /projects/{slug}/size`, `GET /capacity` (schema `Capacity`); toolchain `POST /projects/{slug}/forget`, `POST /gc`; orchestrator `DELETE /projects/{id}`, `POST /projects/{id}/repair`, `POST /projects/{id}/clean`, `GET /capacity`, and 409/507/429 on project creation and SynCode. Diagnostics catalog: `APP_QUOTA_EXCEEDED`, `HOST_DISK_LOW`, `SYNCODE_QUEUE_FULL`.
 - Documentation fix: the `Diagnostics` (422) response of `workspace` and `orchestrator` is an **array** of diagnostics — what the services return since M07 (it was documented as `{diagnostics}`).

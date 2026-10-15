@@ -6,7 +6,7 @@ import { editorUrl, present } from "./pipeline.ts";
 import type { EntitlementService, Feature } from "./entitlements.ts";
 import { exportExtras } from "./export.ts";
 import { type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quotaExceeded } from "./governance.ts";
-import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp } from "./lifecycle.ts";
+import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp, type SweepResult } from "./lifecycle.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
 import { ACTIVE_RUN_STATES, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
 import { RunConflict, type RunManager } from "./runs.ts";
@@ -36,6 +36,8 @@ export interface AppDeps {
   limits?: Limits;
   /** Free disk of the projects volume; without it the disk thresholds are not checked. */
   probe?: CapacityProbe;
+  /** Runs the sweeper now (`POST /sweep`); `null` while a sweep is already running. Without it: 503. */
+  sweep?: () => Promise<SweepResult | null>;
   /** Wakes the generation worker. */
   kick(): void;
   background(p: Promise<void>): void;
@@ -308,6 +310,11 @@ export function createOrchestratorHandler(d: AppDeps) {
         apps: { total: apps.length, limit: limits.maxAppsTotal },
         queue: { queued: pending.filter((q) => q.state === "queued").length, limit: limits.maxQueued },
       });
+    }
+    if (url.pathname === "/sweep" && req.method === "POST") {
+      if (!d.sweep) return json(503, { error: "unavailable", message: "the sweeper is not configured" });
+      const r = await d.sweep();
+      return r ? json(200, r) : json(409, { error: "conflict", message: "a sweep is already running" });
     }
     if (url.pathname === "/system" && req.method === "GET") {
       return json(200, { services: await d.clients.system() });

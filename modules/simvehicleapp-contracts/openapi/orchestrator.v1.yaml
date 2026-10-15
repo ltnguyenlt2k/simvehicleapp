@@ -158,6 +158,29 @@ paths:
                   disk: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue", description: "workspace `Capacity` (freeBytes, totalBytes, level, thresholds); null when the workspace cannot be reached." }
                   apps: { type: object, required: [total, limit], properties: { total: { type: integer, minimum: 0 }, limit: { type: integer, minimum: 0 } } }
                   queue: { type: object, required: [queued, limit], properties: { queued: { type: integer, minimum: 0 }, limit: { type: integer, minimum: 0 } } }
+  /sweep:
+    post:
+      operationId: sweep
+      tags: [system]
+      summary: Runs the sweeper now (ADR-0053 §6) — the hourly job that deletes old failed apps, cleans idle apps and drops orphan toolchain caches. For operators and gates.
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: What the sweep did.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted, cleaned, skipped, freedBytes, cachesRemoved, errors]
+                properties:
+                  deleted: { type: array, items: { type: string }, description: "slugs of the apps deleted" }
+                  cleaned: { type: array, items: { type: string }, description: "slugs of the apps whose build outputs were removed" }
+                  skipped: { type: array, items: { type: string }, description: "slugs left alone because they run or have a SynCode queued/building" }
+                  freedBytes: { type: integer, minimum: 0 }
+                  cachesRemoved: { type: integer, minimum: 0 }
+                  errors: { type: array, items: { type: string } }
+        "409": { description: "A sweep is already running." }
+        "503": { description: "The sweeper is not configured." }
   /projects/{id}/workflows:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     put:

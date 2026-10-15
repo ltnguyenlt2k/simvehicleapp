@@ -78,6 +78,8 @@ jobs:
         run: SV_PARITY_REPORT=$PWD/parity/parity-p3.json modules/simvehicleapp-orchestrator/gate/parity-p3.sh
       - name: Custom VSS model (ADR-0052) — overlay release, SynCode + live run, then a model change on the same project
         run: modules/simvehicleapp-orchestrator/gate/vss-custom-gate.sh v4.0-acme cpp
+      - name: M16 capacity (ADR-0053) — quotas, one queued SynCode per app, Clean measured with du, disk thresholds, repair, sweeper, delete
+        run: modules/simvehicleapp-orchestrator/gate/m16-capacity.sh
       - name: Parity dashboard (report artifact)
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

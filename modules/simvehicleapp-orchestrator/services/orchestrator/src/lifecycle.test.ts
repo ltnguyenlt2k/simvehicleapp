@@ -269,6 +269,21 @@ describe("capacity probe", () => {
   });
 });
 
+describe("POST /sweep", () => {
+  test("runs the sweeper now and answers its result; 409 while one runs; 503 without a sweeper", async () => {
+    const result = { deleted: ["a"], cleaned: [], skipped: [], freedBytes: 10, cachesRemoved: 0, errors: [] };
+    const answers = [result, null];
+    const h = createOrchestratorHandler({ repo: new MemoryRepo(), clients: clients().clients, hub: new EventHub(), limits: limits(), kick() {}, background() {}, sweep: async () => answers.shift() ?? null });
+    const call = () => h(new Request("http://o/sweep", { method: "POST" }), ctx);
+    const first = await call();
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual(result);
+    expect((await call()).status).toBe(409);
+    const none = createOrchestratorHandler({ repo: new MemoryRepo(), clients: clients().clients, hub: new EventHub(), limits: limits(), kick() {}, background() {} });
+    expect((await none(new Request("http://o/sweep", { method: "POST" }), ctx)).status).toBe(503);
+  });
+});
+
 describe("sweeper", () => {
   test("deletes old failed apps, cleans idle ones, collects caches; recent, running and SynCoding apps untouched", async () => {
     const repo = new MemoryRepo();
