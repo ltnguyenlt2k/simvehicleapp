@@ -205,6 +205,66 @@ test.describe('M7 SynCode', () => {
     await expect(pageRoot).toContainText('No vehicle apps yet')
   })
 
+  test('SynCode on a workflow in no app creates the app, waits for it and starts by itself (M16-T05)', async ({
+    page,
+  }) => {
+    const state = {
+      projects: [] as ReturnType<typeof project>[],
+      created: null as Record<string, unknown> | null,
+      ready: false,
+    }
+    await page.route(/\/api\/sv\/projects(\?|$)/, (route) => {
+      if (route.request().method() === 'POST') {
+        state.created = route.request().postDataJSON()
+        state.projects = [project(state.created?.workflowIds as string[], 'creating')]
+        return route.fulfill({ json: state.projects[0] })
+      }
+      if (state.ready && state.projects[0]?.status === 'creating') {
+        state.projects = [project(state.projects[0].workflows.map((w) => w.simWorkflowId))]
+      }
+      return route.fulfill({ json: { projects: state.projects } })
+    })
+    const sent: unknown[] = []
+    await page.route(`**/api/sv/projects/${PROJECT_ID}/generations`, (route) => {
+      sent.push(route.request().postDataJSON())
+      return route.fulfill({ status: 202, json: generation('queued') })
+    })
+    await page.route(`**/api/sv/projects/${PROJECT_ID}/generations/${GENERATION_ID}`, (route) =>
+      route.fulfill({ json: generation('succeeded') })
+    )
+    await page.route(
+      `**/api/sv/projects/${PROJECT_ID}/generations/${GENERATION_ID}/events`,
+      (route) =>
+        route.fulfill({
+          headers: { 'content-type': 'text/event-stream' },
+          body: sse(['▶ ir', '[100%] Built target app']),
+        })
+    )
+    const { workflowId } = await workflowWithTrigger(page, 'm7a')
+
+    const syncode = page.locator('[data-sv-action="syncode"]')
+    await expect(syncode).toBeEnabled({ timeout: 20_000 })
+    await syncode.click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.locator('[data-sv="create-app-release"]')).toHaveText(/^v\d+\.\d+/)
+    await dialog.getByRole('textbox').fill('Hazard App')
+    await dialog.getByRole('button', { name: 'Create and SynCode' }).click()
+    await expect(dialog).toHaveCount(0)
+    expect(state.created).toMatchObject({
+      name: 'Hazard App',
+      slug: 'hazard-app',
+      workflowIds: [workflowId],
+      language: 'cpp',
+    })
+
+    // The app is being prepared: the button says so and nothing is generated yet.
+    await expect(syncode).toHaveText('Preparing app…')
+    expect(sent).toHaveLength(0)
+    state.ready = true
+    await expect.poll(() => sent.length, { timeout: 20_000 }).toBe(1)
+    await expect(page.locator('[data-sv="build-log"]')).toBeVisible()
+  })
+
   test('SynCode pass: stages, build log, verification and the IDE link', async ({ page }) => {
     const workflow = { id: '' }
     const sent = await mockSynCode(

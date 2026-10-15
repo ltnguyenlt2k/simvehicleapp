@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Button, ChipInput, ChipSelect, toast } from '@/components/emcn'
+import { appSlugOf, SV_APP_SLUG } from '@/lib/sv/app-slug'
 import { installedLanguages, type SvLanguage } from '@/lib/sv/languages'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { CapacityBar } from '@/app/workspace/[workspaceId]/vehicle-projects/components/capacity-bar'
@@ -10,17 +11,6 @@ import { useSvCatalogReleases } from '@/hooks/queries/sv-catalog'
 import { useCreateSvProject, useSvProjects, useSvReconcile } from '@/hooks/queries/sv-projects'
 import { useSvSystemStatus } from '@/hooks/queries/sv-system'
 import { useWorkflows } from '@/hooks/queries/workflows'
-
-const SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/
-
-/** Folder name of the project from its name (`My Vehicle App` → `my-vehicle-app`). */
-function slugOf(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 63)
-}
 
 interface VehicleProjectsProps {
   workspaceId: string
@@ -48,8 +38,8 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
   const releases = catalog?.releases ?? []
   const defaultRelease = releases.find((r) => r.default)?.release ?? releases[0]?.release
   const vssRelease = release ?? defaultRelease
-  const slug = slugEdit ?? slugOf(name)
-  const slugValid = SLUG.test(slug)
+  const slug = slugEdit ?? appSlugOf(name)
+  const slugValid = SV_APP_SLUG.test(slug)
   const workflowList = useMemo(
     () => (workflows ?? []).map((w) => ({ id: w.id, name: w.name })),
     [workflows]

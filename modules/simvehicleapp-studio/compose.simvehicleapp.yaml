@@ -63,6 +63,8 @@ services:
       SV_ORCHESTRATOR_URL: ${SV_ORCHESTRATOR_URL:-http://orchestrator:4030}
       SV_SIGNAL_GATEWAY_URL: ${SV_SIGNAL_GATEWAY_URL:-http://signal-gateway:4050}
       SV_AI_URL: ${SV_AI_URL:-http://ai-assistant:4300}
+      # Vehicle apps per workspace (ADR-0053 §B.3); the host-wide quota is the orchestrator's SV_MAX_APPS_TOTAL.
+      SV_MAX_APPS_PER_WORKSPACE: ${SV_MAX_APPS_PER_WORKSPACE:-10}
     ports: ["127.0.0.1:${SV_STUDIO_PORT:-3000}:3000"]
     depends_on:
       studio-migrations: { condition: service_completed_successfully }

@@ -33,7 +33,12 @@ vi.mock('@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/use-run-
   useWorkflowRuns: () => ({ project: undefined, run: undefined, active: undefined }),
 }))
 vi.mock('@/hooks/queries/workflows', () => ({ useWorkflowMap: () => ({ data: {} }) }))
-vi.mock('next/navigation', () => ({ useParams: () => ({}) }))
+vi.mock('next/navigation', () => ({ useParams: () => ({}), useRouter: () => ({ push: vi.fn() }) }))
+vi.mock('@/hooks/queries/sv-catalog', () => ({ useSvCatalogReleases: () => ({ data: undefined }) }))
+vi.mock('@/hooks/queries/sv-workflow-settings', () => ({
+  useSvWorkflowSettings: () => ({ data: undefined }),
+  useUpdateSvWorkflowSettings: () => ({ mutate: mockMutate }),
+}))
 vi.mock('@/hooks/use-collaborative-workflow', () => ({
   useCollaborativeWorkflow: () => ({
     collaborativeBatchAddBlocks: vi.fn(),
@@ -68,11 +73,13 @@ describe('vehicle editor chrome (M01-T10)', () => {
       expect(html).toContain(
         action.id === 'verify' || action.id === 'simulate'
           ? `title="${action.label} the workflow"`
-          : ['syncode', 'run', 'open-ide', 'export'].includes(action.id)
-            ? 'title="Add this workflow to a vehicle project first (Vehicle projects page)"'
-            : action.id === 'stop'
-              ? 'title="Nothing is running"'
-              : `title="${action.label} — available in ${action.milestone}"`
+          : action.id === 'syncode'
+            ? 'title="Create a vehicle app for this workflow, then generate, build and test it"'
+            : ['run', 'open-ide', 'export'].includes(action.id)
+              ? 'title="Add this workflow to a vehicle project first (Vehicle projects page)"'
+              : action.id === 'stop'
+                ? 'title="Nothing is running"'
+                : `title="${action.label} — available in ${action.milestone}"`
       )
     }
     expect(html.match(/disabled=""/g)).toHaveLength(SV_ACTIONS.length)

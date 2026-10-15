@@ -11,10 +11,15 @@ interface SvSynCodeState {
   generationId: string | null
   /** Project chosen for SynCode when the workflow belongs to several. */
   selectedProjectId: string | null
+  /** App created (or joined) from the SynCode dialog: SynCode starts by itself once it is ready (ADR-0053 §A). */
+  autoSynCodeProjectId: string | null
   lines: SvLogLine[]
   /** Bumped to bring the Build log tab to the front. */
   focusBuildLog: number
   selectProject: (projectId: string) => void
+  /** Selects the app and asks for a SynCode as soon as it is ready. */
+  requestAutoSynCode: (projectId: string) => void
+  clearAutoSynCode: () => void
   start: (projectId: string, generationId: string) => void
   /** Adds stream lines in order, ignoring ones already seen (a reconnect replays after Last-Event-ID). */
   append: (generationId: string, lines: SvLogLine[]) => void
@@ -26,6 +31,7 @@ const initialState = {
   projectId: null as string | null,
   generationId: null as string | null,
   selectedProjectId: null as string | null,
+  autoSynCodeProjectId: null as string | null,
   lines: [] as SvLogLine[],
   focusBuildLog: 0,
 }
@@ -36,6 +42,9 @@ export const useSvSynCodeStore = create<SvSynCodeState>()(
     (set) => ({
       ...initialState,
       selectProject: (selectedProjectId) => set({ selectedProjectId }),
+      requestAutoSynCode: (projectId) =>
+        set({ selectedProjectId: projectId, autoSynCodeProjectId: projectId }),
+      clearAutoSynCode: () => set({ autoSynCodeProjectId: null }),
       start: (projectId, generationId) =>
         set((s) => ({ projectId, generationId, lines: [], focusBuildLog: s.focusBuildLog + 1 })),
       append: (generationId, incoming) =>
