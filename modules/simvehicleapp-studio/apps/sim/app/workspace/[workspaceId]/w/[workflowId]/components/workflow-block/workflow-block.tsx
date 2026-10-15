@@ -10,6 +10,7 @@ import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
 import { getBaseUrl } from '@/lib/core/utils/urls'
 import { createMcpToolId } from '@/lib/mcp/shared'
 import { getProviderIdFromServiceId } from '@/lib/oauth'
+import { SV_HANDLE_BG, svHandleTone } from '@/lib/sv/handle-labels'
 import { HANDLE_POSITIONS } from '@/lib/workflows/blocks/block-dimensions'
 import { calculateWorkflowBlockDimensions } from '@/lib/workflows/blocks/deterministic-dimensions'
 import { getConditionRows, getRouterRows } from '@/lib/workflows/dynamic-handle-topology'
@@ -36,6 +37,7 @@ import {
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { ActionBar } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar'
 // SV: realtime lint badge (M03-T11)
+import { SvBlockSummaryLine } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/block-summary-line'
 import { SvBlockProblemsBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
 import { SvTraceBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
 import {
@@ -612,17 +614,23 @@ export const WorkflowBlock = memo(function WorkflowBlock({
   const subBlockRows = subBlockRowsData.rows
   const subBlockState = subBlockRowsData.stateToUse
 
+  /** SV: values of a vehicle block's props, for its summary line and value-dependent handles (ADR-0055). */
+  const svValues = useMemo(() => {
+    if (!type.startsWith('sv_')) return undefined
+    const values: Record<string, unknown> = {}
+    for (const [key, sub] of Object.entries(subBlockState ?? {})) {
+      values[key] = (sub as { value?: unknown } | undefined)?.value
+    }
+    return values
+  }, [type, subBlockState])
+
   /** SV: named branch handles of SimVehicleApp flow blocks (then/else, ok/timeout, case-<i>…). */
   const svHandles = useMemo(() => {
     const spec = config.svHandles
     if (!spec) return undefined
     if (typeof spec !== 'function') return spec
-    const values: Record<string, unknown> = {}
-    for (const [key, sub] of Object.entries(subBlockState ?? {})) {
-      values[key] = (sub as { value?: unknown } | undefined)?.value
-    }
-    return spec(values)
-  }, [config.svHandles, subBlockState])
+    return spec(svValues ?? {})
+  }, [config.svHandles, svValues])
   const topologySubBlocks = data.isPreview
     ? (data.blockState?.subBlocks ?? {})
     : (currentStoreBlock?.subBlocks ?? {})
@@ -645,7 +653,8 @@ export const WorkflowBlock = memo(function WorkflowBlock({
    */
   const shouldShowDefaultHandles =
     config.category !== 'triggers' && type !== 'starter' && !displayTriggerMode
-  const hasContentBelowHeader = subBlockRows.length > 0 || shouldShowDefaultHandles
+  const hasContentBelowHeader =
+    subBlockRows.length > 0 || shouldShowDefaultHandles || svValues !== undefined
 
   /**
    * Reusable styles and positioning for Handle components.
@@ -938,6 +947,8 @@ export const WorkflowBlock = memo(function WorkflowBlock({
 
         {hasContentBelowHeader && (
           <div className='flex flex-col gap-2 p-2'>
+            {/* SV: the sentence the block stands for (ADR-0055) */}
+            {svValues && <SvBlockSummaryLine type={type} values={svValues} />}
             {type === 'condition' ? (
               conditionRows.map((cond) => (
                 <SubBlockRow key={cond.id} title={cond.title} value={getDisplayValue(cond.value)} />
@@ -1115,7 +1126,7 @@ export const WorkflowBlock = memo(function WorkflowBlock({
             type='source'
             position={Position.Right}
             id={handle.id}
-            className={getHandleClasses('right')}
+            className={cn(getHandleClasses('right'), SV_HANDLE_BG[svHandleTone(handle.id)])}
             style={{
               right: '-7px',
               top: 'auto',

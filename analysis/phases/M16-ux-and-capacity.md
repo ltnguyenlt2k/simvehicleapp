@@ -154,13 +154,19 @@
   - lọc Settings ở `settings-sidebar.tsx` thay vì sửa mảng `allNavigationItems`, để diff với upstream nhỏ.
 
 ### T08: Block: câu tóm tắt, màu, nhãn cổng
-- [ ] `lib/sv/block-summary.ts`: một quy tắc cho **mỗi** BlockSpec (41) + test bảng; test bảo đảm không spec nào thiếu quy tắc.
-- [ ] `lib/sv/handle-labels.ts`: bảng handle → nhãn/màu dùng chung.
-- [ ] `workflow-block.tsx`:
+- [x] `lib/sv/block-summary.ts`: một quy tắc cho **mỗi** BlockSpec (41) + test bảng; test bảo đảm không spec nào thiếu quy tắc.
+- [x] `lib/sv/handle-labels.ts`: bảng handle → nhãn/màu dùng chung.
+- [x] `workflow-block.tsx`:
   - đầu thẻ cho `sv_*` (câu + màu + nhãn WHEN/DO);
   - nhãn cổng nhánh;
   - không đổi hành vi kéo, nối, chọn.
-- [ ] Golden graph-adapter + IR + conformance không đổi (chạy test core/contracts local; studio test trên CI).
+- [x] Golden graph-adapter + IR + conformance không đổi (chạy test core/contracts local; studio test trên CI).
+- Bằng chứng 2026-10-15:
+  - `block-summary` 26 test: đủ quy tắc cho cả 41 BlockSpec; block trống vẫn ra một câu; vai trò khớp category.
+  - `handle-labels` 3 test: mọi nhánh có tên của spec đều có màu.
+  - `lib/sv` + `blocks/vehicle` + `workflow-block`: 416 PASS, gồm golden graph-adapter GW-A…G. Không có thay đổi nào trong `simvehicleapp-core`/`contracts`, nên IR và conformance giữ nguyên byte.
+  - Câu tóm tắt nằm ở dòng đầu thân block. Handle neo theo đỉnh/đáy nên không xê dịch, kéo/nối/chọn không đổi.
+  - Dòng tóm tắt không đặt `title` vì helper E2E `nodeByName` tìm block theo `[title=<tên>]`.
 
 ### T09: Nhãn cạnh + chip dữ liệu
 - [ ] `workflow-edge.tsx`: nhãn + màu theo handle nguồn (bảng chung); cạnh lỗi giữ màu đỏ.
