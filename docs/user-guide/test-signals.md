@@ -5,7 +5,11 @@ Có ba cách kiểm, từ nhanh tới sát xe thật:
 - **Run + tab Signals:** app thật chạy trên KUKSA databroker, bạn bắn tín hiệu từ UI.
 - **Bắn tín hiệu từ ngoài:** curl hoặc kuksa-client.
 
-Mọi lệnh dưới đây đã được chạy thử trên stack dev ngày 2026-10-15.
+Đã kiểm thực tế trên stack dev ngày 2026-10-15:
+- các lệnh kuksa-client và curl, trên workflow cảnh báo vượt tốc GW-A;
+- tab Signals, qua E2E full luồng.
+
+Bảng các bước LKA ở mục 2 được suy ra từ logic đã build của workflow LKA, chưa chạy thử từng bước.
 
 ## 1. Simulate (không cần build)
 Tab **Simulation timeline** → **YAML** → dán scenario → **Apply** → **Simulate**. Ví dụ cho workflow cảnh báo chệch làn (LKA):
