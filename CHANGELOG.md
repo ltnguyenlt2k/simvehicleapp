@@ -3,6 +3,22 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/); phiên bản theo SemVer. Chi tiết từng milestone:
 [docs/reports/](docs/reports/), trạng thái: [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## [Unreleased]
+
+### M16 — Trải nghiệm & kiểm soát tài nguyên ([báo cáo](docs/reports/M16.md))
+- **Vehicle apps:**
+  - SynCode tự tạo app cho workflow chưa có app; app sẵn sàng thì SynCode tự chạy.
+  - Trang Vehicle apps có giải thích, dung lượng từng app, quota, và các nút Clean / Delete (gõ tên để xác nhận) / Repair.
+  - Xoá workspace thì app của nó bị dọn.
+- **Kiểm soát dung lượng host (ADR-0053):**
+  - Quota app/workspace/host và workflow/app; ngưỡng đĩa (507 `HOST_DISK_LOW`).
+  - Mỗi app chỉ có 1 SynCode chờ; hàng đợi có giới hạn (429).
+  - Sweeper chạy mỗi giờ; `POST /sweep` để chạy ngay. `scripts/sv apps list|prune`.
+  - Gate, smoke và E2E tự xoá app của chúng. DEPLOY có mục "Dung lượng & quota".
+- **Editor (ADR-0054):** nút có trạng thái (spinner, ✓/✕), nút chính, chip app, pill trạng thái, gợi ý bằng lời. Ẩn Tables/Files/Knowledge/Logs/Scheduled tasks; Settings chỉ còn phần dùng cho toolchain.
+- **Canvas (ADR-0055):** mỗi block xe có câu tóm tắt và nhãn vai trò; cạnh nhánh có nhãn và màu; chip "uses:" làm nổi block nguồn. Graph, IR và code sinh ra không đổi.
+- **Sửa lỗi:** SynCode sinh workflow đã xoá; lỗi 409/429/507 bị biến thành 502; `tree` đi theo symlink; backup cũ không bao giờ bị xoá; `sv smoke` để lại thư mục mỗi lần chạy.
+
 ## [baseline-2026-10-14] — 2026-10-14 (pre-release)
 
 Tại commit `12e803a` — CI xanh (run 38436298021 toàn bộ @ `89a8eb1`, 38490652578 @ `424d8ff`, 38491940778 @ `12e803a`).

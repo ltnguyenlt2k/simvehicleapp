@@ -127,7 +127,10 @@
   - mục "Dung lượng & quota" (biến env, cách đặt volume trên phân vùng riêng/quota XFS, cảnh báo theo metrics);
   - `.env.example` thêm các biến;
   - OPERATIONS.md: quy trình dọn.
-- [ ] `scripts/sv apps prune [--apply]` (mặc định dry-run); chạy trên máy dev, ghi dung lượng thu hồi.
+- [x] `scripts/sv apps prune [--apply]` (mặc định dry-run); chạy trên máy dev, ghi dung lượng thu hồi.
+  - 2026-10-15, máy dev, `prune --apply --e2e`: xoá 83/85 app và 6 thư mục mồ côi; báo 8.120 MB thư mục đã thu hồi; 0 app bị bỏ qua.
+  - Chỉ còn 2 app của người dùng (`sample-test`, `sample-test-v4-2`).
+  - Đo `du`: volume `sv-workspace` 8.927 → 127 MB, `sv-velocitas` 9.458 → 222 MB. Cache Velocitas được xoá theo từng app lúc delete; `POST /sweep` sau đó không còn gì để thu.
 - [x] **Gate/smoke tự dọn:** `m7`, `m8`, `m9`, `parity-p3`, `vss-custom`, `bench`, `mcp-live` xoá app khi kết thúc (`trap`); E2E teardown xoá app.
 
 ### T06: Thanh hành động
@@ -178,15 +181,18 @@
   - Cạnh lỗi giữ màu đỏ. Màu chạy/diff vẫn ưu tiên hơn màu nhánh.
 
 ### T10: Gate + E2E + báo cáo
-- [ ] `gate/m16-capacity.sh` (stack dev):
+- [x] `gate/m16-capacity.sh` (stack dev):
   - tạo tới quota ⇒ lỗi đúng;
   - Clean/Delete trả dung lượng (`du`);
   - repair ⇒ ready;
   - hàng đợi gộp;
   - sweeper với TTL ngắn (env).
-- [ ] Nightly thêm gate (C++), các gate tự dọn.
+- [x] Nightly thêm gate (C++), các gate tự dọn.
 - [ ] CI xanh toàn bộ; nightly xanh; live smoke, parity, VSS gate vẫn PASS.
-- [ ] `docs/reports/M16.md` + ROADMAP + CHANGELOG + `sv refresh` localhost.
+- [x] `docs/reports/M16.md` + ROADMAP + CHANGELOG + `sv refresh` localhost.
+- Bằng chứng 2026-10-15:
+  - gate PASS trên stack dev (`gate-m16-1792032182`); CI xanh 38669938414.
+  - Nightly 38672732360 đang chạy ⇒ mục "CI xanh toàn bộ; nightly xanh…" chưa tick.
 
 ## Mối quan tâm xuyên suốt (soát ở mỗi task)
 | Khía cạnh | Kiểm tra |
