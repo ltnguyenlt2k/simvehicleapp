@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # M7 acceptance gate on the running dev stack (scripts/sv up): real orchestrator, workspace,
-# codegen-cpp and toolchain-cpp. Creates a fresh project; never removes volumes.
+# codegen-cpp and toolchain-cpp. Creates a fresh project and deletes it on exit
+# (SV_KEEP_APPS=1 keeps it); never removes volumes.
 #   modules/simvehicleapp-orchestrator/gate/m7-gate.sh [slug]
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
@@ -10,6 +11,8 @@ VOL=simvehicleapp_sv-workspace
 HEADER="projects/$SLUG/app/src/simvehicleapp-runtime/include/simvehicleapp/rt/Runtime.hpp"
 INTERNAL_API_SECRET="${INTERNAL_API_SECRET:-$(sed -n 's/^INTERNAL_API_SECRET=//p' .env)}"
 export INTERNAL_API_SECRET SLUG
+source scripts/lib/sv-apps.sh
+trap 'sv_delete_apps "$SLUG"' EXIT
 
 step() {
   docker run --rm --network "$NET" -e INTERNAL_API_SECRET -e SLUG -e STEP="$1" -e PREV="${PREV:-}" \
@@ -37,9 +40,9 @@ workspace_with_fault ""
 PREV="$PREV" step recover
 
 echo "== 3. intentional compile error (runtime API renamed in the project)"
-trap restore_header EXIT
+trap 'restore_header; sv_delete_apps "$SLUG"' EXIT
 docker run --rm --user 4000:4000 -v "$VOL":/w alpine sed -i 's/void stableFor(/void stableForRenamed(/' "/w/$HEADER"
 step broken
 restore_header
-trap - EXIT
+trap 'sv_delete_apps "$SLUG"' EXIT
 echo "M7 gate: PASS ($SLUG)"

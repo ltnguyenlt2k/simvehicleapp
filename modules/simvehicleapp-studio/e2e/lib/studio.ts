@@ -69,6 +69,26 @@ export async function createWorkflow(page: Page): Promise<string> {
   return workflowIdOf(page)
 }
 
+/**
+ * Deletes the vehicle apps of the page's workspace through the studio (ADR-0053): a live spec creates real apps
+ * (folder, build caches), and every run would otherwise leave ~150 MB on the host. Called from `afterEach`, pass or
+ * fail; SV_KEEP_APPS=1 keeps them to look at a failure. Never fails the test: a leftover is pruned later
+ * (`scripts/sv apps prune --e2e`).
+ */
+export async function deleteVehicleApps(page: Page): Promise<void> {
+  if (process.env.SV_KEEP_APPS === '1') return
+  const workspaceId = /\/workspace\/([^/?]+)/.exec(new URL(page.url()).pathname)?.[1]
+  if (!workspaceId) return
+  try {
+    const list = await page.request.get(`/api/sv/projects?workspaceId=${workspaceId}`)
+    if (!list.ok()) return
+    const { projects } = (await list.json()) as { projects: { id: string }[] }
+    for (const p of projects) await page.request.delete(`/api/sv/projects/${p.id}`)
+  } catch {
+    // The page or the stack is gone: prune catches up.
+  }
+}
+
 export function workflowIdOf(page: Page): string {
   const m = /\/w\/([^/?]+)/.exec(new URL(page.url()).pathname)
   if (!m) throw new Error(`not a workflow URL: ${page.url()}`)

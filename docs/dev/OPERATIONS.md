@@ -46,6 +46,8 @@ của mọi service — trực tiếp từ BFF hoặc qua orchestrator `GET /sys
   `docker run --rm --network simvehicleapp_sv-internal curlimages/curl -s http://orchestrator:4030/metrics`.
   Chính: `sv_syncode_stage_duration_ms`, `sv_syncode_generations_total{result,code}`, `sv_runs_ended_total`,
   `sv_run_trace_events_total`, `sv_toolchain_job_duration_ms`, `sv_http_requests_total`.
+  Dung lượng (ADR-0053): `sv_workspace_free_bytes`, `sv_apps_total`, `sv_generation_queue_length`,
+  `sv_reclaimed_bytes_total`.
 
 ## 6. Dữ liệu và sao lưu
 Volume: `studio-db` (Postgres: studio + schema `sv`, `sv_ai`), workspace projects, cache conan/velocitas, `sv-vss`.
@@ -54,6 +56,11 @@ Volume: `studio-db` (Postgres: studio + schema `sv`, `sv_ai`), workspace project
 - Sao lưu DB: `docker compose exec studio-db pg_dump -U postgres simvehicleapp > backup.sql`.
 - Project: thư mục trong volume workspace; **Export** (zip) từ studio là bản mang đi được.
 - `scripts/sv reset-caches`: chỉ xoá volume cache conan/velocitas (sau khi dựng lại image toolchain).
+- **Dọn app** (ADR-0053; giới hạn và ngưỡng: [DEPLOY §4](../DEPLOY.md#4-dung-lượng--quota-adr-0053)):
+  1. `scripts/sv apps prune`: xem app sẽ bị xoá và dung lượng thu hồi. Lệnh chỉ in ra, chưa xoá gì.
+  2. `scripts/sv apps prune --apply` (thêm `--e2e` trên máy dev/CI) để xoá. App đang build bị bỏ qua và được báo lại.
+  3. Cache của app đã xoá biến mất ở lượt sweeper kế tiếp (≤ 1 giờ), hoặc ngay khi restart orchestrator + 5 phút.
+  - Gate, smoke và E2E live tự xoá app của chúng khi kết thúc, kể cả khi fail. `SV_KEEP_APPS=1` giữ lại để xem lỗi.
 
 ## 7. Kiểm thử trên stack
 | Lệnh | Kiểm |

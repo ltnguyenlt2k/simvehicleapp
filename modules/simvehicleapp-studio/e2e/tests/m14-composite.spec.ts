@@ -27,7 +27,13 @@ test.describe('M14 composite status blocks', () => {
     await createWorkflow(page)
 
     const toolbar = await openToolbar(page)
-    for (const name of ['Battery status', 'Door status', 'Climate status', 'Filter', 'State machine']) {
+    for (const name of [
+      'Battery status',
+      'Door status',
+      'Climate status',
+      'Filter',
+      'State machine',
+    ]) {
       await expect(toolbar.getByText(name, { exact: true }).first()).toBeVisible()
     }
 

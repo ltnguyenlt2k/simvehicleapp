@@ -105,7 +105,7 @@ r = await ro.call("no_such_tool");
 check(r.isError === true, "unknown tool ⇒ tool error");
 
 // 7. actions with actions:auto on a fresh project: SynCode (graphs), workflow_get, SynCode again (last), Run, inject, logs, Stop
-const slug = `mcp-live-${Date.now()}`;
+const slug = process.env.SLUG ?? `mcp-live-${Date.now()}`;
 let p = await (await fetch(`${O}/projects`, { method: "POST", headers: internal, body: JSON.stringify({ slug, name: "MCP live", language: "cpp", vssRelease: "v4.0" }) })).json();
 while (p.status === "creating") {
   await Bun.sleep(2000);

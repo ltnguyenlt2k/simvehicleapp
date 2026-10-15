@@ -10,6 +10,8 @@ SLUG="${1:-gate-m9-$(date +%s)}"
 INTERNAL_API_SECRET="${INTERNAL_API_SECRET:-$(sed -n 's/^INTERNAL_API_SECRET=//p' .env)}"
 OUT="$(mktemp -d "${TMPDIR:-/tmp}/sv-m9.XXXXXX")"
 export INTERNAL_API_SECRET SLUG
+source scripts/lib/sv-apps.sh
+trap 'sv_delete_apps "$SLUG"' EXIT
 step() {
   docker run --rm --network simvehicleapp_sv-internal --user "$(id -u):$(id -g)" -e INTERNAL_API_SECRET -e SLUG -e STEP="$1" \
     -v "$PWD":/repo:ro -v "$OUT":/out -w /repo/modules/simvehicleapp-orchestrator oven/bun:1.3.8 bun gate/m9-gate.ts
@@ -52,10 +54,10 @@ fi
 
 echo "== 3. License PDP (enforce + restricted license)"
 step license > "$OUT/license.env"
-trap 'orchestrator_with SV_LICENSE_MODE=full SV_LICENSE_KEY= SV_LICENSE_PUBLIC_KEY=' EXIT
+trap 'orchestrator_with SV_LICENSE_MODE=full SV_LICENSE_KEY= SV_LICENSE_PUBLIC_KEY=; sv_delete_apps "$SLUG"' EXIT
 orchestrator_with SV_LICENSE_MODE=enforce "SV_LICENSE_KEY=$(sed -n 's/^SV_LICENSE_KEY=//p' "$OUT/license.env")" "SV_LICENSE_PUBLIC_KEY=$(sed -n 's/^SV_LICENSE_PUBLIC_KEY=//p' "$OUT/license.env")"
 step pdp
 orchestrator_with SV_LICENSE_MODE=full SV_LICENSE_KEY= SV_LICENSE_PUBLIC_KEY=
-trap - EXIT
+trap 'sv_delete_apps "$SLUG"' EXIT
 rm -rf "$OUT"
 echo "M9 gate: PASS ($SLUG)"

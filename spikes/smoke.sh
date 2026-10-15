@@ -4,10 +4,14 @@
 #  2. build → artifact check (build.sh exit code is NOT trusted) → unit tests
 #  3. run the app against databroker:55555 + mqtt:1883, inject Vehicle.Speed via kuksa.val.v1, expect MQTT publish
 #  4. set-semantics probe (sdv.databroker.v1 SetDatapoints → actuator TARGET)
+# The project folder is removed on exit (SV_KEEP_APPS=1 keeps it).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DC="docker compose"; P=/workspace/projects/smoke-$(date +%s)
 pass(){ echo "PASS $*"; }; fail(){ echo "FAIL $*"; exit 1; }
+# The project folder is not an app of the orchestrator: nothing else would ever remove it (~140 MB, ADR-0053).
+cleanup(){ [[ "${SV_KEEP_APPS:-}" == 1 ]] || $DC exec -T toolchain-cpp rm -rf "$P" >/dev/null 2>&1 || true; }
+trap cleanup EXIT
 $DC up -d databroker mqtt toolchain-cpp >/dev/null
 # Tester image before the MQTT subscription: a (re)build inside its 20 s window made S-2 time out.
 docker build -q -t sv-spike-databroker-tester -f spikes/s2-s4-databroker/Dockerfile.tester spikes/s2-s4-databroker >/dev/null

@@ -4,6 +4,7 @@ import { expect, type Page, test } from '@playwright/test'
 import {
   connect,
   createWorkflow,
+  deleteVehicleApps,
   dragFromToolbar,
   dropSignal,
   logIn,
@@ -13,6 +14,15 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+
+/**
+ * Live runs create real vehicle apps: delete them (ADR-0053). A passing `@live` keeps its app for `@live-restart`,
+ * which checks it survived the restart and then deletes it.
+ */
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.title.startsWith('@live full flow') && testInfo.status === 'passed') return
+  await deleteVehicleApps(page)
+})
 
 /**
  * M15-T06 (SCENARIOS H2) — @live, the whole product on the real stack, one user, one workflow:

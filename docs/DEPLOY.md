@@ -46,7 +46,53 @@ có image. `--groups core,studio,cpp,python` chọn nhóm cụ thể.
 
 Không cần dọn cache Velocitas theo từng project: các project dùng chung venv Python của seed (ADR-0051 §5).
 
-## 4. Cập nhật lên release mới
+## 4. Dung lượng & quota (ADR-0053)
+
+Mỗi vehicle app chiếm khoảng 140 MB: phần lớn là thư mục build; cache Velocitas của app chỉ vài MB. Nhiều người dùng
+tạo nhiều app thì đĩa đầy dần. Stack tự giới hạn và tự dọn; quản trị viên chỉ cần chọn ngưỡng.
+
+**Giới hạn** (đặt trong `.env`, có sẵn dòng mẫu trong `.env.example`):
+
+| Biến | Mặc định | Khi chạm ngưỡng |
+|---|---|---|
+| `SV_MAX_APPS_PER_WORKSPACE` | 10 | Không tạo thêm app trong workspace (409 `APP_QUOTA_EXCEEDED`) |
+| `SV_MAX_APPS_TOTAL` | 100 | Không tạo thêm app trên cả máy |
+| `SV_MAX_WORKFLOWS_PER_APP` | 20 | Không gán thêm workflow vào một app |
+| `SV_MAX_QUEUED_GENERATIONS` | 20 | SynCode báo "thử lại sau ít phút" (429 `SYNCODE_QUEUE_FULL`). Mỗi app chỉ có 1 SynCode chờ; SynCode mới thay SynCode cũ |
+| `SV_DISK_LOW_GB` | 10 | Đĩa còn dưới mức này: chỉ cảnh báo trên trang Vehicle apps và System status |
+| `SV_DISK_HIGH_GB` | 5 | Không tạo app mới, không repair (507 `HOST_DISK_LOW`) |
+| `SV_DISK_FLOOD_GB` | 2 | Tạm dừng SynCode. Run và các thao tác dọn vẫn chạy |
+
+Không đo được đĩa thì hệ thống cho qua và ghi log: người dùng không bị chặn chỉ vì phép đo lỗi.
+
+**Tự dọn** (orchestrator, mỗi `SV_SWEEP_INTERVAL_MIN` = 60 phút):
+- App `failed` cũ hơn `SV_FAILED_TTL_DAYS` (7 ngày) bị xoá.
+- App không SynCode/Run trong `SV_IDLE_CLEAN_DAYS` (14 ngày) bị **clean**: xoá thư mục build, giữ mã nguồn. Lần SynCode
+  sau tự cài lại dependency và build lại (lâu hơn bình thường).
+- Cache Velocitas của app không còn tồn tại bị xoá.
+- App đang chạy hoặc đang có SynCode được bỏ qua.
+- `SV_KEEP_GENERATIONS` (10): số bản sinh mã cũ giữ lại cho mỗi app. `SV_CCACHE_MAX` (2G): trần cache biên dịch C++.
+
+Đặt `0` cho `SV_FAILED_TTL_DAYS` hoặc `SV_IDLE_CLEAN_DAYS` để tắt việc dọn tương ứng.
+
+**Người dùng tự dọn:** trang **Vehicle apps** hiện dung lượng từng app và có các nút Clean / Delete / Repair. Xoá
+workspace thì các app của workspace đó bị xoá ở lần kế tiếp có người (bất kỳ workspace nào) mở trang Vehicle apps;
+việc đối soát này chạy tối đa 1 lần/giờ.
+
+**Quản trị viên dọn:** `scripts/sv apps prune` liệt kê app không ai dùng (app gate/test không thuộc workspace nào, app
+của workspace đã xoá, thư mục không có app) và dung lượng sẽ thu hồi. Lệnh chỉ in ra, chưa xoá gì; thêm `--apply` để
+xoá. `--e2e` thêm app của user Playwright, `--failed` thêm app khởi tạo lỗi. `scripts/sv apps list` liệt kê mọi app
+kèm dung lượng và chủ sở hữu.
+
+**Đặt dữ liệu trên phân vùng riêng (khuyến nghị cho máy dùng chung).** Ngưỡng đĩa đo hệ thống file chứa volume
+workspace, tức thư mục data-root của Docker (mặc định `/var/lib/docker`). Đặt `data-root` trong
+`/etc/docker/daemon.json` lên một ổ hoặc phân vùng riêng thì app đầy đĩa cũng không làm đầy ổ hệ điều hành.
+
+**Cảnh báo theo metrics** (`GET /metrics` của orchestrator, xem [OPERATIONS](dev/OPERATIONS.md) §5):
+`sv_workspace_free_bytes` (đĩa còn trống), `sv_apps_total` (số app), `sv_generation_queue_length` (hàng đợi SynCode),
+`sv_reclaimed_bytes_total` (dung lượng sweeper đã thu hồi). Ví dụ cảnh báo: `sv_workspace_free_bytes < 10e9`.
+
+## 5. Cập nhật lên release mới
 
 ```bash
 git fetch --tags && git checkout <tag-mới>
@@ -57,7 +103,7 @@ docker image prune -f         # xoá image cũ không còn dùng
 
 **Không** chạy `scripts/sv down -v`: lệnh này xoá volume, tức mất database studio và mọi project.
 
-## 5. Phát hành image (dành cho maintainer)
+## 6. Phát hành image (dành cho maintainer)
 
 1. Chọn một commit có CI xanh, tạo release:
    `gh release create <tag> --target <sha> --prerelease --notes-file …`.

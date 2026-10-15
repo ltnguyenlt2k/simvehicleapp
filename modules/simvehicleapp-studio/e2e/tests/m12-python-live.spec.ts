@@ -3,6 +3,7 @@ import { expect, type Page, test } from '@playwright/test'
 import {
   connect,
   createWorkflow,
+  deleteVehicleApps,
   dragFromToolbar,
   dropSignal,
   newUser,
@@ -11,6 +12,9 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+
+/** Live runs create real vehicle apps: delete them, pass or fail (ADR-0053). */
+test.afterEach(async ({ page }) => deleteVehicleApps(page))
 
 /**
  * @live — needs the full dev stack with the Python backend (`COMPOSE_PROFILES=python`, `python=…` in

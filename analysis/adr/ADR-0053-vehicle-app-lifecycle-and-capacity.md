@@ -162,3 +162,17 @@ flowchart LR
   - **Workflow đã xoá:** Sim xoá mềm workflow (`archivedAt`, khôi phục được). Trước đây `workflowsInWorkspace` không lọc `archivedAt`, nên SynCode vẫn sinh code từ workflow người dùng đã xoá. Còn nếu workflow bị xoá cứng thì SynCode của app hỏng hẳn với 409 "Workflows no longer exist". Sửa: workflow đã xoá bị bỏ qua lúc SynCode và bị ẩn khỏi trang. Danh sách gán trong orchestrator giữ nguyên, nên khôi phục workflow là nó quay lại app. App không còn workflow nào ⇒ SynCode trả 400 với hướng dẫn, và trang hiện nhãn "Unused".
   - **"Lần SynCode cuối":** contract project chưa có trường này. Trang hiện "updated … ago" từ `updatedAt`; chỉ thêm trường mới khi thật sự cần.
   - **Mã lỗi relay:** BFF trả nguyên 409/422/429/507 kèm mảng diagnostics (trước đây thành 502), để UI hiển thị đúng lý do.
+- **2026-10-15 — T05 (tự tạo app, System status, dọn dữ liệu):**
+  - **SynCode khi workflow chưa thuộc app nào:** nút SynCode không còn bị khoá mà mở hộp thoại "Create a vehicle app". Người dùng chọn một trong hai:
+    - app mới: tên gợi ý là tên workflow; tên thư mục tự sinh và bỏ dấu tiếng Việt (`Đèn cảnh báo` → `den-canh-bao`); trùng trong workspace thì thêm `-2`, `-3`; trùng với workspace khác (orchestrator trả 409 không kèm diagnostics) thì tự thử lại một lần với hậu tố ngẫu nhiên;
+    - app có sẵn cùng release.
+
+    Release luôn là release của workflow và không đổi được. Sau khi xác nhận, nút hiện "Preparing app…" rồi SynCode tự chạy khi app `ready`. App `failed` thì báo lỗi kèm nút "Open Vehicle apps" để repair. Lỗi `APP_QUOTA_EXCEEDED`/`HOST_DISK_LOW` khi tạo app hoặc SynCode cũng có nút này.
+  - **Thư mục mồ côi:** `sv smoke` (spike M0) tạo project trực tiếp bằng toolchain, không qua orchestrator, nên sweeper và delete không bao giờ thấy các thư mục đó (đo được 3 × 136 MB trên máy dev). Sửa:
+    - smoke xoá thư mục khi thoát;
+    - `sv apps prune` liệt kê và xoá thư mục không có app. Bỏ qua thư mục đổi trong 30 phút gần nhất, và liệt kê thư mục **trước** khi lấy danh sách app để app vừa tạo không bị coi là mồ côi. Thư mục được xoá qua `DELETE /projects/{slug}` của workspace, nên ghi chép đi kèm cũng bị xoá.
+  - **Tiêu chí "không ai dùng" của prune:** AI/MCP không tạo app, chỉ dùng app có sẵn; mọi app người dùng tạo đều qua studio nên đều có dòng `sv_projects`. Vì vậy "không có dòng `sv_projects`" chỉ có thể là app gate/test. App của user E2E và app `failed` chỉ bị xoá khi thêm `--e2e` / `--failed`.
+  - **Gate/smoke/E2E tự dọn:**
+    - các script `trap … EXIT` gọi `scripts/lib/sv-apps.sh` (đúng slug, không dùng pattern) và giữ nguyên mã thoát của script;
+    - E2E live dùng `afterEach` → `deleteVehicleApps`; `@live` của m15 giữ app khi pass để `@live-restart` kiểm, rồi `@live-restart` xoá;
+    - `SV_KEEP_APPS=1` giữ app lại để xem lỗi.

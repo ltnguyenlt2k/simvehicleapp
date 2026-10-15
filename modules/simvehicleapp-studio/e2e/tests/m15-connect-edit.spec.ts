@@ -39,9 +39,7 @@ async function tryConnect(from: Locator, fromHandle: string, to: Locator) {
 test.describe('M15 connect and edit', () => {
   test.use({ viewport: { width: 1920, height: 1080 } })
 
-  test('branches, rename ⇒ refs, cycle refused, delete/undo/redo, copy/paste', async ({
-    page,
-  }) => {
+  test('branches, rename ⇒ refs, cycle refused, delete/undo/redo, copy/paste', async ({ page }) => {
     test.setTimeout(180_000)
     await signUp(page, newUser('m15edit', 'Playwright Edit'))
     await setAutoConnect(page, false)

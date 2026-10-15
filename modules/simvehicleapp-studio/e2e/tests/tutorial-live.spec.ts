@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test'
 import {
   connect,
   createWorkflow,
+  deleteVehicleApps,
   dragFromToolbar,
   dropSignal,
   newUser,
@@ -10,6 +11,9 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+
+/** Live runs create real vehicle apps: delete them, pass or fail (ADR-0053). */
+test.afterEach(async ({ page }) => deleteVehicleApps(page))
 
 /**
  * @live — the user-guide tutorial "Overspeed warning" (docs/user-guide/tutorial.md, M11-T02) on the
@@ -112,7 +116,9 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
 
   // 6. vehicle project + SynCode
   await page.getByRole('link', { name: 'Vehicle projects' }).click()
-  await page.getByRole('textbox', { name: 'Project name' }).fill(`Overspeed ${workflowId.slice(0, 6)}`)
+  await page
+    .getByRole('textbox', { name: 'Project name' })
+    .fill(`Overspeed ${workflowId.slice(0, 6)}`)
   const slug = await page.getByRole('textbox', { name: 'Project folder' }).inputValue()
   await page.locator('[data-sv="project-create-submit"]').click()
   const card = page.locator(`[data-sv-project="${slug}"]`)
@@ -137,7 +143,9 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
   const projectId = projects.projects?.find((p) => p.slug === slug)?.id
   expect(projectId).toBeTruthy()
   for (const field of ['target', 'value']) {
-    await page.request.post(`/api/sv/projects/${projectId}/signals`, { data: { path: HAZARD, value: false, field } })
+    await page.request.post(`/api/sv/projects/${projectId}/signals`, {
+      data: { path: HAZARD, value: false, field },
+    })
   }
   await page.locator('[data-sv-action="run"]').click()
   await expect(page.locator('[data-sv="run-state"]')).toHaveAttribute('data-sv-state', 'running', {
@@ -148,7 +156,9 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
   await pause(page, 1000)
   await inject(page, SPEED, '130')
   await page.waitForTimeout(3000)
-  await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)).toHaveText('true')
+  await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)).toHaveText(
+    'true'
+  )
   await page.locator('[data-sv-tab="run-console"]').click()
   await expect(page.getByRole('log', { name: 'Run console' })).toContainText('Set IsSignaling 1', {
     timeout: 15_000,

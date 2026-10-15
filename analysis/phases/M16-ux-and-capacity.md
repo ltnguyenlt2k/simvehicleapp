@@ -114,21 +114,21 @@
 - Bằng chứng 2026-10-15: vitest studio `app/api/sv` 13 file / 65 test PASS (gồm 11 test vòng đời, quota workspace, relay 409/507, bỏ qua workflow đã xoá); orchestrator 103 PASS (`GET /projects/{id}/size`); biome + `check:api-validation:strict` PASS; E2E `m7-syncode.spec.ts` thêm luồng xoá (gõ tên ⇒ thẻ biến mất). Lệch so với checklist (nút Reclaim, app gate, lần SynCode cuối): ADR-0053 Notes 2026-10-15.
 
 ### T05: Tự tạo app + System status + DEPLOY + dọn dữ liệu cũ
-- [ ] SynCode trên workflow chưa có app ⇒ hộp thoại `ChipModal`:
+- [x] SynCode trên workflow chưa có app ⇒ hộp thoại `ChipModal`:
   - tên (gợi ý = tên workflow, slug hợp lệ, không trùng);
   - ngôn ngữ (chỉ ngôn ngữ đã cài);
   - VSS = release của workflow (khoá);
   - hoặc "Thêm vào app có sẵn" (chỉ các app cùng release).
 
   Xác nhận ⇒ tạo ⇒ chờ `ready` (hiện tiến trình) ⇒ tự SynCode.
-- [ ] Lỗi quota/ngưỡng/hàng đợi ⇒ thông báo tiếng người + nút "Mở Vehicle apps để dọn".
-- [ ] **System status:** thẻ "Disk" (free/total, mức ngưỡng, màu), số app/quota, hàng đợi SynCode.
-- [ ] **DEPLOY.md:**
+- [x] Lỗi quota/ngưỡng/hàng đợi ⇒ thông báo tiếng người + nút "Mở Vehicle apps để dọn".
+- [x] **System status:** thẻ "Disk" (free/total, mức ngưỡng, màu), số app/quota, hàng đợi SynCode.
+- [x] **DEPLOY.md:**
   - mục "Dung lượng & quota" (biến env, cách đặt volume trên phân vùng riêng/quota XFS, cảnh báo theo metrics);
   - `.env.example` thêm các biến;
   - OPERATIONS.md: quy trình dọn.
 - [ ] `scripts/sv apps prune [--apply]` (mặc định dry-run); chạy trên máy dev, ghi dung lượng thu hồi.
-- [ ] **Gate/smoke tự dọn:** `m7`, `m8`, `m9`, `parity-p3`, `vss-custom`, `bench`, `mcp-live` xoá app khi kết thúc (`trap`); E2E teardown xoá app.
+- [x] **Gate/smoke tự dọn:** `m7`, `m8`, `m9`, `parity-p3`, `vss-custom`, `bench`, `mcp-live` xoá app khi kết thúc (`trap`); E2E teardown xoá app.
 
 ### T06: Thanh hành động
 - [ ] `SvActionButton` (icon, label, state, emphasis, disabledReason) + test.

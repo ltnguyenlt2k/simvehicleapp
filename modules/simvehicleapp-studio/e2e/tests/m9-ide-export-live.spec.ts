@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test'
 import {
   connect,
   createWorkflow,
+  deleteVehicleApps,
   dropSignal,
   newUser,
   nodeByName,
@@ -10,6 +11,9 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+
+/** Live runs create real vehicle apps: delete them, pass or fail (ADR-0053). */
+test.afterEach(async ({ page }) => deleteVehicleApps(page))
 
 /**
  * @live — needs the full dev stack (`scripts/sv up`, including `ide-cpp`), skipped in CI like the

@@ -75,7 +75,7 @@ async function main() {
   add("simulate GW-A (compile + simulate)", 1000, simulate);
 
   // SynCode: a new project's first generation, then warm repeats and one-prop changes.
-  const slug = `bench-${Date.now()}`;
+  const slug = process.env.SLUG ?? `bench-${Date.now()}`;
   let p = await (await post(`${O}/projects`, { slug, name: "Bench NFR-02", language: "cpp", vssRelease: "v4.0" })).json();
   while (p.status === "creating") {
     await Bun.sleep(2000);
