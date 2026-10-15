@@ -54,6 +54,12 @@ Vòng lặp chi tiết (review doc → research → implement → mismatch → �
 4. Chạy test module + contract test; nếu chạm contract → bump + ADR.
 5. Dev: một diff/PR trong repo hiện tại. Release mới dùng PR repo con và bump lock sau merge; kiểm script tồn tại. Không tự commit/push/merge nếu chưa được yêu cầu.
 6. Cập nhật checklist DoD của phase **và** trạng thái feature trong [docs/ROADMAP.md](docs/ROADMAP.md) (`☐`→`🔄` lúc bắt đầu, `🔄`→`✔` kèm bằng chứng lúc xong).
+7. **Bắt buộc khi thay đổi thứ người dùng thấy** (luồng UI, nhãn, tính năng mới, lệnh/biến env mới). Không tick milestone `✔` khi còn thiếu một trong ba việc:
+   1. chạy full luồng E2E `@live` trên stack thật với workflow phức tạp (`m15-full-flow` `@live` + `@live-restart`, `tutorial-live`, workflow kịch bản ADAS), không chỉ E2E mock trên CI;
+   2. quay lại video demo (`scripts/sv demo-video`) nếu luồng hoặc UI trong video đã đổi; GIF/mp4 trong README phải là UI hiện tại;
+   3. cập nhật **README chính** và hướng dẫn người dùng (`docs/user-guide/`) cho khớp code mới nhất: tên, bước, lệnh, ghi chú tính năng mới.
+
+   Ghi bằng chứng của cả ba vào báo cáo milestone.
 
 ### Commit / PR identity
 Mọi commit/PR chỉ đứng tên user: không thêm `Co-Authored-By` cho AI, footer "Generated with Claude Code" hoặc attribution AI tương tự, kể cả Codex. Khi được yêu cầu commit, kiểm author/committer đúng identity của user; chưa chắc thì không tạo commit. Quy tắc này dùng chung cho mọi agent (đồng bộ với commit `b957cb1` trong `CLAUDE.md`).

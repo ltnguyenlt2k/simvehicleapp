@@ -29,6 +29,11 @@ Không gọi LLM/API trả phí, eval live hay agent phụ mặc định. Chỉ 
 
 Trước khi tick `✔`, kiểm diff và các biên liên quan: error path, null/empty, timeout/race; determinism hai lần khi chạm IR/file sinh; int64/uint64 là decimal string trong JSON; diagnostic công khai chỉ thêm. Contract/API đổi phải có ADR, version và test đồng bộ. Không để TODO/stub che đường chạy thật.
 
+Thay đổi người dùng thấy được (UI, luồng, tính năng, lệnh) ⇒ bắt buộc làm đủ AGENTS.md §4 bước 7 trước khi tick:
+- full luồng `@live` với workflow phức tạp;
+- quay lại video demo nếu UI hoặc luồng đã đổi;
+- cập nhật README chính và user guide theo code mới nhất.
+
 Cập nhật `docs/ROADMAP.md` từ `🔄`→`✔` chỉ sau khi check bắt buộc PASS; ghi commit/PR/report hoặc lệnh và kết quả cùng ngày. Cập nhật DoD của phase đúng bằng chứng.
 
 Kết thúc milestone: chạy toàn test module đã chạm và mọi acceptance gate; smoke theo phase (`scripts/sv smoke` không tự thay cho E2E M7+). Viết `docs/reports/M<nn>.md` theo template và chỉ ghi `Acceptance gate: PASS` khi tất cả tiêu chí PASS. Cập nhật tổng quan milestone trong ROADMAP. Release mới bump lock nếu workflow/script thực đã tồn tại.
