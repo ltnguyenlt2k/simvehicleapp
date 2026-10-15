@@ -157,6 +157,10 @@ export function createOrchestratorHandler(d: AppDeps) {
           return json(502, { error: "unavailable", message: (e as Error).message });
         }
       }
+      if (parts[2] === "size" && parts.length === 3 && req.method === "GET") {
+        const r = await d.clients.workspaceSize(project.slug);
+        return r.ok ? json(200, r.value) : json(r.status === 404 ? 404 : 502, { error: r.status === 404 ? "not_found" : "unavailable", message: "the workspace could not measure the app" });
+      }
       if (parts[2] === "clean" && parts.length === 3 && req.method === "POST") {
         try {
           return json(200, await cleanApp({ ...lifecycle, log: ctx.log }, project));

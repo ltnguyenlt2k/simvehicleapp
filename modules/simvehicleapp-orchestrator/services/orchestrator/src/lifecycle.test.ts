@@ -233,6 +233,14 @@ describe("SynCode queue", () => {
     expect((await full.json())[0]).toMatchObject({ code: "SYNCODE_QUEUE_FULL", stage: "build", data: { limit: 1 } });
   });
 
+  test("GET /projects/{id}/size relays the workspace", async () => {
+    const repo = new MemoryRepo();
+    const p = await app(repo, "sized");
+    const { clients: c } = clients();
+    const r = await handler(repo, c).call("GET", `/projects/${p.id}/size`);
+    expect(await r.json()).toEqual({ bytes: 2000, buildBytes: 1000 });
+  });
+
   test("GET /capacity", async () => {
     const repo = new MemoryRepo();
     const a = await app(repo, "cap-a");

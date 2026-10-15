@@ -111,6 +111,20 @@ paths:
         "404": { description: "Unknown project." }
         "409": { description: "Only a `failed` app can be repaired." }
         "507": { description: "Free disk below the high threshold (`HOST_DISK_LOW`)." }
+  /projects/{id}/size:
+    parameters: [{ $ref: "#/components/parameters/ProjectId" }]
+    get:
+      operationId: getProjectSize
+      tags: [projects]
+      summary: Disk usage of the app folder and the part `clean` would free (relays the workspace, ADR-0053).
+      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      responses:
+        "200":
+          description: Size.
+          content:
+            application/json:
+              schema: { type: object, required: [bytes, buildBytes], properties: { bytes: { type: integer, minimum: 0 }, buildBytes: { type: integer, minimum: 0 } } }
+        "404": { description: "Unknown project (or its folder is gone)." }
   /projects/{id}/clean:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     post:
