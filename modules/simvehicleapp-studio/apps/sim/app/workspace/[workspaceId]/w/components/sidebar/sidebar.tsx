@@ -40,6 +40,7 @@ import { cn } from '@/lib/core/utils/cn'
 import { isMacPlatform } from '@/lib/core/utils/platform'
 import { buildFolderTree, getFolderPath } from '@/lib/folders/tree'
 import { captureEvent } from '@/lib/posthog/client'
+import { isHiddenWorkspaceSection } from '@/lib/sv/hidden-routes'
 import { getBrandConfig } from '@/lib/sv/oss/brand'
 import { useRegisterGlobalCommands } from '@/app/workspace/[workspaceId]/providers/global-commands-provider'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
@@ -511,7 +512,7 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
       [
         {
           id: 'vehicle-projects',
-          label: 'Vehicle projects',
+          label: 'Vehicle apps',
           icon: FolderCode,
           href: `/workspace/${workspaceId}/vehicle-projects`,
           hidden: false,
@@ -550,7 +551,8 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
           icon: Library,
           href: `/workspace/${workspaceId}/logs`,
         },
-      ].filter((item) => !item.hidden),
+        // SV: modules that do not serve the vehicle toolchain are hidden by one list (ADR-0054 §Focus, M16-T07).
+      ].filter((item) => !item.hidden && !isHiddenWorkspaceSection(item.href.split('/')[3] ?? '')),
     [
       workspaceId,
       permissionConfig.hideFilesTab,
@@ -860,6 +862,8 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
       {
         id: 'goto-logs',
         handler: () => {
+          // SV: Logs is hidden (ADR-0054 §Focus); the shortcut does nothing rather than bounce to the workflows.
+          if (isHiddenWorkspaceSection('logs')) return
           try {
             const pathWorkspaceId = resolveWorkspaceIdFromPath()
             if (pathWorkspaceId) {
@@ -1240,11 +1244,13 @@ export const Sidebar = memo(function Sidebar({ isCollapsed }: SidebarProps) {
         onOpenChange={setIsSearchModalOpen}
         workflows={searchModalWorkflows}
         workspaces={searchModalWorkspaces}
-        tables={searchModalTables}
-        files={searchModalFiles}
-        knowledgeBases={searchModalKnowledgeBases}
-        integrations={searchModalIntegrations}
-        connectedAccounts={searchModalConnectedAccounts}
+        tables={isHiddenWorkspaceSection('tables') ? [] : searchModalTables}
+        files={isHiddenWorkspaceSection('files') ? [] : searchModalFiles}
+        knowledgeBases={isHiddenWorkspaceSection('knowledge') ? [] : searchModalKnowledgeBases}
+        integrations={isHiddenWorkspaceSection('integrations') ? [] : searchModalIntegrations}
+        connectedAccounts={
+          isHiddenWorkspaceSection('integrations') ? [] : searchModalConnectedAccounts
+        }
         isOnWorkflowPage={!!workflowId}
         isOnIntegrationsPage={isOnIntegrationsPage}
         canEdit={canEdit}

@@ -87,7 +87,7 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
             <div className='flex min-w-[220px] flex-1 flex-col gap-1 text-[12px] text-[var(--text-secondary)]'>
               <span>Name</span>
               <ChipInput
-                aria-label='Project name'
+                aria-label='App name'
                 value={name}
                 placeholder='Hazard lights app'
                 onChange={(e) => setName(e.target.value)}
@@ -96,7 +96,7 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
             <div className='flex min-w-[180px] flex-col gap-1 text-[12px] text-[var(--text-secondary)]'>
               <span>Folder</span>
               <ChipInput
-                aria-label='Project folder'
+                aria-label='App folder'
                 value={slug}
                 error={slug.length > 0 && !slugValid}
                 placeholder='hazard-lights-app'

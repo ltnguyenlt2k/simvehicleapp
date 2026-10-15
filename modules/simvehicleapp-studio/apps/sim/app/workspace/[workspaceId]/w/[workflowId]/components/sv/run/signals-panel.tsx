@@ -143,7 +143,8 @@ export function SignalsPanel() {
   if (!project) {
     return (
       <div className='flex flex-1 items-center justify-center text-[12px] text-[var(--text-muted)]'>
-        Add this workflow to a vehicle project to watch and inject its signals
+        Press SynCode to create the vehicle app of this workflow, then Run it to watch and inject
+        its signals
       </div>
     )
   }

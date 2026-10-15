@@ -139,11 +139,19 @@
 - Bằng chứng 2026-10-15: `deriveSvActionStatus` (hàm thuần: nút primary, pill, dòng gợi ý) 6 test; `SvActionButton` 5 test jsdom (spinner/aria-busy, ✓/✕ 3 s chỉ khi vừa chạy xong, tên truy cập không đổi); test chrome editor + 15 file sv/store: 99 PASS. Trạng thái mới duy nhất được lưu là graph đã gửi SynCode (`sentGraphJson`), để biết bản build còn khớp canvas hay không. Hook trạng thái không mở stream SSE riêng (chỉ đọc query đã cache). Ô chọn "SynCode project" được thay bằng chip app (đổi app / tạo app khác / Manage vehicle apps).
 
 ### T07: UI tập trung
-- [ ] `hidden-routes.ts`: thêm tables/files/knowledge/logs + test.
-- [ ] Sidebar bỏ 4 mục; Settings chỉ giữ danh sách cho phép + redirect section ẩn + test.
-- [ ] Search modal (sidebar) không gợi ý tới module ẩn.
-- [ ] Đổi nhãn "Vehicle apps" và cập nhật 7 spec E2E + `tutorial.md` + test chrome.
-- [ ] Khai báo mọi file Sim thay đổi trong `UPSTREAM_SYNC.allow`.
+- [x] `hidden-routes.ts`: thêm tables/files/knowledge/logs + test.
+- [x] Sidebar bỏ 4 mục; Settings chỉ giữ danh sách cho phép + redirect section ẩn + test.
+- [x] Search modal (sidebar) không gợi ý tới module ẩn.
+- [x] Đổi nhãn "Vehicle apps" và cập nhật 7 spec E2E + `tutorial.md` + test chrome.
+- [x] Khai báo mọi file Sim thay đổi trong `UPSTREAM_SYNC.allow`.
+- Bằng chứng 2026-10-15: `hidden-routes` 49 test PASS:
+  - redirect tables/files/knowledge/logs/scheduled-tasks về danh sách workflow;
+  - Settings chỉ còn allowlist general/teammates/organization/secrets/recently-deleted/admin, section ẩn redirect về General.
+
+  Sidebar, Search (trang + dữ liệu) và Settings đều lọc theo **một** danh sách. Phím tắt ⌘⇧L (Logs) không làm gì. Đổi tên "Vehicle apps" và nhãn "App name"/"App folder" trong 8 spec E2E. `tutorial.md` và `tutorial-live` đi theo luồng SynCode → hộp thoại → tự build. Mọi file Sim đã sửa đều có trong `UPSTREAM_SYNC.allow`.
+- Lệch so với thiết kế (theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận):
+  - ẩn thêm **Scheduled tasks**: lập lịch chạy agent AI, không có nghĩa cho vehicle app;
+  - lọc Settings ở `settings-sidebar.tsx` thay vì sửa mảng `allNavigationItems`, để diff với upstream nhỏ.
 
 ### T08: Block: câu tóm tắt, màu, nhãn cổng
 - [ ] `lib/sv/block-summary.ts`: một quy tắc cho **mỗi** BlockSpec (41) + test bảng; test bảo đảm không spec nào thiếu quy tắc.

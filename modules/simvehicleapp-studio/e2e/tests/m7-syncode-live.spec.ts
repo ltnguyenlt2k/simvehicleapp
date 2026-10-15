@@ -112,10 +112,10 @@ test.describe('M7 SynCode on the real stack', () => {
     })
 
     // Projects page: create the project (prepared by the workspace + toolchain), assign the workflow.
-    await page.getByRole('link', { name: 'Vehicle projects' }).click()
+    await page.getByRole('link', { name: 'Vehicle apps' }).click()
     const name = `Live ${workflowId.slice(0, 8)}`
-    await page.getByRole('textbox', { name: 'Project name' }).fill(name)
-    const slug = await page.getByRole('textbox', { name: 'Project folder' }).inputValue()
+    await page.getByRole('textbox', { name: 'App name' }).fill(name)
+    const slug = await page.getByRole('textbox', { name: 'App folder' }).inputValue()
     await page.locator('[data-sv="project-create-submit"]').click()
     const card = page.locator(`[data-sv-project="${slug}"]`)
     await expect(card.locator('[data-sv="project-status"]')).toHaveText('Ready', {
@@ -142,7 +142,7 @@ test.describe('M7 SynCode on the real stack', () => {
     // A change, a second SynCode, and the diff of the generated workflow code.
     await setCondition(page, 125)
     await synCode(page)
-    await page.getByRole('link', { name: 'Vehicle projects' }).click()
+    await page.getByRole('link', { name: 'Vehicle apps' }).click()
     await card.locator('[data-sv="project-files-toggle"]').click()
     const files = card.locator('[data-sv="generated-files"]')
     await files.locator('[data-sv-file^="app/src/generated/workflows/"]').first().click()

@@ -42,12 +42,16 @@ Tab **Problems** phải trống. Nếu có lỗi (ví dụ tham chiếu sai tên
 Scenario bạn lưu ở đây cũng trở thành test sinh ra cho app (bước SynCode chạy nó).
 
 ## 6. Sinh app và build (2 phút)
-1. Thanh bên → **Vehicle projects** → đặt tên `Overspeed`, bấm **Create project** (chờ trạng thái **Ready**), đánh dấu workflow
-   của bạn trong project.
-2. Quay lại workflow, bấm **SynCode** (thanh hành động trên canvas). **Build log** hiển thị các bước: IR → codegen →
-   ghi file → dependencies → build → format → test. Kết thúc bằng **SynCode passed**.
-3. Muốn xem code: **Generated files** trên thẻ project (diff với lần trước), **Open IDE** (code-server, mật khẩu trong `.env`) hoặc
-   **Export** (zip build được ngoài SimVehicleApp bằng `app/Dockerfile` của template).
+1. Bấm **SynCode** trên thanh hành động của canvas. Workflow chưa có vehicle app nên hộp thoại **Create a vehicle app** mở
+   ra: đặt tên `Overspeed`, chọn **C++**, bấm **Create and SynCode**. Release VSS lấy theo workflow.
+2. Nút hiện **Preparing app…** trong lúc app được chuẩn bị (lần đầu vài phút), rồi SynCode tự chạy. **Build log** hiển
+   thị các bước: IR → codegen → ghi file → dependencies → build → format → test. Kết thúc bằng **SynCode passed**, pill
+   trạng thái hiện **Built ✓** và **Run** thành nút chính.
+3. Muốn xem code: **Generated files** trên thẻ app ở trang **Vehicle apps** (diff với lần trước), **Open IDE** (code-server,
+   mật khẩu trong `.env`) hoặc **Export** (zip build được ngoài SimVehicleApp bằng `app/Dockerfile` của template).
+
+Trang **Vehicle apps** (thanh bên) liệt kê các app của workspace kèm dung lượng: **Clean** xoá thư mục build, **Delete**
+xoá hẳn app (gõ tên để xác nhận), **Repair** chuẩn bị lại app bị lỗi.
 
 ## 7. Chạy trên databroker thật (1 phút)
 1. Bấm **Run**. Trạng thái chuyển **running**, Run console có `app.started`.

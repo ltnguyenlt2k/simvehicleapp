@@ -78,9 +78,9 @@ test.describe('M8 live run on the real stack', () => {
     await connect(stable, 'stable', set)
 
     // project + SynCode
-    await page.getByRole('link', { name: 'Vehicle projects' }).click()
-    await page.getByRole('textbox', { name: 'Project name' }).fill(`Run ${workflowId.slice(0, 8)}`)
-    const slug = await page.getByRole('textbox', { name: 'Project folder' }).inputValue()
+    await page.getByRole('link', { name: 'Vehicle apps' }).click()
+    await page.getByRole('textbox', { name: 'App name' }).fill(`Run ${workflowId.slice(0, 8)}`)
+    const slug = await page.getByRole('textbox', { name: 'App folder' }).inputValue()
     await page.locator('[data-sv="project-create-submit"]').click()
     const card = page.locator(`[data-sv-project="${slug}"]`)
     await expect(card.locator('[data-sv="project-status"]')).toHaveText('Ready', {

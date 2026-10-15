@@ -100,9 +100,9 @@ test('@live Python project: create ⇒ SynCode ⇒ Run on KUKSA ⇒ inject ⇒ h
   })
 
   // Python project: the language is offered because codegen-python and toolchain-python are up.
-  await page.getByRole('link', { name: 'Vehicle projects' }).click()
-  await page.getByRole('textbox', { name: 'Project name' }).fill(`Python ${workflowId.slice(0, 6)}`)
-  const slug = await page.getByRole('textbox', { name: 'Project folder' }).inputValue()
+  await page.getByRole('link', { name: 'Vehicle apps' }).click()
+  await page.getByRole('textbox', { name: 'App name' }).fill(`Python ${workflowId.slice(0, 6)}`)
+  const slug = await page.getByRole('textbox', { name: 'App folder' }).inputValue()
   await page.getByLabel('Language').click()
   await page
     .getByRole('menuitem', { name: 'Python' })

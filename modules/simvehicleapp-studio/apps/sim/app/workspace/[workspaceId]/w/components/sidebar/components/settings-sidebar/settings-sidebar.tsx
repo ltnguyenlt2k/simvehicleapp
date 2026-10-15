@@ -9,6 +9,7 @@ import { getSubscriptionAccessState } from '@/lib/billing/client'
 import { isEnterprise } from '@/lib/billing/plan-helpers'
 import { isHosted } from '@/lib/core/config/env-flags'
 import { cn } from '@/lib/core/utils/cn'
+import { isHiddenSettingsSection } from '@/lib/sv/hidden-routes'
 import { getUserRole } from '@/lib/workspaces/organization'
 import type { SettingsSection } from '@/app/workspace/[workspaceId]/settings/navigation'
 import {
@@ -83,6 +84,11 @@ export function SettingsSidebar({
   // SV: SSO provider lookup removed with the Enterprise SSO UI (apps/sim/ee); the SSO item is gone from navigation.
   const navigationItems = useMemo(() => {
     return allNavigationItems.filter((item) => {
+      // SV: only the sections the vehicle toolchain uses (allowlist, ADR-0054 §Focus, M16-T07).
+      if (isHiddenSettingsSection(item.id)) {
+        return false
+      }
+
       if (item.hideWhenBillingDisabled && !isBillingEnabled) {
         return false
       }

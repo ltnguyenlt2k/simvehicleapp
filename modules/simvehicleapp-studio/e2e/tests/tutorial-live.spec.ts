@@ -114,25 +114,23 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
   }
   await expect(set.locator('[data-sv="trace-badge"]')).toHaveAttribute('data-sv-replay', 'done')
 
-  // 6. vehicle project + SynCode
-  await page.getByRole('link', { name: 'Vehicle projects' }).click()
-  await page
-    .getByRole('textbox', { name: 'Project name' })
-    .fill(`Overspeed ${workflowId.slice(0, 6)}`)
-  const slug = await page.getByRole('textbox', { name: 'Project folder' }).inputValue()
-  await page.locator('[data-sv="project-create-submit"]').click()
-  const card = page.locator(`[data-sv-project="${slug}"]`)
-  await expect(card.locator('[data-sv="project-status"]')).toHaveText('Ready', { timeout: 180_000 })
-  await card.locator(`[data-sv-workflow="${workflowId}"]`).click()
-  await pause(page, 800)
-  await page.goto(editorUrl)
+  // 6. SynCode creates the vehicle app (M16-T05): the dialog names it, the app is prepared, then SynCode runs
   const syncode = page.locator('[data-sv-action="syncode"]')
   await expect(syncode).toBeEnabled({ timeout: 30_000 })
   await syncode.click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('textbox').fill(`Overspeed ${workflowId.slice(0, 6)}`)
+  await pause(page, 800)
+  await dialog.getByRole('button', { name: 'Create and SynCode' }).click()
+  await expect(syncode).toHaveText('Preparing app…')
   await expect(page.locator('[data-sv="build-log"] [data-sv="syncode-result"]')).toContainText(
     'SynCode passed',
-    { timeout: 300_000 }
+    { timeout: 480_000 }
   )
+  // The build of this graph exists: Run is the next step.
+  await expect(page.locator('[data-sv-action="run"]')).toHaveAttribute('data-sv-primary', 'true')
+  const slug = (await page.locator('[data-sv="app-chip"]').getAttribute('data-sv-project')) ?? ''
+  expect(slug).toMatch(/^overspeed-/)
   await pause(page, 1500)
 
   // 7. run on the real databroker, inject the speed, the hazard lights switch on

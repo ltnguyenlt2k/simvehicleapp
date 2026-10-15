@@ -3,7 +3,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { createLogger } from '@sim/logger'
 import { Command } from 'cmdk'
-import { Scan } from 'lucide-react'
+import { Boxes, Scan, Server } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import { createPortal } from 'react-dom'
@@ -27,6 +27,7 @@ import {
 import { Search } from '@/components/emcn/icons/search'
 import { cn } from '@/lib/core/utils/cn'
 import { captureEvent } from '@/lib/posthog/client'
+import { isHiddenWorkspaceSection } from '@/lib/sv/hidden-routes'
 import { hasTriggerCapability } from '@/lib/workflows/triggers/trigger-utils'
 import { useInvokeGlobalCommand } from '@/app/workspace/[workspaceId]/providers/global-commands-provider'
 import {
@@ -126,6 +127,18 @@ export function SearchModal({
     (): PageItem[] =>
       [
         {
+          id: 'vehicle-apps',
+          name: 'Vehicle apps',
+          icon: Boxes,
+          href: `/workspace/${workspaceId}/vehicle-projects`,
+        },
+        {
+          id: 'system-status',
+          name: 'System status',
+          icon: Server,
+          href: `/workspace/${workspaceId}/system-status`,
+        },
+        {
           id: 'integrations',
           name: 'Integrations',
           icon: Integration,
@@ -184,7 +197,11 @@ export function SearchModal({
           icon: Settings,
           onClick: navigateToSettings,
         },
-      ].filter((page) => !page.hidden),
+        // SV: pages of hidden modules are not offered (ADR-0054 §Focus, M16-T07).
+      ].filter(
+        (page) =>
+          !page.hidden && !(page.href && isHiddenWorkspaceSection(page.href.split('/')[3] ?? ''))
+      ),
     [
       workspaceId,
       openHelpModal,

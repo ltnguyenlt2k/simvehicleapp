@@ -172,14 +172,14 @@ test.describe('M7 SynCode', () => {
       })
     )
 
-    await page.getByRole('link', { name: 'Vehicle projects' }).click()
+    await page.getByRole('link', { name: 'Vehicle apps' }).click()
     const pageRoot = page.locator('[data-sv="projects-page"]')
     await expect(pageRoot).toContainText('No vehicle apps yet')
     await expect(pageRoot.locator('[data-sv="capacity-apps"]')).toHaveText(
       '0/10 apps in this workspace'
     )
-    await page.getByRole('textbox', { name: 'Project name' }).fill('Hazard App')
-    await expect(page.getByRole('textbox', { name: 'Project folder' })).toHaveValue('hazard-app')
+    await page.getByRole('textbox', { name: 'App name' }).fill('Hazard App')
+    await expect(page.getByRole('textbox', { name: 'App folder' })).toHaveValue('hazard-app')
     await page.locator('[data-sv="project-create-submit"]').click()
     const card = page.locator('[data-sv-project="hazard-app"]')
     await expect(card).toBeVisible()

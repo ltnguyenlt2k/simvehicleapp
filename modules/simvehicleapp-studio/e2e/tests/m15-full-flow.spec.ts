@@ -168,13 +168,11 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   }
   await expect(set.locator('[data-sv="trace-badge"]')).toHaveAttribute('data-sv-replay', 'done')
 
-  await caption(page, '7 · Vehicle project: a Velocitas C++ app, created offline')
-  await page.getByRole('link', { name: 'Vehicle projects' }).click()
-  await caption(page, '7 · Vehicle project: a Velocitas C++ app, created offline')
-  await page
-    .getByRole('textbox', { name: 'Project name' })
-    .fill(`Overspeed ${workflowId.slice(0, 6)}`)
-  const slug = await page.getByRole('textbox', { name: 'Project folder' }).inputValue()
+  await caption(page, '7 · Vehicle app: a Velocitas C++ program, created offline')
+  await page.getByRole('link', { name: 'Vehicle apps' }).click()
+  await caption(page, '7 · Vehicle app: a Velocitas C++ program, created offline')
+  await page.getByRole('textbox', { name: 'App name' }).fill(`Overspeed ${workflowId.slice(0, 6)}`)
+  const slug = await page.getByRole('textbox', { name: 'App folder' }).inputValue()
   await page.locator('[data-sv="project-create-submit"]').click()
   const card = page.locator(`[data-sv-project="${slug}"]`)
   await expect(card.locator('[data-sv="project-status"]')).toHaveText('Ready', { timeout: 180_000 })
@@ -312,7 +310,7 @@ test('@live-restart full flow: after the stack restarts the workflow, project an
     await expect(nodeByName(page, name)).toBeVisible({ timeout: 60_000 })
   await expect(page.locator('[data-sv-action="syncode"]')).toBeEnabled({ timeout: 60_000 })
   await expect(page.locator('[data-sv-action="export"]')).toBeEnabled()
-  await page.getByRole('link', { name: 'Vehicle projects' }).click()
+  await page.getByRole('link', { name: 'Vehicle apps' }).click()
   const card = page.locator(`[data-sv-project="${state.slug}"]`)
   await expect(card.locator('[data-sv="project-status"]')).toHaveText('Ready', { timeout: 60_000 })
   await caption(page, 'SimVehicleApp — VSS blocks ⇒ Velocitas vehicle app, end to end')

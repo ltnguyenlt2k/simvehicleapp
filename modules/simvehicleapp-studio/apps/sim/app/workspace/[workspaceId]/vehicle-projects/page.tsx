@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { VehicleProjects } from '@/app/workspace/[workspaceId]/vehicle-projects/vehicle-projects'
 
 export const metadata: Metadata = {
-  title: 'Vehicle projects',
+  title: 'Vehicle apps',
 }
 
 /** Vehicle-app projects of the workspace (M07-T17): SynCode generates the C++ app into them. */
