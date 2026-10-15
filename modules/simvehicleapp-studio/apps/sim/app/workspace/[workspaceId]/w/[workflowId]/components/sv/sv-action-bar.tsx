@@ -33,7 +33,8 @@ function Separator() {
  *
  * The bar follows the work (ADR-0054, M16-T06): check (Verify, Simulate) │ generate and run (SynCode, Run, Stop) │
  * open and take out (Open IDE, Export), then the app the actions use and a status pill. The sensible next step is the
- * primary button; why an action cannot run is said in a line under the bar, not only in a tooltip.
+ * primary button; why an action cannot run is said in words in the bar, not only in a tooltip (inside the bar, not
+ * a row under it: a row appearing with the first error would shift the canvas under the user's pointer).
  */
 export function SvActionBar() {
   const graphJson = useSvLintStore((s) => s.graphJson)
@@ -128,12 +129,15 @@ export function SvActionBar() {
   const verifying = verifyStatus === 'verifying'
   const simulating = simStatus === 'running'
   return (
-    <div data-sv='action-area' className='flex flex-shrink-0 flex-col'>
+    <div
+      data-sv='action-area'
+      className='flex h-[36px] flex-shrink-0 items-center gap-2 border-[var(--border)] border-b bg-[var(--surface-1)] px-2'
+    >
       <div
         role='toolbar'
         aria-label='Vehicle app actions'
         data-sv='action-bar'
-        className='flex h-[36px] items-center gap-1 border-[var(--border)] border-b bg-[var(--surface-1)] px-2'
+        className='flex min-w-0 shrink-0 items-center gap-1'
       >
         <SvActionButton
           action='verify'
@@ -163,7 +167,7 @@ export function SvActionBar() {
         <Separator />
         <OpenIdeButton />
         <ExportButton />
-        <div className='ml-auto flex min-w-0 items-center gap-2'>
+        <div className='ml-2 flex min-w-0 items-center gap-2'>
           <SvAppChip />
           <SvStatusPill pill={status.pill} />
         </div>
@@ -171,7 +175,8 @@ export function SvActionBar() {
       {status.hint && (
         <p
           data-sv='action-hint'
-          className='border-[var(--border)] border-b bg-[var(--surface-1)] px-3 py-1 text-[12px] text-[var(--text-secondary)]'
+          title={status.hint}
+          className='min-w-0 flex-1 truncate text-right text-[12px] text-[var(--text-secondary)]'
         >
           {status.hint}
         </p>
