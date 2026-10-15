@@ -47,7 +47,11 @@
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
 
-**MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
+**MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
+- M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
+- Ngoài MVP: M12 Python và M13 Rust PASS; M14 một phần; M15 chờ PO ký.
+- M16 xong 10/10 task, chờ PO duyệt ADR.
+- Mọi module đã có code sản phẩm thật, CI và nightly xanh (bảng trên).
 
 ---
 

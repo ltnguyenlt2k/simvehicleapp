@@ -1,25 +1,34 @@
 # SimVehicleApp — Vehicle No-Code Toolchain
 
-> Kéo-thả block tín hiệu xe (VSS) thành workflow → biên dịch **tất định** (không qua LLM) sang Eclipse Velocitas Vehicle App (C++ → Python/Rust) → build/run thật trên KUKSA Databroker trong Docker → xem log/trace/tín hiệu realtime trên UI.
-> Drag-and-drop vehicle-signal (VSS) blocks into a workflow → compile it **deterministically** (no LLM in the code path) into an Eclipse Velocitas Vehicle App (C++ → Python/Rust) → build & run it for real on a KUKSA Databroker inside Docker → watch logs/traces/live signals back in the UI.
+> Kéo-thả block tín hiệu xe (VSS) thành workflow → biên dịch **tất định** (không qua LLM) sang Eclipse Velocitas Vehicle App (C++, Python hoặc Rust) → build/run thật trên KUKSA Databroker trong Docker → xem log/trace/tín hiệu realtime trên UI.
+> Drag-and-drop vehicle-signal (VSS) blocks into a workflow → compile it **deterministically** (no LLM in the code path) into an Eclipse Velocitas Vehicle App (C++, Python or Rust) → build & run it for real on a KUKSA Databroker inside Docker → watch logs/traces/live signals back in the UI.
 
 ---
 
 ## Demo
 
-![Full luồng: kéo thả GW-A → lint → Simulate → SynCode → Run trên KUKSA → IDE → Export → trợ lý AI → restart](docs/media/full-flow.gif)
+![Full luồng: workflow rẽ nhánh kéo thả → câu tóm tắt + nhãn nhánh → Simulate → SynCode tự tạo app → Run trên KUKSA → Vehicle apps → Export → IDE → trợ lý AI → restart](docs/media/full-flow.gif)
 
-**Video full luồng** (720p, 84 s, có chú thích từng bước): [docs/media/full-flow.mp4](docs/media/full-flow.mp4) — quay tự
-động bằng E2E `modules/simvehicleapp-studio/e2e/tests/m15-full-flow.spec.ts` trên stack thật, tái tạo bằng một lệnh:
-`scripts/sv demo-video` (cần stack đang chạy với `SV_AI_PROVIDER=fake`; khoảng chờ build được cắt tự động).
+**Video full luồng** (720p, 92 s, có chú thích từng bước; quay 2026-10-15 trên bản mới nhất): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
+- Video được quay tự động bởi E2E `modules/simvehicleapp-studio/e2e/tests/m15-full-flow.spec.ts` chạy trên stack thật.
+- Tái tạo bằng một lệnh: `scripts/sv demo-video`. Cần stack đang chạy với `SV_AI_PROVIDER=fake`; khoảng chờ build được cắt tự động.
 
-Các chặng: 1 sign-up · 2–4 kéo tín hiệu VSS + block Stable for + Set actuator, nối block · 5 lint realtime sạch ·
-6 Simulate (virtual clock) · 7 tạo Velocitas project (offline) · 8 SynCode: graph → IR → C++ → build → unit test sinh ra
-(không LLM) · 9–10 Run trên KUKSA databroker, inject Speed ⇒ đèn hazard bật · 11 Export zip · 12 mở VS Code
-(code-server) đúng project · 13–14 trợ lý AI (provider giả lập offline) đề xuất patch, duyệt rồi Accept · 15 restart
-stack ⇒ workflow, project, code sinh vẫn còn.
+Các chặng:
+1. Đăng ký.
+2–6. Kéo thả workflow **6 block có rẽ nhánh**: When Vehicle.Speed changes → If > 120.
+   - Nhánh *then*: Stable for 2 s → Set Hazard = true → thông báo HMI "Overspeed".
+   - Nhánh *else*: Set Hazard = false.
+7. Mỗi block hiện câu tóm tắt (WHEN / IF / DO / SEND); cạnh có nhãn `then` / `else` / `stable`; lint sạch.
+8. Simulate trên đồng hồ ảo: 100 ⇒ tắt, 130 trong 2 s ⇒ bật + HMI, 90 ⇒ tắt.
+9–10. Bấm **SynCode**: workflow chưa có app nên hộp thoại hỏi tên một lần. App được chuẩn bị rồi SynCode tự chạy: graph → IR → C++ → build → test (không LLM). Pill hiện `Built ✓`, **Run** thành nút chính.
+11–13. Run trên KUKSA databroker, inject tốc độ: đèn hazard bật kèm cảnh báo HMI, rồi tắt khi giảm tốc.
+14. Trang **Vehicle apps** (dung lượng, quota, Clean / Delete / Repair) và **System status** (đĩa, app, hàng đợi).
+15. Export zip.
+16. Open IDE (code-server).
+17–18. Trợ lý AI (provider giả lập offline) đề xuất patch; duyệt rồi Accept.
+19. Restart stack: workflow, app và code sinh vẫn còn.
 
-Video ngắn hơn theo tutorial "Overspeed warning": [docs/media/demo.mp4](docs/media/demo.mp4). Làm theo:
+Video ngắn hơn theo tutorial "Overspeed warning": [docs/media/demo.mp4](docs/media/demo.mp4) (`scripts/sv demo-video --tutorial`). Làm theo:
 [tutorial](docs/user-guide/tutorial.md) · Tài liệu: [docs/README.md](docs/README.md).
 
 ---
@@ -106,8 +115,8 @@ flowchart TB
 | **Dev environment** | Docker Compose only — no VS Code Dev Container is required to run the studio or build vehicle apps (though an *exported* project still works with one). A `toolchain-cpp` image replays what the Velocitas devcontainer would do, with an offline-capable wheel/Conan/SDK cache. |
 | **IDE** | Optional `code-server` (web VS Code) built `FROM` the same toolchain image — open it only when you want to hand-edit generated code or debug. |
 | **AI assistant** | A chat panel (not the old Copilot) wired to your own LLM key from `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) plus an MCP server/client — it proposes workflow patches, it does not write production C++. |
-| **Architecture record** | 34 ADRs (`analysis/adr/`), each re-verified against real upstream source (GitHub, npm registry, actual `.clang-format`/schema files) rather than assumption — see the 2026-10-01 review log in the ADR index. |
-| **Status (2026-10-03)** | M0 gate **passed** (2026-10-03, [report](docs/reports/M00.md)): contracts v1-alpha, root CI on GitHub Actions, stack + smoke re-verified, required ADRs accepted. M1 is next. Historical spike evidence: all 6 technical spikes (headless offline build, databroker↔MQTT wiring, actuator set-semantics, mock-provider, minimal Sim stack, code-server+clangd) **passed against real running containers**, evidence in [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (studio refactor) has not started yet. |
+| **Architecture record** | 47 ADRs (`analysis/adr/`), each re-verified against real upstream source (GitHub, npm registry, actual `.clang-format`/schema files) rather than assumption — see the 2026-10-01 review log in the ADR index. |
+| **Status (2026-10-15)** | M0–M10 gates passed; C++, Python and Rust backends pass parity 7/7 on KUKSA; M16 (vehicle app lifecycle, host capacity limits, stateful action bar, focused UI, block summaries) done and green in CI and nightly, its ADRs await PO review. Live tracking: [docs/ROADMAP.md](docs/ROADMAP.md). |
 | **License** | SimVehicleApp's own code: Apache-2.0. Built on Apache-2.0 upstream (Sim, Eclipse Velocitas, Eclipse KUKSA) and MPL-2.0 (COVESA VSS data). The Sim Enterprise (`ee/`) surface and anything AGPL (Scratch) are explicitly excluded — see [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
 ---
@@ -127,8 +136,8 @@ flowchart TB
 | **Môi trường dev** | Chỉ Docker Compose — không cần VS Code Dev Container để chạy studio hay build vehicle app (dù project **export ra** vẫn mở được bằng devcontainer). Image `toolchain-cpp` tái hiện đúng những gì devcontainer Velocitas làm, có cache offline (wheel/Conan/SDK). |
 | **IDE** | `code-server` (VS Code chạy trên web) tuỳ chọn, build `FROM` cùng image toolchain — chỉ mở khi cần sửa tay code đã sinh hoặc debug. |
 | **AI assistant** | Khung chat (thay Copilot cũ) gắn API key LLM riêng từ `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) cộng MCP server/client — chỉ đề xuất patch workflow, không viết C++ production. |
-| **Hồ sơ kiến trúc** | 34 ADR (`analysis/adr/`), mỗi cái đã verify lại bằng source thật (GitHub, npm registry, file `.clang-format`/schema thật) thay vì suy đoán — xem log review 2026-10-01 trong mục lục ADR. |
-| **Trạng thái (2026-10-03)** | Gate M0 **PASS** (2026-10-03, [report](docs/reports/M00.md)): contracts v1-alpha, CI root trên GitHub Actions, stack + smoke đo lại, ADR bắt buộc Accepted. Tiếp theo: M1. Bằng chứng spike lịch sử: cả 6 spike kỹ thuật (build offline không devcontainer, app nối databroker/MQTT, hành vi set() actuator, mock-provider, Sim chạy tối giản, code-server+clangd) **đã PASS trên container chạy thật**, bằng chứng ở [`docs/spikes/M0-spikes-report.md`](docs/spikes/M0-spikes-report.md). M1 (refactor studio) chưa bắt đầu. |
+| **Hồ sơ kiến trúc** | 47 ADR (`analysis/adr/`), mỗi cái đã verify lại bằng source thật (GitHub, npm registry, file `.clang-format`/schema thật) thay vì suy đoán — xem log review 2026-10-01 trong mục lục ADR. |
+| **Trạng thái (2026-10-15)** | Gate M0–M10 PASS; backend C++, Python, Rust đều parity 7/7 trên KUKSA. M16 xong: vòng đời vehicle app, giới hạn dung lượng host, thanh hành động có trạng thái, UI tập trung, câu tóm tắt block. CI và nightly xanh; ADR của M16 chờ PO duyệt. Tiến độ sống: [docs/ROADMAP.md](docs/ROADMAP.md). |
 | **License** | Code riêng của SimVehicleApp: Apache-2.0. Dựa trên upstream Apache-2.0 (Sim, Eclipse Velocitas, Eclipse KUKSA) và MPL-2.0 (dữ liệu COVESA VSS). Bề mặt Sim Enterprise (`ee/`) và mọi thứ AGPL (Scratch) đều bị loại trừ tường minh — xem [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
 ---
@@ -138,17 +147,20 @@ flowchart TB
 ```
 .
 ├── README.md  AGENTS.md  CLAUDE.md          # anh/chị đang đọc file này; AGENTS.md = luật cho AI coding agent
-├── .claude/skills/                          # nguồn chung 14 skill (xem AGENTS.md §3)
+├── .claude/skills/                          # nguồn chung 15 skill (xem AGENTS.md §3)
 ├── .agents/skills/                          # Codex: symlink tới cùng skill, không copy
-├── analysis/                                # 83 file: nghiên cứu, kiến trúc, 34 ADR, kế hoạch 15 milestone
+├── analysis/                                # ~100 file: nghiên cứu, kiến trúc, 47 ADR, kế hoạch 17 milestone (M0–M16)
 │   ├── 00…16-*.md                           # research → requirements → architecture → … → roadmap → risks
 │   ├── 11b-block-inventory-and-migration.md # kiểm kê 268 block Sim thật, giữ/xoá/tham khảo
-│   ├── adr/ADR-0001…0042-*.md               # quyết định kiến trúc, mỗi cái có Context/Decision/Verification
+│   ├── adr/ADR-0001…0055-*.md               # quyết định kiến trúc, mỗi cái có Context/Decision/Verification
 │   ├── modules/*.md                         # đặc tả từng repo con
-│   └── phases/M00…M14-*.md                  # task chi tiết + acceptance gate mỗi milestone
+│   └── phases/M00…M16-*.md                  # task chi tiết + acceptance gate mỗi milestone
 ├── docs/
 │   ├── BASELINE.md                          # SHA/digest mọi thành phần upstream đã pin
 │   ├── ROADMAP.md                           # tracking sống theo feature/milestone
+│   ├── DEPLOY.md                            # cài trên máy chỉ để chạy, dung lượng & quota
+│   ├── user-guide/                          # tutorial, danh mục block, kịch bản, VSS tuỳ biến
+│   ├── reports/M00…M16.md                   # báo cáo hoàn thành từng milestone
 │   └── spikes/M0-spikes-report.md           # kết quả 6 spike kỹ thuật đã verify thật
 ├── docker-compose.yml                       # entrypoint duy nhất — chỉ include fragment từng module
 ├── modules/                                 # mỗi thư mục = 1 "repo" độc lập (xem ADR-0009)
@@ -157,31 +169,62 @@ flowchart TB
 │   ├── compiler-code-cpp/ · compiler-code-python/ · compiler-code-rust/
 │   ├── velocitas-stack/                     # toolchain image + template Velocitas vendored + databroker/mqtt
 │   └── ide-vscode/                          # code-server FROM toolchain
-├── scripts/sv                               # build | up | down | smoke | reset-caches
+├── scripts/sv                               # init | build | up | pull | refresh | smoke | vss | apps | demo-video
 └── vehicle_no_code_studio_master_plan_v2.md # master plan gốc (tham chiếu lịch sử)
 ```
 
-## 6. Bắt đầu (dev phase) / Getting started (dev phase)
+## 6. Bắt đầu / Getting started
 
 ```bash
-cp .env.example .env            # chỉnh port nếu trùng máy đang dùng / adjust ports if already taken
-scripts/sv build                # build image theo đúng thứ tự phụ thuộc / build images in dependency order
+scripts/sv init                 # tạo .env từ .env.example, sinh secret / create .env with fresh secrets
+scripts/sv build                # build image theo thứ tự phụ thuộc / build images in dependency order
 scripts/sv up                   # docker compose up -d
-scripts/sv smoke                # S-1/S-2/S-3: tạo project offline → build → chạy app ↔ databroker/MQTT
+scripts/sv smoke                # kiểm nhanh: project offline → build → app ↔ databroker/MQTT
 ```
 
-Máy cấu hình thấp / chỉ để chạy: dùng image dựng sẵn của release (`scripts/sv pull <tag>`) thay vì `sv build` — xem [`docs/DEPLOY.md`](docs/DEPLOY.md).
+Mở studio tại `SV_STUDIO_URL` (mặc định http://localhost:3000), đăng ký tài khoản đầu tiên.
 
-> Giai đoạn hiện tại chỉ có hạ tầng (`velocitas-stack`, `ide-vscode`, snapshot `simvehicleapp-studio`) — chưa có UI vehicle thật (bắt đầu từ M1). Chi tiết lệnh/bẫy đã gặp: [`.claude/skills/docker-compose-stack/SKILL.md`](.claude/skills/docker-compose-stack/SKILL.md).
+Máy cấu hình thấp hoặc chỉ để chạy: dùng image dựng sẵn của release (`scripts/sv pull <tag>`) thay cho `sv build`. Chi tiết, cấu hình tối thiểu và quota dung lượng: [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
+### Dùng SimVehicleApp / Using it
+
+1. **Workflows → New workflow.** Kéo tín hiệu từ panel **Vehicle** (vd. `Vehicle.Speed`) hoặc block từ **Toolbar**, rồi nối các block.
+   - Mỗi block hiện một câu tóm tắt (WHEN / IF / DO…). Cạnh rẽ nhánh có nhãn `then` / `else` / `stable`….
+   - Lỗi hiện ngay trên block và trong tab **Problems**.
+2. **Verify / Simulate:** kiểm và chạy thử workflow trên đồng hồ ảo, không cần build. Scenario đã lưu sẽ thành unit test của app.
+3. **SynCode:** sinh code C++/Python/Rust, build và test.
+   - Workflow chưa có vehicle app ⇒ hộp thoại hỏi tên và ngôn ngữ một lần. App sẵn sàng thì SynCode tự chạy.
+   - Release VSS lấy theo workflow.
+4. **Run:** chạy app thật trên KUKSA databroker. Tab **Signals** để inject/xem tín hiệu, **Run console** xem log và trace.
+5. **Open IDE / Export:** mở code-server đúng project, hoặc tải zip build được ngoài SimVehicleApp.
+
+Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dùng app nào (chip app) và trạng thái hiện tại (pill: `Building · step 3/7`, `Running 00:42`…). Khi một nút chưa bấm được, dòng chữ trên thanh nói lý do.
+
+**Lưu ý cho người dùng và quản trị (M16, [ADR-0053](analysis/adr/ADR-0053-vehicle-app-lifecycle-and-capacity.md)):**
+- **Trang Vehicle apps** (thanh bên): liệt kê app của workspace kèm dung lượng.
+  - **Clean** xoá thư mục build, giữ mã nguồn.
+  - **Delete** xoá hẳn app; phải gõ tên để xác nhận.
+  - **Repair** chuẩn bị lại app bị lỗi.
+- **Giới hạn mặc định:** 10 app/workspace, 100 app/máy, 20 workflow/app, hàng đợi 20 SynCode. Chỉnh trong `.env`.
+- **Ngưỡng đĩa:** dưới 10 GB thì cảnh báo, dưới 5 GB thì chặn tạo app, dưới 2 GB thì tạm dừng SynCode. Trang **System status** hiện dung lượng đĩa, số app và hàng đợi.
+- **Tự dọn mỗi giờ:** app lỗi quá 7 ngày bị xoá; app không dùng quá 14 ngày bị clean.
+- **Quản trị viên:** `scripts/sv apps list` và `scripts/sv apps prune [--apply]` (mặc định chỉ in ra) để dọn app không ai dùng.
+- **Trợ lý AI** (tab cạnh Toolbar): đề xuất thay đổi workflow để bạn duyệt rồi Accept; không viết code production.
+  - Cấu hình provider trong `.env` (`SV_AI_PROVIDER`). `fake` = offline, không cần key.
+- **VSS tuỳ biến:** `scripts/sv vss add|use` ([hướng dẫn](docs/user-guide/custom-vss.md)).
+- **UI tập trung:** studio đã ẩn các module của Sim không dùng cho toolchain xe: Tables, Files, Knowledge base, Logs, Scheduled tasks.
+
+Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md).
 
 ## 7. Đọc tiếp / Where to go next
 
 | Vai trò | Đọc |
 |---|---|
-| Muốn hiểu toàn bộ hệ thống | [`analysis/README.md`](analysis/README.md) — bản đồ 83 tài liệu |
-| Muốn xem kế hoạch triển khai | [`analysis/13-implementation-roadmap.md`](analysis/13-implementation-roadmap.md) — M0→M14 |
+| Người dùng | [tutorial](docs/user-guide/tutorial.md) · [DEPLOY](docs/DEPLOY.md) · [vận hành](docs/dev/OPERATIONS.md) |
+| Muốn hiểu toàn bộ hệ thống | [`analysis/README.md`](analysis/README.md) — bản đồ tài liệu |
+| Muốn xem kế hoạch triển khai | [`analysis/13-implementation-roadmap.md`](analysis/13-implementation-roadmap.md) + [`analysis/phases/`](analysis/phases/README.md) — M0→M16 |
 | Muốn xem **tiến độ thật** (tracking, cập nhật liên tục) | [`docs/ROADMAP.md`](docs/ROADMAP.md) — từng feature ☐/🔄/✔ theo milestone + ADR |
-| Muốn xem mọi quyết định kiến trúc | [`analysis/adr/README.md`](analysis/adr/README.md) — 34 ADR + cây phụ thuộc |
+| Muốn xem mọi quyết định kiến trúc | [`analysis/adr/README.md`](analysis/adr/README.md) — 47 ADR + cây phụ thuộc |
 | AI coding agent | [`AGENTS.md`](AGENTS.md) — luật cứng + quy trình + skill |
 
 ## 8. License
