@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { X } from 'lucide-react'
 import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getSmoothStepPath } from 'reactflow'
 import { useShallow } from 'zustand/react/shallow'
+import { SV_HANDLE_COLOR, svEdgeLabel, svHandleTone } from '@/lib/sv/handle-labels'
 import type { EdgeDiffStatus } from '@/lib/workflows/diff/types'
 import { useLastRunEdges } from '@/stores/execution'
 import { useWorkflowDiffStore } from '@/stores/workflow-diff'
@@ -53,6 +54,10 @@ const WorkflowEdgeComponent = ({
 
   const dataSourceHandle = (data as { sourceHandle?: string } | undefined)?.sourceHandle
   const isErrorEdge = (sourceHandle ?? dataSourceHandle) === 'error'
+  // SV: an edge leaving a named branch of a vehicle block says which one, in its colour (ADR-0055).
+  const svBranch = sourceHandle ?? dataSourceHandle
+  const svLabel = svEdgeLabel(svBranch)
+  const svTone = svHandleTone(svBranch)
   const previewExecutionStatus = (
     data as { executionStatus?: 'success' | 'error' | 'not-executed' } | undefined
   )?.executionStatus
@@ -101,6 +106,8 @@ const WorkflowEdgeComponent = ({
     } else if (isErrorEdge) {
       // Error edges that weren't taken stay red
       color = 'var(--text-error)'
+    } else if (svTone === 'positive' || svTone === 'warning') {
+      color = SV_HANDLE_COLOR[svTone]
     }
 
     if (isSelected) {
@@ -120,11 +127,37 @@ const WorkflowEdgeComponent = ({
       strokeDasharray: edgeDiffStatus === 'deleted' ? '10,5' : undefined,
       opacity,
     }
-  }, [style, edgeDiffStatus, isSelected, isErrorEdge, edgeRunStatus, previewExecutionStatus])
+  }, [
+    style,
+    edgeDiffStatus,
+    isSelected,
+    isErrorEdge,
+    edgeRunStatus,
+    previewExecutionStatus,
+    svTone,
+  ])
 
   return (
     <>
       <BaseEdge path={edgePath} style={edgeStyle} interactionWidth={30} />
+
+      {svLabel && !isSelected && (
+        <EdgeLabelRenderer>
+          <div
+            data-sv='edge-label'
+            data-sv-branch={svBranch ?? undefined}
+            className='nodrag nopan pointer-events-none rounded-[4px] border border-[var(--border-1)] bg-[var(--surface-2)] px-1 text-[11px]'
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              color: SV_HANDLE_COLOR[svTone],
+              zIndex: 1010,
+            }}
+          >
+            {svLabel}
+          </div>
+        </EdgeLabelRenderer>
+      )}
 
       {isSelected && (
         <EdgeLabelRenderer>

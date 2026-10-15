@@ -43,3 +43,27 @@ export const SV_HANDLE_BG: Record<SvHandleTone, string> = {
   error: '!bg-[var(--text-error)]',
   neutral: '!bg-[var(--workflow-edge)]',
 }
+
+const EDGE_LABEL: Record<string, string> = {
+  then: 'then',
+  else: 'else',
+  stable: 'stable',
+  broken: 'broken',
+  ok: 'in time',
+  timeout: 'timeout',
+  changed: 'changed',
+  unchanged: 'unchanged',
+  default: 'default',
+  error: 'on error',
+}
+
+/**
+ * Label of an edge leaving a named branch (`then`, `in time`, `case 2`…), or `null` for a plain sequence edge, which
+ * stays unlabelled so the canvas is not cluttered.
+ */
+export function svEdgeLabel(handleId: string | null | undefined): string | null {
+  if (!handleId) return null
+  const caseIndex = /^case-(\d+)$/.exec(handleId)
+  if (caseIndex) return `case ${Number(caseIndex[1]) + 1}`
+  return EDGE_LABEL[handleId] ?? null
+}

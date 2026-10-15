@@ -404,6 +404,16 @@ const goldens = readdirSync(GOLDEN_DIR)
   .filter((d) => d.startsWith('GW-'))
   .sort()
 
+/** Label of the edges leaving named branches (ADR-0055); plain sequence edges have none. */
+const BRANCH_LABEL: Record<string, string> = {
+  then: 'then',
+  else: 'else',
+  stable: 'stable',
+  broken: 'broken',
+  ok: 'in time',
+  timeout: 'timeout',
+}
+
 test.describe('M3 gate — golden workflows built on the canvas', () => {
   test.beforeAll(async ({ browser }) => {
     const page = await browser.newPage()
@@ -448,6 +458,21 @@ test.describe('M3 gate — golden workflows built on the canvas', () => {
       const adapted = (JSON.parse((await linted).postData() ?? '{}') as { graph: Graph }).graph
       expect(workflowIdOf(page)).toBe(workflowId)
       expect(normalize(adapted)).toEqual(normalize(g))
+
+      // M16-T09: every vehicle block (containers render as frames) reads as a sentence; every branch edge says which branch (display only — the
+      // adapted graph above is unchanged).
+      await expect(page.locator('[data-sv="block-summary"]')).toHaveCount(
+        g.blocks.filter((b) => !CONTAINERS.has(b.type)).length
+      )
+      const branches = g.edges.flatMap((e) => BRANCH_LABEL[e.fromHandle] ?? []).sort()
+      const labels = page.locator('[data-sv="edge-label"]')
+      await expect(labels).toHaveCount(branches.length)
+      expect((await labels.allTextContents()).sort()).toEqual(branches)
+      if (id === 'GW-A')
+        await expect(
+          page.locator('[data-sv="block-summary"]', { hasText: 'holds for 2 s' })
+        ).toHaveCount(1)
+
       await page.locator('[data-sv-tab="problems"]').click()
       await expect(page.locator('[data-sv="problems"]')).toContainText('No problems', {
         timeout: 20_000,

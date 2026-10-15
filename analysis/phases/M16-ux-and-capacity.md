@@ -169,9 +169,13 @@
   - Dòng tóm tắt không đặt `title` vì helper E2E `nodeByName` tìm block theo `[title=<tên>]`.
 
 ### T09: Nhãn cạnh + chip dữ liệu
-- [ ] `workflow-edge.tsx`: nhãn + màu theo handle nguồn (bảng chung); cạnh lỗi giữ màu đỏ.
-- [ ] Chip "uses: …" dùng parser biểu thức có sẵn; rê chuột làm nổi block nguồn.
-- [ ] E2E: GW-A hiện câu tóm tắt; cạnh `stable` có nhãn.
+- [x] `workflow-edge.tsx`: nhãn + màu theo handle nguồn (bảng chung); cạnh lỗi giữ màu đỏ.
+- [x] Chip "uses: …" dùng parser biểu thức có sẵn; rê chuột làm nổi block nguồn.
+- [x] E2E: GW-A hiện câu tóm tắt; cạnh `stable` có nhãn.
+- Bằng chứng 2026-10-15:
+  - `block-refs` 4 test (tín hiệu/loop/parallel/variable không tính; ô bảng; toán tử `<` cạnh ref); `handle-labels` 4 test; sv + workflow-edge 116 PASS.
+  - E2E `m3-goldens` (CI): với mỗi GW-A…G, số dòng tóm tắt bằng số block (trừ container), nhãn cạnh khớp đúng các nhánh, GW-A có "holds for 2 s". Cũng test đó kiểm graph adapt giống hệt `graph.json`.
+  - Cạnh lỗi giữ màu đỏ. Màu chạy/diff vẫn ưu tiên hơn màu nhánh.
 
 ### T10: Gate + E2E + báo cáo
 - [ ] `gate/m16-capacity.sh` (stack dev):

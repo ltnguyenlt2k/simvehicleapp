@@ -37,6 +37,7 @@ import {
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { ActionBar } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar'
 // SV: realtime lint badge (M03-T11)
+import { SvBlockRefsLine } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/block-refs-line'
 import { SvBlockSummaryLine } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/block-summary-line'
 import { SvBlockProblemsBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
 import { SvTraceBadge } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
@@ -54,6 +55,7 @@ import { useBlockVisual } from '@/app/workspace/[workspaceId]/w/[workflowId]/hoo
 import { useBlockDimensions } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks/use-block-dimensions'
 import { SELECTOR_TYPES_HYDRATION_REQUIRED, type SubBlockConfig } from '@/blocks/types'
 import { getDependsOnFields } from '@/blocks/utils'
+import { normalizeName } from '@/executor/constants'
 import { useKnowledgeBase } from '@/hooks/kb/use-knowledge'
 import { useCustomTools } from '@/hooks/queries/custom-tools'
 import { useDeployWorkflow } from '@/hooks/queries/deployments'
@@ -65,6 +67,7 @@ import { useTablesList } from '@/hooks/queries/tables'
 import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useReactiveConditions } from '@/hooks/use-reactive-conditions'
 import { useSelectorDisplayName } from '@/hooks/use-selector-display-name'
+import { useSvCanvasHighlightStore } from '@/stores/sv/canvas-highlight/store'
 import { useVariablesStore } from '@/stores/variables/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
@@ -614,6 +617,11 @@ export const WorkflowBlock = memo(function WorkflowBlock({
   const subBlockRows = subBlockRowsData.rows
   const subBlockState = subBlockRowsData.stateToUse
 
+  /** SV: a "uses:" chip of another block points at this one (ADR-0055). */
+  const svHighlighted = useSvCanvasHighlightStore(
+    (s) => s.blockName !== null && s.blockName === normalizeName(name)
+  )
+
   /** SV: values of a vehicle block's props, for its summary line and value-dependent handles (ADR-0055). */
   const svValues = useMemo(() => {
     if (!type.startsWith('sv_')) return undefined
@@ -773,8 +781,10 @@ export const WorkflowBlock = memo(function WorkflowBlock({
         tabIndex={0}
         onClick={handleClick}
         onKeyDown={(event) => handleKeyboardActivation(event, handleClick)}
+        data-sv-highlighted={svHighlighted || undefined}
         className={cn(
-          'workflow-drag-handle relative z-[20] w-[250px] cursor-grab select-none rounded-lg border border-[var(--border-1)] bg-[var(--surface-2)] [&:active]:cursor-grabbing'
+          'workflow-drag-handle relative z-[20] w-[250px] cursor-grab select-none rounded-lg border border-[var(--border-1)] bg-[var(--surface-2)] [&:active]:cursor-grabbing',
+          svHighlighted && 'ring-2 ring-[var(--brand-accent)]'
         )}
       >
         {isPending && (
@@ -949,6 +959,7 @@ export const WorkflowBlock = memo(function WorkflowBlock({
           <div className='flex flex-col gap-2 p-2'>
             {/* SV: the sentence the block stands for (ADR-0055) */}
             {svValues && <SvBlockSummaryLine type={type} values={svValues} />}
+            {svValues && <SvBlockRefsLine values={svValues} />}
             {type === 'condition' ? (
               conditionRows.map((cond) => (
                 <SubBlockRow key={cond.id} title={cond.title} value={getDisplayValue(cond.value)} />
