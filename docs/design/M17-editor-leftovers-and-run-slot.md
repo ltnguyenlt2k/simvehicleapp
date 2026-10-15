@@ -109,6 +109,24 @@
 5. **Nút Stop:** huỷ lượt đang chạy (abort request; server bỏ kết quả, không áp đề xuất dở dang).
 6. **Không hiện chuỗi suy nghĩ nội bộ của model** (không có trong contract, và dễ gây hiểu nhầm). Chỉ hiện các bước công cụ thật và câu trả lời.
 
+## 4b. Kiểm logic trên UI — khoảng trống phát hiện khi PO test workflow LKA (2026-10-15)
+Khi hướng dẫn PO kiểm workflow LKA (đã SynCode 14:08, Run 14:30), phát hiện ba điểm (đọc source `signals-model.ts`, `signals-panel.tsx`):
+1. **Tab Signals thiếu tín hiệu đọc trong biểu thức.**
+   - `graphSignalPaths` chỉ lấy prop `path` của block, nên `<Vehicle.Speed>` trong điều kiện If không có trong bảng.
+   - Người dùng phải tự gõ vào ô "Watch a signal", và danh sách thêm tay (`extra`) mất khi tải lại trang.
+   - **Quyết định:** thêm mọi `<Vehicle.…>` xuất hiện trong biểu thức/template (cùng parser với chip "uses:" của M16-T09). Danh sách thêm tay lưu theo workflow (localStorage).
+2. **Không thấy thông báo HMI/MQTT trên UI.** Block HMI/MQTT gửi ra MQTT; Run console chỉ có trace "block đã chạy", không có nội dung message.
+   - **Quyết định:** tab Signals (hoặc Run console) có mục **Messages**, hiện message MQTT theo topic prefix của app (tiêu đề, mức độ, nội dung HMI).
+   - Signal-gateway đọc Mosquitto theo prefix; với sandbox mỗi run (ADR-0057) thì namespace đã riêng.
+3. **Trigger "Value rises" dễ gây hiểu nhầm khi test:**
+   - inject `true` hai lần liền thì lần hai không chạy;
+   - biểu thức đọc tín hiệu chưa có giá trị cho kết quả khó đoán.
+
+   **Quyết định:**
+   - dòng tín hiệu là trigger thì hiện gợi ý "rises: false → true";
+   - tín hiệu chưa có giá trị thì cột Current ghi "chưa có giá trị" thay vì "—";
+   - hướng dẫn người dùng: [docs/user-guide/test-signals.md](../user-guide/test-signals.md).
+
 ## 5. Kiểm thử
 
 | Khía cạnh | Kiểm thử |
@@ -118,4 +136,5 @@
 | Gate | Gate run mới: hai user cùng release song song; hết hạn tự dừng (`SV_RUN_MAX_MINUTES` nhỏ); quota |
 | Trợ lý đang suy nghĩ | Vitest: ánh xạ tên tool → nhãn; danh sách bước ✓/✕ theo `tool`/`tool_result`; reduced-motion tắt animation; Stop huỷ request. E2E với fake provider có độ trễ: thấy "Thinking…", bước, thời gian, Stop |
 | Runtime nhiều người dùng | Spike: 5 run song song cùng v4.0 không lẫn tín hiệu; unit quota/hạn/extend; gate hai user cùng release; E2E "My runs" + hộp thoại cùng user |
+| Kiểm logic trên UI | Vitest: tín hiệu trong biểu thức vào bảng Signals; danh sách thêm tay còn sau reload; Messages hiện payload HMI. E2E live: workflow có If đọc `<Vehicle.Speed>` ⇒ Speed có sẵn trong Signals, inject ⇒ thấy message HMI |
 | Quy tắc AGENTS §4 bước 7 | Full luồng `@live`, quay lại video nếu UI đổi, cập nhật README |
