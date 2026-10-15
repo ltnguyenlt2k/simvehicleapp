@@ -188,11 +188,11 @@
   - hàng đợi gộp;
   - sweeper với TTL ngắn (env).
 - [x] Nightly thêm gate (C++), các gate tự dọn.
-- [ ] CI xanh toàn bộ; nightly xanh; live smoke, parity, VSS gate vẫn PASS.
+- [x] CI xanh toàn bộ; nightly xanh; live smoke, parity, VSS gate vẫn PASS.
 - [x] `docs/reports/M16.md` + ROADMAP + CHANGELOG + `sv refresh` localhost.
 - Bằng chứng 2026-10-15:
   - gate PASS trên stack dev (`gate-m16-1792032182`); CI xanh 38669938414.
-  - Nightly 38672732360 đang chạy ⇒ mục "CI xanh toàn bộ; nightly xanh…" chưa tick.
+  - Nightly 38672732360 xanh: smoke, parity 7/7, gate VSS tuỳ biến, gate M16.
 
 ## Mối quan tâm xuyên suốt (soát ở mỗi task)
 | Khía cạnh | Kiểm tra |

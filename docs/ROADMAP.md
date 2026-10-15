@@ -45,7 +45,7 @@
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
-| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔; acceptance chờ nightly + PO duyệt ADR ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
+| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
 
 **MVP v1.0 = M0→M11, 147 dòng feature** (gồm 1 dòng M0 dời sang release M11-T10, không tính là hoàn thành). Đã có bằng chứng cho 8/147 dòng (~5%) — phần hạ tầng/spike của M0 và `simvehicleapp-contracts` 1.0.0-alpha.1; **chưa có dòng code sản phẩm thật nào** ở các module `simvehicleapp-core/orchestrator/ai` (còn placeholder README). `modules/simvehicleapp-studio` hiện là **snapshot gốc** của Sim v0.7.13 chưa refactor — M1 là nơi bắt đầu cắt gọt.
 
@@ -355,7 +355,7 @@ Yêu cầu PO 2026-10-14 · Thiết kế: [M16](design/M16-ux-and-capacity.md) �
 | UI tập trung (ẩn module Sim thừa) | 0054 | ✔ | 2026-10-15: ẩn Tables/Files/Knowledge/Logs/Scheduled tasks (sidebar, search, route) bằng một danh sách. Settings dùng allowlist. Đổi tên thành "Vehicle apps" (8 spec E2E + tutorial). Ẩn thêm Scheduled tasks theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận | T07 |
 | Block: câu tóm tắt, màu loại, nhãn cổng | 0055 | ✔ | 2026-10-15: câu tóm tắt + nhãn vai trò (WHEN/IF/DO/SEND/READ/CALC/STATE/FLOW) cho cả 41 BlockSpec; test fail nếu thiếu quy tắc. Handle nhánh có màu theo kết quả. Golden graph-adapter giữ nguyên, core/contracts không đổi | T08 |
 | Nhãn cạnh + chip dữ liệu | 0055 | ✔ | 2026-10-15: cạnh nhánh có nhãn và màu (then/stable/in time/timeout/case n/on error). Chip "uses:" rê chuột làm nổi block nguồn. E2E `m3-goldens`: mỗi golden có đúng số câu tóm tắt và đúng nhãn nhánh, graph adapt không đổi | T09 |
-| Gate dung lượng + E2E + báo cáo | 0053–0055 | ✔ | 2026-10-15: `gate/m16-capacity.sh` PASS trên stack dev (quota host/app, hàng đợi gộp, Clean −123 MB đo `du`, 507 khi đĩa đầy, repair, sweeper, delete) và có trong nightly; `POST /sweep`. Prune máy dev: 83 app + 6 thư mục mồ côi, `sv-workspace` 8,9 GB → 127 MB, `sv-velocitas` 9,5 GB → 222 MB. CI xanh (38669938414). [Báo cáo M16](reports/M16.md) | T10 |
+| Gate dung lượng + E2E + báo cáo | 0053–0055 | ✔ | 2026-10-15: `gate/m16-capacity.sh` PASS trên stack dev (quota host/app, hàng đợi gộp, Clean −123 MB đo `du`, 507 khi đĩa đầy, repair, sweeper, delete) và có trong nightly; `POST /sweep`. Prune máy dev: 83 app + 6 thư mục mồ côi, `sv-workspace` 8,9 GB → 127 MB, `sv-velocitas` 9,5 GB → 222 MB. CI xanh (38669938414); nightly 38672732360 xanh. [Báo cáo M16](reports/M16.md) | T10 |
 
 ---
 
