@@ -46,7 +46,8 @@
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
-| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 1/9 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
+| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 1/8 + T08 ↷ M18 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
+| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Proposed) | 🔄 | 1/11 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -374,8 +375,25 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M17](design/M17-editor-leftovers-and-
 | Runtime multi-user: sandbox mỗi run, quota user/host, thời hạn, extend | 0057 | ☐ | | T04 |
 | Signal-gateway theo run; "My runs", hộp thoại cùng user, thẻ Vehicle runtime, `sv runs`, gate | 0057 | ☐ | | T05 |
 | Trợ lý "đang suy nghĩ": hiệu ứng, bước tool thật, thời gian, Stop | 0054 | ☐ | PO 2026-10-15 | T06 |
-| Kiểm logic trên UI: Signals có tín hiệu đọc trong biểu thức, Messages HMI/MQTT, gợi ý trigger | 0054 | ☐ | Phát hiện khi PO test LKA 2026-10-15; hướng dẫn tạm: [test-signals](user-guide/test-signals.md) | T08 |
+| Kiểm logic trên UI: Signals có tín hiệu đọc trong biểu thức, Messages HMI/MQTT, gợi ý trigger | 0058 | ↷ | Chuyển sang M18-T05 (2026-10-15); hướng dẫn tạm: [test-signals](user-guide/test-signals.md) | T08 |
 | Gate + full luồng `@live` + video + README + báo cáo | 0056, 0057 | ☐ | | T07 |
+
+## M18 — Bàn thử nghiệm, workflow dễ đọc v2, Deploy
+Yêu cầu PO 2026-10-15 · Thiết kế: [M18](design/M18-test-workbench-readability-deploy.md) · Chi tiết: [phases/M18](../analysis/phases/M18-test-workbench-readability-deploy.md) · ADR [0058](../analysis/adr/ADR-0058-test-workbench-scenarios-as-tests.md), [0059](../analysis/adr/ADR-0059-workflow-readability-v2.md), [0060](../analysis/adr/ADR-0060-deploy-targets-and-vehicle-io-layers.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Phân tích + thiết kế + ADR + kế hoạch | 0058–0060 | ✔ | 2026-10-15 (Claude Code), đọc từ source:<br>• một scenario/workflow, Record ghi đè, không chấm kỳ vọng; generator giữ một scenario mỗi workflow; trợ lý không có tool scenario;<br>• Signals: ô nhập chung cho mọi loại, thiếu tín hiệu trong biểu thức;<br>• Connections = block nối vào + output;<br>• block còn nhiều key/value;<br>• chưa có Deploy (Kanto hoãn ở ADR-0050).<br>Đối chiếu ADR-0046 ⇒ ghi quan hệ với ADR-0057. | T01 |
+| Test case: contracts + DB + migrate + BFF | 0058 | ☐ | | T02 |
+| Generator 3 backend: một test mỗi case | 0058 | ☐ | | T03 |
+| Tab Test: soạn bảng, Simulate pass/fail, Generate tests + độ phủ, Play chấm điểm | 0058 | ☐ | | T04 |
+| Tab Live: ô nhập theo catalog, tìm kiếm/kéo thả, Messages; dock 3 tab, Build log drawer | 0058 | ☐ | gộp M17-T08 | T05 |
+| Trợ lý soạn test (`scenario_*`) | 0058 | ☐ | | T06 |
+| Block gọn + Logic view | 0059 | ☐ | | T07 |
+| Làn theo trigger, giá trị sống, "Data from earlier blocks" | 0059 | ☐ | | T08 |
+| Deploy Remote databroker (read-only + audit) | 0060 | ☐ | | T09 |
+| Deploy Container image | 0060 | ☐ | | T10 |
+| Gate + full luồng `@live` + video + README + báo cáo | 0058–0060 | ☐ | | T11 |
 
 ---
 

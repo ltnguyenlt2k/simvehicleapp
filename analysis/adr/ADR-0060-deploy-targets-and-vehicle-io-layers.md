@@ -1,0 +1,105 @@
+# ADR-0060: Deploy — target ngoài stack giả lập (databroker từ xa, image, Kanto) và ranh giới VSS với layer I/O xe (CAN)
+
+- **Status:** Proposed (theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận)
+- **Date:** 2026-10-15
+- **Level:** L0 System
+- **Deciders:** PO; Claude Code (đề xuất)
+- **Related:** ADR-0024 (databroker API), ADR-0028/0031 (IDE, export, license), ADR-0047 (kuksa.val.v2), ADR-0050 #8 (Kanto, hoãn), ADR-0052 (VSS tuỳ biến), ADR-0057 (sandbox run), `analysis/01-requirements.md` (ngoài phạm vi v1: firmware ECU/CAN thật, OTA thật), [design M18 §7](../../docs/design/M18-test-workbench-readability-deploy.md)
+
+## Context
+- PO (2026-10-15) muốn ngoài Test/Run trên UI có chức năng **deploy**, để workflow lấy **dữ liệu thật từ các layer phía dưới**: CAN mapping, phần cứng, qua các layer khác nhau. PO chưa yêu cầu làm layer CAN, nhưng cần nghĩ đến nút/luồng Deploy cho phù hợp.
+
+**Hiện trạng:**
+- **Run** chạy app trên databroker giả lập trong stack; giá trị đến từ người dùng (Signals/Test).
+- **Export** = zip Velocitas build được bằng `app/Dockerfile`.
+- Không có khái niệm target. Kanto (OTA) hoãn ở ADR-0050 #8.
+
+**Kiến trúc SDV thật:** bus CAN/Ethernet → **CAN provider** (ánh xạ DBC ⇄ VSS, vd. dự án eclipse-kuksa CAN provider) → **KUKSA Databroker trên thiết bị** → **vehicle app** (Velocitas, gRPC).
+- App chỉ biết đường dẫn VSS.
+- ⇒ **VSS là ranh giới hợp đồng**: cùng một app chạy được với dữ liệu thật khi phía dưới có provider ánh xạ đúng tín hiệu, không cần sinh lại code.
+
+**Rủi ro tương thích:** databroker bản mới trên thiết bị có thể chỉ phục vụ `kuksa.val.v2`; app sinh ra hiện dùng API v1 (ADR-0047 có lộ trình chuyển).
+
+## Decision
+1. **Deploy là hành động riêng với Run:**
+   - Run = thử trên stack giả lập;
+   - Deploy = đưa **bản build đã SynCode** tới một **target** nơi dữ liệu đến từ layer khác.
+
+   Nút **Deploy** nằm ở nhóm "Mở/xuất" của thanh hành động (cạnh Export), mở hộp thoại chọn target. Target được khai báo ở Settings → **Deploy targets** (quyền admin workspace).
+2. **Target, theo giai đoạn:**
+
+   | Target | Làm gì | Giai đoạn |
+   |---|---|---|
+   | **Local stack** | = Run hiện nay | có sẵn |
+   | **Remote databroker** | Chạy app (sandbox ADR-0057) nối tới databroker **bên ngoài** do người dùng khai báo (URL gRPC, TLS CA, token JWT, phiên bản API). Dữ liệu thật đi lên từ provider phía dưới. Tab Live đọc từ databroker đó | **M18** |
+   | **Container image** | Build image OCI của app (`app/Dockerfile`), kèm AppManifest + license/notice, đẩy lên registry đã cấu hình | M18 (sau Remote) |
+   | **Kanto / OTA** | Triển khai lên thiết bị qua Eclipse Kanto container-management | Hoãn (ADR-0050 #8); mở lại khi có thiết bị và nhu cầu |
+
+3. **An toàn (bắt buộc):**
+   - Target mới mặc định **read-only**: proxy gRPC của SimVehicleApp chặn mọi `set` actuator. Bật ghi phải xác nhận rõ, liệt kê các actuator app sẽ ghi, kèm banner ASIL.
+   - Mỗi deploy ghi **audit log**: ai, target, generation, thời điểm, chế độ đọc/ghi.
+   - Deploy chỉ dùng generation đã **SynCode pass** (đủ test); lệch release VSS giữa app và target ⇒ từ chối.
+   - Token/TLS của target lưu ở kho Secrets (mã hoá), không hiện lại.
+4. **Mô hình Deployment** gắn với vehicle app: `{id, appId, targetId, generationId, state, mode: read-only|read-write, startedAt, stoppedAt, by}`.
+   - Trang Vehicle apps hiện app đang deploy ở đâu.
+   - Dừng/rollback về generation trước.
+   - Contracts chỉ thêm.
+5. **Layer I/O xe (CAN, DBC, provider phần cứng): ngoài phạm vi M18.**
+   - Module tương lai "vehicle-io", có ADR riêng khi có phần cứng và nhu cầu.
+   - M18 chỉ cung cấp target Remote databroker để nối với provider có sẵn.
+   - VSS tuỳ biến (ADR-0052) mô tả tín hiệu riêng của OEM khớp DBC.
+6. **Kiểm tương thích trước khi deploy:** nút **Test connection** kiểm kết nối, TLS/token, phiên bản API (v1/v2), release VSS của target (metadata), và path mà app dùng có tồn tại ở target.
+
+## Diagram
+```mermaid
+flowchart TB
+  subgraph Studio["SimVehicleApp"]
+    APP[Vehicle app đã SynCode] -->|Run| LOCAL[(Databroker giả lập<br/>Signals/Test)]
+    APP -->|Deploy: Remote databroker| PROXY[Proxy gRPC<br/>read-only mặc định, audit]
+    APP -->|Deploy: Container image| REG[(Registry OCI)]
+  end
+  PROXY --> RDB[(KUKSA Databroker<br/>trên devkit/HIL/xe)]
+  subgraph IO["Layer I/O xe — ngoài phạm vi M18"]
+    CANP[CAN provider<br/>DBC ⇄ VSS] --> RDB
+    BUS[[Bus CAN / Ethernet]] --> CANP
+  end
+  REG -.->|sau: Kanto/OTA| DEV[Thiết bị xe]
+```
+
+## Alternatives considered
+| Phương án | Ưu | Nhược | Vì sao loại |
+|---|---|---|---|
+| Không có Deploy, chỉ Export zip | Đơn giản | Người dùng tự lo mọi bước; không thấy app chạy với dữ liệu thật trong studio | Không đáp ứng yêu cầu PO |
+| Gộp Deploy vào Run (chọn databroker trong Run) | Ít nút | Nhầm lẫn thử nghiệm với dữ liệu thật; khó áp an toàn riêng | Tách rõ để áp read-only/audit |
+| Làm luôn CAN provider/DBC mapping | Trọn luồng | Cần phần cứng, DBC thật; ngoài phạm vi v1 | Module riêng sau, VSS làm ranh giới |
+| Kanto ngay | OTA thật | Cần thiết bị, quyền điều khiển container; ADR-0050 hoãn | Giữ hoãn |
+
+## Consequences
+- **Tích cực:** đường đi rõ từ thử nghiệm tới dữ liệu thật; app không phải sinh lại; an toàn mặc định.
+- **Tiêu cực / nợ:** proxy gRPC và quản lý target là thành phần mới cần bảo mật kỹ; phụ thuộc ADR-0047 cho databroker v2.
+- **Ảnh hưởng module:**
+  - contracts (Deployment, DeployTarget);
+  - orchestrator (deploy, proxy/read-only);
+  - velocitas-stack (build image);
+  - studio (nút Deploy, Settings → Deploy targets, Vehicle apps);
+  - docs (DEPLOY, user guide, README).
+
+## Implementation
+| Task | Module | Milestone |
+|---|---|---|
+| Contracts Deployment/DeployTarget + Settings → Deploy targets + Test connection | contracts, orchestrator, studio | M18-T09 |
+| Deploy Remote databroker (sandbox + proxy read-only + audit) | orchestrator, velocitas-stack | M18-T09 |
+| Deploy Container image (build + push) | velocitas-stack, orchestrator | M18-T10 |
+| Kanto, vehicle-io (CAN) | — | hoãn, ADR riêng |
+
+## Verification
+- Unit:
+  - proxy chặn `set` khi read-only;
+  - deploy từ chối generation chưa pass / lệch release;
+  - token không lộ qua API;
+  - audit ghi đủ.
+- **Gate:** một "databroker ngoài" (service riêng trong compose, có feeder giả lập đẩy giá trị như CAN provider) ⇒ deploy Remote ⇒ app nhận dữ liệu và chạy logic mà không cần ai inject; read-only chặn ghi actuator; bật ghi thì actuator đổi.
+- E2E: thêm target ⇒ Test connection ⇒ Deploy ⇒ Vehicle apps hiện trạng thái ⇒ Stop.
+- Full luồng `@live` + README.
+
+## Notes / Deviations

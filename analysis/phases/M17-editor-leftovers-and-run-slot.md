@@ -19,8 +19,8 @@
 | T04 | Runtime multi-user: sandbox mỗi run, quota user/host, thời hạn, extend, `stopReason`, `RUN_QUOTA_EXCEEDED` | contracts, orchestrator, velocitas-stack | T04a | Unit đủ nhánh (đồng hồ giả); contract additive + CHANGELOG + catalog diagnostic |
 | T05 | Signal-gateway theo run; UI "My runs", hộp thoại cùng user, cảnh báo hết hạn, thẻ Vehicle runtime; `scripts/sv runs`; gate; AI tool `run` | signal-gateway, studio, scripts, gate, ai | T04 | Vitest + E2E mock; gate hai user cùng release song song + hết hạn + quota |
 | T06 | Trợ lý "đang suy nghĩ": hiệu ứng, bước tool thật, chữ hiện dần, thời gian chờ, Stop | studio, ai | T02 | Vitest; E2E fake provider có độ trễ |
-| T08 | Kiểm logic trên UI: Signals tự có tín hiệu đọc trong biểu thức, danh sách thêm tay được lưu, mục Messages (HMI/MQTT), gợi ý trigger rises/chưa có giá trị | studio, signal-gateway | T05 | Vitest + E2E live (workflow If đọc Speed) |
-| T07 | Gate + full luồng `@live` + video (nếu UI đổi) + README + báo cáo M17 | all, docs | T02–T06, T08 | CI + nightly xanh; `docs/reports/M17.md` |
+| T08 | ↷ **Chuyển sang M18-T05** (ADR-0058 quyết định 6), 2026-10-15. Nội dung gốc: kiểm logic trên UI: Signals tự có tín hiệu đọc trong biểu thức, danh sách thêm tay được lưu, mục Messages (HMI/MQTT), gợi ý trigger rises/chưa có giá trị | studio, signal-gateway | T05 | Vitest + E2E live (workflow If đọc Speed) |
+| T07 | Gate + full luồng `@live` + video (nếu UI đổi) + README + báo cáo M17 | all, docs | T02–T06 | CI + nightly xanh; `docs/reports/M17.md` |
 
 ## Checklist chi tiết
 
@@ -96,7 +96,7 @@
   - Stop huỷ request.
 - [ ] E2E: fake provider có độ trễ ⇒ thấy Thinking…, bước, thời gian; Stop.
 
-### T08: Kiểm logic trên UI
+### T08: Kiểm logic trên UI — ↷ chuyển sang M18-T05 (ADR-0058)
 - [ ] `graphSignalPaths` thêm mọi `<Vehicle.…>` trong biểu thức/template (dùng chung parser với `lib/sv/block-refs`); test.
 - [ ] Danh sách "Watch a signal" thêm tay lưu theo workflow (localStorage, try/catch).
 - [ ] Mục **Messages**: signal-gateway subscribe Mosquitto theo topic prefix của app/run, stream qua SSE; UI hiện HMI (tiêu đề, mức độ, nội dung) và MQTT publish.

@@ -109,7 +109,7 @@
 5. **Nút Stop:** huỷ lượt đang chạy (abort request; server bỏ kết quả, không áp đề xuất dở dang).
 6. **Không hiện chuỗi suy nghĩ nội bộ của model** (không có trong contract, và dễ gây hiểu nhầm). Chỉ hiện các bước công cụ thật và câu trả lời.
 
-## 4b. Kiểm logic trên UI — khoảng trống phát hiện khi PO test workflow LKA (2026-10-15)
+## 4b. Kiểm logic trên UI — khoảng trống phát hiện khi PO test workflow LKA (2026-10-15) — ↷ chuyển sang [M18](M18-test-workbench-readability-deploy.md) (ADR-0058)
 Khi hướng dẫn PO kiểm workflow LKA (đã SynCode 14:08, Run 14:30), phát hiện ba điểm (đọc source `signals-model.ts`, `signals-panel.tsx`):
 1. **Tab Signals thiếu tín hiệu đọc trong biểu thức.**
    - `graphSignalPaths` chỉ lấy prop `path` của block, nên `<Vehicle.Speed>` trong điều kiện If không có trong bảng.

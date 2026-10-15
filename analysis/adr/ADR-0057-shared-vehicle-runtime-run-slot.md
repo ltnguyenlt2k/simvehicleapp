@@ -4,7 +4,7 @@
 - **Date:** 2026-10-15 (sửa cùng ngày sau câu hỏi multi-user của PO, xem Notes)
 - **Level:** L1 Subsystem (orchestrator runs, toolchain agent, signal-gateway, studio)
 - **Deciders:** PO; Claude Code (đề xuất)
-- **Related:** ADR-0024/0027 (live run, observability), ADR-0052 (databroker theo release, VSS tuỳ biến), ADR-0053 (quota/dung lượng host), AGENTS §2.10 (không mount `docker.sock`), [design M17 §3](../../docs/design/M17-editor-leftovers-and-run-slot.md)
+- **Related:** **ADR-0046** (per-run stack & multi-user: pool tĩnh N stack trong Compose, hoãn — ADR này đề xuất thay quyết định 2 của 0046), ADR-0024/0027 (live run, observability), ADR-0052 (databroker theo release, VSS tuỳ biến), ADR-0053 (quota/dung lượng host), AGENTS §2.10 (không mount `docker.sock`), [design M17 §3](../../docs/design/M17-editor-leftovers-and-run-slot.md)
 
 ## Context
 **Sự cố dẫn tới ADR:** 2026-10-15 PO bấm Run trên `sample-test` và nhận "Another project is running on the vehicle stack". Lúc đó run của `demo-overspeed` (agent bật để PO kiểm tín hiệu) vẫn chạy.
@@ -92,6 +92,7 @@ flowchart LR
 | Giữ khoá toàn host (hiện trạng) | Đơn giản | Cả deploy chỉ một người Run | Không dùng được cho nhiều người |
 | Một run mỗi databroker dùng chung theo release (bản đầu của ADR này) | Thay đổi nhỏ | Mỗi release vẫn chỉ một người; v4.0 là release mặc định nên gần như vẫn khoá toàn host | Không giải quyết multi-user — thay sau câu hỏi của PO |
 | Nhiều run trên cùng databroker dùng chung | Không ai chờ | Ghi đè actuator, trace lẫn lộn | Sai về bản chất (chỉ hợp lệ khi chủ động "chung xe") |
+| Pool tĩnh N stack trong Compose (ADR-0046 quyết định 2) | Không cần quyền Docker; cô lập theo network | N cố định, giữ RAM khi rảnh, phải đoán N trước; vẫn chặn khi hết slot | Sandbox dạng tiến trình cũng không cần Docker nhưng co giãn theo nhu cầu, ~20 MB/run |
 | Databroker riêng mỗi run dưới dạng **container** (Docker API) | Cô lập mức OS | Orchestrator phải có Docker API ⇒ trái luật `docker.sock`; khởi động chậm hơn | Tiến trình đủ cô lập ở mức cổng/bộ nhớ, rẻ, không cần Docker |
 | Hàng đợi run | Công bằng | Phải chờ mà không biết bao lâu | Sandbox + quota cho phép chạy ngay |
 
@@ -138,4 +139,5 @@ flowchart LR
 
 ## Notes / Deviations
 - 2026-10-15 — bản đầu của ADR này (cùng ngày) chọn "một run mỗi databroker dùng chung + thời hạn". Lý do loại phương án databroker riêng mỗi run lúc đó là "tốn RAM/CPU", **chưa đo**.
+- 2026-10-15 (đối chiếu sau): ADR-0046 đã có trước, chọn "pool stack tĩnh" khi cần multi-user (hoãn chờ PO). Bản đầu của ADR này chưa nhắc tới 0046; nay ghi rõ: ADR-0057 đề xuất **thay quyết định 2 của ADR-0046** bằng sandbox dạng tiến trình (cùng nguyên tắc không docker.sock), và ADR-0046 có Notes trỏ sang đây. Khi PO duyệt, 0046 chuyển "Superseded (một phần) by ADR-0057".
 - Sau câu hỏi của PO về multi-user, đã đo lại: databroker 3,8–5,9 MB, app ~14 MB. Lý do loại đó sai, và phương án cũ không cho nhiều người dùng chạy (mỗi release một người). Decision đổi sang sandbox mỗi run; phương án cũ chuyển xuống Alternatives.

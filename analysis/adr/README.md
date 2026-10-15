@@ -67,6 +67,9 @@ flowchart TB
     E55["0055 Block thể hiện logic bằng hình"]
     E56["0056 Ẩn bề mặt executor Sim; menu workflow giữ dữ liệu xe"]
     E57["0057 Runtime nhiều người dùng: sandbox mỗi run + quota"]
+    E58["0058 Test case + dock Test/Live + trợ lý soạn test"]
+    E59["0059 Workflow dễ đọc v2: block gọn, Logic view"]
+    E60["0060 Deploy target + ranh giới VSS với layer I/O"]
   end
   A2 --> A7
   A2 --> A9
@@ -149,6 +152,9 @@ flowchart TB
 | [0055](ADR-0055-block-visual-semantics.md) | Block: câu tóm tắt, màu loại, nhãn cổng/cạnh, chip dữ liệu | L2 | M16 |
 | [0056](ADR-0056-sim-execution-surfaces-and-workflow-menu.md) | Ẩn Chat và "Run from/until block" (executor Sim); Download/Duplicate workflow giữ release VSS + scenario | L2 | M17 |
 | [0057](ADR-0057-shared-vehicle-runtime-run-slot.md) | Runtime xe nhiều người dùng: sandbox (databroker riêng) mỗi run, quota user/host, thời hạn + extend, "My runs" | L1 | M17 |
+| [0058](ADR-0058-test-workbench-scenarios-as-tests.md) | Nhiều test case có kỳ vọng mỗi workflow; dock Problems/Test/Live; Generate tests + độ phủ; trợ lý soạn test | L1 | M18 |
+| [0059](ADR-0059-workflow-readability-v2.md) | Block gọn, Logic view tất định, làn theo trigger, giá trị sống, "Data from earlier blocks" | L2 | M18 |
+| [0060](ADR-0060-deploy-targets-and-vehicle-io-layers.md) | Deploy: target databroker từ xa / image / Kanto (hoãn); read-only + audit; VSS là ranh giới với layer CAN | L0 | M18 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

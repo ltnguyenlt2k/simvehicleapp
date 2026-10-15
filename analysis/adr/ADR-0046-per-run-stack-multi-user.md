@@ -45,3 +45,4 @@
 Khi làm: 2 user Run đồng thời trên 2 slot, trace/log không lẫn; slot thứ N+1 ⇒ 409 + hàng đợi; smoke không cần docker.sock.
 
 ## Notes / Deviations
+- 2026-10-15: [ADR-0057](ADR-0057-shared-vehicle-runtime-run-slot.md) (Proposed) đề xuất thay quyết định 2 (pool tĩnh) bằng **sandbox dạng tiến trình cho mỗi run**: databroker riêng do toolchain agent spawn, ~20 MB/run đo thật, không docker.sock, giới hạn bằng quota user/host + thời hạn. Khi PO duyệt 0057, ADR này thành "Superseded (một phần)".
