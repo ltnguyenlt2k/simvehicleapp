@@ -243,6 +243,10 @@ test.describe('M7 SynCode', () => {
     const { workflowId } = await workflowWithTrigger(page, 'm7a')
 
     const syncode = page.locator('[data-sv-action="syncode"]')
+    await expect(page.locator('[data-sv="app-chip"]')).toHaveText('No vehicle app')
+    await expect(page.locator('[data-sv="action-hint"]')).toContainText(
+      'press SynCode to create one'
+    )
     await expect(syncode).toBeEnabled({ timeout: 20_000 })
     await syncode.click()
     const dialog = page.getByRole('dialog')
@@ -277,6 +281,14 @@ test.describe('M7 SynCode', () => {
     const { workflowId } = await workflowWithTrigger(page, 'm7s')
     workflow.id = workflowId
     const syncode = page.locator('[data-sv-action="syncode"]')
+    // The editor knows the workflow's app before SynCode (without it SynCode offers to create one).
+    await expect(page.locator('[data-sv="app-chip"]')).toHaveAttribute(
+      'data-sv-project',
+      'hazard-app',
+      {
+        timeout: 20_000,
+      }
+    )
     await expect(syncode).toBeEnabled({ timeout: 20_000 })
     await syncode.click()
 
@@ -323,6 +335,14 @@ test.describe('M7 SynCode', () => {
     await dragFromToolbar(page, 'Stable for', 600, 200)
     await expect(nodeByName(page, 'Stable for 1')).toBeVisible()
     const syncode = page.locator('[data-sv-action="syncode"]')
+    // The editor knows the workflow's app before SynCode (without it SynCode offers to create one).
+    await expect(page.locator('[data-sv="app-chip"]')).toHaveAttribute(
+      'data-sv-project',
+      'hazard-app',
+      {
+        timeout: 20_000,
+      }
+    )
     await expect(syncode).toBeEnabled({ timeout: 20_000 })
     await syncode.click()
 

@@ -90,11 +90,12 @@ test.describe
       - toolbar "Vehicle app actions":
         - button "Verify"
         - button "Simulate"
-        - button "SynCode" [disabled]
+        - button "SynCode"
         - button "Run" [disabled]
         - button "Stop" [disabled]
         - button "Open IDE" [disabled]
         - button "Export" [disabled]
+        - button "No vehicle app"
     `)
       await expect(page.locator('[data-sv="bottom-dock"]')).toMatchAriaSnapshot(`
       - tablist "Vehicle app output":

@@ -132,7 +132,11 @@ export function SynCodeButton({ primary = false }: SynCodeButtonProps) {
         }
         primary={primary}
         disabled={
-          (project ? project.status !== 'ready' : !workspaceId || !workflowId || !vssRelease) ||
+          // Without an app, creation is offered only once the app list is known (else a slow list would open the
+          // dialog for a workflow that already has an app).
+          (project
+            ? project.status !== 'ready'
+            : !workspaceId || !workflowId || !vssRelease || projects === undefined) ||
           !graphJson ||
           !loaded
         }
