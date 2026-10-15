@@ -48,30 +48,66 @@
 | R3 | Người bị chặn **không biết** app nào, của ai, từ lúc nào, và không có cách giải phóng | Phải hỏi quản trị viên; quản trị viên cũng không có nút dừng (chỉ có API nội bộ) |
 | R4 | Thông báo hiện kiểu toast chung, nút Run vẫn bật | Người dùng bấm lại nhiều lần, không có hướng dẫn |
 
-**Vì sao không cho nhiều run trên cùng databroker:** hai app cùng đọc/ghi một bộ tín hiệu VSS sẽ ghi đè actuator của nhau, và trace/Signals lẫn lộn. Kết quả "chạy thật" mất ý nghĩa. Vì vậy nguyên tắc **một run trên một databroker** là đúng và giữ nguyên. Cần sửa là phạm vi, thời hạn và cách hiển thị.
+**Phạm vi khoá hiện nay — toàn host, không phải theo user** (PO hỏi lại 2026-10-15):
+- Cả bản deploy chỉ **một** app được Run tại một thời điểm, bất kể user, workspace hay release.
+- Lý do gốc: mọi app dùng chung một databroker cho mỗi release. Hai app trên một databroker ghi đè tín hiệu của nhau, trace và Signals lẫn lộn.
+- Đúng cho giai đoạn một người dùng, **không dùng được khi deploy nhiều người**.
 
-**Quyết định (ADR-0057):**
-1. **Phạm vi khoá theo databroker** (theo release), không còn toàn host: app v4.0 và app v4.2 chạy song song được.
-2. **Thời hạn cho run:**
-   - tối đa `SV_RUN_MAX_MINUTES` (mặc định 30); hết hạn thì dừng sạch, `stopReason: expired`;
-   - 5 phút trước khi hết hạn, UI của chủ run hiện cảnh báo và nút **Extend** (gia hạn thêm một lượt, giới hạn số lần).
-3. **Minh bạch:**
-   - 409 kèm `activeRun` đã lọc theo quyền: tên app nếu cùng workspace, "another workspace" nếu khác; kèm thời gian đã chạy và thời điểm tự hết hạn;
-   - nút Run hiện trạng thái "Vehicle stack busy — frees at hh:mm";
-   - System status có thẻ **Vehicle runtime**: databroker nào đang bận, app nào, còn bao lâu.
-4. **Giải phóng có kiểm soát:**
-   - người cùng workspace có quyền write được **Stop** run đang chiếm;
-   - quản trị viên host có `scripts/sv runs list|stop`;
-   - app do gate/script tạo (không gắn workspace) chỉ dừng được bằng lệnh quản trị.
-5. **Gate và script:** gate live hiện cũng chiếm run. Gate phải chờ chỗ trống (có timeout) thay vì fail, và luôn dừng run khi thoát (đã có trap của M16 cho app; bổ sung cho run).
+**Số đo thật (2026-10-15):**
+- KUKSA databroker: **3,8–5,9 MB** RAM mỗi instance, CPU ~0 % khi rỗi;
+- app C++ đang chạy: **~14 MB**.
 
-**Không chọn (ghi ở ADR):**
-- databroker riêng cho mỗi run (ephemeral): cô lập tốt nhất nhưng tốn RAM/CPU, khởi động chậm, phải đổi signal-gateway. Đưa vào backlog cho chế độ "lab nhiều người";
-- hàng đợi run: người dùng phải chờ mà không biết bao lâu; thời hạn + Stop đơn giản và đủ.
+⇒ Cô lập từng run rất rẻ (~20 MB/run).
 
-## 4. Trợ lý "Working…" (ảnh 3)
+**Cách app chạy:** tiến trình do toolchain agent spawn trong container toolchain. Image databroker là một binary duy nhất. ⇒ Databroker riêng cho mỗi run chạy được **dạng tiến trình**, không cần Docker API, giữ luật không mount `docker.sock`.
 
-Đây không phải lỗi: endpoint `openai-compatible · local-agent` của PO trả lời chậm (đã đo ở M10, đôi khi 524). Kết quả cuối cùng (workflow LKA trong ảnh 4) hợp lệ. Có một khoảng trống UX nhỏ: trong lúc chờ chỉ có chữ "Working…", không có thời gian đã chờ và không có nút huỷ. Ghi vào M17 như việc nhỏ (T06), không cần ADR riêng.
+**Quyết định (ADR-0057, sửa cùng ngày — bản đầu "một run mỗi databroker dùng chung" bị thay vì không giải quyết multi-user):**
+1. **Sandbox mỗi run:** databroker riêng (đúng release VSS của app, kể cả mô hình tuỳ biến) + namespace MQTT riêng (topic prefix theo app). Run kết thúc ⇒ dọn cả sandbox.
+2. **Signal-gateway định tuyến theo run:** Signals, inject, mirror và phát scenario dùng databroker của run đang theo dõi.
+3. **Quota thay khoá:**
+   - `SV_MAX_RUNS_PER_USER` (2), `SV_MAX_RUNS_TOTAL` (20);
+   - vượt quota ⇒ `RUN_QUOTA_EXCEEDED`, liệt kê run của chính người gọi; của người khác chỉ đếm số.
+4. **Thời hạn:** `SV_RUN_MAX_MINUTES` (30), Extend tối đa 3 lần, cảnh báo trước 5 phút, `stopReason: expired`.
+5. **Cùng user Run app khác khi đang có run:**
+   - hộp thoại **Dừng X và chạy Y / Chạy song song** (khi còn quota) / Huỷ;
+   - Run lại cùng app đang chạy ⇒ hỏi **Khởi động lại**.
+6. **Thấy rõ run:**
+   - thanh hành động có "My runs (n)" (app, release, thời gian, hết hạn, Stop);
+   - Vehicle apps đánh dấu app đang chạy;
+   - System status có thẻ **Vehicle runtime**.
+7. **Quản trị:** `scripts/sv runs list|stop`.
+8. **Chế độ "chung xe"** (nhiều app tương tác trên một databroker): tuỳ chọn, backlog.
+9. **Spike trước khi code (T04a):** databroker dạng tiến trình trong toolchain; đo khởi động/RAM; 5 run song song cùng release không lẫn tín hiệu; nạp VSS tuỳ biến.
+
+## 4. Trợ lý "Working…" (ảnh 3) và hiệu ứng "đang suy nghĩ"
+
+**Không phải lỗi:** endpoint `openai-compatible · local-agent` của PO trả lời chậm (đã đo ở M10, đôi khi 524); kết quả (workflow LKA, ảnh 4) hợp lệ.
+
+**Vấn đề UX:** trong lúc chờ chỉ có dòng chữ tĩnh "Working…" (`assistant-panel.tsx`). Người dùng không biết trợ lý còn sống, đang làm gì hay đã chờ bao lâu, và không có cách dừng.
+
+**PO yêu cầu (2026-10-15):** có hiệu ứng để người dùng cảm nhận AI đang suy nghĩ.
+
+**Dữ kiện:** stream của trợ lý (`lib/api/contracts/sv-ai.ts`) đã phát các sự kiện:
+- `tool` (tên công cụ đang gọi);
+- `tool_result`;
+- `text` (từng đoạn chữ);
+- `proposal`, `pending_action`, `done`.
+
+⇒ Hiển thị được **bước thật** đang làm, không cần chữ giả.
+
+**Quyết định (M17-T06, ADR-0054 §UI — không cần ADR mới):**
+1. **Hiệu ứng "đang suy nghĩ":**
+   - biểu tượng trợ lý có vòng sáng nhấp nháy nhẹ, kèm 3 chấm chạy;
+   - chữ **"Thinking…"** có hiệu ứng ánh sáng chạy qua (shimmer), dùng token màu sẵn có.
+   - Tắt animation khi người dùng bật `prefers-reduced-motion`; khi đó chỉ còn chấm tĩnh và chữ.
+2. **Bước đang làm theo sự kiện thật:**
+   - mỗi sự kiện `tool` thêm một dòng với nhãn dễ hiểu, ánh xạ theo tên tool: "Đang tìm tín hiệu VSS…", "Đang đọc workflow…", "Đang kiểm tra (lint)…", "Đang chạy mô phỏng…", "Đang soạn đề xuất…";
+   - dòng đang chạy có spinner; nhận `tool_result` thì đổi thành ✓ (lỗi thì ✕);
+   - tool chưa có nhãn ⇒ hiện tên tool.
+3. **Chữ trả lời hiện dần** theo `text` delta, có con trỏ nhấp nháy ở cuối trong lúc stream.
+4. **Thời gian đã chờ** ("12 s"). Sau 30 s thêm gợi ý "Model đang trả lời chậm" kèm tên provider/model.
+5. **Nút Stop:** huỷ lượt đang chạy (abort request; server bỏ kết quả, không áp đề xuất dở dang).
+6. **Không hiện chuỗi suy nghĩ nội bộ của model** (không có trong contract, và dễ gây hiểu nhầm). Chỉ hiện các bước công cụ thật và câu trả lời.
 
 ## 5. Kiểm thử
 
@@ -79,7 +115,7 @@
 |---|---|
 | Ẩn Chat / Run from block | Unit: danh sách bề mặt ẩn; E2E: không có nút Chat, menu canvas không có "Open Chat", menu block không có "Run from/until block"; route chat của workflow trả 404 |
 | Download/Duplicate giữ dữ liệu xe | Unit: JSON tải về có `simvehicleapp.vssRelease` + scenario; import khôi phục; duplicate copy cả hai. E2E: workflow v4.2 có scenario ⇒ duplicate ⇒ bản sao vẫn v4.2, Simulate ra cùng kết quả |
-| Khoá run theo databroker | Unit orchestrator: v4.0 đang chạy + start v4.2 ⇒ 202; cùng v4.0 ⇒ 409 kèm `activeRun` đã lọc; hết hạn ⇒ `expired`; Extend; stop bởi người cùng workspace / khác workspace (403) |
-| UI bận | E2E mock: 409 ⇒ nút Run hiện "busy — frees at", có Stop khi cùng workspace |
-| Gate | `m16-capacity` + gate run mới: hai release chạy song song; hết hạn tự dừng (đặt `SV_RUN_MAX_MINUTES` nhỏ) |
+| Gate | Gate run mới: hai user cùng release song song; hết hạn tự dừng (`SV_RUN_MAX_MINUTES` nhỏ); quota |
+| Trợ lý đang suy nghĩ | Vitest: ánh xạ tên tool → nhãn; danh sách bước ✓/✕ theo `tool`/`tool_result`; reduced-motion tắt animation; Stop huỷ request. E2E với fake provider có độ trễ: thấy "Thinking…", bước, thời gian, Stop |
+| Runtime nhiều người dùng | Spike: 5 run song song cùng v4.0 không lẫn tín hiệu; unit quota/hạn/extend; gate hai user cùng release; E2E "My runs" + hộp thoại cùng user |
 | Quy tắc AGENTS §4 bước 7 | Full luồng `@live`, quay lại video nếu UI đổi, cập nhật README |

@@ -66,7 +66,7 @@ flowchart TB
     E54["0054 Thanh hành động + UI tập trung"]
     E55["0055 Block thể hiện logic bằng hình"]
     E56["0056 Ẩn bề mặt executor Sim; menu workflow giữ dữ liệu xe"]
-    E57["0057 Runtime xe dùng chung: run theo databroker, có hạn"]
+    E57["0057 Runtime nhiều người dùng: sandbox mỗi run + quota"]
   end
   A2 --> A7
   A2 --> A9
@@ -148,7 +148,7 @@ flowchart TB
 | [0054](ADR-0054-editor-actions-and-focused-ui.md) | Thanh hành động có trạng thái, UI chỉ giữ phần toolchain | L1 | M16 |
 | [0055](ADR-0055-block-visual-semantics.md) | Block: câu tóm tắt, màu loại, nhãn cổng/cạnh, chip dữ liệu | L2 | M16 |
 | [0056](ADR-0056-sim-execution-surfaces-and-workflow-menu.md) | Ẩn Chat và "Run from/until block" (executor Sim); Download/Duplicate workflow giữ release VSS + scenario | L2 | M17 |
-| [0057](ADR-0057-shared-vehicle-runtime-run-slot.md) | Runtime xe dùng chung: một run mỗi databroker, thời hạn + extend, 409 kèm chủ run, Stop cùng workspace | L1 | M17 |
+| [0057](ADR-0057-shared-vehicle-runtime-run-slot.md) | Runtime xe nhiều người dùng: sandbox (databroker riêng) mỗi run, quota user/host, thời hạn + extend, "My runs" | L1 | M17 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

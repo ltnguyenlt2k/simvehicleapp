@@ -46,7 +46,7 @@
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
-| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 1/7 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
+| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 1/8 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -367,12 +367,13 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M17](design/M17-editor-leftovers-and-
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Phân tích + thiết kế + ADR + kế hoạch | 0056, 0057 | ✔ | 2026-10-15 (Claude Code), đọc từ source:<br>• Chat và "Run from/until block" chạy executor của Sim (`GenericBlockHandler` nhận mọi block `sv_*`, sai nghĩa so với IR);<br>• "Export workflow" và Duplicate làm mất release VSS + scenario;<br>• lỗi Run trong ảnh của PO: khoá run toàn host, không có thời hạn, không cho biết ai đang chạy (lần này là run demo agent bật). | T01 |
+| Phân tích + thiết kế + ADR + kế hoạch | 0056, 0057 | ✔ | 2026-10-15 (Claude Code), đọc từ source:<br>• Chat và "Run from/until block" chạy executor của Sim (`GenericBlockHandler` nhận mọi block `sv_*`, sai nghĩa so với IR);<br>• "Export workflow" và Duplicate làm mất release VSS + scenario;<br>• lỗi Run trong ảnh của PO: khoá run toàn host, không có thời hạn, không cho biết ai đang chạy (lần này là run demo agent bật).<br>• Sửa cùng ngày sau câu hỏi multi-user của PO: đo databroker 3,8–5,9 MB, app ~14 MB ⇒ chọn sandbox mỗi run + quota (ADR-0057 Notes).<br>• Thêm yêu cầu hiệu ứng "đang suy nghĩ" cho trợ lý. | T01 |
 | Ẩn Chat + Run from/until block | 0056 | ☐ | | T02 |
 | Download/Duplicate workflow giữ release VSS + scenario | 0056 | ☐ | | T03 |
-| Runtime: khoá theo databroker, thời hạn, extend, 409 kèm chủ run | 0057 | ☐ | | T04 |
-| UI bận/Stop/Extend, thẻ Vehicle runtime, `sv runs`, gate chờ chỗ | 0057 | ☐ | | T05 |
-| Trợ lý: thời gian chờ + huỷ | — | ☐ | | T06 |
+| Spike sandbox mỗi run (databroker dạng tiến trình) | 0057 | ☐ | | T04a |
+| Runtime multi-user: sandbox mỗi run, quota user/host, thời hạn, extend | 0057 | ☐ | | T04 |
+| Signal-gateway theo run; "My runs", hộp thoại cùng user, thẻ Vehicle runtime, `sv runs`, gate | 0057 | ☐ | | T05 |
+| Trợ lý "đang suy nghĩ": hiệu ứng, bước tool thật, thời gian, Stop | 0054 | ☐ | PO 2026-10-15 | T06 |
 | Gate + full luồng `@live` + video + README + báo cáo | 0056, 0057 | ☐ | | T07 |
 
 ---

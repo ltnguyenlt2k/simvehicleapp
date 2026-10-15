@@ -60,6 +60,11 @@ Vòng lặp chi tiết (review doc → research → implement → mismatch → �
    3. cập nhật **README chính** và hướng dẫn người dùng (`docs/user-guide/`) cho khớp code mới nhất: tên, bước, lệnh, ghi chú tính năng mới.
 
    Ghi bằng chứng của cả ba vào báo cáo milestone.
+8. **Ghi lại mọi phân tích và giải pháp** đưa ra khi trả lời PO, trong **cùng lượt**, không chỉ trả lời trong chat:
+   - câu hỏi, sự cố, phản biện thiết kế, hoặc sửa một quyết định trước đó;
+   - ghi vào design doc, ADR (Context/Decision/Alternatives/Notes), checklist phase và ROADMAP, rồi commit.
+
+   Quyết định chưa được PO duyệt thì ghi rõ "chờ PO xác nhận". Không kết thúc bằng câu "nếu đồng ý tôi sẽ cập nhật tài liệu".
 
 ### Commit / PR identity
 Mọi commit/PR chỉ đứng tên user: không thêm `Co-Authored-By` cho AI, footer "Generated with Claude Code" hoặc attribution AI tương tự, kể cả Codex. Khi được yêu cầu commit, kiểm author/committer đúng identity của user; chưa chắc thì không tạo commit. Quy tắc này dùng chung cho mọi agent (đồng bộ với commit `b957cb1` trong `CLAUDE.md`).
