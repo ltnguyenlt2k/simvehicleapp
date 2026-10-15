@@ -64,7 +64,12 @@ export function CreateAppModal({
   const [name, setName] = useState(workflowName)
   const [language, setLanguage] = useState<SvLanguage>('cpp')
   const languages = installedLanguages(system?.services)
-  const sameRelease = projects.filter((p) => p.vssRelease === vssRelease && p.status !== 'failed')
+  const sameRelease = projects.filter(
+    (p) =>
+      p.vssRelease === vssRelease &&
+      p.status !== 'failed' &&
+      !p.workflows.some((w) => w.enabled && w.simWorkflowId === workflowId)
+  )
   const pending = create.isPending || assign.isPending
   const isNew = target === NEW_APP
   const openVehicleApps = () => router.push(`/workspace/${workspaceId}/vehicle-projects`)

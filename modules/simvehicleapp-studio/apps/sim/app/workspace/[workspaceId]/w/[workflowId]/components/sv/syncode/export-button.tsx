@@ -1,6 +1,7 @@
 'use client'
 
-import { Button } from '@/components/emcn'
+import { Download } from 'lucide-react'
+import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
 import { useWorkflowProject } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-workflow-project'
 
 /**
@@ -12,10 +13,10 @@ export function ExportButton() {
   const { project } = useWorkflowProject()
   const ready = project?.status === 'ready'
   return (
-    <Button
-      variant='ghost'
-      size='sm'
-      data-sv-action='export'
+    <SvActionButton
+      action='export'
+      label='Export'
+      icon={Download}
       disabled={!ready}
       onClick={() =>
         project &&
@@ -23,13 +24,11 @@ export function ExportButton() {
       }
       title={
         !project
-          ? 'Add this workflow to a vehicle project first (Vehicle projects page)'
+          ? 'Press SynCode first: it creates the vehicle app of this workflow'
           : ready
             ? `Download ${project.name} as a zip`
             : `${project.name} is not ready yet`
       }
-    >
-      Export
-    </Button>
+    />
   )
 }

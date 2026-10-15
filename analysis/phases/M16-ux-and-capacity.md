@@ -131,11 +131,12 @@
 - [x] **Gate/smoke tự dọn:** `m7`, `m8`, `m9`, `parity-p3`, `vss-custom`, `bench`, `mcp-live` xoá app khi kết thúc (`trap`); E2E teardown xoá app.
 
 ### T06: Thanh hành động
-- [ ] `SvActionButton` (icon, label, state, emphasis, disabledReason) + test.
-- [ ] Hook trạng thái tổng hợp, suy ra từ store lint/sim/syncode/run, không lưu trùng.
-- [ ] Bố cục 3 nhóm, một nút primary đúng quy tắc, chip app đích, pill trạng thái (bấm mở panel tương ứng), dòng gợi ý lý do.
-- [ ] Giữ `data-sv-action`, `aria-busy`; nhãn nút giữ nguyên chữ ("SynCode", "Run"…) để E2E theo role/name không gãy.
-- [ ] Không chạy type-check studio local; biome theo file; vitest file nhỏ nếu RAM trống ≥ 3 GB.
+- [x] `SvActionButton` (icon, label, state, emphasis, disabledReason) + test.
+- [x] Hook trạng thái tổng hợp, suy ra từ store lint/sim/syncode/run, không lưu trùng.
+- [x] Bố cục 3 nhóm, một nút primary đúng quy tắc, chip app đích, pill trạng thái (bấm mở panel tương ứng), dòng gợi ý lý do.
+- [x] Giữ `data-sv-action`, `aria-busy`; nhãn nút giữ nguyên chữ ("SynCode", "Run"…) để E2E theo role/name không gãy.
+- [x] Không chạy type-check studio local; biome theo file; vitest file nhỏ nếu RAM trống ≥ 3 GB.
+- Bằng chứng 2026-10-15: `deriveSvActionStatus` (hàm thuần: nút primary, pill, dòng gợi ý) 6 test; `SvActionButton` 5 test jsdom (spinner/aria-busy, ✓/✕ 3 s chỉ khi vừa chạy xong, tên truy cập không đổi); test chrome editor + 15 file sv/store: 99 PASS. Trạng thái mới duy nhất được lưu là graph đã gửi SynCode (`sentGraphJson`), để biết bản build còn khớp canvas hay không. Hook trạng thái không mở stream SSE riêng (chỉ đọc query đã cache). Ô chọn "SynCode project" được thay bằng chip app (đổi app / tạo app khác / Manage vehicle apps).
 
 ### T07: UI tập trung
 - [ ] `hidden-routes.ts`: thêm tables/files/knowledge/logs + test.

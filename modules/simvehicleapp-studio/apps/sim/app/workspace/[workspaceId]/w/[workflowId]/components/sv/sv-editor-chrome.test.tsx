@@ -76,7 +76,7 @@ describe('vehicle editor chrome (M01-T10)', () => {
           : action.id === 'syncode'
             ? 'title="Create a vehicle app for this workflow, then generate, build and test it"'
             : ['run', 'open-ide', 'export'].includes(action.id)
-              ? 'title="Add this workflow to a vehicle project first (Vehicle projects page)"'
+              ? 'title="Press SynCode first: it creates the vehicle app of this workflow"'
               : action.id === 'stop'
                 ? 'title="Nothing is running"'
                 : `title="${action.label} — available in ${action.milestone}"`

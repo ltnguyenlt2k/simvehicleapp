@@ -1,7 +1,9 @@
 'use client'
 
-import { Button, toast } from '@/components/emcn'
+import { Play, Square } from 'lucide-react'
+import { toast } from '@/components/emcn'
 import { useRunFollow } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/use-run-follow'
+import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
 import { useStartSvRun, useStopSvRun } from '@/hooks/queries/sv-runs'
 import { useSvRunStore } from '@/stores/sv/run/store'
 
@@ -9,7 +11,12 @@ import { useSvRunStore } from '@/stores/sv/run/store'
  * Run / Stop (M08-T08): runs the app of the project's latest SynCode on the KUKSA databroker of its
  * VSS release; Stop ends it (SIGINT, SIGKILL after 5 s). One run at a time on the vehicle stack.
  */
-export function RunButtons() {
+interface RunButtonsProps {
+  /** Run is the sensible next step: the app of this graph is built (ADR-0054). */
+  primary?: boolean
+}
+
+export function RunButtons({ primary = false }: RunButtonsProps) {
   const { project, active } = useRunFollow()
   const start = useStartSvRun()
   const stop = useStopSvRun()
@@ -33,38 +40,34 @@ export function RunButtons() {
   }
 
   const runTitle = !project
-    ? 'Add this workflow to a vehicle project first (Vehicle projects page)'
+    ? 'Press SynCode first: it creates the vehicle app of this workflow'
     : active
       ? `${project.name} is ${active.state}`
       : `Run the app of ${project.name}'s latest SynCode on the vehicle stack`
   return (
     <>
-      <Button
-        variant='ghost'
-        size='sm'
-        data-sv-action='run'
-        data-sv-run-state={active?.state ?? 'idle'}
-        aria-busy={start.isPending || undefined}
-        disabled={!project || Boolean(active) || start.isPending}
+      <SvActionButton
+        action='run'
+        label={active?.state === 'running' ? 'Running' : 'Run'}
+        icon={Play}
+        busy={start.isPending || active?.state === 'starting'}
+        busyLabel='Starting…'
+        primary={primary}
+        disabled={!project || Boolean(active)}
         onClick={onRun}
         title={runTitle}
-      >
-        {active?.state === 'running'
-          ? 'Running'
-          : active?.state === 'starting'
-            ? 'Starting…'
-            : 'Run'}
-      </Button>
-      <Button
-        variant='ghost'
-        size='sm'
-        data-sv-action='stop'
-        disabled={!active || active.state === 'stopping' || stop.isPending}
+        data={{ 'data-sv-run-state': active?.state ?? 'idle' }}
+      />
+      <SvActionButton
+        action='stop'
+        label='Stop'
+        icon={Square}
+        busy={stop.isPending || active?.state === 'stopping'}
+        busyLabel='Stopping…'
+        disabled={!active}
         onClick={onStop}
         title={active ? 'Stop the run (SIGINT, SIGKILL after 5 s)' : 'Nothing is running'}
-      >
-        {active?.state === 'stopping' ? 'Stopping…' : 'Stop'}
-      </Button>
+      />
     </>
   )
 }

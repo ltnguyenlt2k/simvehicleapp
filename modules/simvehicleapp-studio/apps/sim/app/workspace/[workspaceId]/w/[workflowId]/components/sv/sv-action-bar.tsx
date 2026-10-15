@@ -1,30 +1,28 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Button, toast } from '@/components/emcn'
+import { FlaskConical, ShieldCheck } from 'lucide-react'
+import { toast } from '@/components/emcn'
 import { RunButtons } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
 import { defaultScenario } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
-import { SV_ACTIONS } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
+import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
+import { SvAppChip } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-app-chip'
+import { SvStatusPill } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-status-pill'
 import {
   ExportButton,
   OpenIdeButton,
   SynCodeButton,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
+import { useSvActionStatus } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/use-sv-action-status'
 import { useSvVerify } from '@/hooks/queries/sv-lint'
 import { useSaveSvScenario, useSvScenario, useSvSimulate } from '@/hooks/queries/sv-simulation'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 
-/** Actions that work today; the others stay disabled until their milestone ships. */
-const READY = new Set<string>([
-  'verify',
-  'simulate',
-  'syncode',
-  'run',
-  'stop',
-  'open-ide',
-  'export',
-])
+/** A thin divider between the groups of the bar. */
+function Separator() {
+  return <div aria-hidden className='mx-1 h-4 w-px shrink-0 bg-[var(--border)]' />
+}
 
 /**
  * Workflow actions of the vehicle editor. Verify (M04-T11) runs every compiler check on the graph
@@ -32,10 +30,18 @@ const READY = new Set<string>([
  * Simulate (M05-T10) compiles and runs the workflow's scenario on a virtual clock. SynCode (M07-T18)
  * generates, builds and tests the vehicle-app project of the workflow; Run/Stop (M08-T08) run its app
  * on the vehicle stack.
+ *
+ * The bar follows the work (ADR-0054, M16-T06): check (Verify, Simulate) │ generate and run (SynCode, Run, Stop) │
+ * open and take out (Open IDE, Export), then the app the actions use and a status pill. The sensible next step is the
+ * primary button; why an action cannot run is said in a line under the bar, not only in a tooltip.
  */
 export function SvActionBar() {
   const graphJson = useSvLintStore((s) => s.graphJson)
   const verifyStatus = useSvLintStore((s) => s.verifyStatus)
+  const verifiedErrors = useSvLintStore((s) =>
+    s.verifiedFresh ? s.diagnostics.filter((d) => d.severity === 'error').length : 0
+  )
+  const status = useSvActionStatus()
   const verify = useSvVerify()
   const workflowId = useSvLintStore((s) => s.workflowId)
   const simStatus = useSvSimulationStore((s) => s.status)
@@ -119,44 +125,57 @@ export function SvActionBar() {
     })
   }, [verify])
 
+  const verifying = verifyStatus === 'verifying'
+  const simulating = simStatus === 'running'
   return (
-    <div
-      role='toolbar'
-      aria-label='Vehicle app actions'
-      data-sv='action-bar'
-      className='flex h-[36px] flex-shrink-0 items-center gap-1 border-[var(--border)] border-b bg-[var(--surface-1)] px-2'
-    >
-      {SV_ACTIONS.map((action) => {
-        if (action.id === 'syncode') return <SynCodeButton key={action.id} />
-        if (action.id === 'run') return <RunButtons key={action.id} />
-        if (action.id === 'stop') return null
-        if (action.id === 'open-ide') return <OpenIdeButton key={action.id} />
-        if (action.id === 'export') return <ExportButton key={action.id} />
-        const ready = READY.has(action.id)
-        const busy =
-          (action.id === 'verify' && verifyStatus === 'verifying') ||
-          (action.id === 'simulate' && simStatus === 'running')
-        return (
-          <Button
-            key={action.id}
-            variant='ghost'
-            size='sm'
-            disabled={!ready || busy || !graphJson}
-            data-sv-action={action.id}
-            aria-busy={busy || undefined}
-            onClick={
-              action.id === 'verify' ? onVerify : action.id === 'simulate' ? onSimulate : undefined
-            }
-            title={
-              ready
-                ? `${action.label} the workflow`
-                : `${action.label} — available in ${action.milestone}`
-            }
-          >
-            {busy ? `${action.label === 'Verify' ? 'Verifying' : 'Simulating'}…` : action.label}
-          </Button>
-        )
-      })}
+    <div data-sv='action-area' className='flex flex-shrink-0 flex-col'>
+      <div
+        role='toolbar'
+        aria-label='Vehicle app actions'
+        data-sv='action-bar'
+        className='flex h-[36px] items-center gap-1 border-[var(--border)] border-b bg-[var(--surface-1)] px-2'
+      >
+        <SvActionButton
+          action='verify'
+          label='Verify'
+          icon={ShieldCheck}
+          busy={verifying}
+          busyLabel='Verifying…'
+          outcome={verifyStatus === 'done' ? (verifiedErrors ? 'failed' : 'passed') : null}
+          disabled={!graphJson}
+          onClick={onVerify}
+          title='Verify the workflow'
+        />
+        <SvActionButton
+          action='simulate'
+          label='Simulate'
+          icon={FlaskConical}
+          busy={simulating}
+          busyLabel='Simulating…'
+          outcome={simStatus === 'done' ? 'passed' : simStatus === 'failed' ? 'failed' : null}
+          disabled={!graphJson}
+          onClick={onSimulate}
+          title='Simulate the workflow'
+        />
+        <Separator />
+        <SynCodeButton primary={status.primary === 'syncode'} />
+        <RunButtons primary={status.primary === 'run'} />
+        <Separator />
+        <OpenIdeButton />
+        <ExportButton />
+        <div className='ml-auto flex min-w-0 items-center gap-2'>
+          <SvAppChip />
+          <SvStatusPill pill={status.pill} />
+        </div>
+      </div>
+      {status.hint && (
+        <p
+          data-sv='action-hint'
+          className='border-[var(--border)] border-b bg-[var(--surface-1)] px-3 py-1 text-[12px] text-[var(--text-secondary)]'
+        >
+          {status.hint}
+        </p>
+      )}
     </div>
   )
 }

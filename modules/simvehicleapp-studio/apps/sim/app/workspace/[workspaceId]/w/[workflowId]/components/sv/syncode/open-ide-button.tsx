@@ -1,6 +1,7 @@
 'use client'
 
-import { Button } from '@/components/emcn'
+import { Code2 } from 'lucide-react'
+import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
 import { useWorkflowProject } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-workflow-project'
 
 /**
@@ -11,10 +12,10 @@ export function OpenIdeButton() {
   const { project } = useWorkflowProject()
   const url = project?.editor?.url
   return (
-    <Button
-      variant='ghost'
-      size='sm'
-      data-sv-action='open-ide'
+    <SvActionButton
+      action='open-ide'
+      label='Open IDE'
+      icon={Code2}
       disabled={!url}
       onClick={() => url && window.open(url, '_blank', 'noopener,noreferrer')}
       title={
@@ -22,10 +23,8 @@ export function OpenIdeButton() {
           ? `Open ${project?.name} in the IDE (code-server, password from .env)`
           : project
             ? `${project.name} is not ready yet`
-            : 'Add this workflow to a vehicle project first (Vehicle projects page)'
+            : 'Press SynCode first: it creates the vehicle app of this workflow'
       }
-    >
-      Open IDE
-    </Button>
+    />
   )
 }

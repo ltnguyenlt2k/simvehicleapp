@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { Hammer } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
-import { Button, ChipSelect, toast } from '@/components/emcn'
+import { toast } from '@/components/emcn'
+import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
 import { toastSvError } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/capacity-toast'
 import { CreateAppModal } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/create-app-modal'
 import { useSynCodeFollow } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/use-syncode-follow'
@@ -31,24 +33,29 @@ function blockCount(graphJson: string): number {
  * creates one (or adds it to an app on the same release); SynCode then starts by itself once the app
  * is ready (ADR-0053 §A, M16-T05).
  */
-export function SynCodeButton() {
+interface SynCodeButtonProps {
+  /** SynCode is the sensible next step (ADR-0054). */
+  primary?: boolean
+}
+
+export function SynCodeButton({ primary = false }: SynCodeButtonProps) {
   const params = useParams<{ workspaceId?: string }>()
   const workspaceId = params?.workspaceId
   const router = useRouter()
   const graphJson = useSvLintStore((s) => s.graphJson)
-  const { project, candidates, workflowId } = useWorkflowProject()
+  const { project, workflowId } = useWorkflowProject()
   const { data: projects } = useSvProjects(workspaceId)
   const { data: workflowMap } = useWorkflowMap(workspaceId)
   const { data: catalog } = useSvCatalogReleases()
   const pinnedRelease = useSvWorkflowRelease()
   const autoProjectId = useSvSynCodeStore((s) => s.autoSynCodeProjectId)
-  const [creating, setCreating] = useState(false)
+  const creating = useSvSynCodeStore((s) => s.createAppOpen)
   // The canvas holds this workflow (an editor graph read during loading is empty — found by the M8 live E2E).
   const loaded = useWorkflowRegistry(
     (s) => s.hydration.phase === 'ready' && s.hydration.workflowId === workflowId
   )
   const start = useStartSvGeneration()
-  const { running } = useSynCodeFollow()
+  const { generation, running } = useSynCodeFollow()
   const busy = running || start.isPending
   const releases = catalog?.releases ?? []
   const vssRelease =
@@ -75,7 +82,8 @@ export function SynCodeButton() {
     start.mutate(
       { projectId: project.id, body: open ? { open } : {} },
       {
-        onSuccess: (generation) => useSvSynCodeStore.getState().start(project.id, generation.id),
+        onSuccess: (generation) =>
+          useSvSynCodeStore.getState().start(project.id, generation.id, current),
         onError: (e) => toastSvError(e, 'SynCode', openVehicleApps),
       }
     )
@@ -106,24 +114,31 @@ export function SynCodeButton() {
           ? `Project ${project.name} is ${project.status === 'creating' ? 'still being prepared' : 'not ready'}`
           : `Generate, build and test ${project.name}`
 
+  const setCreating = (open: boolean) => useSvSynCodeStore.getState().setCreateAppOpen(open)
   return (
     <>
-      <Button
-        variant='ghost'
-        size='sm'
-        data-sv-action='syncode'
-        aria-busy={busy || preparing || undefined}
+      <SvActionButton
+        action='syncode'
+        label='SynCode'
+        icon={Hammer}
+        busy={busy || preparing}
+        busyLabel={preparing ? 'Preparing app…' : 'SynCode…'}
+        outcome={
+          generation?.state === 'succeeded'
+            ? 'passed'
+            : generation?.state === 'failed'
+              ? 'failed'
+              : null
+        }
+        primary={primary}
         disabled={
           (project ? project.status !== 'ready' : !workspaceId || !workflowId || !vssRelease) ||
-          busy ||
           !graphJson ||
           !loaded
         }
         onClick={project ? onSynCode : () => setCreating(true)}
         title={title}
-      >
-        {preparing ? 'Preparing app…' : busy ? 'SynCode…' : 'SynCode'}
-      </Button>
+      />
       {creating && workspaceId && workflowId && vssRelease && (
         <CreateAppModal
           open={creating}
@@ -133,14 +148,6 @@ export function SynCodeButton() {
           workflowName={workflowMap?.[workflowId]?.name ?? 'Vehicle app'}
           vssRelease={vssRelease}
           projects={projects ?? []}
-        />
-      )}
-      {candidates.length > 1 && (
-        <ChipSelect
-          aria-label='SynCode project'
-          value={project?.id}
-          onChange={(id) => useSvSynCodeStore.getState().selectProject(id)}
-          options={candidates.map((p) => ({ label: p.name, value: p.id }))}
         />
       )}
     </>
