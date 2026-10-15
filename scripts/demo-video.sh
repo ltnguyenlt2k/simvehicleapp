@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # M15-T09/T10: records the full-flow demo video on the running stack and writes docs/media/full-flow.{mp4,gif}.
-#   scripts/sv demo-video                 record + encode
-#   scripts/sv demo-video --encode-only   encode the last recordings again
+#   scripts/sv demo-video                 record + encode the full flow ⇒ docs/media/full-flow.{mp4,gif}
+#   scripts/sv demo-video --tutorial      record + encode the tutorial "Overspeed warning" ⇒ docs/media/demo.{mp4,gif}
+#   scripts/sv demo-video --encode-only   encode the last full-flow recordings again
 # 1. Playwright (official image, as the current user) runs `@live full flow` with SV_DEMO=1 (captions, pauses, 1920×1080);
 # 2. the studio, realtime, orchestrator, workspace and assistant restart, `@live-restart` checks everything is still there (also recorded);
 # 3. ffmpeg (container) joins both recordings, shortens frozen waits (freezedetect) and encodes H.264 720p + a 4× GIF preview.
@@ -15,7 +16,10 @@ E2E=modules/simvehicleapp-studio/e2e
 OUT=docs/media
 env_of() { grep -E "^$1=" .env | tail -1 | cut -d= -f2-; }
 STUDIO_URL=$(env_of SV_STUDIO_URL); STUDIO_URL=${STUDIO_URL:-http://localhost:3000}
-if [[ "${1:-}" != --encode-only ]]; then
+MODE=${1:-}
+NAME=full-flow; CLIPS=2
+[[ "$MODE" == --tutorial ]] && { NAME=demo; CLIPS=1; }
+if [[ "$MODE" != --encode-only ]]; then
   [[ "$(env_of SV_AI_PROVIDER)" == fake ]] || { echo "demo-video: set SV_AI_PROVIDER=fake in .env (offline, deterministic assistant)"; exit 1; }
   curl -fsS -o /dev/null "$STUDIO_URL" || { echo "demo-video: studio not reachable at $STUDIO_URL — scripts/sv up"; exit 1; }
 
@@ -24,18 +28,22 @@ if [[ "${1:-}" != --encode-only ]]; then
     docker run --rm --network host --user "$(id -u):$(id -g)" -e HOME=/tmp -e CI= \
       -e SV_STUDIO_URL="$STUDIO_URL" -e SV_IDE_PASSWORD="$(env_of SV_IDE_PASSWORD)" -e SV_DEMO=1 -e SV_REPO=/repo \
       -v "$PWD":/repo -w /repo/$E2E "$PW_IMAGE" \
-      bash -c "npm install --no-audit --no-fund --silent && npx playwright test tests/m15-full-flow.spec.ts --grep '$1' --output test-results/$2"
+      bash -c "npm install --no-audit --no-fund --silent && npx playwright test tests/$3 --grep '$1' --output test-results/$2"
   }
-  playwright '@live full flow' 1-flow
+  if [[ "$MODE" == --tutorial ]]; then
+    playwright '@live tutorial' 1-tutorial tutorial-live.spec.ts
+  else
+  playwright '@live full flow' 1-flow m15-full-flow.spec.ts
   echo "demo-video: restarting the studio, realtime, orchestrator, workspace and assistant services"
   $DC restart studio studio-realtime orchestrator workspace ai-assistant >/dev/null
   for _ in $(seq 1 90); do curl -fsS -o /dev/null "$STUDIO_URL" && break; sleep 2; done
-  playwright '@live-restart' 2-restart
+  playwright '@live-restart' 2-restart m15-full-flow.spec.ts
+  fi
 
 fi
 # the main tab of each test is `video.webm` (the IDE popup records its own `video-1.webm`)
 mapfile -t clips < <(find "$E2E/test-results" -name 'video.webm' | sort)
-[[ ${#clips[@]} -eq 2 ]] || { echo "demo-video: expected 2 recordings, found ${#clips[@]}"; exit 1; }
+[[ ${#clips[@]} -eq $CLIPS ]] || { echo "demo-video: expected $CLIPS recordings, found ${#clips[@]}"; exit 1; }
 mkdir -p "$OUT"
 list=$(mktemp -p "$E2E/test-results" concat.XXXX.txt)
 for c in "${clips[@]}"; do echo "file '/repo/$c'" >> "$list"; done
@@ -54,9 +62,9 @@ for line in sys.stdin:
 print("+".join(cuts) or "0")')
 ff -i "$E2E/test-results/joined.mp4" \
   -vf "select='not($keep)',setpts=N/25/TB,scale=1280:720:flags=lanczos,format=yuv420p" \
-  -r 25 -c:v libx264 -preset slow -crf 26 -movflags +faststart -an "$OUT/full-flow.mp4"
-ff -i "$OUT/full-flow.mp4" \
+  -r 25 -c:v libx264 -preset slow -crf 26 -movflags +faststart -an "$OUT/$NAME.mp4"
+ff -i "$OUT/$NAME.mp4" \
   -vf "setpts=0.25*PTS,fps=6,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96[p];[b][p]paletteuse=dither=bayer" \
-  "$OUT/full-flow.gif"
-ls -la "$OUT"/full-flow.*
-echo "demo-video: wrote $OUT/full-flow.mp4 and $OUT/full-flow.gif"
+  "$OUT/$NAME.gif"
+ls -la "$OUT"/$NAME.*
+echo "demo-video: wrote $OUT/$NAME.mp4 and $OUT/$NAME.gif"

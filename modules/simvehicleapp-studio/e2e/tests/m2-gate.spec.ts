@@ -147,7 +147,7 @@ test.describe
       if ((await page.locator('.react-flow__edge').count()) === 0) {
         await page
           .getByRole('button', { name: 'Fit view' })
-          .click()
+          .click({ timeout: 2_000 })
           .catch(() => {})
         await trigger
           .locator('[data-handleid="source"]')
