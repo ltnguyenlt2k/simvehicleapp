@@ -161,6 +161,12 @@ Bus CAN / Ethernet trên xe
 - SimVehicleApp hiện làm tầng **app**. Phần **Run** chỉ chạy app trên databroker giả lập; giá trị đến từ người dùng (Signals/Test).
 - **Ranh giới hợp đồng là VSS:** app chỉ biết đường dẫn VSS. Nhờ vậy cùng một app chạy được với dữ liệu thật khi có CAN provider ánh xạ DBC → VSS, không cần sinh lại code.
 
+**Định nghĩa PO chốt (2026-10-15):**
+- **Run** = chạy app với giá trị tín hiệu VSS **giả lập để test** (inject từ UI, scenario/test case, Record), như hiện nay.
+- **Deploy** = cũng chạy app, nhưng tín hiệu VSS đến từ **nhiều nguồn layer khác** (phần cứng, CAN mapping — chưa bàn tới).
+
+Ở Deploy, các giá trị test **không hoạt động**: inject, Play scenario/test case, Record và mirror giả lập bị **server từ chối** (`SIMULATED_INPUT_DISABLED`), UI tắt các nút đó. Tab Live chỉ quan sát.
+
 **Quyết định (ADR-0060):**
 1. **Deploy là hành động riêng, khác Run:**
    - Run = thử trên stack giả lập trong SimVehicleApp;
@@ -202,5 +208,5 @@ Bus CAN / Ethernet trên xe
 | Trợ lý | Tool `scenario_*` (eval fake + eval model thật của PO), proposal → Accept lưu case |
 | Signals/Live | Vitest ô nhập theo kiểu/loại; tìm kiếm gợi ý; tín hiệu trong biểu thức; Messages HMI |
 | Readability | Vitest Logic view (tất định, đủ 41 BlockSpec, đúng 7 golden); E2E block gọn/đầy đủ, chọn câu ⇒ chọn block; giá trị sống |
-| Deploy | Unit target T1 (URL/TLS/token, read-only chặn ghi actuator); gate: app deploy tới một databroker "ngoài" (container riêng trong compose) có feeder giả lập ⇒ app nhận dữ liệu không qua Signals |
+| Deploy | Unit: Deploy từ chối inject/Play/Record/mirror (`SIMULATED_INPUT_DISABLED`); target T1 (URL/TLS/token, read-only chặn ghi actuator); gate: app deploy tới một databroker "ngoài" (container riêng trong compose) có feeder giả lập ⇒ app nhận dữ liệu không qua Signals |
 | AGENTS §4 bước 7 | Full luồng `@live` viết lại theo tab Test/Live + Deploy T1; quay lại video; README |

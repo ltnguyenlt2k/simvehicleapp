@@ -21,6 +21,17 @@
 **Rủi ro tương thích:** databroker bản mới trên thiết bị có thể chỉ phục vụ `kuksa.val.v2`; app sinh ra hiện dùng API v1 (ADR-0047 có lộ trình chuyển).
 
 ## Decision
+0. **Định nghĩa Run và Deploy (PO chốt 2026-10-15):**
+   - **Run** = chạy app; giá trị tín hiệu VSS mà app nhận được **giả lập để test**: inject từ UI (tab Live/Signals), scenario/test case (Play), Record. Như hiện nay.
+   - **Deploy** = cũng chạy app (cùng bản build), nhưng giá trị tín hiệu VSS đến từ **các layer khác** (phần cứng, CAN mapping… — các layer này chưa bàn tới).
+
+   Ở Deploy, mọi cơ chế giả lập **KHÔNG hoạt động**, và orchestrator/signal-gateway **PHẢI từ chối** chúng ở server, không chỉ ẩn nút trên UI:
+   - inject tín hiệu (`POST /signals`);
+   - Play scenario / test case;
+   - Record;
+   - mirror target→current giả lập xe.
+
+   UI hiện "Deployed — signals come from <target>; test inputs are disabled". Tab Live chỉ quan sát (giá trị, Messages, log/trace).
 1. **Deploy là hành động riêng với Run:**
    - Run = thử trên stack giả lập;
    - Deploy = đưa **bản build đã SynCode** tới một **target** nơi dữ liệu đến từ layer khác.
@@ -94,6 +105,7 @@ flowchart TB
 
 ## Verification
 - Unit:
+  - ở Deploy, inject/Play/Record/mirror bị server từ chối (409 `SIMULATED_INPUT_DISABLED`, mã mới);
   - proxy chặn `set` khi read-only;
   - deploy từ chối generation chưa pass / lệch release;
   - token không lộ qua API;
@@ -103,3 +115,4 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-15 — PO bổ sung định nghĩa Run (tín hiệu giả lập để test) và Deploy (tín hiệu từ layer khác, giá trị test không hoạt động) ⇒ thêm quyết định 0 và mã `SIMULATED_INPUT_DISABLED`.

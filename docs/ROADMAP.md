@@ -391,7 +391,7 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M18](design/M18-test-workbench-readab
 | Trợ lý soạn test (`scenario_*`) | 0058 | ☐ | | T06 |
 | Block gọn + Logic view | 0059 | ☐ | | T07 |
 | Làn theo trigger, giá trị sống, "Data from earlier blocks" | 0059 | ☐ | | T08 |
-| Deploy Remote databroker (read-only + audit) | 0060 | ☐ | | T09 |
+| Deploy Remote databroker (read-only + audit) | 0060 | ☐ | PO 2026-10-15: Run = tín hiệu giả lập để test; Deploy = tín hiệu từ layer khác (HW/CAN), inject/Play/Record/mirror bị từ chối (`SIMULATED_INPUT_DISABLED`) | T09 |
 | Deploy Container image | 0060 | ☐ | | T10 |
 | Gate + full luồng `@live` + video + README + báo cáo | 0058–0060 | ☐ | | T11 |
 

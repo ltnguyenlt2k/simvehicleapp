@@ -82,6 +82,10 @@
 - [ ] "Data from earlier blocks" (đổi tên Connections + giải thích): kiểu, đơn vị, giá trị mẫu; bấm chèn; trigger ghi rõ không có đầu vào; mục "Used by".
 
 ### T09: Deploy Remote databroker
+- [ ] Định nghĩa PO (2026-10-15): Run = tín hiệu giả lập để test; Deploy = tín hiệu từ layer khác.
+  - Ở Deploy: signal-gateway/orchestrator **từ chối** inject, Play scenario/test case, Record, mirror ⇒ 409 `SIMULATED_INPUT_DISABLED` (mã diagnostic mới, chỉ thêm).
+  - UI tắt các nút đó, hiện "signals come from <target>; test inputs are disabled"; tab Live chỉ quan sát.
+  - Unit + E2E chứng minh.
 - [ ] Contracts: `DeployTarget{id, name, kind, url, tls, auth, apiVersion, vssRelease}`, `Deployment{…}`; additive.
 - [ ] Settings → Deploy targets (admin workspace); secrets mã hoá; Test connection (kết nối, TLS/token, v1/v2, release, path app dùng có tồn tại).
 - [ ] Deploy ⇒ sandbox (ADR-0057) nối databroker ngoài qua proxy gRPC; mặc định read-only (chặn `set`); bật ghi phải xác nhận liệt kê actuator.
@@ -102,5 +106,5 @@
 1. Người dùng mới tạo và chạy được test cho workflow mà không đọc tài liệu: Generate tests hoặc trợ lý ⇒ Simulate ⇒ pass/fail rõ; Play trên app thật chấm cùng kỳ vọng.
 2. Tab Live: thêm tín hiệu bằng tìm kiếm/kéo thả; ô nhập đúng kiểu; thấy HMI/MQTT.
 3. Logic view đọc đúng 7 golden; block gọn; giá trị sống khi tua; "Data from earlier blocks" giải thích rõ.
-4. Deploy Remote databroker: app nhận dữ liệu từ feeder không qua UI; read-only mặc định; audit đủ.
+4. Deploy Remote databroker: app nhận dữ liệu từ feeder không qua UI; mọi đầu vào giả lập (inject, Play, Record, mirror) bị từ chối ở server; read-only mặc định; audit đủ.
 5. Conformance/golden/parity không đổi; CI + nightly xanh; full luồng `@live`, video và README cập nhật.
