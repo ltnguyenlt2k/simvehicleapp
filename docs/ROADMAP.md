@@ -46,6 +46,7 @@
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
+| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 1/7 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -360,6 +361,19 @@ Yêu cầu PO 2026-10-14 · Thiết kế: [M16](design/M16-ux-and-capacity.md) �
 | Block: câu tóm tắt, màu loại, nhãn cổng | 0055 | ✔ | 2026-10-15: câu tóm tắt + nhãn vai trò (WHEN/IF/DO/SEND/READ/CALC/STATE/FLOW) cho cả 41 BlockSpec; test fail nếu thiếu quy tắc. Handle nhánh có màu theo kết quả. Golden graph-adapter giữ nguyên, core/contracts không đổi | T08 |
 | Nhãn cạnh + chip dữ liệu | 0055 | ✔ | 2026-10-15: cạnh nhánh có nhãn và màu (then/stable/in time/timeout/case n/on error). Chip "uses:" rê chuột làm nổi block nguồn. E2E `m3-goldens`: mỗi golden có đúng số câu tóm tắt và đúng nhãn nhánh, graph adapt không đổi | T09 |
 | Gate dung lượng + E2E + báo cáo | 0053–0055 | ✔ | 2026-10-15: `gate/m16-capacity.sh` PASS trên stack dev (quota host/app, hàng đợi gộp, Clean −123 MB đo `du`, 507 khi đĩa đầy, repair, sweeper, delete) và có trong nightly; `POST /sweep`. Prune máy dev: 83 app + 6 thư mục mồ côi, `sv-workspace` 8,9 GB → 127 MB, `sv-velocitas` 9,5 GB → 222 MB. CI xanh (38669938414); nightly 38672732360 xanh. [Báo cáo M16](reports/M16.md) | T10 |
+
+## M17 — Dọn bề mặt Sim còn sót + runtime xe dùng chung
+Yêu cầu PO 2026-10-15 · Thiết kế: [M17](design/M17-editor-leftovers-and-run-slot.md) · Chi tiết: [phases/M17](../analysis/phases/M17-editor-leftovers-and-run-slot.md) · ADR [0056](../analysis/adr/ADR-0056-sim-execution-surfaces-and-workflow-menu.md), [0057](../analysis/adr/ADR-0057-shared-vehicle-runtime-run-slot.md)
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Phân tích + thiết kế + ADR + kế hoạch | 0056, 0057 | ✔ | 2026-10-15 (Claude Code), đọc từ source:<br>• Chat và "Run from/until block" chạy executor của Sim (`GenericBlockHandler` nhận mọi block `sv_*`, sai nghĩa so với IR);<br>• "Export workflow" và Duplicate làm mất release VSS + scenario;<br>• lỗi Run trong ảnh của PO: khoá run toàn host, không có thời hạn, không cho biết ai đang chạy (lần này là run demo agent bật). | T01 |
+| Ẩn Chat + Run from/until block | 0056 | ☐ | | T02 |
+| Download/Duplicate workflow giữ release VSS + scenario | 0056 | ☐ | | T03 |
+| Runtime: khoá theo databroker, thời hạn, extend, 409 kèm chủ run | 0057 | ☐ | | T04 |
+| UI bận/Stop/Extend, thẻ Vehicle runtime, `sv runs`, gate chờ chỗ | 0057 | ☐ | | T05 |
+| Trợ lý: thời gian chờ + huỷ | — | ☐ | | T06 |
+| Gate + full luồng `@live` + video + README + báo cáo | 0056, 0057 | ☐ | | T07 |
 
 ---
 
