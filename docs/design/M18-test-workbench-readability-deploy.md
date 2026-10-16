@@ -200,7 +200,89 @@ Bus CAN / Ethernet trên xe
 | ADR-0047 kuksa.val.v2 | Proposed | Điều kiện cho Deploy T1 với databroker mới |
 | Rule AGENTS §4 bước 7–8 | Hiệu lực | M18 thay đổi UI nhiều ⇒ full luồng `@live`, quay lại video, cập nhật README và user guide (`test-signals.md` viết lại theo tab Test/Live) |
 
-## 9. Kiểm thử
+## 9. Giải pháp kỹ thuật chi tiết (bổ sung 2026-10-16)
+
+### 9.1 Run và Deploy trên UI
+| | **Run** | **Deploy** |
+|---|---|---|
+| Mục đích | Thử app với tín hiệu **giả lập** | Chạy app với tín hiệu từ **layer khác** (HW/CAN) |
+| Nguồn tín hiệu VSS | Sandbox databroker riêng của run (ADR-0057); giá trị do người dùng/test đưa vào | Databroker của target, được provider phía dưới cập nhật |
+| Inject / Play / Record / mirror | Có | **Bị server từ chối** (`SIMULATED_INPUT_DISABLED`) |
+| Ghi actuator của app | Ghi vào sandbox | Mặc định **read-only** (proxy chặn); bật ghi phải xác nhận |
+| Thời hạn | `SV_RUN_MAX_MINUTES` + Extend | Không tự hết hạn; giới hạn bằng `SV_MAX_DEPLOYMENTS_PER_WORKSPACE`; dừng thủ công |
+| Pill trên thanh hành động | `Running 12:30 · ends 14:00` | `Deployed · <target> · read-only` (màu khác Run) |
+| Tab Live | Tín hiệu + inject + Messages + log | Tín hiệu (chỉ xem) + Messages + log; banner "signals come from <target>" |
+| "My runs" | Liệt kê run | Liệt kê cả deployment, có nhãn **DEPLOY** |
+
+Một vehicle app có thể vừa đang Run (thử bản mới) vừa đang Deploy (bản trước) cùng lúc, vì hai bên dùng nguồn tín hiệu khác nhau. UI luôn ghi rõ generation nào đang chạy ở đâu.
+
+### 9.2 Deploy chạy ở đâu và chặn ghi thế nào
+- **App chạy trong SimVehicleApp** (sandbox tiến trình như Run, ADR-0057). Biến `SDV_VEHICLEDATABROKER_ADDRESS` của app trỏ tới **vehicle-gateway** (service mới trong compose), không trỏ thẳng ra target.
+- **vehicle-gateway** là proxy gRPC (HTTP/2) theo deployment:
+  - nối TLS + token tới databroker của target; app không cần biết TLS/token;
+  - **lọc theo method** (danh sách cho phép, mặc định từ chối);
+  - ghi audit (method, path, thời điểm, deployment).
+
+  | API (method gRPC) | Read-only | Read-write |
+  |---|---|---|
+  | `sdv.databroker.v1.Broker/GetDatapoints`, `/Subscribe`, `/GetMetadata` | cho phép | cho phép |
+  | `sdv.databroker.v1.Broker/SetDatapoints` (app ghi actuator) | **chặn** | cho phép, chỉ path actuator đã khai báo của app |
+  | `sdv.databroker.v1.Collector/*` (vai trò provider/feeder) | **chặn** | **chặn** (app không phải provider) |
+  | `kuksa.val.v1.VAL/Get`, `/Subscribe`, `/GetServerInfo` | cho phép | cho phép |
+  | `kuksa.val.v1.VAL/Set`, `/StreamedUpdate` | **chặn** | cho phép theo path actuator của app |
+
+  Danh sách method lấy từ proto đã vendored trong repo (`signal-gateway/proto/kuksa/val/v1/val.proto`, `spikes/.../sdv/databroker/v1`). Khi hỗ trợ `kuksa.val.v2` (ADR-0047) thì bổ sung `Actuate`, `BatchActuate`, `PublishValue`, `OpenProviderStream` (phải `upstream-verify` trước).
+- **Tab Live ở Deploy:** signal-gateway subscribe **qua vehicle-gateway** (chỉ method đọc). Inject đi qua signal-gateway nên bị từ chối ở đó.
+- **Ràng buộc tương thích (đọc source 2026-10-16):**
+  - app C++ sinh ra dùng Velocitas SDK 0.7.1 với API **`sdv.databroker.v1`**, nên databroker 0.5.0 của stack phải chạy với `--enable-databroker-v1`;
+  - ⇒ target phải phục vụ `sdv.databroker.v1`, hoặc chờ chuyển API theo ADR-0047;
+  - **Test connection** kiểm API nào target có (`GetServerInfo` / `GetMetadata`) và báo rõ "target không phục vụ sdv.databroker.v1 — app hiện tại không chạy được".
+- **Spike trước khi code** (thêm vào M18-T09): proxy HTTP/2 gRPC trong Bun/Node lọc theo method, giữ được stream hai chiều. Kiểm `node:http2` dưới Bun đủ ổn chưa; nếu không thì viết bằng Node runtime. Ghi kết quả vào ADR-0060 Notes.
+
+### 9.3 Test case: ngữ nghĩa kỳ vọng
+Đọc source: `checkExpectations` (`simulator/src/scenario.ts`) so kỳ vọng `{t, path, value}` **đúng thời điểm**. Đủ cho Simulate (tất định), nhưng không đủ cho Play trên app thật vì có độ trễ thực (gate parity đã phải cho phép lệch 150 ms).
+
+**Quyết định (bổ sung ADR-0058), scenario v1.1 (additive):**
+- `write`/`publish` thêm trường tuỳ chọn `within` (ms): chấp nhận trong `[t, t + within]`. Thiếu `within` thì giữ nguyên nghĩa cũ (đúng `t`), nên conformance C01–C45 không đổi.
+- Kỳ vọng phủ định `never: [{ path, from, to }]`: không được ghi `path` trong khoảng đó. Dùng cho nhánh else ("tốc độ ≤ 10 thì **không** bật LDD").
+- Kỳ vọng mặc định của UI:
+  - Simulate dùng `within: 0`;
+  - Play trên app thật dùng `within` mặc định 300 ms (chỉnh được);
+  - kết quả ghi rõ độ lệch thực tế.
+- Kỳ vọng là **tập con**: chỉ kiểm những gì khai báo. Ghi thêm thì không làm fail, trừ khi có `never`.
+- Schema `scenario.v1` đang `additionalProperties: false`, nên thêm trường là **bump minor** (`scenarioVersion: 1.1.0`); reader cũ phải bỏ qua bản 1.1.
+
+### 9.4 Generate tests: thuật toán (tất định)
+1. Từ IR: liệt kê đường đi từ mỗi trigger tới hết, theo từng nhánh (then/else, stable/broken, ok/timeout, case-n, default).
+2. Với mỗi điều kiện so sánh `x op c` trên tín hiệu hoặc output: sinh hai giá trị biên (`c` và `c ± bước`, bước = 1 cho số nguyên; với float dùng phần trăm nhỏ theo đơn vị); boolean dùng `true`/`false`.
+3. Với Stable for / Wait until: một case giữ đủ thời gian (nhánh stable/ok) và một case phá trước hạn (broken/timeout).
+4. Trigger "rises" sinh chuỗi `false → true`; "crosses above c" sinh `c − bước → c + bước`.
+5. Kỳ vọng sinh từ chính simulator chạy case đó: các lần ghi và publish quan sát được. Người dùng duyệt trước khi lưu. Đây là test hồi quy "chốt hành vi hiện tại", ghi rõ trên UI.
+6. Độ phủ = số nhánh có ít nhất một case đi qua / tổng nhánh; nhánh chưa phủ được đánh dấu trên canvas.
+
+### 9.5 Trình tự thực hiện M17 → M18
+```mermaid
+flowchart LR
+  M17T02[M17-T02 ẩn Chat] --> M17T03[M17-T03 Download/Duplicate]
+  M17T04a[M17-T04a spike sandbox] --> M17T04[M17-T04 runtime multi-user] --> M17T05[M17-T05 My runs]
+  M17T02 --> M17T06[M17-T06 trợ lý suy nghĩ]
+  M17T03 --> M18T02[M18-T02 test case data]
+  M18T02 --> M18T03[M18-T03 generator] & M18T04[M18-T04 tab Test]
+  M18T04 --> M18T05[M18-T05 tab Live] & M18T06[M18-T06 trợ lý test]
+  M17T05 --> M18T05
+  M18T07[M18-T07 block gọn + Logic view] --> M18T08[M18-T08 làn, giá trị sống]
+  M17T05 --> M18T09[M18-T09 Deploy remote] --> M18T10[M18-T10 image]
+```
+- **Làm được song song:** M18-T07/T08 (readability) không phụ thuộc runtime, nên làm được song song với M17-T04/T05.
+- **Bước chặn:** hai spike (M17-T04a sandbox, M18-T09 proxy) phải PASS trước task code liên quan.
+
+### 9.6 Câu hỏi chờ PO
+1. **Quota mặc định:** run `SV_MAX_RUNS_PER_USER=2`, `SV_MAX_RUNS_TOTAL=20`; deployment `SV_MAX_DEPLOYMENTS_PER_WORKSPACE=2`. Có phù hợp quy mô dự kiến không?
+2. **Ai được Deploy và bật read-write:** đề xuất chỉ admin workspace.
+3. **Target đầu tiên PO có thật:** devkit, HIL hay databroker giả lập chạy feeder? Target đó phục vụ API databroker nào (`sdv.databroker.v1` / `kuksa.val.v1` / `v2`)? Câu trả lời quyết định thứ tự ADR-0047 so với M18-T09.
+4. **Ngôn ngữ Logic view:** cả tiếng Việt và tiếng Anh, hay theo ngôn ngữ UI?
+
+## 10. Kiểm thử
 | Khía cạnh | Kiểm thử |
 |---|---|
 | Test case | Unit: nhiều case/workflow, migration từ scenario cũ (một case "Default"), kỳ vọng pass/fail trong simulator; contract `scenarios` nhiều case; conformance 3 backend giữ nguyên; golden test sinh ra cho nhiều case |

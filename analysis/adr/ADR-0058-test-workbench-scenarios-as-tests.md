@@ -65,6 +65,14 @@
    - câu "test workflow này" ⇒ trợ lý mở tab Test, đề xuất case phủ các nhánh và chạy Simulate;
    - tab Test có nút "Ask the assistant" điền sẵn yêu cầu.
 
+9. **Ngữ nghĩa kỳ vọng — scenario v1.1, additive** (bổ sung 2026-10-16, design M18 §9.3):
+   - `write`/`publish` thêm `within` (ms; thiếu `within` thì giữ nghĩa cũ là đúng `t`, nên conformance không đổi);
+   - kỳ vọng phủ định `never: [{path, from, to}]`;
+   - kỳ vọng là **tập con** (ghi thêm không fail, trừ `never`);
+   - Simulate mặc định `within: 0`; Play trên app thật mặc định `within: 300` ms, có báo độ lệch thực tế;
+   - bump `scenarioVersion` lên `1.1.0` vì schema `additionalProperties: false`.
+10. **Generate tests** theo thuật toán tất định ở design M18 §9.4: đường đi theo nhánh từ IR, giá trị biên `c`/`c ± bước`, giữ đủ / phá trước hạn cho Stable for và Wait until, `false → true` cho "rises". Kỳ vọng lấy từ simulator, người dùng duyệt trước khi lưu, UI ghi rõ đây là "chốt hành vi hiện tại".
+
 ## Diagram
 ```mermaid
 flowchart LR
@@ -118,4 +126,5 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
+- 2026-10-16: đọc `checkExpectations` (`simulator/src/scenario.ts`): so đúng `t`. Không đủ cho Play trên app thật ⇒ thêm quyết định 9 (`within`, `never`, tập con, scenario 1.1) và 10 (thuật toán Generate tests).
 - M17-T08 (Signals thiếu tín hiệu trong biểu thức, Messages) được gộp vào quyết định 6 của ADR này (2026-10-15).

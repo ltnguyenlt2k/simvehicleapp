@@ -31,6 +31,10 @@
 ## Checklist chi tiết
 
 ### T02: Test case — dữ liệu và contract
+- [ ] `scenario.v1.1` (additive, bump minor):
+  - `within` trên `write`/`publish`; `never: [{path, from, to}]`; kỳ vọng là tập con;
+  - simulator `checkExpectations` + 3 runtime conformance hiểu bản mới;
+  - C01–C45 không đổi.
 - [ ] `scenario.v1` giữ nguyên.
 - [ ] `generateRequest.scenarios[]` và orchestrator `startGeneration.scenarios[]` cho nhiều phần tử cùng `workflowId` + `caseName` (additive), kèm CHANGELOG.
 - [ ] Bảng `sv_workflow_test_cases(id, workflow_id, name, scenario, position, updated_at)`.
@@ -47,7 +51,8 @@
 - [ ] Danh sách case (thêm, đổi tên, nhân bản, xoá).
 - [ ] Soạn bảng: Given (giá trị đầu), When (t, path, giá trị, ô nhập theo catalog), Then (path/HMI/publish, giá trị, dung sai). Có chế độ YAML.
 - [ ] Simulate một case / tất cả: kết quả pass/fail từng kỳ vọng; timeline kết quả; tua lại trên canvas.
-- [ ] Generate tests từ IR: mỗi trigger và mỗi nhánh một case; giá trị biên; độ phủ nhánh.
+- [ ] Generate tests từ IR theo design M18 §9.4: đường đi theo nhánh, giá trị biên, giữ đủ / phá trước hạn, `false → true`; kỳ vọng lấy từ simulator, người dùng duyệt; độ phủ nhánh + đánh dấu nhánh chưa phủ trên canvas.
+- [ ] Play trên app thật dùng `within` mặc định 300 ms, báo độ lệch thực tế.
 - [ ] Play on vehicle stack (khi Run): chấm kỳ vọng từ luồng tín hiệu thật.
 - [ ] Trạng thái rỗng: Generate tests / Ask the assistant / Record from a live run. Luồng 1-2-3 tô bước hiện tại.
 
@@ -82,6 +87,12 @@
 - [ ] "Data from earlier blocks" (đổi tên Connections + giải thích): kiểu, đơn vị, giá trị mẫu; bấm chèn; trigger ghi rõ không có đầu vào; mục "Used by".
 
 ### T09: Deploy Remote databroker
+- [ ] **Spike vehicle-gateway:** proxy gRPC HTTP/2 lọc theo method, giữ stream hai chiều. Thử `node:http2` dưới Bun, nếu không ổn thì dùng Node runtime; ghi kết quả vào ADR-0060 Notes.
+- [ ] vehicle-gateway:
+  - TLS + token tới target; allowlist method read-only/read-write theo design M18 §9.2; audit;
+  - app trỏ `SDV_VEHICLEDATABROKER_ADDRESS` vào gateway; Live subscribe qua gateway.
+- [ ] Test connection kiểm API target có (`sdv.databroker.v1` bắt buộc với app hiện tại; `kuksa.val.v1` cho Live) và báo không tương thích.
+- [ ] Deployment không tự hết hạn; quota `SV_MAX_DEPLOYMENTS_PER_WORKSPACE`; một app có thể vừa Run vừa Deploy.
 - [ ] Định nghĩa PO (2026-10-15): Run = tín hiệu giả lập để test; Deploy = tín hiệu từ layer khác.
   - Ở Deploy: signal-gateway/orchestrator **từ chối** inject, Play scenario/test case, Record, mirror ⇒ 409 `SIMULATED_INPUT_DISABLED` (mã diagnostic mới, chỉ thêm).
   - UI tắt các nút đó, hiện "signals come from <target>; test inputs are disabled"; tab Live chỉ quan sát.

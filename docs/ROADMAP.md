@@ -383,7 +383,7 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M18](design/M18-test-workbench-readab
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Phân tích + thiết kế + ADR + kế hoạch | 0058–0060 | ✔ | 2026-10-15 (Claude Code), đọc từ source:<br>• một scenario/workflow, Record ghi đè, không chấm kỳ vọng; generator giữ một scenario mỗi workflow; trợ lý không có tool scenario;<br>• Signals: ô nhập chung cho mọi loại, thiếu tín hiệu trong biểu thức;<br>• Connections = block nối vào + output;<br>• block còn nhiều key/value;<br>• chưa có Deploy (Kanto hoãn ở ADR-0050).<br>Đối chiếu ADR-0046 ⇒ ghi quan hệ với ADR-0057. | T01 |
+| Phân tích + thiết kế + ADR + kế hoạch | 0058–0060 | ✔ | 2026-10-16 bổ sung [design §9](design/M18-test-workbench-readability-deploy.md):<br>• bảng Run/Deploy trên UI;<br>• vehicle-gateway lọc gRPC theo method;<br>• ràng buộc API `sdv.databroker.v1` của app;<br>• kỳ vọng có `within`/`never` (scenario 1.1);<br>• thuật toán Generate tests;<br>• trình tự M17 → M18;<br>• 4 câu hỏi chờ PO.<br>2026-10-15 (Claude Code), đọc từ source:<br>• một scenario/workflow, Record ghi đè, không chấm kỳ vọng; generator giữ một scenario mỗi workflow; trợ lý không có tool scenario;<br>• Signals: ô nhập chung cho mọi loại, thiếu tín hiệu trong biểu thức;<br>• Connections = block nối vào + output;<br>• block còn nhiều key/value;<br>• chưa có Deploy (Kanto hoãn ở ADR-0050).<br>Đối chiếu ADR-0046 ⇒ ghi quan hệ với ADR-0057. | T01 |
 | Test case: contracts + DB + migrate + BFF | 0058 | ☐ | | T02 |
 | Generator 3 backend: một test mỗi case | 0058 | ☐ | | T03 |
 | Tab Test: soạn bảng, Simulate pass/fail, Generate tests + độ phủ, Play chấm điểm | 0058 | ☐ | | T04 |

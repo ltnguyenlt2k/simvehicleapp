@@ -59,6 +59,17 @@
    - Module tương lai "vehicle-io", có ADR riêng khi có phần cứng và nhu cầu.
    - M18 chỉ cung cấp target Remote databroker để nối với provider có sẵn.
    - VSS tuỳ biến (ADR-0052) mô tả tín hiệu riêng của OEM khớp DBC.
+7. **Kiến trúc chạy Deploy** (bổ sung 2026-10-16, design M18 §9.1–9.2):
+   - **App chạy trong SimVehicleApp** (sandbox tiến trình, ADR-0057); `SDV_VEHICLEDATABROKER_ADDRESS` trỏ tới **vehicle-gateway**, service mới trong compose.
+   - **vehicle-gateway** là proxy gRPC/HTTP2 theo deployment: TLS + token tới target (app không cần biết), lọc **theo method** (mặc định từ chối), audit.
+     - Read-only: cho phép `Get*`/`Subscribe`/`GetMetadata`/`GetServerInfo`; chặn `sdv.databroker.v1.Broker/SetDatapoints` và `kuksa.val.v1.VAL/Set|StreamedUpdate`.
+     - Read-write: chỉ cho ghi các path actuator đã khai báo của app.
+     - `Collector/*` (vai trò provider) luôn bị chặn.
+   - Tab Live subscribe qua vehicle-gateway, chỉ method đọc.
+   - Deployment **không tự hết hạn**: giới hạn `SV_MAX_DEPLOYMENTS_PER_WORKSPACE` (mặc định 2), dừng thủ công. Một app có thể vừa Run vừa Deploy (khác generation, khác nguồn tín hiệu).
+8. **Ràng buộc API:** app C++ sinh ra (Velocitas SDK 0.7.1) dùng **`sdv.databroker.v1`**; databroker 0.5.0 của stack chạy `--enable-databroker-v1`.
+   - Target phải phục vụ API này, hoặc chờ chuyển API theo ADR-0047.
+   - Test connection báo rõ nếu không tương thích.
 6. **Kiểm tương thích trước khi deploy:** nút **Test connection** kiểm kết nối, TLS/token, phiên bản API (v1/v2), release VSS của target (metadata), và path mà app dùng có tồn tại ở target.
 
 ## Diagram
@@ -115,4 +126,7 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-16:
+  - thêm quyết định 7 (vehicle-gateway, lọc method theo proto đã vendored, Live qua gateway, deployment không hết hạn) và 8 (ràng buộc `sdv.databroker.v1`; đọc `compiler-code-cpp/runtime/src/Velocitas.cpp` và `velocitas-stack/compose.yaml`);
+  - spike proxy HTTP/2 trong Bun/Node trước khi code (M18-T09).
 - 2026-10-15 — PO bổ sung định nghĩa Run (tín hiệu giả lập để test) và Deploy (tín hiệu từ layer khác, giá trị test không hoạt động) ⇒ thêm quyết định 0 và mã `SIMULATED_INPUT_DISABLED`.
