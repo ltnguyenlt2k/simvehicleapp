@@ -197,6 +197,7 @@ Máy cấu hình thấp hoặc chỉ để chạy: dùng image dựng sẵn củ
    - Release VSS lấy theo workflow.
 4. **Run:** chạy app thật trên KUKSA databroker. Tab **Signals** để inject/xem tín hiệu, **Run console** xem log và trace.
 5. **Open IDE / Export:** mở code-server đúng project, hoặc tải zip build được ngoài SimVehicleApp.
+6. **Menu workflow (…) → Download workflow (.json):** tải workflow kèm release VSS và scenario. **Import** khôi phục cả hai; **Duplicate** cũng copy cả hai.
 
 Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dùng app nào (chip app) và trạng thái hiện tại (pill: `Building · step 3/7`, `Running 00:42`…). Khi một nút chưa bấm được, dòng chữ trên thanh nói lý do.
 
@@ -212,7 +213,19 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
 - **Trợ lý AI** (tab cạnh Toolbar): đề xuất thay đổi workflow để bạn duyệt rồi Accept; không viết code production.
   - Cấu hình provider trong `.env` (`SV_AI_PROVIDER`). `fake` = offline, không cần key.
 - **VSS tuỳ biến:** `scripts/sv vss add|use` ([hướng dẫn](docs/user-guide/custom-vss.md)).
-- **UI tập trung:** studio đã ẩn các module của Sim không dùng cho toolchain xe: Tables, Files, Knowledge base, Logs, Scheduled tasks.
+- **UI tập trung:**
+  - Studio đã ẩn các module của Sim không dùng cho toolchain xe: Tables, Files, Knowledge base, Logs, Scheduled tasks.
+  - Từ M17 cũng ẩn Chat của workflow và "Run from/until block". Logic xe chỉ chạy qua **Simulate** và **Run** ([ADR-0056](analysis/adr/ADR-0056-sim-execution-surfaces-and-workflow-menu.md)).
+
+**Lưu ý M17 — nhiều người cùng Run ([ADR-0057](analysis/adr/ADR-0057-shared-vehicle-runtime-run-slot.md)):**
+- Đặt `SV_RUN_SANDBOX=1` trong `.env` để mỗi run có databroker riêng. Như vậy nhiều người, và nhiều app, chạy cùng lúc mà không lẫn tín hiệu.
+  - Mặc định `0`: cả máy một run, như trước.
+- **Quota:** `SV_MAX_RUNS_PER_USER` = 2, `SV_MAX_RUNS_TOTAL` = 20.
+- **Thời hạn:** run tự dừng sau `SV_RUN_MAX_MINUTES` = 30 phút. Khi còn 5 phút, nút **Extend** hiện ra (tối đa 3 lần).
+- **My runs (n)** trên thanh hành động liệt kê các app bạn đang chạy, ở mọi workspace, kèm Stop/Extend.
+  - Bấm Run khi đang chạy app khác ⇒ hộp thoại hỏi *Stop … and run* hoặc *Run both*.
+- **Quản trị viên:** `scripts/sv runs list` và `scripts/sv runs stop <id>|--all`. System status có thẻ **Vehicle runtime**.
+- **Trợ lý** hiện *Thinking…*, thời gian chờ và từng bước nó làm (✓/✕); nút **Stop** huỷ lượt.
 
 Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md).
 
