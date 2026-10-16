@@ -9,7 +9,7 @@ import { type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quo
 import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp, type SweepResult } from "./lifecycle.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
 import { ACTIVE_RUN_STATES, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
-import { RunConflict, type RunManager } from "./runs.ts";
+import { RunConflict, RunQuota, type RunManager } from "./runs.ts";
 
 /**
  * HTTP surface of the orchestrator (`openapi/orchestrator.v1.yaml`): projects (vehicle apps) and their lifecycle
@@ -21,6 +21,7 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
 const validator = new ContractValidator();
 const SLUG = /^[a-z0-9][a-z0-9-]{0,62}$/;
 const ID = /^[A-Za-z0-9_][A-Za-z0-9_.:-]{0,127}$/;
+const OWNER = /^[A-Za-z0-9_-]{1,128}$/;
 const MAX_BODY = 16 * 1024 * 1024;
 
 export interface AppDeps {
@@ -214,16 +215,19 @@ export function createOrchestratorHandler(d: AppDeps) {
         if (b instanceof Response) return b;
         if (b.generationId !== undefined && (typeof b.generationId !== "string" || !ID.test(b.generationId))) return json(400, { error: "invalid_request", message: "generationId must be a generation id" });
         if (b.traceLevel !== undefined && !["off", "trigger", "node"].includes(b.traceLevel as string)) return json(400, { error: "invalid_request", message: "traceLevel must be off, trigger or node" });
+        const o = b.owner as { userId?: unknown; workspaceId?: unknown } | undefined;
+        if (o !== undefined && (typeof o !== "object" || o === null || typeof o.userId !== "string" || !OWNER.test(o.userId) || typeof o.workspaceId !== "string" || !OWNER.test(o.workspaceId))) return json(400, { error: "invalid_request", message: "owner must be {userId, workspaceId}" });
         // Default: the project's latest generation (RunManager checks it succeeded).
         const gid = (b.generationId as string | undefined) ?? (await d.repo.latestGeneration(project.id))?.id;
         if (!gid) return json(409, { error: "conflict", message: "SynCode the project first: it has no generation to run" });
         if (!(await d.repo.generation(gid))) return json(404, { error: "not_found", message: "unknown generation" });
         try {
-          const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined);
+          const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined, o ? { userId: o.userId as string, workspaceId: o.workspaceId as string } : undefined);
           ctx.log.info("run requested", { project: project.slug, run: run.id, state: run.state });
           return json(202, runView(run));
         } catch (e) {
           if (e instanceof RunConflict) return json(409, { error: "conflict", message: e.message, ...(e.activeRun ? { activeRun: runView(e.activeRun) } : {}) });
+          if (e instanceof RunQuota) return json(409, [{ ...e.diagnostic, data: { ...e.diagnostic.data, runs: e.own.map(runView) } }]);
           throw e;
         }
       }
@@ -331,7 +335,7 @@ export function createOrchestratorHandler(d: AppDeps) {
       return json(200, { runs: runs.map(runView) });
     }
 
-    if (parts[0] === "runs" && parts[1] && (parts.length === 2 || (parts.length === 3 && parts[2] === "stop"))) {
+    if (parts[0] === "runs" && parts[1] && (parts.length === 2 || (parts.length === 3 && (parts[2] === "stop" || parts[2] === "extend")))) {
       const run = ID.test(parts[1]) ? await d.repo.run(parts[1]) : null;
       if (!run) return json(404, { error: "not_found" });
       if (parts.length === 2 && req.method === "GET") return json(200, runView(run));
@@ -340,6 +344,17 @@ export function createOrchestratorHandler(d: AppDeps) {
         const stopped = await d.runs.stop(run.id);
         ctx.log.info("run stop requested", { run: run.id });
         return json(200, runView(stopped ?? run));
+      }
+      if (parts[2] === "extend" && req.method === "POST") {
+        if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
+        try {
+          const extended = await d.runs.extend(run.id);
+          ctx.log.info("run extended", { run: run.id, expiresAt: extended?.expiresAt });
+          return json(200, runView(extended ?? run));
+        } catch (e) {
+          if (e instanceof RunConflict) return json(409, { error: "conflict", message: e.message });
+          throw e;
+        }
       }
       return json(405, { error: "method_not_allowed" });
     }

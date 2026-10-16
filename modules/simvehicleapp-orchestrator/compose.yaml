@@ -34,6 +34,13 @@ services:
       SV_IDLE_CLEAN_DAYS: ${SV_IDLE_CLEAN_DAYS:-14}
       SV_FAILED_TTL_DAYS: ${SV_FAILED_TTL_DAYS:-7}
       SV_SWEEP_INTERVAL_MIN: ${SV_SWEEP_INTERVAL_MIN:-60}
+      # Runs (ADR-0057): SV_RUN_SANDBOX=1 gives every run a databroker of its own (several users and apps at once),
+      # within quotas and a time limit; 0 = one run at a time on the shared databrokers.
+      SV_RUN_SANDBOX: ${SV_RUN_SANDBOX:-0}
+      SV_MAX_RUNS_PER_USER: ${SV_MAX_RUNS_PER_USER:-2}
+      SV_MAX_RUNS_TOTAL: ${SV_MAX_RUNS_TOTAL:-20}
+      SV_RUN_MAX_MINUTES: ${SV_RUN_MAX_MINUTES:-30}
+      SV_RUN_MAX_EXTENSIONS: ${SV_RUN_MAX_EXTENSIONS:-3}
     # Internal only: the studio BFF reaches it as http://orchestrator:4030.
     # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
     cap_drop: [ALL]

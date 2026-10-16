@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (additive, ADR-0057, M17-T04): `startRun` body `owner {userId, workspaceId}`; `Run.owner`, `sandbox`, `expiresAt`, `extensions`, `stopReason`; `POST /runs/{rid}/extend`; with `SV_RUN_SANDBOX=1` the start answers 409 with a diagnostics array `RUN_QUOTA_EXCEEDED` (new in the catalog) when a quota is reached.
+- `schemas/toolchain-job.v1` (additive, ADR-0057, M17-T04): `options.sandbox` (run on a databroker of its own) and `sandbox.address` on the job.
 - `openapi/orchestrator.v1.yaml` (additive, M16-T10): `POST /sweep` — runs the sweeper now and answers what it did (409 while one runs).
 - `openapi/orchestrator.v1.yaml` (additive, M16-T03): `Project.createdAt`/`updatedAt`; `POST /projects/{id}/generations` answers 409 `not_ready` for an app still creating or failed; `PUT /projects/{id}/workflows` answers 409 `APP_QUOTA_EXCEEDED` over the per-app workflow limit.
 - Vehicle app lifecycle and host capacity (additive, ADR-0053, M16-T02): workspace `DELETE /projects/{slug}`, `POST /projects/{slug}/clean`, `GET /projects/{slug}/size`, `GET /capacity` (schema `Capacity`); toolchain `POST /projects/{slug}/forget`, `POST /gc`; orchestrator `DELETE /projects/{id}`, `POST /projects/{id}/repair`, `POST /projects/{id}/clean`, `GET /capacity`, and 409/507/429 on project creation and SynCode. Diagnostics catalog: `APP_QUOTA_EXCEEDED`, `HOST_DISK_LOW`, `SYNCODE_QUEUE_FULL`.

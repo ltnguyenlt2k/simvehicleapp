@@ -2,6 +2,7 @@ import { createLogger } from '@sim/logger'
 import { type NextRequest, NextResponse } from 'next/server'
 import {
   type SvRun,
+  svDiagnosticSchema,
   svListRunsContract,
   svRunSchema,
   svStartRunContract,
@@ -34,7 +35,8 @@ export const GET = withRouteHandler(async (request: NextRequest, context: RouteC
 
 /**
  * Run (M08-T03): the app of the project's latest SynCode on the runtime stack. One run at a time on
- * the stack; when another project's run is active its details stay hidden (other workspaces).
+ * the stack; when another project's run is active its details stay hidden (other workspaces). With
+ * sandboxes (ADR-0057) the caller is the run's owner and quotas answer 409 `RUN_QUOTA_EXCEEDED`.
  */
 export const POST = withRouteHandler(async (request: NextRequest, context: RouteContext) => {
   const auth = await authorizeProject((await context.params).id, 'write')
@@ -43,9 +45,22 @@ export const POST = withRouteHandler(async (request: NextRequest, context: Route
   if (!parsed.success) return parsed.response
   const res = await orchestrator(`/projects/${auth.row.id}/runs`, {
     method: 'POST',
-    body: parsed.data.body,
+    body: {
+      ...parsed.data.body,
+      owner: { userId: auth.userId, workspaceId: auth.row.workspaceId },
+    },
   })
   if (res instanceof NextResponse) return res
+  if (res.status === 409 && Array.isArray(res.body)) {
+    const quota = svDiagnosticSchema.safeParse(res.body[0])
+    return NextResponse.json(
+      {
+        error: quota.success ? quota.data.message : 'The run quota is reached: stop a run first',
+        code: 'RUN_QUOTA_EXCEEDED',
+      },
+      { status: 409 }
+    )
+  }
   if (res.status === 409) {
     const body = res.body as { message?: string; activeRun?: SvRun } | null
     const own = body?.activeRun?.projectId === auth.row.id

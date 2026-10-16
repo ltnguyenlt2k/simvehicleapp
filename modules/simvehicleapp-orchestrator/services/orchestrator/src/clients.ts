@@ -41,6 +41,8 @@ export interface ToolchainJob {
   state: "queued" | "running" | "succeeded" | "failed" | "cancelled";
   exitCode: number | null;
   diagnostics: Diagnostic[];
+  /** Sandboxed run: where its databroker listens (ADR-0057). */
+  sandbox?: { address: string };
 }
 
 export interface Clients {
@@ -58,6 +60,8 @@ export interface Clients {
   startJob(language: string, kind: string, project: string, options?: Record<string, unknown>): Promise<Outcome<ToolchainJob>>;
   /** Follows a job's log after `afterSeq` until it ends (reconnecting on drops); resolves with the final job. */
   followJob(language: string, jobId: string, afterSeq: number, onLine: (l: LogLine) => void): Promise<ToolchainJob>;
+  /** One job of a toolchain (null when unknown). */
+  getJob(language: string, jobId: string): Promise<ToolchainJob | null>;
   /** Zip of the project folder plus `extraFiles` (workspace `exportProject`), as the raw response. */
   exportProject(slug: string, body: { generationId?: string; extraFiles: { path: string; content: string }[] }): Promise<Response>;
   /** Actuators whose target the signal-gateway mirrors to the current value (empty = none). */
@@ -224,6 +228,11 @@ export function httpClients(e: Endpoints): Clients {
       if (!e.signalGateway) return;
       const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths }) }, true);
       if (!res.ok) throw new ServiceUnavailable(`signal-gateway /mirror ⇒ ${res.status}`);
+    },
+    async getJob(language, jobId) {
+      const tc = base(e.toolchains, language, "toolchain");
+      const res = await call(`${tc}/jobs/${jobId}`);
+      return res.ok ? ((await res.json()) as ToolchainJob) : null;
     },
     async followJob(language, jobId, afterSeq, onLine) {
       const tc = base(e.toolchains, language, "toolchain");

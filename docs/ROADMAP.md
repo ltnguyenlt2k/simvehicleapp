@@ -369,10 +369,10 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M17](design/M17-editor-leftovers-and-
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Phân tích + thiết kế + ADR + kế hoạch | 0056, 0057 | ✔ | 2026-10-15 (Claude Code), đọc từ source:<br>• Chat và "Run from/until block" chạy executor của Sim (`GenericBlockHandler` nhận mọi block `sv_*`, sai nghĩa so với IR);<br>• "Export workflow" và Duplicate làm mất release VSS + scenario;<br>• lỗi Run trong ảnh của PO: khoá run toàn host, không có thời hạn, không cho biết ai đang chạy (lần này là run demo agent bật).<br>• Sửa cùng ngày sau câu hỏi multi-user của PO: đo databroker 3,8–5,9 MB, app ~14 MB ⇒ chọn sandbox mỗi run + quota (ADR-0057 Notes).<br>• Thêm yêu cầu hiệu ứng "đang suy nghĩ" cho trợ lý. | T01 |
-| Ẩn Chat + Run from/until block | 0056 | 🔄 | 2026-10-16 Claude Code: đang chờ CI | T02 |
-| Download/Duplicate workflow giữ release VSS + scenario | 0056 | ☐ | | T03 |
+| Ẩn Chat + Run from/until block | 0056 | ✔ | 2026-10-16 Claude Code (`5802c5d`): một danh sách `hidden-surfaces`, proxy 404 cho `/api/workflows/*/execute|chat`; E2E `m17-sim-surfaces`; CI [38895078128](https://github.com/Blinkthor/sim-vehicle-app/actions/runs/38895078128) xanh | T02 |
+| Download/Duplicate workflow giữ release VSS + scenario | 0056 | 🔄 | 2026-10-16 Claude Code (`921f97c`): sidecar `simvehicleapp` trong JSON tải về, import khôi phục + cảnh báo file cũ, Duplicate copy trong transaction; vitest 63 pass; E2E `m17-workflow-data` — chờ CI | T03 |
 | Spike sandbox mỗi run (databroker dạng tiến trình) | 0057 | ✔ | 2026-10-16 trên stack dev:<br>• 5 databroker 0.5.0 dạng tiến trình trong toolchain-cpp, sẵn sàng 12–26 ms, ~7 MB mỗi cái, không lẫn tín hiệu;<br>• 2 app `demo-overspeed` thật song song (~13 MB mỗi app): inject vào sandbox 1 ⇒ hazard chỉ bật ở sandbox 1.<br>Phát hiện: agent phải reap tiến trình; NOTICE của binary KUKSA (ADR-0057 Notes). | T04a |
-| Runtime multi-user: sandbox mỗi run, quota user/host, thời hạn, extend | 0057 | ☐ | | T04 |
+| Runtime multi-user: sandbox mỗi run, quota user/host, thời hạn, extend | 0057 | 🔄 | 2026-10-16 Claude Code: code + unit xong (agent 22, orchestrator 39, contracts 406, BFF 7); `SV_RUN_SANDBOX` mặc định tắt tới T05; lệch restart ghi ở ADR-0057 Notes — chờ CI | T04 |
 | Signal-gateway theo run; "My runs", hộp thoại cùng user, thẻ Vehicle runtime, `sv runs`, gate | 0057 | ☐ | | T05 |
 | Trợ lý "đang suy nghĩ": hiệu ứng, bước tool thật, thời gian, Stop | 0054 | ☐ | PO 2026-10-15 | T06 |
 | Kiểm logic trên UI: Signals có tín hiệu đọc trong biểu thức, Messages HMI/MQTT, gợi ý trigger | 0058 | ↷ | Chuyển sang M18-T05 (2026-10-15); hướng dẫn tạm: [test-signals](user-guide/test-signals.md) | T08 |

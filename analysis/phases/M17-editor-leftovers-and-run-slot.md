@@ -51,15 +51,18 @@
 - [ ] Ghi số đo vào ADR-0057 Notes; sửa ADR nếu kết quả khác giả định.
 
 ### T04: Runtime multi-user (orchestrator)
-- [ ] Contracts (additive): `Run.expiresAt`, `Run.extensions`, `Run.stopReason`, `Run.sandbox` (nội bộ); `POST /runs/{rid}/extend`; diagnostic `RUN_QUOTA_EXCEEDED` (catalog, chỉ thêm); CHANGELOG.
-- [ ] `runs.ts`:
+> 2026-10-16 (Claude Code): code + unit xong, flag `SV_RUN_SANDBOX` mặc định tắt tới T05. Lệch: restart vẫn dừng mọi run (ADR-0057 Notes).
+- [x] Image toolchain cpp/python/rust: `COPY --from` binary `kuksa-databroker` 0.5.0 (digest ghim) + `thirdparty-licenses` + `sbom.json`; UPSTREAM.md (việc còn lại của T04a).
+- [x] Toolchain agent: `sandbox.ts` spawn/thu dọn databroker theo VSS vendored của project, cấp cổng `SV_SANDBOX_PORTS`, `SV_MAX_RUNS`; job `options.sandbox`, `job.sandbox.address`; 22 test.
+- [x] Contracts (additive): `Run.expiresAt`, `Run.extensions`, `Run.stopReason`, `Run.sandbox` (nội bộ); `POST /runs/{rid}/extend`; diagnostic `RUN_QUOTA_EXCEEDED` (catalog, chỉ thêm); CHANGELOG.
+- [x] `runs.ts` (`runs-sandbox.test.ts`, 5 test):
   - bỏ khoá toàn host; quota `SV_MAX_RUNS_PER_USER` / `SV_MAX_RUNS_TOTAL` (user lấy từ BFF);
   - cấp cổng sandbox; khi run kết thúc dọn cả databroker lẫn app;
-  - restart orchestrator ⇒ dọn sandbox mồ côi, giữ hạn của run còn sống.
-- [ ] Thời hạn `SV_RUN_MAX_MINUTES` (`0` = tắt), `stopReason: expired`; extend tới `SV_RUN_MAX_EXTENSIONS`.
-- [ ] Quyền: Stop/Extend chỉ chủ run hoặc người cùng workspace có quyền write; khác workspace ⇒ 403.
-- [ ] Compose + `.env.example` + DEPLOY: các biến mới, ước lượng tài nguyên mỗi run.
-- [ ] Unit:
+  - restart orchestrator ⇒ dọn sandbox mồ côi, giữ hạn của run còn sống. *(lệch: restart dừng run, xem ADR-0057 Notes)*
+- [x] Thời hạn `SV_RUN_MAX_MINUTES` (`0` = tắt), `stopReason: expired`; extend tới `SV_RUN_MAX_EXTENSIONS`.
+- [x] Quyền (BFF `authorizeProject` write; route `runs/[rid]/extend`): Stop/Extend chỉ chủ run hoặc người cùng workspace có quyền write; khác workspace ⇒ 403.
+- [x] Compose + `.env.example` + DEPLOY: các biến mới, ước lượng tài nguyên mỗi run.
+- [x] Unit (orchestrator 39 + agent 22 + BFF 7; restart giữ nguyên test M08):
   - quota user/host;
   - hai run cùng release song song;
   - hết hạn; extend tới giới hạn;

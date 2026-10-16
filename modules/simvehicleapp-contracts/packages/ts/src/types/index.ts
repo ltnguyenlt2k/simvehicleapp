@@ -796,6 +796,12 @@ export interface ToolchainJobV1 {
    */
   finishedAt?: number;
   diagnostics?: DiagnosticV1[];
+  /**
+   * run with options.sandbox: where its databroker listens on sv-internal (ADR-0057).
+   */
+  sandbox?: {
+    address: string;
+  };
 }
 export interface ToolchainJobOptions {
   /**
@@ -812,6 +818,10 @@ export interface ToolchainJobOptions {
    * stop: job id of the run to stop.
    */
   runJobId?: string;
+  /**
+   * run: start the app on a vehicle databroker of its own, loading the project's vendored VSS file (ADR-0057).
+   */
+  sandbox?: boolean;
 }
 /**
  * Trace event as streamed to the studio (analysis/08 §3.1, ADR-0027). Produced identically by the simulator and by orchestrator TraceIngest from runtime `SVTRACE {…}` lines (`#/$defs/runtimeLine`).

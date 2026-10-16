@@ -1,3 +1,5 @@
+import type { Sandbox, SandboxProvider } from "./sandbox.ts";
+
 /**
  * Job queue of the toolchain agent (ADR-0025 §2–4): build-class jobs run one at a time (one Conan
  * cache), a `run` is single too; every job streams LogLine v1 lines (resumable by seq) and ends in
@@ -12,6 +14,8 @@ export interface JobOptions {
   release?: boolean;
   env?: Record<string, string>;
   runJobId?: string;
+  /** `run` only: start the app on a vehicle databroker of its own (ADR-0057). */
+  sandbox?: boolean;
 }
 
 export interface Diagnostic {
@@ -67,6 +71,8 @@ export interface Job {
   startedAt?: number;
   finishedAt?: number;
   diagnostics: Diagnostic[];
+  /** `run` with `sandbox`: where its databroker listens on sv-internal (ADR-0057). */
+  sandbox?: { address: string };
 }
 
 interface Entry {
@@ -77,6 +83,8 @@ interface Entry {
   cancelRequested: boolean;
   /** Next seq: lines keep their seq when a long run drops its oldest lines. */
   nextSeq: number;
+  /** The run's own databroker, stopped when the run ends. */
+  sandbox?: Sandbox;
 }
 
 const MAX_LINES = 50_000;
@@ -92,7 +100,10 @@ export class JobManager {
   private readonly jobs = new Map<string, Entry>();
   private readonly queue: string[] = [];
   private buildBusy = false;
-  private activeRun: string | null = null;
+  /** Runs on the shared databroker of their release: one at a time (they would share its signals). */
+  private sharedRun: string | null = null;
+  /** Runs alive now, shared and sandboxed. */
+  private readonly activeRuns = new Set<string>();
   /** Observability hook (ADR-0033 §2): a finished job's kind, state and duration (ms). */
   onFinished?: (kind: JobKind, state: JobState, ms: number) => void;
 
@@ -102,6 +113,10 @@ export class JobManager {
     private readonly now: () => number = Date.now,
     /** Rejects a request at once (unknown project, bad slug, env not allowed) by throwing. */
     private readonly validate: (kind: JobKind, project: string, options: JobOptions) => void = () => {},
+    /** Sandboxes of `run` jobs with `sandbox` (ADR-0057); without it those are refused. */
+    private readonly sandboxes?: SandboxProvider,
+    /** Runs alive at once in this toolchain (`SV_MAX_RUNS`). */
+    private readonly maxRuns = 10,
   ) {}
 
   get(id: string): Job | undefined {
@@ -109,7 +124,12 @@ export class JobManager {
   }
 
   create(kind: JobKind, project: string, options?: JobOptions): Job {
-    if (kind === "run" && this.activeRun) throw new ConflictError("a run is already active");
+    if (kind === "run") {
+      if (options?.sandbox) {
+        if (!this.sandboxes) throw new ConflictError("sandboxed runs are not enabled in this toolchain");
+      } else if (this.sharedRun) throw new ConflictError("a run is already active");
+      if (this.activeRuns.size >= this.maxRuns) throw new ConflictError(`${this.maxRuns} runs are already active in this toolchain`);
+    }
     if (kind !== "stop") this.validate(kind, project, options ?? {});
     if (kind === "stop") {
       const target = options?.runJobId ? this.jobs.get(options.runJobId) : undefined;
@@ -119,7 +139,8 @@ export class JobManager {
     this.jobs.set(job.id, { job, lines: [], listeners: new Set(), cancelRequested: false, nextSeq: 0 });
     this.prune();
     if (kind === "run") {
-      this.activeRun = job.id;
+      if (!options?.sandbox) this.sharedRun = job.id;
+      this.activeRuns.add(job.id);
       void this.execute(job.id);
     } else if (kind === "stop") {
       void this.stopRun(job.id, options!.runJobId!);
@@ -181,6 +202,19 @@ export class JobManager {
     const job = e.job;
     job.state = "running";
     job.startedAt = this.now();
+    if (job.kind === "run" && job.options?.sandbox && this.sandboxes) {
+      try {
+        const sb = await this.sandboxes.start(job.project);
+        e.sandbox = sb;
+        job.sandbox = { address: sb.address };
+        job.options = { ...job.options, env: { ...job.options.env, SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${sb.local}` } };
+        this.system(e, `vehicle sandbox: databroker of this run on ${sb.address}`, "info");
+      } catch (err) {
+        this.system(e, `cannot start the vehicle sandbox: ${(err as Error).message}`, "error");
+        this.finish(e, "failed", null, [diag("RUN_CRASHED", "run", (err as Error).message, { kind: job.kind, sandbox: true })]);
+        return;
+      }
+    }
     let plan: Plan;
     try {
       plan = await this.planner(job.kind, job.project, job.options ?? {});
@@ -302,7 +336,9 @@ export class JobManager {
     e.job.finishedAt = this.now();
     e.job.diagnostics = diagnostics;
     this.onFinished?.(e.job.kind, state, e.job.finishedAt - (e.job.startedAt ?? e.job.createdAt));
-    if (this.activeRun === e.job.id) this.activeRun = null;
+    if (this.sharedRun === e.job.id) this.sharedRun = null;
+    this.activeRuns.delete(e.job.id);
+    if (e.sandbox) void e.sandbox.stop();
     for (const f of [...e.listeners]) f(null);
     e.listeners.clear();
   }

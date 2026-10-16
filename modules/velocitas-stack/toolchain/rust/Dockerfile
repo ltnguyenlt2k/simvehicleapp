@@ -6,6 +6,8 @@
 # dependency is vendored at build time and cargo runs offline; a warm shared target dir makes project
 # builds reuse the dependency builds (the build job copies the app binary into the project).
 # ---------------------------------------------------------------------------
+# KUKSA databroker 0.5.0 (docs/BASELINE.md digest): only its binary is copied below.
+FROM ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0@sha256:4fa9d98197fd7d144dccfba9473e83ea30b7eff3afb06e2acf558c588b8da1cc AS kuksa-databroker
 FROM oven/bun:1.3.8-debian AS agent
 WORKDIR /src/velocitas-stack/toolchain/agent
 COPY --from=contracts / /src/simvehicleapp-contracts/
@@ -44,6 +46,11 @@ COPY toolchain/rust/sv-check-signals.py /usr/local/bin/sv-check-signals
 COPY toolchain/cpp/sv-new-project.sh /usr/local/bin/sv-new-project
 RUN chmod 0755 /usr/local/bin/sv-entrypoint /usr/local/bin/sv-check-signals /usr/local/bin/sv-new-project
 USER vscode
+# Per-run vehicle sandboxes (ADR-0057): the KUKSA databroker binary, spawned by the agent next to each app,
+# with its third-party licences and SBOM (Apache-2.0, NOTICE).
+COPY --from=kuksa-databroker /app/databroker /usr/local/bin/kuksa-databroker
+COPY --from=kuksa-databroker /app/thirdparty-licenses /usr/share/licenses/kuksa-databroker/
+COPY --from=kuksa-databroker /app/sbom.json /usr/share/licenses/kuksa-databroker/sbom.json
 COPY --from=agent /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=agent /src /src
 ENV SV_TOOLCHAIN_PORT=4230 SV_PROJECTS_DIR=/workspace/projects

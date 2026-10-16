@@ -2,7 +2,9 @@ import { createLogger, createService, Metrics } from "@simvehicleapp/service-kit
 import pkg from "../package.json" with { type: "json" };
 import { createAgentHandler } from "./app.ts";
 import { createPlanner, defaultConfig, validateJob } from "./commands.ts";
+import { existsSync } from "node:fs";
 import { JobManager } from "./jobs.ts";
+import { ProcessSandboxes, parsePorts } from "./sandbox.ts";
 import { templateTar } from "./templates.ts";
 
 const port = Number(process.env.SV_TOOLCHAIN_PORT ?? 4210);
@@ -10,7 +12,14 @@ const log = createLogger({ service: "toolchain-agent" });
 if (!process.env.INTERNAL_API_SECRET) log.warn("INTERNAL_API_SECRET is not set: every toolchain request will be rejected (fail closed)");
 
 const cfg = defaultConfig();
-const jobs = new JobManager(createPlanner(cfg), undefined, undefined, (kind, project, options) => validateJob(cfg, kind, project, options));
+// Per-run vehicle sandboxes (ADR-0057) when the image has the KUKSA databroker binary.
+const brokerBin = process.env.SV_DATABROKER_BIN ?? "/usr/local/bin/kuksa-databroker";
+const sandboxes = existsSync(brokerBin)
+  ? new ProcessSandboxes({ bin: brokerBin, host: process.env.SV_TOOLCHAIN_HOST ?? `toolchain-${cfg.toolchain ?? "cpp"}`, ports: parsePorts(process.env.SV_SANDBOX_PORTS), projectsDir: cfg.projectsDir })
+  : undefined;
+if (!sandboxes) log.info("no databroker binary: sandboxed runs are off", { brokerBin });
+const maxRuns = Math.max(1, Number(process.env.SV_MAX_RUNS) || 10);
+const jobs = new JobManager(createPlanner(cfg), undefined, undefined, (kind, project, options) => validateJob(cfg, kind, project, options), sandboxes, maxRuns);
 // Build durations, cold or warm, show as deps/build job durations (ADR-0033 §2).
 const metrics = new Metrics();
 const jobMs = metrics.histogram("toolchain_job_duration_ms", "Toolchain job duration (ms) by kind and final state.");

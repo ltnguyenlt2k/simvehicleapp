@@ -16,7 +16,14 @@
     "createdAt": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
     "startedAt": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
     "finishedAt": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
-    "diagnostics": { "type": "array", "items": { "$ref": "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } }
+    "diagnostics": { "type": "array", "items": { "$ref": "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1" } },
+    "sandbox": {
+      "type": "object",
+      "description": "run with options.sandbox: where its databroker listens on sv-internal (ADR-0057).",
+      "required": ["address"],
+      "additionalProperties": false,
+      "properties": { "address": { "type": "string", "pattern": "^[a-z0-9-]+:[0-9]{2,5}$" } }
+    }
   },
   "$defs": {
     "kind": { "enum": ["init", "deps", "build", "test", "format-check", "run", "stop", "generate-model"] },
@@ -32,7 +39,8 @@
           "propertyNames": { "pattern": "^[A-Z][A-Z0-9_]*$" },
           "additionalProperties": { "type": "string" }
         },
-        "runJobId": { "type": "string", "description": "stop: job id of the run to stop." }
+        "runJobId": { "type": "string", "description": "stop: job id of the run to stop." },
+        "sandbox": { "type": "boolean", "description": "run: start the app on a vehicle databroker of its own, loading the project's vendored VSS file (ADR-0057)." }
       }
     },
     "request": {

@@ -314,6 +314,14 @@
       "adr": "ADR-0016"
     },
     {
+      "code": "RUN_QUOTA_EXCEEDED",
+      "severity": "error",
+      "stage": "run",
+      "title": "Run quota reached (yours or the host's): stop a run first",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0057"
+    },
+    {
       "code": "RUN_START_TIMEOUT",
       "severity": "error",
       "stage": "run",

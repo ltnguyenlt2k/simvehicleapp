@@ -10,6 +10,8 @@
 # ---------------------------------------------------------------------------
 # Toolchain agent (ADR-0025 §2, toolchain.v1.yaml): Bun + sources + contracts at the same /src layout as the
 # other services (contracts read their JSON Schemas from disk, so no single-file binary).
+# KUKSA databroker 0.5.0 (docs/BASELINE.md digest): only its binary is copied below.
+FROM ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0@sha256:4fa9d98197fd7d144dccfba9473e83ea30b7eff3afb06e2acf558c588b8da1cc AS kuksa-databroker
 FROM oven/bun:1.3.8-debian AS agent
 WORKDIR /src/velocitas-stack/toolchain/agent
 COPY --from=contracts / /src/simvehicleapp-contracts/
@@ -89,6 +91,11 @@ RUN mkdir -p /home/vscode/.sv/conan-offline-index/recipes \
  && conan remote add sv-offline /home/vscode/.sv/conan-offline-index --type=local-recipes-index \
  && conan remote disable sv-offline
 ENV VELOCITAS_OFFLINE=1
+# Per-run vehicle sandboxes (ADR-0057): the KUKSA databroker binary, spawned by the agent next to each app,
+# with its third-party licences and SBOM (Apache-2.0, NOTICE).
+COPY --from=kuksa-databroker /app/databroker /usr/local/bin/kuksa-databroker
+COPY --from=kuksa-databroker /app/thirdparty-licenses /usr/share/licenses/kuksa-databroker/
+COPY --from=kuksa-databroker /app/sbom.json /usr/share/licenses/kuksa-databroker/sbom.json
 COPY --from=agent /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=agent /src /src
 ENV SV_TOOLCHAIN_PORT=4210 SV_PROJECTS_DIR=/workspace/projects

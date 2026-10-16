@@ -9,7 +9,7 @@ import { sweep } from "./lifecycle.ts";
 import { EventHub } from "./events.ts";
 import { runGeneration } from "./pipeline.ts";
 import { PgRepo } from "./repo.ts";
-import { RunManager } from "./runs.ts";
+import { RunManager, runLimitsFromEnv } from "./runs.ts";
 
 const port = Number(process.env.SV_ORCHESTRATOR_PORT ?? 4030);
 const log = createLogger({ service: "orchestrator" });
@@ -70,6 +70,7 @@ const runs = new RunManager({
   clients,
   hub,
   databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"),
+  limits: runLimitsFromEnv(),
   log,
   metrics: { runEnded: (state, code) => runsEnded.inc({ state, code: code ?? "" }), traceEvents: (n) => traceEvents.inc({}, n) },
 });

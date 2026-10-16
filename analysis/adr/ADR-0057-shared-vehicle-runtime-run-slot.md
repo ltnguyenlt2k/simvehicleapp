@@ -138,6 +138,14 @@ flowchart LR
 - **Full luồng `@live` + README** (AGENTS §4 bước 7).
 
 ## Notes / Deviations
+- 2026-10-16 — **M17-T04 implement** (orchestrator, toolchain agent, contracts):
+  - Bật bằng `SV_RUN_SANDBOX=1`, mặc định `0` (giữ hành vi một run) cho tới khi M17-T05 định tuyến signal-gateway theo run.
+  - Databroker của sandbox bind `0.0.0.0:<cổng>` trong container toolchain. App dùng `127.0.0.1:<cổng>`. Signal-gateway (T05) dùng `Run.sandbox` = `toolchain-<lang>:<cổng>` trên `sv-internal`. Như vậy câu hỏi số 3 của spike được trả lời: không cần route qua agent.
+  - **Lệch so với checklist phase:**
+    - Restart orchestrator vẫn **dừng** mọi run còn active (`recover()` như M08), không giữ hạn của run còn sống. Agent dừng job ⇒ databroker của sandbox cũng dừng, nên không còn sandbox mồ côi.
+    - Giữ run qua restart cần theo dõi lại job đang chạy (follow từ seq cuối) — ghi nợ, chờ PO xác nhận nếu cần.
+  - **Quyền Stop/Extend:** BFF yêu cầu quyền write trên workspace của app (`authorizeProject`). Run của app khác ⇒ 404. Không thêm kiểm "chỉ chủ run", vì người cùng workspace có quyền write được phép theo phase.
+  - **Chưa kiểm:** VSS tuỳ biến trên sandbox và image toolchain có binary databroker. Image build ở CI; kiểm cùng gate T05/T07.
 - 2026-10-16 — **Spike M17-T04a PASS** trên stack dev (toolchain-cpp, không đổi image):
   - Binary `/app/databroker` của `ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0` (7,2 MB, ELF amd64) chạy được dạng tiến trình trong container toolchain.
     - Cờ dùng: `--insecure --enable-databroker-v1 --address 127.0.0.1 --port <p> --worker-threads 2 --vss <file>`.

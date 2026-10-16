@@ -25,6 +25,8 @@ services:
       SV_COMMIT: ${SV_COMMIT:-unknown}
       # Toolchain agent on :4210 (internal only): jobs for the orchestrator (ADR-0025).
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # Sandboxed runs (ADR-0057): each run's own databroker on a port of SV_SANDBOX_PORTS; at most SV_MAX_RUNS here.
+      SV_MAX_RUNS: ${SV_MAX_RUNS_TOTAL:-20}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
       SDV_MIDDLEWARE_TYPE: native
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
@@ -68,6 +70,8 @@ services:
       SV_COMMIT: ${SV_COMMIT:-unknown}
       # Toolchain agent on :4220 (internal only): jobs for the orchestrator (ADR-0025, ADR-0040 §4).
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # Sandboxed runs (ADR-0057): each run's own databroker on a port of SV_SANDBOX_PORTS; at most SV_MAX_RUNS here.
+      SV_MAX_RUNS: ${SV_MAX_RUNS_TOTAL:-20}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
       SDV_MIDDLEWARE_TYPE: native
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
@@ -97,6 +101,8 @@ services:
       SV_COMMIT: ${SV_COMMIT:-unknown}
       # Toolchain agent on :4230 (internal only).
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # Sandboxed runs (ADR-0057): each run's own databroker on a port of SV_SANDBOX_PORTS; at most SV_MAX_RUNS here.
+      SV_MAX_RUNS: ${SV_MAX_RUNS_TOTAL:-20}
       SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
       SV_CARGO_JOBS: ${SV_CARGO_JOBS:-2}
       SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555

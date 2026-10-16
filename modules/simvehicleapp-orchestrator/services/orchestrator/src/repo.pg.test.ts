@@ -51,6 +51,11 @@ describe.skipIf(!url)("PgRepo (schema sv on Postgres)", () => {
     expect(await repo.run("r2")).toMatchObject({ state: "running", jobId: "job-1", runningAt: 2_500 });
     await repo.updateRun("r2", { state: "crashed", exitCode: 139, finishedAt: 3_000, diagnostics: [{ code: "RUN_CRASHED" }] });
     expect(await repo.run("r2")).toMatchObject({ state: "crashed", exitCode: 139, finishedAt: 3_000, diagnostics: [{ code: "RUN_CRASHED" }] });
+    // Sandboxed run (ADR-0057): owner, own databroker, expiry, extensions, why it stopped.
+    await repo.createRun({ ...base, id: "r3", state: "starting", createdAt: 4_000, owner: { userId: "u1", workspaceId: "w1" } });
+    await repo.updateRun("r3", { state: "running", sandbox: "toolchain-cpp:56000", expiresAt: 9_000, extensions: 1 });
+    await repo.updateRun("r3", { state: "stopped", stopReason: "expired" });
+    expect(await repo.run("r3")).toMatchObject({ owner: { userId: "u1", workspaceId: "w1" }, sandbox: "toolchain-cpp:56000", expiresAt: 9_000, extensions: 1, stopReason: "expired" });
     const ev = (seq: number) => (seq % 2 ? { kind: "trace" as const, seq, body: { runId: "r2", seq, ts: seq, ev: "enter", wf: "gw_a", run: 1, node: "n2", blockId: "b2" } } : { kind: "log" as const, seq, body: { runId: "r2", seq, ts: seq, stream: "stdout" as const, level: "info" as const, msg: `m${seq}` } });
     await repo.appendRunEvents("r2", [0, 1, 2, 3].map(ev));
     await repo.appendRunEvents("r2", [3, 4].map(ev)); // a replayed event is ignored

@@ -65,6 +65,19 @@ tạo nhiều app thì đĩa đầy dần. Stack tự giới hạn và tự dọ
 
 Không đo được đĩa thì hệ thống cho qua và ghi log: người dùng không bị chặn chỉ vì phép đo lỗi.
 
+**Run nhiều người cùng lúc** (ADR-0057, M17-T04). Mặc định `SV_RUN_SANDBOX=0`: cả máy chỉ một run trên databroker dùng chung.
+Đặt `SV_RUN_SANDBOX=1` để mỗi run có databroker riêng (tiến trình trong container toolchain, cổng trong `SV_SANDBOX_PORTS`,
+mặc định 56000–56199). Theo số đo spike, mỗi run tốn ~7 MB cho databroker và ~13 MB cho app.
+
+> Giao diện Live/inject theo từng sandbox làm ở M17-T05. Trước khi xong T05, giữ `SV_RUN_SANDBOX=0`.
+
+| Biến | Mặc định | Khi chạm ngưỡng |
+|---|---|---|
+| `SV_MAX_RUNS_PER_USER` | 2 | Người dùng không chạy thêm app (409 `RUN_QUOTA_EXCEEDED`, scope `user`) |
+| `SV_MAX_RUNS_TOTAL` | 20 | Cả máy không chạy thêm app (scope `host`); cũng là trần `SV_MAX_RUNS` của mỗi toolchain |
+| `SV_RUN_MAX_MINUTES` | 30 | Run tự dừng (`stopReason: expired`); `0` = không giới hạn |
+| `SV_RUN_MAX_EXTENSIONS` | 3 | Extend, mỗi lần thêm `SV_RUN_MAX_MINUTES`, không quá số lần này |
+
 **Tự dọn** (orchestrator, mỗi `SV_SWEEP_INTERVAL_MIN` = 60 phút):
 - App `failed` cũ hơn `SV_FAILED_TTL_DAYS` (7 ngày) bị xoá.
 - App không SynCode/Run trong `SV_IDLE_CLEAN_DAYS` (14 ngày) bị **clean**: xoá thư mục build, giữ mã nguồn. Lần SynCode

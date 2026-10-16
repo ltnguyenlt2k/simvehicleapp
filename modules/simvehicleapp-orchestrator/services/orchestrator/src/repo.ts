@@ -107,6 +107,15 @@ export interface Run {
   createdAt: number;
   runningAt?: number;
   finishedAt?: number;
+  /** Who started it (from the studio BFF): run quotas per user (ADR-0057). */
+  owner?: { userId: string; workspaceId: string };
+  /** `host:port` of the run's own databroker on sv-internal (sandboxed runs). */
+  sandbox?: string;
+  /** When the run stops by itself (`SV_RUN_MAX_MINUTES` after it started; extended by Extend). */
+  expiresAt?: number;
+  extensions?: number;
+  /** Why it stopped: Stop by a user, expiry, an administrator. */
+  stopReason?: "user" | "expired" | "admin";
 }
 
 /** TraceEvent v1 (contracts trace-event). */
@@ -482,12 +491,17 @@ export class PgRepo implements Repo {
       createdAt: ms(r.created_at)!,
       ...(r.running_at ? { runningAt: ms(r.running_at) } : {}),
       ...(r.finished_at ? { finishedAt: ms(r.finished_at) } : {}),
+      ...(r.owner_user_id ? { owner: { userId: String(r.owner_user_id), workspaceId: String(r.owner_workspace_id ?? "") } } : {}),
+      ...(r.sandbox_address ? { sandbox: String(r.sandbox_address) } : {}),
+      ...(r.expires_at ? { expiresAt: ms(r.expires_at) } : {}),
+      ...(r.extensions ? { extensions: Number(r.extensions) } : {}),
+      ...(r.stop_reason ? { stopReason: r.stop_reason as Run["stopReason"] } : {}),
     };
   }
 
   async createRun(r: Run) {
-    await this.sql`INSERT INTO sv.run (id, project_id, generation_id, state, vss_release, trace_level, diagnostics, created_at)
-      VALUES (${r.id}, ${r.projectId}, ${r.generationId}, ${r.state}, ${r.vssRelease}, ${r.traceLevel}, ${r.diagnostics}, ${new Date(r.createdAt)})`;
+    await this.sql`INSERT INTO sv.run (id, project_id, generation_id, state, vss_release, trace_level, diagnostics, created_at, owner_user_id, owner_workspace_id)
+      VALUES (${r.id}, ${r.projectId}, ${r.generationId}, ${r.state}, ${r.vssRelease}, ${r.traceLevel}, ${r.diagnostics}, ${new Date(r.createdAt)}, ${r.owner?.userId ?? null}, ${r.owner?.workspaceId ?? null})`;
     return r;
   }
 
@@ -513,6 +527,10 @@ export class PgRepo implements Repo {
     if (patch.diagnostics !== undefined) set.diagnostics = patch.diagnostics;
     if (patch.runningAt !== undefined) set.running_at = new Date(patch.runningAt);
     if (patch.finishedAt !== undefined) set.finished_at = new Date(patch.finishedAt);
+    if (patch.sandbox !== undefined) set.sandbox_address = patch.sandbox;
+    if (patch.expiresAt !== undefined) set.expires_at = new Date(patch.expiresAt);
+    if (patch.extensions !== undefined) set.extensions = patch.extensions;
+    if (patch.stopReason !== undefined) set.stop_reason = patch.stopReason;
     if (Object.keys(set).length) await this.sql`UPDATE sv.run SET ${this.sql(set)} WHERE id = ${id}`;
   }
 

@@ -35,6 +35,7 @@ vi.mock('@sim/db', () => ({
   },
 }))
 
+import { POST as extendRun } from '@/app/api/sv/projects/[id]/runs/[rid]/extend/route'
 import { GET as getRun } from '@/app/api/sv/projects/[id]/runs/[rid]/route'
 import { POST } from '@/app/api/sv/projects/[id]/runs/route'
 import { POST as setSignal } from '@/app/api/sv/projects/[id]/signals/route'
@@ -78,7 +79,32 @@ describe('/api/sv/projects/[id]/runs + signals (M08-T08)', () => {
     const res = await POST(createMockRequest('POST', {}), ctx)
     expect(res.status).toBe(202)
     expect(mockCall.mock.calls[0][1]).toBe('/projects/p1/runs')
+    expect(mockCall.mock.calls[0][2].body).toEqual({
+      owner: { userId: 'user-1', workspaceId: 'ws-1' },
+    })
     expect((await res.json()).state).toBe('starting')
+  })
+
+  it('a reached run quota (ADR-0057) answers 409 RUN_QUOTA_EXCEEDED with its message', async () => {
+    mockCall.mockResolvedValueOnce(
+      reply(409, [
+        {
+          code: 'RUN_QUOTA_EXCEEDED',
+          severity: 'error',
+          stage: 'run',
+          message: 'You already have 2 apps running: the limit is 2. Stop one of them first.',
+          docs: 'diagnostics#RUN_QUOTA_EXCEEDED',
+          data: { scope: 'user', limit: 2, runs: [run('p_other')] },
+        },
+      ])
+    )
+    const res = await POST(createMockRequest('POST', {}), ctx)
+    expect(res.status).toBe(409)
+    const body = await res.json()
+    expect(body).toEqual({
+      error: 'You already have 2 apps running: the limit is 2. Stop one of them first.',
+      code: 'RUN_QUOTA_EXCEEDED',
+    })
   })
 
   it('a run of another project blocks the stack without revealing it', async () => {
@@ -95,6 +121,23 @@ describe('/api/sv/projects/[id]/runs + signals (M08-T08)', () => {
     expect(body.error).toContain('Another project is running')
     expect(JSON.stringify(body)).not.toContain('p_secret')
     expect(JSON.stringify(body)).not.toContain('r_1')
+  })
+
+  it('extends a run of the project; a refusal keeps its reason (ADR-0057)', async () => {
+    const rctx = { params: Promise.resolve({ id: 'p1', rid: 'r_1' }) }
+    mockCall
+      .mockResolvedValueOnce(reply(200, run('p1')))
+      .mockResolvedValueOnce(reply(409, { error: 'conflict', message: 'already extended 3 times' }))
+    const refused = await extendRun(createMockRequest('POST'), rctx)
+    expect(refused.status).toBe(409)
+    expect((await refused.json()).error).toContain('already extended')
+    mockCall
+      .mockResolvedValueOnce(reply(200, run('p1')))
+      .mockResolvedValueOnce(reply(200, run('p1', { expiresAt: 99, extensions: 1 })))
+    const ok = await extendRun(createMockRequest('POST'), rctx)
+    expect(ok.status).toBe(200)
+    expect(mockCall.mock.calls.at(-1)?.[1]).toBe('/runs/r_1/extend')
+    expect(await ok.json()).toMatchObject({ expiresAt: 99, extensions: 1 })
   })
 
   it("another project's run is not found", async () => {

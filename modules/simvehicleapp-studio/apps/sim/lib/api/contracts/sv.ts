@@ -702,6 +702,10 @@ export const svRunSchema = z.object({
   createdAt: z.number(),
   runningAt: z.number().optional(),
   finishedAt: z.number().optional(),
+  /** When the run stops by itself unless extended (ADR-0057, sandboxed runs). */
+  expiresAt: z.number().optional(),
+  extensions: z.number().int().optional(),
+  stopReason: z.enum(['user', 'expired', 'admin']).optional(),
 })
 
 export const svStartRunBodySchema = z.object({
@@ -746,6 +750,14 @@ export const svGetRunContract = defineRouteContract({
 export const svStopRunContract = defineRouteContract({
   method: 'POST',
   path: '/api/sv/projects/[id]/runs/[rid]/stop',
+  params: svRunParamsSchema,
+  response: { mode: 'json', schema: svRunSchema },
+})
+
+/** `POST /api/sv/projects/[id]/runs/[rid]/extend` — keep a sandboxed run longer (ADR-0057). */
+export const svExtendRunContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/runs/[rid]/extend',
   params: svRunParamsSchema,
   response: { mode: 'json', schema: svRunSchema },
 })
