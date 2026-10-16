@@ -10,6 +10,8 @@ import type {
 export interface SvAiToolCall {
   id: string
   name: string
+  /** Its result came (a step of the turn shows ✓ or ✕, M17-T06). */
+  done?: boolean
   isError?: boolean
 }
 
@@ -36,6 +38,8 @@ interface SvAssistantState {
   conversationId: string | null
   items: SvAiItem[]
   streaming: boolean
+  /** When the turn being streamed started (time waited, slow-model hint). */
+  turnStartedAt: number | null
   seq: number
   open: (workflowId: string) => void
   newConversation: () => void
@@ -55,6 +59,7 @@ const initialState = {
   conversationId: null as string | null,
   items: [] as SvAiItem[],
   streaming: false,
+  turnStartedAt: null as number | null,
   seq: 0,
 }
 
@@ -79,6 +84,7 @@ export const useSvAssistantStore = create<SvAssistantState>()(
       startTurn: (text) =>
         set((s) => ({
           streaming: true,
+          turnStartedAt: Date.now(),
           seq: s.seq + 1,
           items: text ? [...s.items, { kind: 'user', key: `u${s.seq + 1}`, text }] : s.items,
         })),
@@ -106,7 +112,9 @@ export const useSvAssistantStore = create<SvAssistantState>()(
                     ? {
                         ...it,
                         tools: it.tools.map((t) =>
-                          t.id === event.data.id ? { ...t, isError: event.data.isError } : t
+                          t.id === event.data.id
+                            ? { ...t, done: true, isError: event.data.isError }
+                            : t
                         ),
                       }
                     : it
@@ -136,12 +144,17 @@ export const useSvAssistantStore = create<SvAssistantState>()(
                 items: [...s.items, { kind: 'error', key, text: event.data.message }],
               }
             case 'done':
-              return { conversationId: event.data.conversationId, streaming: false }
+              return {
+                conversationId: event.data.conversationId,
+                streaming: false,
+                turnStartedAt: null,
+              }
           }
         }),
       endTurn: (error) =>
         set((s) => ({
           streaming: false,
+          turnStartedAt: null,
           seq: s.seq + 1,
           items: error
             ? [...s.items, { kind: 'error', key: `e${s.seq + 1}`, text: error }]
@@ -168,7 +181,11 @@ export const useSvAssistantStore = create<SvAssistantState>()(
                   kind: 'assistant',
                   key: `h${i}`,
                   text: m.text,
-                  tools: (m.tools ?? []).map((t, j) => ({ id: `h${i}-${j}`, name: t.name })),
+                  tools: (m.tools ?? []).map((t, j) => ({
+                    id: `h${i}-${j}`,
+                    name: t.name,
+                    done: true,
+                  })),
                 }
           )
           if (conversation.pending) {

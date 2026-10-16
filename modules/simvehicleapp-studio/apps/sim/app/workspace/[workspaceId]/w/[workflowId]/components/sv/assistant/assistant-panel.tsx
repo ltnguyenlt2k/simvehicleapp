@@ -1,9 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Check, Loader2, Minus, X } from 'lucide-react'
 import { Badge, Button, ChipTextarea } from '@/components/emcn'
 import type { SvAiPendingAction } from '@/lib/api/contracts/sv-ai'
 import { cn } from '@/lib/core/utils/cn'
+import {
+  toolLabel,
+  toolStepState,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/assistant-steps'
+import { AssistantThinking } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/assistant-thinking'
 import { useAssistant } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/use-assistant'
 import { useSvAiConversations, useSvAiStatus } from '@/hooks/queries/sv-ai'
 import { type SvAiItem, useSvAssistantStore } from '@/stores/sv/assistant/store'
@@ -25,11 +31,14 @@ export function SvAssistantPanel() {
   )
   const items = useSvAssistantStore((s) => s.items)
   const streaming = useSvAssistantStore((s) => s.streaming)
+  const turnStartedAt = useSvAssistantStore((s) => s.turnStartedAt)
   const conversationId = useSvAssistantStore((s) => s.conversationId)
   const { data: status, isLoading } = useSvAiStatus()
   const { data: conversations } = useSvAiConversations(workflowId ?? undefined)
   const { send, decide, stop, preview, openConversation } = useAssistant()
   const [draft, setDraft] = useState('')
+  /** Items after the user's last message belong to the turn being streamed. */
+  const lastUser = items.reduce((last, it, i) => (it.kind === 'user' ? i : last), -1)
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -111,19 +120,23 @@ export function SvAssistantPanel() {
             ) : null}
           </div>
         )}
-        {items.map((item) => (
+        {items.map((item, i) => (
           <AssistantItem
             key={item.key}
             item={item}
             streaming={streaming}
+            live={streaming && i === items.length - 1}
+            inTurn={streaming && i > lastUser}
             onPreview={preview}
             onDecide={decide}
           />
         ))}
         {streaming && (
-          <div className='text-[var(--text-muted)] text-small' data-sv-assistant='thinking'>
-            Working…
-          </div>
+          <AssistantThinking
+            startedAt={turnStartedAt ?? Date.now()}
+            provider={status.provider ?? ''}
+            model={status.model ?? ''}
+          />
         )}
       </div>
 
@@ -168,6 +181,10 @@ export function SvAssistantPanel() {
 interface AssistantItemProps {
   item: SvAiItem
   streaming: boolean
+  /** The item being streamed now (its text grows behind a caret). */
+  live: boolean
+  /** Part of the turn being streamed: its tool calls without a result are running steps. */
+  inTurn: boolean
   onPreview: (item: SvAiItem & { kind: 'proposal' }) => void
   onDecide: (
     action: SvAiPendingAction,
@@ -176,7 +193,9 @@ interface AssistantItemProps {
   ) => void
 }
 
-function AssistantItem({ item, streaming, onPreview, onDecide }: AssistantItemProps) {
+const STEP_ICON = { running: Loader2, done: Check, failed: X, stopped: Minus } as const
+
+function AssistantItem({ item, streaming, live, inTurn, onPreview, onDecide }: AssistantItemProps) {
   switch (item.kind) {
     case 'user':
       return (
@@ -191,22 +210,47 @@ function AssistantItem({ item, streaming, onPreview, onDecide }: AssistantItemPr
       return (
         <div className='flex flex-col gap-1' data-sv-ai-message='assistant'>
           {item.tools.length > 0 && (
-            <div className='flex flex-wrap gap-1'>
-              {item.tools.map((t) => (
-                <Badge
-                  key={t.id}
-                  variant={t.isError ? 'red' : 'outline'}
-                  size='sm'
-                  data-sv-ai-tool={t.name}
-                >
-                  {t.name}
-                </Badge>
-              ))}
-            </div>
+            <ul className='flex flex-col gap-0.5' data-sv-ai-steps>
+              {item.tools.map((t) => {
+                const state = toolStepState(t, inTurn)
+                const Icon = STEP_ICON[state]
+                return (
+                  <li
+                    key={t.id}
+                    data-sv-ai-tool={t.name}
+                    data-sv-ai-step={state}
+                    title={t.name}
+                    className={cn(
+                      'flex items-center gap-1.5 text-caption',
+                      state === 'failed'
+                        ? 'text-[var(--text-error)]'
+                        : 'text-[var(--text-secondary)]'
+                    )}
+                  >
+                    <Icon
+                      aria-hidden
+                      className={cn(
+                        'size-[12px] shrink-0',
+                        state === 'running' && 'animate-spin motion-reduce:animate-none',
+                        state === 'done' && 'text-[var(--text-success)]'
+                      )}
+                    />
+                    {toolLabel(t.name)}
+                  </li>
+                )
+              })}
+            </ul>
           )}
           {item.text && (
             <div className='whitespace-pre-wrap text-[var(--text-primary)] text-small'>
               {item.text}
+              {live && (
+                <span
+                  aria-hidden
+                  data-sv-assistant='caret'
+                  className='ml-0.5 inline-block h-[1em] w-[2px] animate-caret-blink bg-[var(--text-primary)] align-text-bottom motion-reduce:animate-none'
+                />
+              )}
             </div>
           )}
         </div>

@@ -115,6 +115,8 @@ async function mockAssistant(page: Page, m: Mocks) {
         ]),
       })
     }
+    // Turn 3: a model that does not answer (M17-T06) — the panel shows it is thinking until Stop.
+    if (m.chats.length === 3) return new Promise<void>(() => {})
     // Turn 2: run the app — a sensitive tool, so the turn ends waiting for a confirmation.
     return route.fulfill({
       headers: { 'content-type': 'text/event-stream' },
@@ -181,7 +183,10 @@ test.describe('M10 Assistant panel', () => {
     await expect(panel.locator('[data-sv-ai-message="assistant"]')).toContainText(
       'Adding a log after the trigger.'
     )
-    await expect(panel.locator('[data-sv-ai-tool="workflow_propose_patch"]')).toBeVisible()
+    // Tool calls are steps in words, ✓ once their result came (M17-T06).
+    const step = panel.locator('[data-sv-ai-tool="workflow_propose_patch"]')
+    await expect(step).toHaveText('Preparing a change to the workflow')
+    await expect(step).toHaveAttribute('data-sv-ai-step', 'done')
     expect(m.chats[0]).toMatchObject({ projectId: PROJECT_ID, graph: { workflowId: m.workflowId } })
 
     const card = panel.locator('[data-sv-ai-proposal]')
@@ -219,5 +224,18 @@ test.describe('M10 Assistant panel', () => {
         editedInput: { projectId: 'p_ai', note: 'edited' },
       }),
     ])
+
+    // A turn the model takes long on: Thinking, the time waited, then Stop ends it (M17-T06).
+    await panel.getByRole('textbox', { name: 'Message the assistant' }).fill('Explain the workflow')
+    await panel.locator('[data-sv-assistant="send"]').click()
+    const thinking = panel.locator('[data-sv-assistant="thinking"]')
+    await expect(thinking).toContainText('Thinking')
+    await expect(thinking.locator('[data-sv-assistant="elapsed"]')).toHaveText(/^[2-9] s$/, {
+      timeout: 10_000,
+    })
+    await panel.locator('[data-sv-assistant="stop"]').click()
+    await expect(thinking).toHaveCount(0)
+    await expect(panel.locator('[data-sv-ai-message="error"]').last()).toHaveText('Stopped.')
+    await expect(panel.locator('[data-sv-assistant="send"]')).toBeVisible()
   })
 })

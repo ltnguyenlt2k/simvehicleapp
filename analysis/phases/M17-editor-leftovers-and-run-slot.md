@@ -93,20 +93,26 @@
 - [ ] Gate trên stack (`gate/m17-runtime.sh` đã viết): hai user cùng v4.0 song song, mỗi người inject và nhận đúng output của mình; hết hạn tự dừng; quota chặn đúng.
 
 ### T06: Trợ lý "đang suy nghĩ"
-- [ ] Thay chữ tĩnh "Working…" (`assistant-panel.tsx`):
+> 2026-10-16 (Claude Code):
+> - `assistant-thinking.tsx`: icon `ring-pulse`, chữ `thinking-block`, 3 chấm; dùng keyframes sẵn có, không sửa global style.
+> - `assistant-steps.ts`: nhãn tool, trạng thái bước.
+> - Caret `caret-blink`; thời gian chờ; gợi ý chậm sau 30 s.
+> - Stop: abort fetch ⇒ BFF relay ⇒ `req.signal` của ai-assistant huỷ lượt (có từ M10). Đề xuất chỉ là proposal, không tự áp.
+> - Test: vitest store/steps/thinking (reduced-motion), E2E `m10-assistant` (bước ✓, Thinking + thời gian, Stop).
+- [x] Thay chữ tĩnh "Working…" (`assistant-panel.tsx`):
   - biểu tượng trợ lý có vòng sáng nhấp nháy + 3 chấm chạy;
   - chữ "Thinking…" có hiệu ứng shimmer, dùng token màu sẵn có;
   - tắt animation khi `prefers-reduced-motion`.
-- [ ] Danh sách bước theo sự kiện thật: `tool` ⇒ dòng mới có spinner với nhãn dễ hiểu (bảng ánh xạ tên tool → nhãn; tool lạ ⇒ tên tool); `tool_result` ⇒ ✓ / ✕.
-- [ ] Chữ trả lời hiện dần theo `text` delta, có con trỏ nhấp nháy.
-- [ ] Thời gian đã chờ; sau 30 s gợi ý "Model đang trả lời chậm" + provider/model.
-- [ ] Nút **Stop**: abort request; server huỷ lượt, không áp đề xuất dở dang.
-- [ ] Không hiển thị chuỗi suy nghĩ nội bộ của model.
-- [ ] Vitest:
+- [x] Danh sách bước theo sự kiện thật: `tool` ⇒ dòng mới có spinner với nhãn dễ hiểu (bảng ánh xạ tên tool → nhãn; tool lạ ⇒ tên tool); `tool_result` ⇒ ✓ / ✕.
+- [x] Chữ trả lời hiện dần theo `text` delta, có con trỏ nhấp nháy.
+- [x] Thời gian đã chờ; sau 30 s gợi ý "Model đang trả lời chậm" + provider/model.
+- [x] Nút **Stop**: abort request; server huỷ lượt, không áp đề xuất dở dang.
+- [x] Không hiển thị chuỗi suy nghĩ nội bộ của model.
+- [x] Vitest:
   - ánh xạ nhãn; trạng thái bước ✓/✕;
   - reduced-motion;
   - Stop huỷ request.
-- [ ] E2E: fake provider có độ trễ ⇒ thấy Thinking…, bước, thời gian; Stop.
+- [x] E2E: fake provider có độ trễ ⇒ thấy Thinking…, bước, thời gian; Stop.
 
 ### T08: Kiểm logic trên UI — ↷ chuyển sang M18-T05 (ADR-0058)
 - [ ] `graphSignalPaths` thêm mọi `<Vehicle.…>` trong biểu thức/template (dùng chung parser với `lib/sv/block-refs`); test.

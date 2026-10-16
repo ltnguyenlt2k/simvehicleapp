@@ -40,8 +40,27 @@ describe('assistant store (M10-T08)', () => {
     expect(items.map((i) => i.kind)).toEqual(['user', 'assistant', 'proposal'])
     expect(items[1]).toMatchObject({
       text: 'Looking.',
-      tools: [{ name: 'vss_search', isError: true }],
+      tools: [{ name: 'vss_search', done: true, isError: true }],
     })
+  })
+
+  it('the turn knows when it started (time waited) and a tool runs until its result (M17-T06)', () => {
+    const s = useSvAssistantStore.getState()
+    s.open('wf')
+    const before = Date.now()
+    s.startTurn('Add a log')
+    expect(useSvAssistantStore.getState().turnStartedAt).toBeGreaterThanOrEqual(before)
+    s.apply({ event: 'tool', data: { id: 't1', name: 'workflow_get', input: {} } })
+    const running = useSvAssistantStore.getState().items[1]
+    expect(running.kind === 'assistant' && running.tools[0].done).toBeFalsy()
+    s.apply({
+      event: 'tool_result',
+      data: { id: 't1', name: 'workflow_get', isError: false, text: 'ok' },
+    })
+    const done = useSvAssistantStore.getState().items[1]
+    expect(done.kind === 'assistant' && done.tools[0]).toMatchObject({ done: true, isError: false })
+    s.endTurn('Stopped.')
+    expect(useSvAssistantStore.getState()).toMatchObject({ streaming: false, turnStartedAt: null })
   })
 
   it('a newer proposal supersedes an unseen one; actions are marked by id; switching workflow starts over', () => {
