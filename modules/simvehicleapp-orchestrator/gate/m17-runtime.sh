@@ -4,7 +4,8 @@
 # per-user quota refuses a second app, Extend moves the time limit, a run stops by itself at its limit, and the
 # toolchain reaps every databroker (no zombie). The orchestrator is restarted with gate limits (SV_RUN_SANDBOX=1,
 # 45 s limit) and restored on exit; the gate's runs are stopped and its apps deleted on exit (SV_KEEP_APPS=1 keeps
-# them). Other apps and runs are not touched.
+# them). Other apps are not touched; restarting the orchestrator stops runs left active, as any restart does — run
+# the gate when nobody runs an app.
 #   modules/simvehicleapp-orchestrator/gate/m17-runtime.sh [slug]
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
