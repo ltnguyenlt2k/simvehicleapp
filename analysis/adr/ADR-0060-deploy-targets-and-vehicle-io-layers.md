@@ -59,6 +59,7 @@
    - Module tương lai "vehicle-io", có ADR riêng khi có phần cứng và nhu cầu.
    - M18 chỉ cung cấp target Remote databroker để nối với provider có sẵn.
    - VSS tuỳ biến (ADR-0052) mô tả tín hiệu riêng của OEM khớp DBC.
+6. **Kiểm tương thích trước khi deploy:** nút **Test connection** kiểm kết nối, TLS/token, phiên bản API (v1/v2), release VSS của target (metadata), và path mà app dùng có tồn tại ở target.
 7. **Kiến trúc chạy Deploy** (bổ sung 2026-10-16, design M18 §9.1–9.2):
    - **App chạy trong SimVehicleApp** (sandbox tiến trình, ADR-0057); `SDV_VEHICLEDATABROKER_ADDRESS` trỏ tới **vehicle-gateway**, service mới trong compose.
    - **vehicle-gateway** là proxy gRPC/HTTP2 theo deployment: TLS + token tới target (app không cần biết), lọc **theo method** (mặc định từ chối), audit.
@@ -70,7 +71,6 @@
 8. **Ràng buộc API:** app C++ sinh ra (Velocitas SDK 0.7.1) dùng **`sdv.databroker.v1`**; databroker 0.5.0 của stack chạy `--enable-databroker-v1`.
    - Target phải phục vụ API này, hoặc chờ chuyển API theo ADR-0047.
    - Test connection báo rõ nếu không tương thích.
-6. **Kiểm tương thích trước khi deploy:** nút **Test connection** kiểm kết nối, TLS/token, phiên bản API (v1/v2), release VSS của target (metadata), và path mà app dùng có tồn tại ở target.
 
 ## Diagram
 ```mermaid
