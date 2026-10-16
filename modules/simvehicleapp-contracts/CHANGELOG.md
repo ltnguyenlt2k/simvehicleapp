@@ -1,7 +1,8 @@
 # Changelog
 
 ## Unreleased
-- `openapi/orchestrator.v1.yaml` (additive, ADR-0057, M17-T04): `startRun` body `owner {userId, workspaceId}`; `Run.owner`, `sandbox`, `expiresAt`, `extensions`, `stopReason`; `POST /runs/{rid}/extend`; with `SV_RUN_SANDBOX=1` the start answers 409 with a diagnostics array `RUN_QUOTA_EXCEEDED` (new in the catalog) when a quota is reached.
+- `openapi/signal-gateway.v1.yaml` (additive, ADR-0057, M17-T05): optional `sandbox` (`toolchain-<lang>:<port>`, a run's own databroker) on `/signals`, `/snapshot`, `/mirror`, `/play`; mirror and playback per sandbox; `PUT /mirror` with `sandbox` and no paths releases it.
+- `openapi/orchestrator.v1.yaml` (additive, ADR-0057, M17-T04): `startRun` body `owner {userId, workspaceId}`; `Run.owner`, `sandbox`, `expiresAt`, `extensions`, `stopReason`; `POST /runs/{rid}/extend`; `GET /runs?ownerUserId=` and `limits` in its response; `GET /capacity` `runs` (apps running against the run quota); `stopRun` optional body `reason` (user|admin); with `SV_RUN_SANDBOX=1` the start answers 409 with a diagnostics array `RUN_QUOTA_EXCEEDED` (new in the catalog) when a quota is reached.
 - `schemas/toolchain-job.v1` (additive, ADR-0057, M17-T04): `options.sandbox` (run on a databroker of its own) and `sandbox.address` on the job.
 - `openapi/orchestrator.v1.yaml` (additive, M16-T10): `POST /sweep` — runs the sweeper now and answers what it did (409 while one runs).
 - `openapi/orchestrator.v1.yaml` (additive, M16-T03): `Project.createdAt`/`updatedAt`; `POST /projects/{id}/generations` answers 409 `not_ready` for an app still creating or failed; `PUT /projects/{id}/workflows` answers 409 `APP_QUOTA_EXCEEDED` over the per-app workflow limit.

@@ -8,6 +8,7 @@ import { formatFileSize } from '@/lib/uploads/utils/file-utils'
 import { AppActions } from '@/app/workspace/[workspaceId]/vehicle-projects/components/app-actions'
 import { GeneratedFiles } from '@/app/workspace/[workspaceId]/vehicle-projects/components/generated-files'
 import { useSvProjectSize, useUpdateSvProjectWorkflows } from '@/hooks/queries/sv-projects'
+import { activeRunOf, useSvRuns } from '@/hooks/queries/sv-runs'
 import { useSvWorkflowSettings } from '@/hooks/queries/sv-workflow-settings'
 
 const STATUS = {
@@ -46,6 +47,8 @@ interface ProjectCardProps {
 export function ProjectCard({ project, workspaceId, workflows, canEdit }: ProjectCardProps) {
   const updateWorkflows = useUpdateSvProjectWorkflows()
   const { data: size } = useSvProjectSize(project.id, project.status === 'ready')
+  const { data: runs } = useSvRuns(project.status === 'ready' ? project.id : undefined)
+  const running = activeRunOf(runs)
   const [showFiles, setShowFiles] = useState(false)
   const existing = new Set(workflows.map((w) => w.id))
   const assigned = new Set(
@@ -87,6 +90,20 @@ export function ProjectCard({ project, workspaceId, workflows, canEdit }: Projec
         <Badge variant={status.variant} size='sm' data-sv='project-status'>
           {status.label}
         </Badge>
+        {running && (
+          <Badge
+            variant='green'
+            size='sm'
+            data-sv='project-running'
+            title={`The app is ${running.state} on VSS ${running.vssRelease}`}
+          >
+            {running.state === 'running'
+              ? 'Running'
+              : running.state === 'starting'
+                ? 'Starting'
+                : 'Stopping'}
+          </Badge>
+        )}
         {project.status === 'ready' && assigned.size === 0 && (
           <Badge variant='gray' size='sm' data-sv='project-unused'>
             Unused

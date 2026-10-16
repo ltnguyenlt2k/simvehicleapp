@@ -8,21 +8,29 @@ import { toDatapoint } from "./values.ts";
 /**
  * HTTP surface of the signal-gateway (`openapi/signal-gateway.v1.yaml`): SSE of signal updates,
  * inject, actuator mirroring (target → current, the provider role in dev runs) and scenario playback.
- * Every path must belong to the release catalog (analysis/08 §4).
+ * Every path must belong to the release catalog (analysis/08 §4). With `sandbox` (ADR-0057, M17-T05) a call goes to the
+ * databroker of one run (`toolchain-<lang>:<port>`) instead of the release's shared one; mirrors and playbacks are per
+ * sandbox, so runs of several users never touch each other's signals.
  */
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 const rejected = (status: number, error: string, message: string) => json(status, { error, message });
 const RELEASE = /^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/;
+const SANDBOX = /^toolchain-(cpp|python|rust):[0-9]{2,5}$/;
 const MAX_PATHS = 200;
 const HEARTBEAT_MS = 15_000;
 const validator = new ContractValidator();
 
 export interface GatewayDeps {
-  /** Databroker of a release (SV_DATABROKERS), or undefined when the stack has none for it. */
-  broker(release: string): Broker | undefined;
+  /** Databroker of a release (SV_DATABROKERS) or of a run's sandbox; undefined when the stack has none for it. */
+  broker(release: string, sandbox?: string): Broker | undefined;
+  /** The run ended (its mirror was cleared): close the connection to its sandbox. */
+  forget?(sandbox: string): void;
   catalog: Catalog;
+  /** Playbacks on the shared databrokers. */
   player: Player;
+  /** Playbacks on a run's sandbox (one player per sandbox). */
+  sandboxPlayer?(sandbox: string): Player;
   newId(): string;
   now?: () => number;
   heartbeatMs?: number;
@@ -35,9 +43,14 @@ class Mirror {
   private cancel: (() => void) | null = null;
   paths: string[] = [];
 
-  set(r: Resolved, paths: string[], log: RequestContext["log"]) {
+  clear() {
     this.cancel?.();
     this.cancel = null;
+    this.paths = [];
+  }
+
+  set(r: Resolved, paths: string[], log: RequestContext["log"]) {
+    this.clear();
     this.paths = paths;
     if (!paths.length) return;
     this.cancel = r.broker.subscribe(
@@ -58,11 +71,21 @@ class Mirror {
 export function createGatewayHandler(d: GatewayDeps) {
   const now = d.now ?? Date.now;
   const mirrors = new Map<string, Mirror>();
+  const players = new Map<string, Player>();
+  const playerOf = (sandbox: string | undefined): Player | Response => {
+    if (!sandbox) return d.player;
+    if (!SANDBOX.test(sandbox)) return rejected(400, "invalid_request", "sandbox must be toolchain-<lang>:<port>");
+    if (!d.sandboxPlayer) return rejected(503, "no_databroker", "sandboxed runs are not enabled in this gateway");
+    let p = players.get(sandbox);
+    if (!p) players.set(sandbox, (p = d.sandboxPlayer(sandbox)));
+    return p;
+  };
 
-  const resolve = async (release: string | null, paths: readonly string[] = []): Promise<Resolved | Response> => {
+  const resolve = async (release: string | null, paths: readonly string[] = [], sandbox?: string | null): Promise<Resolved | Response> => {
     if (!release || !RELEASE.test(release)) return rejected(400, "invalid_request", "release (vX.Y or vX.Y-<name>) is required");
-    const broker = d.broker(release);
-    if (!broker) return rejected(503, "no_databroker", `the stack has no databroker for VSS ${release}`);
+    if (sandbox != null && !SANDBOX.test(sandbox)) return rejected(400, "invalid_request", "sandbox must be toolchain-<lang>:<port>");
+    const broker = d.broker(release, sandbox ?? undefined);
+    if (!broker) return rejected(503, "no_databroker", sandbox ? `the run's databroker ${sandbox} is not reachable` : `the stack has no databroker for VSS ${release}`);
     try {
       return { broker, signals: await d.catalog.signalsWith(release, paths) };
     } catch (e) {
@@ -86,7 +109,7 @@ export function createGatewayHandler(d: GatewayDeps) {
 
     if (url.pathname === "/signals" && req.method === "GET") {
       const paths = pathList();
-      const r = await resolve(q.get("release"), paths);
+      const r = await resolve(q.get("release"), paths, q.get("sandbox"));
       if (r instanceof Response) return r;
       const bad = checkPaths(r, paths);
       if (bad) return rejected(400, "invalid_request", bad);
@@ -136,7 +159,7 @@ export function createGatewayHandler(d: GatewayDeps) {
 
     if (url.pathname === "/snapshot" && req.method === "GET") {
       const paths = pathList();
-      const r = await resolve(q.get("release"), paths);
+      const r = await resolve(q.get("release"), paths, q.get("sandbox"));
       if (r instanceof Response) return r;
       const bad = checkPaths(r, paths);
       if (bad) return rejected(400, "invalid_request", bad);
@@ -149,9 +172,9 @@ export function createGatewayHandler(d: GatewayDeps) {
     }
 
     if (url.pathname === "/signals" && req.method === "POST") {
-      const b = (await req.json().catch(() => null)) as { release?: string; path?: string; value?: unknown; field?: Field } | null;
+      const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; path?: string; value?: unknown; field?: Field } | null;
       if (!b || typeof b.path !== "string" || !("value" in b) || (b.field !== "value" && b.field !== "target")) return rejected(400, "invalid_request", "release, path, value and field (value|target) are required");
-      const r = await resolve(b.release ?? null, [b.path]);
+      const r = await resolve(b.release ?? null, [b.path], b.sandbox);
       if (r instanceof Response) return r;
       const meta = r.signals.get(b.path);
       if (!meta) return rejected(400, "invalid_request", `${b.path} is not a signal of VSS ${b.release}`);
@@ -168,40 +191,56 @@ export function createGatewayHandler(d: GatewayDeps) {
     }
 
     if (url.pathname === "/mirror" && req.method === "PUT") {
-      const b = (await req.json().catch(() => null)) as { release?: string; paths?: unknown } | null;
+      const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; paths?: unknown } | null;
       if (!b || !Array.isArray(b.paths) || !b.paths.every((p) => typeof p === "string")) return rejected(400, "invalid_request", "release and paths are required");
       const paths = [...new Set(b.paths as string[])];
-      const r = await resolve(b.release ?? null, paths);
+      const key = b.sandbox ?? b.release!;
+      if (b.sandbox && !paths.length) {
+        // The run ended: stop its mirror and playback and drop the connection to its databroker.
+        if (!SANDBOX.test(b.sandbox)) return rejected(400, "invalid_request", "sandbox must be toolchain-<lang>:<port>");
+        mirrors.get(key)?.clear();
+        mirrors.delete(key);
+        players.get(key)?.stop();
+        players.delete(key);
+        d.forget?.(b.sandbox);
+        ctx.log.info("sandbox released", { sandbox: b.sandbox });
+        return new Response(null, { status: 204 });
+      }
+      const r = await resolve(b.release ?? null, paths, b.sandbox);
       if (r instanceof Response) return r;
       const notActuator = paths.find((p) => r.signals.get(p)?.type !== "actuator");
       if (notActuator) return rejected(400, "invalid_request", `${notActuator} is not an actuator of VSS ${b.release}`);
-      const m = mirrors.get(b.release!) ?? new Mirror();
-      mirrors.set(b.release!, m);
+      const m = mirrors.get(key) ?? new Mirror();
+      mirrors.set(key, m);
       m.set(r, paths, ctx.log);
-      ctx.log.info("mirror updated", { release: b.release, paths: paths.length });
+      ctx.log.info("mirror updated", { release: b.release, ...(b.sandbox ? { sandbox: b.sandbox } : {}), paths: paths.length });
       return new Response(null, { status: 204 });
     }
 
     if (url.pathname === "/play") {
-      if (req.method === "GET") return d.player.playback ? json(200, d.player.playback) : rejected(404, "not_found", "nothing played yet");
-      if (req.method === "DELETE") {
-        d.player.stop();
+      if (req.method === "GET" || req.method === "DELETE") {
+        const p = playerOf(q.get("sandbox") ?? undefined);
+        if (p instanceof Response) return p;
+        if (req.method === "GET") return p.playback ? json(200, p.playback) : rejected(404, "not_found", "nothing played yet");
+        p.stop();
         return new Response(null, { status: 204 });
       }
       if (req.method === "POST") {
-        const b = (await req.json().catch(() => null)) as { release?: string; scenario?: Scenario } | null;
+        const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; scenario?: Scenario } | null;
         if (!b?.scenario || !validator.validate("scenario", b.scenario).valid) return rejected(400, "invalid_request", "release and a scenario v1 are required");
         // Every signal value is checked before anything is written.
         const sets = [...Object.entries(b.scenario.initial ?? {}).map(([path, value]) => ({ path, value })), ...b.scenario.inputs.filter((i) => i.path).map((i) => ({ path: i.path!, value: i.value }))];
-        const r = await resolve(b.release ?? null, sets.map((x) => x.path));
+        const r = await resolve(b.release ?? null, sets.map((x) => x.path), b.sandbox);
         if (r instanceof Response) return r;
+        const player = playerOf(b.sandbox);
+        if (player instanceof Response) return player;
         for (const s of sets) {
           const meta = r.signals.get(s.path);
           if (!meta) return rejected(400, "invalid_request", `${s.path} is not a signal of VSS ${b.release}`);
           const dp = toDatapoint(meta, s.value);
           if (!dp.ok) return rejected(400, "invalid_value", dp.message);
         }
-        const { playback } = d.player.play(d.newId(), b.release!, b.scenario);
+        const { playback } = player.play(d.newId(), b.release!, b.scenario);
         ctx.log.info("scenario playing", { release: b.release, name: b.scenario.name, inputs: playback.total });
         return json(202, playback);
       }
@@ -210,7 +249,7 @@ export function createGatewayHandler(d: GatewayDeps) {
   };
 }
 
-/** The player's writes: through the same checks as an inject. */
+/** The player's writes: through the same checks as an inject (a sandbox player's `broker` answers the run's databroker). */
 export function playerSet(broker: (release: string) => Broker | undefined, catalog: Catalog) {
   return async (release: string, path: string, field: Field, value: unknown) => {
     const b = broker(release);

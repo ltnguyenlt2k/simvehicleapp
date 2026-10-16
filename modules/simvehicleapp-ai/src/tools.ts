@@ -25,6 +25,9 @@ export const SAFE_TOOL_NAMES = new Set([
 export const SENSITIVE_TOOL_NAMES = new Set(["project_syncode", "run_start", "run_stop", "signal_set"]);
 
 /** What the studio sends with a chat turn: the workflow open in the editor and its project. */
+const OWNER_ID = /^[A-Za-z0-9_-]{1,128}$/;
+const SANDBOX = /^toolchain-(cpp|python|rust):[0-9]{2,5}$/;
+
 export interface ToolContext {
   userId: string;
   conversationId: string;
@@ -415,9 +418,18 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
       async run(input, ctx) {
         const id = projectId(ctx, input);
         if (!id) return err("projectId is required.");
-        const run = (await services.post("orchestrator", `/projects/${id}/runs`, {})) as { id: string; state: string };
+        let run: { id: string; state: string; sandbox?: string };
+        try {
+          // The user the assistant acts for owns the run (per-user run quota, ADR-0057).
+          run = (await services.post("orchestrator", `/projects/${id}/runs`, OWNER_ID.test(ctx.userId) ? { owner: { userId: ctx.userId } } : {})) as typeof run;
+        } catch (e) {
+          const quota = e instanceof ServiceError && e.status === 409 && Array.isArray(e.body) ? (e.body as { code?: string; message?: string; data?: { runs?: { id: string; projectId: string }[] } }[]).find((d) => d.code === "RUN_QUOTA_EXCEEDED") : undefined;
+          if (!quota) throw e;
+          const own = quota.data?.runs ?? [];
+          return err(`${quota.message ?? "The run quota is reached."}${own.length ? ` Running now: ${own.map((r) => `${r.id} (app ${r.projectId})`).join(", ")} — stop one with run_stop, then start again.` : ""}`);
+        }
         const project = (await services.get("orchestrator", `/projects/${id}`).catch(() => null)) as { editor?: { url: string } } | null;
-        return { text: `Run ${run.id} is ${run.state}.`, structured: { runId: run.id, state: run.state, ...(project?.editor ? { editorUrl: project.editor.url } : {}) } };
+        return { text: `Run ${run.id} is ${run.state}${run.sandbox ? " on a vehicle databroker of its own (signals you set reach only this run)" : ""}.`, structured: { runId: run.id, state: run.state, ...(project?.editor ? { editorUrl: project.editor.url } : {}) } };
       },
     },
     {
@@ -441,8 +453,11 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         const pid = projectId(ctx, input);
         const project = !str(input.release) && pid && !ctx.project ? ((await services.get("orchestrator", `/projects/${encodeURIComponent(pid)}`).catch(() => null)) as { vssRelease?: string } | null) : null;
         const release = str(input.release) ?? project?.vssRelease ?? releaseOf(ctx, input);
-        const r = (await services.post("signalGateway", "/signals", { release, path: input.path, value: input.value, field: str(input.field) ?? "value" })) as { path: string; value: unknown; ts: number };
-        return { text: `${r.path} = ${JSON.stringify(r.value)} on VSS ${release}.`, structured: { path: r.path, value: r.value, ts: r.ts } };
+        // The app's own databroker while it runs in a sandbox (ADR-0057); else the release's shared one.
+        const active = pid ? ((await services.get("orchestrator", `/runs?projectId=${encodeURIComponent(pid)}&active=true`).catch(() => null)) as { runs?: { sandbox?: string }[] } | null) : null;
+        const sandbox = active?.runs?.find((x) => typeof x.sandbox === "string" && SANDBOX.test(x.sandbox))?.sandbox;
+        const r = (await services.post("signalGateway", "/signals", { release, ...(sandbox ? { sandbox } : {}), path: input.path, value: input.value, field: str(input.field) ?? "value" })) as { path: string; value: unknown; ts: number };
+        return { text: `${r.path} = ${JSON.stringify(r.value)} on VSS ${release}${sandbox ? " (the running app's databroker)" : ""}.`, structured: { path: r.path, value: r.value, ts: r.ts } };
       },
     },
   ];

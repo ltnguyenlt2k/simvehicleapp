@@ -151,6 +151,7 @@ describe('/api/sv/projects/[id]/runs + signals (M08-T08)', () => {
   it('injects on the databroker of the project release; the gateway refusal comes back', async () => {
     mockCall
       .mockResolvedValueOnce(reply(200, project))
+      .mockResolvedValueOnce(reply(200, { runs: [] }))
       .mockResolvedValueOnce(
         reply(200, { path: 'Vehicle.Speed', ts: 5, value: 130, field: 'value' })
       )
@@ -159,8 +160,9 @@ describe('/api/sv/projects/[id]/runs + signals (M08-T08)', () => {
       ctx
     )
     expect(ok.status).toBe(200)
-    expect(mockCall.mock.calls[1][0]).toBe('signal-gateway')
-    expect(mockCall.mock.calls[1][2].body).toEqual({
+    expect(mockCall.mock.calls[1][1]).toBe('/runs?projectId=p1&active=true')
+    expect(mockCall.mock.calls[2][0]).toBe('signal-gateway')
+    expect(mockCall.mock.calls[2][2].body).toEqual({
       release: 'v4.2',
       path: 'Vehicle.Speed',
       value: 130,
@@ -168,6 +170,7 @@ describe('/api/sv/projects/[id]/runs + signals (M08-T08)', () => {
     })
     mockCall
       .mockResolvedValueOnce(reply(200, project))
+      .mockResolvedValueOnce(reply(200, { runs: [] }))
       .mockResolvedValueOnce(
         reply(400, { error: 'invalid_value', message: 'Vehicle.Speed expects a number' })
       )
@@ -177,6 +180,30 @@ describe('/api/sv/projects/[id]/runs + signals (M08-T08)', () => {
     )
     expect(bad.status).toBe(400)
     expect((await bad.json()).error).toBe('Vehicle.Speed expects a number')
+  })
+
+  it("injects on the app's own databroker while it runs in a sandbox (ADR-0057); never an address the run did not report", async () => {
+    mockCall
+      .mockResolvedValueOnce(reply(200, project))
+      .mockResolvedValueOnce(reply(200, { runs: [run('p1', { sandbox: 'toolchain-cpp:56003' })] }))
+      .mockResolvedValueOnce(reply(200, { path: 'Vehicle.Speed', ts: 5, value: 1, field: 'value' }))
+    await setSignal(
+      createMockRequest('POST', { path: 'Vehicle.Speed', value: 1, field: 'value' }),
+      ctx
+    )
+    expect(mockCall.mock.calls[2][2].body).toMatchObject({
+      release: 'v4.2',
+      sandbox: 'toolchain-cpp:56003',
+    })
+    mockCall
+      .mockResolvedValueOnce(reply(200, project))
+      .mockResolvedValueOnce(reply(200, { runs: [run('p1', { sandbox: 'mqtt:1883' })] }))
+      .mockResolvedValueOnce(reply(200, { path: 'Vehicle.Speed', ts: 5, value: 1, field: 'value' }))
+    await setSignal(
+      createMockRequest('POST', { path: 'Vehicle.Speed', value: 1, field: 'value' }),
+      ctx
+    )
+    expect(mockCall.mock.calls[5][2].body.sandbox).toBeUndefined()
   })
 
   it('reading needs access, injecting needs write access', async () => {

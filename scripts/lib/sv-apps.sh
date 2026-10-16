@@ -19,3 +19,20 @@ sv_delete_apps() {
       console.log(`sv: ${r.ok ? "deleted" : `could not delete (${r.status})`} app ${p.slug}`);
     }' || echo "sv: could not delete $* (scripts/sv apps prune removes them later)"
 }
+
+# Stops the active runs of the given apps (exact slugs), e.g. `trap 'sv_stop_runs "$SLUG"' EXIT` in a gate that runs
+# an app (ADR-0057): with sandboxes a forgotten run keeps its databroker and app until its time limit.
+sv_stop_runs() {
+  (($#)) || return 0
+  SV_SLUGS="$*" docker compose exec -T -e SV_SLUGS orchestrator bun -e '
+    const h = { "x-sv-internal": process.env.INTERNAL_API_SECRET ?? "" };
+    const want = new Set((process.env.SV_SLUGS ?? "").split(" ").filter(Boolean));
+    const { projects } = await (await fetch("http://127.0.0.1:4030/projects", { headers: h })).json();
+    for (const p of projects.filter((p) => want.has(p.slug))) {
+      const { runs } = await (await fetch(`http://127.0.0.1:4030/runs?projectId=${p.id}&active=true`, { headers: h })).json();
+      for (const r of runs) {
+        const s = await fetch(`http://127.0.0.1:4030/runs/${r.id}/stop`, { method: "POST", headers: h });
+        console.log(`sv: ${s.ok ? "stopped" : `could not stop (${s.status})`} run ${r.id} of ${p.slug}`);
+      }
+    }' || echo "sv: could not stop the runs of $*"
+}

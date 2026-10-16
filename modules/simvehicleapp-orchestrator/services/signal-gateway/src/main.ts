@@ -19,12 +19,18 @@ const endpoints = new Map(
     .filter((kv): kv is [string, string] => kv.length === 2 && Boolean(kv[0]) && Boolean(kv[1])),
 );
 const brokers = new Map<string, Broker>();
-const broker = (release: string) => {
-  const address = endpoints.get(release);
+// A run's sandbox (ADR-0057): its own databroker, `toolchain-<lang>:<port>`, keyed by address and closed when the run ends.
+const broker = (release: string, sandbox?: string) => {
+  const address = sandbox ?? endpoints.get(release);
   if (!address) return undefined;
-  let b = brokers.get(release);
-  if (!b) brokers.set(release, (b = grpcBroker(address)));
+  const key = sandbox ?? release;
+  let b = brokers.get(key);
+  if (!b) brokers.set(key, (b = grpcBroker(address)));
   return b;
+};
+const forget = (sandbox: string) => {
+  brokers.get(sandbox)?.close();
+  brokers.delete(sandbox);
 };
 const catalogUrl = process.env.SV_CATALOG_URL ?? "http://vss-catalog:4010";
 const catalog = new Catalog(async (release) => {
@@ -33,8 +39,10 @@ const catalog = new Catalog(async (release) => {
   return res.json();
 });
 const publish = mqttPublisher(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
-const player = new Player({ set: playerSet(broker, catalog), publish, sleep: (ms) => Bun.sleep(ms), now: Date.now, monotonic: () => performance.now() });
+const playerIo = { publish, sleep: (ms: number) => Bun.sleep(ms), now: Date.now, monotonic: () => performance.now() };
+const player = new Player({ ...playerIo, set: playerSet(broker, catalog) });
+const sandboxPlayer = (sandbox: string) => new Player({ ...playerIo, set: playerSet((release) => broker(release, sandbox), catalog) });
 
-const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, catalog, player, newId: () => `play_${crypto.randomUUID()}` }));
+const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, catalog, player, sandboxPlayer, newId: () => `play_${crypto.randomUUID()}` }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port, databrokers: Object.fromEntries(endpoints) });

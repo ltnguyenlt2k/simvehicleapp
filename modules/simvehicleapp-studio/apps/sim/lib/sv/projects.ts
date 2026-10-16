@@ -154,6 +154,21 @@ export async function runOf(projectId: string, runId: string) {
   return run.data
 }
 
+const SANDBOX = /^toolchain-(cpp|python|rust):[0-9]{2,5}$/
+
+/**
+ * The databroker of the project's active run when it has one of its own (ADR-0057): Signals, inject and Play
+ * of the app then reach that run only. Undefined on the shared stack, without a run, or when the orchestrator
+ * is unreachable (the shared databroker of the release answers).
+ */
+export async function activeSandbox(projectId: string): Promise<string | undefined> {
+  const res = await orchestrator(`/runs?projectId=${encodeURIComponent(projectId)}&active=true`)
+  if (res instanceof NextResponse || res.status !== 200) return undefined
+  const runs = (res.body as { runs?: { sandbox?: unknown }[] } | null)?.runs ?? []
+  const sandbox = runs.find((r) => typeof r.sandbox === 'string')?.sandbox
+  return typeof sandbox === 'string' && SANDBOX.test(sandbox) ? sandbox : undefined
+}
+
 /** Workflows of `workspaceId` among `ids` (others are dropped: a project never reaches another workspace). */
 export async function workflowsInWorkspace(workspaceId: string, ids: string[]): Promise<string[]> {
   if (ids.length === 0) return []

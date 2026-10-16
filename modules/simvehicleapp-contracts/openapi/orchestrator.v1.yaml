@@ -158,6 +158,16 @@ paths:
                   disk: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue", description: "workspace `Capacity` (freeBytes, totalBytes, level, thresholds); null when the workspace cannot be reached." }
                   apps: { type: object, required: [total, limit], properties: { total: { type: integer, minimum: 0 }, limit: { type: integer, minimum: 0 } } }
                   queue: { type: object, required: [queued, limit], properties: { queued: { type: integer, minimum: 0 }, limit: { type: integer, minimum: 0 } } }
+                  runs:
+                    type: object
+                    description: "Vehicle runtime (ADR-0057): apps running now against the host's run quota."
+                    required: [active, limit, perUser, sandbox, maxMinutes]
+                    properties:
+                      active: { type: integer, minimum: 0 }
+                      limit: { type: integer, minimum: 0 }
+                      perUser: { type: integer, minimum: 0 }
+                      sandbox: { type: boolean }
+                      maxMinutes: { type: number, minimum: 0 }
   /sweep:
     post:
       operationId: sweep
@@ -450,10 +460,11 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
         - { name: projectId, in: query, required: false, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
-        - { name: active, in: query, required: false, schema: { type: boolean }, description: "Only the run that is starting, running or stopping." }
+        - { name: active, in: query, required: false, schema: { type: boolean }, description: "Only runs that are starting, running or stopping." }
+        - { name: ownerUserId, in: query, required: false, schema: { type: string, pattern: "^[A-Za-z0-9_-]{1,128}$" }, description: "Only runs this user started (My runs, ADR-0057)." }
       responses:
         "200":
-          description: Runs.
+          description: "Runs, and the run limits in force (`sandbox` false: one run at a time on the shared stack, no expiry)."
           content:
             application/json:
               schema:
@@ -461,6 +472,15 @@ paths:
                 required: [runs]
                 properties:
                   runs: { type: array, items: { $ref: "#/components/schemas/Run" } }
+                  limits:
+                    type: object
+                    required: [sandbox, perUser, total, maxMinutes, maxExtensions]
+                    properties:
+                      sandbox: { type: boolean }
+                      perUser: { type: integer, minimum: 1 }
+                      total: { type: integer, minimum: 1 }
+                      maxMinutes: { type: number, minimum: 0 }
+                      maxExtensions: { type: integer, minimum: 0 }
   /runs/{rid}:
     parameters:
       - { name: rid, in: path, required: true, schema: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" } }
@@ -482,6 +502,14 @@ paths:
       operationId: stopRun
       tags: [runs]
       parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { enum: [user, admin], description: "`admin` from `scripts/sv runs stop` (Run.stopReason, ADR-0057); default user." }
       responses:
         "200":
           description: Stop requested (SIGINT, SIGKILL after 5 s); a finished run is returned unchanged.
@@ -615,8 +643,8 @@ components:
         finishedAt: { type: integer }
     RunOwner:
       type: object
-      description: "Who started the run (studio user and workspace): per-user quota and My runs (ADR-0057)."
-      required: [userId, workspaceId]
+      description: "Who started the run (studio user and workspace; the assistant sends only the user): per-user quota and My runs (ADR-0057)."
+      required: [userId]
       additionalProperties: false
       properties:
         userId: { type: string, pattern: "^[A-Za-z0-9_-]{1,128}$" }

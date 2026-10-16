@@ -138,6 +138,14 @@ flowchart LR
 - **Full luồng `@live` + README** (AGENTS §4 bước 7).
 
 ## Notes / Deviations
+- 2026-10-16 — **M17-T05** (định tuyến và UI):
+  - Orchestrator lấy `job.sandbox.address` ngay sau khi job bắt đầu (poll ≤ 5 s; agent khởi động databroker trước app). Nhờ vậy Signals của run đang `starting` đã đúng sandbox, và mirror được đặt trên sandbox.
+  - Signal-gateway chỉ nhận `sandbox` dạng `toolchain-(cpp|python|rust):<port>`, để BFF/AI không gửi được địa chỉ nội bộ khác (chống SSRF).
+  - `RunOwner.workspaceId` thành tuỳ chọn: trợ lý (AI) chỉ biết user nó thay mặt.
+  - **Theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận:**
+    - "Cùng app ⇒ Khởi động lại" không có nút riêng; Run bị khoá khi app đang chạy.
+    - Thẻ Vehicle runtime ghi RAM ước lượng (~20 MB/run, số đo spike).
+    - Sau khi gate `m17-runtime.sh` PASS, đề xuất đổi mặc định `SV_RUN_SANDBOX` thành `1`.
 - 2026-10-16 — **M17-T04 implement** (orchestrator, toolchain agent, contracts):
   - Bật bằng `SV_RUN_SANDBOX=1`, mặc định `0` (giữ hành vi một run) cho tới khi M17-T05 định tuyến signal-gateway theo run.
   - Databroker của sandbox bind `0.0.0.0:<cổng>` trong container toolchain. App dùng `127.0.0.1:<cổng>`. Signal-gateway (T05) dùng `Run.sandbox` = `toolchain-<lang>:<cổng>` trên `sv-internal`. Như vậy câu hỏi số 3 của spike được trả lời: không cần route qua agent.

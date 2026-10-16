@@ -525,6 +525,16 @@ export const svCapacitySchema = z.object({
   host: z.object({ apps: z.number().int().min(0), limit: z.number().int().min(0) }),
   workspace: z.object({ apps: z.number().int().min(0), limit: z.number().int().min(0) }),
   queue: z.object({ queued: z.number().int().min(0), limit: z.number().int().min(0) }),
+  /** Vehicle runtime (ADR-0057): apps running now against the host's run quota; absent without runs. */
+  runs: z
+    .object({
+      active: z.number().int().min(0),
+      limit: z.number().int().min(0),
+      perUser: z.number().int().min(0),
+      sandbox: z.boolean(),
+      maxMinutes: z.number().min(0),
+    })
+    .optional(),
 })
 export type SvCapacity = z.output<typeof svCapacitySchema>
 
@@ -732,6 +742,36 @@ export const svListRunsContract = defineRouteContract({
   params: svProjectParamsSchema,
   response: { mode: 'json', schema: svRunListSchema },
 })
+
+/** Run limits in force (ADR-0057): `sandbox` false ⇒ one run at a time on the shared stack, no expiry. */
+export const svRunLimitsSchema = z.object({
+  sandbox: z.boolean(),
+  perUser: z.number().int(),
+  total: z.number().int(),
+  maxMinutes: z.number(),
+  maxExtensions: z.number().int(),
+})
+
+export const svMyRunSchema = svRunSchema.extend({
+  projectName: z.string(),
+  workspaceId: z.string(),
+})
+
+export const svMyRunsSchema = z.object({
+  runs: z.array(svMyRunSchema),
+  limits: svRunLimitsSchema,
+})
+
+/** `GET /api/sv/runs` — the apps the signed-in user runs now, in every workspace (My runs, ADR-0057). */
+export const svMyRunsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/runs',
+  response: { mode: 'json', schema: svMyRunsSchema },
+})
+
+export type SvRunLimits = z.output<typeof svRunLimitsSchema>
+export type SvMyRun = z.output<typeof svMyRunSchema>
+export type SvMyRuns = z.output<typeof svMyRunsSchema>
 
 export const svRunParamsSchema = z.object({
   id: svProjectIdSchema,

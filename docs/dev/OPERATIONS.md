@@ -34,6 +34,25 @@ toolchain-cpp 4210) **không** publish ra host; chỉ nhận request có `x-sv-i
 | `SV_MCP_TOKEN` / `SV_MCP_TOKENS` | bật `/mcp` cho agent ngoài |
 | `SV_LICENSE_MODE`, `SV_LICENSE_KEY`, `SV_LICENSE_PUBLIC_KEY` | `full` (mặc định) hoặc `enforce` (ADR-0031) |
 | `SV_DATABROKERS` | release VSS ⇒ databroker (`v4.0=databroker:55555,v4.2=databroker-v4-2:55555`) |
+| `SV_RUN_SANDBOX`, `SV_MAX_RUNS_PER_USER`, `SV_MAX_RUNS_TOTAL`, `SV_RUN_MAX_MINUTES`, `SV_RUN_MAX_EXTENSIONS` | runtime nhiều người dùng (mục 3a, ADR-0057) |
+
+### 3a. Runtime nhiều người dùng (ADR-0057)
+- `SV_RUN_SANDBOX=1`: mỗi run có databroker riêng.
+  - Databroker là tiến trình `kuksa-databroker` do toolchain agent chạy cạnh app, trên một cổng trong `SV_SANDBOX_PORTS` (mặc định 56000–56199). Nó nạp file VSS vendored của app.
+  - Signals/inject/Play của app đi tới databroker đó (signal-gateway nhận `sandbox` = `Run.sandbox`).
+  - Run dừng thì agent dừng cả app lẫn databroker.
+- `SV_RUN_SANDBOX=0`: cả máy một run, trên databroker dùng chung của release (hành vi trước M17).
+- **Quota:** `SV_MAX_RUNS_PER_USER` (mặc định 2) và `SV_MAX_RUNS_TOTAL` (20). Chạm quota ⇒ 409 `RUN_QUOTA_EXCEEDED`; studio đưa ra hộp thoại *Stop … and run* / *Run both*.
+- **Thời hạn:** `SV_RUN_MAX_MINUTES` (30; `0` = không giới hạn).
+  - Studio cảnh báo khi còn 5 phút và hiện nút **Extend**, tối đa `SV_RUN_MAX_EXTENSIONS` lần.
+  - Hết hạn ⇒ `stopReason: expired`.
+- **Tài nguyên:** khoảng 20 MB RAM mỗi run (databroker ~7 MB + app ~13 MB, đo ở spike M17-T04a).
+- **Quản trị:**
+  - `scripts/sv runs list` liệt kê run đang chạy (app, người chạy, sandbox, thời gian còn lại);
+  - `scripts/sv runs stop <id>|--all` dừng run với `stopReason: admin`;
+  - System status có thẻ **Vehicle runtime**.
+- **Gate/script tự chạy app** phải `trap 'sv_stop_runs "$SLUG"' EXIT` (`scripts/lib/sv-apps.sh`).
+- Cổng sandbox **không** publish ra host. Lệnh `curl`/`kuksa-client` từ host (`127.0.0.1:55555`) đi vào databroker dùng chung, không vào run có sandbox. Khi đó bắn tín hiệu qua signal-gateway với `sandbox` (xem [test-signals](../user-guide/test-signals.md)).
 
 ## 4. System status
 Trang **System status** (thanh bên studio) và `GET /api/sv/system`: health, độ trễ, version, commit (`SV_COMMIT`), contracts
@@ -68,6 +87,7 @@ Volume: `studio-db` (Postgres: studio + schema `sv`, `sv_ai`), workspace project
 | `modules/simvehicleapp-orchestrator/gate/m7-gate.sh` … `m9-gate.sh` | gate milestone |
 | `modules/simvehicleapp-orchestrator/gate/parity-p3.sh [GW-A,…]` | parity P3 (ADR-0042) |
 | `modules/simvehicleapp-orchestrator/gate/bench-nfr02.sh` | hiệu năng NFR-02 |
+| `modules/simvehicleapp-orchestrator/gate/m17-runtime.sh` | M17 runtime nhiều người dùng: 2 run song song không lẫn tín hiệu, quota, Extend, hết hạn, không zombie |
 
 ## 8. Phát hành (ADR-0002/0009)
 | Lệnh | Việc |

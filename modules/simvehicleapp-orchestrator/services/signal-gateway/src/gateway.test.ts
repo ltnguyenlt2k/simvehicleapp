@@ -211,6 +211,71 @@ async function readEvents(res: Response, count: number) {
   return events;
 }
 
+/** A gateway with a shared databroker and run sandboxes (ADR-0057). */
+function sandboxed() {
+  const shared = fakeBroker();
+  const boxes = new Map<string, ReturnType<typeof fakeBroker>>();
+  const forgotten: string[] = [];
+  const box = (s: string) => boxes.get(s) ?? (boxes.set(s, fakeBroker()), boxes.get(s)!);
+  const catalog = new Catalog(async () => vss40);
+  const { io } = fakeIo();
+  const handler = createGatewayHandler({
+    broker: (r, s) => (r !== "v4.0" ? undefined : s ? box(s).broker : shared.broker),
+    forget: (s) => forgotten.push(s),
+    catalog,
+    player: new Player({ ...io, set: playerSet(() => shared.broker, catalog) }),
+    sandboxPlayer: (s) => new Player({ ...io, set: playerSet(() => box(s).broker, catalog) }),
+    newId: () => "play_1",
+    now: () => 7,
+  });
+  const call = (method: string, path: string, body?: unknown) => handler(new Request(`http://g${path}`, { method, ...(body ? { body: JSON.stringify(body), headers: { "content-type": "application/json" } } : {}) }), ctx);
+  return { shared, box, forgotten, call };
+}
+
+describe("sandboxes of runs (ADR-0057, M17-T05)", () => {
+  test("inject, snapshot, mirror and play go to the run's own databroker; another run and the shared one see nothing", async () => {
+    const g = sandboxed();
+    const a = "toolchain-cpp:56000";
+    const b = "toolchain-cpp:56001";
+    expect((await g.call("POST", "/signals", { release: "v4.0", sandbox: a, path: "Vehicle.Speed", value: 130, field: "value" })).status).toBe(200);
+    expect(g.box(a).sets).toEqual(["Vehicle.Speed.value=130"]);
+    expect(g.box(b).sets).toEqual([]);
+    expect(g.shared.sets).toEqual([]);
+    const snap = await (await g.call("GET", `/snapshot?release=v4.0&sandbox=${a}&paths=Vehicle.Speed`)).json();
+    expect(snap.updates).toMatchObject([{ path: "Vehicle.Speed", value: 130 }]);
+    expect((await (await g.call("GET", `/snapshot?release=v4.0&sandbox=${b}&paths=Vehicle.Speed`)).json()).updates).toEqual([]);
+    // mirror per sandbox
+    expect((await g.call("PUT", "/mirror", { release: "v4.0", sandbox: a, paths: ["Vehicle.Body.Lights.Hazard.IsSignaling"] })).status).toBe(204);
+    await g.call("POST", "/signals", { release: "v4.0", sandbox: b, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true, field: "target" });
+    await g.call("POST", "/signals", { release: "v4.0", sandbox: a, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true, field: "target" });
+    await Bun.sleep(1);
+    expect(g.box(a).store.get("Vehicle.Body.Lights.Hazard.IsSignaling#value")).toBe(true);
+    expect(g.box(b).store.has("Vehicle.Body.Lights.Hazard.IsSignaling#value")).toBe(false);
+    // play per sandbox
+    const play = await g.call("POST", "/play", { release: "v4.0", sandbox: b, scenario: { scenarioVersion: "1.0.0", name: "S", until: 0, initial: { "Vehicle.Speed": 42 }, inputs: [] } });
+    expect(play.status).toBe(202);
+    await Bun.sleep(2);
+    expect(g.box(b).store.get("Vehicle.Speed#value")).toBe(42);
+    expect(g.box(a).store.get("Vehicle.Speed#value")).toBe(130);
+    expect((await g.call("GET", `/play?sandbox=${b}`)).status).toBe(200);
+    expect((await g.call("GET", "/play")).status).toBe(404); // the shared player played nothing
+    // the run ends: its mirror stops and the gateway forgets its databroker
+    expect((await g.call("PUT", "/mirror", { release: "v4.0", sandbox: a, paths: [] })).status).toBe(204);
+    expect(g.box(a).subs.size).toBe(0);
+    expect(g.forgotten).toEqual([a]);
+  });
+
+  test("a sandbox is only ever a toolchain host and port (no other internal address)", async () => {
+    const g = sandboxed();
+    for (const s of ["databroker:55555", "toolchain-cpp", "evil.example:80", "toolchain-cpp:5600/x"]) {
+      expect((await g.call("POST", "/signals", { release: "v4.0", sandbox: s, path: "Vehicle.Speed", value: 1, field: "value" })).status).toBe(400);
+      expect((await g.call("GET", `/signals?release=v4.0&sandbox=${encodeURIComponent(s)}&paths=Vehicle.Speed`)).status).toBe(400);
+      expect((await g.call("PUT", "/mirror", { release: "v4.0", sandbox: s, paths: [] })).status).toBe(400);
+      expect((await g.call("GET", `/play?sandbox=${encodeURIComponent(s)}`)).status).toBe(400);
+    }
+  });
+});
+
 describe("HTTP API (openapi/signal-gateway.v1.yaml)", () => {
   test("GET /signals streams the current value and target first, then changes; closing cancels the subscription", async () => {
     const g = gateway();

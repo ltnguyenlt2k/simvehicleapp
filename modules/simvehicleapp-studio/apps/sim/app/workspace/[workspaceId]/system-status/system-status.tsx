@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation'
 import { Badge } from '@/components/emcn'
 import type { SvCapacity, SvSystemService } from '@/lib/api/contracts/sv'
+import { cn } from '@/lib/core/utils/cn'
 import { formatFileSize } from '@/lib/uploads/utils/file-utils'
 import { useSvCapacity } from '@/hooks/queries/sv-projects'
 import { useSvSystemStatus } from '@/hooks/queries/sv-system'
@@ -104,10 +105,13 @@ interface CapacityCardsProps {
 
 /** Free disk, vehicle apps against their quotas and the SynCode queue of the host (ADR-0053, M16-T05). */
 function CapacityCards({ capacity }: CapacityCardsProps) {
-  const { disk, host, workspace, queue } = capacity
+  const { disk, host, workspace, queue, runs } = capacity
   const level = disk ? DISK[disk.level] : null
   return (
-    <div data-sv='capacity-cards' className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
+    <div
+      data-sv='capacity-cards'
+      className={cn('grid grid-cols-1 gap-3', runs ? 'sm:grid-cols-4' : 'sm:grid-cols-3')}
+    >
       <div
         data-sv='capacity-disk-card'
         data-sv-level={disk?.level ?? 'unknown'}
@@ -154,6 +158,26 @@ function CapacityCards({ capacity }: CapacityCardsProps) {
           One SynCode builds at a time; a full queue asks to try again later.
         </span>
       </div>
+      {runs && (
+        <div
+          data-sv='capacity-runs-card'
+          className='flex flex-col gap-1 rounded-lg border border-[var(--border)] p-3'
+        >
+          <span className='text-[12px] text-[var(--text-muted)]'>Vehicle runtime</span>
+          <span className='text-[15px] text-[var(--text-primary)]'>
+            {runs.sandbox
+              ? `${runs.active} of ${runs.limit} apps running`
+              : `${runs.active ? 'An app is' : 'No app is'} running`}
+          </span>
+          <span className='text-[12px] text-[var(--text-secondary)]'>
+            {runs.sandbox
+              ? `Each run has vehicle signals of its own (about 20 MB with its app), ${runs.perUser} per user${
+                  runs.maxMinutes ? `, ${runs.maxMinutes} min unless extended` : ''
+                }.`
+              : 'One app runs at a time on the shared vehicle stack.'}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

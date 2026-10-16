@@ -108,7 +108,8 @@ export interface Run {
   runningAt?: number;
   finishedAt?: number;
   /** Who started it (from the studio BFF): run quotas per user (ADR-0057). */
-  owner?: { userId: string; workspaceId: string };
+  /** Who started the run; `workspaceId` is absent for the assistant (it acts for the user, ADR-0030). */
+  owner?: { userId: string; workspaceId?: string };
   /** `host:port` of the run's own databroker on sv-internal (sandboxed runs). */
   sandbox?: string;
   /** When the run stops by itself (`SV_RUN_MAX_MINUTES` after it started; extended by Extend). */
@@ -157,7 +158,7 @@ export interface Repo {
   createRun(r: Run): Promise<Run>;
   run(id: string): Promise<Run | null>;
   /** Most recent first. */
-  runs(filter: { projectId?: string; active?: boolean; limit?: number }): Promise<Run[]>;
+  runs(filter: { projectId?: string; active?: boolean; ownerUserId?: string; limit?: number }): Promise<Run[]>;
   updateRun(id: string, patch: Partial<Omit<Run, "id" | "projectId" | "generationId" | "createdAt">>): Promise<void>;
   appendRunEvents(runId: string, events: RunEvent[]): Promise<void>;
   runEvents(runId: string, afterSeq: number, limit?: number): Promise<RunEvent[]>;
@@ -246,9 +247,9 @@ export class MemoryRepo implements Repo {
     const r = this.runsById.get(id);
     return r ? structuredClone(r) : null;
   }
-  async runs(f: { projectId?: string; active?: boolean; limit?: number }) {
+  async runs(f: { projectId?: string; active?: boolean; ownerUserId?: string; limit?: number }) {
     return [...this.runsById.values()]
-      .filter((r) => (!f.projectId || r.projectId === f.projectId) && (!f.active || ACTIVE_RUN_STATES.includes(r.state)))
+      .filter((r) => (!f.projectId || r.projectId === f.projectId) && (!f.ownerUserId || r.owner?.userId === f.ownerUserId) && (!f.active || ACTIVE_RUN_STATES.includes(r.state)))
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, f.limit ?? 20)
       .map((r) => structuredClone(r));
@@ -491,7 +492,7 @@ export class PgRepo implements Repo {
       createdAt: ms(r.created_at)!,
       ...(r.running_at ? { runningAt: ms(r.running_at) } : {}),
       ...(r.finished_at ? { finishedAt: ms(r.finished_at) } : {}),
-      ...(r.owner_user_id ? { owner: { userId: String(r.owner_user_id), workspaceId: String(r.owner_workspace_id ?? "") } } : {}),
+      ...(r.owner_user_id ? { owner: { userId: String(r.owner_user_id), ...(r.owner_workspace_id ? { workspaceId: String(r.owner_workspace_id) } : {}) } } : {}),
       ...(r.sandbox_address ? { sandbox: String(r.sandbox_address) } : {}),
       ...(r.expires_at ? { expiresAt: ms(r.expires_at) } : {}),
       ...(r.extensions ? { extensions: Number(r.extensions) } : {}),
@@ -510,12 +511,13 @@ export class PgRepo implements Repo {
     return rows[0] ? this.toRun(rows[0]) : null;
   }
 
-  async runs(f: { projectId?: string; active?: boolean; limit?: number }) {
+  async runs(f: { projectId?: string; active?: boolean; ownerUserId?: string; limit?: number }) {
     const limit = f.limit ?? 20;
     const active = f.active === true;
+    const owner = f.ownerUserId ?? null;
     const rows = (f.projectId
-      ? await this.sql`SELECT * FROM sv.run WHERE project_id = ${f.projectId} AND (${!active} OR state IN ('starting', 'running', 'stopping')) ORDER BY created_at DESC LIMIT ${limit}`
-      : await this.sql`SELECT * FROM sv.run WHERE (${!active} OR state IN ('starting', 'running', 'stopping')) ORDER BY created_at DESC LIMIT ${limit}`) as Row[];
+      ? await this.sql`SELECT * FROM sv.run WHERE project_id = ${f.projectId} AND (${owner}::text IS NULL OR owner_user_id = ${owner}) AND (${!active} OR state IN ('starting', 'running', 'stopping')) ORDER BY created_at DESC LIMIT ${limit}`
+      : await this.sql`SELECT * FROM sv.run WHERE (${owner}::text IS NULL OR owner_user_id = ${owner}) AND (${!active} OR state IN ('starting', 'running', 'stopping')) ORDER BY created_at DESC LIMIT ${limit}`) as Row[];
     return rows.map((r) => this.toRun(r));
   }
 

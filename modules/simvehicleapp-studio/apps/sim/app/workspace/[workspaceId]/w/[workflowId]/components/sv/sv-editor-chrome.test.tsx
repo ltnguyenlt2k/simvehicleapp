@@ -25,6 +25,8 @@ vi.mock('@/hooks/queries/sv-runs', () => ({
   useSvRuns: () => ({ data: [] }),
   useStartSvRun: () => ({ mutate: mockMutate, isPending: false }),
   useStopSvRun: () => ({ mutate: mockMutate, isPending: false }),
+  useExtendSvRun: () => ({ mutate: mockMutate, isPending: false }),
+  useMySvRuns: () => ({ data: undefined }),
   useSetSvSignal: () => ({ mutate: mockMutate, isPending: false }),
   usePlaySvScenario: () => ({ mutate: mockMutate, isPending: false }),
 }))

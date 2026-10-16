@@ -4,7 +4,9 @@ import {
   type SvRun,
   type SvScenario,
   type SvSignalField,
+  svExtendRunContract,
   svListRunsContract,
+  svMyRunsContract,
   svPlayScenarioContract,
   svSetSignalContract,
   svStartRunContract,
@@ -15,6 +17,7 @@ export const svRunKeys = {
   all: ['sv-runs'] as const,
   lists: () => [...svRunKeys.all, 'list'] as const,
   list: (projectId?: string) => [...svRunKeys.lists(), projectId ?? ''] as const,
+  mine: () => [...svRunKeys.all, 'mine'] as const,
 }
 
 const ACTIVE: ReadonlySet<SvRun['state']> = new Set(['starting', 'running', 'stopping'])
@@ -34,14 +37,26 @@ export function useSvRuns(projectId?: string) {
   })
 }
 
+/** The apps the signed-in user runs now, in every workspace, and the run limits (My runs, ADR-0057). */
+export function useMySvRuns() {
+  return useQuery({
+    queryKey: svRunKeys.mine(),
+    queryFn: async ({ signal }) => requestJson(svMyRunsContract, { signal }),
+    staleTime: 5 * 1000,
+    refetchInterval: (query) => (query.state.data?.runs.length ? 5000 : 30_000),
+  })
+}
+
 /** Run: the app of the project's latest SynCode on the runtime stack. */
 export function useStartSvRun() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (projectId: string) =>
       requestJson(svStartRunContract, { params: { id: projectId }, body: {} }),
-    onSettled: (_data, _error, projectId) =>
-      queryClient.invalidateQueries({ queryKey: svRunKeys.list(projectId) }),
+    onSettled: (_data, _error, projectId) => {
+      queryClient.invalidateQueries({ queryKey: svRunKeys.list(projectId) })
+      queryClient.invalidateQueries({ queryKey: svRunKeys.mine() })
+    },
   })
 }
 
@@ -55,8 +70,23 @@ export function useStopSvRun() {
   return useMutation({
     mutationFn: ({ projectId, runId }: StopSvRunVariables) =>
       requestJson(svStopRunContract, { params: { id: projectId, rid: runId } }),
-    onSettled: (_data, _error, { projectId }) =>
-      queryClient.invalidateQueries({ queryKey: svRunKeys.list(projectId) }),
+    onSettled: (_data, _error, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: svRunKeys.list(projectId) })
+      queryClient.invalidateQueries({ queryKey: svRunKeys.mine() })
+    },
+  })
+}
+
+/** Extend: the run's time limit moves by the stack's `SV_RUN_MAX_MINUTES` (ADR-0057). */
+export function useExtendSvRun() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ projectId, runId }: StopSvRunVariables) =>
+      requestJson(svExtendRunContract, { params: { id: projectId, rid: runId } }),
+    onSettled: (_data, _error, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: svRunKeys.list(projectId) })
+      queryClient.invalidateQueries({ queryKey: svRunKeys.mine() })
+    },
   })
 }
 

@@ -32,6 +32,7 @@ export const GET = withRouteHandler(async (request: NextRequest) => {
     disk?: { freeBytes?: number; totalBytes?: number; level?: string } | null
     apps?: { total?: number; limit?: number }
     queue?: { queued?: number; limit?: number }
+    runs?: unknown
   } | null
   const capacity = svCapacitySchema.safeParse({
     disk: body?.disk
@@ -40,6 +41,7 @@ export const GET = withRouteHandler(async (request: NextRequest) => {
     host: { apps: body?.apps?.total, limit: body?.apps?.limit },
     workspace: { apps: await workspaceAppCount(workspaceId), limit: workspaceAppLimit() },
     queue: { queued: body?.queue?.queued, limit: body?.queue?.limit },
+    ...(body?.runs ? { runs: body.runs } : {}),
   })
   if (!capacity.success) {
     return NextResponse.json({ error: 'Orchestrator returned an invalid answer' }, { status: 502 })

@@ -34,7 +34,7 @@ function fakeToolchain() {
         j.say = cb;
         j.end = resolve;
       }),
-    mirror: async (release: string, paths: string[]) => void calls.push(`mirror ${release} [${paths.join(",")}]`),
+    mirror: async (release: string, paths: string[], sandbox?: string) => void calls.push(`mirror ${release} [${paths.join(",")}]${sandbox ? ` on ${sandbox}` : ""}`),
     system: async () => [],
   } as unknown as Clients;
   return { clients, calls, start: (jobId: string) => jobs.get(jobId)?.say?.(started()) };
@@ -89,7 +89,14 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     const ra = await runs.start(a, (await gen(a)).id, undefined, ann);
     const rb = await runs.start(b, (await gen(b)).id, undefined, bob);
     expect(ra.owner).toEqual(ann);
-    expect(tc.calls).toEqual(['run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1"}', 'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_2"}']);
+    // The address is known while the app starts: the gateway mirrors the app's actuators on that databroker only.
+    expect(ra.sandbox).toBe("toolchain-cpp:56000");
+    expect(tc.calls).toEqual([
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1"}',
+      "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56000",
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_2"}',
+      "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56001",
+    ]);
     tc.start("job-1");
     tc.start("job-2");
     await until(async () => (await repo.run("r_2"))!.state === "running" && (await repo.run("r_1"))!.state === "running");
@@ -99,7 +106,9 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     await until(async () => (await repo.run("r_1"))!.state === "stopped");
     expect((await repo.run("r_1"))!.stopReason).toBe("user");
     expect((await repo.run("r_2"))!.state).toBe("running");
-    expect(tc.calls.some((c) => c.startsWith("mirror"))).toBe(false);
+    expect(tc.calls).toContain("mirror v4.0 [] on toolchain-cpp:56000"); // the gateway releases the ended run's databroker
+    expect(tc.calls).not.toContain("mirror v4.0 [] on toolchain-cpp:56001");
+    expect(tc.calls.some((c) => c.startsWith("mirror") && !c.includes(" on "))).toBe(false); // the shared databrokers are untouched
   });
 
   test("quotas: per user, then for the host, with RUN_QUOTA_EXCEEDED naming the caller's runs; one run per app", async () => {
@@ -161,10 +170,19 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     const ext = await call("POST", "/runs/r_1/extend");
     expect(ext.status).toBe(200);
     expect((await ext.json()).extensions).toBe(1);
+    const mine = await (await call("GET", `/runs?active=true&ownerUserId=${ann.userId}`)).json();
+    expect(mine.runs.map((r: { id: string }) => r.id)).toEqual(["r_1"]);
+    expect(mine.limits).toEqual({ ...LIMITS, perUser: 1 });
+    expect((await (await call("GET", "/runs?active=true&ownerUserId=u_bob")).json()).runs).toEqual([]);
+    expect((await call("GET", "/runs?ownerUserId=x%20y")).status).toBe(400);
+    expect((await (await call("POST", "/runs/r_1/stop", { reason: "admin" })).json()).stopReason).toBe("admin");
+    expect((await (await call("GET", "/capacity")).json()).runs).toEqual({ active: 1, limit: 3, perUser: 1, sandbox: true, maxMinutes: 30 });
   });
 
   test("limits from the environment: sandboxes off unless SV_RUN_SANDBOX=1; bad values fall back", () => {
     expect(runLimitsFromEnv({})).toEqual({ sandbox: false, perUser: 2, total: 20, maxMinutes: 30, maxExtensions: 3 });
     expect(runLimitsFromEnv({ SV_RUN_SANDBOX: "1", SV_MAX_RUNS_PER_USER: "0", SV_MAX_RUNS_TOTAL: "8", SV_RUN_MAX_MINUTES: "0", SV_RUN_MAX_EXTENSIONS: "x" })).toEqual({ sandbox: true, perUser: 2, total: 8, maxMinutes: 0, maxExtensions: 3 });
+    expect(runLimitsFromEnv({ SV_RUN_MAX_MINUTES: "0.75" }).maxMinutes).toBe(0.75);
+    expect(runLimitsFromEnv({ SV_RUN_MAX_MINUTES: "-1" }).maxMinutes).toBe(30);
   });
 });

@@ -12,7 +12,7 @@ import { fakeProvider, plan } from "./providers/fake.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
 import { type LlmProvider, type Message, ProviderError, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
-import { httpServices, type Services } from "./services.ts";
+import { httpServices, ServiceError, type Services } from "./services.ts";
 import { MemoryStore } from "./store.ts";
 import { BlockCatalog, createTools, opsFromString, runTool, vssTerms, SAFE_TOOL_NAMES, SENSITIVE_TOOL_NAMES } from "./tools.ts";
 
@@ -362,7 +362,7 @@ describe("agent loop + /chat (M10-T04, ADR-0030 §6 verification)", () => {
     expect((await app.call(`/conversations/${conv}/actions/nope/confirm`, {})).status).toBe(404);
     const confirmed = await app.events(await app.call(`/conversations/${conv}/actions/${pending.data.actionId}/confirm`, { editedInput: { projectId: "p9" }, context: turnCtx }));
     expect(confirmed.find((e) => e.event === "tool_result")!.data).toMatchObject({ name: "run_start", structured: { runId: "r_1" } });
-    expect(app.log).toContain('POST orchestrator /projects/p9/runs {}');
+    expect(app.log).toContain('POST orchestrator /projects/p9/runs {"owner":{"userId":"u1"}}'); // the user owns the run (ADR-0057)
     // the second sensitive call of the same message was answered with an error, not lost
     expect(JSON.stringify(app.provider.calls[1]!.messages)).toContain("One action needs the user's confirmation already");
     // cancel
@@ -502,6 +502,35 @@ describe("tools without the editor (MCP callers, M10 review)", () => {
     const set = tools.find((t) => t.name === "signal_set")!;
     const out = await runTool(set, { path: "Vehicle.Speed", value: 1, projectId: "p9" }, mcpCtx);
     expect(out.text).toContain("on VSS v4.2");
+  });
+
+  test("sandboxed runs (ADR-0057): signal_set reaches the running app's databroker; run_start sends the user and explains a reached quota", async () => {
+    const posted: { path: string; body: unknown }[] = [];
+    const base = services([]);
+    const quota = [{ code: "RUN_QUOTA_EXCEEDED", severity: "error", stage: "run", message: "You already have 2 apps running: the limit is 2. Stop one of them first.", docs: "d", data: { scope: "user", limit: 2, runs: [{ id: "r_7", projectId: "p2" }] } }];
+    const svc: Services = {
+      ...base,
+      async get(service, path, t) {
+        if (path === "/runs?projectId=p9&active=true") return { runs: [{ id: "r_1", sandbox: "toolchain-cpp:56002" }] };
+        return base.get(service, path, t);
+      },
+      async post(service, path, body, t) {
+        posted.push({ path, body });
+        if (path === "/projects/p3/runs") throw new ServiceError("orchestrator POST ⇒ 409", 409, quota);
+        if (service === "signalGateway") return { path: "Vehicle.Speed", value: 1, ts: 1 };
+        return base.post(service, path, body, t);
+      },
+    };
+    const tools = createTools(svc, new BlockCatalog(fakeServices()));
+    const set = await runTool(tools.find((t) => t.name === "signal_set")!, { path: "Vehicle.Speed", value: 1, projectId: "p9" }, mcpCtx);
+    expect(posted.at(-1)?.body).toMatchObject({ release: "v4.2", sandbox: "toolchain-cpp:56002" });
+    expect(set.text).toContain("running app's databroker");
+    const start = tools.find((t) => t.name === "run_start")!;
+    const refused = await runTool(start, { projectId: "p3" }, { userId: "user-1", conversationId: "c" });
+    expect(posted.at(-1)?.body).toEqual({ owner: { userId: "user-1" } });
+    expect(refused.isError).toBe(true);
+    expect(refused.text).toContain("the limit is 2");
+    expect(refused.text).toContain("r_7 (app p2)");
   });
 });
 

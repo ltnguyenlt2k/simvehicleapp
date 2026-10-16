@@ -69,20 +69,28 @@
   - 403; restart giữa chừng.
 
 ### T05: Định tuyến, hiển thị, quản trị
-- [ ] Signal-gateway: Signals/inject/mirror/play theo `runId` ⇒ databroker của sandbox; bảng `SV_DATABROKERS` chỉ còn cho Signals khi chưa có run và cho gate cũ.
-- [ ] Studio:
+> 2026-10-16 (Claude Code): code + unit xong. Còn: gate trên stack (cần image mới qua `sv refresh`), E2E UI.
+>
+> **Lệch:**
+> - "Cùng app ⇒ Khởi động lại" không làm: Run bị khoá khi app đang chạy, người dùng bấm Stop rồi Run.
+> - RAM sandbox trên thẻ là số ước lượng từ spike (~20 MB/run), không đo trực tiếp.
+>
+> Chờ PO xác nhận.
+- [x] Signal-gateway: Signals/inject/mirror/play theo `runId` ⇒ databroker của sandbox; bảng `SV_DATABROKERS` chỉ còn cho Signals khi chưa có run và cho gate cũ.
+ *(`sandbox` = `toolchain-<lang>:<port>` (regex, không nhận địa chỉ khác); mirror/Play theo sandbox; `PUT /mirror` rỗng giải phóng sandbox; orchestrator ghi `Run.sandbox` lúc job bắt đầu)*
+- [x] Studio (`my-runs-menu.tsx`, `run-buttons.tsx`, `run-conflict-modal.tsx`, BFF `GET /api/sv/runs`, extend, signals/play theo sandbox):
   - "My runs (n)" trên thanh hành động (app, release, thời gian, hết hạn, Stop);
   - pill theo app đang mở; cảnh báo 5 phút + Extend;
   - Vehicle apps đánh dấu app đang chạy.
-- [ ] Hộp thoại cùng user:
+- [x] Hộp thoại cùng user:
   - đang có run khác ⇒ **Dừng X và chạy Y / Chạy song song / Huỷ**;
   - cùng app ⇒ **Khởi động lại**;
   - hết quota ⇒ chỉ còn Dừng/Huỷ.
-- [ ] System status: thẻ **Vehicle runtime** (số run/quota, RAM sandbox).
-- [ ] `scripts/sv runs list|stop <id>`; gate trap Stop run khi thoát (`sv_stop_runs`).
-- [ ] AI tool `run`: đọc `RUN_QUOTA_EXCEEDED` / thời hạn thành câu dễ hiểu.
-- [ ] DEPLOY/OPERATIONS: mục "Runtime nhiều người dùng".
-- [ ] Gate trên stack: hai user cùng v4.0 song song, mỗi người inject và nhận đúng output của mình; hết hạn tự dừng; quota chặn đúng.
+- [x] System status: thẻ **Vehicle runtime** (số run/quota, RAM sandbox).
+- [x] `scripts/sv runs list|stop <id>|--all`; gate trap Stop run khi thoát (`sv_stop_runs`).
+- [x] AI tool `run_start` (owner = user, câu dễ hiểu khi chạm quota) và `signal_set` (theo sandbox): đọc `RUN_QUOTA_EXCEEDED` / thời hạn thành câu dễ hiểu.
+- [x] DEPLOY/OPERATIONS: mục "Runtime nhiều người dùng" (`docs/dev/OPERATIONS.md` §3a; user guide test-signals).
+- [ ] Gate trên stack (`gate/m17-runtime.sh` đã viết): hai user cùng v4.0 song song, mỗi người inject và nhận đúng output của mình; hết hạn tự dừng; quota chặn đúng.
 
 ### T06: Trợ lý "đang suy nghĩ"
 - [ ] Thay chữ tĩnh "Working…" (`assistant-panel.tsx`):

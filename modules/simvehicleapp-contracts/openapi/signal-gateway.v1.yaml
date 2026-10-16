@@ -40,6 +40,7 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
         - { $ref: "#/components/parameters/Release" }
+        - { $ref: "#/components/parameters/Sandbox" }
         - { $ref: "#/components/parameters/Paths" }
       responses:
         "200":
@@ -65,6 +66,7 @@ paths:
               additionalProperties: false
               properties:
                 release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
+                sandbox: { $ref: "#/components/schemas/Sandbox" }
                 path: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" }
                 value: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
                 field: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1#/$defs/field" }
@@ -93,6 +95,7 @@ paths:
               additionalProperties: false
               properties:
                 release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
+                sandbox: { $ref: "#/components/schemas/Sandbox" }
                 paths: { type: array, maxItems: 500, uniqueItems: true, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
       responses:
         "204": { description: Mirroring updated. }
@@ -113,6 +116,7 @@ paths:
               additionalProperties: false
               properties:
                 release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
+                sandbox: { $ref: "#/components/schemas/Sandbox" }
                 scenario: { $ref: "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1" }
       responses:
         "202":
@@ -124,7 +128,7 @@ paths:
     get:
       operationId: getPlayback
       tags: [scenarios]
-      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }, { $ref: "#/components/parameters/Sandbox" }]
       responses:
         "200":
           description: The current or last playback.
@@ -135,7 +139,7 @@ paths:
     delete:
       operationId: stopPlayback
       tags: [scenarios]
-      parameters: [{ $ref: "#/components/parameters/RequestId" }]
+      parameters: [{ $ref: "#/components/parameters/RequestId" }, { $ref: "#/components/parameters/Sandbox" }]
       responses:
         "204": { description: Stopped (or nothing was playing). }
   /snapshot:
@@ -145,6 +149,7 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
         - { $ref: "#/components/parameters/Release" }
+        - { $ref: "#/components/parameters/Sandbox" }
         - { $ref: "#/components/parameters/Paths" }
       responses:
         "200":
@@ -176,6 +181,12 @@ components:
       required: true
       description: "Selects the databroker for this VSS release (SV_DATABROKERS)."
       schema: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
+    Sandbox:
+      name: sandbox
+      in: query
+      required: false
+      description: "A run's own databroker (ADR-0057, `Run.sandbox` of the orchestrator) instead of the release's shared one."
+      schema: { $ref: "#/components/schemas/Sandbox" }
     Paths:
       name: paths
       in: query
@@ -200,6 +211,10 @@ components:
         application/json:
           schema: { $ref: "urn:simvehicleapp:contracts:diagnostics:1.0.0-alpha.1#/$defs/list" }
   schemas:
+    Sandbox:
+      type: string
+      pattern: "^toolchain-(cpp|python|rust):[0-9]{2,5}$"
+      description: "`toolchain-<lang>:<port>` on sv-internal; nothing else is accepted (no other internal address). PUT /mirror with `sandbox` and no paths releases it (the run ended)."
     Playback:
       type: object
       required: [id, release, name, state, until, played, total, startedAt]

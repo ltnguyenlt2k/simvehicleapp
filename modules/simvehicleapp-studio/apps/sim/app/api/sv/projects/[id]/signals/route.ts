@@ -7,7 +7,13 @@ import {
 } from '@/lib/api/contracts/sv'
 import { parseRequest } from '@/lib/api/server'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
-import { authorizeProject, projectOf, svJson, upstreamError } from '@/lib/sv/projects'
+import {
+  activeSandbox,
+  authorizeProject,
+  projectOf,
+  svJson,
+  upstreamError,
+} from '@/lib/sv/projects'
 import { relaySse } from '@/lib/sv/sse-relay'
 
 const logger = createLogger('SvSignalsAPI')
@@ -19,6 +25,7 @@ type RouteContext = { params: Promise<{ id: string }> }
 /**
  * Signals panel (M08-T08): current values and actuator targets on the databroker of the project's
  * VSS release, streamed from the signal-gateway (paths are checked against the release catalog there).
+ * While the app runs on a databroker of its own (ADR-0057), that run's values.
  */
 export const GET = withRouteHandler(async (request: NextRequest, context: RouteContext) => {
   const auth = await authorizeProject((await context.params).id, 'read')
@@ -27,7 +34,12 @@ export const GET = withRouteHandler(async (request: NextRequest, context: RouteC
   if (!parsed.success) return parsed.response
   const project = await projectOf(auth.row.id)
   if (project instanceof NextResponse) return project
-  const query = new URLSearchParams({ release: project.vssRelease, paths: parsed.data.query.paths })
+  const sandbox = await activeSandbox(auth.row.id)
+  const query = new URLSearchParams({
+    release: project.vssRelease,
+    ...(sandbox ? { sandbox } : {}),
+    paths: parsed.data.query.paths,
+  })
   return relaySse('signal-gateway', `/signals?${query}`, request)
 })
 
@@ -39,9 +51,10 @@ export const POST = withRouteHandler(async (request: NextRequest, context: Route
   if (!parsed.success) return parsed.response
   const project = await projectOf(auth.row.id)
   if (project instanceof NextResponse) return project
+  const sandbox = await activeSandbox(auth.row.id)
   const res = await svJson('signal-gateway', '/signals', {
     method: 'POST',
-    body: { release: project.vssRelease, ...parsed.data.body },
+    body: { release: project.vssRelease, ...(sandbox ? { sandbox } : {}), ...parsed.data.body },
   })
   if (res instanceof NextResponse) return res
   if (res.status !== 200) return upstreamError(res)

@@ -216,13 +216,13 @@ export function createOrchestratorHandler(d: AppDeps) {
         if (b.generationId !== undefined && (typeof b.generationId !== "string" || !ID.test(b.generationId))) return json(400, { error: "invalid_request", message: "generationId must be a generation id" });
         if (b.traceLevel !== undefined && !["off", "trigger", "node"].includes(b.traceLevel as string)) return json(400, { error: "invalid_request", message: "traceLevel must be off, trigger or node" });
         const o = b.owner as { userId?: unknown; workspaceId?: unknown } | undefined;
-        if (o !== undefined && (typeof o !== "object" || o === null || typeof o.userId !== "string" || !OWNER.test(o.userId) || typeof o.workspaceId !== "string" || !OWNER.test(o.workspaceId))) return json(400, { error: "invalid_request", message: "owner must be {userId, workspaceId}" });
+        if (o !== undefined && (typeof o !== "object" || o === null || typeof o.userId !== "string" || !OWNER.test(o.userId) || (o.workspaceId !== undefined && (typeof o.workspaceId !== "string" || !OWNER.test(o.workspaceId))))) return json(400, { error: "invalid_request", message: "owner must be {userId, workspaceId?}" });
         // Default: the project's latest generation (RunManager checks it succeeded).
         const gid = (b.generationId as string | undefined) ?? (await d.repo.latestGeneration(project.id))?.id;
         if (!gid) return json(409, { error: "conflict", message: "SynCode the project first: it has no generation to run" });
         if (!(await d.repo.generation(gid))) return json(404, { error: "not_found", message: "unknown generation" });
         try {
-          const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined, o ? { userId: o.userId as string, workspaceId: o.workspaceId as string } : undefined);
+          const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined, o ? { userId: o.userId as string, ...(o.workspaceId ? { workspaceId: o.workspaceId as string } : {}) } : undefined);
           ctx.log.info("run requested", { project: project.slug, run: run.id, state: run.state });
           return json(202, runView(run));
         } catch (e) {
@@ -308,11 +308,13 @@ export function createOrchestratorHandler(d: AppDeps) {
     }
 
     if (url.pathname === "/capacity" && req.method === "GET") {
-      const [disk, apps, pending] = await Promise.all([d.probe?.get() ?? Promise.resolve(null), d.repo.projects(), d.repo.pendingGenerations()]);
+      const [disk, apps, pending, active] = await Promise.all([d.probe?.get() ?? Promise.resolve(null), d.repo.projects(), d.repo.pendingGenerations(), d.repo.runs({ active: true, limit: 1000 })]);
       return json(200, {
         disk,
         apps: { total: apps.length, limit: limits.maxAppsTotal },
         queue: { queued: pending.filter((q) => q.state === "queued").length, limit: limits.maxQueued },
+        // Vehicle runtime (ADR-0057): apps running now against the host's run quota.
+        ...(d.runs?.limits ? { runs: { active: active.length, limit: d.runs.limits.total, perUser: d.runs.limits.perUser, sandbox: d.runs.limits.sandbox, maxMinutes: d.runs.limits.maxMinutes } } : {}),
       });
     }
     if (url.pathname === "/sweep" && req.method === "POST") {
@@ -330,9 +332,11 @@ export function createOrchestratorHandler(d: AppDeps) {
 
     if (url.pathname === "/runs" && req.method === "GET") {
       const projectId = url.searchParams.get("projectId");
-      if (projectId !== null && !ID.test(projectId)) return json(400, { error: "invalid_request" });
-      const runs = await d.repo.runs({ ...(projectId ? { projectId } : {}), active: url.searchParams.get("active") === "true", limit: 20 });
-      return json(200, { runs: runs.map(runView) });
+      const ownerUserId = url.searchParams.get("ownerUserId");
+      if ((projectId !== null && !ID.test(projectId)) || (ownerUserId !== null && !OWNER.test(ownerUserId))) return json(400, { error: "invalid_request" });
+      const runs = await d.repo.runs({ ...(projectId ? { projectId } : {}), ...(ownerUserId ? { ownerUserId } : {}), active: url.searchParams.get("active") === "true", limit: 20 });
+      // What the studio offers (run apps side by side, Extend) follows the limits (ADR-0057).
+      return json(200, { runs: runs.map(runView), ...(d.runs?.limits ? { limits: d.runs.limits } : {}) });
     }
 
     if (parts[0] === "runs" && parts[1] && (parts.length === 2 || (parts.length === 3 && (parts[2] === "stop" || parts[2] === "extend")))) {
@@ -341,8 +345,10 @@ export function createOrchestratorHandler(d: AppDeps) {
       if (parts.length === 2 && req.method === "GET") return json(200, runView(run));
       if (parts[2] === "stop" && req.method === "POST") {
         if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
-        const stopped = await d.runs.stop(run.id);
-        ctx.log.info("run stop requested", { run: run.id });
+        // `reason: admin` from `scripts/sv runs stop` (ADR-0057); the studio and the assistant stop as the user.
+        const body = ((await req.json().catch(() => null)) ?? {}) as { reason?: unknown };
+        const stopped = await d.runs.stop(run.id, body.reason === "admin" ? "admin" : "user");
+        ctx.log.info("run stop requested", { run: run.id, ...(body.reason === "admin" ? { reason: "admin" } : {}) });
         return json(200, runView(stopped ?? run));
       }
       if (parts[2] === "extend" && req.method === "POST") {

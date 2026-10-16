@@ -85,6 +85,18 @@ docker run --rm --network $NET curlimages/curl -s -X POST -H "x-sv-internal: $S"
   -d '{"release":"v4.0","path":"Vehicle.Speed","value":60,"field":"value"}' http://signal-gateway:4050/signals
 ```
 
-**Giới hạn hiện tại** (sẽ sửa ở M17, [ADR-0057](../../analysis/adr/ADR-0057-shared-vehicle-runtime-run-slot.md)):
-- Cả máy chỉ một app được Run tại một thời điểm; app khác đang chạy thì Run báo "Another project is running".
-- Mỗi release dùng chung một databroker, nên tín hiệu bạn bắn từ ngoài tác động lên app đang Run.
+**Một hay nhiều app cùng lúc** ([ADR-0057](../../analysis/adr/ADR-0057-shared-vehicle-runtime-run-slot.md)):
+
+- **`SV_RUN_SANDBOX=0` (stack dùng chung):**
+  - Cả máy chỉ một app được Run tại một thời điểm. App khác đang chạy thì Run báo "Another project is running".
+  - Mỗi release dùng chung một databroker, nên tín hiệu bắn từ ngoài (các lệnh trên) tác động lên app đang Run.
+- **`SV_RUN_SANDBOX=1`:**
+  - Mỗi run có databroker riêng. Bảng Signals, inject và Play của app đi vào databroker đó.
+  - Bạn chạy được nhiều app (theo quota). Run khi đang chạy app khác sẽ hỏi *Stop … and run* hoặc *Run both*.
+  - Run tự dừng sau `SV_RUN_MAX_MINUTES`. Khi còn 5 phút, bấm **Extend** để chạy thêm. Menu **My runs** liệt kê các app bạn đang chạy.
+  - Lệnh `curl`/`kuksa-client` từ host vào `127.0.0.1:55555` **không** tới run có sandbox, vì cổng sandbox không mở ra host.
+  - Muốn bắn từ ngoài: lấy `sandbox` của run (`scripts/sv runs list`), rồi gọi signal-gateway trong mạng `sv-internal`:
+    ```bash
+    docker run --rm --network $NET curlimages/curl -s -X POST -H "x-sv-internal: $S" -H 'content-type: application/json' \
+      -d '{"release":"v4.0","sandbox":"toolchain-cpp:56000","path":"Vehicle.Speed","value":60,"field":"value"}' http://signal-gateway:4050/signals
+    ```

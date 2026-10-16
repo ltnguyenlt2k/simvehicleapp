@@ -51,7 +51,8 @@ export function runLimitsFromEnv(env: Record<string, string | undefined> = proce
     sandbox: env.SV_RUN_SANDBOX === "1",
     perUser: int("SV_MAX_RUNS_PER_USER", 2, 1),
     total: int("SV_MAX_RUNS_TOTAL", 20, 1),
-    maxMinutes: int("SV_RUN_MAX_MINUTES", 30),
+    // Fractions allowed (a gate runs with 0.75 = 45 s).
+    maxMinutes: env.SV_RUN_MAX_MINUTES !== undefined && env.SV_RUN_MAX_MINUTES !== "" && Number(env.SV_RUN_MAX_MINUTES) >= 0 ? Number(env.SV_RUN_MAX_MINUTES) : 30,
     maxExtensions: int("SV_RUN_MAX_EXTENSIONS", 3),
   };
 }
@@ -147,9 +148,8 @@ export class RunManager {
     this.live.set(run.id, live);
     ingest.system(`▶ run ${project.slug} (generation ${generationId}, VSS ${project.vssRelease} on ${broker}, trace ${level})`);
 
+    const writes = (gen.runInfo?.signals ?? []).filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
     if (!sandbox) {
-      // Sandboxed runs: the signal-gateway mirrors on the run's own databroker (M17-T05).
-      const writes = (gen.runInfo?.signals ?? []).filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
       await this.d.clients.mirror(project.vssRelease, writes).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
     }
 
@@ -165,6 +165,16 @@ export class RunManager {
       return (await this.d.repo.run(run.id))!;
     }
     await this.d.repo.updateRun(run.id, { jobId: job.value.id });
+    if (sandbox) {
+      // Where the run's databroker listens (the agent starts it before the app): the signal-gateway mirrors there and
+      // the studio's Signals, inject and Play reach it (M17-T05).
+      const address = await this.sandboxAddress(project.language, job.value.id);
+      if (address) {
+        await this.d.repo.updateRun(run.id, { sandbox: address });
+        ingest.system(`vehicle sandbox: this run's databroker is ${address}`);
+        await this.d.clients.mirror(project.vssRelease, writes, address).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
+      } else ingest.system("the run's databroker did not report its address: Signals show the shared databroker", "warn");
+    }
     live.timer = setTimeout(() => void this.timeout(run.id), this.d.startTimeoutMs ?? 30_000);
     void this.follow(project, run.id, job.value.id);
     return (await this.d.repo.run(run.id))!;
@@ -204,11 +214,27 @@ export class RunManager {
     return this.d.repo.run(runId);
   }
 
+  /** The sandbox address of a run job, polled for up to 5 s (a broker is ready in tens of ms). */
+  private async sandboxAddress(language: string, jobId: string): Promise<string | undefined> {
+    for (let waited = 0; waited <= 5_000; waited += 25) {
+      const job = await this.d.clients.getJob(language, jobId).catch(() => null);
+      if (job?.sandbox) return job.sandbox.address;
+      if (!job || !["queued", "running"].includes(job.state)) return undefined;
+      await Bun.sleep(25);
+    }
+    return undefined;
+  }
+
   private schedule(runId: string, expiresAt: number) {
     const live = this.live.get(runId);
     if (!live) return;
     if (live.expiry) clearTimeout(live.expiry);
     live.expiry = setTimeout(() => void this.stop(runId, "expired"), Math.max(0, expiresAt - this.now()));
+  }
+
+  /** The run limits in force; without sandboxes one run at a time and no expiry. */
+  get limits(): RunLimits {
+    return this.d.limits ?? { sandbox: false, perUser: 1, total: 1, maxMinutes: 0, maxExtensions: 0 };
   }
 
   /** Runs starting, running or stopping in this process. */
@@ -237,12 +263,9 @@ export class RunManager {
     const runningAt = this.now();
     const l = this.d.limits;
     const expiresAt = l && l.maxMinutes > 0 ? runningAt + l.maxMinutes * 60_000 : undefined;
-    // A sandboxed run: where its databroker listens, for the signal-gateway (M17-T05).
-    const project = await this.d.repo.project(run.projectId);
-    const job = run.jobId && project && l?.sandbox ? await this.d.clients.getJob(project.language, run.jobId).catch(() => null) : null;
-    await this.d.repo.updateRun(runId, { state: "running", runningAt, ...(expiresAt ? { expiresAt } : {}), ...(job?.sandbox ? { sandbox: job.sandbox.address } : {}) });
+    await this.d.repo.updateRun(runId, { state: "running", runningAt, ...(expiresAt ? { expiresAt } : {}) });
     if (expiresAt) this.schedule(runId, expiresAt);
-    this.d.log?.info("run started", { run: runId, ...(job?.sandbox ? { sandbox: job.sandbox.address } : {}) });
+    this.d.log?.info("run started", { run: runId, ...(run.sandbox ? { sandbox: run.sandbox } : {}) });
   }
 
   private async timeout(runId: string) {
@@ -292,7 +315,7 @@ export class RunManager {
     if (!run) return;
     this.d.metrics?.runEnded(state, diagnostics[0]?.code);
     await this.d.repo.updateRun(runId, { state, finishedAt: this.now(), ...(diagnostics.length ? { diagnostics: [...run.diagnostics, ...diagnostics] } : {}), ...(exitCode !== undefined ? { exitCode } : {}) });
-    if (!run.sandbox) await this.d.clients.mirror(run.vssRelease, []).catch(() => {});
+    await this.d.clients.mirror(run.vssRelease, [], run.sandbox).catch(() => {});
     this.live.delete(runId);
     this.chains.delete(runId);
     this.d.hub.end(runId);

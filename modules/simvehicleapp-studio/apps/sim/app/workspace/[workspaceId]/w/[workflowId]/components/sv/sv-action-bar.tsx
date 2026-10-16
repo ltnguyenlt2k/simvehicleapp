@@ -3,7 +3,10 @@
 import { useCallback } from 'react'
 import { FlaskConical, ShieldCheck } from 'lucide-react'
 import { toast } from '@/components/emcn'
-import { RunButtons } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
+import {
+  MyRunsMenu,
+  RunButtons,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
 import { defaultScenario } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
 import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
 import { SvAppChip } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-app-chip'
@@ -170,6 +173,7 @@ export function SvActionBar() {
         <div className='ml-2 flex min-w-0 items-center gap-2'>
           <SvAppChip />
           <SvStatusPill pill={status.pill} />
+          <MyRunsMenu />
         </div>
       </div>
       {status.hint && (
