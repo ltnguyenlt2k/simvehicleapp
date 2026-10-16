@@ -14,6 +14,7 @@ import {
 import { generateId } from '@sim/utils/id'
 import { and, eq, isNull, min } from 'drizzle-orm'
 import type { DbOrTx } from '@/lib/db/types'
+import { copySvWorkflowData } from '@/lib/sv/server/copy-workflow-data'
 import { remapConditionBlockIds, remapConditionEdgeHandle } from '@/lib/workflows/condition-ids'
 import { deduplicateWorkflowName } from '@/lib/workflows/utils'
 import type { Variable } from '@/stores/variables/types'
@@ -672,6 +673,9 @@ export async function duplicateWorkflow(
     if (!finalWorkspaceId) {
       throw new Error('Workspace ID is required')
     }
+
+    // SV: the duplicate keeps the workflow's VSS release and scenario (ADR-0056, M17-T03).
+    await copySvWorkflowData(tx, sourceWorkflowId, newWorkflowId)
 
     return {
       id: newWorkflowId,

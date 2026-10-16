@@ -8,10 +8,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mockAuthorizeWorkflowByWorkspacePermission =
   workflowAuthzMockFns.mockAuthorizeWorkflowByWorkspacePermission
 
-const { mockDb } = vi.hoisted(() => ({
+const { mockDb, mockCopySvWorkflowData } = vi.hoisted(() => ({
   mockDb: {
     transaction: vi.fn(),
   },
+  mockCopySvWorkflowData: vi.fn(),
 }))
 
 vi.mock('drizzle-orm', () => ({
@@ -22,6 +23,10 @@ vi.mock('@/lib/workflows/utils', () => workflowsUtilsMock)
 
 vi.mock('@sim/db', () => ({
   db: mockDb,
+}))
+// SV: the vehicle data copy (VSS release, scenario) has its own tables; asserted below (ADR-0056, M17-T03).
+vi.mock('@/lib/sv/server/copy-workflow-data', () => ({
+  copySvWorkflowData: mockCopySvWorkflowData,
 }))
 
 import { duplicateWorkflow } from './duplicate'
@@ -126,6 +131,8 @@ describe('duplicateWorkflow ordering', () => {
 
     expect(result.sortOrder).toBe(1)
     expect(insertedWorkflowValues?.sortOrder).toBe(1)
+    // SV: the duplicate keeps the VSS release and scenario, inside the same transaction.
+    expect(mockCopySvWorkflowData).toHaveBeenCalledWith(tx, 'source-workflow-id', result.id)
   })
 
   it('defaults to sortOrder 0 when target has no siblings', async () => {

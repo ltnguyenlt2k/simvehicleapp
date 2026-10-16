@@ -1036,3 +1036,8 @@ apps/sim/trigger.config.ts
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar.tsx
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/block-menu/block-menu.tsx
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/canvas-menu/canvas-menu.tsx
+
+# M17-T03 — workflow download/import/duplicate keep the VSS release and scenario (ADR-0056)
+apps/sim/app/workspace/[workspaceId]/w/hooks/use-import-workflow.ts
+apps/sim/lib/workflows/persistence/duplicate.test.ts
+apps/sim/lib/workflows/persistence/duplicate.ts

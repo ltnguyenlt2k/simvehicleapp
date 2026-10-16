@@ -3,6 +3,7 @@ import { createLogger } from '@sim/logger'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
+import { toast } from '@/components/emcn'
 import { captureEvent } from '@/lib/posthog/client'
 import {
   extractWorkflowsFromFiles,
@@ -66,6 +67,8 @@ export function useImportWorkflow({ workspaceId }: UseImportWorkflowProps) {
           }),
       })
 
+      // SV: tell when the release or scenario of the workflow could not be kept (ADR-0056).
+      if (result?.svWarning) toast.warning(`${result.workflowName}: ${result.svWarning}`)
       return result?.workflowId ?? null
     },
     [clearDiff, createWorkflowMutation, workspaceId]

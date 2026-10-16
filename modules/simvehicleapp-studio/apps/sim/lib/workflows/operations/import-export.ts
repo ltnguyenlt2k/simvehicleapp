@@ -13,6 +13,12 @@ import {
   workflowVariablesContract,
 } from '@/lib/api/contracts/workflows'
 import { graphToSimState, isWorkflowGraph } from '@/lib/sv/graph-import'
+import {
+  fetchSvSidecar,
+  readSvSidecar,
+  restoreSvSidecar,
+  type SvWorkflowSidecar,
+} from '@/lib/sv/workflow-sidecar'
 import { migrateSubblockIds } from '@/lib/workflows/migrations/subblock-migrations'
 import {
   type ExportWorkflowState,
@@ -55,6 +61,8 @@ export interface WorkflowExportData {
   }
   state: WorkflowState
   variables?: Record<string, Variable>
+  /** SV: VSS release and scenario of the workflow (ADR-0056). */
+  simvehicleapp?: SvWorkflowSidecar
 }
 
 export interface FolderExportData {
@@ -154,6 +162,7 @@ export async function fetchWorkflowForExport(
       },
       state: workflowData.state,
       variables: workflowVariables,
+      simvehicleapp: await fetchSvSidecar(workflowId),
     }
   } catch (error) {
     logger.error(`Failed to fetch workflow ${workflowId} for export:`, error)
@@ -176,7 +185,12 @@ export function exportWorkflowToJson(workflowData: WorkflowExportData): string {
   }
 
   const exportState = sanitizeForExport(workflowState)
-  return JSON.stringify(exportState, null, 2)
+  return JSON.stringify(withSvSidecar(exportState, workflowData.simvehicleapp), null, 2)
+}
+
+/** SV: the exported workflow with its vehicle data under `simvehicleapp` (ADR-0056). */
+function withSvSidecar<T extends object>(exportState: T, sidecar?: SvWorkflowSidecar): T {
+  return sidecar ? { ...exportState, simvehicleapp: sidecar } : exportState
 }
 
 /**
@@ -685,7 +699,12 @@ export async function persistImportedWorkflow({
   nameOverride,
   descriptionOverride,
   createWorkflow,
-}: PersistImportedWorkflowOptions): Promise<{ workflowId: string; workflowName: string } | null> {
+}: PersistImportedWorkflowOptions): Promise<{
+  workflowId: string
+  workflowName: string
+  /** SV: vehicle data that could not be kept (ADR-0056). */
+  svWarning?: string
+} | null> {
   const { data: workflowData, errors: parseErrors } = parseWorkflowJson(content)
 
   if (!workflowData || parseErrors.length > 0) {
@@ -782,6 +801,18 @@ export async function persistImportedWorkflow({
       return null
     }
   })()
+  // SV: a downloaded workflow carries its release and scenario under `simvehicleapp` (ADR-0056, M17-T03).
+  const sidecar = readSvSidecar(graph)
+  if (sidecar) {
+    const failed = await restoreSvSidecar(newWorkflowId, sidecar)
+    if (failed.length) logger.warn(`Not kept for ${newWorkflowId}: ${failed.join(', ')}`)
+    logger.info(`Imported workflow: ${workflowName}`)
+    return {
+      workflowId: newWorkflowId,
+      workflowName,
+      ...(failed.length ? { svWarning: `Could not keep its ${failed.join(' and ')}` } : {}),
+    }
+  }
   const release = isWorkflowGraph(graph) ? graph.vss?.release : undefined
   if (release) {
     await requestJson(svUpdateWorkflowSettingsContract, {
@@ -795,7 +826,17 @@ export async function persistImportedWorkflow({
   }
 
   logger.info(`Imported workflow: ${workflowName}`)
-  return { workflowId: newWorkflowId, workflowName }
+  return {
+    workflowId: newWorkflowId,
+    workflowName,
+    // SV: a file from before M17 (no `simvehicleapp`) lands on the default release, without scenario.
+    ...(release
+      ? {}
+      : {
+          svWarning:
+            'This file has no VSS release or scenario (exported before they were included): it uses the default release',
+        }),
+  }
 }
 
 export interface GenerateWorkflowJsonOptions {
@@ -808,6 +849,8 @@ export interface GenerateWorkflowJsonOptions {
     type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'plain'
     value: any
   }>
+  /** SV: VSS release and scenario of the workflow (ADR-0056). */
+  simvehicleapp?: SvWorkflowSidecar
 }
 
 /**
@@ -842,7 +885,7 @@ export function generateWorkflowJson(
   }
 
   const exportState: ExportWorkflowState = sanitizeForExport(stateWithMetadata)
-  const jsonString = JSON.stringify(exportState, null, 2)
+  const jsonString = JSON.stringify(withSvSidecar(exportState, options.simvehicleapp), null, 2)
 
   logger.info('Workflow JSON generated successfully', {
     version: exportState.version,

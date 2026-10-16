@@ -24,6 +24,7 @@ import { Download, Lock, Unlock } from '@/components/emcn/icons'
 import { VariableIcon } from '@/components/icons'
 import { useSession } from '@/lib/auth/auth-client'
 import { isHiddenSurface } from '@/lib/sv/hidden-surfaces'
+import { fetchSvSidecar } from '@/lib/sv/workflow-sidecar'
 import { generateWorkflowJson } from '@/lib/workflows/operations/import-export'
 import { useRegisterGlobalCommands } from '@/app/workspace/[workspaceId]/providers/global-commands-provider'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
@@ -241,6 +242,8 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
 
       const jsonContent = generateWorkflowJson(workflow.state, {
         workflowId: activeWorkflowId,
+        // SV: the download keeps the workflow's VSS release and scenario (ADR-0056).
+        simvehicleapp: await fetchSvSidecar(activeWorkflowId),
         name: currentWorkflow.name,
         description: currentWorkflow.description,
         variables: workflowVariables.map((v) => ({
@@ -338,7 +341,11 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
             <div className='flex gap-1.5'>
               <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button className='size-[30px] rounded-[5px]'>
+                  <Button
+                    className='size-[30px] rounded-[5px]'
+                    data-sv='workflow-menu'
+                    aria-label='Workflow menu'
+                  >
                     <MoreHorizontal />
                   </Button>
                 </DropdownMenuTrigger>
@@ -376,7 +383,7 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
                     disabled={!userPermissions.canEdit || isExporting || !currentWorkflow}
                   >
                     <Download />
-                    Export workflow
+                    Download workflow (.json)
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={handleDuplicateWorkflow}
