@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { sleep } from '@sim/utils/helpers'
 import { Clock, Play, Square } from 'lucide-react'
 import { toast } from '@/components/emcn'
-import type { SvMyRun } from '@/lib/api/contracts/sv'
+import { requestJson } from '@/lib/api/client/request'
+import { type SvMyRun, svMyRunsContract } from '@/lib/api/contracts/sv'
 import { RunConflictModal } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/run-conflict-modal'
 import {
   canExtendSoon,
@@ -21,6 +23,16 @@ import { useSvRunStore } from '@/stores/sv/run/store'
  * VSS release; Stop ends it (SIGINT, SIGKILL after 5 s). With sandboxes (ADR-0057) the run has vehicle
  * signals of its own, a time limit (Extend in its last minutes) and the user may run several apps.
  */
+/** Polls My runs until none of `ids` is active (at most 10 s). */
+async function waitUntilStopped(ids: Set<string>): Promise<boolean> {
+  for (let waited = 0; waited < 10_000; waited += 500) {
+    const mine = await requestJson(svMyRunsContract, {}).catch(() => null)
+    if (mine && !mine.runs.some((r) => ids.has(r.id))) return true
+    await sleep(500)
+  }
+  return false
+}
+
 interface RunButtonsProps {
   /** Run is the sensible next step: the app of this graph is built (ADR-0054). */
   primary?: boolean
@@ -70,9 +82,14 @@ export function RunButtons({ primary = false }: RunButtonsProps) {
     else run()
   }
   const onStopAndRun = async () => {
+    const ids = new Set((conflict ?? []).map((r) => r.id))
     for (const r of conflict ?? []) {
       await stop.mutateAsync({ projectId: r.projectId, runId: r.id }).catch(() => undefined)
     }
+    // A stopping run still holds its slot: start once the others have stopped (SIGKILL after 5 s).
+    const stopped = await waitUntilStopped(ids)
+    if (!stopped)
+      toast.warning('The other app is still stopping: Run may be refused, try again in a moment')
     run()
   }
   const onStop = () => {
