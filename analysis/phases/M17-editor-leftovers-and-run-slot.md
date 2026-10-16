@@ -44,6 +44,7 @@
 - [ ] E2E: workflow v4.2 có scenario ⇒ Duplicate ⇒ bản sao v4.2 + Simulate cùng kết quả; Download → Import tương tự.
 
 ### T04a: Spike sandbox mỗi run
+- [x] ✔ 2026-10-16 spike PASS (ADR-0057 Notes): 5 databroker song song, 12–26 ms, ~7 MB mỗi cái, không lẫn tín hiệu; 2 app thật song song đúng logic, không lẫn. Chưa thử VSS tuỳ biến (chuyển vào T04).
 - [ ] Image toolchain (hoặc image runtime riêng) có binary `databroker` của `ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0` (multi-stage `COPY --from`); NOTICE Apache-2.0.
 - [ ] Toolchain agent spawn `databroker --insecure --port <free> --vss <file release>` cạnh app; app nhận `SDV_VEHICLEDATABROKER_ADDRESS` của sandbox.
 - [ ] Đo: thời gian databroker sẵn sàng, RAM mỗi sandbox, 5 run song song cùng v4.0 (inject vào run 1 không đổi run 2), release tuỳ biến (file từ vss-catalog).

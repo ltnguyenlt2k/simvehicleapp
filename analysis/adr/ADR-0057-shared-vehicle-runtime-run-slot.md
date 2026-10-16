@@ -138,6 +138,19 @@ flowchart LR
 - **Full luồng `@live` + README** (AGENTS §4 bước 7).
 
 ## Notes / Deviations
+- 2026-10-16 — **Spike M17-T04a PASS** trên stack dev (toolchain-cpp, không đổi image):
+  - Binary `/app/databroker` của `ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0` (7,2 MB, ELF amd64) chạy được dạng tiến trình trong container toolchain.
+    - Cờ dùng: `--insecure --enable-databroker-v1 --address 127.0.0.1 --port <p> --worker-threads 2 --vss <file>`.
+  - **5 instance song song cùng VSS 4.0:** sẵn sàng sau 12–26 ms mỗi instance, RAM ~7 MB mỗi instance (`--worker-threads 2`).
+    - Ghi `Vehicle.Speed` vào instance 1 (130) và 3 (42), các instance khác vẫn `None` ⇒ **không lẫn tín hiệu**.
+  - **2 app `demo-overspeed` thật song song** (~13 MB mỗi app), mỗi app trỏ `SDV_VEHICLEDATABROKER_ADDRESS` vào databroker riêng.
+    - Inject 100 → 130 vào sandbox 1 ⇒ sau 2 s `Hazard.IsSignaling` target = `true` chỉ ở sandbox 1; sandbox 2 `None`.
+    - App 1 có 18 sự kiện trace, app 2 chỉ có 2 (khởi động).
+  - **Phát hiện cho phần code:**
+    1. Tiến trình databroker phải do **toolchain agent spawn và thu dọn**. Ở spike, tiến trình mồ côi thành zombie vì PID 1 của container không reap. Lưu ý: dừng app không được dùng `pkill -f` (khớp nhầm shell).
+    2. Image toolchain chép binary bằng multi-stage `COPY --from` và phải kèm `app/thirdparty-licenses/` + `sbom.json` của image KUKSA vào NOTICE.
+    3. Cấp cổng trong `127.0.0.1` của container toolchain là đủ: app và databroker cùng container; signal-gateway cần route qua agent hoặc bind theo cách khác — quyết định ở T05.
+  - **VSS tuỳ biến:** chưa thử trong spike (chỉ VSS 4.0). Ghi vào M17-T04 checklist để kiểm cùng lúc làm code.
 - 2026-10-15 — bản đầu của ADR này (cùng ngày) chọn "một run mỗi databroker dùng chung + thời hạn". Lý do loại phương án databroker riêng mỗi run lúc đó là "tốn RAM/CPU", **chưa đo**.
 - 2026-10-15 (đối chiếu sau): ADR-0046 đã có trước, chọn "pool stack tĩnh" khi cần multi-user (hoãn chờ PO). Bản đầu của ADR này chưa nhắc tới 0046; nay ghi rõ: ADR-0057 đề xuất **thay quyết định 2 của ADR-0046** bằng sandbox dạng tiến trình (cùng nguyên tắc không docker.sock), và ADR-0046 có Notes trỏ sang đây. Khi PO duyệt, 0046 chuyển "Superseded (một phần) by ADR-0057".
 - Sau câu hỏi của PO về multi-user, đã đo lại: databroker 3,8–5,9 MB, app ~14 MB. Lý do loại đó sai, và phương án cũ không cho nhiều người dùng chạy (mỗi release một người). Decision đổi sang sandbox mỗi run; phương án cũ chuyển xuống Alternatives.
