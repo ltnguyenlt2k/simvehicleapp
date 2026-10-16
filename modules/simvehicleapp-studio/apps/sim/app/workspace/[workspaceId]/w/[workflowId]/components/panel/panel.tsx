@@ -23,6 +23,7 @@ import {
 import { Download, Lock, Unlock } from '@/components/emcn/icons'
 import { VariableIcon } from '@/components/icons'
 import { useSession } from '@/lib/auth/auth-client'
+import { isHiddenSurface } from '@/lib/sv/hidden-surfaces'
 import { generateWorkflowJson } from '@/lib/workflows/operations/import-export'
 import { useRegisterGlobalCommands } from '@/app/workspace/[workspaceId]/providers/global-commands-provider'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
@@ -395,13 +396,16 @@ export const Panel = memo(function Panel({ workspaceId: propWorkspaceId }: Panel
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                className='size-[30px] rounded-[5px]'
-                variant={isChatOpen ? 'active' : 'default'}
-                onClick={() => setIsChatOpen(!isChatOpen)}
-              >
-                {isChatOpen ? <BubbleChatClose /> : <BubbleChatPreview />}
-              </Button>
+              {/* SV: Sim's workflow chat is hidden (ADR-0056); the Assistant tab is the chat. */}
+              {!isHiddenSurface('workflow-chat') && (
+                <Button
+                  className='size-[30px] rounded-[5px]'
+                  variant={isChatOpen ? 'active' : 'default'}
+                  onClick={() => setIsChatOpen(!isChatOpen)}
+                >
+                  {isChatOpen ? <BubbleChatClose /> : <BubbleChatPreview />}
+                </Button>
+              )}
             </div>
 
             {/* SV: Sim's Deploy and Run removed (M11-T03) — vehicle apps run with Run/Stop in the action bar. */}

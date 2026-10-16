@@ -7,6 +7,7 @@ import { isAuthDisabled, isHosted } from './lib/core/config/env-flags'
 import { generateRuntimeCSP } from './lib/core/security/csp'
 import { getClientIp } from './lib/core/utils/request'
 import { getHiddenRouteRedirect } from './lib/sv/hidden-routes'
+import { isHiddenApiRoute } from './lib/sv/hidden-surfaces'
 
 const logger = createLogger('Proxy')
 
@@ -233,6 +234,10 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl
 
   if (url.pathname.startsWith('/api/')) {
+    // SV: Sim's workflow chat and executor do not run vehicle workflows (ADR-0056, M17-T02).
+    if (isHiddenApiRoute(url.pathname)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
     const policy = resolveApiCorsPolicy(request)
     if (request.method === 'OPTIONS') {
       return buildPreflightResponse(policy)

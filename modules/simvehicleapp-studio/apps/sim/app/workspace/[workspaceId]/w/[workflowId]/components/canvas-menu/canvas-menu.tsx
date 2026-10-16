@@ -8,6 +8,7 @@ import {
   PopoverDivider,
   PopoverItem,
 } from '@/components/emcn'
+import { isHiddenSurface } from '@/lib/sv/hidden-surfaces'
 
 /**
  * Props for CanvasMenu component
@@ -203,14 +204,17 @@ export function CanvasMenu({
         >
           {isVariablesOpen ? 'Close Variables' : 'Open Variables'}
         </PopoverItem>
-        <PopoverItem
-          onClick={() => {
-            onToggleChat()
-            onClose()
-          }}
-        >
-          {isChatOpen ? 'Close Chat' : 'Open Chat'}
-        </PopoverItem>
+        {/* SV: Sim's workflow chat is hidden (ADR-0056). */}
+        {!isHiddenSurface('workflow-chat') && (
+          <PopoverItem
+            onClick={() => {
+              onToggleChat()
+              onClose()
+            }}
+          >
+            {isChatOpen ? 'Close Chat' : 'Open Chat'}
+          </PopoverItem>
+        )}
       </PopoverContent>
     </Popover>
   )

@@ -3,6 +3,7 @@ import { ArrowLeftRight, ArrowUpDown, Circle, CircleOff, Lock, LogOut, Unlock } 
 import { useShallow } from 'zustand/react/shallow'
 import { Button, Duplicate, PlayOutline, Tooltip, Trash2, toast } from '@/components/emcn'
 import { cn } from '@/lib/core/utils/cn'
+import { isHiddenSurface } from '@/lib/sv/hidden-surfaces'
 import { isInputDefinitionTrigger } from '@/lib/workflows/triggers/input-definition-triggers'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { useWorkflowExecution } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks'
@@ -163,7 +164,8 @@ export const ActionBar = memo(
           'dark:border-transparent dark:bg-[var(--surface-4)]'
         )}
       >
-        {!isNoteBlock && !isInsideSubflow && (
+        {/* SV: run from block runs Sim's executor, not vehicle logic (ADR-0056). */}
+        {!isHiddenSurface('run-from-block') && !isNoteBlock && !isInsideSubflow && (
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
               <span className='inline-flex'>

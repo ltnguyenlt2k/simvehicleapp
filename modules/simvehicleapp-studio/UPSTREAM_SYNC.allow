@@ -1031,3 +1031,8 @@ apps/sim/executor/handlers/pi/ssh-tools.test.ts
 apps/sim/executor/handlers/pi/ssh-tools.ts
 apps/sim/executor/handlers/registry.ts
 apps/sim/trigger.config.ts
+
+# M17-T02 — hide Sim's executor surfaces: workflow chat, run from/until block (ADR-0056)
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/action-bar/action-bar.tsx
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/block-menu/block-menu.tsx
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/canvas-menu/canvas-menu.tsx

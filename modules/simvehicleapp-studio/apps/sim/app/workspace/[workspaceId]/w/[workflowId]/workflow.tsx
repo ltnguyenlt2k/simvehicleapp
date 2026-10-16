@@ -21,6 +21,7 @@ import { useSession } from '@/lib/auth/auth-client'
 import type { OAuthConnectEventDetail } from '@/lib/copilot/tools/client/base-tool'
 import { consumeOAuthReturnContext, writeOAuthReturnContext } from '@/lib/credentials/client-state'
 import type { OAuthProvider } from '@/lib/oauth'
+import { isHiddenSurface } from '@/lib/sv/hidden-surfaces'
 import { BLOCK_DIMENSIONS, CONTAINER_DIMENSIONS } from '@/lib/workflows/blocks/block-dimensions'
 import { TriggerUtils } from '@/lib/workflows/triggers/triggers'
 import { ConnectOAuthModal } from '@/app/workspace/[workspaceId]/components/connect-oauth-modal'
@@ -4199,9 +4200,12 @@ const WorkflowContent = React.memo(
                 {!embedded && (
                   <>
                     <WorkflowControls />
-                    <Suspense fallback={null}>
-                      <LazyChat />
-                    </Suspense>
+                    {/* SV: Sim's workflow chat runs Sim's executor, not vehicle logic (ADR-0056). */}
+                    {!isHiddenSurface('workflow-chat') && (
+                      <Suspense fallback={null}>
+                        <LazyChat />
+                      </Suspense>
+                    )}
 
                     <BlockMenu
                       isOpen={isBlockMenuOpen}

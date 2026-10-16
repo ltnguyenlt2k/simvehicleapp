@@ -8,6 +8,7 @@ import {
   PopoverDivider,
   PopoverItem,
 } from '@/components/emcn'
+import { isHiddenSurface } from '@/lib/sv/hidden-surfaces'
 import { TriggerUtils } from '@/lib/workflows/triggers/triggers'
 
 /**
@@ -274,36 +275,40 @@ export function BlockMenu({
         )}
 
         {/* Run from/until block - only for single non-note block, not inside subflows */}
-        {isSingleBlock && !allNoteBlocks && !isInsideSubflow && (
-          <>
-            <PopoverDivider />
-            <PopoverItem
-              disabled={!canRunFromBlock || isExecuting}
-              onClick={() => {
-                if (canRunFromBlock && !isExecuting) {
-                  onRunFromBlock?.()
-                  onClose()
-                }
-              }}
-            >
-              Run from block
-            </PopoverItem>
-            {/* Hide "Run until" for triggers - they're always at the start */}
-            {!hasTriggerBlock && (
+        {/* SV: run from/until block runs Sim's executor, not vehicle logic (ADR-0056). */}
+        {!isHiddenSurface('run-from-block') &&
+          isSingleBlock &&
+          !allNoteBlocks &&
+          !isInsideSubflow && (
+            <>
+              <PopoverDivider />
               <PopoverItem
-                disabled={isExecuting}
+                disabled={!canRunFromBlock || isExecuting}
                 onClick={() => {
-                  if (!isExecuting) {
-                    onRunUntilBlock?.()
+                  if (canRunFromBlock && !isExecuting) {
+                    onRunFromBlock?.()
                     onClose()
                   }
                 }}
               >
-                Run until block
+                Run from block
               </PopoverItem>
-            )}
-          </>
-        )}
+              {/* Hide "Run until" for triggers - they're always at the start */}
+              {!hasTriggerBlock && (
+                <PopoverItem
+                  disabled={isExecuting}
+                  onClick={() => {
+                    if (!isExecuting) {
+                      onRunUntilBlock?.()
+                      onClose()
+                    }
+                  }}
+                >
+                  Run until block
+                </PopoverItem>
+              )}
+            </>
+          )}
 
         {/* Destructive action */}
         <PopoverDivider />
