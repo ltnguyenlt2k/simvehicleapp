@@ -59,7 +59,9 @@ function errorText(error: ApiError, errors: { path?: string; error?: ApiError }[
 export function grpcBroker(address: string, now: () => number = Date.now): Broker {
   const def = loader.loadSync("kuksa/val/v1/val.proto", { includeDirs: [PROTO_DIR], keepCase: true, longs: String, enums: String, defaults: false, oneofs: true });
   const pkg = grpc.loadPackageDefinition(def) as any;
-  const client = new pkg.kuksa.val.v1.VAL(address, grpc.credentials.createInsecure());
+  // Own subchannel pool: a client made for a new run resolves its host again (the shared pool kept the address of a
+  // toolchain container that was recreated, ECONNREFUSED to its old IP — M17-T05 gate).
+  const client = new pkg.kuksa.val.v1.VAL(address, grpc.credentials.createInsecure(), { "grpc.use_local_subchannel_pool": 1 });
   const unary = <T>(method: string, req: unknown) =>
     new Promise<T>((resolve, reject) =>
       client[method](req, { deadline: Date.now() + 5000 }, (err: grpc.ServiceError | null, res: T) => {

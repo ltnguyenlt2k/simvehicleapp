@@ -138,6 +138,11 @@ flowchart LR
 - **Full luồng `@live` + README** (AGENTS §4 bước 7).
 
 ## Notes / Deviations
+- 2026-10-16 — **Gate `m17-runtime.sh` PASS** trên stack dev (2 lần; lần 2 sau khi recreate toolchain-cpp). Hai lỗi lộ ra và đã sửa:
+  1. PID 1 của toolchain là bun và không reap tiến trình mồ côi. Kết quả: 8 zombie `git` sau 2 SynCode, có từ trước M17.
+     - Sửa: `init: true` (docker-init làm PID 1) cho toolchain-cpp/python/rust.
+  2. grpc-js dùng chung subchannel pool, nên client mới tới `toolchain-cpp:56000` vẫn nối IP của container cũ (ECONNREFUSED).
+     - Sửa: `grpc.use_local_subchannel_pool` cho mỗi client.
 - 2026-10-16 — **M17-T05** (định tuyến và UI):
   - Orchestrator lấy `job.sandbox.address` ngay sau khi job bắt đầu (poll ≤ 5 s; agent khởi động databroker trước app). Nhờ vậy Signals của run đang `starting` đã đúng sandbox, và mirror được đặt trên sandbox.
   - Signal-gateway chỉ nhận `sandbox` dạng `toolchain-(cpp|python|rust):<port>`, để BFF/AI không gửi được địa chỉ nội bộ khác (chống SSRF).

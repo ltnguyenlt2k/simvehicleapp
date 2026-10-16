@@ -12,6 +12,8 @@ services:
     restart: "no"
 
   toolchain-cpp:
+    # docker-init as PID 1 reaps orphans (git of SynCode builds, sandbox databrokers) — bun as PID 1 does not.
+    init: true
     image: simvehicleapp/toolchain-cpp:dev
     build:
       context: .
@@ -58,6 +60,8 @@ services:
     restart: "no"
 
   toolchain-python:
+    # docker-init as PID 1 reaps orphans (git of SynCode builds, sandbox databrokers) — bun as PID 1 does not.
+    init: true
     image: simvehicleapp/toolchain-python:dev
     profiles: ["python"]
     build:
@@ -87,6 +91,8 @@ services:
   # Rust (ADR-0041, feasibility — experimental, not Velocitas tooling): opt-in with the `rust` profile and
   # rust=… in SV_BACKENDS/SV_TOOLCHAINS. Needs image simvehicleapp/codegen-rust:dev (its runtime crate is the seed's).
   toolchain-rust:
+    # docker-init as PID 1 reaps orphans (git of SynCode builds, sandbox databrokers) — bun as PID 1 does not.
+    init: true
     image: simvehicleapp/toolchain-rust:dev
     profiles: ["rust"]
     build:
