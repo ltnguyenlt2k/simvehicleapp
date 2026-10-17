@@ -154,7 +154,7 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
   await pause(page, 1000)
   await inject(page, SPEED, '130')
   await page.waitForTimeout(3000)
-  await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)).toHaveText(
+  await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)).toHaveText(
     'true'
   )
   await page.locator('[data-sv-tab="run-console"]').click()

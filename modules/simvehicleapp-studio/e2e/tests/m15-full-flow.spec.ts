@@ -260,7 +260,9 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   })
   await expect(page.locator('[data-sv="status-pill"]')).toContainText('Running')
   await page.locator('[data-sv-tab="signals"]').click()
-  const hazardTarget = page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)
+  // The current value: mirrored from the target (sdv.databroker.v1) or published by the gateway as provider of a
+  // kuksa.val.v2 app (ADR-0047) — the app's write either way.
+  const hazardTarget = page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)
   await inject(page, SPEED, '100')
   await pause(page, 800)
   await inject(page, SPEED, '130')

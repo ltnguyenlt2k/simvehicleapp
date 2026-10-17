@@ -124,9 +124,9 @@ test.describe('M8 live run on the real stack', () => {
       expect(reset.ok()).toBe(true)
     }
 
-    // Signals: Speed 100 then 130 held 3 s ⇒ Hazard on (target, and current through the gateway mirror)
+    // Signals: Speed 100 then 130 held 3 s ⇒ Hazard on (current value: mirrored target on v1, provided on kuksa.val.v2)
     await page.locator('[data-sv-tab="signals"]').click()
-    await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)).toHaveText(
+    await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)).toHaveText(
       'false'
     )
     await inject(page, SPEED, '100')
@@ -138,7 +138,7 @@ test.describe('M8 live run on the real stack', () => {
       '130'
     )
     await page.waitForTimeout(3000)
-    await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-target]`)).toHaveText(
+    await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)).toHaveText(
       'true'
     )
     await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)).toHaveText(
