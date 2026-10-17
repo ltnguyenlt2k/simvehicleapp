@@ -34,6 +34,7 @@ toolchain-cpp 4210) **không** publish ra host; chỉ nhận request có `x-sv-i
 | `SV_MCP_TOKEN` / `SV_MCP_TOKENS` | bật `/mcp` cho agent ngoài |
 | `SV_LICENSE_MODE`, `SV_LICENSE_KEY`, `SV_LICENSE_PUBLIC_KEY` | `full` (mặc định) hoặc `enforce` (ADR-0031) |
 | `SV_DATABROKERS` | release VSS ⇒ databroker (`v4.0=databroker:55555,v4.2=databroker-v4-2:55555`) |
+| `SV_DATABROKER_API` | API databroker của app mỗi backend (ADR-0047). Mặc định mọi backend dùng `kuksa.val.v2`: signal-gateway làm provider các actuator app ghi. Quay về API cũ: `*=sdv.databroker.v1`, hoặc chọn từng backend, vd. `cpp=sdv.databroker.v1` |
 | `SV_RUN_SANDBOX`, `SV_MAX_RUNS_PER_USER`, `SV_MAX_RUNS_TOTAL`, `SV_RUN_MAX_MINUTES`, `SV_RUN_MAX_EXTENSIONS` | runtime nhiều người dùng (mục 3a, ADR-0057) |
 
 ### 3a. Runtime nhiều người dùng (ADR-0057)
@@ -87,6 +88,8 @@ Volume: `studio-db` (Postgres: studio + schema `sv`, `sv_ai`), workspace project
 | `modules/simvehicleapp-orchestrator/gate/m7-gate.sh` … `m9-gate.sh` | gate milestone |
 | `modules/simvehicleapp-orchestrator/gate/parity-p3.sh [GW-A,…]` | parity P3 (ADR-0042) |
 | `modules/simvehicleapp-orchestrator/gate/bench-nfr02.sh` | hiệu năng NFR-02 |
+| `SV_PARITY_API=kuksa.val.v2 modules/simvehicleapp-orchestrator/gate/parity-p3.sh` | parity P3 khi app chạy trên `kuksa.val.v2` (provider chỉ chấp nhận, không trả lời) |
+| `modules/simvehicleapp-orchestrator/gate/kuksa-v2-provider.sh` | signal-gateway làm provider `kuksa.val.v2`: Actuate ⇒ current, provider thứ hai bị từ chối, nhả claim |
 | `modules/simvehicleapp-orchestrator/gate/m17-runtime.sh` | M17 runtime nhiều người dùng: 2 run song song không lẫn tín hiệu, quota, Extend, hết hạn, không zombie |
 
 ## 8. Phát hành (ADR-0002/0009)

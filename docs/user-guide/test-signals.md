@@ -39,6 +39,11 @@ Timeline liệt kê từng lần ghi tín hiệu, từng thông báo HMI và log
    - Tín hiệu chỉ xuất hiện trong **biểu thức** (vd. `<Vehicle.Speed>` trong điều kiện If) **chưa** tự có trong bảng.
    - Gõ `Vehicle.Speed` vào ô **Watch a signal** (cạnh nhãn `VSS v4.0`) rồi Enter để thêm.
 4. Inject: gõ giá trị vào ô của dòng tín hiệu, chọn `value` (giá trị cảm biến/hiện tại) hoặc `target` (yêu cầu cho actuator), bấm **Set**.
+   - **App ghi actuator thế nào** (từ 2026-10-17, [ADR-0047](../../analysis/adr/ADR-0047-kuksa-val-v2-migration.md)):
+     - app dùng `kuksa.val.v2` (mặc định) và gửi *Actuate*;
+     - signal-gateway đóng vai provider, publish giá trị đó thành **giá trị hiện tại**;
+     - nên trên bảng Signals, cột hiện tại đổi, còn `target` có thể trống.
+   - Stack đặt `SV_DATABROKER_API=*=sdv.databroker.v1` thì app ghi `target` như trước (gateway mirror sang hiện tại).
 5. Xem kết quả:
    - **Signals:** cột *Target* của actuator là giá trị app vừa ghi; *Current* theo sau (stack giả lập xe thực hiện lệnh).
    - **Run console:** log của app và trace từng block đã chạy. Thông báo HMI và log của workflow xuất hiện ở đây.
@@ -52,7 +57,7 @@ Timeline liệt kê từng lần ghi tín hiệu, từng thông báo HMI và log
 | 1 | `Vehicle.Speed` = `5` (value) | Không có gì (chưa có trigger) |
 | 2 | `IsWarning` = `false`, rồi `true` (value) | Trigger *rises* (false → true). Tốc độ ≤ 10 ⇒ nhánh **else**: Run console có log "LKA không kích hoạt"; `IsEnabled` không đổi |
 | 3 | `Vehicle.Speed` = `60` | Không có gì (tốc độ không phải trigger) |
-| 4 | `IsWarning` = `false`, rồi `true` | Nhánh **then**: Run console có trace "LKA warning" (HMI) và "Enable LDD"; `IsEnabled` target = `true` |
+| 4 | `IsWarning` = `false`, rồi `true` | Nhánh **then**: Run console có trace "LKA warning" (HMI) và "Enable LDD"; `IsEnabled` = `true` (giá trị hiện tại, xem ghi chú dưới) |
 
 Lưu ý:
 - Trigger kiểu **"Value rises"** chỉ chạy khi giá trị **đổi từ false sang true**. Inject `true` hai lần liền thì lần hai không kích hoạt; phải về `false` trước.

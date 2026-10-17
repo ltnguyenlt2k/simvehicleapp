@@ -42,6 +42,11 @@ export interface RunLimits {
   maxExtensions: number;
 }
 
+/** The databroker API of a backend's apps: its entry, else `*`, else `sdv.databroker.v1` (ADR-0047 §3–4). */
+export function databrokerApiOf(apis: Record<string, string> | undefined, language: string): "sdv.databroker.v1" | "kuksa.val.v2" {
+  return (apis?.[language] ?? apis?.["*"]) === "kuksa.val.v2" ? "kuksa.val.v2" : "sdv.databroker.v1";
+}
+
 export function runLimitsFromEnv(env: Record<string, string | undefined> = process.env): RunLimits {
   const int = (name: string, fallback: number, min = 0) => {
     const v = Number(env[name]);
@@ -152,7 +157,8 @@ export class RunManager {
 
     const writes = (gen.runInfo?.signals ?? []).filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
     // A v2 app actuates through a provider: the gateway provides its actuators instead of mirroring targets (ADR-0047 §2).
-    const api = this.d.databrokerApis?.[project.language] === "kuksa.val.v2" ? "kuksa.val.v2" : "sdv.databroker.v1";
+    // SV_DATABROKER_API selects the host of the Rust runtime, KUKSA_DATABROKER_API the client of the C++ SDK 0.7.1.
+    const api = databrokerApiOf(this.d.databrokerApis, project.language);
     if (!sandbox) {
       await this.d.clients.mirror(project.vssRelease, writes, undefined, api).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
     }
@@ -162,8 +168,8 @@ export class RunManager {
       "run",
       project.slug,
       sandbox
-        ? { sandbox: true, env: { SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api } }
-        : { env: { SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${broker}`, SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api } },
+        ? { sandbox: true, env: { SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api, KUKSA_DATABROKER_API: api } }
+        : { env: { SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${broker}`, SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api, KUKSA_DATABROKER_API: api } },
     );
     if (!job.ok) {
       const d = job.diagnostics.length ? job.diagnostics : [diag("RUN_CRASHED", `The toolchain refused the run (${job.status}${job.message ? `: ${job.message}` : ""})`)];

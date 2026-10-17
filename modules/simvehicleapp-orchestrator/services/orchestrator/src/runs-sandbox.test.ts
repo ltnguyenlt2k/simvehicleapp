@@ -3,7 +3,7 @@ import { createOrchestratorHandler } from "./app.ts";
 import type { Clients, Outcome, ToolchainJob } from "./clients.ts";
 import { EventHub } from "./events.ts";
 import { type Generation, initialVerification, type LogLine, MemoryRepo, type Project, STAGES } from "./repo.ts";
-import { RunConflict, type RunLimits, RunManager, RunQuota, runLimitsFromEnv } from "./runs.ts";
+import { databrokerApiOf, RunConflict, type RunLimits, RunManager, RunQuota, runLimitsFromEnv } from "./runs.ts";
 
 /** Sandboxed runs (ADR-0057, M17-T04): many runs at once, each on a databroker of its own, within quotas and a time limit. */
 
@@ -92,9 +92,9 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     // The address is known while the app starts: the gateway mirrors the app's actuators on that databroker only.
     expect(ra.sandbox).toBe("toolchain-cpp:56000");
     expect(tc.calls).toEqual([
-      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"sdv.databroker.v1"}',
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"sdv.databroker.v1","KUKSA_DATABROKER_API":"sdv.databroker.v1"}',
       "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56000",
-      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_2","SV_DATABROKER_API":"sdv.databroker.v1"}',
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_2","SV_DATABROKER_API":"sdv.databroker.v1","KUKSA_DATABROKER_API":"sdv.databroker.v1"}',
       "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56001",
     ]);
     tc.start("job-1");
@@ -184,9 +184,16 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     const a = await project("lka");
     await runs.start(a, (await gen(a)).id, undefined, ann);
     expect(tc.calls).toEqual([
-      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"kuksa.val.v2"}',
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"kuksa.val.v2","KUKSA_DATABROKER_API":"kuksa.val.v2"}',
       "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56000 kuksa.val.v2",
     ]);
+  });
+
+  test("databroker API per backend: its entry, else *, else sdv.databroker.v1", () => {
+    expect(databrokerApiOf(undefined, "cpp")).toBe("sdv.databroker.v1");
+    expect(databrokerApiOf({ "*": "kuksa.val.v2" }, "python")).toBe("kuksa.val.v2");
+    expect(databrokerApiOf({ "*": "kuksa.val.v2", cpp: "sdv.databroker.v1" }, "cpp")).toBe("sdv.databroker.v1");
+    expect(databrokerApiOf({ rust: "nonsense" }, "rust")).toBe("sdv.databroker.v1");
   });
 
   test("limits from the environment: sandboxes off unless SV_RUN_SANDBOX=1; bad values fall back", () => {

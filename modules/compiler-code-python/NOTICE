@@ -6,6 +6,9 @@ This module includes third-party material:
 - template-overlay/app/src/main.py is derived from app/src/main.py of
   eclipse-velocitas/vehicle-app-python-template @ e7082f75d1831489462f6672b6858f7ea7708256
   (Copyright (c) 2022-2025 Contributors to the Eclipse Foundation, Apache-2.0; header kept, modified).
+- runtime/simvehicleapp_runtime/kuksa_v2/*_pb2*.py are generated (grpcio-tools 1.64.1) from
+  proto/kuksa/val/v2/{types,val}.proto of eclipse-kuksa/kuksa-databroker @ 30e5c13abc496d0b39aaa6c25acebb088b9902e3 (0.5.0)
+  (Copyright (c) 2024 Contributors to the Eclipse Foundation, Apache-2.0); only their import lines are changed.
 
 Used by generated apps, not redistributed in this repository:
 - Eclipse Velocitas vehicle-app-python-sdk (velocitas-sdk 0.15.7, Apache-2.0) and its dependencies

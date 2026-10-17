@@ -41,7 +41,8 @@ services:
       SV_MAX_RUNS_TOTAL: ${SV_MAX_RUNS_TOTAL:-20}
       SV_RUN_MAX_MINUTES: ${SV_RUN_MAX_MINUTES:-30}
       SV_RUN_MAX_EXTENSIONS: ${SV_RUN_MAX_EXTENSIONS:-3}
-      # Databroker API of each backend's apps (ADR-0047 §3), e.g. rust=kuksa.val.v2; unset = sdv.databroker.v1 for all.
+      # Databroker API of each backend's apps (ADR-0047): unset = kuksa.val.v2 for all; *=sdv.databroker.v1 or
+      # cpp=sdv.databroker.v1 to go back.
       SV_DATABROKER_API: ${SV_DATABROKER_API:-}
     # Internal only: the studio BFF reaches it as http://orchestrator:4030.
     # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.

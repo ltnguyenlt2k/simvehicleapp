@@ -80,6 +80,18 @@ sequenceDiagram
 - Gate nâng databroker: cả ba backend P3 7/7 trên v2 + signal-gateway provider; E2E live (tutorial, m12-python-live).
 
 ## Notes / Deviations
+- 2026-10-17 — **Bước 3 xong cho cả ba backend, đã đổi mặc định sang `kuksa.val.v2`.** Theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
+  - **C++:** SDK 0.7.1 đã có client v2 (`KUKSA_DATABROKER_API=kuksa.val.v2`, ghi = `BatchActuate`). Runtime dùng `IVehicleDataBrokerClient::createInstance`, nên chỉ cần env. Orchestrator đặt cả `KUKSA_DATABROKER_API` lẫn `SV_DATABROKER_API`. Parity P3 7/7 ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-cpp-kuksa-val-v2.json)), log app: "Using Kuksa Databroker kuksa.val.v2 API".
+  - **Python:** SDK 0.15.7 chỉ có v1.
+    - Runtime thêm `KuksaV2VehicleAccess` trên stub v2 sinh từ proto 0.5.0 bằng grpcio-tools 1.64.1 (trùng grpc của image), vendored ở `simvehicleapp_runtime/kuksa_v2/` (Apache-2.0, `# ruff: noqa`).
+    - Không thêm dependency vào image offline, không dùng `kuksa-client`.
+    - Parity P3 7/7 ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-python-kuksa-val-v2.json)), log app: "databroker over kuksa.val.v2".
+  - **Mặc định:**
+    - orchestrator dùng `{"*": "kuksa.val.v2"}` + `SV_DATABROKER_API` để ghi đè (`*=sdv.databroker.v1` quay lại);
+    - C++ mặc định parity 7/7 ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-cpp-default-v2.json));
+    - gate M17 runtime PASS (`gate-m17-1792221700`).
+  - **Khác biệt người dùng thấy:** app v2 không ghi `target`. Gateway publish giá trị Actuate thành current, nên bảng Signals đổi ở cột hiện tại. User guide `test-signals` đã ghi chú.
+  - **Chưa làm:** ADR mới để nâng databroker ≥ 0.7 và bỏ `--enable-databroker-v1`. Còn chặn bởi signal-gateway (dùng `kuksa.val.v1` để đọc/inject; 0.7 vẫn giữ `kuksa.val.v1`) và lựa chọn mặc định. Chờ PO.
 - 2026-10-17 — **Bước 3, Rust xong: parity P3 7/7 trên `kuksa.val.v2`** ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-rust-kuksa-val-v2.json), lệch ≤ 6 ms). Theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
   - **Runtime Rust:** host thứ hai `VdbV2`, gồm GetValue, Subscribe theo path, ghi = Actuate. Chọn bằng `SV_DATABROKER_API`.
   - **Orchestrator:** `SV_DATABROKER_API` theo ngôn ngữ (vd. `rust=kuksa.val.v2`), truyền env cho app và `api` cho `PUT /mirror`.

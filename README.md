@@ -226,6 +226,10 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
   - Bấm Run khi đang chạy app khác ⇒ hộp thoại hỏi *Stop … and run* hoặc *Run both*.
 - **Quản trị viên:** `scripts/sv runs list` và `scripts/sv runs stop <id>|--all`. System status có thẻ **Vehicle runtime**.
 - **Trợ lý** hiện *Thinking…*, thời gian chờ và từng bước nó làm (✓/✕); nút **Stop** huỷ lượt.
+- **API databroker (M14 #5, [ADR-0047](analysis/adr/ADR-0047-kuksa-val-v2-migration.md)):**
+  - app C++/Python/Rust mặc định chạy trên `kuksa.val.v2`; signal-gateway làm provider các actuator app ghi;
+  - trên bảng Signals, giá trị app ghi hiện ở cột **hiện tại**;
+  - quay về API cũ: `SV_DATABROKER_API=*=sdv.databroker.v1`.
 
 Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md).
 

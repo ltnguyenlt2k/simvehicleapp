@@ -18,7 +18,7 @@ from velocitas_sdk.proto.broker_pb2 import GetDatapointsReply, SetDatapointsRepl
 from velocitas_sdk.proto.types_pb2 import Datapoint, DatapointError, Uint32Array  # noqa: E402
 
 from simvehicleapp_runtime import values as V  # noqa: E402
-from simvehicleapp_runtime.velocitas import SimVehicleApp, from_sdk, to_sdk  # noqa: E402
+from simvehicleapp_runtime.velocitas import SimVehicleApp, databroker_api, from_sdk, from_v2, to_sdk, to_v2  # noqa: E402
 
 
 def test_conversions():
@@ -32,6 +32,23 @@ def test_conversions():
     assert to_sdk("float", V.fround(0.1)).WhichOneof("value") == "float_value"
     with pytest.raises(ValueError):
         to_sdk("uint8[]", [1])
+
+
+def test_kuksa_val_v2_conversions_and_api():
+    from simvehicleapp_runtime.kuksa_v2 import types_pb2
+
+    assert to_v2("uint8", 7).WhichOneof("typed_value") == "uint32"
+    assert to_v2("boolean", True).bool is True
+    assert to_v2("string", "on").string == "on"
+    assert from_v2(types_pb2.Value(float=0.5)) == 0.5
+    assert from_v2(types_pb2.Value(int32_array=types_pb2.Int32Array(values=[1, 2]))) == [1, 2]
+    assert from_v2(types_pb2.Value()) is None
+    with pytest.raises(ValueError):
+        to_v2("uint8[]", [1])
+    assert databroker_api(None) == "sdv.databroker.v1"
+    assert databroker_api("kuksa.val.v2") == "kuksa.val.v2"
+    with pytest.raises(ValueError):
+        databroker_api("v3")
 
 
 class FakeBroker:

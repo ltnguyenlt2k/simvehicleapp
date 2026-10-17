@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from typing import Any, Callable, Dict, List, Optional
 
 import grpc  # type: ignore
@@ -160,6 +161,127 @@ class VelocitasVehicleAccess(VehicleAccess):
             t.cancel()
 
 
+_V2_ARRAYS = {"string_array", "bool_array", "int32_array", "int64_array", "uint32_array", "uint64_array", "float_array", "double_array"}
+
+
+def from_v2(value: Any) -> Optional[Any]:
+    """``kuksa.val.v2`` Value ⇒ runtime value; None without a value."""
+    which = value.WhichOneof("typed_value") if value is not None else None
+    if which is None:
+        return None
+    v = getattr(value, which)
+    return list(v.values) if which in _V2_ARRAYS else v
+
+
+def to_v2(type_: str, value: Any) -> Any:
+    """Runtime value of VSS type ``type_`` ⇒ ``kuksa.val.v2`` Value (same wire types as ``sdv.databroker.v1``)."""
+    from .kuksa_v2 import types_pb2
+
+    dp = to_sdk(type_, value)
+    which = dp.WhichOneof("value")
+    return types_pb2.Value(**{which.removesuffix("_value"): getattr(dp, which)})
+
+
+def databroker_api(value: Optional[str]) -> str:
+    """``SV_DATABROKER_API``: ``sdv.databroker.v1`` (default) or ``kuksa.val.v2`` (ADR-0047 §3)."""
+    if value in (None, "", "sdv.databroker.v1"):
+        return "sdv.databroker.v1"
+    if value == "kuksa.val.v2":
+        return value
+    raise ValueError(f"SV_DATABROKER_API must be sdv.databroker.v1 or kuksa.val.v2, not {value}")
+
+
+class KuksaV2VehicleAccess(VelocitasVehicleAccess):
+    """The vehicle on ``kuksa.val.v2`` (ADR-0047 §3; the Velocitas Python SDK 0.15.7 speaks only sdv.databroker.v1):
+    GetValue, Subscribe by path, writes as Actuate — OK means the databroker handed it to the actuator's provider
+    (the signal-gateway in dev runs). Same strand semantics as the SDK host."""
+
+    def __init__(self, address: str, strand: Strand) -> None:
+        from .kuksa_v2 import val_pb2_grpc
+
+        target = address.split("://", 1)[-1]
+        self._channel = grpc.aio.insecure_channel(target)  # type: ignore
+        super().__init__(val_pb2_grpc.VALStub(self._channel), strand)
+
+    @staticmethod
+    def _signal(path: str) -> Any:
+        from .kuksa_v2 import types_pb2
+
+        return types_pb2.SignalID(path=path)
+
+    async def _value(self, path: str) -> Optional[Any]:
+        from .kuksa_v2 import val_pb2
+
+        reply = await self._vdb.GetValue(val_pb2.GetValueRequest(signal_id=self._signal(path)))
+        return from_v2(reply.data_point.value) if reply.HasField("data_point") else None
+
+    async def prefetch(self, paths: Dict[str, str]) -> None:
+        for path, type_ in sorted(paths.items()):
+            try:
+                v = await self._value(path)
+                if v is not None:
+                    self._baselines[path] = _runtime_value(v, type_)
+            except Exception as e:  # noqa: BLE001 — a missing baseline only means "no value yet"
+                logger.warning("simvehicleapp: no current value of %s: %s", path, e)
+
+    def subscribe(self, path: str, type_: str, on_value: Callable[[Any], None]) -> None:
+        from .kuksa_v2 import val_pb2
+
+        first = asyncio.Event()
+        self._first.append(first)
+
+        async def forever() -> None:
+            while True:
+                try:
+                    async for reply in self._vdb.Subscribe(val_pb2.SubscribeRequest(signal_paths=[path])):
+                        first.set()
+                        dp = reply.entries.get(path)
+                        v = from_v2(dp.value) if dp is not None and dp.HasField("value") else None
+                        if v is not None:
+                            value = _runtime_value(v, type_)
+                            self._strand.post(lambda value=value: on_value(value))
+                    return
+                except asyncio.CancelledError:
+                    raise
+                except grpc.aio.AioRpcError as e:  # type: ignore
+                    first.set()
+                    if e.code() in (grpc.StatusCode.INVALID_ARGUMENT, grpc.StatusCode.NOT_FOUND):
+                        logger.error("simvehicleapp: subscription to %s failed: %s", path, e.details())
+                        return
+                    logger.warning("simvehicleapp: subscription to %s lost (%s), retrying", path, e.code())
+                    await asyncio.sleep(2.5)
+
+        self._tasks.append(asyncio.get_event_loop().create_task(forever(), name=f"subscribe {path}"))
+
+    def get(self, path: str, type_: str, done: Callable[[Optional[Any], str], None]) -> None:
+        async def call() -> None:
+            try:
+                value = _runtime_value(await self._value(path), type_)
+                self._strand.post(lambda: done(value, ""))
+            except Exception as e:  # noqa: BLE001
+                msg = e.details() if isinstance(e, grpc.aio.AioRpcError) else str(e)  # type: ignore
+                self._strand.post(lambda: done(None, msg or "read failed"))
+
+        asyncio.get_event_loop().create_task(call())
+
+    def set(self, path: str, type_: str, value: Any, done: Optional[Callable[[str], None]]) -> None:
+        from .kuksa_v2 import val_pb2
+
+        async def call() -> None:
+            err = ""
+            try:
+                await self._vdb.Actuate(val_pb2.ActuateRequest(signal_id=self._signal(path), value=to_v2(type_, value)))
+            except Exception as e:  # noqa: BLE001
+                # No provider for the actuator: UNAVAILABLE "Provider for vss_id … does not exist".
+                err = (f"{e.code().name}: {e.details()}" if isinstance(e, grpc.aio.AioRpcError) else str(e)) or "write failed"  # type: ignore
+            if err:
+                logger.error("simvehicleapp: set %s failed: %s", path, err)
+            if done is not None:
+                self._strand.post(lambda: done(err))
+
+        asyncio.get_event_loop().create_task(call())
+
+
 class VelocitasPubSub(PubSub):
     def __init__(self, client: Any, strand: Strand) -> None:
         self._client = client
@@ -206,7 +328,13 @@ class SimVehicleApp(VehicleApp):
         self.sink.trace(TraceRecord(0, epoch_ms(), ev, "", None, "", "", None))
 
     async def on_start(self) -> None:
-        self._vehicle = VelocitasVehicleAccess(self._vdb_client, self.strand)
+        api = databroker_api(os.environ.get("SV_DATABROKER_API"))
+        if api == "kuksa.val.v2":
+            address = os.environ.get("SDV_VEHICLEDATABROKER_ADDRESS", "grpc://127.0.0.1:55555")
+            self._vehicle = KuksaV2VehicleAccess(address, self.strand)
+        else:
+            self._vehicle = VelocitasVehicleAccess(self._vdb_client, self.strand)
+        logger.info("simvehicleapp: databroker over %s", api)
         pubsub = VelocitasPubSub(self.pubsub_client, self.strand)
         self.runtime = Runtime(self.strand, self._vehicle, pubsub, self.sink)
         for bind in self._binds:

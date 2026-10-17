@@ -68,7 +68,10 @@ must(runA.state === "running" && runB.state === "running", `both apps running at
 const set = (sandbox: string, path: string, value: unknown, field = "value") => post(`${G}/signals`, { release: "v4.0", sandbox, path, value, field });
 const hazard = async (sandbox: string) => {
   const s = await get(`${G}/snapshot?release=v4.0&sandbox=${sandbox}&paths=${HAZARD}`);
-  return s.updates.find((u: { field: string }) => u.field === "target")?.value ?? null;
+  // sdv.databroker.v1 apps set the target (mirrored to current); kuksa.val.v2 apps actuate and the gateway, as
+  // provider, publishes the current value (ADR-0047): either shows the app switched the hazard.
+  const of = (field: string) => s.updates.find((u: { field: string }) => u.field === field)?.value;
+  return of("target") ?? of("value") ?? null;
 };
 for (const s of [ra.sandbox, rb.sandbox]) must((await set(s, "Vehicle.Speed", 100)).ok, `Speed 100 on ${s}`);
 await Bun.sleep(500);
@@ -76,7 +79,7 @@ must((await set(ra.sandbox, "Vehicle.Speed", 130)).ok, `Speed 130 on A's databro
 await Bun.sleep(3000);
 const onA = await hazard(ra.sandbox);
 const onB = await hazard(rb.sandbox);
-must(onA === true && onB !== true, `hazard target: A ${onA}, B ${onB} (no signal leaks between runs)`);
+must(onA === true && onB !== true, `hazard (target or provided current): A ${onA}, B ${onB} (no signal leaks between runs)`);
 const shared = await get(`${G}/snapshot?release=v4.0&paths=Vehicle.Speed`);
 must(!shared.updates.some((u: { value: unknown }) => u.value === 130), "the shared v4.0 databroker never saw Speed 130");
 

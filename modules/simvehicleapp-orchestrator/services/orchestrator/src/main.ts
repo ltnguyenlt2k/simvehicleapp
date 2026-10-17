@@ -71,8 +71,9 @@ const runs = new RunManager({
   hub,
   databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"),
   limits: runLimitsFromEnv(),
-  // rust=kuksa.val.v2 (ADR-0047 §3): the apps of these backends run on kuksa.val.v2; the others on sdv.databroker.v1.
-  databrokerApis: parseMap(process.env.SV_DATABROKER_API ?? ""),
+  // Every backend's apps run on kuksa.val.v2 (ADR-0047 §4, parity P3 7/7 for C++, Python and Rust); override per
+  // backend or for all, e.g. SV_DATABROKER_API=*=sdv.databroker.v1 or cpp=sdv.databroker.v1.
+  databrokerApis: { "*": "kuksa.val.v2", ...parseMap(process.env.SV_DATABROKER_API ?? "") },
   log,
   metrics: { runEnded: (state, code) => runsEnded.inc({ state, code: code ?? "" }), traceEvents: (n) => traceEvents.inc({}, n) },
 });
