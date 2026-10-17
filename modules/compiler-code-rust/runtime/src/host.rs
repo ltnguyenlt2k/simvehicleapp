@@ -1,4 +1,5 @@
-//! The runtime as a vehicle app (feature `host`, ADR-0041): `sdv.databroker.v1` through `kuksa-rust-sdk` 0.2.2
+//! The runtime as a vehicle app (feature `host`, ADR-0041): `sdv.databroker.v1` (default) or `kuksa.val.v2`
+//! (`SV_DATABROKER_API`, ADR-0047 §3) through `kuksa-rust-sdk` 0.2.2
 //! (its generated broker stubs on one tonic channel) and MQTT through `rumqttc`, on a tokio current-thread
 //! runtime — one thread, one strand. Environment as Velocitas apps: `SDV_VEHICLEDATABROKER_ADDRESS`,
 //! `SDV_MQTT_ADDRESS`, `SV_TRACE_LEVEL`.
@@ -10,6 +11,9 @@ use std::time::Duration;
 
 use kuksa_rust_sdk::sdv_proto::{
     self as proto, broker_client::BrokerClient, datapoint::Value as Dp, Datapoint,
+};
+use kuksa_rust_sdk::v2_proto::{
+    self as v2, signal_id::Signal, val_client::ValClient, value::TypedValue,
 };
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
 use tonic::transport::{Channel, Endpoint};
@@ -75,6 +79,72 @@ pub fn to_sdk(ty: &str, x: &Value) -> Result<Datapoint, String> {
     Ok(Datapoint {
         timestamp: None,
         value: Some(value),
+    })
+}
+
+/// kuksa.val.v2 value ⇒ JSON-shaped value (ADR-0047 §3).
+pub fn from_v2(x: &v2::Value) -> Option<Value> {
+    Some(match x.typed_value.as_ref()? {
+        TypedValue::String(s) => Value::Str(s.clone()),
+        TypedValue::Bool(b) => Value::Bool(*b),
+        TypedValue::Int32(i) => Value::Int(*i as i128),
+        TypedValue::Int64(i) => Value::Int(*i as i128),
+        TypedValue::Uint32(i) => Value::Int(*i as i128),
+        TypedValue::Uint64(i) => Value::Int(*i as i128),
+        TypedValue::Float(f) => Value::Float(*f as f64),
+        TypedValue::Double(f) => Value::Float(*f),
+        TypedValue::StringArray(a) => {
+            Value::Array(a.values.iter().map(|s| Value::Str(s.clone())).collect())
+        }
+        TypedValue::BoolArray(a) => {
+            Value::Array(a.values.iter().map(|b| Value::Bool(*b)).collect())
+        }
+        TypedValue::Int32Array(a) => {
+            Value::Array(a.values.iter().map(|i| Value::Int(*i as i128)).collect())
+        }
+        TypedValue::Int64Array(a) => {
+            Value::Array(a.values.iter().map(|i| Value::Int(*i as i128)).collect())
+        }
+        TypedValue::Uint32Array(a) => {
+            Value::Array(a.values.iter().map(|i| Value::Int(*i as i128)).collect())
+        }
+        TypedValue::Uint64Array(a) => {
+            Value::Array(a.values.iter().map(|i| Value::Int(*i as i128)).collect())
+        }
+        TypedValue::FloatArray(a) => {
+            Value::Array(a.values.iter().map(|f| Value::Float(*f as f64)).collect())
+        }
+        TypedValue::DoubleArray(a) => {
+            Value::Array(a.values.iter().map(|f| Value::Float(*f)).collect())
+        }
+    })
+}
+
+/// Runtime value of VSS type `ty` ⇒ kuksa.val.v2 value to actuate (same wire types as sdv.databroker.v1).
+pub fn to_v2(ty: &str, x: &Value) -> Result<v2::Value, String> {
+    let typed = match to_sdk(ty, x)?.value {
+        Some(Dp::BoolValue(b)) => TypedValue::Bool(b),
+        Some(Dp::Int32Value(i)) => TypedValue::Int32(i),
+        Some(Dp::Int64Value(i)) => TypedValue::Int64(i),
+        Some(Dp::Uint32Value(i)) => TypedValue::Uint32(i),
+        Some(Dp::Uint64Value(i)) => TypedValue::Uint64(i),
+        Some(Dp::FloatValue(f)) => TypedValue::Float(f),
+        Some(Dp::DoubleValue(f)) => TypedValue::Double(f),
+        Some(Dp::StringValue(s)) => TypedValue::String(s),
+        _ => {
+            return Err(format!(
+                "simvehicleapp runtime: cannot write a value of type {ty}"
+            ))
+        }
+    };
+    Ok(v2::Value {
+        typed_value: Some(typed),
+    })
+}
+
+fn signal(path: &str) -> Option<v2::SignalId> {
+    Some(v2::SignalId {
+        signal: Some(Signal::Path(path.to_string())),
     })
 }
 
@@ -257,6 +327,239 @@ impl VehicleAccess for Vdb {
     }
 }
 
+/// The vehicle on kuksa.val.v2 (`SV_DATABROKER_API=kuksa.val.v2`, ADR-0047 §3): GetValue, Subscribe by path, writes
+/// as Actuate — OK means the databroker handed it to the actuator's provider (the signal-gateway in dev runs), so the
+/// current value follows when the provider publishes it. Same strand semantics as the v1 host.
+struct VdbV2 {
+    val: ValClient<Channel>,
+    strand: Rc<Strand>,
+    baselines: RefCell<HashMap<String, Value>>,
+    pending: Rc<Cell<usize>>,
+}
+
+impl VdbV2 {
+    async fn value_of(val: &mut ValClient<Channel>, path: &str) -> Result<Option<Value>, String> {
+        val.get_value(v2::GetValueRequest {
+            signal_id: signal(path),
+        })
+        .await
+        .map(|r| {
+            r.into_inner()
+                .data_point
+                .and_then(|d| d.value)
+                .as_ref()
+                .and_then(from_v2)
+        })
+        .map_err(|e| e.message().to_string())
+    }
+
+    async fn prefetch(&self, paths: &BTreeMap<String, String>) {
+        for (path, ty) in paths {
+            let mut val = self.val.clone();
+            match Self::value_of(&mut val, path).await {
+                Ok(Some(x)) => {
+                    self.baselines
+                        .borrow_mut()
+                        .insert(path.clone(), v::from_json(&x, ty));
+                }
+                Ok(None) => {}
+                Err(e) => eprintln!("simvehicleapp: no current value of {path}: {e}"),
+            }
+        }
+    }
+
+    async fn ready(&self, limit: Duration) {
+        let start = std::time::Instant::now();
+        while self.pending.get() > 0 && start.elapsed() < limit {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+        if self.pending.get() > 0 {
+            eprintln!(
+                "simvehicleapp: some subscriptions are not open after {limit:?}, starting anyway"
+            );
+        }
+    }
+}
+
+impl VehicleAccess for VdbV2 {
+    fn current(&self, path: &str, _ty: &str) -> Option<Value> {
+        self.baselines.borrow().get(path).cloned()
+    }
+
+    fn subscribe(&self, path: &str, ty: &str, on_value: Box<dyn Fn(Value)>) {
+        let (mut val, strand, path, ty, on_value, pending) = (
+            self.val.clone(),
+            self.strand.clone(),
+            path.to_string(),
+            ty.to_string(),
+            Rc::new(on_value),
+            self.pending.clone(),
+        );
+        pending.set(pending.get() + 1);
+        tokio::task::spawn_local(async move {
+            let mut first = true;
+            let opened = |first: &mut bool| {
+                if std::mem::take(first) {
+                    pending.set(pending.get() - 1);
+                }
+            };
+            loop {
+                match val
+                    .subscribe(v2::SubscribeRequest {
+                        signal_paths: vec![path.clone()],
+                        ..Default::default()
+                    })
+                    .await
+                {
+                    Ok(stream) => {
+                        let mut stream = stream.into_inner();
+                        loop {
+                            match stream.message().await {
+                                Ok(Some(reply)) => {
+                                    opened(&mut first);
+                                    let x = reply
+                                        .entries
+                                        .get(&path)
+                                        .and_then(|d| d.value.as_ref())
+                                        .and_then(from_v2);
+                                    if let Some(x) = x {
+                                        let (cb, x) = (on_value.clone(), v::from_json(&x, &ty));
+                                        strand.post(move || cb(x));
+                                    }
+                                }
+                                Ok(None) => break,
+                                Err(e) => {
+                                    eprintln!(
+                                        "simvehicleapp: subscription to {path} lost ({}), retrying",
+                                        e.message()
+                                    );
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        opened(&mut first);
+                        if matches!(
+                            e.code(),
+                            tonic::Code::InvalidArgument | tonic::Code::NotFound
+                        ) {
+                            eprintln!(
+                                "simvehicleapp: subscription to {path} failed: {}",
+                                e.message()
+                            );
+                            return;
+                        }
+                    }
+                }
+                tokio::time::sleep(Duration::from_millis(2500)).await;
+            }
+        });
+    }
+
+    fn get(&self, path: &str, ty: &str, done: Box<dyn FnOnce(Option<Value>, String)>) {
+        let (mut val, strand, path, ty) = (
+            self.val.clone(),
+            self.strand.clone(),
+            path.to_string(),
+            ty.to_string(),
+        );
+        tokio::task::spawn_local(async move {
+            let (x, err) = match Self::value_of(&mut val, &path).await {
+                Ok(x) => (x.map(|x| v::from_json(&x, &ty)), String::new()),
+                Err(e) => (None, e),
+            };
+            strand.post(move || done(x, err));
+        });
+    }
+
+    fn set(&self, path: &str, ty: &str, value: Value, done: Option<Box<dyn FnOnce(String)>>) {
+        let (mut val, strand, path) = (self.val.clone(), self.strand.clone(), path.to_string());
+        let x = to_v2(ty, &value);
+        tokio::task::spawn_local(async move {
+            let err = match x {
+                Err(e) => e,
+                Ok(x) => match val
+                    .actuate(v2::ActuateRequest {
+                        signal_id: signal(&path),
+                        value: Some(x),
+                    })
+                    .await
+                {
+                    Ok(_) => String::new(),
+                    // No provider for the actuator: UNAVAILABLE "Provider for vss_id … does not exist".
+                    Err(e) => format!("{:?}: {}", e.code(), e.message()),
+                },
+            };
+            if !err.is_empty() {
+                eprintln!("simvehicleapp: set {path} failed: {err}");
+            }
+            if let Some(done) = done {
+                strand.post(move || done(err));
+            }
+        });
+    }
+}
+
+/// The two vehicle hosts behind one `VehicleAccess` (the runtime sees no difference).
+enum Vehicle {
+    V1(Vdb),
+    V2(VdbV2),
+}
+
+impl Vehicle {
+    async fn prefetch(&self, paths: &BTreeMap<String, String>) {
+        match self {
+            Vehicle::V1(x) => x.prefetch(paths).await,
+            Vehicle::V2(x) => x.prefetch(paths).await,
+        }
+    }
+    async fn ready(&self, limit: Duration) {
+        match self {
+            Vehicle::V1(x) => x.ready(limit).await,
+            Vehicle::V2(x) => x.ready(limit).await,
+        }
+    }
+}
+
+impl VehicleAccess for Vehicle {
+    fn current(&self, path: &str, ty: &str) -> Option<Value> {
+        match self {
+            Vehicle::V1(x) => x.current(path, ty),
+            Vehicle::V2(x) => x.current(path, ty),
+        }
+    }
+    fn subscribe(&self, path: &str, ty: &str, on_value: Box<dyn Fn(Value)>) {
+        match self {
+            Vehicle::V1(x) => x.subscribe(path, ty, on_value),
+            Vehicle::V2(x) => x.subscribe(path, ty, on_value),
+        }
+    }
+    fn get(&self, path: &str, ty: &str, done: Box<dyn FnOnce(Option<Value>, String)>) {
+        match self {
+            Vehicle::V1(x) => x.get(path, ty, done),
+            Vehicle::V2(x) => x.get(path, ty, done),
+        }
+    }
+    fn set(&self, path: &str, ty: &str, value: Value, done: Option<Box<dyn FnOnce(String)>>) {
+        match self {
+            Vehicle::V1(x) => x.set(path, ty, value, done),
+            Vehicle::V2(x) => x.set(path, ty, value, done),
+        }
+    }
+}
+
+/// `SV_DATABROKER_API`: `sdv.databroker.v1` (default) or `kuksa.val.v2` (ADR-0047 §3).
+pub fn databroker_api(value: Option<&str>) -> Result<&'static str, String> {
+    match value.unwrap_or("sdv.databroker.v1") {
+        "" | "sdv.databroker.v1" => Ok("sdv.databroker.v1"),
+        "kuksa.val.v2" => Ok("kuksa.val.v2"),
+        other => Err(format!(
+            "SV_DATABROKER_API must be sdv.databroker.v1 or kuksa.val.v2, not {other}"
+        )),
+    }
+}
+
 struct Mqtt {
     client: AsyncClient,
     handler: Rc<RefCell<Option<MqttHandler>>>,
@@ -302,13 +605,24 @@ pub async fn run(app: App) -> Result<(), String> {
         .map_err(|e| e.to_string())?
         .connect_lazy();
 
+    let api = databroker_api(std::env::var("SV_DATABROKER_API").ok().as_deref())?;
     let strand = Rc::new(Strand::new_monotonic());
-    let vdb = Rc::new(Vdb {
-        broker: BrokerClient::new(channel),
-        strand: strand.clone(),
-        baselines: RefCell::new(HashMap::new()),
-        pending: Rc::new(Cell::new(0)),
+    let vdb = Rc::new(if api == "kuksa.val.v2" {
+        Vehicle::V2(VdbV2 {
+            val: ValClient::new(channel),
+            strand: strand.clone(),
+            baselines: RefCell::new(HashMap::new()),
+            pending: Rc::new(Cell::new(0)),
+        })
+    } else {
+        Vehicle::V1(Vdb {
+            broker: BrokerClient::new(channel),
+            strand: strand.clone(),
+            baselines: RefCell::new(HashMap::new()),
+            pending: Rc::new(Cell::new(0)),
+        })
     });
+    eprintln!("simvehicleapp: databroker {vdb_address} over {api}");
 
     let rest = mqtt_address
         .split_once("://")
@@ -423,5 +737,28 @@ mod tests {
             http_uri("grpc://databroker:55555"),
             "http://databroker:55555"
         );
+    }
+
+    #[test]
+    fn kuksa_val_v2() {
+        assert_eq!(
+            to_v2("uint8", &Value::Int(7)).unwrap().typed_value,
+            Some(TypedValue::Uint32(7))
+        );
+        assert_eq!(
+            to_v2("boolean", &Value::Bool(true)).unwrap().typed_value,
+            Some(TypedValue::Bool(true))
+        );
+        assert!(to_v2("uint8[]", &Value::Array(vec![])).is_err());
+        assert_eq!(
+            from_v2(&v2::Value {
+                typed_value: Some(TypedValue::Float(0.5))
+            }),
+            Some(Value::Float(0.5))
+        );
+        assert_eq!(from_v2(&v2::Value { typed_value: None }), None);
+        assert_eq!(databroker_api(None), Ok("sdv.databroker.v1"));
+        assert_eq!(databroker_api(Some("kuksa.val.v2")), Ok("kuksa.val.v2"));
+        assert!(databroker_api(Some("v3")).is_err());
     }
 }

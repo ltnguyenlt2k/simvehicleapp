@@ -151,7 +151,7 @@ describe("RunManager (M08-T03/T04, analysis/08 §5)", () => {
     const g = await gen();
     const run = await runs.start(project, g.id);
     expect(run).toMatchObject({ id: "r_1", state: "starting", traceLevel: "node", vssRelease: "v4.0", jobId: "job-run" });
-    expect(tc.calls).toEqual(["mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling]", 'run {"SDV_VEHICLEDATABROKER_ADDRESS":"grpc://databroker:55555","SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1"}']);
+    expect(tc.calls).toEqual(["mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling]", 'run {"SDV_VEHICLEDATABROKER_ADDRESS":"grpc://databroker:55555","SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"sdv.databroker.v1"}']);
     tc.say(svtrace({ ev: "app.started" }));
     tc.say(svtrace({ wf: "gw_a", run: 1, node: "n2", ev: "enter" }));
     await until(async () => (await repo.run("r_1"))!.state === "running");

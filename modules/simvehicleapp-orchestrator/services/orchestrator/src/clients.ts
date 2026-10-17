@@ -65,7 +65,7 @@ export interface Clients {
   /** Zip of the project folder plus `extraFiles` (workspace `exportProject`), as the raw response. */
   exportProject(slug: string, body: { generationId?: string; extraFiles: { path: string; content: string }[] }): Promise<Response>;
   /** Actuators whose target the signal-gateway mirrors to the current value (empty = none); `sandbox`: on a run's own databroker (empty = the run ended). */
-  mirror(release: string, paths: string[], sandbox?: string): Promise<void>;
+  mirror(release: string, paths: string[], sandbox?: string, api?: string): Promise<void>;
   /** Health and version of every service the orchestrator drives (System status, ADR-0033 §4). */
   system(): Promise<ServiceStatus[]>;
   /** App lifecycle on the workspace (ADR-0053): delete is idempotent, clean frees build outputs. */
@@ -224,9 +224,9 @@ export function httpClients(e: Endpoints): Clients {
         }),
       );
     },
-    async mirror(release, paths, sandbox) {
+    async mirror(release, paths, sandbox, api) {
       if (!e.signalGateway) return;
-      const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths, ...(sandbox ? { sandbox } : {}) }) }, true);
+      const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths, ...(sandbox ? { sandbox } : {}), ...(api && api !== "sdv.databroker.v1" ? { api } : {}) }) }, true);
       if (!res.ok) throw new ServiceUnavailable(`signal-gateway /mirror ⇒ ${res.status}`);
     },
     async getJob(language, jobId) {

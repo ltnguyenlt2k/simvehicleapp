@@ -100,6 +100,7 @@ paths:
                 api:
                   enum: [sdv.databroker.v1, kuksa.val.v2]
                   description: "The databroker API of the running app (ADR-0047 §5). `sdv.databroker.v1` (default): targets are mirrored to current values. `kuksa.val.v2`: the gateway becomes the provider of these actuators (OpenProviderStream); each actuation is accepted and published as the current value."
+                publish: { type: boolean, description: "kuksa.val.v2 only: false accepts actuations without publishing them as current values (no vehicle answers: parity gate). Default true." }
       responses:
         "204": { description: Mirroring (or providing) updated. }
         "400": { $ref: "#/components/responses/Rejected" }

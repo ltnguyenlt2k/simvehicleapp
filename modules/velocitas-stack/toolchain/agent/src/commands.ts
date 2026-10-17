@@ -32,7 +32,7 @@ const RUN_ARTIFACT: Record<string, { file: string; missing: string }> = {
 const runArtifact = (cfg: AgentConfig) => RUN_ARTIFACT[cfg.toolchain ?? "cpp"] ?? RUN_ARTIFACT.cpp!;
 
 /** Environment a `run` may receive (ADR-0025 §3, toolchain-job `options.env`). */
-const RUN_ENV = /^(SDV_[A-Z0-9_]+|KUKSA_DATABROKER_API|SV_TRACE_LEVEL|SV_RUN_ID)$/;
+const RUN_ENV = /^(SDV_[A-Z0-9_]+|KUKSA_DATABROKER_API|SV_DATABROKER_API|SV_TRACE_LEVEL|SV_RUN_ID)$/;
 
 export class PlanError extends Error {}
 

@@ -57,17 +57,25 @@ class Mirror {
   }
 
   /** A v2 app: provide its actuators (each actuation is accepted and published as the current value). */
-  async provide(api: ProviderApi, paths: string[], log: RequestContext["log"]) {
+  private publishing = true;
+
+  async provide(api: ProviderApi, paths: string[], log: RequestContext["log"], publish = true) {
     const same = this.provider && this.paths.length === paths.length && paths.every((p) => this.paths.includes(p));
-    if (same) return;
+    if (same) {
+      // Same actuators: keep the claim (a re-claim leaves a gap where the app's writes are refused).
+      this.provider!.setPublish(publish);
+      this.publishing = publish;
+      return;
+    }
     const hadOwn = Boolean(this.provider);
     this.clear();
     this.paths = paths;
+    this.publishing = publish;
     if (!paths.length) return;
     // The databroker frees our previous claim a moment after its stream closes: retry ALREADY_EXISTS briefly then.
     for (let attempt = 0; ; attempt++) {
       try {
-        this.provider = await provideActuators(api, paths, log, (e) => log.warn("provider stream ended", { err: e.message }));
+        this.provider = await provideActuators(api, paths, log, (e) => log.warn("provider stream ended", { err: e.message }), publish);
         return;
       } catch (e) {
         if (!hadOwn || attempt >= 10 || !(e instanceof ProviderRejected) || !e.message.startsWith("another provider")) throw e;
@@ -218,7 +226,7 @@ export function createGatewayHandler(d: GatewayDeps) {
     }
 
     if (url.pathname === "/mirror" && req.method === "PUT") {
-      const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; paths?: unknown; api?: string } | null;
+      const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; paths?: unknown; api?: string; publish?: boolean } | null;
       if (!b || !Array.isArray(b.paths) || !b.paths.every((p) => typeof p === "string")) return rejected(400, "invalid_request", "release and paths are required");
       if (b.api !== undefined && b.api !== "sdv.databroker.v1" && b.api !== "kuksa.val.v2") return rejected(400, "invalid_request", "api must be sdv.databroker.v1 or kuksa.val.v2");
       const paths = [...new Set(b.paths as string[])];
@@ -245,7 +253,7 @@ export function createGatewayHandler(d: GatewayDeps) {
         const api = d.providerApi?.(b.release!, b.sandbox);
         if (!api) return rejected(503, "no_databroker", "kuksa.val.v2 is not available for this databroker");
         try {
-          await m.provide(api, paths, ctx.log);
+          await m.provide(api, paths, ctx.log, b.publish !== false);
         } catch (e) {
           m.clear();
           return rejected(409, "provider_refused", (e as Error).message);

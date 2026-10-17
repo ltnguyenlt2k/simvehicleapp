@@ -38,13 +38,15 @@ export interface ProviderApi {
 export interface Provider {
   /** Actuations accepted and published as current values so far. */
   readonly provided: number;
+  /** Publish accepted actuations as current values (true) or only accept them; switches without re-claiming. */
+  setPublish(publish: boolean): void;
   stop(): void;
 }
 
 export class ProviderRejected extends Error {}
 
 /** Starts providing `paths`; resolves once the databroker accepted the claim (rejects with its reason). */
-export async function provideActuators(api: ProviderApi, paths: string[], log: { warn(msg: string, data?: object): void }, onEnd: (e: Error) => void = () => {}): Promise<Provider> {
+export async function provideActuators(api: ProviderApi, paths: string[], log: { warn(msg: string, data?: object): void }, onEnd: (e: Error) => void = () => {}, publish = true): Promise<Provider> {
   const ids = new Map<number, string>();
   for (const p of paths) ids.set(await api.idOf(p), p);
   const stream = api.open();
@@ -65,7 +67,8 @@ export async function provideActuators(api: ProviderApi, paths: string[], log: {
           continue;
         }
         stream.write({ batch_actuate_stream_response: { signal_id: { id }, error: { code: "ERROR_CODE_OK", message: "" } } });
-        stream.write({ publish_values_request: { request_id: ++requestId, data_points: { [id]: { value: req.value } } } });
+        // publish false: accept only (no vehicle answers — the parity expectations' model, ADR-0042).
+        if (publish) stream.write({ publish_values_request: { request_id: ++requestId, data_points: { [id]: { value: req.value } } } });
         provided++;
       }
     });
@@ -81,6 +84,9 @@ export async function provideActuators(api: ProviderApi, paths: string[], log: {
   return {
     get provided() {
       return provided;
+    },
+    setPublish(p) {
+      publish = p;
     },
     stop() {
       stopped = true;

@@ -80,6 +80,19 @@ sequenceDiagram
 - Gate nâng databroker: cả ba backend P3 7/7 trên v2 + signal-gateway provider; E2E live (tutorial, m12-python-live).
 
 ## Notes / Deviations
+- 2026-10-17 — **Bước 3, Rust xong: parity P3 7/7 trên `kuksa.val.v2`** ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-rust-kuksa-val-v2.json), lệch ≤ 6 ms). Theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
+  - **Runtime Rust:** host thứ hai `VdbV2`, gồm GetValue, Subscribe theo path, ghi = Actuate. Chọn bằng `SV_DATABROKER_API`.
+  - **Orchestrator:** `SV_DATABROKER_API` theo ngôn ngữ (vd. `rust=kuksa.val.v2`), truyền env cho app và `api` cho `PUT /mirror`.
+  - **Agent:** thêm `SV_DATABROKER_API` vào allowlist env của run.
+  - **Lỗi lộ ra trong gate:**
+    1. `finish()` đánh dấu run xong rồi mới nhả mirror. Run kế (gate, *Stop … and run*) claim xong thì bị lệnh nhả muộn xoá. Sửa: nhả trước.
+    2. Parity cần mô hình "không có xe trả lời", nên thêm `publish: false` cho provider v2 (chỉ chấp nhận). Đổi `publish` trên cùng tập actuator thì giữ claim, vì claim lại để hở một khoảng app ghi bị từ chối.
+  - **Hồi quy:** C++ trên v1 vẫn 7/7 sau các thay đổi ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-cpp-v1-after-v2.json)).
+  - **Còn:**
+    - C++ (`KUKSA_DATABROKER_API` của SDK 0.7.1) rồi Python, mỗi bước parity 7/7;
+    - sau đó đổi mặc định sang v2;
+    - rồi ADR mới để nâng databroker.
+  - Mặc định vẫn `sdv.databroker.v1` cho mọi backend.
 - 2026-10-17 — **Bước 2 (signal-gateway provider v2) xong** (Claude Code, theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận):
   - `PUT /mirror` thêm `api`:
     - `sdv.databroker.v1` (mặc định): mirror target → current như trước;

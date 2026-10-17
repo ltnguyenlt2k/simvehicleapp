@@ -302,6 +302,18 @@ describe("kuksa.val.v2 provider (ADR-0047 §2, M14 #5)", () => {
     expect(pv.claimed.size).toBe(0);
   });
 
+  test("publish false: actuations are accepted but the current value stays (no vehicle answers)", async () => {
+    const { pv, call } = setup();
+    expect((await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2", publish: false })).status).toBe(204);
+    pv.actuate(65, { bool: true });
+    expect(pv.written.slice(1)).toEqual([{ batch_actuate_stream_response: { signal_id: { id: 65 }, error: { code: "ERROR_CODE_OK", message: "" } } }]);
+    // Switching back on the same actuators keeps the claim: no new stream, publishing again.
+    expect((await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2" })).status).toBe(204);
+    expect(pv.cancelled()).toBe(0);
+    pv.actuate(65, { bool: false });
+    expect(pv.written.at(-1)).toEqual({ publish_values_request: { request_id: 1, data_points: { 65: { value: { bool: false } } } } });
+  });
+
   test("another provider holds an actuator ⇒ 409 provider_refused; a bad api ⇒ 400; v1 stays the default", async () => {
     const { pv, b, call } = setup();
     pv.claimed.add(HZ);

@@ -63,6 +63,8 @@ export interface RunDeps {
   hub: EventHub;
   /** VSS release ⇒ databroker `host:port` (SV_DATABROKERS, ADR-0024 §6). */
   databrokers: Record<string, string>;
+  /** Databroker API of each backend's apps (`SV_DATABROKER_API`, ADR-0047 §3): `kuksa.val.v2` or the default `sdv.databroker.v1`. */
+  databrokerApis?: Record<string, string>;
   newId?: () => string;
   now?: () => number;
   startTimeoutMs?: number;
@@ -149,15 +151,19 @@ export class RunManager {
     ingest.system(`▶ run ${project.slug} (generation ${generationId}, VSS ${project.vssRelease} on ${broker}, trace ${level})`);
 
     const writes = (gen.runInfo?.signals ?? []).filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
+    // A v2 app actuates through a provider: the gateway provides its actuators instead of mirroring targets (ADR-0047 §2).
+    const api = this.d.databrokerApis?.[project.language] === "kuksa.val.v2" ? "kuksa.val.v2" : "sdv.databroker.v1";
     if (!sandbox) {
-      await this.d.clients.mirror(project.vssRelease, writes).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
+      await this.d.clients.mirror(project.vssRelease, writes, undefined, api).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
     }
 
     const job = await this.d.clients.startJob(
       project.language,
       "run",
       project.slug,
-      sandbox ? { sandbox: true, env: { SV_TRACE_LEVEL: level, SV_RUN_ID: run.id } } : { env: { SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${broker}`, SV_TRACE_LEVEL: level, SV_RUN_ID: run.id } },
+      sandbox
+        ? { sandbox: true, env: { SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api } }
+        : { env: { SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${broker}`, SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api } },
     );
     if (!job.ok) {
       const d = job.diagnostics.length ? job.diagnostics : [diag("RUN_CRASHED", `The toolchain refused the run (${job.status}${job.message ? `: ${job.message}` : ""})`)];
@@ -172,7 +178,7 @@ export class RunManager {
       if (address) {
         await this.d.repo.updateRun(run.id, { sandbox: address });
         ingest.system(`vehicle sandbox: this run's databroker is ${address}`);
-        await this.d.clients.mirror(project.vssRelease, writes, address).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
+        await this.d.clients.mirror(project.vssRelease, writes, address, api).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
       } else ingest.system("the run's databroker did not report its address: Signals show the shared databroker", "warn");
     }
     live.timer = setTimeout(() => void this.timeout(run.id), this.d.startTimeoutMs ?? 30_000);
@@ -314,8 +320,10 @@ export class RunManager {
     const run = await this.d.repo.run(runId);
     if (!run) return;
     this.d.metrics?.runEnded(state, diagnostics[0]?.code);
-    await this.d.repo.updateRun(runId, { state, finishedAt: this.now(), ...(diagnostics.length ? { diagnostics: [...run.diagnostics, ...diagnostics] } : {}), ...(exitCode !== undefined ? { exitCode } : {}) });
+    // Release the mirror/provider before the run is seen finished: a run started right after (gates, Stop and run)
+    // claims the same actuators, and a late release would wipe its claim.
     await this.d.clients.mirror(run.vssRelease, [], run.sandbox).catch(() => {});
+    await this.d.repo.updateRun(runId, { state, finishedAt: this.now(), ...(diagnostics.length ? { diagnostics: [...run.diagnostics, ...diagnostics] } : {}), ...(exitCode !== undefined ? { exitCode } : {}) });
     this.live.delete(runId);
     this.chains.delete(runId);
     this.d.hub.end(runId);

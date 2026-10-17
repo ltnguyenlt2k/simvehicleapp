@@ -171,7 +171,11 @@ async function playOnce(projectId: string, generationId: string, g: string, work
   if (r.state !== "running") throw new Error(`${g}: run ${r.state} ${JSON.stringify(r.diagnostics ?? [])}`);
   // The expectation has no vehicle provider: an actuator's current value changes only when the scenario
   // sets it. Dev runs mirror the app's targets to current values (the provider role, ADR-0024): off here.
-  const mirror = await fetch(`${G}/mirror`, { method: "PUT", headers: h, body: JSON.stringify({ release: "v4.0", paths: [] }) });
+  // Apps on kuksa.val.v2 (SV_PARITY_API, ADR-0047) need a provider to accept their writes: one that does not answer.
+  const v2 = process.env.SV_PARITY_API === "kuksa.val.v2";
+  const irSignals = (JSON.parse(readFileSync(`${ROOT}/${g}/ir.json`, "utf8")) as { signals?: { path: string; vssType: string; access: string[] }[] }).signals ?? [];
+  const writes = irSignals.filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
+  const mirror = await fetch(`${G}/mirror`, { method: "PUT", headers: h, body: JSON.stringify(v2 ? { release: "v4.0", paths: writes, api: "kuksa.val.v2", publish: false } : { release: "v4.0", paths: [] }) });
   if (!mirror.ok) throw new Error(`${g}: mirror off ${mirror.status}`);
   let done = false;
   const events = readEvents(`${O}/events?runId=${run.id}`, () => done);

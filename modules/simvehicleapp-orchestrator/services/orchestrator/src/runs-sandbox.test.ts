@@ -34,7 +34,7 @@ function fakeToolchain() {
         j.say = cb;
         j.end = resolve;
       }),
-    mirror: async (release: string, paths: string[], sandbox?: string) => void calls.push(`mirror ${release} [${paths.join(",")}]${sandbox ? ` on ${sandbox}` : ""}`),
+    mirror: async (release: string, paths: string[], sandbox?: string, api?: string) => void calls.push(`mirror ${release} [${paths.join(",")}]${sandbox ? ` on ${sandbox}` : ""}${api && api !== "sdv.databroker.v1" ? ` ${api}` : ""}`),
     system: async () => [],
   } as unknown as Clients;
   return { clients, calls, start: (jobId: string) => jobs.get(jobId)?.say?.(started()) };
@@ -42,7 +42,7 @@ function fakeToolchain() {
 
 const LIMITS: RunLimits = { sandbox: true, perUser: 2, total: 3, maxMinutes: 30, maxExtensions: 3 };
 
-async function setup(limits: Partial<RunLimits> = {}) {
+async function setup(limits: Partial<RunLimits> = {}, databrokerApis: Record<string, string> = {}) {
   const repo = new MemoryRepo();
   const hub = new EventHub();
   const tc = fakeToolchain();
@@ -66,7 +66,7 @@ async function setup(limits: Partial<RunLimits> = {}) {
     return g;
   };
   let n = 0;
-  const runs = new RunManager({ repo, clients: tc.clients, hub, databrokers: { "v4.0": "databroker:55555" }, limits: { ...LIMITS, ...limits }, newId: () => `r_${++n}`, batchMs: 1 });
+  const runs = new RunManager({ repo, clients: tc.clients, hub, databrokers: { "v4.0": "databroker:55555" }, limits: { ...LIMITS, ...limits }, databrokerApis, newId: () => `r_${++n}`, batchMs: 1 });
   return { repo, hub, tc, project, gen, runs };
 }
 
@@ -92,9 +92,9 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     // The address is known while the app starts: the gateway mirrors the app's actuators on that databroker only.
     expect(ra.sandbox).toBe("toolchain-cpp:56000");
     expect(tc.calls).toEqual([
-      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1"}',
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"sdv.databroker.v1"}',
       "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56000",
-      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_2"}',
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_2","SV_DATABROKER_API":"sdv.databroker.v1"}',
       "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56001",
     ]);
     tc.start("job-1");
@@ -177,6 +177,16 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
     expect((await call("GET", "/runs?ownerUserId=x%20y")).status).toBe(400);
     expect((await (await call("POST", "/runs/r_1/stop", { reason: "admin" })).json()).stopReason).toBe("admin");
     expect((await (await call("GET", "/capacity")).json()).runs).toEqual({ active: 1, limit: 3, perUser: 1, sandbox: true, maxMinutes: 30 });
+  });
+
+  test("a backend on kuksa.val.v2 (ADR-0047): its app gets SV_DATABROKER_API and the gateway provides its actuators", async () => {
+    const { tc, project, gen, runs } = await setup({}, { cpp: "kuksa.val.v2" });
+    const a = await project("lka");
+    await runs.start(a, (await gen(a)).id, undefined, ann);
+    expect(tc.calls).toEqual([
+      'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"kuksa.val.v2"}',
+      "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56000 kuksa.val.v2",
+    ]);
   });
 
   test("limits from the environment: sandboxes off unless SV_RUN_SANDBOX=1; bad values fall back", () => {
