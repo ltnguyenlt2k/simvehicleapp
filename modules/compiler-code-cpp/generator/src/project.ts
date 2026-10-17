@@ -20,7 +20,7 @@ export interface GenerateRequest {
   workflows: WorkflowIr[];
   options?: { emitTests?: boolean };
   /** Scenario v1 per workflow for the generated tests (ADR-0022 §8). */
-  scenarios?: { workflowId: string; scenario: Record<string, unknown> }[];
+  scenarios?: { workflowId: string; scenario: Record<string, unknown>; caseName?: string }[];
 }
 
 export interface FileOut {
@@ -206,12 +206,49 @@ export function generateProject(req: GenerateRequest): FileSet {
 
   // Generated tests: each workflow with a scenario runs it on the mock vehicle (ADR-0022 §8).
   if (req.options?.emitTests) {
-    const scenarios = new Map((req.scenarios ?? []).map((s) => [s.workflowId, s.scenario]));
+    const cases = new Map<string, { scenario: Record<string, unknown>; caseName?: string }[]>();
+    for (const s of req.scenarios ?? []) cases.set(s.workflowId, [...(cases.get(s.workflowId) ?? []), { scenario: s.scenario, ...(s.caseName ? { caseName: s.caseName } : {}) }]);
     const tests: string[] = [];
     for (const wf of byName) {
-      const sc = scenarios.get(wf.workflowId);
-      if (!sc) continue;
+      const list = cases.get(wf.workflowId);
+      if (!list?.length) continue;
       const cls = classes.get(wf.workflowId)!;
+      if (list.length > 1 || list[0]!.caseName) {
+        // Test cases (ADR-0058 §2): one TEST per case, named after it, in the workflow's test file.
+        const t = new CodeWriter();
+        t.line(headerComment(wf.irHash));
+        t.line(`#include ${cppString(`workflows/${cls}.hpp`)}`);
+        t.line();
+        t.line('#include "simvehicleapp/rt/Testing.hpp"');
+        t.line();
+        t.line("#include <gtest/gtest.h>");
+        t.line();
+        t.line("namespace {");
+        list.forEach((c, i) => {
+          t.line(`/** Test case ${commentText(c.caseName ?? `case ${i + 1}`)} (contracts scenario v1). */`);
+          t.line(`const char* const kCase${i + 1} = ${rawString(JSON.stringify(c.scenario, null, 2))};`);
+        });
+        t.line();
+        t.block("void runCase(const char* text)", () => {
+          t.line("const auto scenario = simvehicleapp::rt::Value::parse(text);");
+          t.line(`const auto result = simvehicleapp::rt::testing::runScenario(&simvehicleapp::generated::${cls}::bind, scenario);`);
+          t.line("const auto mismatches = simvehicleapp::rt::testing::checkExpectations(result, scenario.value(\"expect\", simvehicleapp::rt::Value()));");
+          t.block("for (const auto& m : mismatches)", () => t.line("ADD_FAILURE() << m;"));
+        });
+        t.line("} // namespace");
+        const used = new Map<string, number>();
+        list.forEach((c, i) => {
+          const base = pascalCase(c.caseName ?? `case ${i + 1}`, `Case${i + 1}`);
+          const n = (used.get(base) ?? 0) + 1;
+          used.set(base, n);
+          t.line();
+          t.block(`TEST(${cls}Test, ${n > 1 ? `${base}${n}` : base})`, () => t.line(`runCase(kCase${i + 1});`));
+        });
+        files.push(file(`${TESTS}${cls}_test.cpp`, t.toString(), "test"));
+        tests.push(`${cls}_test.cpp`);
+        continue;
+      }
+      const sc = list[0]!.scenario;
       const t = new CodeWriter();
       t.line(headerComment(wf.irHash));
       t.line(`#include ${cppString(`workflows/${cls}.hpp`)}`);

@@ -201,3 +201,41 @@ TEST(RuntimeTest, stdoutTraceKeepsLifecycleEventsAtEveryLevelAndTheEnvOnlyLowers
     EXPECT_EQ(StdoutTraceSink::levelFromEnv(TraceLevel::Node), TraceLevel::Node);
     ::unsetenv("SV_TRACE_LEVEL");
 }
+
+// ---- Scenario 1.1 expectations (ADR-0058 §9): subset, within, never; 1.0 stays exact -------------------------
+
+namespace {
+simvehicleapp::rt::testing::ScenarioResult scenarioResult(const char* writes, const char* publishes, const char* version) {
+    simvehicleapp::rt::testing::ScenarioResult r;
+    r.writes = simvehicleapp::rt::Value::parse(writes);
+    r.publishes = simvehicleapp::rt::Value::parse(publishes);
+    r.scenarioVersion = version;
+    return r;
+}
+std::vector<std::string> check(const simvehicleapp::rt::testing::ScenarioResult& r, const char* expect) {
+    return simvehicleapp::rt::testing::checkExpectations(r, simvehicleapp::rt::Value::parse(expect));
+}
+} // namespace
+
+TEST(Scenario11Test, versionSubsetWithinOrderNever) {
+    using simvehicleapp::rt::testing::isScenario11;
+    EXPECT_TRUE(isScenario11("1.1.0"));
+    EXPECT_TRUE(isScenario11("1.2.3"));
+    EXPECT_FALSE(isScenario11("1.0.0"));
+    EXPECT_FALSE(isScenario11(""));
+    const char* writes = R"([{"t":0,"path":"L","value":false},{"t":2010,"path":"H","value":true},{"t":2500,"path":"H","value":false}])";
+    const auto r = scenarioResult(writes, "[]", "1.1.0");
+    EXPECT_TRUE(check(r, R"({"writes":[{"t":2000,"path":"H","value":true,"within":50}]})").empty());
+    EXPECT_EQ(check(r, R"({"writes":[{"t":2000,"path":"H","value":true}]})").size(), 1U);
+    EXPECT_EQ(check(r, R"({"writes":[{"t":2020,"path":"H","value":true,"within":100}]})").size(), 1U);
+    EXPECT_EQ(check(r, R"({"writes":[{"t":2010,"path":"H","value":true},{"t":2010,"path":"H","value":true}]})").size(), 1U);
+    EXPECT_EQ(check(scenarioResult(writes, "[]", "1.0.0"), R"({"writes":[{"t":2010,"path":"H","value":true}]})").size(), 1U);
+    const auto n = scenarioResult(R"([{"t":500,"path":"L","value":true}])", "[]", "1.1.0");
+    EXPECT_TRUE(check(n, R"({"never":[{"path":"H"}]})").empty());
+    EXPECT_EQ(check(n, R"({"never":[{"path":"L","from":0,"to":1000}]})"),
+              std::vector<std::string>{"L must not be written in [0, 1000] ms: written true at 500 ms"});
+    EXPECT_TRUE(check(n, R"({"never":[{"path":"L","from":600}]})").empty());
+    const auto p = scenarioResult("[]", R"([{"t":1205,"topic":"app/hmi","payload":"{\"title\":\"Overspeed\"}"}])", "1.1.0");
+    EXPECT_TRUE(check(p, R"({"publishes":[{"t":1200,"topic":"app/hmi","payload":"{\"title\":\"Overspeed\"}","within":10}]})").empty());
+    EXPECT_EQ(check(p, R"({"publishes":[{"t":1200,"topic":"app/hmi","payload":"x","within":10}]})").size(), 1U);
+}

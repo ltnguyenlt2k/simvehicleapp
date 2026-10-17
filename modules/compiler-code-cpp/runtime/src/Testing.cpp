@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "simvehicleapp/rt/Testing.hpp"
+#include <functional>
 
 namespace simvehicleapp::rt::testing {
 
@@ -205,7 +206,23 @@ ScenarioResult runScenario(const std::function<void(Runtime&)>& bind, const Valu
     for (const auto& l : sink.logs) {
         r.logs.push_back(timedJson(l, "level", "message"));
     }
+    if (scenario.contains("scenarioVersion") && scenario["scenarioVersion"].is_string()) {
+        r.scenarioVersion = scenario["scenarioVersion"].get<std::string>();
+    }
     return r;
+}
+
+bool isScenario11(const std::string& version) {
+    if (version.rfind("1.", 0) != 0) {
+        return false;
+    }
+    const auto rest = version.substr(2);
+    const auto dot = rest.find('.');
+    const auto minor = rest.substr(0, dot);
+    if (minor.empty() || minor.find_first_not_of("0123456789") != std::string::npos) {
+        return false;
+    }
+    return std::stoul(minor) >= 1;
 }
 
 namespace {
@@ -226,6 +243,85 @@ bool subset(const Value& want, const Value* have) {
     }
     return have != nullptr && same(want, *have);
 }
+int64_t intOf(const Value& o, const char* key) {
+    return o.contains(key) && o[key].is_number() ? o[key].get<int64_t>() : 0;
+}
+
+std::string plain(const Value& v) { return v.is_string() ? v.get<std::string>() : stringify(v); }
+
+/** Indices into `want` no distinct actual item (same key, in order) matches within `[t, t + within]`. */
+std::vector<size_t> matchInOrder(const Value& want, const Value& have, const std::function<std::string(const Value&)>& key) {
+    std::vector<bool> used(have.size(), false);
+    std::vector<size_t> missing;
+    size_t start = 0;
+    for (size_t i = 0; i < want.size(); ++i) {
+        const auto& w = want[i];
+        const auto k = key(w);
+        const auto lo = intOf(w, "t");
+        const auto hi = lo + intOf(w, "within");
+        bool found = false;
+        for (size_t j = start; j < have.size(); ++j) {
+            const auto t = intOf(have[j], "t");
+            if (!used[j] && key(have[j]) == k && t >= lo && t <= hi) {
+                used[j] = true;
+                start = j + 1;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            missing.push_back(i);
+        }
+    }
+    return missing;
+}
+
+std::string withinText(const Value& m) {
+    const auto w = intOf(m, "within");
+    return w == 0 ? std::string() : " (within " + std::to_string(w) + " ms)";
+}
+
+void check11(const ScenarioResult& result, const Value& expect, std::vector<std::string>& out) {
+    if (expect.contains("writes")) {
+        const auto& want = expect["writes"];
+        const auto key = [](const Value& w) { return plain(w.value("path", Value())) + "=" + stringify(w.value("value", Value())); };
+        for (const auto i : matchInOrder(want, result.writes, key)) {
+            const auto& m = want[i];
+            out.push_back("expected " + plain(m["path"]) + " = " + stringify(m.value("value", Value())) + " at " +
+                          std::to_string(intOf(m, "t")) + " ms" + withinText(m) + "; actual writes " + stringify(result.writes));
+        }
+    }
+    if (expect.contains("publishes")) {
+        const auto& want = expect["publishes"];
+        const auto key = [](const Value& p) {
+            return plain(p.value("topic", Value())) + std::string(1, '\0') + plain(p.value("payload", Value()));
+        };
+        for (const auto i : matchInOrder(want, result.publishes, key)) {
+            const auto& m = want[i];
+            out.push_back("expected a publish on " + plain(m["topic"]) + " (" + plain(m["payload"]) + ") at " +
+                          std::to_string(intOf(m, "t")) + " ms" + withinText(m) + "; actual " + stringify(result.publishes));
+        }
+    }
+    if (expect.contains("never")) {
+        for (const auto& n : expect["never"]) {
+            const auto path = plain(n["path"]);
+            const auto lo = intOf(n, "from");
+            const bool bounded = n.contains("to");
+            const auto hi = intOf(n, "to");
+            for (const auto& w : result.writes) {
+                const auto t = intOf(w, "t");
+                if (plain(w["path"]) == path && t >= lo && (!bounded || t <= hi)) {
+                    const auto window = n.contains("from") || bounded
+                                            ? " in [" + std::to_string(lo) + ", " + (bounded ? std::to_string(hi) : "end") + "] ms"
+                                            : std::string();
+                    out.push_back(path + " must not be written" + window + ": written " + stringify(w["value"]) + " at " +
+                                  std::to_string(t) + " ms");
+                    break;
+                }
+            }
+        }
+    }
+}
 } // namespace
 
 std::vector<std::string> checkExpectations(const ScenarioResult& result, const Value& expect) {
@@ -233,7 +329,11 @@ std::vector<std::string> checkExpectations(const ScenarioResult& result, const V
     if (expect.is_null()) {
         return out;
     }
-    if (expect.contains("writes")) {
+    const bool v11 = isScenario11(result.scenarioVersion);
+    if (v11) {
+        check11(result, expect, out);
+    }
+    if (!v11 && expect.contains("writes")) {
         Value have = Value::array();
         for (const auto& w : result.writes) {
             Value o = Value::object();
@@ -247,7 +347,7 @@ std::vector<std::string> checkExpectations(const ScenarioResult& result, const V
                           stringify(have));
         }
     }
-    if (expect.contains("publishes")) {
+    if (!v11 && expect.contains("publishes")) {
         Value have = Value::array();
         for (const auto& p : result.publishes) {
             Value o = Value::object();

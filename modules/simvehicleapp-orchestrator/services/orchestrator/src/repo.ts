@@ -87,7 +87,7 @@ export interface Generation {
 
 export interface GenerationRequest {
   graphs: Record<string, unknown>[];
-  scenarios?: { workflowId: string; scenario: Record<string, unknown> }[];
+  scenarios?: { workflowId: string; scenario: Record<string, unknown>; caseName?: string }[];
   overwriteModified?: boolean;
 }
 

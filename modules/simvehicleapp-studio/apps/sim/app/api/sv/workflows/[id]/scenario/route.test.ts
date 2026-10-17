@@ -4,11 +4,11 @@
 import { createMockRequest } from '@sim/testing'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetSession, mockAuthorize, mockAssertMutable, dbState } = vi.hoisted(() => ({
+const { mockGetSession, mockAuthorize, mockAssertMutable, cases } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockAuthorize: vi.fn(),
   mockAssertMutable: vi.fn(),
-  dbState: { rows: [] as { scenario: unknown }[], upserts: [] as unknown[] },
+  cases: { list: [] as { scenario: unknown }[], saved: [] as unknown[] },
 }))
 
 vi.mock('@/lib/auth', () => ({
@@ -27,23 +27,13 @@ vi.mock('@sim/platform-authz/workflow', () => {
   }
 })
 
-vi.mock('@sim/db/schema', () => ({
-  svWorkflowScenarios: { workflowId: 'workflow_id', scenario: 'scenario' },
+// The scenario is the workflow's first test case (ADR-0058, M18-T02).
+vi.mock('@/lib/sv/server/test-cases', () => ({
+  listTestCases: async () => cases.list,
+  saveFirstCase: async (workflowId: string, scenario: unknown) => {
+    cases.saved.push({ workflowId, scenario })
+  },
 }))
-
-vi.mock('@sim/db', () => {
-  const select = () => ({
-    from: () => ({ where: () => ({ limit: async () => dbState.rows }) }),
-  })
-  const insert = () => ({
-    values: (v: unknown) => ({
-      onConflictDoUpdate: async (c: unknown) => {
-        dbState.upserts.push({ values: v, conflict: c })
-      },
-    }),
-  })
-  return { db: { select, insert } }
-})
 
 import { WorkflowLockedError } from '@sim/platform-authz/workflow'
 import { GET, PUT } from '@/app/api/sv/workflows/[id]/scenario/route'
@@ -64,29 +54,40 @@ const scenario = {
 describe('/api/sv/workflows/[id]/scenario (M05-T09)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    dbState.rows = []
-    dbState.upserts = []
+    cases.list = []
+    cases.saved = []
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
     mockAuthorize.mockResolvedValue({ workflow: { id: 'wf-1' }, allowed: true })
     mockAssertMutable.mockResolvedValue(undefined)
   })
 
-  it('GET returns null until a scenario is saved; an invalid stored one reads as null', async () => {
+  it('GET returns null until a case is saved, then the first test case', async () => {
     let res = await GET(createMockRequest('GET', undefined, {}, url), ctx())
     expect(await res.json()).toEqual({ scenario: null })
-    dbState.rows = [{ scenario }]
+    cases.list = [{ scenario }, { scenario: { ...scenario, name: 'second' } }]
     res = await GET(createMockRequest('GET', undefined, {}, url), ctx())
     expect(await res.json()).toEqual({ scenario })
-    dbState.rows = [{ scenario: { name: 'old format' } }]
-    res = await GET(createMockRequest('GET', undefined, {}, url), ctx())
-    expect(await res.json()).toEqual({ scenario: null })
   })
 
-  it('PUT validates and upserts the scenario', async () => {
+  it('PUT validates and saves the first test case (1.1 expectations accepted)', async () => {
     const res = await PUT(createMockRequest('PUT', { scenario }, {}, url), ctx())
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ scenario })
-    expect(dbState.upserts).toHaveLength(1)
+    expect(cases.saved).toEqual([{ workflowId: 'wf-1', scenario }])
+    const v11 = {
+      ...scenario,
+      scenarioVersion: '1.1.0',
+      expect: {
+        writes: [
+          { t: 2000, path: 'Vehicle.Body.Lights.Hazard.IsSignaling', value: true, within: 300 },
+        ],
+        never: [{ path: 'Vehicle.ADAS.LaneDepartureDetection.IsEnabled', from: 0 }],
+      },
+    }
+    expect((await PUT(createMockRequest('PUT', { scenario: v11 }, {}, url), ctx())).status).toBe(
+      200
+    )
+    cases.saved = cases.saved.slice(0, 1)
     const bad = await PUT(
       createMockRequest('PUT', { scenario: { ...scenario, until: 90_000_000 } }, {}, url),
       ctx()
@@ -102,7 +103,7 @@ describe('/api/sv/workflows/[id]/scenario (M05-T09)', () => {
       ctx()
     )
     expect(badPath.status).toBe(400)
-    expect(dbState.upserts).toHaveLength(1)
+    expect(cases.saved).toHaveLength(1)
   })
 
   it('needs a session, permission and an unlocked workflow', async () => {

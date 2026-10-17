@@ -876,7 +876,7 @@ export interface SignalUpdateV1 {
   field: "value" | "target";
 }
 /**
- * Input trace + expectations shared by simulator, runtime conformance, integration and parity tests (ADR-0017 §3–5, ADR-0042). Times are virtual ms from app start. Array values are JSON arrays; int64/uint64 are decimal strings (ADR-0018).
+ * Input trace + expectations shared by simulator, runtime conformance, integration and parity tests (ADR-0017 §3–5, ADR-0042). Times are virtual ms from app start. Array values are JSON arrays; int64/uint64 are decimal strings (ADR-0018). Version 1.1 (additive, ADR-0058 §9): `within` on expected writes/publishes, `expect.never`, and expectations are a subset (1.0: exact ordered lists).
  */
 export interface ScenarioV1 {
   scenarioVersion: string & {
@@ -909,17 +909,33 @@ export interface ScenarioV1 {
      * Partial TraceEvent matchers (fields compared when present).
      */
     trace?: {}[];
+    /**
+     * Scenario 1.1: these paths must not be written in [from, to] ms (`to` absent: until the end).
+     */
+    never?: {
+      path: string;
+      from?: number;
+      to?: number;
+    }[];
   };
 }
 export interface ScenarioWrite {
   t: number;
   path: string;
   value: JsonValue;
+  /**
+   * Scenario 1.1: accepted at t ≤ actual ≤ t + within ms (default 0).
+   */
+  within?: number;
 }
 export interface ScenarioPublish {
   t: number;
   topic: string;
   payload: string;
+  /**
+   * Scenario 1.1: accepted at t ≤ actual ≤ t + within ms (default 0).
+   */
+  within?: number;
 }
 /**
  * The only way the AI assistant changes a workflow (ADR-0030 §5, analysis/09 §5). `ref` is a temporary id mapped by the studio on apply; a stale `baseRevision` is rebased or rejected.
@@ -1113,13 +1129,17 @@ export interface GenerateRequest {
     emitTests?: boolean;
   };
   /**
-   * Scenario of a workflow for the generated tests (ADR-0022 §8, additive 2026-10-07); workflows without one get no test.
+   * Scenarios (test cases) of the workflows for the generated tests (ADR-0022 §8, additive 2026-10-07); workflows without one get no test. Several entries may share a workflowId (ADR-0058 §2): one generated test each, named after `caseName`; a lone entry without `caseName` is generated as before.
    *
    * @maxItems 1000
    */
   scenarios?: {
     workflowId: string;
     scenario: ScenarioV1;
+    /**
+     * Test case name (ADR-0058); the generated test name is derived from it.
+     */
+    caseName?: string;
   }[];
 }
 export interface ToolchainJobRequest {

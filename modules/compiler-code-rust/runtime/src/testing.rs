@@ -248,6 +248,8 @@ pub struct ScenarioResult {
     pub signals: Vec<Value>,
     pub publishes: Vec<Value>,
     pub logs: Vec<Value>,
+    /// `scenarioVersion` of the scenario run: 1.1 expectations are a subset with `within` and `never` (ADR-0058 §9).
+    pub scenario_version: String,
 }
 
 /// Runs `scenario` (Scenario v1 as a JSON value) on the mock vehicle and virtual clock.
@@ -338,6 +340,115 @@ pub fn run_scenario(
         signals: vehicle.signals(),
         publishes: pubsub.publishes(),
         logs,
+        scenario_version: match scenario.get("scenarioVersion") {
+            Some(Value::Str(s)) => s.clone(),
+            _ => String::new(),
+        },
+    }
+}
+
+/// Scenario 1.1 and later minor versions (ADR-0058 §9).
+pub fn is_scenario_11(version: &str) -> bool {
+    let mut parts = version.split('.');
+    parts.next() == Some("1")
+        && parts
+            .next()
+            .and_then(|m| m.parse::<u32>().ok())
+            .is_some_and(|m| m >= 1)
+}
+
+fn int_of(x: Option<&Value>) -> i64 {
+    x.map(|x| v::num(x) as i64).unwrap_or(0)
+}
+
+/// Indices into `want` that no distinct actual item (same key, in order) matches within `[t, t + within]`.
+fn match_in_order(want: &[Value], have: &[Value], key: &dyn Fn(&Value) -> String) -> Vec<usize> {
+    let mut used = vec![false; have.len()];
+    let mut missing = Vec::new();
+    let mut start = 0;
+    for (i, w) in want.iter().enumerate() {
+        let (k, lo) = (key(w), int_of(w.get("t")));
+        let hi = lo + int_of(w.get("within"));
+        let found = (start..have.len()).find(|&j| {
+            let t = int_of(have[j].get("t"));
+            !used[j] && key(&have[j]) == k && t >= lo && t <= hi
+        });
+        match found {
+            Some(j) => {
+                used[j] = true;
+                start = j + 1;
+            }
+            None => missing.push(i),
+        }
+    }
+    missing
+}
+
+fn within_text(m: &Value) -> String {
+    match int_of(m.get("within")) {
+        0 => String::new(),
+        w => format!(" (within {w} ms)"),
+    }
+}
+
+fn check_11(result: &ScenarioResult, expect: &Value, out: &mut Vec<String>) {
+    let text = |x: Option<&Value>| x.map(v::js_json).unwrap_or_default();
+    let plain = |x: Option<&Value>| match x {
+        Some(Value::Str(s)) => s.clone(),
+        other => text(other),
+    };
+    if let Some(Value::Array(want)) = expect.get("writes") {
+        let key = |w: &Value| format!("{}={}", plain(w.get("path")), text(w.get("value")));
+        for i in match_in_order(want, &result.writes, &key) {
+            let m = &want[i];
+            out.push(format!(
+                "expected {} = {} at {} ms{}; actual writes {}",
+                plain(m.get("path")),
+                text(m.get("value")),
+                int_of(m.get("t")),
+                within_text(m),
+                v::js_json(&Value::Array(result.writes.clone()))
+            ));
+        }
+    }
+    if let Some(Value::Array(want)) = expect.get("publishes") {
+        let key = |p: &Value| format!("{}\u{0}{}", plain(p.get("topic")), plain(p.get("payload")));
+        for i in match_in_order(want, &result.publishes, &key) {
+            let m = &want[i];
+            out.push(format!(
+                "expected a publish on {} ({}) at {} ms{}; actual {}",
+                plain(m.get("topic")),
+                plain(m.get("payload")),
+                int_of(m.get("t")),
+                within_text(m),
+                v::js_json(&Value::Array(result.publishes.clone()))
+            ));
+        }
+    }
+    if let Some(Value::Array(never)) = expect.get("never") {
+        for n in never {
+            let (path, lo) = (plain(n.get("path")), int_of(n.get("from")));
+            let hi = n.get("to").map(|x| v::num(x) as i64);
+            let hit = result.writes.iter().find(|w| {
+                let t = int_of(w.get("t"));
+                plain(w.get("path")) == path && t >= lo && hi.is_none_or(|hi| t <= hi)
+            });
+            if let Some(hit) = hit {
+                let window = if n.get("from").is_some() || n.get("to").is_some() {
+                    format!(
+                        " in [{lo}, {}] ms",
+                        hi.map(|h| h.to_string()).unwrap_or_else(|| "end".into())
+                    )
+                } else {
+                    String::new()
+                };
+                out.push(format!(
+                    "{path} must not be written{window}: written {} at {} ms",
+                    text(hit.get("value")),
+                    int_of(hit.get("t"))
+                ));
+            }
+        }
     }
 }
 
@@ -357,7 +468,11 @@ fn subset(want: &Value, have: Option<&Value>) -> bool {
 pub fn check_expectations(result: &ScenarioResult, expect: Option<&Value>) -> Vec<String> {
     let mut out = Vec::new();
     let Some(expect) = expect else { return out };
-    if let Some(want) = expect.get("writes") {
+    let v11 = is_scenario_11(&result.scenario_version);
+    if v11 {
+        check_11(result, expect, &mut out);
+    }
+    if let Some(want) = expect.get("writes").filter(|_| !v11) {
         let have = Value::Array(
             result
                 .writes
@@ -379,7 +494,7 @@ pub fn check_expectations(result: &ScenarioResult, expect: Option<&Value>) -> Ve
             ));
         }
     }
-    if let Some(want) = expect.get("publishes") {
+    if let Some(want) = expect.get("publishes").filter(|_| !v11) {
         let have = Value::Array(
             result
                 .publishes
@@ -418,4 +533,103 @@ pub fn check_expectations(result: &ScenarioResult, expect: Option<&Value>) -> Ve
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::values::parse_json;
+
+    const H: &str = "Vehicle.Body.Lights.Hazard.IsSignaling";
+    const L: &str = "Vehicle.ADAS.LaneDepartureDetection.IsEnabled";
+
+    fn result(writes: &str, publishes: &str, version: &str) -> ScenarioResult {
+        let arr = |t: &str| match parse_json(t).unwrap() {
+            Value::Array(a) => a,
+            _ => vec![],
+        };
+        ScenarioResult {
+            trace: vec![],
+            writes: arr(writes),
+            signals: vec![],
+            publishes: arr(publishes),
+            logs: vec![],
+            scenario_version: version.into(),
+        }
+    }
+
+    fn check(r: &ScenarioResult, expect: &str) -> Vec<String> {
+        check_expectations(r, Some(&parse_json(expect).unwrap()))
+    }
+
+    #[test]
+    fn scenario_11_version() {
+        assert!(is_scenario_11("1.1.0") && is_scenario_11("1.2.3"));
+        assert!(!is_scenario_11("1.0.0") && !is_scenario_11(""));
+    }
+
+    #[test]
+    fn scenario_11_subset_within_order_never() {
+        let w = format!(
+            r#"[{{"t":0,"path":"{L}","value":false}},{{"t":2010,"path":"{H}","value":true}},{{"t":2500,"path":"{H}","value":false}}]"#
+        );
+        let r = result(&w, "[]", "1.1.0");
+        let e = |t: u32, within: u32| {
+            format!(r#"{{"writes":[{{"t":{t},"path":"{H}","value":true,"within":{within}}}]}}"#)
+        };
+        assert!(check(&r, &e(2000, 50)).is_empty());
+        assert_eq!(check(&r, &e(2000, 0)).len(), 1);
+        assert_eq!(check(&r, &e(2020, 100)).len(), 1);
+        let exact = result(&w, "[]", "1.0.0");
+        assert_eq!(
+            check(
+                &exact,
+                &format!(r#"{{"writes":[{{"t":2010,"path":"{H}","value":true}}]}}"#)
+            )
+            .len(),
+            1
+        );
+        let twice = format!(
+            r#"{{"writes":[{{"t":2010,"path":"{H}","value":true}},{{"t":2010,"path":"{H}","value":true}}]}}"#
+        );
+        assert_eq!(check(&r, &twice).len(), 1);
+        let r = result(
+            &format!(r#"[{{"t":500,"path":"{L}","value":true}}]"#),
+            "[]",
+            "1.1.0",
+        );
+        assert!(check(&r, &format!(r#"{{"never":[{{"path":"{H}"}}]}}"#)).is_empty());
+        assert_eq!(
+            check(
+                &r,
+                &format!(r#"{{"never":[{{"path":"{L}","from":0,"to":1000}}]}}"#)
+            ),
+            vec![format!(
+                "{L} must not be written in [0, 1000] ms: written true at 500 ms"
+            )]
+        );
+        assert!(check(&r, &format!(r#"{{"never":[{{"path":"{L}","from":600}}]}}"#)).is_empty());
+    }
+
+    #[test]
+    fn scenario_11_publishes() {
+        let r = result(
+            "[]",
+            r#"[{"t":1205,"topic":"app/hmi","payload":"{\"title\":\"Overspeed\"}"}]"#,
+            "1.1.0",
+        );
+        assert!(check(
+            &r,
+            r#"{"publishes":[{"t":1200,"topic":"app/hmi","payload":"{\"title\":\"Overspeed\"}","within":10}]}"#
+        )
+        .is_empty());
+        assert_eq!(
+            check(
+                &r,
+                r#"{"publishes":[{"t":1200,"topic":"app/hmi","payload":"x","within":10}]}"#
+            )
+            .len(),
+            1
+        );
+    }
 }

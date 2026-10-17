@@ -165,7 +165,8 @@ def run_scenario(bind: Callable[[Runtime], None], scenario: Dict[str, Any], run_
         if r.data is not None:
             e["data"] = r.data
         trace.append(e)
-    return {"trace": trace, "writes": vehicle.writes, "signals": vehicle.signals, "publishes": pubsub.publishes, "logs": sink.logs}
+    # The scenario version decides how check_expectations compares (1.1: subset, within, never — ADR-0058 §9).
+    return {"trace": trace, "writes": vehicle.writes, "signals": vehicle.signals, "publishes": pubsub.publishes, "logs": sink.logs, "scenarioVersion": str(scenario.get("scenarioVersion", ""))}
 
 
 def _subset(want: Any, have: Any) -> bool:
@@ -176,11 +177,58 @@ def _subset(want: Any, have: Any) -> bool:
     return V.js_json(want) == V.js_json(have)
 
 
-def check_expectations(result: Dict[str, List[Any]], expect: Optional[Dict[str, Any]]) -> List[str]:
-    """Problems of a result against ``scenario.expect`` (writes and publishes exactly, trace matchers in order)."""
+def is_scenario_11(version: Any) -> bool:
+    """Scenario 1.1 and later minor versions (ADR-0058 §9)."""
+    parts = str(version or "").split(".")
+    return len(parts) >= 2 and parts[0] == "1" and parts[1].isdigit() and int(parts[1]) >= 1
+
+
+def _match_in_order(want: List[Dict[str, Any]], have: List[Dict[str, Any]], key: Callable[[Dict[str, Any]], str]) -> List[Dict[str, Any]]:
+    used: set = set()
+    missing: List[Dict[str, Any]] = []
+    start = 0
+    for w in want:
+        k, lo, hi = key(w), int(w["t"]), int(w["t"]) + int(w.get("within", 0))
+        found = next((j for j in range(start, len(have)) if j not in used and key(have[j]) == k and lo <= int(have[j]["t"]) <= hi), None)
+        if found is None:
+            missing.append(w)
+        else:
+            used.add(found)
+            start = found + 1
+    return missing
+
+
+def _within(m: Dict[str, Any]) -> str:
+    return f" (within {m['within']} ms)" if m.get("within") else ""
+
+
+def _check_11(result: Dict[str, Any], expect: Dict[str, Any], out: List[str]) -> List[str]:
+    writes = [{"t": w["t"], "path": w["path"], "value": w["value"]} for w in result["writes"]]
+    if "writes" in expect:
+        for m in _match_in_order(expect["writes"], writes, lambda w: f"{w['path']}={V.js_json(w['value'])}"):
+            out.append(f"expected {m['path']} = {V.js_json(m['value'])} at {m['t']} ms{_within(m)}; actual writes {V.js_json(writes)}")
+    if "publishes" in expect:
+        pubs = [{"t": p["t"], "topic": p["topic"], "payload": p["payload"]} for p in result["publishes"]]
+        for m in _match_in_order(expect["publishes"], pubs, lambda p: f"{p['topic']}\u0000{p['payload']}"):
+            out.append(f"expected a publish on {m['topic']} ({m['payload']}) at {m['t']} ms{_within(m)}; actual {V.js_json(pubs)}")
+    for n in expect.get("never") or []:
+        lo, hi = int(n.get("from", 0)), n.get("to")
+        hit = next((w for w in writes if w["path"] == n["path"] and int(w["t"]) >= lo and (hi is None or int(w["t"]) <= int(hi))), None)
+        if hit is not None:
+            window = f" in [{lo}, {hi if hi is not None else 'end'}] ms" if "from" in n or "to" in n else ""
+            out.append(f"{n['path']} must not be written{window}: written {V.js_json(hit['value'])} at {hit['t']} ms")
+    return out
+
+
+def check_expectations(result: Dict[str, Any], expect: Optional[Dict[str, Any]]) -> List[str]:
+    """Problems of a result against ``scenario.expect``: 1.0 writes and publishes exactly; 1.1 (the result's
+    ``scenarioVersion``) as a subset with ``within`` and ``never``; trace matchers in order."""
     out: List[str] = []
     if not expect:
         return out
+    if is_scenario_11(result.get("scenarioVersion")):
+        _check_11(result, expect, out)
+        expect = {"trace": expect["trace"]} if "trace" in expect else {}
     if "writes" in expect:
         have = [{"t": w["t"], "path": w["path"], "value": w["value"]} for w in result["writes"]]
         if V.js_json(have) != V.js_json(expect["writes"]):

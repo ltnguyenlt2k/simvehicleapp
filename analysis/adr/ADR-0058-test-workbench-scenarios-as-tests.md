@@ -126,5 +126,10 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
+- 2026-10-17 — **Implement T02/T03** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - Version 1.1 nhận ra theo `scenarioVersion` ≥ 1.1. `run_scenario` của runtime ghi `scenarioVersion` vào kết quả, nên lời gọi `checkExpectations(result, expect)` trong code sinh ra **không đổi**, golden giữ nguyên byte.
+  - Một case không tên ⇒ sinh như cũ (`scenarioMeetsItsExpectations` / `test_<wf>_scenario_meets_its_expectations`). Nhiều case ⇒ tên test từ `caseName`: C++ PascalCase, Python/Rust snake_case, trùng tên thêm số.
+  - Bảng cũ `sv_workflow_scenarios` không còn được ghi (giữ một release, rồi bỏ). Route `/scenario` đọc/ghi case đầu tiên, để trình soạn scenario và Record hiện tại chạy tiếp tới khi có tab Test (T04).
+  - Giới hạn 50 case mỗi workflow (409).
 - 2026-10-16: đọc `checkExpectations` (`simulator/src/scenario.ts`): so đúng `t`. Không đủ cho Play trên app thật ⇒ thêm quyết định 9 (`within`, `never`, tập con, scenario 1.1) và 10 (thuật toán Generate tests).
 - M17-T08 (Signals thiếu tín hiệu trong biểu thức, Messages) được gộp vào quyết định 6 của ADR này (2026-10-15).

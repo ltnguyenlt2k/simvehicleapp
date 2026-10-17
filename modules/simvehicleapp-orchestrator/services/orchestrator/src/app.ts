@@ -254,8 +254,8 @@ export function createOrchestratorHandler(d: AppDeps) {
           return json(422, [{ code: "GRAPH_SCHEMA_INVALID", severity: "error", stage: "parse", message: `A workflow graph does not match WorkflowGraph v1: ${bad.errors.slice(0, 2).map((e) => `${e.instancePath} ${e.message}`).join("; ")}`, docs: "diagnostics#GRAPH_SCHEMA_INVALID" }]);
         }
         const scenarios = b.scenarios;
-        if (scenarios !== undefined && (!Array.isArray(scenarios) || !scenarios.every((s) => s && typeof s.workflowId === "string" && validator.validate("scenario", s.scenario).valid))) {
-          return json(400, { error: "invalid_request", message: "scenarios: [{workflowId, scenario (scenario v1)}]" });
+        if (scenarios !== undefined && (!Array.isArray(scenarios) || !scenarios.every((s) => s && typeof s.workflowId === "string" && validator.validate("scenario", s.scenario).valid && (s.caseName === undefined || (typeof s.caseName === "string" && s.caseName.length >= 1 && s.caseName.length <= 80))))) {
+          return json(400, { error: "invalid_request", message: "scenarios: [{workflowId, scenario (scenario v1), caseName?}]" });
         }
         const g: Generation = {
           id: `g_${crypto.randomUUID()}`,

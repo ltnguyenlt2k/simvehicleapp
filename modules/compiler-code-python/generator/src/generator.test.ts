@@ -5,6 +5,7 @@ import { ContractValidator, fixturesDir } from "@simvehicleapp/contracts";
 import { createBackendHandler } from "./app.ts";
 import { overlayBundle, runtimeBundle } from "./bundle.ts";
 import { OPCODES } from "./emit.ts";
+import { gwaCases } from "../conformance/cases.ts";
 import { generate } from "./generate.ts";
 import { manifestFragment, moduleNames } from "./project.ts";
 import { constLiteral, floatLiteral, pyString, sanitizeIdent, snakeCase } from "./py.ts";
@@ -241,5 +242,33 @@ describe("Python text safety (ADR-0040 §3, rules of ADR-0022 §7)", () => {
     expect(floatLiteral(1e21)).toBe("1e21");
     expect(floatLiteral(-0)).toBe("-0.0");
     expect(floatLiteral(Number.NaN)).toBe('float("nan")');
+  });
+});
+
+/** GW-A with three test cases (ADR-0058 §2, M18-T03), see conformance/cases.ts. */
+export function goldenCasesRequest() {
+  const req = goldenRequest("GW-A");
+  return { ...req, scenarios: gwaCases(req.workflows[0].workflowId, req.scenarios[0]!.scenario) };
+}
+
+describe("test cases (ADR-0058 §2, M18-T03)", () => {
+  test("one test per case named after it (unique), deterministic; golden-cases/GW-A", () => {
+    const r = generate(goldenCasesRequest());
+    if (!r.ok) throw new Error(JSON.stringify(r));
+    const again = generate(goldenCasesRequest());
+    expect(again.ok && again.fileSet.files.map((f) => f.sha256)).toEqual(r.fileSet.files.map((f) => f.sha256));
+    const tests = r.fileSet.files.filter((f) => f.role === "test" && /test_.*\.py$/.test(f.path) && !f.path.endsWith("conftest.py"));
+    expect(tests).toHaveLength(1);
+    const text = tests[0]!.content;
+    expect(text.match(/^def test_/gm)).toHaveLength(3);
+    expect(text).toContain("_overspeed_held_2_s() -> None");
+    expect(text).toContain("_below_the_limit() -> None");
+    expect(text).toContain("_overspeed_held_2_s_2() -> None");
+    const dir = new URL("../../golden-cases/GW-A/", import.meta.url).pathname;
+    if (process.env.SV_UPDATE_GOLDEN === "1") {
+      mkdirSync(dirname(join(dir, tests[0]!.path)), { recursive: true });
+      writeFileSync(join(dir, tests[0]!.path), text);
+    }
+    expect(text).toBe(readFileSync(join(dir, tests[0]!.path), "utf8"));
   });
 });

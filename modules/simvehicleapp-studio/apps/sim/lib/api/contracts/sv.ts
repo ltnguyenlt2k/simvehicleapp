@@ -288,10 +288,16 @@ export const svScenarioInputSchema = z.union([
     .strict(),
 ])
 
-/** Simulation scenario (contracts `scenario` v1, ADR-0017 §3): initial values, inputs over time, optional expectations. */
+/** Within a 1.1 expectation: accepted at `t ≤ actual ≤ t + within` ms (ADR-0058 §9). */
+const svWithinSchema = z.number().int().min(0).max(60_000).optional()
+
+/**
+ * Simulation scenario (contracts `scenario` v1, ADR-0017 §3): initial values, inputs over time, optional expectations.
+ * 1.1 (ADR-0058 §9): expectations are a subset, with `within` and `never`.
+ */
 export const svScenarioSchema = z
   .object({
-    scenarioVersion: z.literal('1.0.0'),
+    scenarioVersion: z.enum(['1.0.0', '1.1.0']),
     name: z.string().min(1).max(200),
     description: z.string().max(2000).optional(),
     vss: z.object({ release: svVssReleaseSchema }).strict().optional(),
@@ -310,7 +316,35 @@ export const svScenarioSchema = z
         writes: z
           .array(
             z
-              .object({ t: svScenarioTimeSchema, path: z.string(), value: svScenarioValueSchema })
+              .object({
+                t: svScenarioTimeSchema,
+                path: z.string(),
+                value: svScenarioValueSchema,
+                within: svWithinSchema,
+              })
+              .strict()
+          )
+          .optional(),
+        publishes: z
+          .array(
+            z
+              .object({
+                t: svScenarioTimeSchema,
+                topic: z.string().min(1).max(256),
+                payload: z.string().max(10_000),
+                within: svWithinSchema,
+              })
+              .strict()
+          )
+          .optional(),
+        never: z
+          .array(
+            z
+              .object({
+                path: svVssPathSchema,
+                from: svScenarioTimeSchema.optional(),
+                to: svScenarioTimeSchema.optional(),
+              })
               .strict()
           )
           .optional(),
@@ -324,6 +358,68 @@ export const svScenarioSchema = z
 
 export const svScenarioResponseSchema = z.object({ scenario: svScenarioSchema.nullable() })
 export const svUpdateScenarioBodySchema = z.object({ scenario: svScenarioSchema })
+
+/** A test case of a workflow (ADR-0058 §1): a named scenario at a position. */
+export const svTestCaseSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(80),
+  scenario: svScenarioSchema,
+  position: z.number().int().min(0),
+})
+export const svTestCaseListSchema = z.object({ cases: z.array(svTestCaseSchema) })
+export const svTestCaseParamsSchema = z.object({
+  id: z.string().min(1).max(128),
+  caseId: z.string().min(1).max(160),
+})
+export const svCreateTestCaseBodySchema = z.object({
+  name: z.string().trim().min(1, 'name is required').max(80),
+  scenario: svScenarioSchema,
+})
+export const svUpdateTestCaseBodySchema = z
+  .object({
+    name: z.string().trim().min(1, 'name is required').max(80).optional(),
+    scenario: svScenarioSchema.optional(),
+    position: z.number().int().min(0).max(1000).optional(),
+  })
+  .refine((b) => b.name !== undefined || b.scenario !== undefined || b.position !== undefined, {
+    message: 'nothing to change',
+  })
+
+/** `GET /api/sv/workflows/[id]/test-cases` — the workflow's test cases in order (ADR-0058, M18-T02). */
+export const svListTestCasesContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/workflows/[id]/test-cases',
+  params: svWorkflowSettingsParamsSchema,
+  response: { mode: 'json', schema: svTestCaseListSchema },
+})
+
+/** `POST /api/sv/workflows/[id]/test-cases` — a new test case, last in the list. */
+export const svCreateTestCaseContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/workflows/[id]/test-cases',
+  params: svWorkflowSettingsParamsSchema,
+  body: svCreateTestCaseBodySchema,
+  response: { mode: 'json', schema: svTestCaseSchema },
+})
+
+/** `PATCH /api/sv/workflows/[id]/test-cases/[caseId]` — rename, edit or move a test case. */
+export const svUpdateTestCaseContract = defineRouteContract({
+  method: 'PATCH',
+  path: '/api/sv/workflows/[id]/test-cases/[caseId]',
+  params: svTestCaseParamsSchema,
+  body: svUpdateTestCaseBodySchema,
+  response: { mode: 'json', schema: svTestCaseSchema },
+})
+
+/** `DELETE /api/sv/workflows/[id]/test-cases/[caseId]`. */
+export const svDeleteTestCaseContract = defineRouteContract({
+  method: 'DELETE',
+  path: '/api/sv/workflows/[id]/test-cases/[caseId]',
+  params: svTestCaseParamsSchema,
+  response: { mode: 'json', schema: z.object({ deleted: z.boolean() }) },
+})
+
+export type SvTestCase = z.output<typeof svTestCaseSchema>
 
 /** `GET /api/sv/workflows/[id]/scenario` — the workflow's simulation scenario, `null` when none was saved (M05-T09). */
 export const svGetScenarioContract = defineRouteContract({

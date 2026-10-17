@@ -36,6 +36,25 @@ vi.mock('@/lib/sv/graph-adapter', () => ({
     docs: `diagnostics#${i.code}`,
   }),
 }))
+// Test cases (ADR-0058): rows of `sv_workflow_scenarios` in dbState stand for one case per workflow.
+vi.mock('@/lib/sv/server/test-cases', () => ({
+  testCasesOf: async (ids: string[]) =>
+    new Map(
+      ((dbState.tables.sv_workflow_scenarios ?? []) as { workflowId: string; scenario: unknown }[])
+        // like the real module: a stored scenario that no longer validates is left out
+        .filter(
+          (r) =>
+            ids.includes(r.workflowId) &&
+            (r.scenario as { scenarioVersion?: string }).scenarioVersion
+        )
+        .map((r) => [
+          r.workflowId,
+          [{ id: `tc_${r.workflowId}`, name: 'Default', scenario: r.scenario, position: 0 }],
+        ])
+    ),
+  scenariosForSynCode: (cases: Map<string, { scenario: unknown }[]>) =>
+    [...cases].map(([workflowId, list]) => ({ workflowId, scenario: list[0].scenario })),
+}))
 vi.mock('@sim/db/schema', () => ({
   svProjects: { _: 'sv_projects', id: 'id' },
   workflow: { _: 'workflow', id: 'id', workspaceId: 'workspace_id' },

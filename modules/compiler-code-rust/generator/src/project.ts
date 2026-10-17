@@ -20,7 +20,7 @@ export interface GenerateRequest {
   workflows: WorkflowIr[];
   options?: { emitTests?: boolean };
   /** Scenario v1 per workflow for the generated tests (ADR-0022 §8). */
-  scenarios?: { workflowId: string; scenario: Record<string, unknown> }[];
+  scenarios?: { workflowId: string; scenario: Record<string, unknown>; caseName?: string }[];
 }
 
 export interface FileOut {
@@ -119,7 +119,8 @@ export function generateProject(req: GenerateRequest): FileSet {
   // Generated tests: each workflow with a scenario runs it on the mock vehicle (ADR-0022 §8). The test target
   // has its own harness (`harness = false`) that prints gtest-style lines, like the other backends' tests.
   if (req.options?.emitTests) {
-    const scenarios = new Map((req.scenarios ?? []).map((s) => [s.workflowId, s.scenario]));
+    const cases = new Map<string, { scenario: Record<string, unknown>; caseName?: string }[]>();
+    for (const s of req.scenarios ?? []) cases.set(s.workflowId, [...(cases.get(s.workflowId) ?? []), { scenario: s.scenario, ...(s.caseName ? { caseName: s.caseName } : {}) }]);
     const t = new CodeWriter();
     t.line(header);
     // Plain comments only: the template's tests/scenarios.rs `include!`s this file.
@@ -131,15 +132,31 @@ export function generateProject(req: GenerateRequest): FileSet {
     t.line("#[allow(unused_imports)]");
     t.line("use app::generated::workflows;");
     t.line();
-    const tests: string[] = [];
+    const tests: { mod: string; name: string; text: string }[] = [];
     for (const wf of byName) {
-      const sc = scenarios.get(wf.workflowId);
-      if (!sc) continue;
+      const list = cases.get(wf.workflowId);
+      if (!list?.length) continue;
       const mod = modules.get(wf.workflowId)!;
-      t.line(`/// Scenario ${commentText(String(sc.name ?? ""))} of workflow ${commentText(wf.name)}.`);
-      t.line(`const ${mod.toUpperCase()}: &str = ${rawString(JSON.stringify(sc, null, 2))};`);
-      t.line();
-      tests.push(mod);
+      if (list.length === 1 && !list[0]!.caseName) {
+        const sc = list[0]!.scenario;
+        t.line(`/// Scenario ${commentText(String(sc.name ?? ""))} of workflow ${commentText(wf.name)}.`);
+        t.line(`const ${mod.toUpperCase()}: &str = ${rawString(JSON.stringify(sc, null, 2))};`);
+        t.line();
+        tests.push({ mod, name: "scenario_meets_its_expectations", text: mod.toUpperCase() });
+        continue;
+      }
+      // Test cases (ADR-0058 §2): one test per case, named after it.
+      const used = new Map<string, number>();
+      list.forEach((c, i) => {
+        const base = snakeCase(c.caseName ?? `case ${i + 1}`, `case_${i + 1}`);
+        const n = (used.get(base) ?? 0) + 1;
+        used.set(base, n);
+        const konst = `${mod.toUpperCase()}_CASE_${i + 1}`;
+        t.line(`/// Test case ${commentText(c.caseName ?? `case ${i + 1}`)} of workflow ${commentText(wf.name)}.`);
+        t.line(`const ${konst}: &str = ${rawString(JSON.stringify(c.scenario, null, 2))};`);
+        t.line();
+        tests.push({ mod, name: n > 1 ? `${base}_${n}` : base, text: konst });
+      });
     }
     t.line("/// The `bind` of a workflow.");
     t.line("type Bind = fn(&simvehicleapp_runtime::Runtime);");
@@ -147,7 +164,7 @@ export function generateProject(req: GenerateRequest): FileSet {
     t.line("/// (suite, name, scenario, bind) of every generated test.");
     t.line("#[rustfmt::skip]");
     t.line("const TESTS: &[(&str, &str, &str, Bind)] = &[");
-    for (const mod of tests) t.line(`    (${rsString(`${mod}Test`)}, "scenario_meets_its_expectations", ${mod.toUpperCase()}, workflows::${mod}::bind),`);
+    for (const x of tests) t.line(`    (${rsString(`${x.mod}Test`)}, ${rsString(x.name)}, ${x.text}, workflows::${x.mod}::bind),`);
     t.line("];");
     t.line();
     t.lines_(`fn main() {

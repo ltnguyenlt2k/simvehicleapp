@@ -228,6 +228,10 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   Keeps every trace event and log line.
 - `struct ScenarioResult`
   Outcome of a scenario run, in the simulator's JSON shapes.
+- `std::string scenarioVersion`
+  `scenarioVersion` of the scenario run: 1.1 expectations are a subset with `within` and `never` (ADR-0058 §9).
+- `bool isScenario11(const std::string& version)`
+  Scenario 1.1 and later minor versions (ADR-0058 §9).
 - `ScenarioResult runScenario(const std::function<void(Runtime&)>& bind, const Value& scenario, const std::string& runId = "sim", const std::map<std::string, Bounds>& bounds =`
   Runs a scenario (contracts `scenario` v1 as JSON) against the workflows `bind` declares: inputs are scheduled before the app starts (simulator order), the clock runs to `until`.
 - `std::vector<std::string> checkExpectations(const ScenarioResult& result, const Value& expect)`

@@ -1,11 +1,5 @@
 import { db } from '@sim/db'
-import {
-  svProjects,
-  svWorkflowScenarios,
-  svWorkflowSettings,
-  workflow,
-  workspace,
-} from '@sim/db/schema'
+import { svProjects, svWorkflowSettings, workflow, workspace } from '@sim/db/schema'
 import { createLogger } from '@sim/logger'
 import type { Variable } from '@sim/workflow-types/workflow'
 import { and, count, eq, inArray, isNotNull, isNull } from 'drizzle-orm'
@@ -16,11 +10,11 @@ import {
   svGenerationSchema,
   svProjectSchema,
   svRunSchema,
-  svScenarioSchema,
 } from '@/lib/api/contracts/sv'
 import { getSession } from '@/lib/auth'
 import { callSvService, SvServiceNotConfiguredError } from '@/lib/sv/api-client'
 import { adaptWorkflow, issueToDiagnostic } from '@/lib/sv/graph-adapter'
+import { scenariosForSynCode, testCasesOf } from '@/lib/sv/server/test-cases'
 import { loadWorkflowFromNormalizedTables } from '@/lib/workflows/persistence/utils'
 import { checkWorkspaceAccess } from '@/lib/workspaces/permissions/utils'
 
@@ -241,17 +235,10 @@ export async function graphsFor(
   return { graphs, missing, issues }
 }
 
-/** Saved simulation scenarios of the workflows (they become the generated tests, ADR-0022 §8). */
+/** Test cases of the workflows: they become the generated tests (ADR-0022 §8; one test per case, ADR-0058 §2). */
 export async function scenariosFor(workflowIds: string[]) {
   if (workflowIds.length === 0) return []
-  const rows = await db
-    .select()
-    .from(svWorkflowScenarios)
-    .where(inArray(svWorkflowScenarios.workflowId, workflowIds))
-  return rows.flatMap((r) => {
-    const parsed = svScenarioSchema.safeParse(r.scenario)
-    return parsed.success ? [{ workflowId: r.workflowId, scenario: parsed.data }] : []
-  })
+  return scenariosForSynCode(await testCasesOf(workflowIds))
 }
 
 /** Vehicle apps a workspace may have (`SV_MAX_APPS_PER_WORKSPACE`, default 10; ADR-0053 §B.3). */

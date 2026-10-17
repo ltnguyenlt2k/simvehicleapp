@@ -10,12 +10,17 @@ import { dirname, join } from "node:path";
 import { fixturesDir } from "@simvehicleapp/contracts";
 import { overlayBundle, runtimeBundle } from "../src/bundle.ts";
 import { generate } from "../src/generate.ts";
+import { gwaCases } from "./cases.ts";
 
 const out = process.argv[2];
 if (!out) throw new Error("usage: stage-project.ts <out-dir>");
 const ids = readdirSync(join(fixturesDir, "golden")).filter((d) => d.startsWith("GW-")).sort();
 const workflows = ids.map((id) => JSON.parse(readFileSync(join(fixturesDir, "golden", id, "ir.json"), "utf8")));
-const scenarios = ids.map((id, i) => ({ workflowId: workflows[i].workflowId, scenario: Bun.YAML.parse(readFileSync(join(fixturesDir, "golden", id, "scenario.yaml"), "utf8")) }));
+// GW-A runs three test cases (ADR-0058 §2): one generated test each, 1.1 expectations included.
+const scenarios = ids.flatMap((id, i) => {
+  const scenario = Bun.YAML.parse(readFileSync(join(fixturesDir, "golden", id, "scenario.yaml"), "utf8")) as Record<string, unknown>;
+  return id === "GW-A" ? gwaCases(workflows[i].workflowId, scenario) : [{ workflowId: workflows[i].workflowId, scenario }];
+});
 const r = generate({ project: { slug: "goldens", appName: "GoldensApp", language: "cpp", mqttTopicPrefix: "simvehicleapp/goldens", traceLevel: "node" }, workflows, options: { emitTests: true }, scenarios });
 if (!r.ok) throw new Error(JSON.stringify(r));
 const write = (path: string, content: string) => {

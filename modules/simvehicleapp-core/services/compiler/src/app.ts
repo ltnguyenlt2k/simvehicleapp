@@ -100,12 +100,12 @@ export function createCompilerHandler(deps: CompilerDeps) {
       if (!ir.irVersion.startsWith("1.")) {
         return json(422, [diag("IR_VERSION_UNSUPPORTED", ir.workflowId, { message: `The simulator runs IR 1.x, not ${ir.irVersion}`, data: { irVersion: ir.irVersion } })]);
       }
-      const sc = body.scenario as { until: number; initial?: Record<string, unknown>; inputs: never[]; latency?: { read?: number; write?: number }; expect?: never };
+      const sc = body.scenario as { scenarioVersion?: string; until: number; initial?: Record<string, unknown>; inputs: never[]; latency?: { read?: number; write?: number }; expect?: never };
       const result = simulate(ir, { until: sc.until, initial: sc.initial, inputs: sc.inputs, latency: sc.latency, runId: ctx.requestId, ...(deps.simMaxEvents ? { maxEvents: deps.simMaxEvents } : {}) });
       const diagnostics = result.limit
         ? [diag("SIM_LIMIT_REACHED", ir.workflowId, { message: `Simulation stopped after ${result.limit.events} events at t=${result.limit.t} ms`, data: { ...result.limit } })]
         : [];
-      const mismatches = sc.expect ? checkExpectations(result, sc.expect).map((m) => m.message) : undefined;
+      const mismatches = sc.expect ? checkExpectations(result, sc.expect, sc.scenarioVersion).map((m) => m.message) : undefined;
       return json(200, {
         trace: result.trace,
         writes: result.writes,

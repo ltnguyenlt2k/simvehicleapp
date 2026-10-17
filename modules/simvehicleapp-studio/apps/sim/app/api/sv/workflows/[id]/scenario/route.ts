@@ -1,21 +1,15 @@
-import { db } from '@sim/db'
-import { svWorkflowScenarios } from '@sim/db/schema'
 import { createLogger } from '@sim/logger'
 import {
   assertWorkflowMutable,
   authorizeWorkflowByWorkspacePermission,
   WorkflowLockedError,
 } from '@sim/platform-authz/workflow'
-import { eq } from 'drizzle-orm'
 import { type NextRequest, NextResponse } from 'next/server'
-import {
-  svGetScenarioContract,
-  svScenarioSchema,
-  svUpdateScenarioContract,
-} from '@/lib/api/contracts/sv'
+import { svGetScenarioContract, svUpdateScenarioContract } from '@/lib/api/contracts/sv'
 import { parseRequest } from '@/lib/api/server'
 import { getSession } from '@/lib/auth'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import { listTestCases, saveFirstCase } from '@/lib/sv/server/test-cases'
 
 const logger = createLogger('SvWorkflowScenarioAPI')
 
@@ -47,7 +41,7 @@ async function authorize(
   return null
 }
 
-/** Simulation scenario of the workflow (M05-T09); `null` until one is saved. */
+/** Simulation scenario of the workflow (M05-T09): its first test case (ADR-0058); `null` until one is saved. */
 export const GET = withRouteHandler(async (request: NextRequest, context: RouteContext) => {
   const workflowId = (await context.params).id
   const denied = await authorize(workflowId, 'read')
@@ -56,17 +50,11 @@ export const GET = withRouteHandler(async (request: NextRequest, context: RouteC
   const parsed = await parseRequest(svGetScenarioContract, request, context)
   if (!parsed.success) return parsed.response
 
-  const [row] = await db
-    .select({ scenario: svWorkflowScenarios.scenario })
-    .from(svWorkflowScenarios)
-    .where(eq(svWorkflowScenarios.workflowId, parsed.data.params.id))
-    .limit(1)
-  // A stored scenario that no longer validates is treated as absent rather than breaking the editor.
-  const stored = row ? svScenarioSchema.safeParse(row.scenario) : null
-  return NextResponse.json({ scenario: stored?.success ? stored.data : null })
+  const [first] = await listTestCases(parsed.data.params.id)
+  return NextResponse.json({ scenario: first?.scenario ?? null })
 })
 
-/** Saves the simulation scenario of the workflow. */
+/** Saves the simulation scenario of the workflow: its first test case, created as "Default" (ADR-0058). */
 export const PUT = withRouteHandler(async (request: NextRequest, context: RouteContext) => {
   const workflowId = (await context.params).id
   const denied = await authorize(workflowId, 'write')
@@ -85,13 +73,7 @@ export const PUT = withRouteHandler(async (request: NextRequest, context: RouteC
   if (!parsed.success) return parsed.response
   const { scenario } = parsed.data.body
 
-  await db
-    .insert(svWorkflowScenarios)
-    .values({ workflowId: parsed.data.params.id, scenario, updatedAt: new Date() })
-    .onConflictDoUpdate({
-      target: svWorkflowScenarios.workflowId,
-      set: { scenario, updatedAt: new Date() },
-    })
+  await saveFirstCase(parsed.data.params.id, scenario)
   logger.info('Scenario saved', { workflowId, inputs: scenario.inputs.length })
   return NextResponse.json({ scenario })
 })

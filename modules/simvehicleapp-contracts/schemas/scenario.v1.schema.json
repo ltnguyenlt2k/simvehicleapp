@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:simvehicleapp:contracts:scenario:1.0.0-alpha.1",
   "title": "Scenario v1",
-  "description": "Input trace + expectations shared by simulator, runtime conformance, integration and parity tests (ADR-0017 §3–5, ADR-0042). Times are virtual ms from app start. Array values are JSON arrays; int64/uint64 are decimal strings (ADR-0018).",
+  "description": "Input trace + expectations shared by simulator, runtime conformance, integration and parity tests (ADR-0017 §3–5, ADR-0042). Times are virtual ms from app start. Array values are JSON arrays; int64/uint64 are decimal strings (ADR-0018). Version 1.1 (additive, ADR-0058 §9): `within` on expected writes/publishes, `expect.never`, and expectations are a subset (1.0: exact ordered lists).",
   "type": "object",
   "required": ["scenarioVersion", "name", "until", "inputs"],
   "additionalProperties": false,
@@ -42,7 +42,21 @@
       "properties": {
         "writes": { "type": "array", "items": { "$ref": "#/$defs/write" } },
         "publishes": { "type": "array", "items": { "$ref": "#/$defs/publish" }, "description": "Exact MQTT publishes (time, topic, payload text; HMI notifications are JSON on <prefix>/hmi), identical in the simulator and every backend." },
-        "trace": { "type": "array", "items": { "type": "object" }, "description": "Partial TraceEvent matchers (fields compared when present)." }
+        "trace": { "type": "array", "items": { "type": "object" }, "description": "Partial TraceEvent matchers (fields compared when present)." },
+        "never": {
+          "type": "array",
+          "description": "Scenario 1.1: these paths must not be written in [from, to] ms (`to` absent: until the end).",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
+              "from": { "$ref": "#/$defs/time" },
+              "to": { "$ref": "#/$defs/time" }
+            }
+          }
+        }
       }
     }
   },
@@ -81,7 +95,8 @@
       "properties": {
         "t": { "$ref": "#/$defs/time" },
         "topic": { "type": "string", "minLength": 1 },
-        "payload": { "type": "string" }
+        "payload": { "type": "string" },
+        "within": { "type": "integer", "minimum": 0, "maximum": 60000, "description": "Scenario 1.1: accepted at t ≤ actual ≤ t + within ms (default 0)." }
       }
     },
     "write": {
@@ -92,7 +107,8 @@
       "properties": {
         "t": { "$ref": "#/$defs/time" },
         "path": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
-        "value": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" }
+        "value": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" },
+        "within": { "type": "integer", "minimum": 0, "maximum": 60000, "description": "Scenario 1.1: accepted at t ≤ actual ≤ t + within ms (default 0)." }
       }
     }
   }

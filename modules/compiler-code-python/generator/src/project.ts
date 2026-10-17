@@ -21,7 +21,7 @@ export interface GenerateRequest {
   workflows: WorkflowIr[];
   options?: { emitTests?: boolean };
   /** Scenario v1 per workflow for the generated tests (ADR-0022 §8). */
-  scenarios?: { workflowId: string; scenario: Record<string, unknown> }[];
+  scenarios?: { workflowId: string; scenario: Record<string, unknown>; caseName?: string }[];
 }
 
 export interface FileOut {
@@ -113,12 +113,39 @@ export function generateProject(req: GenerateRequest): FileSet {
 
   // Generated tests: each workflow with a scenario runs it on the mock vehicle (ADR-0022 §8).
   if (req.options?.emitTests) {
-    const scenarios = new Map((req.scenarios ?? []).map((s) => [s.workflowId, s.scenario]));
+    const cases = testCasesByWorkflow(req.scenarios ?? []);
     const tests: string[] = [];
     for (const wf of byName) {
-      const sc = scenarios.get(wf.workflowId);
-      if (!sc) continue;
+      const list = cases.get(wf.workflowId);
+      if (!list?.length) continue;
       const mod = modules.get(wf.workflowId)!;
+      if (list.length > 1 || list[0]!.caseName) {
+        // Test cases (ADR-0058 §2): one test function per case, named after it, in the workflow's test module.
+        const t = new CodeWriter();
+        t.line(headerComment(wf.irHash));
+        t.line(`"""Test cases of workflow ${commentText(wf.name)} (contracts scenario v1)."""`);
+        t.line();
+        for (const l of importFrom("generated.workflows", [mod])) t.line(l);
+        t.line("from simvehicleapp_runtime.testing import check_expectations, run_scenario");
+        list.forEach((c, i) => {
+          t.line();
+          t.stmt(prefix(`CASE_${i + 1} = `, jsonNode(c.scenario)));
+        });
+        list.forEach((c, i) => {
+          t.line();
+          t.line();
+          t.block(`def test_${mod}_${caseIdent(c.caseName, i, list)}() -> None`, () => {
+            t.line(`"""${commentText(c.caseName ?? `case ${i + 1}`)}"""`);
+            t.line(`result = run_scenario(${mod}.bind, CASE_${i + 1})`);
+            t.line(`problems = check_expectations(result, CASE_${i + 1}.get("expect"))`);
+            t.line('assert not problems, "\\n".join(problems)');
+          });
+        });
+        files.push(file(`${TESTS}test_${mod}.py`, t.toString(), "test"));
+        tests.push(mod);
+        continue;
+      }
+      const sc = list[0]!.scenario;
       const t = new CodeWriter();
       t.line(headerComment(wf.irHash));
       t.line(`"""Scenario ${commentText(String(sc.name ?? ""))} of workflow ${commentText(wf.name)} (contracts scenario v1)."""`);
@@ -196,4 +223,23 @@ export function manifestFragment(workflows: WorkflowIr[]): Record<string, unknow
     },
     pubsub: { reads: [...reads].sort(), writes: [...writes].sort() },
   };
+}
+
+/** Test cases per workflow, in request order (ADR-0058 §2). */
+function testCasesByWorkflow(scenarios: readonly { workflowId: string; scenario: Record<string, unknown>; caseName?: string }[]) {
+  const out = new Map<string, { scenario: Record<string, unknown>; caseName?: string }[]>();
+  for (const s of scenarios) {
+    const list = out.get(s.workflowId) ?? [];
+    list.push({ scenario: s.scenario, ...(s.caseName ? { caseName: s.caseName } : {}) });
+    out.set(s.workflowId, list);
+  }
+  return out;
+}
+
+/** A Python identifier for a case: snake case of its name, made unique in the workflow (`_2`, `_3`…). */
+function caseIdent(name: string | undefined, index: number, list: readonly { caseName?: string }[]): string {
+  const base = (n: string | undefined, i: number) => snakeCase(n ?? `case ${i + 1}`, `case_${i + 1}`);
+  const id = base(name, index);
+  const before = list.slice(0, index).filter((c, i) => base(c.caseName, i) === id).length;
+  return before ? `${id}_${before + 1}` : id;
 }

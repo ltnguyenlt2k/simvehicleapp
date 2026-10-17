@@ -102,7 +102,12 @@ struct ScenarioResult {
     Value signals = Value::array();   // {t, path, value}
     Value publishes = Value::array(); // {t, topic, payload}
     Value logs = Value::array();      // {t, level, message}
+    /** `scenarioVersion` of the scenario run: 1.1 expectations are a subset with `within` and `never` (ADR-0058 §9). */
+    std::string scenarioVersion;
 };
+
+/** Scenario 1.1 and later minor versions (ADR-0058 §9). */
+bool isScenario11(const std::string& version);
 
 /**
  * Runs a scenario (contracts `scenario` v1 as JSON) against the workflows `bind` declares:

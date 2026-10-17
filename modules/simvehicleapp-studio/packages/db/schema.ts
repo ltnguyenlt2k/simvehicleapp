@@ -210,6 +210,28 @@ export const svWorkflowScenarios = pgTable('sv_workflow_scenarios', {
 })
 
 /**
+ * SV: test cases of a workflow (ADR-0058 §1, M18-T02): each a scenario v1 (Given/When/Then) with a name and a
+ * position; SynCode generates one test per case. Replaces the single `sv_workflow_scenarios` row (copied in as
+ * "Default" by the migration; the old table is kept one release, then dropped).
+ */
+export const svWorkflowTestCases = pgTable(
+  'sv_workflow_test_cases',
+  {
+    id: text('id').primaryKey(),
+    workflowId: text('workflow_id')
+      .notNull()
+      .references(() => workflow.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    scenario: jsonb('scenario').notNull(),
+    position: integer('position').notNull().default(0),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => ({
+    workflowIdx: index('sv_workflow_test_cases_workflow_idx').on(table.workflowId, table.position),
+  })
+)
+
+/**
  * SV: a vehicle-app project of a workspace (M07-T17). The orchestrator owns the project (schema `sv`);
  * this row only scopes it to a workspace so the BFF can check access before every project call.
  */

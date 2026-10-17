@@ -6,6 +6,7 @@ import { createBackendHandler } from "./app.ts";
 import { overlayBundle, runtimeBundle } from "./bundle.ts";
 import { cppString, pascalCase, sanitizeIdent, snakeCase } from "./cpp.ts";
 import { OPCODES } from "./emit.ts";
+import { gwaCases } from "../conformance/cases.ts";
 import { generate } from "./generate.ts";
 import { manifestFragment, rawString } from "./project.ts";
 
@@ -217,5 +218,27 @@ describe("C++ text safety (ADR-0022 §7)", () => {
     expect(pascalCase("new")).toBe("New");
     for (const s of ["", "😀", "rt", "c", "std", "main"]) expect(sanitizeIdent(s)).toMatch(/^[A-Za-z][A-Za-z0-9_]*$/);
     expect(rawString('x)sv"y')).toBe('R"sv1(x)sv"y)sv1"');
+  });
+});
+
+/** GW-A with three test cases (ADR-0058 §2, M18-T03), see conformance/cases.ts. */
+describe("test cases (ADR-0058 §2, M18-T03)", () => {
+  test("one TEST per case named after it (unique), deterministic; golden-cases/GW-A", () => {
+    const req = goldenRequest("GW-A");
+    const casesReq = () => ({ ...req, scenarios: gwaCases(req.workflows[0].workflowId, req.scenarios[0]!.scenario) });
+    const r = generate(casesReq());
+    if (!r.ok) throw new Error(JSON.stringify(r));
+    const again = generate(casesReq());
+    expect(again.ok && again.fileSet.files.map((f) => f.sha256)).toEqual(r.fileSet.files.map((f) => f.sha256));
+    const tests = r.fileSet.files.filter((f) => f.path.endsWith("_test.cpp"));
+    expect(tests).toHaveLength(1);
+    const text = tests[0]!.content;
+    for (const n of ["Test, OverspeedHeld2S)", "Test, BelowTheLimit)", "Test, OverspeedHeld2S2)"]) expect(text).toContain(n);
+    const dir = new URL("../../golden-cases/GW-A/", import.meta.url).pathname;
+    if (process.env.SV_UPDATE_GOLDEN === "1") {
+      mkdirSync(dirname(join(dir, tests[0]!.path)), { recursive: true });
+      writeFileSync(join(dir, tests[0]!.path), text);
+    }
+    expect(text).toBe(readFileSync(join(dir, tests[0]!.path), "utf8"));
   });
 });

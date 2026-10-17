@@ -31,21 +31,21 @@
 ## Checklist chi tiết
 
 ### T02: Test case — dữ liệu và contract
-- [ ] `scenario.v1.1` (additive, bump minor):
+- [x] `scenario.v1.1` (additive, bump minor):
   - `within` trên `write`/`publish`; `never: [{path, from, to}]`; kỳ vọng là tập con;
   - simulator `checkExpectations` + 3 runtime conformance hiểu bản mới;
   - C01–C45 không đổi.
-- [ ] `scenario.v1` giữ nguyên.
-- [ ] `generateRequest.scenarios[]` và orchestrator `startGeneration.scenarios[]` cho nhiều phần tử cùng `workflowId` + `caseName` (additive), kèm CHANGELOG.
-- [ ] Bảng `sv_workflow_test_cases(id, workflow_id, name, scenario, position, updated_at)`.
-- [ ] Migration copy `sv_workflow_scenarios` ⇒ case "Default". Bảng cũ giữ một release, rồi bỏ.
-- [ ] BFF CRUD case; SynCode gửi mọi case.
-- [ ] Download/Duplicate workflow (M17-T03) mang theo mọi case.
+- [x] `scenario.v1` giữ nguyên.
+- [x] `generateRequest.scenarios[]` và orchestrator `startGeneration.scenarios[]` cho nhiều phần tử cùng `workflowId` + `caseName` (additive), kèm CHANGELOG.
+- [x] Bảng `sv_workflow_test_cases(id, workflow_id, name, scenario, position, updated_at)`.
+- [x] Migration copy `sv_workflow_scenarios` ⇒ case "Default" (0253). Bảng cũ giữ một release, rồi bỏ. *(chạy thật trên stack: chờ)*
+- [x] BFF CRUD case; SynCode gửi mọi case.
+- [x] Download/Duplicate workflow (M17-T03) mang theo mọi case.
 
 ### T03: Generator nhiều test
-- [ ] C++, Python, Rust: một test mỗi case, tên từ `caseName` (an toàn ký tự).
-- [ ] Conformance + golden cũ không đổi.
-- [ ] Golden mới: GW-A với 3 case.
+- [x] C++, Python, Rust: một test mỗi case, tên từ `caseName` (an toàn ký tự).
+- [x] Conformance + golden cũ không đổi.
+- [x] Golden mới: GW-A với 3 case.
 
 ### T04: Tab Test
 - [ ] Danh sách case (thêm, đổi tên, nhân bản, xoá).

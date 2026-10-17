@@ -19,16 +19,23 @@ beforeEach(() => vi.clearAllMocks())
 
 describe('workflow vehicle data in downloads (ADR-0056)', () => {
   it('reads the release and scenario; an empty object for a default-release workflow', async () => {
-    mockRequest.mockResolvedValueOnce({ vssRelease: 'v4.2' }).mockResolvedValueOnce({ scenario })
+    mockRequest
+      .mockResolvedValueOnce({ vssRelease: 'v4.2' })
+      .mockResolvedValueOnce({ scenario })
+      .mockResolvedValueOnce({ cases: [] })
     expect(await fetchSvSidecar('wf1')).toEqual({ vssRelease: 'v4.2', scenario })
     mockRequest
       .mockResolvedValueOnce({ vssRelease: null })
       .mockResolvedValueOnce({ scenario: null })
+      .mockResolvedValueOnce({ cases: [] })
     expect(await fetchSvSidecar('wf2')).toEqual({})
   })
 
   it('a failed read does not stop the download', async () => {
-    mockRequest.mockRejectedValueOnce(new Error('503')).mockResolvedValueOnce({ scenario })
+    mockRequest
+      .mockRejectedValueOnce(new Error('503'))
+      .mockResolvedValueOnce({ scenario })
+      .mockRejectedValueOnce(new Error('503'))
     expect(await fetchSvSidecar('wf1')).toEqual({ scenario })
   })
 
@@ -53,5 +60,32 @@ describe('workflow vehicle data in downloads (ADR-0056)', () => {
     })
     expect(mockRequest.mock.calls[1][1]).toEqual({ params: { id: 'wf9' }, body: { scenario } })
     expect(await restoreSvSidecar('wf9', {})).toEqual([])
+  })
+})
+
+describe('test cases in downloads (ADR-0058, M18-T02)', () => {
+  it('downloads every case; an import creates them in order (the scenario only for older files)', async () => {
+    const cases = [
+      { id: 'tc_1', name: 'Above', scenario, position: 0 },
+      { id: 'tc_2', name: 'Below', scenario: { ...scenario, name: 'Below' }, position: 1 },
+    ]
+    mockRequest
+      .mockResolvedValueOnce({ vssRelease: null })
+      .mockResolvedValueOnce({ scenario })
+      .mockResolvedValueOnce({ cases })
+    const sidecar = await fetchSvSidecar('wf1')
+    expect(sidecar.testCases?.map((c) => c.name)).toEqual(['Above', 'Below'])
+    const read = readSvSidecar({
+      simvehicleapp: { ...sidecar, testCases: [...sidecar.testCases!, { name: '', scenario }] },
+    })
+    expect(read?.testCases?.map((c) => c.name)).toEqual(['Above', 'Below'])
+    mockRequest.mockReset()
+    mockRequest.mockResolvedValue({})
+    expect(await restoreSvSidecar('wf9', read!)).toEqual([])
+    const bodies = mockRequest.mock.calls.map((c) => c[1].body)
+    expect(bodies).toEqual([
+      { name: 'Above', scenario },
+      { name: 'Below', scenario: { ...scenario, name: 'Below' } },
+    ])
   })
 })
