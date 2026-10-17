@@ -97,9 +97,13 @@ paths:
                 release: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
                 sandbox: { $ref: "#/components/schemas/Sandbox" }
                 paths: { type: array, maxItems: 500, uniqueItems: true, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+                api:
+                  enum: [sdv.databroker.v1, kuksa.val.v2]
+                  description: "The databroker API of the running app (ADR-0047 §5). `sdv.databroker.v1` (default): targets are mirrored to current values. `kuksa.val.v2`: the gateway becomes the provider of these actuators (OpenProviderStream); each actuation is accepted and published as the current value."
       responses:
-        "204": { description: Mirroring updated. }
+        "204": { description: Mirroring (or providing) updated. }
         "400": { $ref: "#/components/responses/Rejected" }
+        "409": { description: "`provider_refused`: another provider already holds one of the actuators (kuksa.val.v2)." }
   /play:
     post:
       operationId: playScenario

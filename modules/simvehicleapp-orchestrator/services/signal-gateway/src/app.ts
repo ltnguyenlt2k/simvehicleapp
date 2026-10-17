@@ -3,6 +3,7 @@ import type { RequestContext } from "@simvehicleapp/service-kit";
 import { type Broker, BrokerRejected, type BrokerUpdate, BrokerUnavailable, type Field } from "./broker.ts";
 import type { Catalog, SignalMeta } from "./catalog.ts";
 import type { Player, Scenario } from "./player.ts";
+import { type Provider, type ProviderApi, ProviderRejected, provideActuators } from "./provider.ts";
 import { toDatapoint } from "./values.ts";
 
 /**
@@ -31,6 +32,8 @@ export interface GatewayDeps {
   player: Player;
   /** Playbacks on a run's sandbox (one player per sandbox). */
   sandboxPlayer?(sandbox: string): Player;
+  /** `kuksa.val.v2` of the databroker of a release or sandbox: the gateway provides the actuators of a v2 app (ADR-0047). */
+  providerApi?(release: string, sandbox?: string): ProviderApi | undefined;
   newId(): string;
   now?: () => number;
   heartbeatMs?: number;
@@ -43,10 +46,34 @@ class Mirror {
   private cancel: (() => void) | null = null;
   paths: string[] = [];
 
+  private provider: Provider | null = null;
+
   clear() {
     this.cancel?.();
     this.cancel = null;
+    this.provider?.stop();
+    this.provider = null;
     this.paths = [];
+  }
+
+  /** A v2 app: provide its actuators (each actuation is accepted and published as the current value). */
+  async provide(api: ProviderApi, paths: string[], log: RequestContext["log"]) {
+    const same = this.provider && this.paths.length === paths.length && paths.every((p) => this.paths.includes(p));
+    if (same) return;
+    const hadOwn = Boolean(this.provider);
+    this.clear();
+    this.paths = paths;
+    if (!paths.length) return;
+    // The databroker frees our previous claim a moment after its stream closes: retry ALREADY_EXISTS briefly then.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        this.provider = await provideActuators(api, paths, log, (e) => log.warn("provider stream ended", { err: e.message }));
+        return;
+      } catch (e) {
+        if (!hadOwn || attempt >= 10 || !(e instanceof ProviderRejected) || !e.message.startsWith("another provider")) throw e;
+        await Bun.sleep(100);
+      }
+    }
   }
 
   set(r: Resolved, paths: string[], log: RequestContext["log"]) {
@@ -191,8 +218,9 @@ export function createGatewayHandler(d: GatewayDeps) {
     }
 
     if (url.pathname === "/mirror" && req.method === "PUT") {
-      const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; paths?: unknown } | null;
+      const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; paths?: unknown; api?: string } | null;
       if (!b || !Array.isArray(b.paths) || !b.paths.every((p) => typeof p === "string")) return rejected(400, "invalid_request", "release and paths are required");
+      if (b.api !== undefined && b.api !== "sdv.databroker.v1" && b.api !== "kuksa.val.v2") return rejected(400, "invalid_request", "api must be sdv.databroker.v1 or kuksa.val.v2");
       const paths = [...new Set(b.paths as string[])];
       const key = b.sandbox ?? b.release!;
       if (b.sandbox && !paths.length) {
@@ -212,8 +240,18 @@ export function createGatewayHandler(d: GatewayDeps) {
       if (notActuator) return rejected(400, "invalid_request", `${notActuator} is not an actuator of VSS ${b.release}`);
       const m = mirrors.get(key) ?? new Mirror();
       mirrors.set(key, m);
-      m.set(r, paths, ctx.log);
-      ctx.log.info("mirror updated", { release: b.release, ...(b.sandbox ? { sandbox: b.sandbox } : {}), paths: paths.length });
+      if (b.api === "kuksa.val.v2") {
+        // The app actuates over kuksa.val.v2: provide its actuators instead of mirroring targets (ADR-0047 §2, §5).
+        const api = d.providerApi?.(b.release!, b.sandbox);
+        if (!api) return rejected(503, "no_databroker", "kuksa.val.v2 is not available for this databroker");
+        try {
+          await m.provide(api, paths, ctx.log);
+        } catch (e) {
+          m.clear();
+          return rejected(409, "provider_refused", (e as Error).message);
+        }
+      } else m.set(r, paths, ctx.log);
+      ctx.log.info("mirror updated", { release: b.release, ...(b.sandbox ? { sandbox: b.sandbox } : {}), api: b.api ?? "sdv.databroker.v1", paths: paths.length });
       return new Response(null, { status: 204 });
     }
 

@@ -80,6 +80,19 @@ sequenceDiagram
 - Gate nâng databroker: cả ba backend P3 7/7 trên v2 + signal-gateway provider; E2E live (tutorial, m12-python-live).
 
 ## Notes / Deviations
+- 2026-10-17 — **Bước 2 (signal-gateway provider v2) xong** (Claude Code, theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận):
+  - `PUT /mirror` thêm `api`:
+    - `sdv.databroker.v1` (mặc định): mirror target → current như trước;
+    - `kuksa.val.v2`: gateway mở `OpenProviderStream` claim các actuator. Mỗi actuation được ack `ERROR_CODE_OK` rồi publish thành current; actuator không claim ⇒ `ERROR_CODE_NOT_FOUND`.
+  - Id ↔ path qua `ListMetadata` với root = path, vì `Metadata` v2 không có path.
+  - Claim bị provider khác giữ ⇒ 409 `provider_refused`. Claim lại cùng tập ⇒ giữ nguyên. Đổi tập ⇒ retry ngắn khi databroker chưa nhả claim cũ.
+  - Proto v2 vendored từ 0.5.0 (`30e5c13`).
+  - Bằng chứng:
+    - unit gateway 17;
+    - gate `gate/kuksa-v2-provider.sh` PASS trên databroker v4.0 của stack: Actuate không provider ⇒ UNAVAILABLE; có provider ⇒ current = 7 sau 31 ms; provider thứ hai ⇒ ALREADY_EXISTS; nhả ⇒ UNAVAILABLE.
+  - **Còn:**
+    - orchestrator chọn `api` theo generation: chưa backend nào sinh app v2, nên luôn v1;
+    - bước 3–4: host v2 Rust → C++ → Python + parity P3.
 - 2026-10-07: ADR-0024 §7 dự kiến "chuyển C++ trước khi Python SDK hỗ trợ v2"; thực tế Velocitas Python SDK vẫn chưa hỗ
   trợ, nhưng runtime Python của SimVehicleApp dùng client raw nên có thể dùng stub v2 của `kuksa-client` — không phải
   chờ SDK. Rust đi trước vì stub v2 đã có trong dependency đang khoá.

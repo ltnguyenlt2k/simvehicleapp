@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/signal-gateway.v1.yaml` (additive, ADR-0047 §2, M14 #5): `PUT /mirror` `api` (`sdv.databroker.v1` default | `kuksa.val.v2`: the gateway provides the actuators over `OpenProviderStream`), 409 `provider_refused`. Vendored `proto/kuksa/val/v2` of databroker 0.5.0.
 - `openapi/signal-gateway.v1.yaml` (additive, ADR-0057, M17-T05): optional `sandbox` (`toolchain-<lang>:<port>`, a run's own databroker) on `/signals`, `/snapshot`, `/mirror`, `/play`; mirror and playback per sandbox; `PUT /mirror` with `sandbox` and no paths releases it.
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0057, M17-T04): `startRun` body `owner {userId, workspaceId}`; `Run.owner`, `sandbox`, `expiresAt`, `extensions`, `stopReason`; `POST /runs/{rid}/extend`; `GET /runs?ownerUserId=` and `limits` in its response; `GET /capacity` `runs` (apps running against the run quota); `stopRun` optional body `reason` (user|admin); with `SV_RUN_SANDBOX=1` the start answers 409 with a diagnostics array `RUN_QUOTA_EXCEEDED` (new in the catalog) when a quota is reached.
 - `schemas/toolchain-job.v1` (additive, ADR-0057, M17-T04): `options.sandbox` (run on a databroker of its own) and `sandbox.address` on the job.

@@ -6,6 +6,7 @@ import { type Broker, BrokerRejected, type BrokerUpdate, type Field } from "./br
 import { Catalog, indexVss } from "./catalog.ts";
 import { connectPacket, publishPacket } from "./mqtt.ts";
 import { Player, type PlayerIo } from "./player.ts";
+import type { ProviderApi, ProviderMessage, ProviderStream } from "./provider.ts";
 import { fromDatapoint, toDatapoint } from "./values.ts";
 
 const vss40 = JSON.parse(readFileSync(`${fixturesDir}vss/vss_rel_4.0.json`, "utf8"));
@@ -231,6 +232,87 @@ function sandboxed() {
   const call = (method: string, path: string, body?: unknown) => handler(new Request(`http://g${path}`, { method, ...(body ? { body: JSON.stringify(body), headers: { "content-type": "application/json" } } : {}) }), ctx);
   return { shared, box, forgotten, call };
 }
+
+/** A databroker's kuksa.val.v2 provider side: ids by path, one claim per actuator, scripted actuations. */
+function fakeProviderApi() {
+  const written: unknown[] = [];
+  const claimed = new Set<string>();
+  let push: ((m: ProviderMessage) => void) | null = null;
+  let fail: ((e: Error & { code?: number }) => void) | null = null;
+  let cancelled = 0;
+  const api: ProviderApi = {
+    idOf: async (path) => (path === "Vehicle.Body.Lights.Hazard.IsSignaling" ? 65 : 99),
+    open(): ProviderStream {
+      return {
+        write(msg) {
+          written.push(msg);
+          const claim = (msg as { provide_actuation_request?: { actuator_identifiers: { path: string }[] } }).provide_actuation_request;
+          if (claim) {
+            const paths = claim.actuator_identifiers.map((x) => x.path);
+            if (paths.some((x) => claimed.has(x))) queueMicrotask(() => fail?.(Object.assign(new Error("exists"), { code: 6 })));
+            else {
+              for (const x of paths) claimed.add(x);
+              queueMicrotask(() => push?.({ provide_actuation_response: {} }));
+            }
+          }
+        },
+        on(event: string, cb: never) {
+          if (event === "data") push = cb;
+          else fail = cb;
+        },
+        cancel() {
+          cancelled++;
+          claimed.clear();
+        },
+      } as ProviderStream;
+    },
+    close() {},
+  };
+  return { api, written, claimed, actuate: (id: number, value: unknown) => push?.({ batch_actuate_stream_request: { actuate_requests: [{ signal_id: { id }, value }] } }), cancelled: () => cancelled };
+}
+
+describe("kuksa.val.v2 provider (ADR-0047 §2, M14 #5)", () => {
+  const HZ = "Vehicle.Body.Lights.Hazard.IsSignaling";
+  const setup = () => {
+    const pv = fakeProviderApi();
+    const catalog = new Catalog(async () => vss40);
+    const { io } = fakeIo();
+    const b = fakeBroker();
+    const handler = createGatewayHandler({ broker: (r) => (r === "v4.0" ? b.broker : undefined), providerApi: () => pv.api, catalog, player: new Player({ ...io, set: playerSet(() => b.broker, catalog) }), newId: () => "p" });
+    const call = (body: unknown) => handler(new Request("http://g/mirror", { method: "PUT", body: JSON.stringify(body), headers: { "content-type": "application/json" } }), ctx);
+    return { pv, b, call };
+  };
+
+  test("PUT /mirror with api kuksa.val.v2 claims the actuators; an actuation is accepted and published as current", async () => {
+    const { pv, b, call } = setup();
+    expect((await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2" })).status).toBe(204);
+    expect(pv.claimed.has(HZ)).toBe(true);
+    expect(b.subs.size).toBe(0); // no v1 mirror subscription for a v2 app
+    pv.actuate(65, { bool: true });
+    expect(pv.written.slice(1)).toEqual([
+      { batch_actuate_stream_response: { signal_id: { id: 65 }, error: { code: "ERROR_CODE_OK", message: "" } } },
+      { publish_values_request: { request_id: 1, data_points: { 65: { value: { bool: true } } } } },
+    ]);
+    // An actuator it does not provide is refused, not published.
+    pv.actuate(7, { bool: true });
+    expect(pv.written.at(-1)).toMatchObject({ batch_actuate_stream_response: { error: { code: "ERROR_CODE_NOT_FOUND" } } });
+    // The run ends: the claim is released.
+    expect((await call({ release: "v4.0", paths: [], api: "kuksa.val.v2" })).status).toBe(204);
+    expect(pv.cancelled()).toBe(1);
+    expect(pv.claimed.size).toBe(0);
+  });
+
+  test("another provider holds an actuator ⇒ 409 provider_refused; a bad api ⇒ 400; v1 stays the default", async () => {
+    const { pv, b, call } = setup();
+    pv.claimed.add(HZ);
+    const refused = await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2" });
+    expect(refused.status).toBe(409);
+    expect((await refused.json()).message).toContain("another provider already holds");
+    expect((await call({ release: "v4.0", paths: [HZ], api: "v3" })).status).toBe(400);
+    expect((await call({ release: "v4.0", paths: [HZ] })).status).toBe(204);
+    expect(b.subs.size).toBe(1); // v1 mirror
+  });
+});
 
 describe("sandboxes of runs (ADR-0057, M17-T05)", () => {
   test("inject, snapshot, mirror and play go to the run's own databroker; another run and the shared one see nothing", async () => {

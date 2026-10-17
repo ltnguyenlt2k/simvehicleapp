@@ -5,6 +5,7 @@ import { type Broker, grpcBroker } from "./broker.ts";
 import { Catalog } from "./catalog.ts";
 import { mqttPublisher } from "./mqtt.ts";
 import { Player } from "./player.ts";
+import { grpcProviderApi, type ProviderApi } from "./provider.ts";
 
 const port = Number(process.env.SV_SIGNAL_GATEWAY_PORT ?? 4050);
 const log = createLogger({ service: "signal-gateway" });
@@ -28,9 +29,20 @@ const broker = (release: string, sandbox?: string) => {
   if (!b) brokers.set(key, (b = grpcBroker(address)));
   return b;
 };
+const providerApis = new Map<string, ProviderApi>();
+const providerApi = (release: string, sandbox?: string) => {
+  const address = sandbox ?? endpoints.get(release);
+  if (!address) return undefined;
+  const key = sandbox ?? release;
+  let p = providerApis.get(key);
+  if (!p) providerApis.set(key, (p = grpcProviderApi(address)));
+  return p;
+};
 const forget = (sandbox: string) => {
   brokers.get(sandbox)?.close();
   brokers.delete(sandbox);
+  providerApis.get(sandbox)?.close();
+  providerApis.delete(sandbox);
 };
 const catalogUrl = process.env.SV_CATALOG_URL ?? "http://vss-catalog:4010";
 const catalog = new Catalog(async (release) => {
@@ -43,6 +55,6 @@ const playerIo = { publish, sleep: (ms: number) => Bun.sleep(ms), now: Date.now,
 const player = new Player({ ...playerIo, set: playerSet(broker, catalog) });
 const sandboxPlayer = (sandbox: string) => new Player({ ...playerIo, set: playerSet((release) => broker(release, sandbox), catalog) });
 
-const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, catalog, player, sandboxPlayer, newId: () => `play_${crypto.randomUUID()}` }));
+const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, providerApi, catalog, player, sandboxPlayer, newId: () => `play_${crypto.randomUUID()}` }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port, databrokers: Object.fromEntries(endpoints) });
