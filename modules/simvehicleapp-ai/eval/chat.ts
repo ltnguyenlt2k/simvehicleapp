@@ -5,6 +5,8 @@ export interface TurnOutput {
   tools: string[];
   proposal?: { valid: boolean; graph: { blocks: { id: string; type: string; name: string; props: Record<string, unknown> }[]; edges: { from: string; fromHandle: string; to: string }[] }; diagnostics: { severity: string; code: string; message: string }[] };
   pending?: { toolName: string; toolInput: Record<string, unknown> };
+  /** Structured result of the last successful scenario_propose (M18-T06). */
+  testProposal?: { testCases: { name: string; scenario: Record<string, unknown> }[]; results: { name: string; valid: boolean; passed?: boolean; problems: string[] }[] };
   error?: string;
   ms: number;
 }
@@ -27,6 +29,7 @@ export async function chat(message: string, opts: { user?: string; release?: str
     if (ev === "text") out.text += d.delta;
     if (ev === "tool") out.tools.push(`${d.name} ${JSON.stringify(d.input).slice(0, 300)}`);
     if (ev === "tool_result" && process.env.SV_EVAL_VERBOSE) out.tools.push(`  ⇒ ${d.isError ? "ERROR " : ""}${String(d.text).slice(0, 400).replace(/\n/g, " | ")}`);
+    if (ev === "tool_result" && d.name === "scenario_propose" && !d.isError && d.structured) out.testProposal = d.structured;
     if (ev === "proposal") out.proposal = d;
     if (ev === "pending_action") out.pending = d;
     if (ev === "error") out.error = d.message;
