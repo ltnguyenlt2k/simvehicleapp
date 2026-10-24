@@ -126,7 +126,7 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
-- 2026-10-24 — **T06** (theo uỷ quyền PO — chờ PO xác nhận):
+- 2026-10-24 — **T06** (PO xác nhận 2026-10-24: thẻ đề xuất trong panel trợ lý; được phép chạy eval với model thật):
   - Ba tool `scenario_*` đều SAFE: `scenario_propose` không lưu gì, chỉ validate (scenario 1.1) và Simulate từng case trên bản nháp graph, rồi trả `structured.testCases`.
   - Đề xuất hiện thành thẻ trong panel trợ lý (Add to Test tab / Reject), không phải bản xem trước trong tab Test: không cần trạng thái "case nháp" trong DB hay store tab Test. Accept tạo case qua BFF CRUD sẵn có, chọn case đầu, đưa tab Test lên trước.
   - Contract studio `svAiEventSchema.tool_result` thêm `structured` (optional); service đã gửi trường này từ M10 nhưng zod của studio bỏ đi.

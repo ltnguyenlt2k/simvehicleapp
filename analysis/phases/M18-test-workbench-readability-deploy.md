@@ -75,7 +75,7 @@
 ### T06: Trợ lý soạn test
 - [x] Tool `scenario_list`, `scenario_propose` (proposal ⇒ thẻ trong panel trợ lý ⇒ Add to Test tab / Reject), `scenario_run` (Simulate ⇒ pass/fail). 2026-10-24: thẻ đặt trong panel trợ lý thay vì xem trước trong tab Test (ít đổi layout; Accept mở tab Test với case đầu đã chọn) — ADR-0058 Notes.
 - [x] Câu "test workflow này" ⇒ prompt hướng dẫn model đề xuất case phủ các nhánh (`scenario_propose` tự Simulate từng case và báo pass/fail).
-- [ ] Eval: fake provider (unit, ✔) + model thật của PO (chưa chạy — chờ PO).
+- [ ] Eval: fake provider (unit, ✔) + model thật của PO (PO đồng ý 2026-10-24; chưa chạy).
 
 ### T07: Block gọn + Logic view
 - [ ] Block gọn mặc định; toggle Details (lưu theo người dùng); handle neo như cũ.
