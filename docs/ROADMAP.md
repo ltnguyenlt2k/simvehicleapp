@@ -8,6 +8,15 @@
 >
 > 2026-10-13 → 2026-10-24: repo chính là Blinkthor/sim-vehicle-app — chuyển nguyên toàn bộ lịch sử (325 commit, tag `studio/baseline-v0.7.13`, cùng SHA). Link CI/commit trong các dòng ghi trước ngày này trỏ tới repo cũ `ltnguyenlt2k/simvehicleapp` (bằng chứng lịch sử, giữ nguyên).
 
+> **Kế hoạch thực hiện tuần tự tới hết roadmap** (PO 2026-10-24, "lên plan thực hiện tuần tự cho đến hết roadmap"):
+> 1. Chốt các task đang chờ E2E (CI chạy lại được từ 2026-10-24): M17-T03/T05/T06 và M18-T02…T06. Sau đó M17-T07: gate, full luồng `@live`, video, README, báo cáo M17.
+> 2. M18-T07 → T11: block gọn + Logic view → làn/giá trị sống → Deploy Remote → Deploy image → đóng M18.
+> 3. M19 (Flow, ADR-0062): T02 → T07.
+> 4. M20 (WASM, ADR-0061): spike T01 → T09.
+> 5. Việc còn treo chờ PO: duyệt ADR Proposed, ký video, eval model thật (endpoint), M11/M14/M15 các mục chờ PO.
+>
+> Mỗi bước: test/gate bắt buộc → commit → push lên `origin` và `blinkthor` → CI xanh → `scripts/sv refresh`.
+
 ## 1. Vòng đời cập nhật file này (bắt buộc)
 
 1. Bắt đầu làm 1 feature → đổi `☐` thành `🔄`, ghi tên người/agent + ngày bắt đầu vào cột Ghi chú.
