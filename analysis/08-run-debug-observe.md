@@ -62,9 +62,21 @@ flowchart LR
 { "runId": "r_12", "seq": 1043, "ts": 1759200000125, "wf": "wf_7Hk", "run": 42, "node": "n2",
   "blockId": "b2" /* orchestrator map qua sourceMap/IR */, "ev": "enter|exit|value|write|error|cancel|trigger",
   "data": { "value": 131.2 } }
-// SignalUpdate v1 (signal-gateway)
-{ "path": "Vehicle.Speed", "ts": 1759200000100, "value": 131.2, "field": "value|target" }
+// exit của block quyết định (ADR-0062 §2, M19-T02): nhánh đã đi + vì sao
+{ "ev": "exit", "node": "n2", "data": { "handle": "then",
+  "eval": { "refs": { "Vehicle.Speed": 131.2, "n1.value": 131.2 }, "result": true } } }
+// SignalUpdate v1 (signal-gateway); source có từ M19-T05
+{ "path": "Vehicle.Speed", "ts": 1759200000100, "value": 131.2, "field": "value|target",
+  "source": "inject|playback|mirror|app|vehicle" }
 ```
+
+**`data.eval`** (simulator và 3 runtime phát giống nhau, so trong conformance và parity P3):
+- Có ở `exit` của `control.branch`, `control.switch`, `control.stable_for`, `control.wait_until`.
+- `refs`: giá trị của mỗi tham chiếu trong biểu thức ngay lúc quyết định, theo thứ tự xuất hiện, tối đa 8 tham chiếu. Khoá là đường dẫn VSS (`$signal`), `nK.out` (`$ref`) hoặc `state.vK` (`$state`).
+- `result`: giá trị của biểu thức (bool, hoặc giá trị được so của `switch`).
+- Giá trị mã hoá như write: int64/uint64 là chuỗi. Chuỗi dài hơn 120 đơn vị UTF-16 bị cắt, thêm `…`. Không đánh giá được ⇒ `null`.
+
+**`source`** của SignalUpdate: gateway nhận ra giá trị chính nó vừa ghi (inject, playback, mirror) trong ±250 ms. `target` không do gateway ghi ⇒ `app`. Giá trị hiện tại của actuator mà gateway provide cho app v2 ⇒ `app`. Còn lại ⇒ `vehicle`. Không có `source` trên các giá trị hiện tại gửi đầu stream (ADR-0062 Notes).
 
 ### 3.2 Mức trace
 `off` (release/export mặc định) · `trigger` (chỉ trigger & kết quả cuối) · `node` (mọi node, dev mặc định). Cấu hình ở project settings → truyền vào `GenerateRequest.project.traceLevel` và biến môi trường `SV_TRACE_LEVEL` lúc chạy (runtime đọc env, override xuống không lên).

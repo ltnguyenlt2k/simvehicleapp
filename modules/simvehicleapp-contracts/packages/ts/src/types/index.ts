@@ -855,6 +855,9 @@ export interface TraceEventV1 {
   ev:
     | ("trigger" | "enter" | "exit" | "value" | "write" | "error" | "cancel")
     | ("app.started" | "app.stopping" | "vdb.connected" | "vdb.disconnected");
+  /**
+   * Event payload. `exit` of a decision (branch, switch, stable_for, wait_until): `handle` and `eval {refs, result}` — the value of each reference of its expression right after it decided (keys: VSS path, `nK.out`, `state.vK`; at most 8; text cut at 120 UTF-16 units; int64 as strings) and the expression's value (ADR-0062 §2).
+   */
   data?: {};
 }
 /**

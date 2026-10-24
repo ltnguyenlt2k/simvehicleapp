@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `schemas/trace-event.v1` (description only, ADR-0062 §2, M19-T02): `data.eval {refs, result}` on the `exit` of a decision — emitted by the simulator and the C++/Python/Rust runtimes; golden `expected.trace.json` GW-A/B/G carry it.
 - `schemas/signal-update.v1` (additive, ADR-0062 §3, M19-T05): optional `source` ∈ {inject, playback, mirror, app, vehicle} on each change the signal-gateway streams (not on the current values sent first).
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0060, M18-T10): `POST /projects/{id}/images` — the app's OCI image pushed to a registry. `schemas/toolchain-job.v1.schema.json`: kind `image`, option `image {reference, insecure, username, password}` (C++ and Rust; the last log line is `SVIMAGE {…}`).
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0060, M18-T09): deploy targets per workspace — `GET/POST /deploy-targets`, `DELETE /deploy-targets/{tid}`, `POST /deploy-targets/{tid}/test` (`DeployTarget`, the token sealed and never returned: `hasToken`); `POST /projects/{id}/deployments` (a `Run` with `deploy {targetId, targetName, mode}`, no expiry, 409 `DEPLOY_QUOTA_EXCEEDED`); `GET /runs/{rid}/audit`.

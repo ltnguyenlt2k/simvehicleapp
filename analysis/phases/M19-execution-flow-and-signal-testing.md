@@ -28,7 +28,7 @@
 ## Checklist chi tiết
 
 ### T02: Lý do rẽ nhánh trong trace
-- [ ] Đặc tả `data.eval = {refs, result}` trong `analysis/08` (trace) + mô tả trong `trace-event.v1` (description, không đổi schema) — làm ở T07.
+- [x] Đặc tả `data.eval = {refs, result}` trong `analysis/08` §3.1 (kèm `source`) + mô tả trong `trace-event.v1` (description, không đổi schema) + CHANGELOG contracts.
 - [x] Block quyết định: `sv_if` (`control.branch`), `sv_switch`, `sv_stable_for`, `sv_wait_until`. Trigger `crosses_above/below`, `rising/falling` **không** có `eval`: trigger không có `exit`, giá trị đã nằm ở `trigger.outputs` (`value`, `previous`) — đủ để Flow giải thích (ghi ở ADR-0062 Notes).
 - [x] `refs` theo thứ tự xuất hiện; tối đa 8; chuỗi ≤ 120 đơn vị UTF-16 (như JS); int64 là chuỗi (`toJson` theo kiểu IR); chỉ có khi level `node` (sự kiện `exit` không có ở level `trigger`).
 - [x] Simulator (T02a) + C++ + Python + Rust (T02b) phát giống nhau: generator truyền `refs` (key, kiểu IR, giá trị) vào `branch`/`switch`/`wait_until`/`stable_for`; runtime tính lúc `exit`. Conformance so cả `eval` cho golden.
