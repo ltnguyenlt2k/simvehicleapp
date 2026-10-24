@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 import { useReactFlow } from 'reactflow'
 import { Badge, Button } from '@/components/emcn'
 import { cn } from '@/lib/core/utils/cn'
-import { type LogicLine, type LogicState, logicView } from '@/lib/sv/logic-view'
+import { type LogicLine, logicView } from '@/lib/sv/logic-view'
 import { SV_ROLE_TAG } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/block-summary-line'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvCanvasViewStore } from '@/stores/sv/canvas-view/store'
@@ -39,7 +39,7 @@ export function SvLogicPanel() {
   const flow = useReactFlow()
 
   const paragraphs = useMemo(
-    () => (open ? logicView({ blocks, edges, loops, parallels } as unknown as LogicState) : []),
+    () => (open ? logicView({ blocks, edges, loops, parallels }) : []),
     [open, blocks, edges, loops, parallels]
   )
   if (!open) return null
