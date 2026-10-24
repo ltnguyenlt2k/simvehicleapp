@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`flow of a workflow (ADR-0062 §1, M19-T03) > GW-B: each run of the trigger with its steps, the branch taken and why, newest first 1`] = `
+[
+  {
+    "outcome": "done",
+    "run": 3,
+    "steps": [
+      "n2:else (n1.value = 10, IsMoving = false ⇒ false)",
+    ],
+  },
+  {
+    "outcome": "done",
+    "run": 2,
+    "steps": [
+      "n2:then (n1.value = 15, IsMoving = true ⇒ true)",
+      "n3",
+      "n4 writes 1",
+    ],
+  },
+  {
+    "outcome": "done",
+    "run": 1,
+    "steps": [
+      "n2:else (n1.value = 25, IsMoving = true ⇒ false)",
+    ],
+  },
+]
+`;

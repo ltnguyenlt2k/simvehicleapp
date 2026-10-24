@@ -35,10 +35,11 @@
 - [ ] `golden-trace.ts`: `expected.trace.json` GW-A…G cập nhật có review (nguồn chuẩn cho parity).
 
 ### T03: Mô hình Flow
-- [ ] Kiểu `FlowRun`, `FlowStep` (design §3.1); `cause` từ signal update gần nhất ≤ 1 s, nếu không có thì lấy `trigger.outputs`.
-- [ ] Xử lý: `cancel` (policy restart), `error`, run chưa kết thúc (`running`), sampling (`data.dropped`), block chờ (Stable for / Wait until: thời lượng gồm thời gian chờ).
-- [ ] Câu dễ đọc: tên block từ câu tóm tắt (M16-T08), giá trị có đơn vị/enum từ catalog, nhánh có nhãn (M16-T09).
-- [ ] Giữ 200 lần chạy gần nhất; ghi số lần chạy đã ẩn.
+- [x] Kiểu `FlowRun`, `FlowStep` (design §3.1); `cause` từ signal update gần nhất ≤ 1 s, cùng giá trị với `trigger.outputs.value`. Không khớp thì không có `cause`; view hiện `trigger.outputs`.
+- [x] Xử lý: `cancel` (policy restart), `error`, run chưa kết thúc (`running`), sampling (`data.dropped`), block chờ (thời lượng = enter→exit nên gồm thời gian chờ). Run bị huỷ khi đang chờ giữ bước mở (GW-A run 2).
+- [x] Câu dễ đọc ở mức mô hình: `evalText` (toán hạng ⇒ kết quả), `SOURCE_TEXT`, `stepDuration`. Tên block từ câu tóm tắt (M16-T08), đơn vị/enum từ catalog và nhãn nhánh (M16-T09) ghép ở view (T04) vì cần workflow + catalog; mô hình giữ thuần.
+- [x] Giữ 200 lần chạy gần nhất; ghi số lần chạy đã ẩn (`hidden`).
+- Bằng chứng 2026-10-24: `lib/sv/flow-trace.test.ts` 9/9 (snapshot GW-B; GW-A…G: số run = số trigger, write gắn đủ; trace sao chép cho cùng kết quả; 5 000 sự kiện < 50 ms); tsc hẹp sạch; biome sạch.
 
 ### T04: Flow view
 - [ ] Live: pane thứ ba "Flow" cạnh Run console / Messages; follow mặc định, ⏸ khi người dùng cuộn.
