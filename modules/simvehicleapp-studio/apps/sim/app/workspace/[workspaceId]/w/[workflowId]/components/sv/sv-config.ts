@@ -10,6 +10,7 @@ export const SV_ACTIONS = [
   { id: 'stop', label: 'Stop', milestone: 'M8' },
   { id: 'open-ide', label: 'Open IDE', milestone: 'M9' },
   { id: 'export', label: 'Export', milestone: 'M9' },
+  { id: 'deploy', label: 'Deploy', milestone: 'M18' },
 ] as const
 
 /**

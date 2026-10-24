@@ -65,7 +65,7 @@ import {
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 
 describe('vehicle editor chrome (M01-T10)', () => {
-  it('renders the seven actions; Verify (M4) and Simulate (M5) wait for a graph, SynCode (M7) and Run (M8) for a project, Stop for a run, the others for their milestone', () => {
+  it('renders the eight actions; Verify (M4) and Simulate (M5) wait for a graph, SynCode (M7) and Run (M8) for a project, Stop for a run, the others for their milestone', () => {
     const html = renderToStaticMarkup(<SvActionBar />)
     expect(SV_ACTIONS.map((a) => a.label)).toEqual([
       'Verify',
@@ -75,6 +75,7 @@ describe('vehicle editor chrome (M01-T10)', () => {
       'Stop',
       'Open IDE',
       'Export',
+      'Deploy',
     ])
     for (const action of SV_ACTIONS) {
       expect(html).toContain(`data-sv-action="${action.id}"`)
@@ -83,7 +84,7 @@ describe('vehicle editor chrome (M01-T10)', () => {
           ? `title="${action.label} the workflow"`
           : action.id === 'syncode'
             ? 'title="Create a vehicle app for this workflow, then generate, build and test it"'
-            : ['run', 'open-ide', 'export'].includes(action.id)
+            : ['run', 'open-ide', 'export', 'deploy'].includes(action.id)
               ? 'title="Press SynCode first: it creates the vehicle app of this workflow"'
               : action.id === 'stop'
                 ? 'title="Nothing is running"'

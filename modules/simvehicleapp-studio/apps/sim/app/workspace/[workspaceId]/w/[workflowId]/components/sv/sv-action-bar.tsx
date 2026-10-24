@@ -13,6 +13,7 @@ import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/com
 import { SvAppChip } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-app-chip'
 import { SvStatusPill } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-status-pill'
 import {
+  DeployButton,
   ExportButton,
   OpenIdeButton,
   SynCodeButton,
@@ -222,6 +223,7 @@ export function SvActionBar() {
         <Separator />
         <OpenIdeButton />
         <ExportButton />
+        <DeployButton />
         <Separator />
         <ViewToggle
           view='logic'

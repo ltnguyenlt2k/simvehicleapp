@@ -1052,3 +1052,6 @@ apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/
 
 # M18-T08 — lanes: Auto layout of a vehicle workflow, one lane per trigger (ADR-0059 §3)
 apps/sim/app/workspace/[workspaceId]/w/[workflowId]/utils/auto-layout-utils.ts
+
+# M18-T09 — Deploy: deploy targets and deployments hooks (ADR-0060)
+apps/sim/hooks/queries/sv-deploy.ts

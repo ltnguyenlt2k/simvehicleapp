@@ -41,6 +41,8 @@ interface SignalRowProps {
     field: SvSignalField
   ) => void
   onRemove?: () => void
+  /** A deployment: its signals come from the target, Set is disabled (ADR-0060). */
+  readOnly?: boolean
 }
 
 const FIELD_LABEL: Record<SvSignalField, string> = {
@@ -48,7 +50,16 @@ const FIELD_LABEL: Record<SvSignalField, string> = {
   value: 'simulate feedback (current)',
 }
 
-function SignalRow({ projectId, path, values, node, hint, onInjected, onRemove }: SignalRowProps) {
+function SignalRow({
+  projectId,
+  path,
+  values,
+  node,
+  hint,
+  onInjected,
+  onRemove,
+  readOnly = false,
+}: SignalRowProps) {
   const input = signalInputOf(node)
   const { control } = input
   const [text, setText] = useState(control.kind === 'bool' ? 'true' : '')
@@ -141,7 +152,8 @@ function SignalRow({ projectId, path, values, node, hint, onInjected, onRemove }
             variant='ghost'
             size='sm'
             data-sv-inject={path}
-            disabled={!text.trim() || set.isPending}
+            disabled={readOnly || !text.trim() || set.isPending}
+            title={readOnly ? 'Deployed: the signals come from the target' : undefined}
             onClick={inject}
           >
             Set
@@ -211,7 +223,9 @@ function useWatchList(
  * scenario, and play the saved scenario on the databroker (M08-T07).
  */
 export function SignalsPanel() {
-  const { project } = useWorkflowRuns()
+  const { project, run } = useWorkflowRuns()
+  /** Following a deployment (ADR-0060): watch only — inject, Record and Play are refused by the server too. */
+  const deployed = run?.deploy
   const workflowId = useSvLintStore((s) => s.workflowId)
   const graphJson = useSvLintStore((s) => s.graphJson)
   const fromGraph = useMemo(() => graphSignalPaths(graphJson), [graphJson])
@@ -346,6 +360,14 @@ export function SignalsPanel() {
 
   return (
     <div data-sv='signals' className='flex min-h-0 flex-1 flex-col'>
+      {deployed && (
+        <p
+          data-sv='deployed-banner'
+          className='shrink-0 border-[var(--border)] border-b bg-[var(--surface-5)] px-2 py-1 text-[12px] text-[var(--text-secondary)]'
+        >
+          {`Deployed to ${deployed.targetName} (${deployed.mode}): the signals come from the target; inject, Record and Play are disabled.`}
+        </p>
+      )}
       <div className='flex shrink-0 items-center gap-2 border-[var(--border)] border-b px-2 py-1'>
         <span className='text-[12px] text-[var(--text-secondary)]'>{`VSS ${project.vssRelease}`}</span>
         <ChipInput
@@ -401,6 +423,7 @@ export function SignalsPanel() {
               variant='ghost'
               size='sm'
               data-sv='record'
+              disabled={Boolean(deployed)}
               onClick={startRecording}
               title='Record injected values as a new test case (Test tab)'
             >
@@ -411,7 +434,7 @@ export function SignalsPanel() {
             variant='ghost'
             size='sm'
             data-sv='play-scenario'
-            disabled={!scenario || play.isPending}
+            disabled={Boolean(deployed) || !scenario || play.isPending}
             onClick={playSaved}
             title={
               scenario
@@ -456,6 +479,7 @@ export function SignalsPanel() {
                 node={nodes?.get(p)}
                 hint={hints.get(p)}
                 onInjected={onInjected}
+                readOnly={Boolean(deployed)}
                 onRemove={
                   extra.includes(p) ? () => setExtra((x) => x.filter((y) => y !== p)) : undefined
                 }

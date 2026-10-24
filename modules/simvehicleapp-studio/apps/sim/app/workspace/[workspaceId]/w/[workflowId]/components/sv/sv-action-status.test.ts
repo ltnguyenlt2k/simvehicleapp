@@ -45,6 +45,18 @@ describe('action bar status (ADR-0054)', () => {
     expect(derive({ hasGraph: false }).primary).toBeNull()
   })
 
+  it('a deployment shows its target and mode; a test run of the app at the same time comes first (ADR-0060)', () => {
+    const deployment = { targetName: 'HIL bench', mode: 'read-only' as const }
+    expect(derive({ deployment }).pill).toEqual({
+      label: 'Deployed · HIL bench · read-only',
+      tone: 'ok',
+      target: 'run-console',
+    })
+    expect(derive({ deployment, run: { state: 'running', runningAt: 58_000 } }).pill?.label).toBe(
+      'Running 00:42'
+    )
+  })
+
   it('the pill shows what is happening, the most important first', () => {
     expect(derive({ run: { state: 'running', runningAt: 58_000 } }).pill).toEqual({
       label: 'Running 00:42',

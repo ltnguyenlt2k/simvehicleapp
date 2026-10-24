@@ -35,6 +35,8 @@ export interface SvActionStatusInput {
   /** The followed SynCode was made from the graph now on the canvas. */
   generationFresh: boolean
   run?: { state: 'starting' | 'running' | 'stopping' | 'stopped' | 'crashed'; runningAt?: number }
+  /** An active deployment of the app (ADR-0060): its signals come from the target. */
+  deployment?: { targetName: string; mode: 'read-only' | 'read-write' }
   now: number
 }
 
@@ -68,6 +70,12 @@ function pillOf(i: SvActionStatusInput): SvStatusPill | null {
           : 'Stopping…'
     return { label, tone: 'busy', target: 'run-console' }
   }
+  if (i.deployment)
+    return {
+      label: `Deployed · ${i.deployment.targetName} · ${i.deployment.mode}`,
+      tone: 'ok',
+      target: 'run-console',
+    }
   const g = i.generation
   if (g?.state === 'queued') return { label: 'SynCode queued', tone: 'busy', target: 'build-log' }
   if (g?.state === 'running') {

@@ -46,6 +46,26 @@ export async function authorizeProject(
   return { row, userId: session.user.id }
 }
 
+/**
+ * The caller in a workspace (ADR-0060 deploy targets): `read` for members, `write` for editors, `admin` for
+ * workspace admins (who add targets and allow read-write deployments).
+ */
+export async function authorizeWorkspace(
+  workspaceId: string,
+  action: 'read' | 'write' | 'admin'
+): Promise<{ userId: string; canAdmin: boolean } | NextResponse> {
+  const session = await getSession()
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const access = await checkWorkspaceAccess(workspaceId, session.user.id)
+  if (!access.hasAccess) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
+  if ((action === 'write' && !access.canWrite) || (action === 'admin' && !access.canAdmin))
+    return NextResponse.json(
+      { error: action === 'admin' ? 'Only workspace admins can do this' : 'Access denied' },
+      { status: 403 }
+    )
+  return { userId: session.user.id, canAdmin: access.canAdmin }
+}
+
 const SERVICE_NAME: Record<'orchestrator' | 'signal-gateway', string> = {
   orchestrator: 'Orchestrator',
   'signal-gateway': 'Signal gateway',

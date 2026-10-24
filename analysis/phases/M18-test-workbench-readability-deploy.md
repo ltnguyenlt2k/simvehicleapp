@@ -100,10 +100,10 @@
   - UI tắt các nút đó, hiện "signals come from <target>; test inputs are disabled"; tab Live chỉ quan sát.
   - Unit + E2E chứng minh.
 - [x] Contracts: `DeployTarget{id, name, kind, url, tls, auth, apiVersion, vssRelease}`, `Deployment{…}`; additive.
-- [ ] Settings → Deploy targets (admin workspace); secrets mã hoá; Test connection (kết nối, TLS/token, v1/v2, release, path app dùng có tồn tại).
+- [x] (trong hộp thoại Deploy, ADR-0060 Notes) Settings → Deploy targets (admin workspace); secrets mã hoá; Test connection (kết nối, TLS/token, v1/v2, release, path app dùng có tồn tại).
 - [ ] Deploy ⇒ sandbox (ADR-0057) nối databroker ngoài qua proxy gRPC; mặc định read-only (chặn `set`); bật ghi phải xác nhận liệt kê actuator.
 - [ ] Từ chối generation chưa pass / lệch release. Audit log. Dừng / rollback generation trước.
-- [ ] Vehicle apps hiện "Deployed to <target>"; tab Live đọc từ target.
+- [x] (pill trên thanh hành động + banner tab Live) Vehicle apps hiện "Deployed to <target>"; tab Live đọc từ target.
 - [x] Gate (`gate/m18-deploy.sh` PASS 2026-10-24): service "external-databroker" + feeder giả lập (như CAN provider) ⇒ app chạy logic với dữ liệu tự đến; read-only chặn ghi; bật ghi ⇒ actuator đổi.
 
 ### T10: Deploy Container image

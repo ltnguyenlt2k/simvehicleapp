@@ -15,10 +15,13 @@ const FLUSH_MS = 100
 export function useWorkflowRuns() {
   const { project } = useWorkflowProject()
   const { data: runs } = useSvRuns(project?.id)
-  const active = activeRunOf(runs)
+  // A test run and a deployment of the app may be active at once (ADR-0060): Run/Stop act on the run, the dock follows
+  // the run, else the deployment.
+  const active = activeRunOf(runs?.filter((r) => !r.deploy))
+  const deployment = activeRunOf(runs?.filter((r) => r.deploy))
   const runId = useSvRunStore((s) => s.runId)
   const followed = runs?.find((r) => r.id === runId)
-  return { project, runs, active, followed, run: active ?? followed }
+  return { project, runs, active, deployment, followed, run: active ?? deployment ?? followed }
 }
 
 /**
@@ -28,7 +31,8 @@ export function useWorkflowRuns() {
  */
 export function useRunFollow() {
   const queryClient = useQueryClient()
-  const { project, runs, active } = useWorkflowRuns()
+  const { project, runs, active: testRun, deployment } = useWorkflowRuns()
+  const active = testRun ?? deployment
   const runId = useSvRunStore((s) => s.runId)
   const reported = useRef<string | null>(null)
 
@@ -85,5 +89,6 @@ export function useRunFollow() {
     }
   }, [last])
 
-  return { project, run: active ?? last, active }
+  // Run/Stop act on test runs only: a deployment is stopped from its Deploy dialog (ADR-0060).
+  return { project, run: testRun ?? (last?.deploy ? undefined : last), active: testRun }
 }

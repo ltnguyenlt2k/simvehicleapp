@@ -231,7 +231,7 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
   - trên bảng Signals, giá trị app ghi hiện ở cột **hiện tại**;
   - quay về API cũ: `SV_DATABROKER_API=*=sdv.databroker.v1`.
 
-Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md).
+Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md) · chạy app trên databroker của xe/bench: [deploy](docs/user-guide/deploy.md).
 
 ## 7. Đọc tiếp / Where to go next
 

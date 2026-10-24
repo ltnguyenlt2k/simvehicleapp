@@ -812,6 +812,14 @@ export const svRunSchema = z.object({
   expiresAt: z.number().optional(),
   extensions: z.number().int().optional(),
   stopReason: z.enum(['user', 'expired', 'admin']).optional(),
+  /** A deployment (ADR-0060): the app runs on a deploy target's signals; simulated input is disabled. */
+  deploy: z
+    .object({
+      targetId: z.string(),
+      targetName: z.string(),
+      mode: z.enum(['read-only', 'read-write']),
+    })
+    .optional(),
 })
 
 export const svStartRunBodySchema = z.object({
@@ -1021,3 +1029,97 @@ export type SvGeneration = z.output<typeof svGenerationSchema>
 export type SvStartGenerationBody = z.input<typeof svStartGenerationBodySchema>
 export type SvLogLine = z.output<typeof svLogLineSchema>
 export type SvProjectFiles = z.output<typeof svProjectFilesSchema>
+
+/** A deploy target of the workspace (ADR-0060): a databroker outside the stack; its token never comes back. */
+export const svDeployTargetSchema = z.object({
+  id: z.string(),
+  workspaceId: z.string(),
+  name: z.string(),
+  address: z.string(),
+  tls: z.boolean(),
+  vssRelease: z.string(),
+  createdAt: z.number(),
+  hasToken: z.boolean(),
+})
+export const svDeployTargetListSchema = z.object({ targets: z.array(svDeployTargetSchema) })
+export const svWorkspaceQuerySchema = z.object({ workspaceId: z.string().min(1).max(128) })
+
+/** `GET /api/sv/deploy-targets?workspaceId=` — the workspace's deploy targets. */
+export const svListDeployTargetsContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/deploy-targets',
+  query: svWorkspaceQuerySchema,
+  response: { mode: 'json', schema: svDeployTargetListSchema },
+})
+
+export const svCreateDeployTargetBodySchema = z.object({
+  workspaceId: z.string().min(1).max(128),
+  name: z.string().trim().min(1, 'name is required').max(80),
+  address: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9.-]{1,253}:[0-9]{2,5}$/, 'address must be host:port'),
+  tls: z.boolean().optional(),
+  token: z.string().max(4096).optional(),
+  vssRelease: z
+    .string()
+    .regex(/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/, 'vssRelease vX.Y'),
+})
+
+/** `POST /api/sv/deploy-targets` — add a deploy target (workspace admins). */
+export const svCreateDeployTargetContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/deploy-targets',
+  body: svCreateDeployTargetBodySchema,
+  response: { mode: 'json', schema: svDeployTargetSchema },
+})
+
+export const svDeployTargetParamsSchema = z.object({ id: z.string().min(1).max(128) })
+
+/** `DELETE /api/sv/deploy-targets/[id]?workspaceId=` — remove a deploy target (workspace admins). */
+export const svDeleteDeployTargetContract = defineRouteContract({
+  method: 'DELETE',
+  path: '/api/sv/deploy-targets/[id]',
+  params: svDeployTargetParamsSchema,
+  query: svWorkspaceQuerySchema,
+  response: { mode: 'json', schema: z.object({ deleted: z.literal(true) }) },
+})
+
+export const svTestDeployTargetResultSchema = z.union([
+  z.object({
+    reachable: z.literal(true),
+    api: z.literal('kuksa.val.v2'),
+    server: z.object({ name: z.string().optional(), version: z.string().optional() }),
+    missing: z.array(z.string()),
+  }),
+  z.object({ reachable: z.literal(false), status: z.number(), message: z.string() }),
+])
+
+/** `POST /api/sv/deploy-targets/[id]/test` — Test connection: the server, and the paths it lacks. */
+export const svTestDeployTargetContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/deploy-targets/[id]/test',
+  params: svDeployTargetParamsSchema,
+  body: z.object({
+    workspaceId: z.string().min(1).max(128),
+    paths: z.array(z.string().min(1).max(255)).max(200).optional(),
+  }),
+  response: { mode: 'json', schema: svTestDeployTargetResultSchema },
+})
+
+/** `POST /api/sv/projects/[id]/deployments` — deploy the app's latest SynCode to a target. */
+export const svStartDeploymentContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/deployments',
+  params: svProjectParamsSchema,
+  body: z.object({
+    targetId: z.string().min(1).max(128),
+    mode: z.enum(['read-only', 'read-write']),
+  }),
+  response: { mode: 'json', schema: svRunSchema },
+})
+
+export type SvDeployTarget = z.output<typeof svDeployTargetSchema>
+export type SvCreateDeployTargetBody = z.input<typeof svCreateDeployTargetBodySchema>
+export type SvTestDeployTargetResult = z.output<typeof svTestDeployTargetResultSchema>
+export type SvDeployMode = 'read-only' | 'read-write'

@@ -126,6 +126,10 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-24 — **UI Deploy (studio)** (theo uỷ quyền PO — chờ PO xác nhận):
+  - Target được quản lý **ngay trong hộp thoại Deploy** (chọn, thêm, Test connection), chưa có trang Settings → Deploy targets riêng. Như vậy không phải sửa điều hướng Settings của Sim; một trang quản lý (xoá, sửa) có thể thêm sau.
+  - Phân quyền ở BFF: xem target là thành viên; thêm/xoá target là admin; Test connection và deploy read-only là người có quyền ghi; read-write là admin.
+  - Run/Stop chỉ tác động lên Run thử. Deployment dừng từ hộp thoại Deploy. Dock theo dõi Run nếu có, không thì theo deployment. Pill hiện `Deployed · <target> · <mode>`. Tab Live có banner, tắt Set/Record/Play; tab Test tắt Play.
 - 2026-10-24 — **Gate deploy PASS** (`gate/m18-deploy.sh`, stack dev):
   - Target là databroker thứ hai trên `sv-internal`, kèm feeder Speed và provider cho Hazard, đóng vai các layer của xe.
   - Test connection báo đúng path thiếu.

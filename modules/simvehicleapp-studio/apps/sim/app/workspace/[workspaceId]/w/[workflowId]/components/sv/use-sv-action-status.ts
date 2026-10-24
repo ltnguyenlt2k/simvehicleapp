@@ -37,7 +37,7 @@ export function useSvActionStatus(): SvActionStatus {
     ofThisApp ? (followedProjectId ?? undefined) : undefined,
     ofThisApp ? (generationId ?? undefined) : undefined
   )
-  const { run } = useWorkflowRuns()
+  const { active: run, deployment } = useWorkflowRuns()
   const [now, setNow] = useState(() => Date.now())
 
   const running = run?.state === 'running'
@@ -61,6 +61,9 @@ export function useSvActionStatus(): SvActionStatus {
       : undefined,
     generationFresh: Boolean(graphJson && sentGraphJson === graphJson),
     run: run ? { state: run.state, runningAt: run.runningAt } : undefined,
+    ...(deployment?.deploy
+      ? { deployment: { targetName: deployment.deploy.targetName, mode: deployment.deploy.mode } }
+      : {}),
     now: running ? now : Date.now(),
   })
 }
