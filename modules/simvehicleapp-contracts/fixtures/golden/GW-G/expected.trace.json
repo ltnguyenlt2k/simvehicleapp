@@ -182,7 +182,16 @@
     "node": "n6",
     "blockId": "b6",
     "data": {
-      "handle": "ok"
+      "handle": "ok",
+      "eval": {
+        "refs": {
+          "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position": 0,
+          "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position": 0,
+          "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position": 0,
+          "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position": 0
+        },
+        "result": true
+      }
     }
   },
   {

@@ -567,8 +567,35 @@ class Simulator {
         handle = this.onError(run, node, e.reason, e.message);
       }
       if (run.token.cancelled) return;
-      this.trace("exit", { run, node: id, blockId: node.src.blockId, ...(handle ? { data: { handle } } : {}) });
+      const why = handle ? this.evalOf(run, node) : undefined;
+      this.trace("exit", { run, node: id, blockId: node.src.blockId, ...(handle ? { data: { handle, ...(why ? { eval: why } : {}) } } : {}) });
       id = handle ? (node.next[handle] ?? null) : null;
+    }
+  }
+
+  /**
+   * Why a decision went the way it did (ADR-0062 §2, M19-T02a): the value of every reference of its expression right
+   * after it decided, and the expression's value. Keys: `$signal` ⇒ VSS path, `$ref` ⇒ `nK.out`, `$state` ⇒
+   * `state.vK`; at most 8, strings cut at 120 characters. Nothing for blocks that do not decide.
+   */
+  private evalOf(run: Run, node: Node): { refs: Record<string, unknown>; result: unknown } | undefined {
+    const expr = DECISIONS[node.opcode] ? node.args[DECISIONS[node.opcode]!] : undefined;
+    if (expr === undefined) return undefined;
+    const refs: Record<string, unknown> = {};
+    for (const leaf of leafRefs(expr).slice(0, EVAL_MAX_REFS)) {
+      const key = "$signal" in leaf ? (this.signalById.get(String(leaf.$signal))?.path ?? String(leaf.$signal)) : "$ref" in leaf ? String(leaf.$ref) : `state.${String(leaf.$state)}`;
+      refs[key] = this.jsonOrNull(() => this.eval(leaf, run));
+    }
+    return { refs, result: this.jsonOrNull(() => this.eval(expr, run)) };
+  }
+
+  private jsonOrNull(f: () => Value): unknown {
+    try {
+      const v = toJson(f());
+      return typeof v === "string" && v.length > EVAL_MAX_TEXT ? `${v.slice(0, EVAL_MAX_TEXT - 1)}…` : v;
+    } catch (err) {
+      if (err instanceof EvalError) return null;
+      throw err;
     }
   }
 
@@ -799,4 +826,38 @@ function topicMatches(filter: string, topic: string): boolean {
 
 function jsonOutputs(o: Record<string, Value>, spec: Record<string, { type: string }>) {
   return Object.fromEntries(Object.entries(o).map(([k, v]) => [k, toJson(v, spec[k]?.type)]));
+}
+
+/** Decision opcodes and the argument whose value decides (ADR-0062 §2). */
+const DECISIONS: Record<string, string> = {
+  "control.branch": "condition",
+  "control.switch": "value",
+  "control.stable_for": "condition",
+  "control.wait_until": "condition",
+};
+const EVAL_MAX_REFS = 8;
+const EVAL_MAX_TEXT = 120;
+
+/** `$signal`/`$ref`/`$state` leaves of an expression, in order of first appearance, each once. */
+export function leafRefs(e: unknown): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  const walk = (x: unknown) => {
+    if (Array.isArray(x)) return x.forEach(walk);
+    if (!x || typeof x !== "object") return;
+    const o = x as Record<string, unknown>;
+    for (const k of ["$signal", "$ref", "$state"]) {
+      if (k in o) {
+        const key = `${k}:${String(o[k])}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ [k]: o[k] });
+        }
+        return;
+      }
+    }
+    for (const v of Object.values(o)) walk(v);
+  };
+  walk(e);
+  return out;
 }

@@ -36,7 +36,13 @@
     "node": "n2",
     "blockId": "b2",
     "data": {
-      "handle": "broken"
+      "handle": "broken",
+      "eval": {
+        "refs": {
+          "n1.value": 100
+        },
+        "result": false
+      }
     }
   },
   {
@@ -116,7 +122,13 @@
     "node": "n2",
     "blockId": "b2",
     "data": {
-      "handle": "stable"
+      "handle": "stable",
+      "eval": {
+        "refs": {
+          "n1.value": 135
+        },
+        "result": true
+      }
     }
   },
   {
@@ -231,7 +243,13 @@
     "node": "n2",
     "blockId": "b2",
     "data": {
-      "handle": "broken"
+      "handle": "broken",
+      "eval": {
+        "refs": {
+          "n1.value": 105
+        },
+        "result": false
+      }
     }
   },
   {

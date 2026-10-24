@@ -36,7 +36,14 @@
     "node": "n2",
     "blockId": "b2",
     "data": {
-      "handle": "else"
+      "handle": "else",
+      "eval": {
+        "refs": {
+          "n1.value": 25,
+          "Vehicle.IsMoving": true
+        },
+        "result": false
+      }
     }
   },
   {
@@ -76,7 +83,14 @@
     "node": "n2",
     "blockId": "b2",
     "data": {
-      "handle": "then"
+      "handle": "then",
+      "eval": {
+        "refs": {
+          "n1.value": 15,
+          "Vehicle.IsMoving": true
+        },
+        "result": true
+      }
     }
   },
   {
@@ -191,7 +205,14 @@
     "node": "n2",
     "blockId": "b2",
     "data": {
-      "handle": "else"
+      "handle": "else",
+      "eval": {
+        "refs": {
+          "n1.value": 10,
+          "Vehicle.IsMoving": false
+        },
+        "result": false
+      }
     }
   }
 ]

@@ -203,6 +203,8 @@ for (const c of cases) {
   }
   if (c.golden) {
     const wantTrace = JSON.parse(readFileSync(join(fixturesDir, "golden", c.id, "expected.trace.json"), "utf8"));
+    // The runtimes do not emit data.eval yet (ADR-0062 Notes, M19-T02b): compare the trace without it.
+    for (const e of wantTrace as { data?: Record<string, unknown> }[]) if (e.data) delete e.data.eval;
     const wantWrites = JSON.parse(readFileSync(join(fixturesDir, "golden", c.id, "expected.writes.json"), "utf8"));
     if (!same(out.writes, wantWrites)) problems.push(`writes ≠ expected.writes.json: ${stringify(out.writes)}`);
     if (!same(out.trace, wantTrace)) {
