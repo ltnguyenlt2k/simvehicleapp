@@ -126,6 +126,7 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-24 — **Spike vehicle-gateway PASS** ([docs/spikes/vehicle-gateway.md](../../docs/spikes/vehicle-gateway.md)): Bun `node:http2` proxy h2c chuyển `kuksa.val.v2` tới databroker 0.5.0. Read-only chặn `Actuate` bằng `PERMISSION_DENIED`; `Subscribe` stream qua proxy; status lỗi của upstream (trailers-only) được truyền nguyên vẹn; client huỷ stream không làm crash proxy. App mặc định đã là `kuksa.val.v2` (ADR-0047), nên allowlist dùng method v2: đọc = GetValue/GetValues/Subscribe/SubscribeById/ListMetadata/GetServerInfo; ghi = Actuate/BatchActuate; PublishValue/OpenProviderStream luôn bị chặn.
 - 2026-10-16:
   - thêm quyết định 7 (vehicle-gateway, lọc method theo proto đã vendored, Live qua gateway, deployment không hết hạn) và 8 (ràng buộc `sdv.databroker.v1`; đọc `compiler-code-cpp/runtime/src/Velocitas.cpp` và `velocitas-stack/compose.yaml`);
   - spike proxy HTTP/2 trong Bun/Node trước khi code (M18-T09).

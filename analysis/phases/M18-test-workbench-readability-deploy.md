@@ -89,7 +89,7 @@
 - [x] "Data from earlier blocks" (đổi tên Connections + dòng giải thích): kiểu, giá trị mẫu từ lần Simulate/Run gần nhất; bấm ⇒ chèn `<block.field>` vào ô sửa gần nhất (kéo thả giữ nguyên); trigger: "This block starts the workflow — it has no inputs"; mục "Used by". Đơn vị chưa hiện (ADR-0059 Notes).
 
 ### T09: Deploy Remote databroker
-- [ ] **Spike vehicle-gateway:** proxy gRPC HTTP/2 lọc theo method, giữ stream hai chiều. Thử `node:http2` dưới Bun, nếu không ổn thì dùng Node runtime; ghi kết quả vào ADR-0060 Notes.
+- [x] **Spike vehicle-gateway:** proxy gRPC HTTP/2 lọc theo method, giữ stream. Bun `node:http2` đủ dùng ([docs/spikes/vehicle-gateway.md](../../docs/spikes/vehicle-gateway.md), 2026-10-24).
 - [ ] vehicle-gateway:
   - TLS + token tới target; allowlist method read-only/read-write theo design M18 §9.2; audit;
   - app trỏ `SDV_VEHICLEDATABROKER_ADDRESS` vào gateway; Live subscribe qua gateway.
