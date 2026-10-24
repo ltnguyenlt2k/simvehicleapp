@@ -152,6 +152,21 @@ describe("scenario player (M08-T07)", () => {
     expect(at[1]).toBeLessThan(3005);
   });
 
+  test("a playback lasts until its `until`, not its last input (the app may still act after it)", async () => {
+    let mono = 0;
+    const { io } = fakeIo();
+    const player = new Player({
+      ...io,
+      async sleep(ms) {
+        mono += ms;
+      },
+      monotonic: () => mono,
+    });
+    const run = player.play("u", "v4.0", { name: "U", until: 8000, inputs: [{ t: 6000, path: "Vehicle.Speed", value: 1 }] });
+    expect(await run.finished).toMatchObject({ state: "done" });
+    expect(mono).toBeGreaterThanOrEqual(8000);
+  });
+
   test("a new playback stops the previous one; a failed write ends it as failed", async () => {
     const { io } = fakeIo();
     const player = new Player({ ...io, sleep: () => new Promise((r) => setTimeout(r, 5)) });

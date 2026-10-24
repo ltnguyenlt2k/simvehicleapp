@@ -126,6 +126,12 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
+- 2026-10-24 — **Sửa lỗi Play (tìm ra khi chạy kịch bản ADAS live):**
+  - Lỗi: playback chuyển sang `done` ngay sau input cuối, và `observe` dừng ghi sau đó 1 s. Mọi write của app sau thời điểm đó, dù vẫn trước `until`, đều bị bỏ mất. Ví dụ C44: input cuối ở 6000, app ghi Hazard ở 7000, gateway ghi được 0 write. Studio chấm điểm khi playback `done`, nên cũng bỏ sót các write này.
+  - Sửa: playback giữ trạng thái `playing` tới `until` của scenario (`player.ts`), có test hồi quy.
+  - Bằng chứng: gate mới `gate/adas-live.sh` (SynCode workflow ADAS kèm scenario làm test case ⇒ Run ⇒ Play `observe` ⇒ mọi write kỳ vọng phải thấy trong 300 ms):
+    - C43 PASS với C++ (lệch 2–28 ms) và Python;
+    - C44 PASS với C++ và Rust (7 ms), sau khi sửa.
 - 2026-10-24 — **T06** (PO xác nhận 2026-10-24: thẻ đề xuất trong panel trợ lý; được phép chạy eval với model thật):
   - Ba tool `scenario_*` đều SAFE: `scenario_propose` không lưu gì, chỉ validate (scenario 1.1) và Simulate từng case trên bản nháp graph, rồi trả `structured.testCases`.
   - Đề xuất hiện thành thẻ trong panel trợ lý (Add to Test tab / Reject), không phải bản xem trước trong tab Test: không cần trạng thái "case nháp" trong DB hay store tab Test. Accept tạo case qua BFF CRUD sẵn có, chọn case đầu, đưa tab Test lên trước.

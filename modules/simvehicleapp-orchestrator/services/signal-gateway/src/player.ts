@@ -94,6 +94,9 @@ export class Player {
           else if (input.topic) await this.io.publish(input.topic, typeof input.value === "string" ? input.value : JSON.stringify(input.value));
           step({ played: ++played });
         }
+        // The scenario lasts until `until`: the app may still act after the last input (Play grades what it observed).
+        for (let wait = origin + scenario.until - clock(); wait > 0 && live(); wait = origin + scenario.until - clock()) await this.io.sleep(wait);
+        if (!live()) return this.current!;
         step({ state: "done" });
       } catch (err) {
         step({ state: "failed", error: (err as Error).message });

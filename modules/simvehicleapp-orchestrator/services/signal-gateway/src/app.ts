@@ -350,7 +350,8 @@ export function createGatewayHandler(d: GatewayDeps) {
 /**
  * Records what the app does during a playback (ADR-0058 §4, Play on the vehicle stack): target and current changes of
  * the observed signals, in ms from the playback's start. Changes of a value the playback itself set (its initial
- * values and inputs, within 250 ms of their time) are not the app's: they are left out. Stops 1 s after the end.
+ * values and inputs, within 250 ms of their time) are not the app's: they are left out. Stops 1 s after the playback
+ * ends, at the scenario's `until`.
  */
 function watch(r: Resolved, player: Player, playback: Playback, scenario: Scenario, paths: string[], finished: Promise<Playback>, log: RequestContext["log"]) {
   const own = [
