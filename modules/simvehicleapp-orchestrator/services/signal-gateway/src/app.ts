@@ -17,8 +17,14 @@ import { toDatapoint } from "./values.ts";
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 const rejected = (status: number, error: string, message: string) => json(status, { error, message });
+const simulatedInputDisabled = (sandbox: string) =>
+  rejected(409, "SIMULATED_INPUT_DISABLED", `the app is deployed (${sandbox}): its signals come from the deploy target, simulated input is disabled`);
 const RELEASE = /^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/;
-const SANDBOX = /^toolchain-(cpp|python|rust):[0-9]{2,5}$/;
+/** A run's own databroker (ADR-0057), or a deployment's route to its deploy target (ADR-0060). */
+const SANDBOX = /^(toolchain-(cpp|python|rust)|vehicle-gateway):[0-9]{2,5}$/;
+/** A deployment: its signals come from the target's layers, never from SimVehicleApp (no inject, play or mirror). */
+const DEPLOYED = /^vehicle-gateway:[0-9]{2,5}$/;
+const SANDBOX_HELP = "sandbox must be toolchain-<lang>:<port> or vehicle-gateway:<port>";
 const MAX_PATHS = 200;
 const TOPIC_PREFIX = /^[A-Za-z0-9_\-]+(\/[A-Za-z0-9_\-]+)*\/?$/;
 const HEARTBEAT_MS = 15_000;
@@ -113,7 +119,7 @@ export function createGatewayHandler(d: GatewayDeps) {
   const players = new Map<string, Player>();
   const playerOf = (sandbox: string | undefined): Player | Response => {
     if (!sandbox) return d.player;
-    if (!SANDBOX.test(sandbox)) return rejected(400, "invalid_request", "sandbox must be toolchain-<lang>:<port>");
+    if (!SANDBOX.test(sandbox)) return rejected(400, "invalid_request", SANDBOX_HELP);
     if (!d.sandboxPlayer) return rejected(503, "no_databroker", "sandboxed runs are not enabled in this gateway");
     let p = players.get(sandbox);
     if (!p) players.set(sandbox, (p = d.sandboxPlayer(sandbox)));
@@ -122,7 +128,7 @@ export function createGatewayHandler(d: GatewayDeps) {
 
   const resolve = async (release: string | null, paths: readonly string[] = [], sandbox?: string | null): Promise<Resolved | Response> => {
     if (!release || !RELEASE.test(release)) return rejected(400, "invalid_request", "release (vX.Y or vX.Y-<name>) is required");
-    if (sandbox != null && !SANDBOX.test(sandbox)) return rejected(400, "invalid_request", "sandbox must be toolchain-<lang>:<port>");
+    if (sandbox != null && !SANDBOX.test(sandbox)) return rejected(400, "invalid_request", SANDBOX_HELP);
     const broker = d.broker(release, sandbox ?? undefined);
     if (!broker) return rejected(503, "no_databroker", sandbox ? `the run's databroker ${sandbox} is not reachable` : `the stack has no databroker for VSS ${release}`);
     try {
@@ -213,6 +219,7 @@ export function createGatewayHandler(d: GatewayDeps) {
     if (url.pathname === "/signals" && req.method === "POST") {
       const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; path?: string; value?: unknown; field?: Field } | null;
       if (!b || typeof b.path !== "string" || !("value" in b) || (b.field !== "value" && b.field !== "target")) return rejected(400, "invalid_request", "release, path, value and field (value|target) are required");
+      if (b.sandbox && DEPLOYED.test(b.sandbox)) return simulatedInputDisabled(b.sandbox);
       const r = await resolve(b.release ?? null, [b.path], b.sandbox);
       if (r instanceof Response) return r;
       const meta = r.signals.get(b.path);
@@ -234,10 +241,11 @@ export function createGatewayHandler(d: GatewayDeps) {
       if (!b || !Array.isArray(b.paths) || !b.paths.every((p) => typeof p === "string")) return rejected(400, "invalid_request", "release and paths are required");
       if (b.api !== undefined && b.api !== "sdv.databroker.v1" && b.api !== "kuksa.val.v2") return rejected(400, "invalid_request", "api must be sdv.databroker.v1 or kuksa.val.v2");
       const paths = [...new Set(b.paths as string[])];
+      if (b.sandbox && paths.length && DEPLOYED.test(b.sandbox)) return simulatedInputDisabled(b.sandbox);
       const key = b.sandbox ?? b.release!;
       if (b.sandbox && !paths.length) {
         // The run ended: stop its mirror and playback and drop the connection to its databroker.
-        if (!SANDBOX.test(b.sandbox)) return rejected(400, "invalid_request", "sandbox must be toolchain-<lang>:<port>");
+        if (!SANDBOX.test(b.sandbox)) return rejected(400, "invalid_request", SANDBOX_HELP);
         mirrors.get(key)?.clear();
         mirrors.delete(key);
         players.get(key)?.stop();
@@ -321,6 +329,7 @@ export function createGatewayHandler(d: GatewayDeps) {
       if (req.method === "POST") {
         const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; scenario?: Scenario; observe?: unknown } | null;
         if (!b?.scenario || !validator.validate("scenario", b.scenario).valid) return rejected(400, "invalid_request", "release and a scenario v1 are required");
+        if (b.sandbox && DEPLOYED.test(b.sandbox)) return simulatedInputDisabled(b.sandbox);
         const observe = b.observe === undefined ? [] : b.observe;
         if (!Array.isArray(observe) || observe.length > MAX_PATHS || !observe.every((p) => typeof p === "string")) return rejected(400, "invalid_request", `observe: at most ${MAX_PATHS} signal paths`);
         // Every signal value is checked before anything is written.

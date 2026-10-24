@@ -138,6 +138,22 @@
       "adr": "ADR-0016"
     },
     {
+      "code": "DEPLOY_QUOTA_EXCEEDED",
+      "severity": "error",
+      "stage": "run",
+      "title": "Deployment quota of the workspace reached: stop a deployment first",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0060"
+    },
+    {
+      "code": "DEPLOY_TARGET_UNREACHABLE",
+      "severity": "error",
+      "stage": "run",
+      "title": "The deploy target's databroker does not answer",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0060"
+    },
+    {
       "code": "DEPS_INSTALL_FAILED",
       "severity": "error",
       "stage": "build",
@@ -328,6 +344,14 @@
       "title": "App did not start in time",
       "since": "1.0.0-alpha.1",
       "adr": "ADR-0016"
+    },
+    {
+      "code": "SIMULATED_INPUT_DISABLED",
+      "severity": "error",
+      "stage": "run",
+      "title": "The app is deployed: its signals come from the target, simulated input is disabled",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0060"
     },
     {
       "code": "SIM_LIMIT_REACHED",

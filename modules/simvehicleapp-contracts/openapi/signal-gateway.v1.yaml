@@ -78,6 +78,7 @@ paths:
               schema: { $ref: "urn:simvehicleapp:contracts:signal-update:1.0.0-alpha.1" }
         "400": { $ref: "#/components/responses/Rejected" }
         "422": { $ref: "#/components/responses/Rejected" }
+        "409": { description: "`SIMULATED_INPUT_DISABLED`: the sandbox is a deployment (vehicle-gateway:<port>, ADR-0060) — its signals come from the deploy target." }
         "503": { description: "No databroker for this release, or it is unreachable." }
   /mirror:
     put:
@@ -104,7 +105,7 @@ paths:
       responses:
         "204": { description: Mirroring (or providing) updated. }
         "400": { $ref: "#/components/responses/Rejected" }
-        "409": { description: "`provider_refused`: another provider already holds one of the actuators (kuksa.val.v2)." }
+        "409": { description: "`provider_refused`: another provider already holds one of the actuators (kuksa.val.v2); `SIMULATED_INPUT_DISABLED`: the sandbox is a deployment (ADR-0060)." }
   /messages:
     get:
       operationId: streamMessages
@@ -143,6 +144,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Playback" }
         "400": { $ref: "#/components/responses/Rejected" }
+        "409": { description: "`SIMULATED_INPUT_DISABLED`: the sandbox is a deployment (vehicle-gateway:<port>, ADR-0060) — its signals come from the deploy target." }
     get:
       operationId: getPlayback
       tags: [scenarios]
@@ -203,7 +205,7 @@ components:
       name: sandbox
       in: query
       required: false
-      description: "A run's own databroker (ADR-0057, `Run.sandbox` of the orchestrator) instead of the release's shared one."
+      description: "A run's own databroker (ADR-0057, `Run.sandbox` of the orchestrator) instead of the release's shared one; `vehicle-gateway:<port>` is a deployment's route to its deploy target (ADR-0060): read only — inject, play and mirror answer 409 SIMULATED_INPUT_DISABLED."
       schema: { $ref: "#/components/schemas/Sandbox" }
     Paths:
       name: paths
@@ -231,7 +233,7 @@ components:
   schemas:
     Sandbox:
       type: string
-      pattern: "^toolchain-(cpp|python|rust):[0-9]{2,5}$"
+      pattern: "^(toolchain-(cpp|python|rust)|vehicle-gateway):[0-9]{2,5}$"
       description: "`toolchain-<lang>:<port>` on sv-internal; nothing else is accepted (no other internal address). PUT /mirror with `sandbox` and no paths releases it (the run ended)."
     Playback:
       type: object

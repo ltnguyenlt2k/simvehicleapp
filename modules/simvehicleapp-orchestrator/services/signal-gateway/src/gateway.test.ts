@@ -418,12 +418,35 @@ describe("sandboxes of runs (ADR-0057, M17-T05)", () => {
 
   test("a sandbox is only ever a toolchain host and port (no other internal address)", async () => {
     const g = sandboxed();
-    for (const s of ["databroker:55555", "toolchain-cpp", "evil.example:80", "toolchain-cpp:5600/x"]) {
+    for (const s of ["databroker:55555", "toolchain-cpp", "evil.example:80", "toolchain-cpp:5600/x", "vehicle-gateway", "vehicle-gateway:5700/x"]) {
       expect((await g.call("POST", "/signals", { release: "v4.0", sandbox: s, path: "Vehicle.Speed", value: 1, field: "value" })).status).toBe(400);
       expect((await g.call("GET", `/signals?release=v4.0&sandbox=${encodeURIComponent(s)}&paths=Vehicle.Speed`)).status).toBe(400);
       expect((await g.call("PUT", "/mirror", { release: "v4.0", sandbox: s, paths: [] })).status).toBe(400);
       expect((await g.call("GET", `/play?sandbox=${encodeURIComponent(s)}`)).status).toBe(400);
     }
+  });
+});
+
+describe("deployments (ADR-0060, M18-T09): signals come from the deploy target", () => {
+  test("a vehicle-gateway route is read: inject, play, record source and mirror are refused with SIMULATED_INPUT_DISABLED", async () => {
+    const g = sandboxed();
+    const route = "vehicle-gateway:57000";
+    g.box(route).store.set("Vehicle.Speed#value", 88);
+    const snap = await (await g.call("GET", `/snapshot?release=v4.0&sandbox=${route}&paths=Vehicle.Speed`)).json();
+    expect(snap.updates).toMatchObject([{ path: "Vehicle.Speed", value: 88 }]);
+    const refused = [
+      await g.call("POST", "/signals", { release: "v4.0", sandbox: route, path: "Vehicle.Speed", value: 130, field: "value" }),
+      await g.call("POST", "/play", { release: "v4.0", sandbox: route, scenario: { scenarioVersion: "1.0.0", name: "S", until: 0, inputs: [] } }),
+      await g.call("PUT", "/mirror", { release: "v4.0", sandbox: route, paths: ["Vehicle.Body.Lights.Hazard.IsSignaling"] }),
+    ];
+    for (const r of refused) {
+      expect(r.status).toBe(409);
+      expect(await r.json()).toMatchObject({ error: "SIMULATED_INPUT_DISABLED" });
+    }
+    expect(g.box(route).sets).toEqual([]);
+    // The deployment ends: releasing it is allowed (no input), the gateway forgets the route.
+    expect((await g.call("PUT", "/mirror", { release: "v4.0", sandbox: route, paths: [] })).status).toBe(204);
+    expect(g.forgotten).toEqual([route]);
   });
 });
 
