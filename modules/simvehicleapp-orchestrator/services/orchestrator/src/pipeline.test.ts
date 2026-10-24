@@ -60,6 +60,10 @@ function fakeClients(overrides: Partial<Clients> = {}, jobs: JobScript = {}) {
     workspaceCapacity: async () => ({ ok: true, value: { freeBytes: 100 * 1024 ** 3, totalBytes: 200 * 1024 ** 3, level: "ok", thresholds: { lowBytes: 10 * 1024 ** 3, highBytes: 5 * 1024 ** 3, floodBytes: 2 * 1024 ** 3 } } }),
     toolchainForget: async (l, slug) => (calls.push(`tc:forget:${l}:${slug}`), { ok: true, value: null }),
     toolchainGc: async (l, keep) => (calls.push(`tc:gc:${l}:${keep.length}`), { ok: true, value: { removed: 0, freedBytes: 0 } }),
+    openRoute: async (id) => (calls.push(`route:open:${id}`), { address: "vehicle-gateway:57000" }),
+    closeRoute: async (id) => void calls.push(`route:close:${id}`),
+    routeAudit: async () => ({ audit: [], forwarded: {} }),
+    probeTarget: async () => ({ reachable: true, api: "kuksa.val.v2", server: { name: "databroker", version: "0.5.0" }, missing: [] }),
     getJob: async () => null,
     ...overrides,
   };

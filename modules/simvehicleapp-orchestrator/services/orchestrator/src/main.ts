@@ -44,6 +44,8 @@ const clients = httpClients({
   backends: parseMap(process.env.SV_BACKENDS ?? "cpp=http://codegen-cpp:4110"),
   toolchains: parseMap(process.env.SV_TOOLCHAINS ?? "cpp=http://toolchain-cpp:4210"),
   signalGateway: process.env.SV_SIGNAL_GATEWAY_URL ?? "http://signal-gateway:4050",
+  // Deployment routes to deploy targets (ADR-0060).
+  vehicleGateway: process.env.SV_VEHICLE_GATEWAY_URL ?? "http://vehicle-gateway:4060",
   secret,
 });
 const hub = new EventHub();
@@ -71,6 +73,7 @@ const runs = new RunManager({
   hub,
   databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"),
   limits: runLimitsFromEnv(),
+  deployLimits: { perWorkspace: Math.max(1, Number(process.env.SV_MAX_DEPLOYMENTS_PER_WORKSPACE ?? 2) || 2) },
   // Every backend's apps run on kuksa.val.v2 (ADR-0047 §4, parity P3 7/7 for C++, Python and Rust); override per
   // backend or for all, e.g. SV_DATABROKER_API=*=sdv.databroker.v1 or cpp=sdv.databroker.v1.
   databrokerApis: { "*": "kuksa.val.v2", ...parseMap(process.env.SV_DATABROKER_API ?? "") },
@@ -158,6 +161,6 @@ setTimeout(() => {
   setInterval(sweepQuietly, sweepEveryMs);
 }, 5 * 60_000);
 
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe, sweep: runSweep }));
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe, sweep: runSweep, secret: process.env.INTERNAL_API_SECRET }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

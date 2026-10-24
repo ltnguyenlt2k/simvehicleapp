@@ -8,7 +8,8 @@ import { exportExtras } from "./export.ts";
 import { type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quotaExceeded } from "./governance.ts";
 import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp, type SweepResult } from "./lifecycle.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
-import { ACTIVE_RUN_STATES, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
+import { ACTIVE_RUN_STATES, type DeployTarget, DuplicateTargetName, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
+import { openToken, sealToken } from "./secrets.ts";
 import { RunConflict, RunQuota, type RunManager } from "./runs.ts";
 
 /**
@@ -39,6 +40,8 @@ export interface AppDeps {
   probe?: CapacityProbe;
   /** Runs the sweeper now (`POST /sweep`); `null` while a sweep is already running. Without it: 503. */
   sweep?: () => Promise<SweepResult | null>;
+  /** INTERNAL_API_SECRET: seals deploy target tokens at rest (ADR-0060). */
+  secret?: string;
   /** Wakes the generation worker. */
   kick(): void;
   background(p: Promise<void>): void;
@@ -64,6 +67,14 @@ const projectView = (p: Project, ideUrl?: string, ide = true) => {
 };
 
 /** Run v1 of the contract (the toolchain job id stays internal). */
+/** A deploy target without its token (never returned), only whether it has one. */
+const targetView = (t: DeployTarget) => {
+  const { tokenEnc, ...view } = t;
+  return { ...view, hasToken: Boolean(tokenEnc) };
+};
+const TARGET_ADDRESS = /^[A-Za-z0-9.-]{1,253}:[0-9]{2,5}$/;
+const VSS_PATH = /^Vehicle(\.[A-Za-z0-9_]+)+$/;
+
 const runView = (r: Run) => {
   const { jobId: _job, ...view } = r;
   return view;
@@ -134,6 +145,68 @@ export function createOrchestratorHandler(d: AppDeps) {
         if (e instanceof DuplicateSlug) return json(409, { error: "conflict", message: `project ${slug} already exists` });
         throw e;
       }
+    }
+
+    // Deploy targets of a workspace (ADR-0060, M18-T09): databrokers outside the stack the apps are deployed to.
+    if (parts[0] === "deploy-targets") {
+      const workspaceId = url.searchParams.get("workspaceId");
+      if (parts.length === 1 && req.method === "GET") {
+        if (!workspaceId || !OWNER.test(workspaceId)) return json(400, { error: "invalid_request", message: "workspaceId is required" });
+        return json(200, { targets: (await d.repo.deployTargets(workspaceId)).map(targetView) });
+      }
+      if (parts.length === 1 && req.method === "POST") {
+        const b = await readBody(req);
+        if (b instanceof Response) return b;
+        const { workspaceId: ws, name, address, tls, token, vssRelease } = b as Record<string, unknown>;
+        if (typeof ws !== "string" || !OWNER.test(ws)) return json(400, { error: "invalid_request", message: "workspaceId is required" });
+        if (typeof name !== "string" || !name.trim() || name.length > 80) return json(400, { error: "invalid_request", message: "name: 1–80 characters" });
+        if (typeof address !== "string" || !TARGET_ADDRESS.test(address)) return json(400, { error: "invalid_request", message: "address must be host:port" });
+        if (tls !== undefined && typeof tls !== "boolean") return json(400, { error: "invalid_request", message: "tls must be a boolean" });
+        if (token !== undefined && (typeof token !== "string" || token.length > 4096)) return json(400, { error: "invalid_request", message: "token must be a string" });
+        if (typeof vssRelease !== "string" || !/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/.test(vssRelease)) return json(400, { error: "invalid_request", message: "vssRelease (vX.Y or vX.Y-<name>) is required" });
+        if (token && !d.secret) return json(503, { error: "unavailable", message: "INTERNAL_API_SECRET is not set: a token cannot be stored" });
+        try {
+          const t = await d.repo.createDeployTarget({
+            id: `dt_${crypto.randomUUID()}`,
+            workspaceId: ws,
+            name: name.trim(),
+            address,
+            tls: tls === true,
+            ...(token ? { tokenEnc: await sealToken(token as string, d.secret!) } : {}),
+            vssRelease,
+            createdAt: Date.now(),
+          });
+          ctx.log.info("deploy target created", { target: t.id, workspace: ws, address, tls: t.tls });
+          return json(201, targetView(t));
+        } catch (e) {
+          if (e instanceof DuplicateTargetName) return json(409, { error: "conflict", message: e.message });
+          throw e;
+        }
+      }
+      if (parts[1] && (parts.length === 2 || (parts.length === 3 && parts[2] === "test"))) {
+        const t = await d.repo.deployTarget(parts[1]);
+        // A target of another workspace is not found.
+        const ws = parts.length === 2 ? workspaceId : (((await req.clone().json().catch(() => ({}))) as { workspaceId?: unknown }).workspaceId as string | undefined);
+        if (!t || !ws || t.workspaceId !== ws) return json(404, { error: "not_found" });
+        if (parts.length === 2 && req.method === "DELETE") {
+          const using = (await d.repo.runs({ active: true, limit: 1000 })).filter((r) => r.deploy?.targetId === t.id);
+          if (using.length) return json(409, { error: "conflict", message: `${t.name} has ${using.length} active deployment(s): stop them first`, runs: using.map(runView) });
+          await d.repo.deleteDeployTarget(t.id);
+          ctx.log.info("deploy target deleted", { target: t.id });
+          return new Response(null, { status: 204 });
+        }
+        if (parts.length === 3 && req.method === "POST") {
+          const b = await readBody(req);
+          if (b instanceof Response) return b;
+          const paths = (b.paths ?? []) as unknown;
+          if (!Array.isArray(paths) || paths.length > 200 || !paths.every((p) => typeof p === "string" && VSS_PATH.test(p))) return json(400, { error: "invalid_request", message: "paths: at most 200 VSS paths" });
+          const token = t.tokenEnc && d.secret ? await openToken(t.tokenEnc, d.secret) : undefined;
+          const result = await d.clients.probeTarget({ target: t.address, tls: t.tls, ...(token ? { token } : {}), paths: paths as string[] });
+          ctx.log.info("deploy target tested", { target: t.id, reachable: result.reachable });
+          return json(200, result);
+        }
+      }
+      return json(404, { error: "not_found" });
     }
 
     if (parts[0] === "projects" && parts[1]) {
@@ -224,6 +297,30 @@ export function createOrchestratorHandler(d: AppDeps) {
         try {
           const run = await d.runs.start(project, gid, b.traceLevel as Run["traceLevel"] | undefined, o ? { userId: o.userId as string, ...(o.workspaceId ? { workspaceId: o.workspaceId as string } : {}) } : undefined);
           ctx.log.info("run requested", { project: project.slug, run: run.id, state: run.state });
+          return json(202, runView(run));
+        } catch (e) {
+          if (e instanceof RunConflict) return json(409, { error: "conflict", message: e.message, ...(e.activeRun ? { activeRun: runView(e.activeRun) } : {}) });
+          if (e instanceof RunQuota) return json(409, [{ ...e.diagnostic, data: { ...e.diagnostic.data, runs: e.own.map(runView) } }]);
+          throw e;
+        }
+      }
+      if (parts[2] === "deployments" && parts.length === 3 && req.method === "POST") {
+        if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
+        const b = await readBody(req);
+        if (b instanceof Response) return b;
+        const o = b.owner as { userId?: unknown; workspaceId?: unknown } | undefined;
+        if (!o || typeof o.userId !== "string" || !OWNER.test(o.userId) || typeof o.workspaceId !== "string" || !OWNER.test(o.workspaceId)) return json(400, { error: "invalid_request", message: "owner {userId, workspaceId} is required" });
+        if (b.mode !== "read-only" && b.mode !== "read-write") return json(400, { error: "invalid_request", message: "mode must be read-only or read-write" });
+        if (typeof b.targetId !== "string") return json(400, { error: "invalid_request", message: "targetId is required" });
+        const t = await d.repo.deployTarget(b.targetId);
+        if (!t || t.workspaceId !== o.workspaceId) return json(404, { error: "not_found", message: "unknown deploy target" });
+        if (t.vssRelease !== project.vssRelease) return json(409, { error: "conflict", message: `${t.name} serves VSS ${t.vssRelease}, ${project.name} is built for ${project.vssRelease}` });
+        const gid = (typeof b.generationId === "string" ? b.generationId : undefined) ?? (await d.repo.latestGeneration(project.id))?.id;
+        if (!gid) return json(409, { error: "conflict", message: "SynCode the project first: it has no generation to deploy" });
+        try {
+          const token = t.tokenEnc && d.secret ? await openToken(t.tokenEnc, d.secret) : undefined;
+          const run = await d.runs.startDeployment(project, gid, { id: t.id, name: t.name, address: t.address, tls: t.tls, ...(token ? { token } : {}) }, b.mode, { userId: o.userId, workspaceId: o.workspaceId });
+          ctx.log.info("deployment requested", { project: project.slug, run: run.id, target: t.id, mode: b.mode });
           return json(202, runView(run));
         } catch (e) {
           if (e instanceof RunConflict) return json(409, { error: "conflict", message: e.message, ...(e.activeRun ? { activeRun: runView(e.activeRun) } : {}) });
@@ -337,6 +434,12 @@ export function createOrchestratorHandler(d: AppDeps) {
       const runs = await d.repo.runs({ ...(projectId ? { projectId } : {}), ...(ownerUserId ? { ownerUserId } : {}), active: url.searchParams.get("active") === "true", limit: 20 });
       // What the studio offers (run apps side by side, Extend) follows the limits (ADR-0057).
       return json(200, { runs: runs.map(runView), ...(d.runs?.limits ? { limits: d.runs.limits } : {}) });
+    }
+
+    if (parts[0] === "runs" && parts[1] && parts[2] === "audit" && parts.length === 3 && req.method === "GET") {
+      const run = ID.test(parts[1]) ? await d.repo.run(parts[1]) : null;
+      if (!run?.deploy) return json(404, { error: "not_found", message: "only a deployment has an audit" });
+      return json(200, (await d.clients.routeAudit(run.id)) ?? { audit: [], forwarded: {} });
     }
 
     if (parts[0] === "runs" && parts[1] && (parts.length === 2 || (parts.length === 3 && (parts[2] === "stop" || parts[2] === "extend")))) {

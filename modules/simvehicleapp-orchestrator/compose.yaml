@@ -44,6 +44,9 @@ services:
       # Databroker API of each backend's apps (ADR-0047): unset = kuksa.val.v2 for all; *=sdv.databroker.v1 or
       # cpp=sdv.databroker.v1 to go back.
       SV_DATABROKER_API: ${SV_DATABROKER_API:-}
+      # Deployments (ADR-0060): apps on a deploy target's signals, through the vehicle-gateway.
+      SV_VEHICLE_GATEWAY_URL: http://vehicle-gateway:4060
+      SV_MAX_DEPLOYMENTS_PER_WORKSPACE: ${SV_MAX_DEPLOYMENTS_PER_WORKSPACE:-2}
     # Internal only: the studio BFF reaches it as http://orchestrator:4030.
     # Hardening (analysis/14 §5): no Linux capabilities, no privilege escalation.
     cap_drop: [ALL]

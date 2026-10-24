@@ -77,6 +77,8 @@ export interface RunDeps {
   log?: { info(msg: string, data?: Record<string, unknown>): void; warn(msg: string, data?: Record<string, unknown>): void };
   /** Without it: one run at a time on the shared databrokers, no expiry (the v1 behaviour). */
   limits?: RunLimits;
+  /** Deployments (ADR-0060): how many may be active per workspace (`SV_MAX_DEPLOYMENTS_PER_WORKSPACE`, default 2). */
+  deployLimits?: { perWorkspace: number };
   /** Observability hooks (ADR-0033 §2): runs ended by state, trace events stored. */
   metrics?: { runEnded(state: "stopped" | "crashed", code?: string): void; traceEvents(count: number): void };
 }
@@ -90,6 +92,15 @@ interface Live {
   timer?: ReturnType<typeof setTimeout>;
   /** Stops the run when it expires. */
   expiry?: ReturnType<typeof setTimeout>;
+}
+
+/** A deploy target as a deployment needs it: where, how, with the token already opened. */
+export interface DeployTargetRef {
+  id: string;
+  name: string;
+  address: string;
+  tls: boolean;
+  token?: string;
 }
 
 export class RunManager {
@@ -113,15 +124,22 @@ export class RunManager {
     return stale.length;
   }
 
-  async start(project: Project, generationId: string, traceLevel?: Run["traceLevel"], owner?: Run["owner"]): Promise<Run> {
+  /** The generation a run or deployment starts: the project's latest, passed SynCode. */
+  private async checkGeneration(project: Project, generationId: string) {
     const latest = await this.d.repo.latestGeneration(project.id);
     const gen = await this.d.repo.generation(generationId);
     if (!gen || gen.projectId !== project.id) throw new RunConflict("unknown generation");
     if (latest && (latest.state === "queued" || latest.state === "running")) throw new RunConflict("A SynCode of this project is in progress: run when it has finished");
     if (gen.state !== "succeeded") throw new RunConflict("Only a generation that passed SynCode can run");
     if (latest?.id !== gen.id) throw new RunConflict("The project changed since this generation: run its latest SynCode");
+    return gen;
+  }
+
+  async start(project: Project, generationId: string, traceLevel?: Run["traceLevel"], owner?: Run["owner"]): Promise<Run> {
+    const gen = await this.checkGeneration(project, generationId);
     const sandbox = this.d.limits?.sandbox === true;
-    const active = await this.d.repo.runs({ active: true, limit: 1000 });
+    // Deployments use neither the shared databrokers nor the run quota (ADR-0060).
+    const active = (await this.d.repo.runs({ active: true, limit: 1000 })).filter((r) => !r.deploy);
     const own = active.find((r) => r.projectId === project.id);
     if (own) throw new RunConflict(`${project.name} is already running: stop it or restart it`, own);
     if (!sandbox) {
@@ -190,6 +208,79 @@ export class RunManager {
     live.timer = setTimeout(() => void this.timeout(run.id), this.d.startTimeoutMs ?? 30_000);
     void this.follow(project, run.id, job.value.id);
     return (await this.d.repo.run(run.id))!;
+  }
+
+  /**
+   * Deploys the app to a target (ADR-0060): it runs like a Run, but its databroker is a vehicle-gateway route to the
+   * target's databroker — signals come from the target's layers; it writes only in read-write mode, only its own
+   * actuators. No mirror (the target has its providers), no expiry; a quota per workspace.
+   */
+  async startDeployment(project: Project, generationId: string, target: DeployTargetRef, mode: "read-only" | "read-write", owner?: Run["owner"]): Promise<Run> {
+    const gen = await this.checkGeneration(project, generationId);
+    const deployments = (await this.d.repo.runs({ active: true, limit: 1000 })).filter((r) => r.deploy);
+    const own = deployments.find((r) => r.projectId === project.id);
+    if (own) throw new RunConflict(`${project.name} is already deployed to ${own.deploy!.targetName}: stop that deployment first`, own);
+    const perWorkspace = this.d.deployLimits?.perWorkspace ?? 2;
+    const workspace = owner?.workspaceId;
+    const ofWorkspace = workspace ? deployments.filter((r) => r.owner?.workspaceId === workspace) : [];
+    if (workspace && ofWorkspace.length >= perWorkspace)
+      throw new RunQuota(diag("DEPLOY_QUOTA_EXCEEDED", `This workspace has ${ofWorkspace.length} deployments: the limit is ${perWorkspace}. Stop one of them first.`, { scope: "workspace", limit: perWorkspace }), ofWorkspace);
+
+    const level = project.settings.traceLevel;
+    const run: Run = {
+      id: (this.d.newId ?? (() => `r_${crypto.randomUUID()}`))(),
+      projectId: project.id,
+      generationId,
+      state: "starting",
+      vssRelease: project.vssRelease,
+      traceLevel: level,
+      diagnostics: [],
+      createdAt: this.now(),
+      ...(owner ? { owner } : {}),
+      deploy: { targetId: target.id, targetName: target.name, mode },
+    };
+    await this.d.repo.createRun(run);
+    const { live, ingest } = this.track(run, gen);
+    const actuators = (gen.runInfo?.signals ?? []).filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
+    let address: string;
+    try {
+      ({ address } = await this.d.clients.openRoute(run.id, { target: target.address, tls: target.tls, ...(target.token ? { token: target.token } : {}), mode, actuators }));
+    } catch (e) {
+      await this.finish(run.id, "crashed", [diag("DEPLOY_TARGET_UNREACHABLE", `No route to ${target.name}: ${(e as Error).message}`)]);
+      return (await this.d.repo.run(run.id))!;
+    }
+    await this.d.repo.updateRun(run.id, { sandbox: address });
+    ingest.system(`▶ deploy ${project.slug} (generation ${generationId}, VSS ${project.vssRelease}) to ${target.name} (${target.address}${target.tls ? ", TLS" : ""}), ${mode}, through ${address}`);
+    const api = databrokerApiOf(this.d.databrokerApis, project.language);
+    const job = await this.d.clients.startJob(project.language, "run", project.slug, {
+      env: { SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${address}`, SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api, KUKSA_DATABROKER_API: api },
+    });
+    if (!job.ok) {
+      const d = job.diagnostics.length ? job.diagnostics : [diag("RUN_CRASHED", `The toolchain refused the deployment (${job.status}${job.message ? `: ${job.message}` : ""})`)];
+      await this.finish(run.id, "crashed", d);
+      return (await this.d.repo.run(run.id))!;
+    }
+    await this.d.repo.updateRun(run.id, { jobId: job.value.id });
+    live.timer = setTimeout(() => void this.timeout(run.id), this.d.startTimeoutMs ?? 30_000);
+    void this.follow(project, run.id, job.value.id);
+    return (await this.d.repo.run(run.id))!;
+  }
+
+  /** The live state of a run: its trace ingest (SSE), the lifecycle hooks. */
+  private track(run: Run, gen: { runInfo?: { traceMap?: Record<string, unknown> } }) {
+    const ingest = new TraceIngest({
+      runId: run.id,
+      traceMap: (gen.runInfo?.traceMap ?? {}) as never,
+      batchMs: this.d.batchMs,
+      now: this.now,
+      emit: (events) => this.emit(run.id, events),
+      onLifecycle: (ev) => {
+        if (ev === "app.started") void this.started(run.id);
+      },
+    });
+    const live: Live = { ingest, stopRequested: false };
+    this.live.set(run.id, live);
+    return { live, ingest };
   }
 
   async stop(runId: string, reason: NonNullable<Run["stopReason"]> = "user"): Promise<Run | null> {
@@ -274,7 +365,7 @@ export class RunManager {
     if (live?.timer) clearTimeout(live.timer);
     const runningAt = this.now();
     const l = this.d.limits;
-    const expiresAt = l && l.maxMinutes > 0 ? runningAt + l.maxMinutes * 60_000 : undefined;
+    const expiresAt = l && l.maxMinutes > 0 && !run.deploy ? runningAt + l.maxMinutes * 60_000 : undefined;
     await this.d.repo.updateRun(runId, { state: "running", runningAt, ...(expiresAt ? { expiresAt } : {}) });
     if (expiresAt) this.schedule(runId, expiresAt);
     this.d.log?.info("run started", { run: runId, ...(run.sandbox ? { sandbox: run.sandbox } : {}) });
@@ -329,6 +420,7 @@ export class RunManager {
     // Release the mirror/provider before the run is seen finished: a run started right after (gates, Stop and run)
     // claims the same actuators, and a late release would wipe its claim.
     await this.d.clients.mirror(run.vssRelease, [], run.sandbox).catch(() => {});
+    if (run.deploy) await this.d.clients.closeRoute(run.id).catch((e) => this.d.log?.warn("deployment route not closed", { run: runId, err: (e as Error).message }));
     await this.d.repo.updateRun(runId, { state, finishedAt: this.now(), ...(diagnostics.length ? { diagnostics: [...run.diagnostics, ...diagnostics] } : {}), ...(exitCode !== undefined ? { exitCode } : {}) });
     this.live.delete(runId);
     this.chains.delete(runId);

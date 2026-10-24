@@ -61,4 +61,18 @@ describe("orchestrator responses ⇄ openapi/orchestrator.v1.yaml", () => {
     }
     expect(schema("Run")(await (await h(new Request("http://o/runs/r_3"), ctx)).json())).toBe(true);
   });
+
+  test("a deployment Run and a DeployTarget validate (ADR-0060); the token never shows", async () => {
+    const repo = new MemoryRepo();
+    const h = createOrchestratorHandler({ repo, clients: {} as never, hub: new EventHub(), kick() {}, background() {}, secret: "s" });
+    await repo.createRun({ id: "r_d", projectId: crypto.randomUUID(), generationId: "g1", vssRelease: "v4.0", traceLevel: "node", diagnostics: [], createdAt: 1, state: "running", runningAt: 2, sandbox: "vehicle-gateway:57000", owner: { userId: "u", workspaceId: "w" }, deploy: { targetId: "dt_1", targetName: "HIL", mode: "read-only" } });
+    const run = await (await h(new Request("http://o/runs/r_d"), ctx)).json();
+    expect(schema("Run")(run)).toBe(true);
+    const res = await h(new Request("http://o/deploy-targets", { method: "POST", body: JSON.stringify({ workspaceId: "w", name: "HIL", address: "hil.lab:55555", tls: true, token: "tok", vssRelease: "v4.0" }), headers: { "content-type": "application/json" } }), ctx);
+    const t = await res.json();
+    const ok = schema("DeployTarget")(t);
+    if (!ok) console.log(schema("DeployTarget").errors);
+    expect(ok).toBe(true);
+    expect(JSON.stringify(t)).not.toContain("tok\"");
+  });
 });

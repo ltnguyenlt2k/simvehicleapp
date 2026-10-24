@@ -28,6 +28,10 @@ function clients(over: Partial<Clients> = {}) {
     workspaceCapacity: async () => ok(cap(50, "ok")),
     toolchainForget: async (l: string, slug: string) => (calls.push(`tc:forget:${l}:${slug}`), ok(null)),
     toolchainGc: async (l: string, keep: string[]) => (calls.push(`tc:gc:${l}:${keep.join("+")}`), ok({ removed: 1, freedBytes: 500 })),
+    openRoute: async (id: string) => (calls.push(`route:open:${id}`), { address: "vehicle-gateway:57000" }),
+    closeRoute: async (id: string) => void calls.push(`route:close:${id}`),
+    routeAudit: async () => ({ audit: [], forwarded: {} }),
+    probeTarget: async () => ({ reachable: true, api: "kuksa.val.v2", server: { name: "databroker", version: "0.5.0" }, missing: [] }),
     ...over,
   } as unknown as Clients;
   return { clients: c, calls };

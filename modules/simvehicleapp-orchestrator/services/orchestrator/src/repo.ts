@@ -117,6 +117,27 @@ export interface Run {
   extensions?: number;
   /** Why it stopped: Stop by a user, expiry, an administrator. */
   stopReason?: "user" | "expired" | "admin";
+  /** A deployment (ADR-0060): the app runs on a deploy target's signals, through a vehicle-gateway route. */
+  deploy?: { targetId: string; targetName: string; mode: "read-only" | "read-write" };
+}
+
+/** A databroker outside the stack a workspace deploys apps to (ADR-0060). `tokenEnc` never leaves the orchestrator. */
+export interface DeployTarget {
+  id: string;
+  workspaceId: string;
+  name: string;
+  /** `host:port`. */
+  address: string;
+  tls: boolean;
+  tokenEnc?: string;
+  vssRelease: string;
+  createdAt: number;
+}
+
+export class DuplicateTargetName extends Error {
+  constructor(name: string) {
+    super(`a deploy target named ${name} exists in this workspace`);
+  }
 }
 
 /** TraceEvent v1 (contracts trace-event). */
@@ -170,6 +191,10 @@ export interface Repo {
   lastActivity(): Promise<{ projectId: string; lastAt: number }[]>;
   /** `queued` ⇒ `cancelled`, atomically; false when the worker claimed it first (or it is gone). */
   cancelQueued(id: string, at: number): Promise<boolean>;
+  createDeployTarget(t: DeployTarget): Promise<DeployTarget>;
+  deployTarget(id: string): Promise<DeployTarget | null>;
+  deployTargets(workspaceId: string): Promise<DeployTarget[]>;
+  deleteDeployTarget(id: string): Promise<void>;
 }
 
 export const initialVerification = (): Generation["verification"] => ({ ir: "pending", format: "pending", compile: "pending", tests: "pending" });
@@ -275,6 +300,22 @@ export class MemoryRepo implements Repo {
       .filter((g) => (g.state === "queued" || g.state === "running") && (!projectId || g.projectId === projectId))
       .sort((a, b) => a.createdAt - b.createdAt)
       .map((g) => ({ id: g.id, projectId: g.projectId, state: g.state as "queued" | "running", createdAt: g.createdAt }));
+  }
+  readonly targets = new Map<string, DeployTarget>();
+  async createDeployTarget(t: DeployTarget) {
+    if ([...this.targets.values()].some((x) => x.workspaceId === t.workspaceId && x.name === t.name)) throw new DuplicateTargetName(t.name);
+    this.targets.set(t.id, structuredClone(t));
+    return structuredClone(t);
+  }
+  async deployTarget(id: string) {
+    const t = this.targets.get(id);
+    return t ? structuredClone(t) : null;
+  }
+  async deployTargets(workspaceId: string) {
+    return [...this.targets.values()].filter((t) => t.workspaceId === workspaceId).sort((a, b) => a.name.localeCompare(b.name)).map((t) => structuredClone(t));
+  }
+  async deleteDeployTarget(id: string) {
+    this.targets.delete(id);
   }
   async cancelQueued(id: string, at: number) {
     const g = this.gens.get(id);
@@ -497,12 +538,13 @@ export class PgRepo implements Repo {
       ...(r.expires_at ? { expiresAt: ms(r.expires_at) } : {}),
       ...(r.extensions ? { extensions: Number(r.extensions) } : {}),
       ...(r.stop_reason ? { stopReason: r.stop_reason as Run["stopReason"] } : {}),
+      ...(r.deploy ? { deploy: parse(r.deploy) as Run["deploy"] } : {}),
     };
   }
 
   async createRun(r: Run) {
-    await this.sql`INSERT INTO sv.run (id, project_id, generation_id, state, vss_release, trace_level, diagnostics, created_at, owner_user_id, owner_workspace_id)
-      VALUES (${r.id}, ${r.projectId}, ${r.generationId}, ${r.state}, ${r.vssRelease}, ${r.traceLevel}, ${r.diagnostics}, ${new Date(r.createdAt)}, ${r.owner?.userId ?? null}, ${r.owner?.workspaceId ?? null})`;
+    await this.sql`INSERT INTO sv.run (id, project_id, generation_id, state, vss_release, trace_level, diagnostics, created_at, owner_user_id, owner_workspace_id, deploy)
+      VALUES (${r.id}, ${r.projectId}, ${r.generationId}, ${r.state}, ${r.vssRelease}, ${r.traceLevel}, ${r.diagnostics}, ${new Date(r.createdAt)}, ${r.owner?.userId ?? null}, ${r.owner?.workspaceId ?? null}, ${r.deploy ?? null})`;
     return r;
   }
 
@@ -562,6 +604,39 @@ export class PgRepo implements Repo {
     return rows.map((r) => ({ id: String(r.id), projectId: String(r.project_id), state: r.state as "queued" | "running", createdAt: ms(r.created_at)! }));
   }
 
+  private toTarget(r: Row): DeployTarget {
+    return {
+      id: String(r.id),
+      workspaceId: String(r.workspace_id),
+      name: String(r.name),
+      address: String(r.address),
+      tls: Boolean(r.tls),
+      ...(r.token_enc ? { tokenEnc: String(r.token_enc) } : {}),
+      vssRelease: String(r.vss_release),
+      createdAt: ms(r.created_at)!,
+    };
+  }
+  async createDeployTarget(t: DeployTarget) {
+    try {
+      await this.sql`INSERT INTO sv.deploy_target (id, workspace_id, name, address, tls, token_enc, vss_release, created_at)
+        VALUES (${t.id}, ${t.workspaceId}, ${t.name}, ${t.address}, ${t.tls}, ${t.tokenEnc ?? null}, ${t.vssRelease}, ${new Date(t.createdAt)})`;
+    } catch (e) {
+      if ((e as { code?: string }).code === "23505") throw new DuplicateTargetName(t.name);
+      throw e;
+    }
+    return t;
+  }
+  async deployTarget(id: string) {
+    const rows = (await this.sql`SELECT * FROM sv.deploy_target WHERE id = ${id}`) as Row[];
+    return rows[0] ? this.toTarget(rows[0]) : null;
+  }
+  async deployTargets(workspaceId: string) {
+    const rows = (await this.sql`SELECT * FROM sv.deploy_target WHERE workspace_id = ${workspaceId} ORDER BY name`) as Row[];
+    return rows.map((r) => this.toTarget(r));
+  }
+  async deleteDeployTarget(id: string) {
+    await this.sql`DELETE FROM sv.deploy_target WHERE id = ${id}`;
+  }
   async cancelQueued(id: string, at: number) {
     const rows = (await this.sql`UPDATE sv.generation SET state = 'cancelled', finished_at = ${new Date(at)} WHERE id = ${id} AND state = 'queued' RETURNING id`) as Row[];
     return rows.length === 1;

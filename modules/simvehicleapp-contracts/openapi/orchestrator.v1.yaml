@@ -534,6 +534,105 @@ paths:
               schema: { $ref: "#/components/schemas/Run" }
         "404": { description: "Unknown run." }
         "409": { description: "The run is not running, has no time limit, or was extended enough." }
+  /deploy-targets:
+    get:
+      operationId: listDeployTargets
+      tags: [deploy]
+      parameters:
+        - { name: workspaceId, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The workspace's deploy targets.
+          content:
+            application/json:
+              schema: { type: object, required: [targets], additionalProperties: false, properties: { targets: { type: array, items: { $ref: "#/components/schemas/DeployTarget" } } } }
+    post:
+      operationId: createDeployTarget
+      tags: [deploy]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, name, address, vssRelease]
+              additionalProperties: false
+              properties:
+                workspaceId: { type: string }
+                name: { type: string, minLength: 1, maxLength: 80 }
+                address: { type: string, pattern: "^[A-Za-z0-9.-]{1,253}:[0-9]{2,5}$" }
+                tls: { type: boolean }
+                token: { type: string, maxLength: 4096 }
+                vssRelease: { type: string }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "#/components/schemas/DeployTarget" } } } }
+        "400": { description: Invalid request. }
+        "409": { description: A target of that name exists in the workspace. }
+  /deploy-targets/{tid}:
+    delete:
+      operationId: deleteDeployTarget
+      tags: [deploy]
+      parameters:
+        - { name: tid, in: path, required: true, schema: { type: string } }
+        - { name: workspaceId, in: query, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Deleted. }
+        "404": { description: No such target in the workspace. }
+        "409": { description: The target has active deployments. }
+  /deploy-targets/{tid}/test:
+    post:
+      operationId: testDeployTarget
+      tags: [deploy]
+      description: "Test connection through the vehicle-gateway (`POST /probe`): the server, and the paths the app uses that the target lacks."
+      parameters:
+        - { name: tid, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId]
+              additionalProperties: false
+              properties:
+                workspaceId: { type: string }
+                paths: { type: array, maxItems: 200, items: { type: string } }
+      responses:
+        "200": { description: "vehicle-gateway probe result (reachable, server, missing) or why it is not reachable." }
+        "404": { description: No such target in the workspace. }
+  /projects/{id}/deployments:
+    post:
+      operationId: startDeployment
+      tags: [deploy]
+      description: "Deploys the app's latest SynCode to a target (ADR-0060): a Run with `deploy`; its signals come from the target; read-write lets it set its own actuators only."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetId, mode, owner]
+              additionalProperties: false
+              properties:
+                targetId: { type: string }
+                mode: { enum: [read-only, read-write] }
+                generationId: { type: string }
+                owner: { $ref: "#/components/schemas/RunOwner" }
+      responses:
+        "202": { description: The deployment (a Run with `deploy`)., content: { application/json: { schema: { $ref: "#/components/schemas/Run" } } } }
+        "404": { description: Unknown project or deploy target of the workspace. }
+        "409": { description: "Already deployed, the target serves another VSS release, no generation, or `DEPLOY_QUOTA_EXCEEDED` (a diagnostics array)." }
+  /runs/{rid}/audit:
+    get:
+      operationId: deploymentAudit
+      tags: [deploy]
+      parameters:
+        - { name: rid, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: "The deployment route's audit (vehicle-gateway `GET /routes/{id}/audit`)." }
+        "404": { description: Not a deployment. }
   /events:
     get:
       operationId: streamEvents
@@ -650,6 +749,20 @@ components:
       properties:
         userId: { type: string, pattern: "^[A-Za-z0-9_-]{1,128}$" }
         workspaceId: { type: string, pattern: "^[A-Za-z0-9_-]{1,128}$" }
+    DeployTarget:
+      type: object
+      description: "A databroker outside the stack a workspace deploys apps to (ADR-0060). The token is never returned: `hasToken` says whether one is stored (sealed at rest)."
+      required: [id, workspaceId, name, address, tls, vssRelease, createdAt, hasToken]
+      additionalProperties: false
+      properties:
+        id: { type: string }
+        workspaceId: { type: string }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        address: { type: string, pattern: "^[A-Za-z0-9.-]{1,253}:[0-9]{2,5}$" }
+        tls: { type: boolean }
+        vssRelease: { type: string }
+        createdAt: { type: integer }
+        hasToken: { type: boolean }
     Run:
       type: object
       description: "A live run (analysis/08 §5): starting until the app traces `app.started` (30 s, else RUN_START_TIMEOUT), stopped after Stop, crashed when the app exits on its own or never starts."
@@ -672,3 +785,12 @@ components:
         expiresAt: { type: integer, description: "When the run stops by itself (stopReason expired) unless extended." }
         extensions: { type: integer, minimum: 0 }
         stopReason: { enum: [user, expired, admin] }
+        deploy:
+          type: object
+          description: "A deployment (ADR-0060): the app runs on the deploy target's signals through a vehicle-gateway route (`sandbox` = vehicle-gateway:<port>, read only for the signal-gateway); no expiry."
+          required: [targetId, targetName, mode]
+          additionalProperties: false
+          properties:
+            targetId: { type: string }
+            targetName: { type: string }
+            mode: { enum: [read-only, read-write] }

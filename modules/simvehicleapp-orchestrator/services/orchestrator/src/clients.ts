@@ -77,7 +77,25 @@ export interface Clients {
   /** Per-project toolchain caches of a deleted app; `gc` keeps only the live apps of that language. */
   toolchainForget(language: string, slug: string): Promise<Outcome<null>>;
   toolchainGc(language: string, keep: string[]): Promise<Outcome<{ removed: number; freedBytes: number }>>;
+  /** A deployment's route to its deploy target (vehicle-gateway, ADR-0060): the app's databroker address. */
+  openRoute(id: string, body: RouteBody): Promise<{ address: string }>;
+  closeRoute(id: string): Promise<void>;
+  routeAudit(id: string): Promise<unknown>;
+  /** Test connection of a deploy target: its server and the paths it lacks. */
+  probeTarget(body: { target: string; tls: boolean; token?: string; paths?: string[] }): Promise<ProbeResult>;
 }
+
+export interface RouteBody {
+  target: string;
+  tls: boolean;
+  token?: string;
+  mode: "read-only" | "read-write";
+  actuators: string[];
+}
+
+export type ProbeResult =
+  | { reachable: true; api: "kuksa.val.v2"; server: { name?: string; version?: string }; missing: string[] }
+  | { reachable: false; status: number; message: string };
 
 export interface WorkspaceCapacity {
   freeBytes: number;
@@ -100,6 +118,7 @@ export interface Endpoints {
   compiler: string;
   workspace: string;
   signalGateway?: string;
+  vehicleGateway?: string;
   backends: Record<string, string>;
   toolchains: Record<string, string>;
   secret: string;
@@ -228,6 +247,28 @@ export function httpClients(e: Endpoints): Clients {
       if (!e.signalGateway) return;
       const res = await call(`${e.signalGateway}/mirror`, { method: "PUT", body: JSON.stringify({ release, paths, ...(sandbox ? { sandbox } : {}), ...(api && api !== "sdv.databroker.v1" ? { api } : {}) }) }, true);
       if (!res.ok) throw new ServiceUnavailable(`signal-gateway /mirror ⇒ ${res.status}`);
+    },
+    async openRoute(id, body) {
+      if (!e.vehicleGateway) throw new ServiceUnavailable("the stack has no vehicle-gateway (SV_VEHICLE_GATEWAY_URL)");
+      const res = await call(`${e.vehicleGateway}/routes/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+      if (!res.ok) throw new ServiceUnavailable(`vehicle-gateway PUT /routes ⇒ ${res.status} ${await res.text()}`);
+      return (await res.json()) as { address: string };
+    },
+    async closeRoute(id) {
+      if (!e.vehicleGateway) return;
+      const res = await call(`${e.vehicleGateway}/routes/${encodeURIComponent(id)}`, { method: "DELETE" }, true);
+      if (!res.ok && res.status !== 404) throw new ServiceUnavailable(`vehicle-gateway DELETE /routes ⇒ ${res.status}`);
+    },
+    async routeAudit(id) {
+      if (!e.vehicleGateway) return null;
+      const res = await call(`${e.vehicleGateway}/routes/${encodeURIComponent(id)}/audit`);
+      return res.ok ? res.json() : null;
+    },
+    async probeTarget(body) {
+      if (!e.vehicleGateway) throw new ServiceUnavailable("the stack has no vehicle-gateway (SV_VEHICLE_GATEWAY_URL)");
+      const res = await call(`${e.vehicleGateway}/probe`, { method: "POST", body: JSON.stringify(body) });
+      if (!res.ok) throw new ServiceUnavailable(`vehicle-gateway /probe ⇒ ${res.status}`);
+      return (await res.json()) as ProbeResult;
     },
     async getJob(language, jobId) {
       const tc = base(e.toolchains, language, "toolchain");
