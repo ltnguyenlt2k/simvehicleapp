@@ -45,7 +45,7 @@ export function call(port: number, method: string, message = new Uint8Array()) {
     const client = http2.connect(`http://127.0.0.1:${port}`);
     // A closed route: no connection, no gRPC status.
     client.on("error", () => resolve({ status: -1, messages: 0 }));
-    const req = client.request({ ":method": "POST", ":path": `/kuksa.val.v2.VAL/${method}`, "content-type": "application/grpc", te: "trailers" });
+    const req = client.request({ ":method": "POST", ":path": method.startsWith("/") ? method : `/kuksa.val.v2.VAL/${method}`, "content-type": "application/grpc", te: "trailers" });
     let status = -1;
     let msg: string | undefined;
     const chunks: Buffer[] = [];

@@ -26,13 +26,17 @@ describe("vehicle-gateway route (M18-T09, ADR-0060)", () => {
     expect(await call(port, "Actuate", actuateByPath(HAZARD))).toMatchObject({ status: 7, message: "/kuksa.val.v2.VAL/Actuate: this deployment is read-only" });
     expect(await call(port, "PublishValue")).toMatchObject({ status: 7 });
     expect(await call(port, "OpenProviderStream")).toMatchObject({ status: 7 });
+    // The Live tab's v1 reads pass, v1 writes never.
+    expect((await call(port, "/kuksa.val.v1.VAL/Get")).status).toBe(0);
+    expect((await call(port, "/kuksa.val.v1.VAL/Set")).status).toBe(7);
     // The token goes to the target; the app never sends one.
-    expect(t.seen.map((s) => s.method)).toEqual(["/kuksa.val.v2.VAL/GetServerInfo", "/kuksa.val.v2.VAL/Subscribe"]);
+    expect(t.seen.map((s) => s.method)).toEqual(["/kuksa.val.v2.VAL/GetServerInfo", "/kuksa.val.v2.VAL/Subscribe", "/kuksa.val.v1.VAL/Get"]);
     expect(t.seen.every((s) => s.authorization === "Bearer s3cret")).toBe(true);
     expect(r.audit.map((a) => [a.method.split("/").pop(), a.allowed])).toEqual([
       ["Actuate", false],
       ["PublishValue", false],
       ["OpenProviderStream", false],
+      ["Set", false],
     ]);
   });
 

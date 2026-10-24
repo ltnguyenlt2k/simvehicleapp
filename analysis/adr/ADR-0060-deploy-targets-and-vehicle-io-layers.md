@@ -126,6 +126,14 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-24 — **Gate deploy PASS** (`gate/m18-deploy.sh`, stack dev):
+  - Target là databroker thứ hai trên `sv-internal`, kèm feeder Speed và provider cho Hazard, đóng vai các layer của xe.
+  - Test connection báo đúng path thiếu.
+  - Read-only: app đọc Speed của target qua route; `BatchActuate` của app (C++ SDK 0.7.1 ghi bằng BatchActuate) bị route chặn và audit; Hazard không đổi.
+  - Inject và Play trả 409 `SIMULATED_INPUT_DISABLED`.
+  - Read-write: provider của target nhận lệnh, Hazard bật, write được audit.
+  - Stop đóng route; xoá target.
+  - **Lệch so với thiết kế:** tab Live của signal-gateway đọc qua `kuksa.val.v1` (`Get`, `Subscribe`, `GetServerInfo`), nên route cho phép ba method đọc v1 này. `Set`/`StreamedUpdate` của v1 luôn bị chặn. Target chỉ có v2 thì tab Live chưa đọc được; chuyển reader của signal-gateway sang v2 là việc sau.
 - 2026-10-24 — **Thiết kế triển khai T09** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - **Deployment là một Run có trường `deploy`** `{targetId, targetName, mode: read-only|read-write}`. Dùng lại RunManager, console, trace, My runs và sandbox tiến trình (ADR-0057). Khác Run ở ba điểm:
     - không có `expiresAt`;

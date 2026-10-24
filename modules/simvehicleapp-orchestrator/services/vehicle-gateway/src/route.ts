@@ -30,7 +30,11 @@ export interface AuditEntry {
 }
 
 const V2 = "/kuksa.val.v2.VAL/";
-export const READ_METHODS = ["GetValue", "GetValues", "Subscribe", "SubscribeById", "ListMetadata", "GetServerInfo"].map((m) => V2 + m);
+export const READ_METHODS = [
+  ...["GetValue", "GetValues", "Subscribe", "SubscribeById", "ListMetadata", "GetServerInfo"].map((m) => V2 + m),
+  // The signal-gateway (the Live tab) reads over kuksa.val.v1; its writes (Set, StreamedUpdate) are never allowed.
+  ...["Get", "Subscribe", "GetServerInfo"].map((m) => `/kuksa.val.v1.VAL/${m}`),
+];
 export const WRITE_METHODS = ["Actuate", "BatchActuate"].map((m) => V2 + m);
 const AUDIT_MAX = 1000;
 /** gRPC status codes the route answers itself. */

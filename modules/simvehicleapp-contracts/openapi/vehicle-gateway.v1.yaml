@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: SimVehicleApp Vehicle Gateway API
   version: 1.0.0-alpha.1
-  description: "Deployment routes to a deploy target's KUKSA databroker (ADR-0060, M18-T09). Each route is an h2c port on sv-internal that a deployed app uses as its databroker: kuksa.val.v2 reads always pass; Actuate/BatchActuate only in read-write mode and only on the app's actuators; provider methods (PublishValue, OpenProviderStream) never. TLS and the target token are added by the gateway. This API is the orchestrator's control of the routes."
+  description: "Deployment routes to a deploy target's KUKSA databroker (ADR-0060, M18-T09). Each route is an h2c port on sv-internal that a deployed app uses as its databroker: kuksa.val.v2 reads (and the kuksa.val.v1 reads Get/Subscribe/GetServerInfo of the signal-gateway's Live tab) always pass; Actuate/BatchActuate only in read-write mode and only on the app's actuators; provider methods (PublishValue, OpenProviderStream) never. TLS and the target token are added by the gateway. This API is the orchestrator's control of the routes."
   license: { name: Apache-2.0, identifier: Apache-2.0 }
 servers:
   - url: http://vehicle-gateway:4060

@@ -90,7 +90,7 @@
 
 ### T09: Deploy Remote databroker
 - [x] **Spike vehicle-gateway:** proxy gRPC HTTP/2 lọc theo method, giữ stream. Bun `node:http2` đủ dùng ([docs/spikes/vehicle-gateway.md](../../docs/spikes/vehicle-gateway.md), 2026-10-24).
-- [ ] vehicle-gateway:
+- [x] vehicle-gateway (`services/vehicle-gateway`, contract `vehicle-gateway.v1`, 7 test):
   - TLS + token tới target; allowlist method read-only/read-write theo design M18 §9.2; audit;
   - app trỏ `SDV_VEHICLEDATABROKER_ADDRESS` vào gateway; Live subscribe qua gateway.
 - [ ] Test connection kiểm API target có (`sdv.databroker.v1` bắt buộc với app hiện tại; `kuksa.val.v1` cho Live) và báo không tương thích.
@@ -99,12 +99,12 @@
   - Ở Deploy: signal-gateway/orchestrator **từ chối** inject, Play scenario/test case, Record, mirror ⇒ 409 `SIMULATED_INPUT_DISABLED` (mã diagnostic mới, chỉ thêm).
   - UI tắt các nút đó, hiện "signals come from <target>; test inputs are disabled"; tab Live chỉ quan sát.
   - Unit + E2E chứng minh.
-- [ ] Contracts: `DeployTarget{id, name, kind, url, tls, auth, apiVersion, vssRelease}`, `Deployment{…}`; additive.
+- [x] Contracts: `DeployTarget{id, name, kind, url, tls, auth, apiVersion, vssRelease}`, `Deployment{…}`; additive.
 - [ ] Settings → Deploy targets (admin workspace); secrets mã hoá; Test connection (kết nối, TLS/token, v1/v2, release, path app dùng có tồn tại).
 - [ ] Deploy ⇒ sandbox (ADR-0057) nối databroker ngoài qua proxy gRPC; mặc định read-only (chặn `set`); bật ghi phải xác nhận liệt kê actuator.
 - [ ] Từ chối generation chưa pass / lệch release. Audit log. Dừng / rollback generation trước.
 - [ ] Vehicle apps hiện "Deployed to <target>"; tab Live đọc từ target.
-- [ ] Gate: service "external-databroker" + feeder giả lập (như CAN provider) ⇒ app chạy logic với dữ liệu tự đến; read-only chặn ghi; bật ghi ⇒ actuator đổi.
+- [x] Gate (`gate/m18-deploy.sh` PASS 2026-10-24): service "external-databroker" + feeder giả lập (như CAN provider) ⇒ app chạy logic với dữ liệu tự đến; read-only chặn ghi; bật ghi ⇒ actuator đổi.
 
 ### T10: Deploy Container image
 - [ ] Build image từ `app/Dockerfile` (toolchain), đóng kèm AppManifest + NOTICE/license; push registry (cấu hình target `kind: registry`).
