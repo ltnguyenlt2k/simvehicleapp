@@ -205,9 +205,13 @@ test.describe('M18 Test cases', () => {
     await page.locator('[data-sv-view="logic"]').click()
     const logic = page.locator('[data-sv="logic-view"]')
     await expect(logic).toBeVisible()
-    await expect(logic.locator('[data-sv-logic-line="trigger"]')).toContainText('When Speed changes')
+    await expect(logic.locator('[data-sv-logic-line="trigger"]')).toContainText(
+      'When Speed changes'
+    )
     await expect(logic.locator('[data-sv-logic-line="branch"]')).toContainText('stable ⇒')
-    const set = logic.locator('[data-sv-logic-line="step"]', { hasText: 'Set Hazard.IsSignaling = true' })
+    const set = logic.locator('[data-sv-logic-line="step"]', {
+      hasText: 'Set Hazard.IsSignaling = true',
+    })
     await expect(set).toBeVisible()
     await set.click()
     // The editor panel opens on that block.
@@ -216,4 +220,34 @@ test.describe('M18 Test cases', () => {
     await expect(logic).toHaveCount(0)
   })
 
+  test('Data from earlier blocks, Used by; after Simulate the edges show the way and the value', async ({
+    page,
+  }) => {
+    await signUp(page, newUser('m18lv2', 'Playwright Live values'))
+    await setAutoConnect(page, false)
+    await page.reload()
+    await createWorkflow(page)
+    await buildOverspeed(page)
+
+    // The trigger has no inputs and is used by Stable for (its condition reads <whenspeedchanges1.value>).
+    await nodeByName(page, 'When Speed changes 1').click()
+    const editor = page.locator('[data-tab-content="editor"]')
+    await expect(editor.locator('[data-sv="earlier-data-trigger"]')).toContainText(
+      'starts the workflow'
+    )
+    await expect(editor.locator('[data-sv="used-by"]')).toContainText('Stable for 1')
+    // Stable for reads the data of the trigger.
+    await nodeByName(page, 'Stable for 1').click()
+    await expect(editor).toContainText('Data from earlier blocks')
+
+    // Simulate the generated cases: the replay shows the way the workflow went.
+    await page.locator('[data-sv-tab="simulation"]').click()
+    await page.locator('[data-sv="test-generate"]').click()
+    await expect
+      .poll(() => page.locator('[data-sv="test-case"]').count(), { timeout: 30_000 })
+      .toBeGreaterThanOrEqual(1)
+    await page.locator('[data-sv-action="simulate"]').click()
+    await expect(page.locator('[data-sv="edge-value"]').first()).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-sv="edge-value"]').first()).toHaveText(/^= /)
+  })
 })

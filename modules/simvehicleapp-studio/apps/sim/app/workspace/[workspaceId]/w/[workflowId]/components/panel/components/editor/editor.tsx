@@ -43,6 +43,13 @@ import {
 import { ActiveSearchTargetProvider } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/providers/active-search-target-provider'
 import { LoopTool } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/loop/loop-config'
 import { ParallelTool } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/parallel/parallel-config'
+import {
+  SV_EARLIER_DATA_HINT,
+  SV_EARLIER_DATA_TITLE,
+  SvTriggerHasNoInputs,
+  SvUsedBy,
+  useSvLastFieldTracker,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/editor/earlier-data'
 import { getSubBlockStableKey } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/workflow-block/utils'
 import { useCurrentWorkflow } from '@/app/workspace/[workspaceId]/w/[workflowId]/hooks'
 import {
@@ -233,6 +240,9 @@ export function Editor() {
   }, [subBlocks, canonicalIndex.canonicalIdBySubBlockId])
 
   const { incomingConnections, hasIncomingConnections } = useBlockConnections(currentBlockId || '')
+  // SV: data of earlier blocks, inserted on click into the field edited last (ADR-0059 §5).
+  useSvLastFieldTracker()
+  const isSvTrigger = currentBlock?.type.startsWith('sv_on_') ?? false
 
   const { handleMouseDown: handleConnectionsResizeMouseDown, isResizing } = useConnectionsResize({
     subBlocksRef,
@@ -755,12 +765,15 @@ export function Editor() {
                     }
                   />
                   <div className='font-medium text-[var(--text-primary)] text-small'>
-                    Connections
+                    {SV_EARLIER_DATA_TITLE}
                   </div>
                 </div>
 
                 {/* Connections Content - Always visible */}
                 <div className='flex-1 overflow-y-auto overflow-x-hidden px-1.5 pb-2'>
+                  <p className='px-1 pb-1 text-[var(--text-muted)] text-caption'>
+                    {SV_EARLIER_DATA_HINT}
+                  </p>
                   <ConnectionBlocks
                     connections={incomingConnections}
                     currentBlockId={currentBlock.id}
@@ -768,6 +781,9 @@ export function Editor() {
                 </div>
               </div>
             )}
+            {/* SV: a trigger has no inputs; who uses this block's outputs (ADR-0059 §5). */}
+            {!hasIncomingConnections && isSvTrigger && <SvTriggerHasNoInputs />}
+            <SvUsedBy blockId={currentBlock.id} />
           </div>
         )}
       </div>

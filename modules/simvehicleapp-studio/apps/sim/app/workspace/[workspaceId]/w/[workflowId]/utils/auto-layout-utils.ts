@@ -8,6 +8,7 @@ import {
   type WorkflowStateContractInput,
   workflowAutoLayoutContract,
 } from '@/lib/api/contracts/workflows'
+import { laneLayout } from '@/lib/sv/lane-layout'
 import {
   DEFAULT_HORIZONTAL_SPACING,
   DEFAULT_LAYOUT_PADDING,
@@ -87,37 +88,51 @@ export async function applyAutoLayoutAndUpdateStore(
       gridSize: options.gridSize,
     }
 
-    let result: Awaited<ReturnType<typeof requestJson<typeof workflowAutoLayoutContract>>>
-    try {
-      result = await requestJson(workflowAutoLayoutContract, {
-        params: { id: workflowId },
-        body: {
-          ...layoutOptions,
-          blocks,
-          edges,
-          loops,
-          parallels,
-        },
-      })
-    } catch (error) {
-      const errorMessage =
-        error instanceof ApiClientError
-          ? error.message
-          : error instanceof Error
+    // SV: a vehicle workflow is laid out in lanes, one per trigger (ADR-0059 §3), on the client.
+    const vehicle = Object.values(blocks).every(
+      (b) => b.type.startsWith('sv_') || b.type === 'loop' || b.type === 'parallel'
+    )
+    let layoutedBlocks: Record<string, BlockState>
+    if (vehicle) {
+      const positions = laneLayout(blocks, edges)
+      layoutedBlocks = Object.fromEntries(
+        Object.entries(blocks).map(([id, b]) => [
+          id,
+          positions[id] ? { ...b, position: positions[id] } : b,
+        ])
+      )
+    } else {
+      let result: Awaited<ReturnType<typeof requestJson<typeof workflowAutoLayoutContract>>>
+      try {
+        result = await requestJson(workflowAutoLayoutContract, {
+          params: { id: workflowId },
+          body: {
+            ...layoutOptions,
+            blocks,
+            edges,
+            loops,
+            parallels,
+          },
+        })
+      } catch (error) {
+        const errorMessage =
+          error instanceof ApiClientError
             ? error.message
-            : 'Auto layout failed'
-      logger.error('Auto layout API call failed:', { error: errorMessage })
-      return { success: false, error: errorMessage }
-    }
+            : error instanceof Error
+              ? error.message
+              : 'Auto layout failed'
+        logger.error('Auto layout API call failed:', { error: errorMessage })
+        return { success: false, error: errorMessage }
+      }
 
-    // The contract's `workflowBlockStateSchema` and the store's `BlockState`
-    // describe the same runtime shape but TS sees the contract's
-    // `SubBlockState.value` as `unknown` (zod default) while the store
-    // narrows it to the editor's per-input value union. The contract's
-    // shape is structurally a supertype of the store's, so this is a
-    // single safe widening cast (store -> wire) on the way back in.
-    const layoutedBlocks: Record<string, BlockState> =
-      (result.data.layoutedBlocks as Record<string, BlockState>) || blocks
+      // The contract's `workflowBlockStateSchema` and the store's `BlockState`
+      // describe the same runtime shape but TS sees the contract's
+      // `SubBlockState.value` as `unknown` (zod default) while the store
+      // narrows it to the editor's per-input value union. The contract's
+      // shape is structurally a supertype of the store's, so this is a
+      // single safe widening cast (store -> wire) on the way back in.
+      layoutedBlocks = (result.data.layoutedBlocks as Record<string, BlockState>) || blocks
+    }
     const mergedBlocks = mergeSubblockState(layoutedBlocks, workflowId)
 
     const newWorkflowState = {

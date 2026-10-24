@@ -43,6 +43,7 @@ import {
   SvSafetyBanner,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv'
 // SV: VSS signal drops (M02-T10)
+import { SvLaneBackdrop } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/lane-backdrop'
 import { SvLogicPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/logic-panel'
 import { SvLintRunner } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
 import {
@@ -4199,6 +4200,8 @@ const WorkflowContent = React.memo(
                 />
 
                 <Cursors />
+                {/* SV: one region per trigger once the lanes read apart (ADR-0059 §3). */}
+                {!embedded && <SvLaneBackdrop />}
 
                 {!embedded && (
                   <>

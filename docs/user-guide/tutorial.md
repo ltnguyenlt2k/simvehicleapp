@@ -33,13 +33,15 @@ sẽ bắt đầu lại cửa sổ (chính sách `restart` của trigger).
 
 Tab **Problems** phải trống. Nếu có lỗi (ví dụ tham chiếu sai tên), click vào lỗi để nhảy tới khối.
 
-Block trên canvas ở dạng gọn: chỉ câu tóm tắt và nhãn nhánh, các ô cài đặt hiện khi bạn chọn block (hoặc bật **Details** trên thanh hành động). Bấm **Logic** để đọc cả workflow thành câu, ví dụ `When Speed changes: If … holds for 2 s ⇒ stable ⇒ Set Hazard.IsSignaling = true`. Bấm một câu để chọn khối đó trên canvas.
+Block trên canvas ở dạng gọn: chỉ câu tóm tắt và nhãn nhánh, các ô cài đặt hiện khi bạn chọn block (hoặc bật **Details** trên thanh hành động). Bấm **Logic** để đọc cả workflow thành câu, ví dụ `When Speed changes: If … holds for 2 s ⇒ stable ⇒ Set Hazard.IsSignaling = true`. Bấm một câu để chọn khối đó trên canvas. **Auto layout** (thanh điều khiển canvas) xếp mỗi trigger thành một làn: nhánh *then* đi thẳng, *else* xuống dưới.
+
+Trong panel Editor, mục **Data from earlier blocks** liệt kê output của các khối chạy trước khối đang chọn (kèm giá trị mẫu sau khi Simulate). Bấm một output để chèn `<khối.output>` vào ô vừa sửa. Mục **Used by** cho biết khối nào đang dùng output của khối này.
 
 ## 5. Mô phỏng (2 phút)
 1. Mở tab **Test** ở dock dưới (Problems · Test · Live). Workflow chưa có case nên bảng đầu tiên chính là case **Default**: phần **When** là input theo thời gian. Thêm input: `t = 1000 ms`, `Vehicle.Speed = 100`; `t = 2000 ms`, `Vehicle.Speed = 130`.
    Độ dài chạy (**Run for**) `6000 ms`. Muốn nhanh hơn: bấm **Generate tests** để studio tự sinh các case.
 2. Bấm **Simulate**. Timeline cho thấy trigger lúc 1000 và 2000, và **write** `Hazard.IsSignaling = true` lúc **4000 ms**
-   (2000 + 2 s). Kéo thanh tua để xem badge trên từng khối.
+   (2000 + 2 s). Kéo thanh tua để xem badge trên từng khối: cạnh của nhánh vừa chạy sáng lên, nhánh không chạy mờ đi, cạnh ra từ trigger ghi giá trị vừa đi qua (`= 130`).
 
 Mỗi test case ở đây trở thành một test sinh ra cho app (bước SynCode chạy chúng).
 

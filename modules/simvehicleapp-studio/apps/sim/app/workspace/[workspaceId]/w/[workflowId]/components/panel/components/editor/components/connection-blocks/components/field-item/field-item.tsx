@@ -7,6 +7,10 @@ import { ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/emcn'
 import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
 import type { ConnectedBlock } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/hooks/use-block-connections'
+import {
+  insertIntoLastField,
+  useSvSampleValue,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/editor/earlier-data'
 import { normalizeName } from '@/executor/constants'
 
 const logger = createLogger('FieldItem')
@@ -68,24 +72,26 @@ export function FieldItem({
     [connection, field, path]
   )
 
+  // SV: a sample value from the last Simulate/Run; a click inserts the reference (ADR-0059 §5).
+  const sample = useSvSampleValue(connection.id, path)
   const handleClick = useCallback(() => {
     if (hasChildren) {
       onToggleExpand?.(path)
+      return
     }
-  }, [hasChildren, onToggleExpand, path])
+    insertIntoLastField(`${normalizeName(connection.name)}.${path}`)
+  }, [hasChildren, onToggleExpand, path, connection.name])
 
   return (
     <div
       role='treeitem'
       aria-expanded={hasChildren ? isExpanded : undefined}
-      tabIndex={hasChildren ? 0 : undefined}
+      tabIndex={0}
       draggable
       onDragStart={handleDragStart}
       onClick={handleClick}
-      onKeyDown={(event) => {
-        if (!hasChildren) return
-        handleKeyboardActivation(event, handleClick)
-      }}
+      onKeyDown={(event) => handleKeyboardActivation(event, handleClick)}
+      data-sv-output={`${connection.id}.${path}`}
       className={clsx(
         'group flex h-[26px] cursor-grab items-center gap-2 rounded-lg px-1.5 text-sm hover-hover:bg-[var(--surface-6)] active:cursor-grabbing dark:hover-hover:bg-[var(--surface-5)]',
         hasChildren && 'cursor-pointer'
@@ -99,6 +105,14 @@ export function FieldItem({
       >
         {field.name}
       </span>
+      {sample !== null && (
+        <span
+          data-sv-sample
+          className='max-w-[96px] shrink-0 truncate font-mono text-[var(--text-muted)] text-xs'
+        >
+          {sample}
+        </span>
+      )}
       <Badge className='flex-shrink-0 rounded-sm px-1.5 py-[1px] font-mono text-xs'>
         {field.type}
       </Badge>

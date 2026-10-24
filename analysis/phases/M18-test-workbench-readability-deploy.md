@@ -84,9 +84,9 @@
 - [x] Vitest: 41 BlockSpec (quy tắc câu tóm tắt, `block-summary.test.ts`), 7 golden (snapshot), chạy 2 lần giống nhau; panel render test. E2E `m18-test-cases` (compact ⇄ Details, Logic, chọn câu) chạy trên CI.
 
 ### T08: Làn, giá trị sống, dữ liệu block trước
-- [ ] Auto layout xếp mỗi trigger một làn; nhánh then lên, else xuống; vùng nền có tên trigger.
-- [ ] Giá trị sống trên cạnh khi tua Simulate/Run; nhánh chạy sáng, nhánh không chạy mờ.
-- [ ] "Data from earlier blocks" (đổi tên Connections + giải thích): kiểu, đơn vị, giá trị mẫu; bấm chèn; trigger ghi rõ không có đầu vào; mục "Used by".
+- [x] Auto layout xếp mỗi trigger một làn (`lib/sv/lane-layout.ts`, phía client cho workflow xe); nhánh positive đi thẳng, else/broken/timeout xuống hàng dưới; vùng có tên trigger (khung viền) khi các luồng không chồng nhau.
+- [x] Giá trị sống trên cạnh khi tua Simulate/Run (`lib/sv/edge-flow.ts`): nhánh chạy sáng và đậm, nhánh không chạy mờ, cạnh ra từ trigger có `= <giá trị>`.
+- [x] "Data from earlier blocks" (đổi tên Connections + dòng giải thích): kiểu, giá trị mẫu từ lần Simulate/Run gần nhất; bấm ⇒ chèn `<block.field>` vào ô sửa gần nhất (kéo thả giữ nguyên); trigger: "This block starts the workflow — it has no inputs"; mục "Used by". Đơn vị chưa hiện (ADR-0059 Notes).
 
 ### T09: Deploy Remote databroker
 - [ ] **Spike vehicle-gateway:** proxy gRPC HTTP/2 lọc theo method, giữ stream hai chiều. Thử `node:http2` dưới Bun, nếu không ổn thì dùng Node runtime; ghi kết quả vào ADR-0060 Notes.

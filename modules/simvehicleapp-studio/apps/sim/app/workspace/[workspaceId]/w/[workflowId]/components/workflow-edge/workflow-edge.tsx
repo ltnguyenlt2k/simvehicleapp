@@ -4,6 +4,7 @@ import { BaseEdge, EdgeLabelRenderer, type EdgeProps, getSmoothStepPath } from '
 import { useShallow } from 'zustand/react/shallow'
 import { SV_HANDLE_COLOR, svEdgeLabel, svHandleTone } from '@/lib/sv/handle-labels'
 import type { EdgeDiffStatus } from '@/lib/workflows/diff/types'
+import { useSvEdgeFlow } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/use-edge-flow'
 import { useLastRunEdges } from '@/stores/execution'
 import { useWorkflowDiffStore } from '@/stores/workflow-diff'
 
@@ -58,6 +59,8 @@ const WorkflowEdgeComponent = ({
   const svBranch = sourceHandle ?? dataSourceHandle
   const svLabel = svEdgeLabel(svBranch)
   const svTone = svHandleTone(svBranch)
+  // SV: the way the replay/live run went (ADR-0059 §4): taken bright, other branches dimmed, trigger value shown.
+  const svFlow = useSvEdgeFlow(source, svBranch)
   const previewExecutionStatus = (
     data as { executionStatus?: 'success' | 'error' | 'not-executed' } | undefined
   )?.executionStatus
@@ -113,12 +116,14 @@ const WorkflowEdgeComponent = ({
     if (isSelected) {
       opacity = 0.5
     }
+    if (!edgeDiffStatus && svFlow.state === 'taken') color = 'var(--border-success)'
+    if (!edgeDiffStatus && svFlow.state === 'skipped') opacity = Math.min(opacity, 0.3)
 
     return {
       ...(style ?? {}),
       strokeWidth: edgeDiffStatus
         ? 3
-        : edgeRunStatus === 'success' || edgeRunStatus === 'error'
+        : edgeRunStatus === 'success' || edgeRunStatus === 'error' || svFlow.state === 'taken'
           ? 2.5
           : isSelected
             ? 2.5
@@ -135,6 +140,7 @@ const WorkflowEdgeComponent = ({
     edgeRunStatus,
     previewExecutionStatus,
     svTone,
+    svFlow.state,
   ])
 
   return (
@@ -155,6 +161,17 @@ const WorkflowEdgeComponent = ({
             }}
           >
             {svLabel}
+          </div>
+        </EdgeLabelRenderer>
+      )}
+      {svFlow.value !== null && !isSelected && (
+        <EdgeLabelRenderer>
+          <div
+            data-sv='edge-value'
+            className='nodrag nopan pointer-events-none absolute z-[1010] rounded-[4px] border border-[var(--border-success)] bg-[var(--surface-2)] px-1 font-mono text-[11px] text-[var(--text-primary)]'
+            style={{ transform: `translate(-50%, -150%) translate(${labelX}px,${labelY}px)` }}
+          >
+            = {svFlow.value}
           </div>
         </EdgeLabelRenderer>
       )}

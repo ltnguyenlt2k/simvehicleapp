@@ -83,6 +83,12 @@ flowchart LR
 - Golden graph-adapter/IR không đổi; full luồng `@live` + video.
 
 ## Notes / Deviations
+- 2026-10-24 — **T08 implement** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - Làn: Auto layout của workflow xe (mọi block là `sv_*` hoặc Loop/Parallel) chạy **ở client** (`laneLayout`), không gọi API layout chung của Sim; workflow khác vẫn dùng API cũ. Block trong Loop/Parallel giữ vị trí tương đối trong container.
+  - "Vùng nền" là **khung viền đứt** có tên trigger, vẽ trên canvas và không bắt chuột. React Flow v11 không có lớp nằm dưới node, nên không tô nền để khỏi phủ màu lên block. Chỉ hiện khi workflow có ≥ 2 trigger và các vùng không chồng nhau.
+  - Giá trị sống dùng trace sẵn có: `exit.data.handle` cho nhánh, `trigger.data.outputs.value` cho giá trị. Biểu thức tính toán được inline (ADR-0013) nên không có giá trị trung gian trên cạnh; M19 (`data.eval`) bổ sung.
+  - "Data from earlier blocks": giá trị mẫu chỉ có cho output có trong trace (output của trigger). **Đơn vị** chưa hiện (cần tra catalog theo output); để lại.
+  - Bấm một output ⇒ chèn tham chiếu vào ô văn bản của panel Editor được sửa gần nhất (setter gốc + sự kiện `input`, để ô controlled của React nhận).
 - 2026-10-24 — **T07 implement** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - Logic view là **panel nổi trên canvas** (nút **Logic** trên thanh hành động), không thay hẳn canvas. Như vậy vừa đọc câu vừa thấy block được căn giữa khi bấm.
   - Chỉ có câu **tiếng Anh**: UI của studio chưa có tiếng Việt, và câu tóm tắt block (ADR-0055) cũng tiếng Anh. Tiếng Việt làm cùng lúc với i18n UI.

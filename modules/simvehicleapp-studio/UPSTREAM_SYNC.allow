@@ -1046,3 +1046,9 @@ apps/sim/lib/workflows/persistence/duplicate.ts
 apps/sim/hooks/queries/sv-test-cases.ts
 packages/db/migrations/0253_sv_workflow_test_cases.sql
 packages/db/migrations/meta/0253_snapshot.json
+
+# M18-T08 — "Data from earlier blocks": sample values of outputs, a click inserts the reference (ADR-0059 §5)
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/editor/components/connection-blocks/components/field-item/field-item.tsx
+
+# M18-T08 — lanes: Auto layout of a vehicle workflow, one lane per trigger (ADR-0059 §3)
+apps/sim/app/workspace/[workspaceId]/w/[workflowId]/utils/auto-layout-utils.ts
