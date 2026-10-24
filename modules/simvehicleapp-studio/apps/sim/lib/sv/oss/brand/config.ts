@@ -29,7 +29,7 @@ export const SV_BRAND_DEFAULTS = {
   supportEmail: 'support@simvehicleapp.local',
   primaryColor: '#0FC0FF',
   primaryHoverColor: '#0AA3DB',
-  documentationUrl: 'https://github.com/Blinkthor/sim-vehicle-app#readme',
+  documentationUrl: 'https://github.com/ltnguyenlt2k/simvehicleapp#readme',
 } as const
 
 /**

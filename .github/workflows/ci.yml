@@ -131,7 +131,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Upstream Sim builds this image on 8-vCPU/32 GB runners; standard runners have 16 GB (public) or 7 GB (private),
       # so `next build` page generation gets killed (exit 143) without extra swap.
-      # Private-repo runners (the repo moved to Blinkthor/sim-vehicle-app, private) have 7 GB RAM and little free disk:
+      # Private-repo runners (Blinkthor/sim-vehicle-app, private, primary 2026-10-13…24) have 7 GB RAM and little free disk:
       # a fixed 16 GB swapfile filled the disk and killed the runner. Free the preinstalled toolchains we never use,
       # then size the swap from what is free, keeping 12 GB for the image build.
       - name: Free disk and add swap

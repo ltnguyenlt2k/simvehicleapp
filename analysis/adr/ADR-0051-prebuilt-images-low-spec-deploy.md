@@ -98,3 +98,4 @@ flowchart LR
 ## Notes / Deviations
 - 2026-10-13: viết theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
 - 2026-10-14: release đầu tiên có image [baseline-2026-10-14](https://github.com/Blinkthor/sim-vehicle-app/releases/tag/baseline-2026-10-14) (workflow run 38492369078). `scripts/sv pull baseline-2026-10-14 --groups core`: tải + sha256 + load 9 image trong 12 s; `scripts/sv up` với `SV_PREBUILT` không build gì (0 dòng "Building"); `scripts/sv smoke live` (cổng M7 + M8) PASS trên image tải về.
+- 2026-10-24: repo chính quay về `ltnguyenlt2k/simvehicleapp` (public), vì Actions của repo private bị chặn billing. Hai repo có cùng branch và tag. Release `baseline-2026-10-13`/`-14` (image dựng sẵn) chỉ có ở Blinkthor: `scripts/sv pull` trên repo mới cần chép release (chờ PO duyệt việc công khai image) hoặc đặt `SV_REPO=Blinkthor/sim-vehicle-app`. Lưu ý: runner public có 16 GB RAM, nên bước swap của studio image vẫn đúng.

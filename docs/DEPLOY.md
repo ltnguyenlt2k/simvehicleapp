@@ -22,7 +22,7 @@ Số đo RAM là trên máy dev (WSL, 11 GB). "4 GB" là con số suy ra từ pe
 ## 2. Cài đặt
 
 ```bash
-git clone https://github.com/Blinkthor/sim-vehicle-app && cd sim-vehicle-app
+git clone https://github.com/ltnguyenlt2k/simvehicleapp && cd simvehicleapp
 git checkout <tag>            # tag của release có image, ví dụ baseline-2026-10-13.1
 scripts/sv init               # tạo .env, sinh secret
 # máy yếu: thêm SV_BUILD_JOBS=2 vào .env (app C++ build tối đa 2 job song song)

@@ -4,7 +4,9 @@
 >
 > Sinh ngày 2026-10-02 từ: 34 ADR (`analysis/adr/ADR-0001`…`0042`) + 15 file `analysis/phases/M00`…`M14`. Mỗi dòng feature = 1 cụm task (ID task gốc ghi trong cột cuối) để không phải tick 150+ ô task rời.
 
-> **Repo chính từ 2026-10-13: [github.com/Blinkthor/sim-vehicle-app](https://github.com/Blinkthor/sim-vehicle-app)** — chuyển nguyên toàn bộ lịch sử (325 commit, tag `studio/baseline-v0.7.13`, cùng SHA). Link CI/commit trong các dòng ghi trước ngày này trỏ tới repo cũ `ltnguyenlt2k/simvehicleapp` (bằng chứng lịch sử, giữ nguyên).
+> **Repo chính từ 2026-10-24: [github.com/ltnguyenlt2k/simvehicleapp](https://github.com/ltnguyenlt2k/simvehicleapp)** (public). GitHub Actions chạy được ở đây; repo private Blinkthor bị chặn billing từ 2026-10-16. Ngày 2026-10-24 đã fast-forward 77 commit và đẩy tag `baseline-2026-10-13`/`-14`, nên hai repo có cùng branch và tag (`main` = `0c285b82`). [Blinkthor/sim-vehicle-app](https://github.com/Blinkthor/sim-vehicle-app) giữ làm bản sao (remote `blinkthor`). Hai GitHub Release có image dựng sẵn (`sv pull`) mới chỉ có ở Blinkthor: chép sang repo public cần PO duyệt.
+>
+> 2026-10-13 → 2026-10-24: repo chính là Blinkthor/sim-vehicle-app — chuyển nguyên toàn bộ lịch sử (325 commit, tag `studio/baseline-v0.7.13`, cùng SHA). Link CI/commit trong các dòng ghi trước ngày này trỏ tới repo cũ `ltnguyenlt2k/simvehicleapp` (bằng chứng lịch sử, giữ nguyên).
 
 ## 1. Vòng đời cập nhật file này (bắt buộc)
 

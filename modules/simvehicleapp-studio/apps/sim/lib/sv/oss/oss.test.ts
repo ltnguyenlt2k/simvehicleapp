@@ -56,7 +56,7 @@ describe('brand (spec §2)', () => {
       theme: { primaryColor: '#0FC0FF', primaryHoverColor: '#0AA3DB' },
     })
     expect(brand.logoUrl).toBeUndefined()
-    expect(brand.documentationUrl).toBe('https://github.com/Blinkthor/sim-vehicle-app#readme')
+    expect(brand.documentationUrl).toBe('https://github.com/ltnguyenlt2k/simvehicleapp#readme')
     expect(getBrandConfig()).toEqual(brand)
     expect(useBrandConfig()).toEqual(brand)
   })
