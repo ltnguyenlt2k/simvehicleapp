@@ -3,7 +3,8 @@
 # on the KUKSA databroker, scenarios played by the signal-gateway, traces compared with the goldens.
 # Creates a fresh project and deletes it on exit (SV_KEEP_APPS=1 keeps it); never removes volumes. Report: $SV_PARITY_REPORT (default parity-p3.json).
 #   modules/simvehicleapp-orchestrator/gate/parity-p3.sh [GW-A,GW-C]       env SV_PARITY_LANGUAGE=python: the Python backend (M12)
-#   SV_PARITY_API=kuksa.val.v2: the apps run on kuksa.val.v2 (orchestrator SV_DATABROKER_API=<lang>=kuksa.val.v2, ADR-0047)
+#   SV_PARITY_API: the API the apps run on — kuksa.val.v2 by default (the orchestrator's default, ADR-0047);
+#   sdv.databroker.v1 when the stack sets SV_DATABROKER_API=*=sdv.databroker.v1
 set -euo pipefail
 cd "$(dirname "$0")/../../.."
 SLUG="parity-p3-$(date +%s)"

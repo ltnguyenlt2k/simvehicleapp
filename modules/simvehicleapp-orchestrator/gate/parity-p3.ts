@@ -172,7 +172,8 @@ async function playOnce(projectId: string, generationId: string, g: string, work
   // The expectation has no vehicle provider: an actuator's current value changes only when the scenario
   // sets it. Dev runs mirror the app's targets to current values (the provider role, ADR-0024): off here.
   // Apps on kuksa.val.v2 (SV_PARITY_API, ADR-0047) need a provider to accept their writes: one that does not answer.
-  const v2 = process.env.SV_PARITY_API === "kuksa.val.v2";
+  // kuksa.val.v2 is the apps' default (ADR-0047, orchestrator `databrokerApis`); SV_PARITY_API=sdv.databroker.v1 runs v1.
+  const v2 = (process.env.SV_PARITY_API || "kuksa.val.v2") === "kuksa.val.v2";
   const irSignals = (JSON.parse(readFileSync(`${ROOT}/${g}/ir.json`, "utf8")) as { signals?: { path: string; vssType: string; access: string[] }[] }).signals ?? [];
   const writes = irSignals.filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
   const mirror = await fetch(`${G}/mirror`, { method: "PUT", headers: h, body: JSON.stringify(v2 ? { release: "v4.0", paths: writes, api: "kuksa.val.v2", publish: false } : { release: "v4.0", paths: [] }) });
