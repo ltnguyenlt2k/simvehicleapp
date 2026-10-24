@@ -7,6 +7,7 @@ import { Badge, Button } from '@/components/emcn'
 import { cn } from '@/lib/core/utils/cn'
 import { type LogicLine, logicView } from '@/lib/sv/logic-view'
 import { SV_ROLE_TAG } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/block-summary-line'
+import { useSvMergedBlocks } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/use-merged-blocks'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvCanvasViewStore } from '@/stores/sv/canvas-view/store'
 import { useSvLintStore } from '@/stores/sv/lint/store'
@@ -30,7 +31,7 @@ const DEPTH_PADDING = [
  */
 export function SvLogicPanel() {
   const open = useSvCanvasViewStore((s) => s.logicOpen)
-  const blocks = useWorkflowStore((s) => s.blocks)
+  const blocks = useSvMergedBlocks()
   const edges = useWorkflowStore((s) => s.edges)
   const loops = useWorkflowStore((s) => s.loops)
   const parallels = useWorkflowStore((s) => s.parallels)

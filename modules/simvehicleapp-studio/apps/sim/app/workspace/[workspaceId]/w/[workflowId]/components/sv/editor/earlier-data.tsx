@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo } from 'react'
 import { sampleText, sampleValue, usedBy } from '@/lib/sv/earlier-data'
+import { useSvMergedBlocks } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/use-merged-blocks'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvRunStore } from '@/stores/sv/run/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
-import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 /**
  * "Data from earlier blocks" (ADR-0059 §5, M18-T08): the editor section under a vehicle block's settings. Outputs of
@@ -85,7 +85,7 @@ interface SvUsedByProps {
 
 /** Blocks that read this block's outputs; a name selects that block. */
 export function SvUsedBy({ blockId }: SvUsedByProps) {
-  const blocks = useWorkflowStore((s) => s.blocks)
+  const blocks = useSvMergedBlocks()
   const users = useMemo(() => usedBy(blocks, blockId), [blocks, blockId])
   if (!users.length) return null
   return (

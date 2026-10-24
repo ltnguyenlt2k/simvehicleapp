@@ -23,6 +23,15 @@ vi.mock('@/stores/panel', () => {
 })
 const sub = (values: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(values).map(([k, value]) => [k, { value }]))
+vi.mock('@/stores/workflows/registry/store', () => ({
+  useWorkflowRegistry: (f: (s: unknown) => unknown) => f({ activeWorkflowId: 'wf' }),
+}))
+// The editor's values live in the subblock store: the Logic view reads them over the workflow store's copy.
+vi.mock('@/stores/workflows/subblock/store', () => ({
+  EMPTY_SUBBLOCK_VALUES: {},
+  useSubBlockStore: (f: (s: unknown) => unknown) =>
+    f({ workflowValues: { wf: { i: { condition: '<Vehicle.Speed> > 120' } } } }),
+}))
 vi.mock('@/stores/workflows/workflow/store', () => ({
   useWorkflowStore: (f: (s: unknown) => unknown) =>
     f({
@@ -39,7 +48,7 @@ vi.mock('@/stores/workflows/workflow/store', () => ({
           type: 'sv_if',
           name: 'If 1',
           position: { x: 0, y: 10 },
-          subBlocks: sub({ condition: '<Vehicle.Speed> > 120' }),
+          subBlocks: sub({ condition: '' }),
         },
         a: {
           id: 'a',
