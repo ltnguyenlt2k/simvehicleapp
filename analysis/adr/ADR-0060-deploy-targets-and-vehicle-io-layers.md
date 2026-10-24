@@ -126,6 +126,20 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-24 — **Thiết kế triển khai T09** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - **Deployment là một Run có trường `deploy`** `{targetId, targetName, mode: read-only|read-write}`. Dùng lại RunManager, console, trace, My runs và sandbox tiến trình (ADR-0057). Khác Run ở ba điểm:
+    - không có `expiresAt`;
+    - quota riêng `SV_MAX_DEPLOYMENTS_PER_WORKSPACE`;
+    - databroker của app là một **route của vehicle-gateway** (`vehicle-gateway:<port>`).
+  - **vehicle-gateway** (service mới trong module orchestrator, dựa trên spike):
+    - mỗi deployment một cổng h2c, nối TLS/token tới target;
+    - allowlist method `kuksa.val.v2` theo mode;
+    - `Actuate`/`BatchActuate` (read-write) chỉ cho path actuator đã khai báo của app, giải mã protobuf request;
+    - `PublishValue`/`OpenProviderStream` luôn bị chặn;
+    - audit mỗi lời gọi bị chặn hoặc ghi (method, path, deployment, thời điểm).
+  - **signal-gateway** nhận `sandbox = vehicle-gateway:<port>` như nguồn **chỉ đọc**: `POST /signals`, `/play` và `PUT /mirror` trả 409 `SIMULATED_INPUT_DISABLED` (mã diagnostic mới, chỉ thêm). `GET /signals` và `/messages` vẫn chạy (tab Live chỉ xem). Đây là lớp chặn thứ hai, sau vehicle-gateway.
+  - **DeployTarget** lưu ở orchestrator theo workspace: `{id, workspaceId, name, address host:port, tls, token (chỉ ghi, mã hoá AES-GCM bằng khoá từ INTERNAL_API_SECRET), apiVersion kuksa.val.v2, vssRelease}`. **Test connection** gọi `GetServerInfo` + `ListMetadata` (path app dùng có tồn tại) qua chính route.
+  - Gate dùng một databroker "ngoài" chạy trong compose (`external-databroker`, profile gate) cùng một feeder giả lập (provider `kuksa.val.v2` publish Speed): app deploy phải nhận Speed và bật Hazard mà không qua Signals; read-only chặn ghi; read-write cho ghi.
 - 2026-10-24 — **Spike vehicle-gateway PASS** ([docs/spikes/vehicle-gateway.md](../../docs/spikes/vehicle-gateway.md)): Bun `node:http2` proxy h2c chuyển `kuksa.val.v2` tới databroker 0.5.0. Read-only chặn `Actuate` bằng `PERMISSION_DENIED`; `Subscribe` stream qua proxy; status lỗi của upstream (trailers-only) được truyền nguyên vẹn; client huỷ stream không làm crash proxy. App mặc định đã là `kuksa.val.v2` (ADR-0047), nên allowlist dùng method v2: đọc = GetValue/GetValues/Subscribe/SubscribeById/ListMetadata/GetServerInfo; ghi = Actuate/BatchActuate; PublishValue/OpenProviderStream luôn bị chặn.
 - 2026-10-16:
   - thêm quyết định 7 (vehicle-gateway, lọc method theo proto đã vendored, Live qua gateway, deployment không hết hạn) và 8 (ràng buộc `sdv.databroker.v1`; đọc `compiler-code-cpp/runtime/src/Velocitas.cpp` và `velocitas-stack/compose.yaml`);
