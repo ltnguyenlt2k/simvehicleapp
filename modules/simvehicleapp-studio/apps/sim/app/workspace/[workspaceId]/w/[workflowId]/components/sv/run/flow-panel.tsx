@@ -50,6 +50,8 @@ interface FlowPanelProps {
   onSelectBlock?: (blockId: string) => void
   /** Live: a write was picked (the Signals table shows that signal). */
   onSelectSignal?: (path: string) => void
+  /** Make a test case that locks what this run did (M19-T06). */
+  onMakeCase?: (run: FlowRun) => void
   /** Simulate: the replay time; the run that spans it is highlighted. */
   activeAt?: number
   /** Simulate: a run was picked (the replay jumps to its start). */
@@ -73,6 +75,7 @@ export function FlowPanel({
   blockName,
   onSelectBlock,
   onSelectSignal,
+  onMakeCase,
   activeAt,
   onPickRun,
   timeText = (ts) => `${ts} ms`,
@@ -219,6 +222,19 @@ export function FlowPanel({
                     ))}
                     {!r.steps.length && (
                       <li className='text-[var(--text-muted)]'>No block ran after the trigger</li>
+                    )}
+                    {onMakeCase && r.outcome !== 'running' && (
+                      <li className='pt-0.5'>
+                        <Button
+                          size='sm'
+                          variant='ghost'
+                          data-sv='flow-make-case'
+                          title='A new test case with the inputs that led to this run and what it wrote'
+                          onClick={() => onMakeCase(r)}
+                        >
+                          Make test case from this run
+                        </Button>
+                      </li>
                     )}
                   </ol>
                 )}

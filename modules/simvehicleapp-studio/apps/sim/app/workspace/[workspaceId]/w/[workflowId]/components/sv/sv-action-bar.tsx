@@ -117,7 +117,7 @@ export function SvActionBar() {
             toast.error(`Simulate: fix ${errors} error${errors === 1 ? '' : 's'} first`)
             return
           }
-          useSvSimulationStore.getState().setResult(wf, current, run.until, response.result)
+          useSvSimulationStore.getState().setResult(wf, current, run.until, response.result, run)
           if (caseId) {
             const exp0 = response.result.expectations
             useSvTestStore.getState().setOutcome(caseId, {

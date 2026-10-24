@@ -59,7 +59,7 @@
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
 | [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 8/8 ✔ (T01–T07; T08 ↷ M18), gate kỹ thuật PASS ([báo cáo](reports/M17.md)); acceptance chờ PO duyệt ADR 0056/0057 — yêu cầu PO 2026-10-15 |
 | [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Proposed) | 🔄 | 10/11 ✔ (T01–T05, T07–T11), T06 🔄 (chỉ còn eval model thật: endpoint PO lỗi); gate kỹ thuật PASS ([báo cáo](reports/M18.md)); chờ PO duyệt ADR 0058–0060 — yêu cầu PO 2026-10-15 |
-| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Proposed) | 🔄 | 2/8 ✔ (T01, T03), T02a + T04 + T05 🔄 (chờ CI), T02b, T06, T07 ☐ — bắt đầu 2026-10-24 sau gate kỹ thuật M18 — yêu cầu PO 2026-10-24 |
+| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Proposed) | 🔄 | 2/8 ✔ (T01, T03), T02a + T04–T06 🔄 (chờ CI), T02b, T07 ☐ — bắt đầu 2026-10-24 sau gate kỹ thuật M18 — yêu cầu PO 2026-10-24 |
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Proposed) | ☐ | phân tích + nghiên cứu upstream ✔; spike T01 và T02–T09 ☐ (spike làm sớm được) — yêu cầu PO 2026-10-24 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
@@ -420,7 +420,7 @@ Yêu cầu PO 2026-10-24 · Thiết kế: [M19](design/M19-execution-flow-and-si
 | Mô hình Flow `lib/sv/flow-trace.ts` | 0062 | ✔ | 2026-10-24 Claude Code: `flowRuns(trace, signals)` ⇒ lần chạy (mới nhất trước, giữ 200 + số đã ẩn), bước có nhánh + `eval`, write/log/MQTT, lỗi, `cancel`, `running`, `dropped`; `cause` = signal update cùng giá trị ≤ 1 s trước trigger (có `source` khi T05 xong). Vitest 9/9: snapshot GW-B, GW-A…G đủ trigger/write, 5 000 sự kiện < 50 ms. Tên block/đơn vị ghép ở view (T04) | T03 |
 | Flow view: Live, Simulate, Test; chọn bước ⇒ block; tải JSONL | 0062 | 🔄 | 2026-10-24 Claude Code: `FlowPanel` dùng chung; pane Flow ở Live; công tắc Timeline/Flow ở Simulate và mỗi case Test; bấm lần chạy ⇒ tua; lọc trigger/kết quả; JSONL. Vitest xanh; chờ E2E `m5-simulate` trên CI. Bấm write ⇒ Signals làm ở T05 | T04 |
 | Nguồn tín hiệu ở gateway; Run console dạng câu + Raw + dòng input | 0062 | 🔄 | 2026-10-24 Claude Code: `signal-update.source` (additive) gắn ở gateway (inject/playback/mirror/app/vehicle, ±250 ms); console dạng câu + Raw + dòng input; bấm write trong Flow ⇒ Signals. Unit xanh; chờ CI (E2E `m8-run`). `actor` hoãn | T05 |
-| Giải thích case FAIL; "Make test case from this run" | 0062 | ☐ | | T06 |
+| Giải thích case FAIL; "Make test case from this run" | 0062 | 🔄 | 2026-10-24 Claude Code: "Why the case failed" ở Simulate (quyết định đầu tiên rẽ khác + giá trị + nhánh cần); "Make test case from this run" ở Flow (Simulate, Live). Vitest xanh; chờ CI (E2E `m5-simulate`) | T06 |
 | Gate + full luồng `@live` + video + README + báo cáo | 0062 | ☐ | | T07 |
 
 ## M20 — Target WebAssembly cho C++ và Rust + host runtime

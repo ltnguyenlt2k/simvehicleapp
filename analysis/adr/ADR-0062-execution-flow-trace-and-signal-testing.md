@@ -118,6 +118,17 @@ Xem Decision 8. Thêm:
 - test gateway: inject ⇒ `source: inject`, app write ⇒ `source: app`, playback ⇒ `playback`.
 
 ## Notes / Deviations
+- 2026-10-24 — **T06: giải thích FAIL và tạo case từ lần chạy** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - **Giải thích** (`lib/sv/fail-explain.ts`) cho mỗi kỳ vọng không đạt của lần Simulate:
+    - có write cùng giá trị nhưng khác thời điểm ⇒ "written at … instead";
+    - không có ⇒ tìm block Set của path (ưu tiên block có đúng giá trị), đi ngược cạnh tới trigger, lấy lần chạy mới nhất của trigger đó bắt đầu trước `t + within`;
+    - rồi báo **quyết định đầu tiên** trên đường đó đã rẽ khác (kèm `eval`) và nhánh cần, hoặc block lần chạy không tới (bị huỷ do restart, hoặc đang chờ);
+    - vi phạm `never` ⇒ block đã ghi, lần chạy và các quyết định của lần chạy đó.
+  - Giải thích chỉ có ở Simulate, vì trace của simulator có `eval` và nối được với graph. Case chạy bằng Play trên stack vẫn chỉ có chuỗi mismatch như M18; giải thích được khi runtime phát `eval` (T02b) và Play giữ trace của lần chạy.
+  - **Tạo case từ lần chạy:**
+    - Simulate: scenario đã simulate, cắt tới lúc lần chạy kết thúc. Khoá mọi write tới lúc đó với `within` 300 ms (để case cũng đạt khi Play trên stack). `never` cho các actuator mà block Set của workflow ghi được nhưng không ghi. `until` = kết thúc + 1 s, làm tròn lên giây.
+    - Live: giá trị hiện tại của các tín hiệu đang watch ngay trước lần chạy làm `initial`; tín hiệu gây ra lần chạy làm input ở 1 s; write của lần chạy theo đồng hồ của case.
+  - Store simulation giữ scenario đã simulate (`setResult(…, scenario)`), để giải thích không dùng nhầm bản nháp đã sửa sau đó.
 - 2026-10-24 — **T05: cách gateway gắn `source`** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - Gateway ghi lại mỗi giá trị chính nó ghi: inject (`POST /signals`), playback (player) và mirror (target ⇒ current). Khoá là databroker (sandbox, hoặc release), path, field và giá trị JSON. Một thay đổi thấy trên subscription mà khớp một lần ghi như vậy trong ±250 ms thì mang nguồn đó.
   - Thay đổi gateway không tự ghi: `target` ⇒ `app` (chỉ app và người dùng đặt target, mà người dùng thì đã được ghi lại). `value` của actuator gateway đang provide cho app v2 ⇒ `app` (đó là actuation của app, gateway publish lại). Còn lại ⇒ `vehicle` (feeder, IDE, xe thật).

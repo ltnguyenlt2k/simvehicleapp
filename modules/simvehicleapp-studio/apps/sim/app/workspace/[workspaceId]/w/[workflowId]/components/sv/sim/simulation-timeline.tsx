@@ -2,16 +2,22 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pause, Play } from 'lucide-react'
-import { Button, ChipSwitch } from '@/components/emcn'
+import { Button, ChipSwitch, toast } from '@/components/emcn'
 import { cn } from '@/lib/core/utils/cn'
+import { caseFromSimulatedRun, writablePaths } from '@/lib/sv/case-from-run'
+import { explainFailures } from '@/lib/sv/fail-explain'
+import type { FlowRun } from '@/lib/sv/flow-trace'
+import type { Graph } from '@/lib/sv/test-generate'
 import { FlowPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/flow-panel'
 import {
   type TimelineKind,
   timelineRows,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim/scenario-model'
+import { useCreateSvTestCase } from '@/hooks/queries/sv-test-cases'
 import { usePanelEditorStore } from '@/stores/panel'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
+import { useSvTestStore } from '@/stores/sv/test/store'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 const KIND_TONE: Record<TimelineKind, string> = {
@@ -41,6 +47,9 @@ export function SimulationTimeline() {
   const currentGraph = useSvLintStore((s) => s.graphJson)
   const setCursor = useSvSimulationStore((s) => s.setCursor)
   const blocks = useWorkflowStore((s) => s.blocks)
+  const workflowId = useSvSimulationStore((s) => s.workflowId)
+  const scenario = useSvSimulationStore((s) => s.scenario)
+  const create = useCreateSvTestCase(workflowId ?? undefined)
   const [playing, setPlaying] = useState(false)
   const [view, setView] = useState<'timeline' | 'flow'>('timeline')
   const frame = useRef<number | null>(null)
@@ -55,6 +64,40 @@ export function SimulationTimeline() {
       })),
     [result]
   )
+  const graph = useMemo(
+    () => (simulatedGraph ? (JSON.parse(simulatedGraph) as Graph) : null),
+    [simulatedGraph]
+  )
+  // Why each unmet expectation failed (M19-T06): the decision that went the other way and the branch it needed.
+  const failures = useMemo(
+    () =>
+      result?.expectations && !result.expectations.passed && scenario && graph
+        ? explainFailures(scenario, result.trace, graph)
+        : [],
+    [result, scenario, graph]
+  )
+  const makeCase = (run: FlowRun) => {
+    if (!result || !scenario || !graph) return
+    const written = result.trace.flatMap((e) =>
+      e.ev === 'write' && typeof e.data?.path === 'string'
+        ? [{ ts: e.ts, path: e.data.path, value: e.data.value }]
+        : []
+    )
+    const name = `${blocks[run.trigger.blockId]?.name ?? 'Run'} — run ${run.run}`.slice(0, 80)
+    create.mutate(
+      {
+        name,
+        scenario: caseFromSimulatedRun(scenario, run, written, writablePaths(graph.blocks), name),
+      },
+      {
+        onSuccess: (c) => {
+          useSvTestStore.getState().setActiveCase(c.id)
+          toast.success(`Test case "${name}" added`)
+        },
+        onError: (e) => toast.error(`New case: ${e.message}`),
+      }
+    )
+  }
 
   useEffect(() => {
     if (!playing) return
@@ -135,6 +178,29 @@ export function SimulationTimeline() {
           ? 'The workflow changed since this simulation — Simulate again'
           : `${writes} write${writes === 1 ? '' : 's'}${result.expectations ? (result.expectations.passed ? ' · expectations met' : ` · ${result.expectations.mismatches.length} expectation(s) not met`) : ''}`}
       </p>
+      {!stale && failures.length > 0 && (
+        <ul
+          data-sv='fail-explain'
+          aria-label='Why the case failed'
+          className='mx-2 my-1 rounded-md border border-[var(--border)] px-2 py-1 text-caption'
+        >
+          {failures.map((f, i) => (
+            <li key={`${f.expected}-${i}`} data-sv-fail-block={f.blockId}>
+              <button
+                type='button'
+                className='text-left hover:underline'
+                disabled={!f.blockId}
+                onClick={() =>
+                  f.blockId && usePanelEditorStore.getState().setCurrentBlockId(f.blockId)
+                }
+              >
+                <span className='text-[var(--text-error)]'>Expected {f.expected}</span>
+                <span className='text-[var(--text-secondary)]'> — {f.why}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {view === 'flow' ? (
         <FlowPanel
           trace={result.trace}
@@ -146,6 +212,7 @@ export function SimulationTimeline() {
             setPlaying(false)
             setCursor(r.startedAt)
           }}
+          onMakeCase={scenario && workflowId ? makeCase : undefined}
           emptyText='No trigger fired in this simulation — add an input that changes a watched signal'
           downloadName='flow-simulation.jsonl'
         />

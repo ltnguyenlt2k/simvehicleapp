@@ -43,6 +43,9 @@ Timeline dưới case liệt kê từng lần ghi tín hiệu, từng thông bá
 - mở ra là các block lần chạy đó đi qua: nhánh đã rẽ (`→ then`, `→ else`, `→ stable`…) kèm giá trị của điều kiện lúc quyết định (vd. `Speed = 130 ⇒ true`), thời gian mỗi block (gồm thời gian chờ của *Stable for* / *Wait until*), rồi tín hiệu block ghi, log và tin MQTT;
 - bấm một lần chạy ⇒ thanh tua nhảy tới lúc nó bắt đầu; tua ⇒ lần chạy tại con trỏ được tô sáng. Bấm một block ⇒ chọn block đó trên canvas;
 - lọc theo trigger và kết quả; nút tải xuống lưu trace gốc + các lần chạy dạng JSONL.
+- **Make test case from this run** (trong lần chạy đã mở): tạo một test case mới khoá đúng việc lần chạy đó làm. Case gồm các input dẫn tới nó, các write tới lúc nó kết thúc (cho trễ 300 ms) và `never` cho actuator mà workflow không ghi. Ở tab Live, nút này dùng giá trị hiện tại của các tín hiệu đang watch làm giá trị ban đầu.
+
+Khi case **không đạt**, khung **Why the case failed** dưới kết quả nói mỗi kỳ vọng hỏng ở đâu. Ví dụ: `Expected …IsSignaling = true at 1000 ms — Stable 2s took broken (Speed = 100 ⇒ false); it needs stable`, hoặc `run 2 was cancelled before it reached …`. Bấm một dòng ⇒ chọn block đó. Khung này có cho Simulate; case chạy bằng Play trên app thật vẫn hiện danh sách kỳ vọng không đạt như trước.
 
 ## 2. Run + tab Live (app thật trên databroker)
 1. Workflow phải nằm trong một vehicle app. Bấm **SynCode** sau mỗi lần sửa workflow: **Run chạy bản build gần nhất**, không phải canvas hiện tại.

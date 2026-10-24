@@ -101,6 +101,12 @@ test.describe('M5 Simulate', () => {
     await expect(
       flowRun.locator('[data-sv-flow-write="Vehicle.Body.Lights.Hazard.IsSignaling"]')
     ).toBeVisible()
+    // Make test case from this run (M19-T06): a new case that locks the run's inputs and write; then back to the first.
+    const cases = page.locator('[data-sv="test-case"]')
+    const before = await cases.count()
+    await flowRun.locator('[data-sv="flow-make-case"]').click()
+    await expect(cases).toHaveCount(before + 1)
+    await cases.first().locator('button').first().click()
     await flowRun.locator('button').first().click()
     await expect(page.locator('[data-sv="sim-cursor"]')).toContainText('1000 /')
     await timeline.getByRole('radio', { name: 'Timeline' }).click()

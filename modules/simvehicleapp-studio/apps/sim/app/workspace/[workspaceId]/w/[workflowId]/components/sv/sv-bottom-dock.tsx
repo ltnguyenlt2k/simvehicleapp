@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { generateId } from '@sim/utils/id'
 import { useParams } from 'next/navigation'
-import { Button } from '@/components/emcn'
+import { Button, toast } from '@/components/emcn'
 import type { SvDiagnostic } from '@/lib/api/contracts/sv'
 import { cn } from '@/lib/core/utils/cn'
+import { caseFromLiveRun, writablePaths } from '@/lib/sv/case-from-run'
 import { planConvertFix } from '@/lib/sv/quick-fix'
+import type { Graph } from '@/lib/sv/test-generate'
 import {
   type ProblemFix,
   ProblemsList,
@@ -24,6 +26,7 @@ import {
   type SvDockTabId,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-config'
 import { BuildLog } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
+import { useCreateSvTestCase } from '@/hooks/queries/sv-test-cases'
 import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
 import { usePanelEditorStore, usePanelStore } from '@/stores/panel'
@@ -32,6 +35,7 @@ import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvRunStore } from '@/stores/sv/run/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 import { useSvSynCodeStore } from '@/stores/sv/syncode/store'
+import { useSvTestStore } from '@/stores/sv/test/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { prepareBlockState } from '@/stores/workflows/utils'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
@@ -194,6 +198,8 @@ const clock = (ts: number) =>
 /** Flow pane of the Live tab (M19-T04): the runs of the open workflow in the followed run. */
 function LiveFlowTab() {
   const workflowId = useSvLintStore((s) => s.workflowId)
+  const graphJson = useSvLintStore((s) => s.graphJson)
+  const create = useCreateSvTestCase(workflowId ?? undefined)
   const entries = useSvRunStore((s) => s.entries)
   const signals = useSvRunStore((s) => s.signals)
   const runId = useSvRunStore((s) => s.runId)
@@ -211,6 +217,23 @@ function LiveFlowTab() {
       blockName={blockName}
       onSelectBlock={(id) => focusField(id)}
       onSelectSignal={(path) => useSvRunStore.getState().showSignal(path)}
+      onMakeCase={(run) => {
+        const graph = graphJson ? (JSON.parse(graphJson) as Graph) : null
+        const name = `${blockName(run.trigger.blockId) ?? 'Run'} — live run ${run.run}`.slice(0, 80)
+        create.mutate(
+          {
+            name,
+            scenario: caseFromLiveRun(run, signals, graph ? writablePaths(graph.blocks) : [], name),
+          },
+          {
+            onSuccess: (c) => {
+              useSvTestStore.getState().setActiveCase(c.id)
+              toast.success(`Test case "${name}" added — open Test to simulate it`)
+            },
+            onError: (e) => toast.error(`New case: ${e.message}`),
+          }
+        )
+      }}
       timeText={clock}
       live
       emptyText='No run of this workflow yet — Run the app, then inject a signal'

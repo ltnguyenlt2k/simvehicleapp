@@ -57,8 +57,9 @@
 - Bằng chứng 2026-10-24: gateway `bun test` 26/26 (3 test nguồn mới); contracts `bun test` 399/399; studio vitest 357 (gồm `run-console.test.ts` 2 mới); tsc orchestrator + tsc hẹp studio sạch. `bun test` toàn orchestrator: 5 test workspace FAIL trên máy này do `tar: Cannot mkdir: Operation not permitted` trong thư mục tạm (môi trường, không liên quan; CI chạy). E2E `m8-run` thêm Sentences/Raw (CI).
 
 ### T06: Giải thích FAIL + tạo case từ lần chạy
-- [ ] Mỗi kỳ vọng không đạt ⇒ lần chạy gần nhất, nhánh thực tế + `eval`, nhánh cần (duyệt ngược từ block Set của path).
-- [ ] "Make test case from this run" (Live, Simulate) ⇒ case mới qua BFF (initial, input, writes + `never`, `within` 300 ms).
+- [x] Mỗi kỳ vọng không đạt ⇒ lần chạy gần nhất, nhánh thực tế + `eval`, nhánh cần (duyệt ngược từ block Set của path) — khung "Why the case failed" dưới kết quả Simulate; bấm ⇒ chọn block. Chỉ cho Simulate; Play giữ mismatch dạng chuỗi (ADR-0062 Notes).
+- [x] "Make test case from this run" (Live, Simulate) ⇒ case mới qua BFF hiện có (`useCreateSvTestCase`): initial, input, writes `within` 300 ms + `never`.
+- Bằng chứng 2026-10-24: vitest `fail-explain.test.ts` 4/4 (ghi lệch giờ, nhánh broken kèm giá trị, run bị huỷ khi chờ, trigger không chạy, `never`, không block nào ghi), `case-from-run.test.ts` 3/3 (case hợp lệ với `svScenarioSchema`); studio vitest 364; tsc hẹp sạch. E2E `m5-simulate` thêm "Make test case" (CI). E2E cho "Why the case failed": chưa có, làm ở T07 cùng full luồng.
 
 ### T07: Đóng milestone
 - [ ] Gate M19 trên stack dev + nightly.

@@ -10,6 +10,8 @@ interface SvSimulationState {
   graphJson: string | null
   until: number
   result: SimResult | null
+  /** The scenario `result` was simulated with (its expectations explain a failure, M19-T06). */
+  scenario: SvScenario | null
   /** Replay cursor (virtual ms). */
   cursor: number
   status: 'idle' | 'running' | 'done' | 'failed'
@@ -21,7 +23,13 @@ interface SvSimulationState {
   focusSimulation: number
   showSimulation: () => void
   setRunning: () => void
-  setResult: (workflowId: string, graphJson: string, until: number, result: SimResult) => void
+  setResult: (
+    workflowId: string,
+    graphJson: string,
+    until: number,
+    result: SimResult,
+    scenario?: SvScenario
+  ) => void
   setFailed: () => void
   setCursor: (cursor: number) => void
   clear: () => void
@@ -32,6 +40,7 @@ const initialState = {
   graphJson: null as string | null,
   until: 0,
   result: null as SimResult | null,
+  scenario: null as SvScenario | null,
   cursor: 0,
   status: 'idle' as SvSimulationState['status'],
   focusSimulation: 0,
@@ -47,8 +56,16 @@ export const useSvSimulationStore = create<SvSimulationState>()(
       setDraft: (workflowId, scenario, caseId) =>
         set({ draft: { workflowId, scenario, ...(caseId ? { caseId } : {}) } }),
       showSimulation: () => set((s) => ({ focusSimulation: s.focusSimulation + 1 })),
-      setResult: (workflowId, graphJson, until, result) =>
-        set({ workflowId, graphJson, until, result, cursor: until, status: 'done' }),
+      setResult: (workflowId, graphJson, until, result, scenario) =>
+        set({
+          workflowId,
+          graphJson,
+          until,
+          result,
+          scenario: scenario ?? null,
+          cursor: until,
+          status: 'done',
+        }),
       setFailed: () => set({ status: 'failed' }),
       setCursor: (cursor) => set((s) => ({ cursor: Math.max(0, Math.min(s.until, cursor)) })),
       clear: () => set(initialState),
