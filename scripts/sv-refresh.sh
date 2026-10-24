@@ -76,7 +76,7 @@ echo "refresh: building migrations/realtime, contracts, core, backend, orchestra
 $DC build studio-migrations studio-realtime
 $DC build contracts
 $DC build vss-catalog compiler codegen-cpp
-$DC build orchestrator workspace signal-gateway toolchain-cpp ai-assistant
+$DC build orchestrator workspace signal-gateway vehicle-gateway toolchain-cpp ai-assistant
 # Python backend when the `python` profile is on (ADR-0040): only its agent layer rebuilds, like toolchain-cpp.
 if $DC config --services | grep -qx toolchain-python; then $DC build codegen-python toolchain-python; fi
 if $DC config --services | grep -qx toolchain-rust; then $DC build codegen-rust toolchain-rust; fi

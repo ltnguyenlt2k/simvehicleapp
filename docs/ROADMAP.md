@@ -406,7 +406,7 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M18](design/M18-test-workbench-readab
 | Làn theo trigger, giá trị sống, "Data from earlier blocks" | 0059 | 🔄 | 2026-10-24 Claude Code (theo uỷ quyền PO — chờ PO xác nhận):<br>• Auto layout theo làn cho workflow xe (`lane-layout.ts`), khung tên trigger;<br>• cạnh: nhánh chạy sáng, nhánh bỏ qua mờ, `= giá trị` trên cạnh ra từ trigger (Simulate/Run);<br>• editor: "Data from earlier blocks" + giải thích, giá trị mẫu, bấm chèn, "This block starts the workflow", "Used by".<br>Test: vitest 63 file / 491 test (lane 4, edge-flow 2, earlier-data 2); narrow tsc sạch. Chờ: E2E `m18-test-cases` trên CI | T08 |
 | Deploy Remote databroker (read-only + audit) | 0060 | 🔄 | PO 2026-10-15: Run = tín hiệu giả lập để test; Deploy = tín hiệu từ layer khác (HW/CAN), inject/Play/Record/mirror bị từ chối (`SIMULATED_INPUT_DISABLED`)<br>• **2026-10-24 Claude Code:** spike vehicle-gateway PASS (Bun `node:http2`: read-only chặn `Actuate` = PERMISSION_DENIED, Subscribe stream qua proxy, status upstream nguyên vẹn) — [spike](spikes/vehicle-gateway.md). Tiếp: service vehicle-gateway, contract DeployTarget/Deployment, `SIMULATED_INPUT_DISABLED`, UI | T09 |
 | Deploy Container image | 0060 | ☐ | | T10 |
-| Gate + full luồng `@live` + video + README + báo cáo | 0058–0060 | ☐ | | T11 |
+| Gate + full luồng `@live` + video + README + báo cáo | 0058–0060 | ☐ | 2026-10-24 ghi nhận: trên CI, trang `/workspace` sau đăng ký có lần đứng yên (spinner) vì request danh sách workspace lỗi lúc stack tải nặng; đây là hành vi của Sim (không thử lại, không báo lỗi). E2E reload một lần (`e2e/lib/studio.ts`); cần xem xử lý lỗi ở trang này trước khi đóng M18 | T11 |
 
 
 ## M19 — Luồng thực thi (Flow) và thử tín hiệu chỉn chu

@@ -73,7 +73,7 @@ jobs:
         run: |
           case "$GROUP" in
             core)   $DC build contracts
-                    $DC build vss-catalog compiler codegen-cpp codegen-python codegen-rust orchestrator workspace signal-gateway ai-assistant ;;
+                    $DC build vss-catalog compiler codegen-cpp codegen-python codegen-rust orchestrator workspace signal-gateway vehicle-gateway ai-assistant ;;
             studio) $DC build studio studio-migrations studio-realtime ;;
             cpp)    $DC build contracts && $DC build devcontainer-cpp toolchain-cpp && $DC build ide-cpp ;;
             python) $DC build contracts && $DC build devcontainer-python toolchain-python && $DC build ide-python ;;

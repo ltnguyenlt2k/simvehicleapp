@@ -2,7 +2,7 @@
 # each group into images-<group>.tar.zst; `scripts/sv pull` downloads and loads them. Images of one group are saved
 # together, so the layers they share (toolchain → IDE, bun base of the services) are stored once.
 # group   images
-core      simvehicleapp/vss-catalog:dev simvehicleapp/compiler:dev simvehicleapp/codegen-cpp:dev simvehicleapp/codegen-python:dev simvehicleapp/codegen-rust:dev simvehicleapp/orchestrator:dev simvehicleapp/workspace:dev simvehicleapp/signal-gateway:dev simvehicleapp/ai-assistant:dev
+core      simvehicleapp/vss-catalog:dev simvehicleapp/compiler:dev simvehicleapp/codegen-cpp:dev simvehicleapp/codegen-python:dev simvehicleapp/codegen-rust:dev simvehicleapp/orchestrator:dev simvehicleapp/workspace:dev simvehicleapp/signal-gateway:dev simvehicleapp/vehicle-gateway:dev simvehicleapp/ai-assistant:dev
 studio    simvehicleapp/studio:dev simvehicleapp/studio-migrations:dev simvehicleapp/studio-realtime:dev
 cpp       simvehicleapp/devcontainer-cpp:dev simvehicleapp/toolchain-cpp:dev simvehicleapp/ide-cpp:dev
 python    simvehicleapp/devcontainer-python:dev simvehicleapp/toolchain-python:dev simvehicleapp/ide-python:dev

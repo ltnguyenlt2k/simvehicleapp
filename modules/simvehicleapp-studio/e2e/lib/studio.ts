@@ -29,6 +29,14 @@ export async function submitAuth(page: Page, endpoint: string, done: RegExp) {
     const retryAfter = Number(headers['x-retry-after'] ?? headers['retry-after'] ?? '10')
     await page.waitForTimeout((Number.isFinite(retryAfter) ? retryAfter : 10) * 1000 + 250)
   }
+  // The /workspace landing redirects once it has loaded the user's workspaces; when that request fails (a loaded CI
+  // stack) it stays there with a spinner. A user reloads: so does the test, once.
+  const reached = await page.waitForURL(done, { timeout: 20_000 }).then(
+    () => true,
+    () => false
+  )
+  if (reached) return
+  if (new URL(page.url()).pathname === '/workspace') await page.reload()
   await page.waitForURL(done, { timeout: 60_000 })
 }
 
