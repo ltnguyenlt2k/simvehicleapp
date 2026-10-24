@@ -415,7 +415,8 @@ Yêu cầu PO 2026-10-24 · Thiết kế: [M19](design/M19-execution-flow-and-si
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Phân tích + kiểm kê + thiết kế + ADR + kế hoạch | 0062 | ✔ | 2026-10-24 Claude Code: kiểm kê 8 nơi tạo tín hiệu thử và 4 nơi hiện luồng ([design §2](design/M19-execution-flow-and-signal-testing.md)). Thiếu: lý do rẽ nhánh trong trace, nguồn tín hiệu (`signal-update` chỉ có `path, ts, value, field`), console là JSON thô và phẳng, case FAIL không chỉ điểm lệch | T01 |
-| `data.eval` (lý do rẽ nhánh) trong simulator + 3 runtime | 0062 | ☐ | | T02 |
+| `data.eval` (lý do rẽ nhánh) trong simulator | 0062 | 🔄 | 2026-10-24: chia T02a (simulator) / T02b (3 runtime, golden đổi byte) — ADR-0062 Notes | T02a |
+| `data.eval` trong runtime C++/Python/Rust | 0062 | ☐ | | T02b |
 | Mô hình Flow `lib/sv/flow-trace.ts` | 0062 | ☐ | | T03 |
 | Flow view: Live, Simulate, Test; chọn bước ⇒ block; tải JSONL | 0062 | ☐ | | T04 |
 | Nguồn tín hiệu ở gateway; Run console dạng câu + Raw + dòng input | 0062 | ☐ | | T05 |

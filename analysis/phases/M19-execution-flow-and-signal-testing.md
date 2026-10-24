@@ -17,7 +17,8 @@
 | ID | Task | Module | Phụ thuộc | DoD |
 |---|---|---|---|---|
 | T01 | Phân tích + kiểm kê + thiết kế + ADR-0062 + phase + ROADMAP | docs | — | Tài liệu commit; ADR Proposed |
-| T02 | `data.eval` ở `exit` của block quyết định: simulator + runtime C++/Python/Rust; trace kỳ vọng conformance | core, compiler-code-* | T01 | Conformance C01–C45 3 runtime; parity P3 7/7; golden code không đổi |
+| T02a | `data.eval` ở `exit` của block quyết định trong **simulator**; parity bỏ qua `eval` (ADR-0062 Notes) | core | T01 | Simulator test; golden trace cập nhật có review; parity P3 7/7 |
+| T02b | Generator truyền danh sách tham chiếu ⇒ runtime C++/Python/Rust phát `eval` | compiler-code-* | T02a | Golden code đổi byte có chủ đích, review diff; conformance; parity so cả `eval` |
 | T03 | `lib/sv/flow-trace.ts`: `TraceEvent[]` + signal updates ⇒ `FlowRun[]`; câu dễ đọc | studio | T01 | Snapshot GW-A…G tất định (2 lần); 5 000 sự kiện ≤ 50 ms |
 | T04 | Flow view: pane Flow ở Live, cạnh timeline Simulate, trong mỗi case Test; chọn bước ⇒ block; lọc; tải JSONL | studio | T03 | Vitest + E2E |
 | T05 | `signal-update.source` (+`actor`) ở gateway; Run console dạng câu + Raw + dòng input | contracts, orchestrator, studio | T01 | Contract minor + CHANGELOG; unit gateway (inject/playback/mirror/app/vehicle); vitest console |

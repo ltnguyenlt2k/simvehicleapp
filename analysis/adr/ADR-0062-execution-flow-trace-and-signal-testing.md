@@ -118,4 +118,9 @@ Xem Decision 8. Thêm:
 - test gateway: inject ⇒ `source: inject`, app write ⇒ `source: app`, playback ⇒ `playback`.
 
 ## Notes / Deviations
+- 2026-10-24 — **T02 chia làm hai** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - Khi đọc source: runtime C++/Python/Rust nhận điều kiện của `branch`, `switch`, `stable_for`, `wait_until` dưới dạng hàm do generator sinh ra, ví dụ `w.branch(…, [](Ctx&){ return … > 120; })`. Runtime không biết biểu thức tham chiếu tới những gì, nên không tự đọc được giá trị toán hạng. Muốn runtime phát `eval`, generator phải truyền thêm danh sách tham chiếu, và golden code của 3 backend đổi byte.
+  - **T02a:** simulator phát `data.eval` (Simulate, Test, Generate tests: nơi người dùng hỏi "vì sao" nhiều nhất). Parity P3 và so trace bỏ qua khoá `eval` cho tới T02b. Run live vẫn có `handle` (nhánh đã đi) mà chưa có giá trị toán hạng.
+  - **T02b:** generator truyền danh sách tham chiếu vào các hàm quyết định của runtime. Golden code đổi byte có chủ đích, review diff, rồi parity so lại cả `eval`.
+  - Khoá của `refs`: `$signal` ⇒ đường dẫn VSS, `$ref` ⇒ `nK.out`, `$state` ⇒ `state.vK`. Giá trị theo mã hoá JSON của IR (int64 là chuỗi); tối đa 8 tham chiếu; chuỗi cắt ở 120 ký tự.
 - 2026-10-24: viết ADR từ yêu cầu PO, dựa trên kiểm kê source ở Context.
