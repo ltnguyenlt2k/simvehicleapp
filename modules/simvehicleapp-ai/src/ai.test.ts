@@ -8,7 +8,7 @@ import { createAssistantHandler, type Entitlement, entitlementFrom, RateLimiter 
 import { connectExternal, createMcpHandler, extName, sameSecret } from "./mcp.ts";
 import { applyPatch, asciiOperators, emptyGraph, normalizeName, repairOps, type WorkflowGraph } from "./patch.ts";
 import { anthropicProvider } from "./providers/anthropic.ts";
-import { fakeProvider, plan } from "./providers/fake.ts";
+import { fakeProvider, fold, plan, testPlan } from "./providers/fake.ts";
 import { geminiProvider, geminiSchema } from "./providers/gemini.ts";
 import { openaiProvider, toOpenAi } from "./providers/openai.ts";
 import { type LlmProvider, type Message, ProviderError, redactSecrets, type TurnRequest, type TurnResult } from "./providers/types.ts";
@@ -232,6 +232,10 @@ describe("WorkflowPatch v1 (M10-T05)", () => {
     const fake = fakeProvider();
     const run = await fake.streamTurn({ system, tools: [], messages: [{ role: "user", content: "Chạy app" }] });
     expect(run.content).toEqual([expect.objectContaining({ type: "tool_use", name: "run_start", input: { projectId: "p1" } })]);
+    const tests = await fake.streamTurn({ system, tools: [], messages: [{ role: "user", content: "Test this workflow: speed above 120" }] });
+    expect(tests.content).toEqual([expect.objectContaining({ type: "tool_use", name: "scenario_propose" })]);
+    expect(testPlan(fold("Kiểm thử tốc độ dưới 30"))!.testCases.map((c) => c.name)).toEqual(["Speed 29 (below 30)", "Speed 30 (at the limit)"]);
+    expect(testPlan("test the hmi")).toBeNull();
     const help = await fake.streamTurn({ system, tools: [], messages: [{ role: "user", content: "hello" }] });
     expect(help).toMatchObject({ stopReason: "end_turn", content: [{ text: expect.stringContaining("SV_AI_PROVIDER=fake") }] });
   });
@@ -534,6 +538,55 @@ describe("tools without the editor (MCP callers, M10 review)", () => {
   });
 });
 
+describe("test cases from the assistant (ADR-0058 §8, M18-T06)", () => {
+  const H = "Vehicle.Body.Lights.Hazard.IsSignaling";
+  const svc = (writes: { t: number; path: string; value: unknown }[]): Services => {
+    const base = fakeServices([]);
+    return {
+      ...base,
+      async post(service, path, body, t) {
+        if (service === "compiler" && path === "/compile") return { ir: { irVersion: "1.0.0" }, diagnostics: [] };
+        if (service === "compiler" && path === "/simulate") {
+          const exp = (body as { scenario: { expect?: { writes?: { path: string; value: unknown }[] } } }).scenario.expect?.writes ?? [];
+          const missing = exp.filter((e) => !writes.some((w) => w.path === e.path && w.value === e.value));
+          return { writes, trace: [], diagnostics: [], expectations: { passed: missing.length === 0, mismatches: missing.map((m) => `expected ${m.path}`) } };
+        }
+        return base.post(service, path, body, t);
+      },
+    };
+  };
+  const ctx = { userId: "u", conversationId: "c", workflow: { ...turnCtx.workflow, testCases: [{ name: "Fast", scenario: { scenarioVersion: "1.1.0", name: "Fast", until: 5000, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 130 }], expect: { writes: [{ t: 3000, path: H, value: true, within: 50 }] } } }] } };
+
+  test("scenario_list says the cases in words", async () => {
+    const tools = createTools(svc([]), new BlockCatalog(fakeServices()));
+    const r = await runTool(tools.find((t) => t.name === "scenario_list")!, {}, ctx);
+    expect(r.text).toBe(`1. Fast: when t=1000 Vehicle.Speed = 130; then ${H} = true at 3000`);
+  });
+
+  test("scenario_propose validates and simulates each case, saves nothing; invalid ones are reported", async () => {
+    const tools = createTools(svc([{ t: 3010, path: H, value: true }]), new BlockCatalog(fakeServices()));
+    const propose = tools.find((t) => t.name === "scenario_propose")!;
+    const r = await runTool(propose, {
+      testCases: [
+        { name: "Above 120", scenario: { name: "Above", until: 5000, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 121 }], expect: { writes: [{ t: 3000, path: H, value: true, within: 50 }] } } },
+        { name: "Broken", scenario: { name: "x", until: "soon", inputs: [] } },
+      ],
+    }, ctx);
+    expect(r.isError).toBeFalsy();
+    expect(r.structured?.testCases).toEqual([{ name: "Above 120", scenario: expect.objectContaining({ scenarioVersion: "1.1.0", name: "Above" }) }]);
+    expect(r.text).toContain("Above 120: the workflow meets it");
+    expect(r.text).toContain("Broken: invalid");
+    expect((await runTool(propose, { testCases: [] }, ctx)).isError).toBe(true);
+  });
+
+  test("scenario_run runs a case by name and says what is not met", async () => {
+    const tools = createTools(svc([]), new BlockCatalog(fakeServices()));
+    const r = await runTool(tools.find((t) => t.name === "scenario_run")!, { name: "Fast" }, ctx);
+    expect(r.structured).toMatchObject({ passed: false, problems: [`expected ${H}`] });
+    expect((await runTool(tools.find((t) => t.name === "scenario_run")!, { name: "Nope" }, ctx)).isError).toBe(true);
+  });
+});
+
 describe("MCP server + client (M10-T03/T06)", () => {
   const services = fakeServices();
   const blocks = new BlockCatalog(services);
@@ -556,8 +609,8 @@ describe("MCP server + client (M10-T03/T06)", () => {
     return client;
   };
 
-  test("13 tools, statically safe or sensitive; bearer required", async () => {
-    expect(SAFE_TOOL_NAMES.size + SENSITIVE_TOOL_NAMES.size).toBe(13);
+  test("16 tools, statically safe or sensitive; bearer required", async () => {
+    expect(SAFE_TOOL_NAMES.size + SENSITIVE_TOOL_NAMES.size).toBe(16);
     await expect(connect()).rejects.toThrow();
     const c = await connect("read-token-0123456789");
     const listed = await c.listTools();

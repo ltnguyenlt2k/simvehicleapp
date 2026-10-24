@@ -69,7 +69,8 @@ function contextOf(userId: string, conversationId: string, raw: unknown): ToolCo
   const ctx: ToolContext = { userId, conversationId };
   const wf = c.workflow;
   if (wf && typeof wf.workflowId === "string" && typeof wf.vssRelease === "string") {
-    ctx.workflow = { workflowId: wf.workflowId, vssRelease: wf.vssRelease, ...(typeof wf.name === "string" ? { name: wf.name } : {}), ...(wf.graph && Array.isArray(wf.graph.blocks) ? { graph: wf.graph } : {}) };
+    const cases = Array.isArray(wf.testCases) ? (wf.testCases as unknown[]).filter((x): x is { name: string; scenario: Record<string, unknown> } => !!x && typeof (x as { name?: unknown }).name === "string" && typeof (x as { scenario?: unknown }).scenario === "object").slice(0, 50) : undefined;
+    ctx.workflow = { workflowId: wf.workflowId, vssRelease: wf.vssRelease, ...(typeof wf.name === "string" ? { name: wf.name } : {}), ...(wf.graph && Array.isArray(wf.graph.blocks) ? { graph: wf.graph } : {}), ...(cases ? { testCases: cases } : {}) };
   }
   const p = c.project;
   if (p && typeof p.id === "string" && typeof p.vssRelease === "string") {

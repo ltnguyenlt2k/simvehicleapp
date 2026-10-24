@@ -118,6 +118,30 @@ const HELP_VI =
 const HELP_EN =
   "(Simulated AI — SV_AI_PROVIDER=fake, no model.) I understand requests like: \"Turn on the hazard lights when the speed stays above 120 km/h for 2 seconds\", \"Show an HMI warning when the battery is below 20% while moving\", \"Log a message when the app starts\", \"Run the app\". Configure a real provider in .env for the full assistant.";
 
+/**
+ * "Test speed above 100" ⇒ two boundary cases on Vehicle.Speed (ADR-0058 §8): one just past the
+ * limit, one at it. The simulated model sees block names only, so the signal comes from the request.
+ */
+export function testPlan(t: string): { testCases: { name: string; scenario: Record<string, unknown> }[] } | null {
+  if (!/\b(test|tests|kiem thu|kiem tra)\b/.test(t) || !/\b(speed|toc do)\b/.test(t)) return null;
+  const [limit] = numbers(t);
+  if (limit === undefined) return null;
+  const below = /\b(below|under|less|duoi|thap hon)\b|</.test(t);
+  const past = below ? limit - 1 : limit + 1;
+  const scenario = (name: string, value: number) => ({
+    name,
+    until: 3000,
+    initial: { "Vehicle.Speed": below ? limit + 10 : 0 },
+    inputs: [{ t: 1000, path: "Vehicle.Speed", value }],
+  });
+  return {
+    testCases: [
+      { name: `Speed ${past} (${below ? "below" : "above"} ${limit})`, scenario: scenario(`Speed ${past}`, past) },
+      { name: `Speed ${limit} (at the limit)`, scenario: scenario(`Speed ${limit}`, limit) },
+    ],
+  };
+}
+
 let seq = 0;
 const toolUse = (name: string, input: Record<string, unknown>): ToolUseBlock => ({ type: "tool_use", id: `fake_${++seq}`, name, input });
 
@@ -152,10 +176,13 @@ export function fakeProvider(): LlmProvider {
         const r = results[0] as { content: string; is_error?: boolean };
         const head = r.content.split("\n")[0] ?? "";
         if (/^Proposal is valid/m.test(r.content)) return say(vi ? "Đã đề xuất thay đổi — bấm \"Show on canvas\" để xem và Accept trên canvas." : "Proposed — click \"Show on canvas\" to review it, then Accept on the canvas.");
+        if (/test case\(s\) proposed/.test(head)) return say(vi ? "Đã đề xuất test case — bấm \"Add to Test tab\" để thêm vào tab Test." : "Proposed — click \"Add to Test tab\" to keep them.");
         if (/^Proposal has/m.test(r.content)) return say(vi ? `Đề xuất còn lỗi:\n${r.content.slice(0, 400)}` : `The proposal still has errors:\n${r.content.slice(0, 400)}`);
         return say(r.is_error ? (vi ? `Không thực hiện được: ${head}` : `That did not work: ${head}`) : head);
       }
       const t = fold(question);
+      const tests = testPlan(t);
+      if (tests) return { content: [toolUse("scenario_propose", tests)], stopReason: "tool_use" };
       if (/\b(run|chay|start the app)\b/.test(t) && !/\b(when|khi)\b/.test(t)) {
         const project = /Project: id (\S+?),/.exec(req.system)?.[1];
         if (!project) return say(vi ? "Workflow chưa thuộc project nào — thêm nó vào một vehicle project rồi SynCode trước." : "This workflow is not in a vehicle project yet — add it to one and SynCode first.");

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { ContractValidator } from "@simvehicleapp/contracts";
 import { fileURLToPath } from "node:url";
 import { applyPatch, emptyGraph, normalizeName, repairOps, type PatchOp, patchSummary, referencesByName, type WorkflowGraph, type WorkflowPatch } from "./patch.ts";
 import type { ToolDef } from "./providers/types.ts";
@@ -19,6 +20,9 @@ export const SAFE_TOOL_NAMES = new Set([
   "workflow_propose_patch",
   "workflow_validate",
   "workflow_simulate",
+  "scenario_list",
+  "scenario_propose",
+  "scenario_run",
   "diagnostics_explain",
   "run_logs",
 ]);
@@ -28,10 +32,19 @@ export const SENSITIVE_TOOL_NAMES = new Set(["project_syncode", "run_start", "ru
 const OWNER_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const SANDBOX = /^toolchain-(cpp|python|rust):[0-9]{2,5}$/;
 
+/** A test case in words: its inputs and what it expects (scenario_list). */
+function summarizeCase(sc: Record<string, unknown>): string {
+  const inputs = (sc.inputs as { t: number; path?: string; topic?: string; value: unknown }[] | undefined) ?? [];
+  const e = (sc.expect as { writes?: { t: number; path: string; value: unknown }[]; never?: { path: string }[] } | undefined) ?? {};
+  const when = inputs.map((i) => `t=${i.t} ${i.path ?? i.topic} = ${JSON.stringify(i.value)}`).join(", ") || "no input";
+  const then = [...(e.writes ?? []).map((w) => `${w.path} = ${JSON.stringify(w.value)} at ${w.t}`), ...(e.never ?? []).map((n) => `never ${n.path}`)].join(", ") || "no expectation";
+  return `when ${when}; then ${then}`;
+}
+
 export interface ToolContext {
   userId: string;
   conversationId: string;
-  workflow?: { workflowId: string; name?: string; vssRelease: string; graph?: WorkflowGraph };
+  workflow?: { workflowId: string; name?: string; vssRelease: string; graph?: WorkflowGraph; testCases?: { name: string; scenario: Record<string, unknown> }[] };
   project?: { id: string; vssRelease: string; graphs?: WorkflowGraph[]; scenarios?: { workflowId: string; scenario: unknown }[] };
   /** Ops of the turn's previous proposal (models often send only the change since it). */
   lastOps?: PatchOp[];
@@ -72,6 +85,9 @@ interface BlockSpec {
   outputs?: { name: string; type: string }[];
   handles?: { in?: string[]; out?: string[] };
 }
+
+/** Scenario checks of the assistant's test cases (contracts `scenario`). */
+const scenarioValidator = new ContractValidator();
 
 const CATALOG = JSON.parse(readFileSync(fileURLToPath(import.meta.resolve("@simvehicleapp/contracts/schemas/diagnostics-catalog.v1.json")), "utf8")) as { codes: { code: string; severity: string; stage: string; title: string; adr?: string }[] };
 
@@ -173,6 +189,13 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
     ctx.workflow ? (ctx.workflow.graph ?? emptyGraph(ctx.workflow.workflowId, ctx.workflow.name ?? "Workflow", ctx.workflow.vssRelease)) : null;
   const verify = async (graph: WorkflowGraph): Promise<Diagnostic[]> => ((await services.post("compiler", "/compile", { graph, mode: "verify" })) as { diagnostics: Diagnostic[] }).diagnostics;
   const projectId = (ctx: ToolContext, input: Record<string, unknown>) => str(input.projectId) ?? ctx.project?.id;
+  /** Compiles the graph and simulates a test case: does the workflow meet its expectations? null when it does not compile. */
+  const simulateCase = async (graph: WorkflowGraph, scenario: Record<string, unknown>) => {
+    const built = (await services.post("compiler", "/compile", { graph, mode: "build" })) as { ir?: unknown };
+    if (!built.ir) return null;
+    const sim = (await services.post("compiler", "/simulate", { ir: built.ir, scenario })) as { writes: { t: number; path: string; value: unknown }[]; expectations?: { passed: boolean; mismatches: string[] } };
+    return { passed: sim.expectations ? sim.expectations.passed : true, problems: sim.expectations?.mismatches ?? [], writes: sim.writes };
+  };
 
   const tools: Tool[] = [
     {
@@ -341,6 +364,71 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         return {
           text: `Writes:\n${sim.writes.map((w) => `t=${w.t} ${w.path} = ${JSON.stringify(w.value)}`).join("\n") || "(none)"}\n${sim.trace.length} trace events.`,
           structured: { writes: sim.writes, trace: sim.trace.slice(0, 200) },
+        };
+      },
+    },
+    {
+      name: "scenario_list",
+      description: "The test cases of the open workflow (ADR-0058): name, inputs, expectations. Each becomes a generated test at SynCode.",
+      input_schema: { type: "object", properties: {} },
+      async run(_input, ctx) {
+        const cases = ctx.workflow?.testCases ?? [];
+        if (!cases.length) return { text: "The workflow has no test case yet.", structured: { testCases: [] } };
+        return {
+          text: cases.map((c, i) => `${i + 1}. ${c.name}: ${summarizeCase(c.scenario)}`).join("\n"),
+          structured: { testCases: cases.map((c) => ({ name: c.name })) },
+        };
+      },
+    },
+    {
+      name: "scenario_propose",
+      description:
+        "Propose test cases for the open workflow (ADR-0058 §8): each {name, scenario} where scenario is scenario v1.1 — initial values, inputs over time (When), expect.writes with `within` ms and expect.never (Then). Cover both sides of each condition. The user accepts or rejects them in the Test tab; nothing is saved by this tool. Each case is simulated: the result says whether the workflow meets it.",
+      input_schema: {
+        type: "object",
+        properties: { testCases: { type: "array", items: { type: "object", properties: { name: { type: "string" }, scenario: { type: "object" } }, required: ["name", "scenario"] } } },
+        required: ["testCases"],
+      },
+      async run(input, ctx) {
+        const list = Array.isArray(input.testCases) ? (input.testCases as { name?: unknown; scenario?: unknown }[]) : [];
+        if (!list.length || list.length > 20) return err("testCases: 1 to 20 cases, each {name, scenario}.");
+        const g = draft(ctx);
+        const results: { name: string; valid: boolean; passed?: boolean; problems: string[] }[] = [];
+        const accepted: { name: string; scenario: Record<string, unknown> }[] = [];
+        for (const c of list) {
+          const name = typeof c.name === "string" ? c.name.trim().slice(0, 80) : "";
+          const sc = { scenarioVersion: "1.1.0", ...(c.scenario as Record<string, unknown>) };
+          const v = scenarioValidator.validate("scenario", sc);
+          if (!name || !v.valid) {
+            results.push({ name: name || "(no name)", valid: false, problems: name ? v.errors.slice(0, 3).map((e) => `${e.instancePath || "/"} ${e.message}`) : ["name is required"] });
+            continue;
+          }
+          const run = g ? await simulateCase(g, sc) : null;
+          results.push({ name, valid: true, ...(run ? { passed: run.passed } : {}), problems: run?.problems ?? [] });
+          accepted.push({ name, scenario: sc });
+        }
+        const text = results.map((r) => `- ${r.name}: ${!r.valid ? `invalid (${r.problems.join("; ")})` : r.passed === undefined ? "valid" : r.passed ? "the workflow meets it" : `the workflow does not meet it (${r.problems.slice(0, 2).join("; ")})`}`).join("\n");
+        if (!accepted.length) return err(`No valid test case:\n${text}`);
+        return { text: `${accepted.length} test case(s) proposed; the user accepts or rejects them in the Test tab.\n${text}`, structured: { testCases: accepted, results } };
+      },
+    },
+    {
+      name: "scenario_run",
+      description: "Simulate one test case of the open workflow (by name from scenario_list, or a scenario v1.1) and say whether the workflow meets its expectations.",
+      input_schema: { type: "object", properties: { name: { type: "string" }, scenario: { type: "object" } } },
+      async run(input, ctx) {
+        const g = draft(ctx);
+        if (!g) return err("No workflow open.");
+        const byName = str(input.name) ? ctx.workflow?.testCases?.find((c) => c.name === str(input.name)) : undefined;
+        const sc = (byName?.scenario ?? (input.scenario as Record<string, unknown> | undefined));
+        if (!sc) return err(str(input.name) ? `No test case named ${input.name} (scenario_list).` : "Give the name of a test case or a scenario.");
+        const v = scenarioValidator.validate("scenario", sc);
+        if (!v.valid) return err(`Invalid scenario: ${v.errors.slice(0, 3).map((e) => `${e.instancePath || "/"} ${e.message}`).join("; ")}`);
+        const run = await simulateCase(g, sc);
+        if (!run) return err("The workflow does not compile: fix the errors first (workflow_validate).");
+        return {
+          text: run.passed ? "The workflow meets every expectation of this case." : `The workflow does not meet the case:\n${run.problems.map((p) => `- ${p}`).join("\n")}`,
+          structured: { passed: run.passed, problems: run.problems, writes: run.writes },
         };
       },
     },
