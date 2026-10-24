@@ -100,7 +100,7 @@ test.describe
       await expect(page.locator('[data-sv="bottom-dock"]')).toMatchAriaSnapshot(`
       - tablist "Vehicle app output":
         - tab "Problems" [selected]
-        - tab "Simulation timeline"
+        - tab "Test"
         - tab "Run console"
         - tab "Signals"
         - tab "Build log"

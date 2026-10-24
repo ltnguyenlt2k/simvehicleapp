@@ -14,8 +14,9 @@ interface SvSimulationState {
   cursor: number
   status: 'idle' | 'running' | 'done' | 'failed'
   /** Scenario being edited (saved after a short debounce); Simulate always uses what the editor shows. */
-  draft: { workflowId: string; scenario: SvScenario } | null
-  setDraft: (workflowId: string, scenario: SvScenario) => void
+  draft: { workflowId: string; scenario: SvScenario; caseId?: string } | null
+  /** `caseId`: the test case the draft belongs to (ADR-0058); Simulate saves it there. */
+  setDraft: (workflowId: string, scenario: SvScenario, caseId?: string) => void
   /** Bumped to bring the Simulation tab to the front. */
   focusSimulation: number
   showSimulation: () => void
@@ -43,7 +44,8 @@ export const useSvSimulationStore = create<SvSimulationState>()(
     (set) => ({
       ...initialState,
       setRunning: () => set({ status: 'running' }),
-      setDraft: (workflowId, scenario) => set({ draft: { workflowId, scenario } }),
+      setDraft: (workflowId, scenario, caseId) =>
+        set({ draft: { workflowId, scenario, ...(caseId ? { caseId } : {}) } }),
       showSimulation: () => set((s) => ({ focusSimulation: s.focusSimulation + 1 })),
       setResult: (workflowId, graphJson, until, result) =>
         set({ workflowId, graphJson, until, result, cursor: until, status: 'done' }),

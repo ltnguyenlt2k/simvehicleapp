@@ -16,10 +16,7 @@ import {
   SignalsPanel,
   useWorkflowRuns,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run'
-import {
-  ScenarioEditor,
-  SimulationTimeline,
-} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
+import { TestTab } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sim'
 import {
   SV_DOCK_TABS,
   type SvDockTabId,
@@ -27,7 +24,8 @@ import {
 import { BuildLog } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode'
 import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useCollaborativeWorkflow } from '@/hooks/use-collaborative-workflow'
-import { usePanelEditorStore } from '@/stores/panel'
+import { usePanelEditorStore, usePanelStore } from '@/stores/panel'
+import { useSvAssistantStore } from '@/stores/sv/assistant/store'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvRunStore } from '@/stores/sv/run/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
@@ -140,18 +138,25 @@ function ProblemsTab() {
   )
 }
 
-/** Simulation tab (M05-T09/T10): scenario editor next to the timeline of the last simulation. */
-function SimulationTab() {
+/**
+ * Test tab (M18-T04, ADR-0058): the workflow's test cases, the editor of the active one and the timeline of the last
+ * simulation; its empty state asks the assistant or opens Signals to record a live run.
+ */
+function SimulationTab({ onRecord }: { onRecord: () => void }) {
   const workflowId = useSvLintStore((s) => s.workflowId)
   const workflowName = useWorkflowName(workflowId)
   if (!workflowId) return null
   return (
-    <div className='flex min-h-0 flex-1'>
-      <div className='flex w-[440px] min-w-0 shrink-0 flex-col border-[var(--border)] border-r'>
-        <ScenarioEditor key={workflowId} workflowId={workflowId} workflowName={workflowName} />
-      </div>
-      <SimulationTimeline />
-    </div>
+    <TestTab
+      key={workflowId}
+      workflowId={workflowId}
+      workflowName={workflowName}
+      onRecord={onRecord}
+      onAskAssistant={(text) => {
+        useSvAssistantStore.getState().setPrefill(text)
+        usePanelStore.getState().setActiveTab('copilot')
+      }}
+    />
   )
 }
 
@@ -244,8 +249,8 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
           <ProblemsTab />
         </div>
       ) : active.id === 'simulation' ? (
-        <div role='tabpanel' aria-label='Simulation timeline' className='flex min-h-0 flex-1'>
-          <SimulationTab />
+        <div role='tabpanel' aria-label='Test' className='flex min-h-0 flex-1'>
+          <SimulationTab onRecord={() => setActiveTab('signals')} />
         </div>
       ) : active.id === 'run-console' ? (
         <div role='tabpanel' aria-label='Run console' className='flex min-h-0 flex-1'>

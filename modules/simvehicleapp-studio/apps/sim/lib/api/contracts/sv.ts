@@ -955,9 +955,23 @@ export const svPlaybackSchema = z.object({
   total: z.number(),
   startedAt: z.number(),
   error: z.string().optional(),
+  /** What the app did during the playback (ms from its start), for the signals asked in `observe` (ADR-0058 §4). */
+  observed: z
+    .array(
+      z.object({
+        t: z.number(),
+        path: z.string(),
+        field: z.enum(['value', 'target']),
+        value: svScenarioValueSchema,
+      })
+    )
+    .optional(),
 })
 
-export const svPlayScenarioBodySchema = z.object({ scenario: svScenarioSchema })
+export const svPlayScenarioBodySchema = z.object({
+  scenario: svScenarioSchema,
+  observe: z.array(svVssPathSchema).max(200).optional(),
+})
 
 /** `POST /api/sv/projects/[id]/play` — play a scenario on the project's databroker (M08-T07). */
 export const svPlayScenarioContract = defineRouteContract({
@@ -965,6 +979,14 @@ export const svPlayScenarioContract = defineRouteContract({
   path: '/api/sv/projects/[id]/play',
   params: svProjectParamsSchema,
   body: svPlayScenarioBodySchema,
+  response: { mode: 'json', schema: svPlaybackSchema },
+})
+
+/** `GET /api/sv/projects/[id]/play` — the current or last playback of the project's app (Play on the vehicle stack). */
+export const svPlaybackStatusContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/play',
+  params: svProjectParamsSchema,
   response: { mode: 'json', schema: svPlaybackSchema },
 })
 

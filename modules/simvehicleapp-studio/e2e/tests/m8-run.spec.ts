@@ -157,13 +157,16 @@ test.describe('M8 Run, Run console, Signals', () => {
     await row.locator(`[data-sv-inject="${SPEED}"]`).click()
     await expect.poll(() => m.injected).toEqual([{ path: SPEED, value: 130, field: 'value' }])
     await expect(page.locator('[data-sv="recording"]')).toContainText('1 input')
+    // A recording becomes a new test case (ADR-0058 §7).
     const saved = page.waitForResponse(
-      (r) => r.request().method() === 'PUT' && r.url().includes('/scenario') && r.ok()
+      (r) => r.request().method() === 'POST' && r.url().includes('/test-cases') && r.ok()
     )
     await page.locator('[data-sv="save-recording"]').click()
     const scenario = (await (await saved).request().postDataJSON()) as {
+      name: string
       scenario: { inputs: { path: string; value: unknown }[]; initial?: Record<string, unknown> }
     }
+    expect(scenario.name).toMatch(/^Recorded /)
     expect(scenario.scenario.inputs).toMatchObject([{ path: SPEED, value: 130 }])
     expect(scenario.scenario.initial).toEqual({ [SPEED]: 100 })
     await expect(page.locator('[data-sv="scenario-editor"]')).toBeVisible()

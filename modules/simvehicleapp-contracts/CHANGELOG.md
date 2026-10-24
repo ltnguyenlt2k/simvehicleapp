@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/signal-gateway.v1.yaml` (additive, ADR-0058 §4, M18-T04): `POST /play` `observe` and `Playback.observed` — what the app did during a playback, for grading a test case on the vehicle stack.
 - Test cases (additive, ADR-0058 §2/§9, M18-T02): `schemas/scenario.v1` 1.1 — `within` on expected writes/publishes, `expect.never`, expectations as a subset (1.0 unchanged: exact lists, C01–C45 unchanged); `generateRequest.scenarios[]` and orchestrator `startGeneration.scenarios[]` take several entries per workflow with `caseName` (one generated test each).
 - `openapi/signal-gateway.v1.yaml` (additive, ADR-0047 §2, M14 #5): `PUT /mirror` `api` (`sdv.databroker.v1` default | `kuksa.val.v2`: the gateway provides the actuators over `OpenProviderStream`), 409 `provider_refused`. Vendored `proto/kuksa/val/v2` of databroker 0.5.0.
 - `openapi/signal-gateway.v1.yaml` (additive, ADR-0057, M17-T05): optional `sandbox` (`toolchain-<lang>:<port>`, a run's own databroker) on `/signals`, `/snapshot`, `/mirror`, `/play`; mirror and playback per sandbox; `PUT /mirror` with `sandbox` and no paths releases it.

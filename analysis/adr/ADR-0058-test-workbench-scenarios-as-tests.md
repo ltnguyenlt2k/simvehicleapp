@@ -126,6 +126,11 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
+- 2026-10-24 — **T04 implement** (theo uỷ quyền PO — chờ PO xác nhận):
+  - Tab giữ id `simulation` (mã E2E cũ không đổi), nhãn đổi thành **Test**.
+  - Case đầu tiên chính là scenario của workflow: editor của nó giữ draft riêng, nên khi refetch không mất chữ đang gõ.
+  - Generate tests chạy trên WorkflowGraph JSON ở studio, không chạy trên IR, vì studio không được import core (luật cứng 2). Thuật toán bám design §9.4; kỳ vọng chốt kèm `never` cho các actuator case không ghi.
+  - Play chấm điểm: gateway ghi thay đổi target/current của các path cần quan sát; giá trị do chính playback đặt (±250 ms) và giá trị có trước playback bị bỏ qua.
 - 2026-10-17 — **Implement T02/T03** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - Version 1.1 nhận ra theo `scenarioVersion` ≥ 1.1. `run_scenario` của runtime ghi `scenarioVersion` vào kết quả, nên lời gọi `checkExpectations(result, expect)` trong code sinh ra **không đổi**, golden giữ nguyên byte.
   - Một case không tên ⇒ sinh như cũ (`scenarioMeetsItsExpectations` / `test_<wf>_scenario_meets_its_expectations`). Nhiều case ⇒ tên test từ `caseName`: C++ PascalCase, Python/Rust snake_case, trùng tên thêm số.

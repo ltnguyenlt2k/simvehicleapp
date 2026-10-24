@@ -49,6 +49,13 @@ export function SvAssistantPanel() {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight })
   }, [items])
 
+  const prefill = useSvAssistantStore((s) => s.prefill)
+  useEffect(() => {
+    if (!prefill) return
+    setDraft(prefill)
+    useSvAssistantStore.getState().setPrefill(null)
+  }, [prefill])
+
   const submit = () => {
     const text = draft.trim()
     if (!text || streaming || !graphReady) return

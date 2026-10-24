@@ -420,6 +420,21 @@ describe("HTTP API (openapi/signal-gateway.v1.yaml)", () => {
     expect(g.subs.size).toBe(0);
   });
 
+  test("POST /play with observe records what the app does during the playback, not the playback's own values", async () => {
+    const g = gateway();
+    const H = "Vehicle.Body.Lights.Hazard.IsSignaling";
+    expect((await g.call("POST", "/play", { release: "v4.0", observe: ["Vehicle.Nope"], scenario: { scenarioVersion: "1.0.0", name: "x", until: 1, inputs: [] } })).status).toBe(400);
+    const res = await g.call("POST", "/play", { release: "v4.0", observe: [H, "Vehicle.Speed"], scenario: { scenarioVersion: "1.0.0", name: "S", until: 3000, initial: { "Vehicle.Speed": 100 }, inputs: [{ t: 1000, path: "Vehicle.Speed", value: 130 }] } });
+    expect(res.status).toBe(202);
+    const { startedAt } = await res.json();
+    // The app reacts: it sets the hazard target (fake broker updates are stamped 2: re-stamp them like a real broker)
+    const [sub] = [...g.subs].filter((x) => x.paths.includes(H));
+    expect(sub).toBeDefined();
+    sub!.on([{ path: H, field: "target", value: true, ts: startedAt + 2010 }, { path: "Vehicle.Speed", field: "value", value: 130, ts: startedAt + 1000 }, { path: H, field: "value", value: false, ts: startedAt - 5 }]);
+    const pb = await (await g.call("GET", "/play")).json();
+    expect(pb.observed).toEqual([{ t: 2010, path: H, field: "target", value: true }]);
+  });
+
   test("POST /play validates the whole scenario, then plays it on the databroker", async () => {
     const g = gateway();
     const bad = await g.call("POST", "/play", { release: "v4.0", scenario: { scenarioVersion: "1.0.0", name: "x", until: 10, inputs: [{ t: 1, path: "Vehicle.Speed", value: "fast" }] } });

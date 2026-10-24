@@ -48,13 +48,14 @@
 - [x] Golden mới: GW-A với 3 case.
 
 ### T04: Tab Test
-- [ ] Danh sách case (thêm, đổi tên, nhân bản, xoá).
-- [ ] Soạn bảng: Given (giá trị đầu), When (t, path, giá trị, ô nhập theo catalog), Then (path/HMI/publish, giá trị, dung sai). Có chế độ YAML.
-- [ ] Simulate một case / tất cả: kết quả pass/fail từng kỳ vọng; timeline kết quả; tua lại trên canvas.
-- [ ] Generate tests từ IR theo design M18 §9.4: đường đi theo nhánh, giá trị biên, giữ đủ / phá trước hạn, `false → true`; kỳ vọng lấy từ simulator, người dùng duyệt; độ phủ nhánh + đánh dấu nhánh chưa phủ trên canvas.
-- [ ] Play trên app thật dùng `within` mặc định 300 ms, báo độ lệch thực tế.
-- [ ] Play on vehicle stack (khi Run): chấm kỳ vọng từ luồng tín hiệu thật.
-- [ ] Trạng thái rỗng: Generate tests / Ask the assistant / Record from a live run. Luồng 1-2-3 tô bước hiện tại.
+> 2026-10-24: xong code + vitest + gate Play trên stack; E2E trình duyệt chờ CI. Lệch: Generate dùng WorkflowGraph (ADR-0058 Notes).
+- [x] Danh sách case (thêm, đổi tên, nhân bản, xoá).
+- [x] Soạn bảng: Given (giá trị đầu), When (t, path, giá trị, ô nhập theo catalog), Then (path/HMI/publish, giá trị, dung sai). Có chế độ YAML.
+- [x] Simulate một case / tất cả: kết quả pass/fail từng kỳ vọng; timeline kết quả; tua lại trên canvas.
+- [x] Generate tests từ IR theo design M18 §9.4: đường đi theo nhánh, giá trị biên, giữ đủ / phá trước hạn, `false → true`; kỳ vọng lấy từ simulator, người dùng duyệt; độ phủ nhánh + đánh dấu nhánh chưa phủ trên canvas.
+- [x] Play trên app thật dùng `within` mặc định 300 ms, báo độ lệch thực tế.
+- [x] Play on vehicle stack (khi Run): chấm kỳ vọng từ luồng tín hiệu thật.
+- [x] Trạng thái rỗng: Generate tests / Ask the assistant / Record from a live run. Luồng 1-2-3 tô bước hiện tại.
 
 ### T05: Tab Live + dock
 - [ ] Dock: Problems · Test · Live. Build log thành drawer: mở khi SynCode chạy hoặc lỗi; mở lại từ pill.

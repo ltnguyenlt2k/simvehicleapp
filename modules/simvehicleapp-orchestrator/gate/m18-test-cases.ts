@@ -49,3 +49,28 @@ for (const language of langs) {
   must(gen.success && gen.verification?.tests === "passed", `${language}: SynCode with 3 test cases ${JSON.stringify(gen.verification)}`);
   for (const n of names[language] ?? []) must(log.includes(n), `${language}: generated test ${n} ran`);
 }
+
+// Play on the vehicle stack (ADR-0058 §4): run the C++ app, play the golden case with `observe`, and check what the
+// app wrote came back in `observed` at about the expected time.
+if (langs.includes("cpp")) {
+  const G = process.env.SV_SIGNAL_GATEWAY_URL ?? "http://signal-gateway:4050";
+  const H = "Vehicle.Body.Lights.Hazard.IsSignaling";
+  const p = (await get(`${O}/projects`)).projects.find((x: { slug: string }) => x.slug === `${slug}-cpp`);
+  const run = await (await post(`${O}/projects/${p.id}/runs`, {})).json();
+  let r = run;
+  for (let i = 0; i < 300 && r.state === "starting"; i++) {
+    await Bun.sleep(100);
+    r = await get(`${O}/runs/${run.id}`);
+  }
+  must(r.state === "running", `cpp: app running for Play (${r.state})`);
+  const sandbox = r.sandbox;
+  await post(`${G}/signals`, { release: "v4.0", ...(sandbox ? { sandbox } : {}), path: H, value: false, field: "target" });
+  const pb0 = await (await post(`${G}/play`, { release: "v4.0", ...(sandbox ? { sandbox } : {}), scenario, observe: [H] })).json();
+  must(pb0.state === "playing", "cpp: golden case playing with observe");
+  await Bun.sleep(scenario.until as number + 1500);
+  const pb = await get(`${G}/play${sandbox ? `?sandbox=${sandbox}` : ""}`);
+  const on = (pb.observed ?? []).find((o: { path: string; value: unknown }) => o.path === H && o.value === true);
+  const expected = ((scenario.expect as { writes?: { t: number; path: string; value: unknown }[] }).writes ?? []).find((w) => w.path === H && w.value === true);
+  must(on && expected && on.t >= expected.t && on.t - expected.t <= 300, `cpp: the app's hazard write observed at ${on?.t} ms (expected ${expected?.t} ms, lag ${on && expected ? on.t - expected.t : "?"} ms ≤ 300)`);
+  await post(`${O}/runs/${run.id}/stop`, {});
+}

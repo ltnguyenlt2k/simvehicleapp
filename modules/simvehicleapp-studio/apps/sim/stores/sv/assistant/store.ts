@@ -40,6 +40,9 @@ interface SvAssistantState {
   streaming: boolean
   /** When the turn being streamed started (time waited, slow-model hint). */
   turnStartedAt: number | null
+  /** A request written for the user (Test tab "Ask the assistant"); the panel puts it in its input once. */
+  prefill: string | null
+  setPrefill: (text: string | null) => void
   seq: number
   open: (workflowId: string) => void
   newConversation: () => void
@@ -60,6 +63,7 @@ const initialState = {
   items: [] as SvAiItem[],
   streaming: false,
   turnStartedAt: null as number | null,
+  prefill: null as string | null,
   seq: 0,
 }
 
@@ -80,6 +84,7 @@ export const useSvAssistantStore = create<SvAssistantState>()(
       ...initialState,
       open: (workflowId) =>
         set((s) => (s.workflowId === workflowId ? s : { ...initialState, workflowId, seq: s.seq })),
+      setPrefill: (prefill) => set({ prefill }),
       newConversation: () => set((s) => (s.streaming ? s : { conversationId: null, items: [] })),
       startTurn: (text) =>
         set((s) => ({

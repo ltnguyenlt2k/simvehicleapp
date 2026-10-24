@@ -11,6 +11,12 @@ vi.mock('@/hooks/queries/sv-simulation', () => ({
   useSvSimulate: () => ({ mutate: mockMutate }),
   useSaveSvScenario: () => ({ mutate: mockMutate }),
 }))
+vi.mock('@/hooks/queries/sv-test-cases', () => ({
+  useSvTestCases: () => ({ data: [], isLoading: false }),
+  useCreateSvTestCase: () => ({ mutate: mockMutate, mutateAsync: mockMutate }),
+  useUpdateSvTestCase: () => ({ mutate: mockMutate }),
+  useDeleteSvTestCase: () => ({ mutate: mockMutate }),
+}))
 vi.mock('@/hooks/queries/sv-projects', () => ({
   useSvProjects: () => ({ data: [] }),
   useStartSvGeneration: () => ({ mutate: mockMutate, isPending: false }),
@@ -91,7 +97,7 @@ describe('vehicle editor chrome (M01-T10)', () => {
     const html = renderToStaticMarkup(<SvBottomDock />)
     expect(SV_DOCK_TABS.map((t) => t.label)).toEqual([
       'Problems',
-      'Simulation timeline',
+      'Test',
       'Run console',
       'Signals',
       'Build log',

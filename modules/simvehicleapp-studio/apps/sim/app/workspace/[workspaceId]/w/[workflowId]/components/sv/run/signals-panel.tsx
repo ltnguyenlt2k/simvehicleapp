@@ -13,9 +13,11 @@ import {
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/signals-model'
 import { useWorkflowRuns } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/use-run-follow'
 import { usePlaySvScenario, useSetSvSignal } from '@/hooks/queries/sv-runs'
-import { useSaveSvScenario, useSvScenario } from '@/hooks/queries/sv-simulation'
+import { useSvScenario } from '@/hooks/queries/sv-simulation'
+import { useCreateSvTestCase } from '@/hooks/queries/sv-test-cases'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
+import { useSvTestStore } from '@/stores/sv/test/store'
 
 const PATH = /^Vehicle(\.[A-Za-z0-9_]+)+$/
 const shown = (v: SignalValues['value']) =>
@@ -118,7 +120,7 @@ export function SignalsPanel() {
   const [recording, setRecording] = useState<Recording | null>(null)
   const recordingRef = useRef<Recording | null>(null)
   const { data: scenario } = useSvScenario(workflowId ?? undefined)
-  const save = useSaveSvScenario(workflowId ?? undefined)
+  const create = useCreateSvTestCase(workflowId ?? undefined)
   const play = usePlaySvScenario()
   const paths = useMemo(() => [...new Set([...fromGraph, ...extra])], [fromGraph, extra])
   const key = paths.join(',')
@@ -173,16 +175,21 @@ export function SignalsPanel() {
       recording,
       `Recorded ${new Date(recording.startedAt).toLocaleTimeString()}`
     )
-    save.mutate(s, {
-      onSuccess: () => {
-        toast.success(
-          `Saved as the workflow's scenario (${s.inputs.length} inputs) — open in Simulation`
-        )
-        setRecording(null)
-        useSvSimulationStore.getState().showSimulation()
-      },
-      onError: (e) => toast.error(e.message),
-    })
+    // A recording is a new test case (ADR-0058 §7): it never replaces an existing one.
+    create.mutate(
+      { name: s.name.slice(0, 80), scenario: s },
+      {
+        onSuccess: (c) => {
+          toast.success(
+            `Saved as the test case "${c.name}" (${s.inputs.length} inputs) — open in Test`
+          )
+          setRecording(null)
+          useSvTestStore.getState().setActiveCase(c.id)
+          useSvSimulationStore.getState().showSimulation()
+        },
+        onError: (e) => toast.error(e.message),
+      }
+    )
   }
   const playSaved = () => {
     if (!scenario) return

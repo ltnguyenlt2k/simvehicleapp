@@ -19,8 +19,10 @@ import {
 import { useSvActionStatus } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/use-sv-action-status'
 import { useSvVerify } from '@/hooks/queries/sv-lint'
 import { useSaveSvScenario, useSvScenario, useSvSimulate } from '@/hooks/queries/sv-simulation'
+import { useUpdateSvTestCase } from '@/hooks/queries/sv-test-cases'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
+import { useSvTestStore } from '@/stores/sv/test/store'
 
 /** A thin divider between the groups of the bar. */
 function Separator() {
@@ -52,6 +54,7 @@ export function SvActionBar() {
   const { data: scenario } = useSvScenario(workflowId ?? undefined)
   const simulate = useSvSimulate()
   const saveScenario = useSaveSvScenario(workflowId ?? undefined)
+  const updateCase = useUpdateSvTestCase(workflowId ?? undefined)
 
   const onSimulate = useCallback(() => {
     const {
@@ -65,8 +68,10 @@ export function SvActionBar() {
     // What the editor shows (a draft may not be saved yet), else the saved scenario.
     const draft = sim.draft?.workflowId === wf ? sim.draft.scenario : null
     const run = draft ?? scenario ?? defaultScenario('Scenario')
-    // The scenario that was simulated is the one kept with the workflow.
-    if (draft && draft !== scenario) saveScenario.mutate(draft)
+    // The scenario that was simulated is the one kept with the workflow — in its test case (ADR-0058).
+    const caseId = sim.draft?.workflowId === wf ? sim.draft.caseId : undefined
+    if (draft && caseId) updateCase.mutate({ caseId, scenario: draft })
+    else if (draft && draft !== scenario) saveScenario.mutate(draft)
     sim.setRunning()
     sim.showSimulation()
     simulate.mutate(
@@ -83,6 +88,21 @@ export function SvActionBar() {
             return
           }
           useSvSimulationStore.getState().setResult(wf, current, run.until, response.result)
+          if (caseId) {
+            const exp0 = response.result.expectations
+            useSvTestStore.getState().setOutcome(caseId, {
+              passed: exp0 ? exp0.passed : true,
+              mismatches: exp0?.mismatches ?? [],
+              graphJson: current,
+              blockIds: [
+                ...new Set(
+                  response.result.trace.flatMap((e) =>
+                    e.ev === 'enter' && e.blockId ? [e.blockId] : []
+                  )
+                ),
+              ],
+            })
+          }
           const exp = response.result.expectations
           const writes = response.result.writes.length
           if (response.diagnostics.some((d) => d.code === 'SIM_LIMIT_REACHED'))
@@ -97,7 +117,7 @@ export function SvActionBar() {
         },
       }
     )
-  }, [saveScenario, scenario, simulate])
+  }, [saveScenario, scenario, simulate, updateCase])
 
   const onVerify = useCallback(() => {
     const {

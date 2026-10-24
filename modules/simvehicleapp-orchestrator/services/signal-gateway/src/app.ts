@@ -2,7 +2,7 @@ import { ContractValidator } from "@simvehicleapp/contracts";
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { type Broker, BrokerRejected, type BrokerUpdate, BrokerUnavailable, type Field } from "./broker.ts";
 import type { Catalog, SignalMeta } from "./catalog.ts";
-import type { Player, Scenario } from "./player.ts";
+import type { Playback, Player, Scenario } from "./player.ts";
 import { type Provider, type ProviderApi, ProviderRejected, provideActuators } from "./provider.ts";
 import { toDatapoint } from "./values.ts";
 
@@ -272,12 +272,16 @@ export function createGatewayHandler(d: GatewayDeps) {
         return new Response(null, { status: 204 });
       }
       if (req.method === "POST") {
-        const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; scenario?: Scenario } | null;
+        const b = (await req.json().catch(() => null)) as { release?: string; sandbox?: string; scenario?: Scenario; observe?: unknown } | null;
         if (!b?.scenario || !validator.validate("scenario", b.scenario).valid) return rejected(400, "invalid_request", "release and a scenario v1 are required");
+        const observe = b.observe === undefined ? [] : b.observe;
+        if (!Array.isArray(observe) || observe.length > MAX_PATHS || !observe.every((p) => typeof p === "string")) return rejected(400, "invalid_request", `observe: at most ${MAX_PATHS} signal paths`);
         // Every signal value is checked before anything is written.
         const sets = [...Object.entries(b.scenario.initial ?? {}).map(([path, value]) => ({ path, value })), ...b.scenario.inputs.filter((i) => i.path).map((i) => ({ path: i.path!, value: i.value }))];
-        const r = await resolve(b.release ?? null, sets.map((x) => x.path), b.sandbox);
+        const r = await resolve(b.release ?? null, [...sets.map((x) => x.path), ...(observe as string[])], b.sandbox);
         if (r instanceof Response) return r;
+        const unknown = (observe as string[]).find((p) => !r.signals.has(p));
+        if (unknown) return rejected(400, "invalid_request", `${unknown} is not a signal of VSS ${b.release}`);
         const player = playerOf(b.sandbox);
         if (player instanceof Response) return player;
         for (const s of sets) {
@@ -286,14 +290,45 @@ export function createGatewayHandler(d: GatewayDeps) {
           const dp = toDatapoint(meta, s.value);
           if (!dp.ok) return rejected(400, "invalid_value", dp.message);
         }
-        const { playback } = player.play(d.newId(), b.release!, b.scenario);
-        ctx.log.info("scenario playing", { release: b.release, name: b.scenario.name, inputs: playback.total });
+        const { playback, finished } = player.play(d.newId(), b.release!, b.scenario);
+        if ((observe as string[]).length) watch(r, player, playback, b.scenario, observe as string[], finished, ctx.log);
+        ctx.log.info("scenario playing", { release: b.release, name: b.scenario.name, inputs: playback.total, observe: (observe as string[]).length });
         return json(202, playback);
       }
     }
     return rejected(404, "not_found", "not found");
   };
 }
+
+/**
+ * Records what the app does during a playback (ADR-0058 §4, Play on the vehicle stack): target and current changes of
+ * the observed signals, in ms from the playback's start. Changes of a value the playback itself set (its initial
+ * values and inputs, within 250 ms of their time) are not the app's: they are left out. Stops 1 s after the end.
+ */
+function watch(r: Resolved, player: Player, playback: Playback, scenario: Scenario, paths: string[], finished: Promise<Playback>, log: RequestContext["log"]) {
+  const own = [
+    ...Object.entries(scenario.initial ?? {}).map(([path, value]) => ({ t: 0, path, value })),
+    ...scenario.inputs.flatMap((i) => (i.path ? [{ t: i.t, path: i.path, value: i.value }] : [])),
+  ];
+  const targets = actuatorsOf(r, paths);
+  const cancel = r.broker.subscribe(
+    paths,
+    targets,
+    (updates) => {
+      for (const u of updates) {
+        // The subscription first reports each signal's current value, stamped when it was set: older is not the app's.
+        if (u.ts < playback.startedAt) continue;
+        const t = u.ts - playback.startedAt;
+        const set = u.field === "value" && own.some((o) => o.path === u.path && JSON.stringify(o.value) === JSON.stringify(u.value) && Math.abs(o.t - t) <= 250);
+        if (!set) player.record(playback.id, { t, path: u.path, field: u.field, value: u.value });
+      }
+    },
+    (e) => log.warn("play: observing stopped", { err: e.message }),
+  );
+  void finished.then(() => setTimeout(cancel, 1000));
+}
+
+const actuatorsOf = (r: Resolved, paths: string[]) => paths.filter((p) => r.signals.get(p)?.type === "actuator");
 
 /** The player's writes: through the same checks as an inject (a sandbox player's `broker` answers the run's databroker). */
 export function playerSet(broker: (release: string) => Broker | undefined, catalog: Catalog) {

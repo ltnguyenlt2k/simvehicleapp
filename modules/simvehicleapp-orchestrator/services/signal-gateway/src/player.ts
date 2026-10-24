@@ -30,6 +30,8 @@ export interface Playback {
   total: number;
   startedAt: number;
   error?: string;
+  /** Changes of the observed signals during the playback (ms from its start): what the app did (ADR-0058 §4). */
+  observed?: { t: number; path: string; field: "value" | "target"; value: unknown }[];
 }
 
 export interface PlayerIo {
@@ -50,6 +52,11 @@ export class Player {
 
   get playback(): Playback | null {
     return this.current;
+  }
+
+  /** Adds a change of an observed signal to the playback `id` (ignored once another playback started). */
+  record(id: string, entry: NonNullable<Playback["observed"]>[number]) {
+    if (this.current?.id === id) this.current = { ...this.current, observed: [...(this.current.observed ?? []), entry] };
   }
 
   stop() {
