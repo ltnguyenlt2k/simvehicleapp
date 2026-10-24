@@ -1,10 +1,12 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import type {
-  SvAiConversation,
-  SvAiEvent,
-  SvAiPendingAction,
-  SvAiProposal,
+import {
+  type SvAiConversation,
+  type SvAiEvent,
+  type SvAiPendingAction,
+  type SvAiProposal,
+  type SvAiProposedTestCase,
+  svAiProposedTestCasesSchema,
 } from '@/lib/api/contracts/sv-ai'
 
 export interface SvAiToolCall {
@@ -30,6 +32,12 @@ export type SvAiItem =
       action: SvAiPendingAction
       state: 'pending' | 'confirmed' | 'cancelled'
     }
+  | {
+      kind: 'tests'
+      key: string
+      testCases: SvAiProposedTestCase[]
+      state: 'new' | 'accepted' | 'rejected'
+    }
   | { kind: 'error'; key: string; text: string }
 
 interface SvAssistantState {
@@ -52,6 +60,8 @@ interface SvAssistantState {
   endTurn: (error?: string) => void
   markProposal: (key: string, state: 'previewed' | 'dismissed') => void
   markAction: (actionId: string, state: 'confirmed' | 'cancelled') => void
+  /** Proposed test cases the user accepted into the Test tab or rejected (ADR-0058 §8). */
+  markTests: (key: string, state: 'accepted' | 'rejected') => void
   /** A conversation reloaded from the server (messages and the pending action). */
   load: (conversation: SvAiConversation) => void
   reset: () => void
@@ -110,21 +120,33 @@ export const useSvAssistantStore = create<SvAssistantState>()(
               msg.tools.push({ id: event.data.id, name: event.data.name })
               return { seq: s.seq + 1, items: [...rest, msg] }
             }
-            case 'tool_result':
-              return {
-                items: s.items.map((it) =>
-                  it.kind === 'assistant' && it.tools.some((t) => t.id === event.data.id)
-                    ? {
-                        ...it,
-                        tools: it.tools.map((t) =>
-                          t.id === event.data.id
-                            ? { ...t, done: true, isError: event.data.isError }
-                            : t
-                        ),
-                      }
-                    : it
-                ),
-              }
+            case 'tool_result': {
+              const proposed =
+                event.data.name === 'scenario_propose' && !event.data.isError
+                  ? svAiProposedTestCasesSchema.safeParse(event.data.structured)
+                  : null
+              const steps = s.items.map((it) =>
+                it.kind === 'assistant' && it.tools.some((t) => t.id === event.data.id)
+                  ? {
+                      ...it,
+                      tools: it.tools.map((t) =>
+                        t.id === event.data.id
+                          ? { ...t, done: true, isError: event.data.isError }
+                          : t
+                      ),
+                    }
+                  : it
+              )
+              return proposed?.success
+                ? {
+                    seq: s.seq + 1,
+                    items: [
+                      ...steps,
+                      { kind: 'tests', key, testCases: proposed.data.testCases, state: 'new' },
+                    ],
+                  }
+                : { items: steps }
+            }
             case 'proposal':
               return {
                 seq: s.seq + 1,
@@ -175,6 +197,12 @@ export const useSvAssistantStore = create<SvAssistantState>()(
         set((s) => ({
           items: s.items.map((it) =>
             it.kind === 'action' && it.action.actionId === actionId ? { ...it, state } : it
+          ),
+        })),
+      markTests: (key, state) =>
+        set((s) => ({
+          items: s.items.map((it) =>
+            it.kind === 'tests' && it.key === key ? { ...it, state } : it
           ),
         })),
       load: (conversation) =>

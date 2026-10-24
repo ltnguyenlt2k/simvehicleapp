@@ -73,9 +73,9 @@
 - [x] Record ⇒ case mới, đề xuất kỳ vọng từ các lần ghi/publish quan sát được.
 
 ### T06: Trợ lý soạn test
-- [ ] Tool `scenario_list`, `scenario_propose` (proposal ⇒ xem trước trong tab Test ⇒ Accept/Reject), `scenario_run` (Simulate ⇒ pass/fail).
-- [ ] Câu "test workflow này" ⇒ đề xuất case phủ các nhánh + chạy Simulate.
-- [ ] Eval: fake provider (CI) + model thật của PO (đo, ghi số).
+- [x] Tool `scenario_list`, `scenario_propose` (proposal ⇒ thẻ trong panel trợ lý ⇒ Add to Test tab / Reject), `scenario_run` (Simulate ⇒ pass/fail). 2026-10-24: thẻ đặt trong panel trợ lý thay vì xem trước trong tab Test (ít đổi layout; Accept mở tab Test với case đầu đã chọn) — ADR-0058 Notes.
+- [x] Câu "test workflow này" ⇒ prompt hướng dẫn model đề xuất case phủ các nhánh (`scenario_propose` tự Simulate từng case và báo pass/fail).
+- [ ] Eval: fake provider (unit, ✔) + model thật của PO (chưa chạy — chờ PO).
 
 ### T07: Block gọn + Logic view
 - [ ] Block gọn mặc định; toggle Details (lưu theo người dùng); handle neo như cũ.

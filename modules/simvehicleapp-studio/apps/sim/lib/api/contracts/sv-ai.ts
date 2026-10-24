@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { workflowIdSchema } from '@/lib/api/contracts/primitives'
-import { svDiagnosticSchema, svProjectIdSchema } from '@/lib/api/contracts/sv'
+import { svDiagnosticSchema, svProjectIdSchema, svScenarioSchema } from '@/lib/api/contracts/sv'
 import { defineRouteContract } from '@/lib/api/contracts/types'
 
 /**
@@ -136,6 +136,17 @@ export const svAiProposalSchema = z.object({
   valid: z.boolean(),
 })
 
+/**
+ * Test cases the assistant proposes (`scenario_propose` structured result, ADR-0058 §8): the user
+ * accepts them into the Test tab or rejects them; nothing is saved before that.
+ */
+export const svAiProposedTestCasesSchema = z.object({
+  testCases: z
+    .array(z.object({ name: z.string().min(1).max(80), scenario: svScenarioSchema }))
+    .min(1)
+    .max(20),
+})
+
 /** SSE events of a turn (`event:` name + JSON `data:`). */
 export const svAiEventSchema = z.discriminatedUnion('event', [
   z.object({ event: z.literal('text'), data: z.object({ delta: z.string() }) }),
@@ -145,7 +156,13 @@ export const svAiEventSchema = z.discriminatedUnion('event', [
   }),
   z.object({
     event: z.literal('tool_result'),
-    data: z.object({ id: z.string(), name: z.string(), isError: z.boolean(), text: z.string() }),
+    data: z.object({
+      id: z.string(),
+      name: z.string(),
+      isError: z.boolean(),
+      text: z.string(),
+      structured: z.record(z.string(), z.unknown()).optional(),
+    }),
   }),
   z.object({ event: z.literal('proposal'), data: svAiProposalSchema }),
   z.object({ event: z.literal('pending_action'), data: svAiPendingActionSchema }),
@@ -164,3 +181,4 @@ export type SvAiConversationSummary = z.output<typeof svAiConversationSummarySch
 export type SvAiPendingAction = z.output<typeof svAiPendingActionSchema>
 export type SvAiProposal = z.output<typeof svAiProposalSchema>
 export type SvAiEvent = z.output<typeof svAiEventSchema>
+export type SvAiProposedTestCase = z.output<typeof svAiProposedTestCasesSchema>['testCases'][number]

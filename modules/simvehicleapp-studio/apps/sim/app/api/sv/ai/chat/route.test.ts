@@ -4,16 +4,23 @@
 import { createMockRequest } from '@sim/testing'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetSession, mockAuthz, mockCall, mockProjectOf, mockGraphsFor, dbState } = vi.hoisted(
-  () => ({
-    mockGetSession: vi.fn(),
-    mockAuthz: vi.fn(),
-    mockCall: vi.fn(),
-    mockProjectOf: vi.fn(),
-    mockGraphsFor: vi.fn(),
-    dbState: { rows: [] as unknown[] },
-  })
-)
+const {
+  mockGetSession,
+  mockAuthz,
+  mockCall,
+  mockProjectOf,
+  mockGraphsFor,
+  mockListTestCases,
+  dbState,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockAuthz: vi.fn(),
+  mockCall: vi.fn(),
+  mockProjectOf: vi.fn(),
+  mockGraphsFor: vi.fn(),
+  mockListTestCases: vi.fn(),
+  dbState: { rows: [] as unknown[] },
+}))
 
 vi.mock('@/lib/auth', () => ({
   auth: { api: { getSession: vi.fn() } },
@@ -31,6 +38,7 @@ vi.mock('@/lib/sv/projects', () => ({
   graphsFor: mockGraphsFor,
   scenariosFor: async () => [],
 }))
+vi.mock('@/lib/sv/server/test-cases', () => ({ listTestCases: mockListTestCases }))
 vi.mock('@sim/db/schema', () => ({ svProjects: { id: 'id' } }))
 vi.mock('@sim/db', () => ({
   db: {
@@ -61,6 +69,7 @@ describe('POST /api/sv/ai/chat (M10-T08)', () => {
     mockGetSession.mockResolvedValue({ user: { id: 'user-1' } })
     mockAuthz.mockResolvedValue({ allowed: true, workflow: { id: WF, workspaceId: 'ws-1' } })
     mockCall.mockResolvedValue(sse())
+    mockListTestCases.mockResolvedValue([])
   })
 
   it('401 without a session; 403 without write access to the workflow', async () => {
@@ -109,6 +118,22 @@ describe('POST /api/sv/ai/chat (M10-T08)', () => {
       conversationId: 'c_1',
       context: { workflow: { workflowId: WF, name: 'Comfort', vssRelease: 'v4.0', graph } },
     })
+  })
+
+  it("adds the workflow's test cases to the context (M18-T06)", async () => {
+    const scenario = {
+      scenarioVersion: '1.0.0',
+      name: 'Default',
+      until: 10,
+      initial: {},
+      inputs: [],
+    }
+    mockListTestCases.mockResolvedValue([{ id: 'tc_1', name: 'Default', scenario, position: 0 }])
+    await POST(createMockRequest('POST', { workflowId: WF, graph, message: 'Test it' }))
+    expect(mockListTestCases).toHaveBeenCalledWith(WF)
+    expect(mockCall.mock.calls[0][2].body.context.workflow.testCases).toEqual([
+      { name: 'Default', scenario },
+    ])
   })
 
   it('adds the project (same workspace, workflow enabled) with every enabled graph', async () => {

@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { graphsFor, projectOf, scenariosFor } from '@/lib/sv/projects'
+import { listTestCases } from '@/lib/sv/server/test-cases'
 
 const logger = createLogger('SvAi')
 
@@ -19,6 +20,7 @@ export interface AiTurnContext {
     name?: string
     vssRelease: string
     graph: Record<string, unknown>
+    testCases?: { name: string; scenario: unknown }[]
   }
   project?: {
     id: string
@@ -68,12 +70,18 @@ export async function aiTurnContext(
       { status: 400 }
     )
   }
+  // Its test cases (ADR-0058 §8): the assistant lists, proposes and runs them (scenario_* tools).
+  const testCases = (await listTestCases(input.workflowId)).map((c) => ({
+    name: c.name,
+    scenario: c.scenario,
+  }))
   const context: AiTurnContext = {
     workflow: {
       workflowId: input.workflowId,
       ...(typeof graph.name === 'string' ? { name: graph.name } : {}),
       vssRelease,
       graph: input.graph,
+      ...(testCases.length ? { testCases } : {}),
     },
   }
   if (!input.projectId || !workspaceId) return context

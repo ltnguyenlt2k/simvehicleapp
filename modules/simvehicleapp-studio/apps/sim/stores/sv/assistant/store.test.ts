@@ -125,3 +125,57 @@ describe('assistant SSE reader', () => {
     expect(parseSvAiBlock(': keep-alive')).toBeNull()
   })
 })
+
+describe('assistant store: proposed test cases (M18-T06)', () => {
+  beforeEach(() => useSvAssistantStore.getState().reset())
+
+  const scenario = {
+    scenarioVersion: '1.1.0',
+    name: 'Hazard',
+    until: 3000,
+    initial: { 'Vehicle.Speed': 0 },
+    inputs: [{ t: 1000, path: 'Vehicle.Speed', value: 120 }],
+  }
+
+  it('a scenario_propose result becomes a tests card to accept or reject', () => {
+    const s = useSvAssistantStore.getState()
+    s.open('wf')
+    s.startTurn('Test this workflow')
+    s.apply({ event: 'tool', data: { id: 't1', name: 'scenario_propose', input: {} } })
+    s.apply({
+      event: 'tool_result',
+      data: {
+        id: 't1',
+        name: 'scenario_propose',
+        isError: false,
+        text: '1 test case(s) proposed',
+        structured: { testCases: [{ name: 'Speed above 100', scenario }], results: [] },
+      },
+    })
+    const tests = useSvAssistantStore.getState().items.find((i) => i.kind === 'tests')
+    expect(tests).toMatchObject({ state: 'new', testCases: [{ name: 'Speed above 100' }] })
+    s.markTests(tests?.key as string, 'accepted')
+    expect(useSvAssistantStore.getState().items.find((i) => i.kind === 'tests')).toMatchObject({
+      state: 'accepted',
+    })
+  })
+
+  it('no card for a failed proposal, another tool, or a malformed structured result', () => {
+    const s = useSvAssistantStore.getState()
+    s.open('wf')
+    s.startTurn('Test')
+    for (const data of [
+      { id: 'a', name: 'scenario_propose', isError: true, text: 'x' },
+      { id: 'b', name: 'scenario_list', isError: false, text: 'x', structured: { testCases: [] } },
+      {
+        id: 'c',
+        name: 'scenario_propose',
+        isError: false,
+        text: 'x',
+        structured: { testCases: [{ name: 'n' }] },
+      },
+    ])
+      s.apply({ event: 'tool_result', data })
+    expect(useSvAssistantStore.getState().items.some((i) => i.kind === 'tests')).toBe(false)
+  })
+})

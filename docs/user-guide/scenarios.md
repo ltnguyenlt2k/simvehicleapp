@@ -59,3 +59,11 @@ Khi cảnh báo vật cản hết (`!<…IsWarning>`), đèn phanh trở về `"
 
 Với giá trị enum chuỗi trong biểu thức (ví dụ `"ACTIVE"`), cần để trong dấu ngoặc kép. Ô nhập giá trị của block
 `Set actuator` có gợi ý nhanh (quick pick) các giá trị hợp lệ cho actuator boolean hoặc có danh sách `allowed`.
+
+## Nhờ trợ lý soạn test case
+Trong panel trợ lý, gõ ví dụ "test this workflow" hoặc "test speed above 120":
+1. Trợ lý đọc workflow và các test case đang có, đề xuất vài case (giá trị biên, nhánh then/else).
+2. Mỗi case được kiểm schema và chạy Simulate trước khi hiện; câu trả lời ghi case nào workflow đạt, case nào không.
+3. Thẻ **Proposed test cases** liệt kê các case. **Add to Test tab** lưu chúng thành case mới và mở tab Test với case đầu tiên. **Reject** bỏ đi; chưa có gì được lưu trước khi bạn bấm.
+
+Với `SV_AI_PROVIDER=fake` (offline), trợ lý chỉ hiểu câu có "test" + "speed" + một con số, và đề xuất hai case: ngay qua ngưỡng và đúng ngưỡng.

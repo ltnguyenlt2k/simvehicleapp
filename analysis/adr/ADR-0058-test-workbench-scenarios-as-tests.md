@@ -126,6 +126,12 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
+- 2026-10-24 — **T06** (theo uỷ quyền PO — chờ PO xác nhận):
+  - Ba tool `scenario_*` đều SAFE: `scenario_propose` không lưu gì, chỉ validate (scenario 1.1) và Simulate từng case trên bản nháp graph, rồi trả `structured.testCases`.
+  - Đề xuất hiện thành thẻ trong panel trợ lý (Add to Test tab / Reject), không phải bản xem trước trong tab Test: không cần trạng thái "case nháp" trong DB hay store tab Test. Accept tạo case qua BFF CRUD sẵn có, chọn case đầu, đưa tab Test lên trước.
+  - Contract studio `svAiEventSchema.tool_result` thêm `structured` (optional); service đã gửi trường này từ M10 nhưng zod của studio bỏ đi.
+  - BFF gửi `workflow.testCases` (tên + scenario) để trợ lý biết các case hiện có.
+  - Fake provider chỉ thấy tên/kiểu block, không thấy props, nên đề xuất theo câu hỏi ("test speed above 120" ⇒ 121 và 120); eval model thật chưa chạy.
 - 2026-10-24 — **T05** (theo uỷ quyền PO — chờ PO xác nhận):
   - Build log là tab đóng được, tự hiện khi SynCode chạy hoặc lỗi, không phải drawer nổi (ít đổi layout).
   - Messages subscribe `<mqttTopicPrefix>/#` của app; nhiều run cùng prefix sẽ thấy tin của nhau, nên tách namespace MQTT theo run vẫn là việc còn mở (M17-T05).

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { getErrorMessage } from '@sim/utils/errors'
 import { Check, Loader2, Minus, X } from 'lucide-react'
 import { Badge, Button, ChipTextarea } from '@/components/emcn'
 import type { SvAiPendingAction } from '@/lib/api/contracts/sv-ai'
@@ -12,8 +13,11 @@ import {
 import { AssistantThinking } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/assistant-thinking'
 import { useAssistant } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/assistant/use-assistant'
 import { useSvAiConversations, useSvAiStatus } from '@/hooks/queries/sv-ai'
+import { useCreateSvTestCase } from '@/hooks/queries/sv-test-cases'
 import { type SvAiItem, useSvAssistantStore } from '@/stores/sv/assistant/store'
 import { useSvLintStore } from '@/stores/sv/lint/store'
+import { useSvSimulationStore } from '@/stores/sv/simulation/store'
+import { useSvTestStore } from '@/stores/sv/test/store'
 import { useWorkflowDiffStore } from '@/stores/workflow-diff'
 import { useWorkflowRegistry } from '@/stores/workflows/registry/store'
 
@@ -266,6 +270,8 @@ function AssistantItem({ item, streaming, live, inTurn, onPreview, onDecide }: A
       return <ProposalCard item={item} streaming={streaming} onPreview={onPreview} />
     case 'action':
       return <ActionCard item={item} streaming={streaming} onDecide={onDecide} />
+    case 'tests':
+      return <TestsCard item={item} />
     case 'error':
       return (
         <div className='text-[var(--text-error)] text-small' data-sv-ai-message='error'>
@@ -402,6 +408,85 @@ function ActionCard({ item, streaming, onDecide }: ActionCardProps) {
       ) : (
         <div className='text-[var(--text-muted)]'>
           {item.state === 'confirmed' ? 'Confirmed.' : 'Cancelled.'}
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface TestsCardProps {
+  item: SvAiItem & { kind: 'tests' }
+}
+
+/**
+ * Test cases the assistant proposed (ADR-0058 §8): Accept saves them as new cases of the workflow
+ * and brings the Test tab to the front with the first one selected; Reject drops them.
+ */
+function TestsCard({ item }: TestsCardProps) {
+  const workflowId = useSvLintStore((s) => s.workflowId)
+  const create = useCreateSvTestCase(workflowId ?? undefined)
+  const [error, setError] = useState<string | null>(null)
+  const markTests = useSvAssistantStore((s) => s.markTests)
+
+  const accept = async () => {
+    setError(null)
+    try {
+      const ids: string[] = []
+      for (const c of item.testCases) {
+        const saved = await create.mutateAsync({ name: c.name, scenario: c.scenario })
+        ids.push(saved.id)
+      }
+      markTests(item.key, 'accepted')
+      if (ids[0]) useSvTestStore.getState().setActiveCase(ids[0])
+      useSvSimulationStore.getState().showSimulation()
+    } catch (e) {
+      setError(getErrorMessage(e, 'Could not save the test cases'))
+    }
+  }
+
+  return (
+    <div
+      className='flex flex-col gap-1.5 rounded-md border border-[var(--border)] p-2 text-small'
+      data-sv-ai-tests={item.state}
+    >
+      <div className='font-medium text-[var(--text-primary)]'>
+        Proposed test case{item.testCases.length > 1 ? 's' : ''}
+      </div>
+      <ul className='flex flex-col gap-0.5 text-[var(--text-secondary)]'>
+        {item.testCases.map((c) => (
+          <li key={c.name} data-sv-ai-test-case={c.name}>
+            {c.name}{' '}
+            <span className='text-[var(--text-muted)]'>
+              ({c.scenario.inputs.length} change(s), until {c.scenario.until} ms)
+            </span>
+          </li>
+        ))}
+      </ul>
+      {error && <div className='text-[var(--text-error)]'>{error}</div>}
+      {item.state === 'new' ? (
+        <div className='flex justify-end gap-2'>
+          <Button
+            variant='ghost'
+            size='sm'
+            data-sv-ai-tests-reject
+            disabled={create.isPending}
+            onClick={() => markTests(item.key, 'rejected')}
+          >
+            Reject
+          </Button>
+          <Button
+            variant='primary'
+            size='sm'
+            data-sv-ai-tests-accept
+            disabled={create.isPending || !workflowId}
+            onClick={accept}
+          >
+            Add to Test tab
+          </Button>
+        </div>
+      ) : (
+        <div className='text-[var(--text-muted)]'>
+          {item.state === 'accepted' ? 'Added to the Test tab.' : 'Rejected.'}
         </div>
       )}
     </div>
