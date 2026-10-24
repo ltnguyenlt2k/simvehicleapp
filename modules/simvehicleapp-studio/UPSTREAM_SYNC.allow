@@ -1041,3 +1041,8 @@ apps/sim/app/workspace/[workspaceId]/w/[workflowId]/components/canvas-menu/canva
 apps/sim/app/workspace/[workspaceId]/w/hooks/use-import-workflow.ts
 apps/sim/lib/workflows/persistence/duplicate.test.ts
 apps/sim/lib/workflows/persistence/duplicate.ts
+
+# M18-T02/T04 — test cases of a workflow (table sv_workflow_test_cases, Test tab hooks; ADR-0058)
+apps/sim/hooks/queries/sv-test-cases.ts
+packages/db/migrations/0253_sv_workflow_test_cases.sql
+packages/db/migrations/meta/0253_snapshot.json
