@@ -48,6 +48,8 @@ interface FlowPanelProps {
   blockName?: (blockId: string) => string | undefined
   /** Bring a block into view (selects it on the canvas). */
   onSelectBlock?: (blockId: string) => void
+  /** Live: a write was picked (the Signals table shows that signal). */
+  onSelectSignal?: (path: string) => void
   /** Simulate: the replay time; the run that spans it is highlighted. */
   activeAt?: number
   /** Simulate: a run was picked (the replay jumps to its start). */
@@ -70,6 +72,7 @@ export function FlowPanel({
   signals,
   blockName,
   onSelectBlock,
+  onSelectSignal,
   activeAt,
   onPickRun,
   timeText = (ts) => `${ts} ms`,
@@ -211,6 +214,7 @@ export function FlowPanel({
                         step={s}
                         name={name(s.blockId)}
                         onSelect={() => onSelectBlock?.(s.blockId)}
+                        onSelectSignal={onSelectSignal}
                       />
                     ))}
                     {!r.steps.length && (
@@ -241,10 +245,11 @@ interface StepRowProps {
   step: FlowStep
   name: string
   onSelect: () => void
+  onSelectSignal?: (path: string) => void
 }
 
 /** One block of a run: its branch with the condition's values, duration, writes, logs and errors. */
-function StepRow({ step, name, onSelect }: StepRowProps) {
+function StepRow({ step, name, onSelect, onSelectSignal }: StepRowProps) {
   const ms = stepDuration(step)
   return (
     <li data-sv-flow-step={step.blockId} className='py-[1px]'>
@@ -280,7 +285,18 @@ function StepRow({ step, name, onSelect }: StepRowProps) {
           data-sv-flow-write={w.path}
           className='pl-3 font-mono text-[var(--text-secondary)]'
         >
-          writes {w.path} = {shown(w.value)}
+          {onSelectSignal ? (
+            <button
+              type='button'
+              title='Show this signal in Signals'
+              className='text-left hover:underline'
+              onClick={() => onSelectSignal(w.path)}
+            >
+              writes {w.path} = {shown(w.value)}
+            </button>
+          ) : (
+            `writes ${w.path} = ${shown(w.value)}`
+          )}
         </p>
       ))}
       {step.values.map((v, i) => (

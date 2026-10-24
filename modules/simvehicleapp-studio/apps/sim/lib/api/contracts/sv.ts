@@ -922,6 +922,8 @@ export const svSignalUpdateSchema = z.object({
   ts: z.number(),
   value: svScenarioValueSchema,
   field: svSignalFieldSchema,
+  /** Who made the change (ADR-0062 §3); absent on the current values sent first. */
+  source: z.enum(['inject', 'playback', 'mirror', 'app', 'vehicle']).optional(),
 })
 
 export const svSignalStreamQuerySchema = z.object({

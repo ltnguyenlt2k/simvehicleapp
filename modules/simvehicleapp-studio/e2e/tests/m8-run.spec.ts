@@ -137,7 +137,11 @@ test.describe('M8 Run, Run console, Signals', () => {
     await runButton.click()
     const runConsole = page.getByRole('log', { name: 'Run console' })
     await expect(runConsole).toContainText('hello from the vehicle app')
+    // Trace as sentences (M19-T05); Raw shows the events as they came.
+    await expect(runConsole).toContainText('→ When Speed changes 1')
+    await page.getByRole('radio', { name: 'Raw' }).click()
     await expect(runConsole).toContainText('n1 enter · When Speed changes 1')
+    await page.getByRole('radio', { name: 'Sentences' }).click()
     await expect(page.locator('[data-sv="run-state"]')).toHaveAttribute('data-sv-state', 'running')
     await expect(runButton).toBeDisabled()
     // live overlay on the block: entered and left once

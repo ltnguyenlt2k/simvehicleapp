@@ -58,8 +58,8 @@ Timeline dưới case liệt kê từng lần ghi tín hiệu, từng thông bá
    - Stack đặt `SV_DATABROKER_API=*=sdv.databroker.v1` thì app ghi `target` như trước (gateway mirror sang hiện tại).
 5. Xem kết quả:
    - **Signals:** cột *Target* của actuator là giá trị app vừa ghi; *Current* theo sau (stack giả lập xe thực hiện lệnh).
-   - **Run console** (pane đầu của tab Live): log của app và trace từng block đã chạy.
-   - **Flow** (pane thứ hai): từng lần chạy của workflow giống Flow ở Simulate. Giá trị bạn vừa inject hiện `(you injected)`. App thật chưa gửi giá trị của điều kiện (M19-T02b), nên chỉ thấy nhánh đã rẽ. Khi bạn cuộn xuống, Flow dừng theo dõi; bấm **Paused — show newest** để quay lại.
+   - **Run console** (pane đầu của tab Live): log của app và trace từng block đã chạy, viết thành câu: `▶ When Speed changes fired (run 3) with 130`, `← If over 120 → then`, `Set Hazard writes … = true`. Giá trị bạn inject hoặc bản Play đặt hiện thành dòng `● Vehicle.Speed = 130 — you injected`. Công tắc **Raw** hiện sự kiện gốc như app gửi.
+   - **Flow** (pane thứ hai): từng lần chạy của workflow giống Flow ở Simulate. Mỗi lần chạy ghi nguồn của giá trị đã kích hoạt nó: `you injected`, `test playback`, `written by the app`, `simulated vehicle` (mirror) hoặc `from the vehicle`. Bấm một dòng `writes …` ⇒ bảng Signals thêm tín hiệu đó và cuộn tới nó. App thật chưa gửi giá trị của điều kiện (M19-T02b), nên chỉ thấy nhánh đã rẽ. Khi bạn cuộn xuống, Flow dừng theo dõi; bấm **Paused — show newest** để quay lại.
    - **Messages** (pane thứ ba): thông báo HMI hiện thành thẻ; các tin MQTT khác của app hiện kèm topic.
    - Badge trên block cho biết block nào vừa chạy.
 

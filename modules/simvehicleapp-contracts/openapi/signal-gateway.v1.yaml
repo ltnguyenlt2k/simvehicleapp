@@ -36,7 +36,7 @@ paths:
     get:
       operationId: streamSignals
       tags: [signals]
-      description: "SSE of SignalUpdate v1 (`event: signal`) for the paths: the current value/target of each first, then every change. Replaces the WebSocket of the skeleton (ADR-0027 Notes 2026-10-07: the studio BFF relays SSE, Next.js route handlers cannot proxy a WebSocket)."
+      description: "SSE of SignalUpdate v1 (`event: signal`) for the paths: the current value/target of each first, then every change with its `source` (ADR-0062 §3). Replaces the WebSocket of the skeleton (ADR-0027 Notes 2026-10-07: the studio BFF relays SSE, Next.js route handlers cannot proxy a WebSocket)."
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
         - { $ref: "#/components/parameters/Release" }

@@ -7,6 +7,7 @@ import { Catalog, indexVss } from "./catalog.ts";
 import { connectPacket, parsePackets, parsePublish, publishPacket, subscribePacket } from "./mqtt.ts";
 import { Player, type PlayerIo } from "./player.ts";
 import type { ProviderApi, ProviderMessage, ProviderStream } from "./provider.ts";
+import { Sources } from "./sources.ts";
 import { fromDatapoint, toDatapoint } from "./values.ts";
 
 const vss40 = JSON.parse(readFileSync(`${fixturesDir}vss/vss_rel_4.0.json`, "utf8"));
@@ -466,7 +467,7 @@ describe("HTTP API (openapi/signal-gateway.v1.yaml)", () => {
     expect(events.map((e) => e.data)).toEqual([
       { path: "Vehicle.Speed", ts: 1, value: 100, field: "value" },
       { path: "Vehicle.Body.Lights.Hazard.IsSignaling", ts: 1, value: false, field: "target" },
-      { path: "Vehicle.Speed", ts: 2, value: 130, field: "value" },
+      { path: "Vehicle.Speed", ts: 2, value: 130, field: "value", source: "inject" },
     ]);
     abort.abort();
     await Bun.sleep(5);
@@ -527,5 +528,85 @@ describe("HTTP API (openapi/signal-gateway.v1.yaml)", () => {
     expect(g.sets).toEqual(["Vehicle.Speed.value=100", "Vehicle.Speed.value=130"]);
     expect(await (await g.call("GET", "/play")).json()).toMatchObject({ state: "done", played: 2 });
     expect((await g.call("DELETE", "/play")).status).toBe(204);
+  });
+});
+
+describe("sources of signal changes (ADR-0062 §3, M19-T05)", () => {
+  const HZ = "Vehicle.Body.Lights.Hazard.IsSignaling";
+  const setup = (opts: { provider?: boolean } = {}) => {
+    let t = 1000;
+    const now = () => t;
+    const sources = new Sources(now);
+    const b = fakeBroker();
+    const pv = fakeProviderApi();
+    const catalog = new Catalog(async () => vss40);
+    const { io } = fakeIo();
+    const marked = (r: string, path: string, field: Field, value: unknown) => sources.mark(r, path, field, value, "playback");
+    const handler = createGatewayHandler({
+      broker: (r) => (r === "v4.0" ? b.broker : undefined),
+      ...(opts.provider ? { providerApi: () => pv.api } : {}),
+      catalog,
+      player: new Player({ ...io, set: playerSet(() => b.broker, catalog, marked) }),
+      sources,
+      newId: () => "play_1",
+      now,
+      heartbeatMs: 1000,
+    });
+    const call = (method: string, path: string, body?: unknown, signal?: AbortSignal) =>
+      handler(new Request(`http://g${path}`, { method, ...(body ? { body: JSON.stringify(body), headers: { "content-type": "application/json" } } : {}), ...(signal ? { signal } : {}) }), ctx);
+    const watch = async (count: number) => {
+      const abort = new AbortController();
+      const res = await call("GET", `/signals?release=v4.0&paths=Vehicle.Speed,${HZ}`, undefined, abort.signal);
+      const events = readEvents(res, count);
+      await Bun.sleep(2);
+      return { events: events.then((e) => (abort.abort(), e.map((x) => x.data as { path: string; field: string; value: unknown; source?: string }))) };
+    };
+    return { b, pv, call, watch, tick: (ms: number) => (t += ms) };
+  };
+
+  test("inject, the app's target, the mirror's current value and a value nobody in SimVehicleApp set", async () => {
+    const g = setup();
+    expect((await g.call("PUT", "/mirror", { release: "v4.0", paths: [HZ] })).status).toBe(204);
+    const { events } = await g.watch(6);
+    await g.call("POST", "/signals", { release: "v4.0", path: "Vehicle.Speed", value: 130, field: "value" });
+    g.tick(1000);
+    await g.b.broker.set(HZ, "target", { bool: true }); // the app ⇒ the mirror copies it to the current value
+    await Bun.sleep(2);
+    g.tick(1000);
+    await g.b.broker.set("Vehicle.Speed", "value", { float: 90 }); // a feeder
+    await g.call("POST", "/signals", { release: "v4.0", path: HZ, value: false, field: "target" });
+    const seen = await events;
+    for (const e of seen) contracts.assert("signal-update", e);
+    // (the fake databroker notifies the mirror's subscription before the stream's: compare without order)
+    expect(seen.map((e) => `${e.path}.${e.field}=${JSON.stringify(e.value)} ${e.source}`).sort()).toEqual(
+      [
+        "Vehicle.Speed.value=130 inject",
+        `${HZ}.target=true app`,
+        `${HZ}.value=true mirror`,
+        "Vehicle.Speed.value=90 vehicle",
+        `${HZ}.target=false inject`,
+        `${HZ}.value=false mirror`,
+      ].sort(),
+    );
+  });
+
+  test("a playback's values; the gateway's own write is recognised only within 250 ms", async () => {
+    const g = setup();
+    const { events } = await g.watch(2);
+    const res = await g.call("POST", "/play", { release: "v4.0", scenario: { scenarioVersion: "1.0.0", name: "S", until: 10, inputs: [{ t: 1, path: "Vehicle.Speed", value: 130 }] } });
+    expect(res.status).toBe(202);
+    await Bun.sleep(5);
+    // the same value again much later, by someone else
+    g.tick(300);
+    await g.b.broker.set("Vehicle.Speed", "value", { float: 130 });
+    expect((await events).map((e) => e.source)).toEqual(["playback", "vehicle"]);
+  });
+
+  test("a v2 app's actuation published by the gateway is the app's; a deployment's values are the vehicle's", async () => {
+    const g = setup({ provider: true });
+    expect((await g.call("PUT", "/mirror", { release: "v4.0", paths: [HZ], api: "kuksa.val.v2" })).status).toBe(204);
+    const { events } = await g.watch(1);
+    await g.b.broker.set(HZ, "value", { bool: true }); // what the provider publishes after the app actuates
+    expect((await events).map((e) => e.source)).toEqual(["app"]);
   });
 });

@@ -41,6 +41,8 @@ interface SvRunState {
   blocks: Record<string, Record<string, SvLiveBlock>>
   /** Latest signal changes seen by the Live tab, oldest first. */
   signals: FlowSignal[]
+  /** A signal to bring into view in the Signals table (a write picked in Flow); `n` bumps on each request. */
+  focusSignal: { path: string; n: number } | null
   /** Bumped to bring the Run console to the front. */
   focusRunConsole: number
   follow: (projectId: string, runId: string) => void
@@ -50,6 +52,7 @@ interface SvRunState {
     items: { event: 'log' | 'trace'; data: SvLogLine | SvTraceEvent }[]
   ) => void
   pushSignal: (signal: FlowSignal) => void
+  showSignal: (path: string) => void
   showRunConsole: () => void
   clear: () => void
 }
@@ -62,6 +65,7 @@ const initialState = {
   lastSeq: -1,
   blocks: {} as SvRunState['blocks'],
   signals: [] as FlowSignal[],
+  focusSignal: null as SvRunState['focusSignal'],
   focusRunConsole: 0,
 }
 
@@ -156,6 +160,7 @@ export const useSvRunStore = create<SvRunState>()(
               ? [...s.signals.slice(1 - SV_RUN_SIGNAL_LIMIT), signal]
               : [...s.signals, signal],
         })),
+      showSignal: (path) => set((s) => ({ focusSignal: { path, n: (s.focusSignal?.n ?? 0) + 1 } })),
       showRunConsole: () => set((s) => ({ focusRunConsole: s.focusRunConsole + 1 })),
       clear: () => set(initialState),
     }),

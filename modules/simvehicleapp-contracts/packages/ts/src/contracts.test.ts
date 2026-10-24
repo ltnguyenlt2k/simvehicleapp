@@ -322,6 +322,7 @@ describe("streams and jobs", () => {
 
   test("signal update + client messages", () => {
     v.assert("signal-update", { path: "Vehicle.Speed", ts: 1759200000100, value: 131.2, field: "value" });
+    v.assert("signal-update", { path: "Vehicle.Speed", ts: 1759200000100, value: 131.2, field: "value", source: "inject" });
     v.assert("signal-update#/$defs/clientMessage", { op: "subscribe", paths: ["Vehicle.Speed"] });
     v.assert("signal-update#/$defs/clientMessage", { op: "set", path: "Vehicle.Speed", value: 130, field: "value" });
     expect(v.validate("signal-update#/$defs/clientMessage", { op: "set", path: "Vehicle.Speed", value: 1 }).valid).toBe(false);

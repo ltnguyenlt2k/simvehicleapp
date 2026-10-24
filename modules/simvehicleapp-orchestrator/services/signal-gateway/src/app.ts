@@ -4,6 +4,7 @@ import { type Broker, BrokerRejected, type BrokerUpdate, BrokerUnavailable, type
 import type { Catalog, SignalMeta } from "./catalog.ts";
 import type { Playback, Player, Scenario } from "./player.ts";
 import { type Provider, type ProviderApi, ProviderRejected, provideActuators } from "./provider.ts";
+import { Sources, sourceOf } from "./sources.ts";
 import type { Subscribe } from "./mqtt.ts";
 import { toDatapoint } from "./values.ts";
 
@@ -45,6 +46,8 @@ export interface GatewayDeps {
   /** `kuksa.val.v2` of the databroker of a release or sandbox: the gateway provides the actuators of a v2 app (ADR-0047). */
   providerApi?(release: string, sandbox?: string): ProviderApi | undefined;
   newId(): string;
+  /** The gateway's own writes (inject, playback, mirror), shared with the players: each change names its source. */
+  sources?: Sources;
   now?: () => number;
   heartbeatMs?: number;
 }
@@ -94,7 +97,12 @@ class Mirror {
     }
   }
 
-  set(r: Resolved, paths: string[], log: RequestContext["log"]) {
+  /** The gateway provides these actuators for a v2 app: their current value is the app's actuation. */
+  provides(path: string) {
+    return Boolean(this.provider) && this.paths.includes(path);
+  }
+
+  set(r: Resolved, paths: string[], log: RequestContext["log"], mirrored: (path: string, value: unknown) => void) {
     this.clear();
     this.paths = paths;
     if (!paths.length) return;
@@ -105,7 +113,9 @@ class Mirror {
         for (const u of updates) {
           const meta = r.signals.get(u.path);
           const dp = meta && toDatapoint(meta, u.value);
-          if (dp?.ok) r.broker.set(u.path, "value", dp.datapoint).catch((e) => log.warn("mirror write failed", { path: u.path, err: (e as Error).message }));
+          if (!dp?.ok) continue;
+          mirrored(u.path, u.value);
+          r.broker.set(u.path, "value", dp.datapoint).catch((e) => log.warn("mirror write failed", { path: u.path, err: (e as Error).message }));
         }
       },
       (e) => log.warn("mirror subscription ended", { err: e.message }),
@@ -115,6 +125,7 @@ class Mirror {
 
 export function createGatewayHandler(d: GatewayDeps) {
   const now = d.now ?? Date.now;
+  const sources = d.sources ?? new Sources(now);
   const mirrors = new Map<string, Mirror>();
   const players = new Map<string, Player>();
   const playerOf = (sandbox: string | undefined): Player | Response => {
@@ -173,8 +184,16 @@ export function createGatewayHandler(d: GatewayDeps) {
             stop();
             controller.close();
           };
+          const sandbox = q.get("sandbox");
+          const key = sandbox ?? q.get("release")!;
+          const deployed = Boolean(sandbox && DEPLOYED.test(sandbox));
+          const plain = (u: BrokerUpdate) => ({ path: u.path, ts: u.ts, value: u.value, field: u.field });
+          // A change names who made it (ADR-0062 §3); the current values sent first are not changes.
           const emit = (updates: BrokerUpdate[]) => {
-            for (const u of updates) send("signal", { path: u.path, ts: u.ts, value: u.value, field: u.field });
+            for (const u of updates) {
+              const provided = mirrors.get(key)?.provides(u.path) ?? false;
+              send("signal", { ...plain(u), source: sourceOf(sources, key, u, { deployed, provided }) });
+            }
           };
           // Subscribe first, then read the current values: a change in between is not lost.
           const cancel = r.broker.subscribe(paths, targets, emit, (e) => {
@@ -188,7 +207,7 @@ export function createGatewayHandler(d: GatewayDeps) {
           };
           req.signal.addEventListener("abort", close);
           try {
-            emit(await r.broker.get(paths, targets));
+            for (const u of await r.broker.get(paths, targets)) send("signal", plain(u));
           } catch (e) {
             send("error", { error: "databroker_unavailable", message: (e as Error).message });
             close();
@@ -227,6 +246,7 @@ export function createGatewayHandler(d: GatewayDeps) {
       if (b.field === "target" && meta.type !== "actuator") return rejected(400, "invalid_request", `${b.path} is a ${meta.type}: only actuators have a target`);
       const dp = toDatapoint(meta, b.value);
       if (!dp.ok) return rejected(400, "invalid_value", dp.message);
+      sources.mark(b.sandbox ?? b.release!, b.path, b.field, b.value, "inject");
       try {
         await r.broker.set(b.path, b.field, dp.datapoint);
       } catch (e) {
@@ -270,7 +290,7 @@ export function createGatewayHandler(d: GatewayDeps) {
           m.clear();
           return rejected(409, "provider_refused", (e as Error).message);
         }
-      } else m.set(r, paths, ctx.log);
+      } else m.set(r, paths, ctx.log, (path, value) => sources.mark(key, path, "value", value, "mirror"));
       ctx.log.info("mirror updated", { release: b.release, ...(b.sandbox ? { sandbox: b.sandbox } : {}), api: b.api ?? "sdv.databroker.v1", paths: paths.length });
       return new Response(null, { status: 204 });
     }
@@ -388,7 +408,8 @@ function watch(r: Resolved, player: Player, playback: Playback, scenario: Scenar
 const actuatorsOf = (r: Resolved, paths: string[]) => paths.filter((p) => r.signals.get(p)?.type === "actuator");
 
 /** The player's writes: through the same checks as an inject (a sandbox player's `broker` answers the run's databroker). */
-export function playerSet(broker: (release: string) => Broker | undefined, catalog: Catalog) {
+/** `marked`: each value the playback sets, so the subscriptions name it as a playback (ADR-0062 §3). */
+export function playerSet(broker: (release: string) => Broker | undefined, catalog: Catalog, marked?: (release: string, path: string, field: Field, value: unknown) => void) {
   return async (release: string, path: string, field: Field, value: unknown) => {
     const b = broker(release);
     if (!b) throw new Error(`no databroker for VSS ${release}`);
@@ -396,6 +417,7 @@ export function playerSet(broker: (release: string) => Broker | undefined, catal
     if (!meta) throw new Error(`${path} is not a signal of VSS ${release}`);
     const dp = toDatapoint(meta, value);
     if (!dp.ok) throw new Error(dp.message);
+    marked?.(release, path, field, value);
     await b.set(path, field, dp.datapoint);
   };
 }

@@ -50,9 +50,11 @@
 - Bằng chứng 2026-10-24: vitest `flow-panel.test.tsx` 3/3, `flow-trace.test.ts` 9/9, run/sim/stores 58 test; tsc hẹp sạch. E2E: `m5-simulate` thêm chặng Flow (CI); `m15-full-flow` `@live` thêm chặng Flow ở Live (chạy ở T07 trên stack dev).
 
 ### T05: Nguồn tín hiệu + console
-- [ ] Contract `signal-update.v1`: `source` ∈ {inject, playback, mirror, app, vehicle}, `actor` (optional); CHANGELOG; OpenAPI gateway.
-- [ ] Gateway gắn nguồn (cửa sổ ±250 ms cho giá trị do chính gateway đặt); test từng nguồn.
-- [ ] Console: câu dễ đọc, "Raw", dòng `input` từ signal updates có `source` inject/playback.
+- [x] Contract `signal-update.v1`: `source` ∈ {inject, playback, mirror, app, vehicle} (optional); CHANGELOG; mô tả OpenAPI gateway; zod studio; types sinh lại. `actor` hoãn (ADR-0062 Notes).
+- [x] Gateway gắn nguồn (`sources.ts`, cửa sổ ±250 ms cho giá trị chính gateway đặt); test từng nguồn: inject, app (target), mirror, vehicle, playback, ngoài cửa sổ, app v2 (provider).
+- [x] Console: câu dễ đọc (`▶ … fired`, `→`, `← … → then (Speed = 130 ⇒ true)`, `writes`, `publishes`, `✖ … failed`), công tắc Sentences / Raw, dòng `● path = v — you injected / test playback` xen theo thời gian.
+- [x] (từ T04) Bấm write trong Flow ở Live ⇒ bảng Signals watch tín hiệu đó và cuộn tới dòng của nó.
+- Bằng chứng 2026-10-24: gateway `bun test` 26/26 (3 test nguồn mới); contracts `bun test` 399/399; studio vitest 357 (gồm `run-console.test.ts` 2 mới); tsc orchestrator + tsc hẹp studio sạch. `bun test` toàn orchestrator: 5 test workspace FAIL trên máy này do `tar: Cannot mkdir: Operation not permitted` trong thư mục tạm (môi trường, không liên quan; CI chạy). E2E `m8-run` thêm Sentences/Raw (CI).
 
 ### T06: Giải thích FAIL + tạo case từ lần chạy
 - [ ] Mỗi kỳ vọng không đạt ⇒ lần chạy gần nhất, nhánh thực tế + `eval`, nhánh cần (duyệt ngược từ block Set của path).

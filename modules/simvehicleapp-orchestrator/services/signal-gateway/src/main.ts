@@ -6,6 +6,7 @@ import { Catalog } from "./catalog.ts";
 import { mqttPublisher, mqttSubscriber } from "./mqtt.ts";
 import { Player } from "./player.ts";
 import { grpcProviderApi, type ProviderApi } from "./provider.ts";
+import { Sources } from "./sources.ts";
 
 const port = Number(process.env.SV_SIGNAL_GATEWAY_PORT ?? 4050);
 const log = createLogger({ service: "signal-gateway" });
@@ -53,9 +54,11 @@ const catalog = new Catalog(async (release) => {
 const publish = mqttPublisher(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
 const subscribe = mqttSubscriber(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
 const playerIo = { publish, sleep: (ms: number) => Bun.sleep(ms), now: Date.now, monotonic: () => performance.now() };
-const player = new Player({ ...playerIo, set: playerSet(broker, catalog) });
-const sandboxPlayer = (sandbox: string) => new Player({ ...playerIo, set: playerSet((release) => broker(release, sandbox), catalog) });
+const sources = new Sources();
+const player = new Player({ ...playerIo, set: playerSet(broker, catalog, (release, path, field, value) => sources.mark(release, path, field, value, "playback")) });
+const sandboxPlayer = (sandbox: string) =>
+  new Player({ ...playerIo, set: playerSet((release) => broker(release, sandbox), catalog, (_release, path, field, value) => sources.mark(sandbox, path, field, value, "playback")) });
 
-const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, providerApi, subscribe, catalog, player, sandboxPlayer, newId: () => `play_${crypto.randomUUID()}` }));
+const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, providerApi, subscribe, catalog, player, sandboxPlayer, sources, newId: () => `play_${crypto.randomUUID()}` }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port, databrokers: Object.fromEntries(endpoints) });

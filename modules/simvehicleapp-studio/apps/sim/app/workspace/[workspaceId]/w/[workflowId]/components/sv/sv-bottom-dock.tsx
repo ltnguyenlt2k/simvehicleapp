@@ -210,6 +210,7 @@ function LiveFlowTab() {
       signals={signals}
       blockName={blockName}
       onSelectBlock={(id) => focusField(id)}
+      onSelectSignal={(path) => useSvRunStore.getState().showSignal(path)}
       timeText={clock}
       live
       emptyText='No run of this workflow yet — Run the app, then inject a signal'

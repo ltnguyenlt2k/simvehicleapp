@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, ChipInput, ChipSelect, toast } from '@/components/emcn'
 import { type SvSignalField, type SvVssNode, svSignalUpdateSchema } from '@/lib/api/contracts/sv'
 import {
@@ -205,16 +205,19 @@ function useWatchList(
       setList([])
     }
   }, [storageKey])
-  const update = (f: (x: string[]) => string[]) =>
-    setList((prev) => {
-      const next = f(prev)
-      try {
-        if (storageKey) window.localStorage.setItem(storageKey, JSON.stringify(next))
-      } catch {
-        // storage unavailable (private window): the list lives until reload
-      }
-      return next
-    })
+  const update = useCallback(
+    (f: (x: string[]) => string[]) =>
+      setList((prev) => {
+        const next = f(prev)
+        try {
+          if (storageKey) window.localStorage.setItem(storageKey, JSON.stringify(next))
+        } catch {
+          // storage unavailable (private window): the list lives until reload
+        }
+        return next
+      }),
+    [storageKey]
+  )
   return [list, update]
 }
 
@@ -258,6 +261,19 @@ export function SignalsPanel() {
     setExtra((x) => (x.includes(p) ? x : [...x, p]))
     setAdding('')
   }
+  const focusSignal = useSvRunStore((s) => s.focusSignal)
+
+  // A write picked in Flow (M19-T05): watch that signal and bring its row into view.
+  useEffect(() => {
+    if (!focusSignal) return
+    const { path } = focusSignal
+    setExtra((x) => (x.includes(path) ? x : [...x, path]))
+    requestAnimationFrame(() =>
+      document
+        .querySelector<HTMLElement>(`[data-sv="signals"] [data-sv-signal="${CSS.escape(path)}"]`)
+        ?.scrollIntoView({ block: 'center' })
+    )
+  }, [focusSignal, setExtra])
 
   useEffect(() => {
     recordingRef.current = recording
@@ -273,7 +289,8 @@ export function SignalsPanel() {
       if (!v.success) return
       setValues((prev) => applySignalUpdates(prev, [v.data]))
       const injected = injectedRef.current.has(`${v.data.path}=${JSON.stringify(v.data.value)}`)
-      useSvRunStore.getState().pushSignal({ ...v.data, ...(injected ? { source: 'inject' } : {}) })
+      // The gateway names the source (ADR-0062 §3); an older gateway does not, so the user's own inject is known here.
+      useSvRunStore.getState().pushSignal({ ...(injected ? { source: 'inject' } : {}), ...v.data })
       // While recording, an actuator the app changed (target, or current through a provider) is a proposed expectation.
       const rec = recordingRef.current
       const u = v.data

@@ -886,6 +886,10 @@ export interface SignalUpdateV1 {
    * `value` = current value, `target` = actuator target (kuksa.val.v1).
    */
   field: "value" | "target";
+  /**
+   * Who made this change (ADR-0062 §3): `inject` the user (POST /signals), `playback` a test playback, `mirror` the gateway copying an actuator's target to its current value, `app` the vehicle app (an actuator's target, or the current value of an actuator the gateway provides for a kuksa.val.v2 app), `vehicle` anything else (feeders, the car of a deployment). Absent on the current values sent first.
+   */
+  source?: "inject" | "playback" | "mirror" | "app" | "vehicle";
 }
 /**
  * Input trace + expectations shared by simulator, runtime conformance, integration and parity tests (ADR-0017 §3–5, ADR-0042). Times are virtual ms from app start. Array values are JSON arrays; int64/uint64 are decimal strings (ADR-0018). Version 1.1 (additive, ADR-0058 §9): `within` on expected writes/publishes, `expect.never`, and expectations are a subset (1.0: exact ordered lists).

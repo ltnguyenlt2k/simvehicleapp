@@ -10,7 +10,11 @@
     "path": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" },
     "ts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/epochMs" },
     "value": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/jsonValue" },
-    "field": { "$ref": "#/$defs/field" }
+    "field": { "$ref": "#/$defs/field" },
+    "source": {
+      "enum": ["inject", "playback", "mirror", "app", "vehicle"],
+      "description": "Who made this change (ADR-0062 §3): `inject` the user (POST /signals), `playback` a test playback, `mirror` the gateway copying an actuator's target to its current value, `app` the vehicle app (an actuator's target, or the current value of an actuator the gateway provides for a kuksa.val.v2 app), `vehicle` anything else (feeders, the car of a deployment). Absent on the current values sent first."
+    }
   },
   "$defs": {
     "field": { "enum": ["value", "target"], "description": "`value` = current value, `target` = actuator target (kuksa.val.v1)." },

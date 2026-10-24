@@ -118,6 +118,14 @@ Xem Decision 8. Thêm:
 - test gateway: inject ⇒ `source: inject`, app write ⇒ `source: app`, playback ⇒ `playback`.
 
 ## Notes / Deviations
+- 2026-10-24 — **T05: cách gateway gắn `source`** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - Gateway ghi lại mỗi giá trị chính nó ghi: inject (`POST /signals`), playback (player) và mirror (target ⇒ current). Khoá là databroker (sandbox, hoặc release), path, field và giá trị JSON. Một thay đổi thấy trên subscription mà khớp một lần ghi như vậy trong ±250 ms thì mang nguồn đó.
+  - Thay đổi gateway không tự ghi: `target` ⇒ `app` (chỉ app và người dùng đặt target, mà người dùng thì đã được ghi lại). `value` của actuator gateway đang provide cho app v2 ⇒ `app` (đó là actuation của app, gateway publish lại). Còn lại ⇒ `vehicle` (feeder, IDE, xe thật).
+  - Databroker của deployment (`vehicle-gateway:<port>`): `target` ⇒ `app`, `value` ⇒ `vehicle`.
+  - Giá trị hiện tại gửi đầu stream không phải là thay đổi nên không có `source`.
+  - Giới hạn: so khớp dùng giá trị JSON. Float được databroker làm tròn (float32, ví dụ 0.1) có thể không khớp và thành `vehicle`.
+  - **`actor` hoãn lại:** gateway chưa nhận id người dùng (BFF → orchestrator → gateway chưa truyền), nên contract chưa thêm `actor`. Thêm sau, khi có nhiều người cùng inject trên một run.
+  - Contract `signal-update.v1` thêm `source` (optional, additive, giữ `$id`, như các thay đổi additive trước).
 - 2026-10-24 — **T03/T04: nối lần chạy với tín hiệu gây ra nó** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - `cause` = signal update **gần trigger nhất** có cùng giá trị với `trigger.outputs.value`, trong khoảng từ 1 s trước tới 250 ms sau trigger. Lý do: trên stack, gateway đóng dấu thời gian cho update, còn app đóng dấu cho trigger, nên update có thể đến sau trigger vài chục ms. 250 ms là cùng cửa sổ với nguồn tín hiệu ở §3.
   - Không có update khớp thì không có `cause`; Flow hiện giá trị của trigger.
