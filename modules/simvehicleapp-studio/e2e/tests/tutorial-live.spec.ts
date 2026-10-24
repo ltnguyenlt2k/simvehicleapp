@@ -149,7 +149,7 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
   await expect(page.locator('[data-sv="run-state"]')).toHaveAttribute('data-sv-state', 'running', {
     timeout: 60_000,
   })
-  await page.locator('[data-sv-tab="signals"]').click()
+  await page.locator('[data-sv-tab="live"]').click()
   await inject(page, SPEED, '100')
   await pause(page, 1000)
   await inject(page, SPEED, '130')
@@ -157,7 +157,7 @@ test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Ru
   await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)).toHaveText(
     'true'
   )
-  await page.locator('[data-sv-tab="run-console"]').click()
+  await page.locator('[data-sv-tab="live"]').click()
   await expect(page.getByRole('log', { name: 'Run console' })).toContainText('Set IsSignaling 1', {
     timeout: 15_000,
   })

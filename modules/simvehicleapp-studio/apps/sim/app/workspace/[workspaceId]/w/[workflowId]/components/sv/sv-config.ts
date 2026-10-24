@@ -12,11 +12,14 @@ export const SV_ACTIONS = [
   { id: 'export', label: 'Export', milestone: 'M9' },
 ] as const
 
+/**
+ * Dock tabs (ADR-0058 §3): Problems · Test · Live. Build log is a tab shown only while SynCode runs or failed, or
+ * opened from the status pill (it is closable).
+ */
 export const SV_DOCK_TABS = [
   { id: 'problems', label: 'Problems', milestone: 'M3' },
   { id: 'simulation', label: 'Test', milestone: 'M18' },
-  { id: 'run-console', label: 'Run console', milestone: 'M8' },
-  { id: 'signals', label: 'Signals', milestone: 'M8' },
+  { id: 'live', label: 'Live', milestone: 'M18' },
   { id: 'build-log', label: 'Build log', milestone: 'M7' },
 ] as const
 

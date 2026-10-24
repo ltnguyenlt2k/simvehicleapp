@@ -4,6 +4,7 @@ import { type Broker, BrokerRejected, type BrokerUpdate, BrokerUnavailable, type
 import type { Catalog, SignalMeta } from "./catalog.ts";
 import type { Playback, Player, Scenario } from "./player.ts";
 import { type Provider, type ProviderApi, ProviderRejected, provideActuators } from "./provider.ts";
+import type { Subscribe } from "./mqtt.ts";
 import { toDatapoint } from "./values.ts";
 
 /**
@@ -19,6 +20,7 @@ const rejected = (status: number, error: string, message: string) => json(status
 const RELEASE = /^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/;
 const SANDBOX = /^toolchain-(cpp|python|rust):[0-9]{2,5}$/;
 const MAX_PATHS = 200;
+const TOPIC_PREFIX = /^[A-Za-z0-9_\-]+(\/[A-Za-z0-9_\-]+)*\/?$/;
 const HEARTBEAT_MS = 15_000;
 const validator = new ContractValidator();
 
@@ -32,6 +34,8 @@ export interface GatewayDeps {
   player: Player;
   /** Playbacks on a run's sandbox (one player per sandbox). */
   sandboxPlayer?(sandbox: string): Player;
+  /** MQTT subscription (Messages, ADR-0058 §6). */
+  subscribe?: Subscribe;
   /** `kuksa.val.v2` of the databroker of a release or sandbox: the gateway provides the actuators of a v2 app (ADR-0047). */
   providerApi?(release: string, sandbox?: string): ProviderApi | undefined;
   newId(): string;
@@ -261,6 +265,49 @@ export function createGatewayHandler(d: GatewayDeps) {
       } else m.set(r, paths, ctx.log);
       ctx.log.info("mirror updated", { release: b.release, ...(b.sandbox ? { sandbox: b.sandbox } : {}), api: b.api ?? "sdv.databroker.v1", paths: paths.length });
       return new Response(null, { status: 204 });
+    }
+
+    if (url.pathname === "/messages" && req.method === "GET") {
+      // The MQTT messages of an app (its topic prefix): HMI notifications and other publishes, as SSE (ADR-0058 §6).
+      const prefix = q.get("prefix") ?? "";
+      if (!TOPIC_PREFIX.test(prefix)) return rejected(400, "invalid_request", "prefix: a topic prefix (letters, digits, - _ /)");
+      if (!d.subscribe) return rejected(503, "mqtt_unavailable", "MQTT is not configured");
+      const subscribe = d.subscribe;
+      const enc = new TextEncoder();
+      let stop = () => {};
+      let closed = false;
+      const body = new ReadableStream<Uint8Array>({
+        start: (controller) => {
+          const send = (event: string, data: unknown) => {
+            if (!closed) controller.enqueue(enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+          };
+          const close = () => {
+            if (closed) return;
+            closed = true;
+            stop();
+            controller.close();
+          };
+          const cancel = subscribe(
+            `${prefix.replace(/\/$/, "")}/#`,
+            (topic, payload) => send("message", { topic, payload, ts: now() }),
+            (e) => {
+              send("error", { error: "mqtt_unavailable", message: e.message });
+              close();
+            },
+          );
+          const beat = setInterval(() => !closed && controller.enqueue(enc.encode(": keep-alive\n\n")), d.heartbeatMs ?? HEARTBEAT_MS);
+          stop = () => {
+            clearInterval(beat);
+            cancel();
+          };
+          req.signal.addEventListener("abort", close);
+        },
+        cancel: () => {
+          closed = true;
+          stop();
+        },
+      });
+      return new Response(body, { headers: { "content-type": "text/event-stream", "cache-control": "no-cache", connection: "keep-alive" } });
     }
 
     if (url.pathname === "/play") {

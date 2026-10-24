@@ -149,7 +149,7 @@ test.describe('M8 Run, Run console, Signals', () => {
     await page.getByRole('textbox', { name: 'Search the run log' }).fill('')
 
     // Signals: current value, inject, record ⇒ scenario
-    await page.locator('[data-sv-tab="signals"]').click()
+    await page.locator('[data-sv-tab="live"]').click()
     const row = page.locator(`[data-sv-signal="${SPEED}"]`)
     await expect(row.locator('[data-sv-signal-value]')).toHaveText('100')
     await page.locator('[data-sv="record"]').click()

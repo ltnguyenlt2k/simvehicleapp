@@ -126,6 +126,10 @@ flowchart LR
 - Live: full luồng `@live` với Play chấm kỳ vọng trên app thật. Eval trợ lý với model thật của PO.
 
 ## Notes / Deviations
+- 2026-10-24 — **T05** (theo uỷ quyền PO — chờ PO xác nhận):
+  - Build log là tab đóng được, tự hiện khi SynCode chạy hoặc lỗi, không phải drawer nổi (ít đổi layout).
+  - Messages subscribe `<mqttTopicPrefix>/#` của app; nhiều run cùng prefix sẽ thấy tin của nhau, nên tách namespace MQTT theo run vẫn là việc còn mở (M17-T05).
+  - Record đề xuất kỳ vọng từ thay đổi actuator khi đang ghi; giá trị do chính người dùng inject bị bỏ qua.
 - 2026-10-24 — **T04 implement** (theo uỷ quyền PO — chờ PO xác nhận):
   - Tab giữ id `simulation` (mã E2E cũ không đổi), nhãn đổi thành **Test**.
   - Case đầu tiên chính là scenario của workflow: editor của nó giữ draft riêng, nên khi refetch không mất chữ đang gõ.

@@ -125,7 +125,7 @@ test.describe('M8 live run on the real stack', () => {
     }
 
     // Signals: Speed 100 then 130 held 3 s ⇒ Hazard on (current value: mirrored target on v1, provided on kuksa.val.v2)
-    await page.locator('[data-sv-tab="signals"]').click()
+    await page.locator('[data-sv-tab="live"]').click()
     await expect(page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)).toHaveText(
       'false'
     )
@@ -151,14 +151,14 @@ test.describe('M8 live run on the real stack', () => {
       /done|running/
     )
     await expect(set.locator('[data-sv="trace-badge"]')).toHaveText(/\d+×/)
-    await page.locator('[data-sv-tab="run-console"]').click()
+    await page.locator('[data-sv-tab="live"]').click()
     await consoleHas(page, '· Stable for 1')
     await consoleHas(page, '· Set IsSignaling 1')
 
     // reload: the run log comes back from the stored stream
     await page.reload()
     await expect(page.locator('.react-flow__renderer')).toBeVisible()
-    await page.locator('[data-sv-tab="run-console"]').click()
+    await page.locator('[data-sv-tab="live"]').click()
     await expect(page.getByRole('log', { name: 'Run console' })).toContainText('app.started', {
       timeout: 30_000,
     })

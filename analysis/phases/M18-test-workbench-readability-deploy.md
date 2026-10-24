@@ -58,18 +58,19 @@
 - [x] Trạng thái rỗng: Generate tests / Ask the assistant / Record from a live run. Luồng 1-2-3 tô bước hiện tại.
 
 ### T05: Tab Live + dock
-- [ ] Dock: Problems · Test · Live. Build log thành drawer: mở khi SynCode chạy hoặc lỗi; mở lại từ pill.
-- [ ] Ô nhập theo catalog:
+> 2026-10-24: xong code + vitest + narrow tsc; Messages kiểm với mosquitto thật; E2E chờ CI. Lệch: Build log là tab đóng được (không phải drawer nổi).
+- [x] Dock: Problems · Test · Live. Build log thành drawer: mở khi SynCode chạy hoặc lỗi; mở lại từ pill.
+- [x] Ô nhập theo catalog:
   - sensor/attribute chỉ value; actuator: request (target) mặc định, simulate feedback (current) ở menu phụ;
   - boolean = công tắc, enum = dropdown, số = ô có đơn vị + min/max;
   - Enter = Set.
-- [ ] Tìm kiếm có gợi ý (catalog `vss_search`); kéo tín hiệu từ panel Vehicle vào bảng.
-- [ ] Tín hiệu tự gồm `path` + mọi `<Vehicle.…>` trong biểu thức/template (parser chung với `lib/sv/block-refs`). Danh sách thêm tay lưu theo workflow.
-- [ ] Messages:
+- [x] Tìm kiếm có gợi ý (catalog `vss_search`); kéo tín hiệu từ panel Vehicle vào bảng.
+- [x] Tín hiệu tự gồm `path` + mọi `<Vehicle.…>` trong biểu thức/template (parser chung với `lib/sv/block-refs`). Danh sách thêm tay lưu theo workflow.
+- [x] Messages:
   - signal-gateway subscribe Mosquitto theo topic prefix của app/run, stream SSE;
   - UI hiện HMI (tiêu đề, mức, nội dung) và publish khác.
-- [ ] Gợi ý: trigger "rises: false → true"; tín hiệu chưa có giá trị.
-- [ ] Record ⇒ case mới, đề xuất kỳ vọng từ các lần ghi/publish quan sát được.
+- [x] Gợi ý: trigger "rises: false → true"; tín hiệu chưa có giá trị.
+- [x] Record ⇒ case mới, đề xuất kỳ vọng từ các lần ghi/publish quan sát được.
 
 ### T06: Trợ lý soạn test
 - [ ] Tool `scenario_list`, `scenario_propose` (proposal ⇒ xem trước trong tab Test ⇒ Accept/Reject), `scenario_run` (Simulate ⇒ pass/fail).

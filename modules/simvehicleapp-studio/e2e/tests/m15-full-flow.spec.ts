@@ -259,7 +259,7 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
     timeout: 60_000,
   })
   await expect(page.locator('[data-sv="status-pill"]')).toContainText('Running')
-  await page.locator('[data-sv-tab="signals"]').click()
+  await page.locator('[data-sv-tab="live"]').click()
   // The current value: mirrored from the target (sdv.databroker.v1) or published by the gateway as provider of a
   // kuksa.val.v2 app (ADR-0047) — the app's write either way.
   const hazardTarget = page.locator(`[data-sv-signal="${HAZARD}"] [data-sv-signal-value]`)
@@ -269,17 +269,17 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   await page.waitForTimeout(3000)
   await caption(page, '12 · Above 120 km/h for 2 s ⇒ hazard lights on and an HMI warning')
   await expect(hazardTarget).toHaveText('true')
-  await page.locator('[data-sv-tab="run-console"]').click()
+  await page.locator('[data-sv-tab="live"]').click()
   const runConsole = page.getByRole('log', { name: 'Run console' })
   await expect(runConsole).toContainText('Set IsSignaling 1', { timeout: 15_000 })
   await expect(runConsole).toContainText('HMI notification 1')
   await pause(page, 1200)
-  await page.locator('[data-sv-tab="signals"]').click()
+  await page.locator('[data-sv-tab="live"]').click()
   await inject(page, SPEED, '90')
   await caption(page, '13 · Back to 90 km/h ⇒ the else branch switches them off')
   await expect(hazardTarget).toHaveText('false', { timeout: 10_000 })
   await pause(page, 1200)
-  await page.locator('[data-sv-tab="run-console"]').click()
+  await page.locator('[data-sv-tab="live"]').click()
   await page.locator('[data-sv-action="stop"]').click()
   await expect(page.locator('[data-sv="run-state"]')).toHaveAttribute('data-sv-state', 'stopped', {
     timeout: 15_000,

@@ -930,6 +930,18 @@ export const svSignalStreamContract = defineRouteContract({
   response: { mode: 'stream' },
 })
 
+/** `GET /api/sv/projects/[id]/messages` — SSE of the app's MQTT messages (`event: message`, Live tab, ADR-0058 §6). */
+export const svMessagesStreamContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/projects/[id]/messages',
+  params: svProjectParamsSchema,
+  response: { mode: 'stream' },
+})
+
+/** An MQTT message of the app; HMI notifications are JSON on `<prefix>/hmi`. */
+export const svMessageSchema = z.object({ topic: z.string(), payload: z.string(), ts: z.number() })
+export type SvMessage = z.output<typeof svMessageSchema>
+
 export const svSetSignalBodySchema = z.object({
   path: svVssPathSchema,
   value: svScenarioValueSchema,

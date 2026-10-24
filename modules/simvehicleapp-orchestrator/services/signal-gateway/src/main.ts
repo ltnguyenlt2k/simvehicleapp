@@ -3,7 +3,7 @@ import pkg from "../package.json" with { type: "json" };
 import { createGatewayHandler, playerSet } from "./app.ts";
 import { type Broker, grpcBroker } from "./broker.ts";
 import { Catalog } from "./catalog.ts";
-import { mqttPublisher } from "./mqtt.ts";
+import { mqttPublisher, mqttSubscriber } from "./mqtt.ts";
 import { Player } from "./player.ts";
 import { grpcProviderApi, type ProviderApi } from "./provider.ts";
 
@@ -51,10 +51,11 @@ const catalog = new Catalog(async (release) => {
   return res.json();
 });
 const publish = mqttPublisher(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
+const subscribe = mqttSubscriber(process.env.SDV_MQTT_ADDRESS ?? "mqtt://mqtt:1883");
 const playerIo = { publish, sleep: (ms: number) => Bun.sleep(ms), now: Date.now, monotonic: () => performance.now() };
 const player = new Player({ ...playerIo, set: playerSet(broker, catalog) });
 const sandboxPlayer = (sandbox: string) => new Player({ ...playerIo, set: playerSet((release) => broker(release, sandbox), catalog) });
 
-const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, providerApi, catalog, player, sandboxPlayer, newId: () => `play_${crypto.randomUUID()}` }));
+const handler = createService({ name: "signal-gateway", version: pkg.version, logger: log, metrics: new Metrics() }, createGatewayHandler({ broker, forget, providerApi, subscribe, catalog, player, sandboxPlayer, newId: () => `play_${crypto.randomUUID()}` }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port, databrokers: Object.fromEntries(endpoints) });

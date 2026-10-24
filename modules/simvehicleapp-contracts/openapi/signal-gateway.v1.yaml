@@ -105,6 +105,18 @@ paths:
         "204": { description: Mirroring (or providing) updated. }
         "400": { $ref: "#/components/responses/Rejected" }
         "409": { description: "`provider_refused`: another provider already holds one of the actuators (kuksa.val.v2)." }
+  /messages:
+    get:
+      operationId: streamMessages
+      tags: [signals]
+      description: "SSE of the MQTT messages under an app's topic prefix (subscribes `<prefix>/#`): `event: message` {topic, payload, ts}. HMI notifications are the JSON on `<prefix>/hmi` (ADR-0058 §6)."
+      parameters:
+        - { $ref: "#/components/parameters/RequestId" }
+        - { name: prefix, in: query, required: true, schema: { type: string, pattern: "^[A-Za-z0-9_\\-]+(/[A-Za-z0-9_\\-]+)*/?$" } }
+      responses:
+        "200": { description: Event stream., content: { text/event-stream: {} } }
+        "400": { $ref: "#/components/responses/Rejected" }
+        "503": { description: "MQTT is not configured or unreachable." }
   /play:
     post:
       operationId: playScenario

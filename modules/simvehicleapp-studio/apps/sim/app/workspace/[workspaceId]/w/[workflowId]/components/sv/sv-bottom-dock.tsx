@@ -12,6 +12,7 @@ import {
   ProblemsList,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
 import {
+  MessagesPanel,
   RunConsole,
   SignalsPanel,
   useWorkflowRuns,
@@ -186,10 +187,51 @@ function RunConsoleTab() {
   return <RunConsole run={run} blockName={blockName} />
 }
 
-/** Bottom dock of the vehicle editor: Problems, Simulation, Run console, Signals, Build log. */
+/**
+ * Live tab (M18-T05, ADR-0058 §6): the app's signals — watch and inject — next to its run console or its MQTT
+ * messages.
+ */
+function LiveTab({ pane, onPane }: { pane: LivePane; onPane: (p: LivePane) => void }) {
+  return (
+    <div className='flex min-h-0 flex-1' data-sv='live'>
+      <div className='flex min-w-0 flex-[3] flex-col border-[var(--border)] border-r'>
+        <SignalsPanel />
+      </div>
+      <div className='flex min-w-0 flex-[2] flex-col'>
+        <div role='tablist' aria-label='Live output' className='flex gap-1 px-2 pt-1'>
+          {LIVE_PANES.map((p) => (
+            <Button
+              key={p.id}
+              role='tab'
+              aria-selected={p.id === pane}
+              size='sm'
+              variant={p.id === pane ? 'active' : 'ghost'}
+              data-sv-live-pane={p.id}
+              onClick={() => onPane(p.id)}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+        {pane === 'run-console' ? <RunConsoleTab /> : <MessagesPanel />}
+      </div>
+    </div>
+  )
+}
+
+const LIVE_PANES = [
+  { id: 'run-console', label: 'Run console' },
+  { id: 'messages', label: 'Messages' },
+] as const
+type LivePane = (typeof LIVE_PANES)[number]['id']
+
+/** Bottom dock of the vehicle editor: Problems, Test, Live, and Build log while SynCode runs or failed. */
 export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   const [activeTab, setActiveTab] = useState<SvDockTabId>(initialTab)
-  const active = SV_DOCK_TABS.find((tab) => tab.id === activeTab) ?? SV_DOCK_TABS[0]
+  const [livePane, setLivePane] = useState<LivePane>('run-console')
+  const [buildLogOpen, setBuildLogOpen] = useState(initialTab === 'build-log')
+  const tabs = SV_DOCK_TABS.filter((tab) => tab.id !== 'build-log' || buildLogOpen)
+  const active = tabs.find((tab) => tab.id === activeTab) ?? tabs[0]
   const focusProblems = useSvLintStore((s) => s.focusProblems)
   const focusSimulation = useSvSimulationStore((s) => s.focusSimulation)
   const focusBuildLog = useSvSynCodeStore((s) => s.focusBuildLog)
@@ -213,12 +255,14 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
   useEffect(() => {
     if (focusBuildLog === seenBuildLog.current) return
     seenBuildLog.current = focusBuildLog
+    setBuildLogOpen(true)
     setActiveTab('build-log')
   }, [focusBuildLog])
   useEffect(() => {
     if (focusRunConsole === seenRunConsole.current) return
     seenRunConsole.current = focusRunConsole
-    setActiveTab('run-console')
+    setLivePane('run-console')
+    setActiveTab('live')
   }, [focusRunConsole])
 
   return (
@@ -230,12 +274,12 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
       )}
     >
       <div role='tablist' aria-label='Vehicle app output' className='flex gap-1 px-2 pt-1.5'>
-        {SV_DOCK_TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Button
             key={tab.id}
             role='tab'
-            aria-selected={tab.id === activeTab}
-            variant={tab.id === activeTab ? 'active' : 'ghost'}
+            aria-selected={tab.id === active.id}
+            variant={tab.id === active.id ? 'active' : 'ghost'}
             size='sm'
             data-sv-tab={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -243,6 +287,20 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
             {tab.label}
           </Button>
         ))}
+        {buildLogOpen && (
+          <Button
+            variant='ghost'
+            size='sm'
+            aria-label='Close Build log'
+            data-sv='close-build-log'
+            onClick={() => {
+              setBuildLogOpen(false)
+              if (active.id === 'build-log') setActiveTab('problems')
+            }}
+          >
+            ×
+          </Button>
+        )}
       </div>
       {active.id === 'problems' ? (
         <div role='tabpanel' aria-label='Problems' className='flex min-h-0 flex-1'>
@@ -250,15 +308,11 @@ export function SvBottomDock({ initialTab = 'problems' }: SvBottomDockProps) {
         </div>
       ) : active.id === 'simulation' ? (
         <div role='tabpanel' aria-label='Test' className='flex min-h-0 flex-1'>
-          <SimulationTab onRecord={() => setActiveTab('signals')} />
+          <SimulationTab onRecord={() => setActiveTab('live')} />
         </div>
-      ) : active.id === 'run-console' ? (
-        <div role='tabpanel' aria-label='Run console' className='flex min-h-0 flex-1'>
-          <RunConsoleTab />
-        </div>
-      ) : active.id === 'signals' ? (
-        <div role='tabpanel' aria-label='Signals' className='flex min-h-0 flex-1'>
-          <SignalsPanel />
+      ) : active.id === 'live' ? (
+        <div role='tabpanel' aria-label='Live' className='flex min-h-0 flex-1'>
+          <LiveTab pane={livePane} onPane={setLivePane} />
         </div>
       ) : (
         <div role='tabpanel' aria-label='Build log' className='flex min-h-0 flex-1'>

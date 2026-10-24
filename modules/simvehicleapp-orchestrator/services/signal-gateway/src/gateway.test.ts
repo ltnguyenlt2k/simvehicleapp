@@ -4,7 +4,7 @@ import { ContractValidator, fixturesDir } from "@simvehicleapp/contracts";
 import { createGatewayHandler, playerSet } from "./app.ts";
 import { type Broker, BrokerRejected, type BrokerUpdate, type Field } from "./broker.ts";
 import { Catalog, indexVss } from "./catalog.ts";
-import { connectPacket, publishPacket } from "./mqtt.ts";
+import { connectPacket, parsePackets, parsePublish, publishPacket, subscribePacket } from "./mqtt.ts";
 import { Player, type PlayerIo } from "./player.ts";
 import type { ProviderApi, ProviderMessage, ProviderStream } from "./provider.ts";
 import { fromDatapoint, toDatapoint } from "./values.ts";
@@ -69,6 +69,19 @@ describe("values ⇄ kuksa.val.v1 Datapoint", () => {
 });
 
 describe("MQTT 3.1.1 packets", () => {
+  test("SUBSCRIBE bytes; PUBLISH parsed across split and joined reads", () => {
+    expect([...subscribePacket(1, "a/#")]).toEqual([0x82, 8, 0, 1, 0, 3, 97, 47, 35, 0]);
+    const p1 = publishPacket("sv/hmi", '{"title":"Overspeed"}');
+    const p2 = publishPacket("sv/x", "1");
+    const joined = Uint8Array.from([...p1, ...p2.slice(0, 3)]);
+    const first = parsePackets(joined);
+    expect(first.packets).toHaveLength(1);
+    expect(parsePublish(first.packets[0]!)).toEqual({ topic: "sv/hmi", payload: '{"title":"Overspeed"}' });
+    const second = parsePackets(Uint8Array.from([...first.rest, ...p2.slice(3)]));
+    expect(parsePublish(second.packets[0]!)).toEqual({ topic: "sv/x", payload: "1" });
+    expect(second.rest).toHaveLength(0);
+  });
+
   test("CONNECT and PUBLISH (QoS 0) bytes", () => {
     expect([...connectPacket("c")]).toEqual([0x10, 13, 0, 4, 77, 81, 84, 84, 4, 2, 0, 30, 0, 1, 99]);
     expect([...publishPacket("a/b", "ON")]).toEqual([0x30, 7, 0, 3, 97, 47, 98, 79, 78]);
@@ -323,6 +336,35 @@ describe("kuksa.val.v2 provider (ADR-0047 §2, M14 #5)", () => {
     expect((await call({ release: "v4.0", paths: [HZ], api: "v3" })).status).toBe(400);
     expect((await call({ release: "v4.0", paths: [HZ] })).status).toBe(204);
     expect(b.subs.size).toBe(1); // v1 mirror
+  });
+});
+
+describe("Messages (ADR-0058 §6, M18-T05)", () => {
+  test("GET /messages streams the MQTT messages under the app's topic prefix; a bad prefix is refused", async () => {
+    let deliver: ((t: string, p: string) => void) | null = null;
+    let filter = "";
+    let stopped = 0;
+    const catalog = new Catalog(async () => vss40);
+    const { io } = fakeIo();
+    const handler = createGatewayHandler({
+      broker: () => undefined,
+      subscribe: (f, on) => ((filter = f), (deliver = on), () => void stopped++),
+      catalog,
+      player: new Player({ ...io, set: async () => {} }),
+      newId: () => "p",
+      now: () => 9,
+      heartbeatMs: 10,
+    });
+    expect((await handler(new Request("http://g/messages?prefix=a/../b"), ctx)).status).toBe(400);
+    const abort = new AbortController();
+    const res = await handler(new Request("http://g/messages?prefix=simvehicleapp/lka", { signal: abort.signal }), ctx);
+    expect(filter).toBe("simvehicleapp/lka/#");
+    const pending = readEvents(res, 1);
+    deliver!("simvehicleapp/lka/hmi", '{"title":"Overspeed"}');
+    expect((await pending)[0]).toEqual({ event: "message", data: { topic: "simvehicleapp/lka/hmi", payload: '{"title":"Overspeed"}', ts: 9 } });
+    abort.abort();
+    await Bun.sleep(5);
+    expect(stopped).toBe(1);
   });
 });
 

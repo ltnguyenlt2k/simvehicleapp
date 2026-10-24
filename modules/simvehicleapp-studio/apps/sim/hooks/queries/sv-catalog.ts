@@ -20,6 +20,9 @@ export const svCatalogKeys = {
   tree: (release?: string, prefix?: string) =>
     [...svCatalogKeys.trees(), release ?? '', prefix ?? ''] as const,
   searches: () => [...svCatalogKeys.all, 'search'] as const,
+  nodeSets: () => [...svCatalogKeys.all, 'nodes'] as const,
+  nodeSet: (release?: string, paths?: string) =>
+    [...svCatalogKeys.nodeSets(), release ?? '', paths ?? ''] as const,
   search: (release?: string, q?: string, type?: SvVssNodeKind) =>
     [...svCatalogKeys.searches(), release ?? '', q ?? '', type ?? ''] as const,
   nodes: () => [...svCatalogKeys.all, 'nodes'] as const,
@@ -54,6 +57,24 @@ export function useSvCatalogSearch(release: string | undefined, q: string, type?
     queryFn: ({ signal }): Promise<SvCatalogNodesResponse> =>
       requestJson(svCatalogSearchContract, { query: { q: query, type, release }, signal }),
     enabled: query.length > 0,
+    staleTime: CATALOG_STALE_TIME,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Catalog entries of several paths (Live tab typed inputs, M18-T05), by path. */
+export function useSvCatalogNodes(release: string | undefined, paths: string[]) {
+  const key = [...paths].sort().join(',')
+  return useQuery({
+    queryKey: svCatalogKeys.nodeSet(release, key),
+    queryFn: async ({ signal }) => {
+      const data = await requestJson(svCatalogNodesContract, {
+        query: { paths: key, release },
+        signal,
+      })
+      return new Map(data.nodes.map((n) => [n.path, n]))
+    },
+    enabled: Boolean(release) && key.length > 0,
     staleTime: CATALOG_STALE_TIME,
     placeholderData: keepPreviousData,
   })

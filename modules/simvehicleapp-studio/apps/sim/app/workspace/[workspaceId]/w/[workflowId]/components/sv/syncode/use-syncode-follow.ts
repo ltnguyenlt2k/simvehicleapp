@@ -47,7 +47,7 @@ export function useSynCodeFollow() {
     if (generation.state === 'succeeded') {
       toast.success(
         generation.verification.tests === 'skipped'
-          ? 'SynCode passed — no tests ran: simulate the workflow to save a scenario, it becomes its test'
+          ? 'SynCode passed — no tests ran: add a test case in the Test tab, each case becomes a test'
           : 'SynCode passed: IR, format, compile and tests'
       )
     } else if (generation.state === 'failed') {

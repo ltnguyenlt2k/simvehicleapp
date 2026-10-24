@@ -7,6 +7,9 @@ import {
   graphSignalPaths,
   parseSignalInput,
   recordingToScenario,
+  signalInputOf,
+  triggerHints,
+  typedValue,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/signals-model'
 
 describe('signals panel model (M08-T08/T09)', () => {
@@ -24,6 +27,30 @@ describe('signals panel model (M08-T08/T09)', () => {
       'Vehicle.Speed',
     ])
     expect(graphSignalPaths('{bad')).toEqual([])
+  })
+
+  it('also watches the signals read in expressions and templates (M18-T05)', () => {
+    const graph = JSON.stringify({
+      blocks: [
+        {
+          props: {
+            condition: '<Vehicle.Speed> > 10 && <Vehicle.ADAS.LaneDepartureDetection.IsWarning>',
+          },
+        },
+        {
+          props: {
+            message: 'Speed {<Vehicle.Speed>} km/h',
+            rows: [{ text: '<Vehicle.Cabin.Door.Row1.DriverSide.IsOpen>' }],
+          },
+        },
+        { props: { condition: '<speedchanged.value> > 1' } },
+      ],
+    })
+    expect(graphSignalPaths(graph)).toEqual([
+      'Vehicle.ADAS.LaneDepartureDetection.IsWarning',
+      'Vehicle.Cabin.Door.Row1.DriverSide.IsOpen',
+      'Vehicle.Speed',
+    ])
   })
 
   it('reads typed input like the scenario editor', () => {
@@ -63,5 +90,78 @@ describe('signals panel model (M08-T08/T09)', () => {
         { t: 3500, path: 'Vehicle.Speed', value: 130 },
       ],
     })
+  })
+})
+
+describe('typed inject and hints (M18-T05, ADR-0058 §6)', () => {
+  const node = (o: object) => ({ path: 'Vehicle.X', name: 'X', ...o }) as never
+  it('sensors take a value; actuators a request (target) first, feedback (current) second', () => {
+    expect(signalInputOf(node({ kind: 'sensor', datatype: 'float' })).fields).toEqual(['value'])
+    expect(signalInputOf(node({ kind: 'actuator', datatype: 'boolean' }))).toEqual({
+      fields: ['target', 'value'],
+      defaultField: 'target',
+      control: { kind: 'bool' },
+    })
+    expect(signalInputOf(undefined).fields).toEqual(['value', 'target'])
+  })
+  it('enum, number with unit and range, text', () => {
+    expect(
+      signalInputOf(node({ kind: 'actuator', datatype: 'string', allowed: ['OFF', 'SLOW'] }))
+        .control
+    ).toEqual({ kind: 'enum', options: ['OFF', 'SLOW'] })
+    expect(
+      signalInputOf(node({ kind: 'sensor', datatype: 'uint8', unit: 'percent', min: 0, max: 100 }))
+        .control
+    ).toEqual({ kind: 'number', unit: 'percent', min: 0, max: 100, integer: true })
+    expect(signalInputOf(node({ kind: 'sensor', datatype: 'string' })).control).toEqual({
+      kind: 'text',
+    })
+  })
+  it('typed values are checked before they are sent', () => {
+    const pct = { kind: 'number' as const, min: 0, max: 100, integer: true }
+    expect(typedValue(pct, '42')).toEqual({ ok: true, value: 42 })
+    expect(typedValue(pct, '101')).toEqual({ ok: false, error: 'at most 100' })
+    expect(typedValue(pct, '1.5')).toEqual({ ok: false, error: 'a whole number' })
+    expect(typedValue({ kind: 'bool' }, 'false')).toEqual({ ok: true, value: false })
+    expect(typedValue({ kind: 'enum', options: ['OFF'] }, 'ON')).toEqual({
+      ok: false,
+      error: 'one of OFF',
+    })
+  })
+  it('trigger hints say which change fires the workflow', () => {
+    const graph = JSON.stringify({
+      blocks: [
+        { type: 'sv_on_signal_changed', props: { path: 'Vehicle.A', mode: 'rising' } },
+        {
+          type: 'sv_on_signal_changed',
+          props: { path: 'Vehicle.Speed', mode: 'crosses_below', threshold: 110 },
+        },
+      ],
+    })
+    expect([...triggerHints(graph)]).toEqual([
+      ['Vehicle.A', 'trigger: rises (false → true)'],
+      ['Vehicle.Speed', 'trigger: crosses below 110'],
+    ])
+  })
+})
+
+describe('Record proposes expectations (M18-T05, ADR-0058 §7)', () => {
+  it('what the app wrote while recording becomes expected writes within 300 ms (scenario 1.1)', () => {
+    const s = recordingToScenario(
+      {
+        startedAt: 0,
+        initial: { 'Vehicle.Speed': 100 },
+        inputs: [{ t: 1000, path: 'Vehicle.Speed', value: 130 }],
+        observed: [{ t: 3210, path: 'Vehicle.Body.Lights.Hazard.IsSignaling', value: true }],
+      },
+      'Recorded'
+    )
+    expect(s.scenarioVersion).toBe('1.1.0')
+    expect(s.expect).toEqual({
+      writes: [
+        { t: 2910, path: 'Vehicle.Body.Lights.Hazard.IsSignaling', value: true, within: 300 },
+      ],
+    })
+    expect(s.until).toBe(6000)
   })
 })

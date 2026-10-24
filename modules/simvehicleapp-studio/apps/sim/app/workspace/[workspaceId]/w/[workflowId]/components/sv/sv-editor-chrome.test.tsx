@@ -93,16 +93,11 @@ describe('vehicle editor chrome (M01-T10)', () => {
     expect(html.match(/disabled=""/g)).toHaveLength(SV_ACTIONS.length)
   })
 
-  it('renders the five dock tabs with the first one selected and empty', () => {
+  it('renders Problems · Test · Live (Build log only while SynCode needs it), the first selected and empty', () => {
     const html = renderToStaticMarkup(<SvBottomDock />)
-    expect(SV_DOCK_TABS.map((t) => t.label)).toEqual([
-      'Problems',
-      'Test',
-      'Run console',
-      'Signals',
-      'Build log',
-    ])
-    expect(html.match(/role="tab"/g)).toHaveLength(5)
+    expect(SV_DOCK_TABS.map((t) => t.label)).toEqual(['Problems', 'Test', 'Live', 'Build log'])
+    expect(html.match(/role="tab"/g)).toHaveLength(3)
+    expect(html).not.toContain('data-sv-tab="build-log"')
     expect(html).toContain('aria-selected="true" ')
     expect(html).toContain('data-sv="problems"')
     expect(html).toContain('No problems')

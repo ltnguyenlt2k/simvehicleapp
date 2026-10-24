@@ -101,9 +101,7 @@ test.describe
       - tablist "Vehicle app output":
         - tab "Problems" [selected]
         - tab "Test"
-        - tab "Run console"
-        - tab "Signals"
-        - tab "Build log"
+        - tab "Live"
       - tabpanel "Problems"
     `)
 
