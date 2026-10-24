@@ -34,12 +34,12 @@ sẽ bắt đầu lại cửa sổ (chính sách `restart` của trigger).
 Tab **Problems** phải trống. Nếu có lỗi (ví dụ tham chiếu sai tên), click vào lỗi để nhảy tới khối.
 
 ## 5. Mô phỏng (2 phút)
-1. Mở tab **Simulation timeline** ở dock dưới (bảng scenario: giá trị ban đầu và input theo thời gian). Thêm input: `t = 1000 ms`, `Vehicle.Speed = 100`; `t = 2000 ms`, `Vehicle.Speed = 130`.
-   Độ dài chạy `6000 ms`.
+1. Mở tab **Test** ở dock dưới (Problems · Test · Live). Workflow chưa có case nên bảng đầu tiên chính là case **Default**: phần **When** là input theo thời gian. Thêm input: `t = 1000 ms`, `Vehicle.Speed = 100`; `t = 2000 ms`, `Vehicle.Speed = 130`.
+   Độ dài chạy (**Run for**) `6000 ms`. Muốn nhanh hơn: bấm **Generate tests** để studio tự sinh các case.
 2. Bấm **Simulate**. Timeline cho thấy trigger lúc 1000 và 2000, và **write** `Hazard.IsSignaling = true` lúc **4000 ms**
    (2000 + 2 s). Kéo thanh tua để xem badge trên từng khối.
 
-Scenario bạn lưu ở đây cũng trở thành test sinh ra cho app (bước SynCode chạy nó).
+Mỗi test case ở đây trở thành một test sinh ra cho app (bước SynCode chạy chúng).
 
 ## 6. Sinh app và build (2 phút)
 1. Bấm **SynCode** trên thanh hành động của canvas. Workflow chưa có vehicle app nên hộp thoại **Create a vehicle app** mở
@@ -55,10 +55,10 @@ xoá hẳn app (gõ tên để xác nhận), **Repair** chuẩn bị lại app b
 
 ## 7. Chạy trên databroker thật (1 phút)
 1. Bấm **Run**. Trạng thái chuyển **running**, Run console có `app.started`.
-2. Tab **Signals**: nhập `100` cho `Vehicle.Speed` → **Inject**; rồi `130` → **Inject**, đợi 2 giây.
+2. Tab **Live**: nhập `100` cho `Vehicle.Speed` → **Inject**; rồi `130` → **Inject**, đợi 2 giây.
 3. `Hazard.IsSignaling` đổi thành `true` (target và current). Trên canvas, badge live cho thấy khối nào vừa chạy; Run
    console có trace `Set IsSignaling 1`.
-4. Bấm **Stop** (app dừng sạch trong < 5 s). **Record** trong tab Signals lưu các lần inject thành scenario mới.
+4. Bấm **Stop** (app dừng sạch trong < 5 s). **Record** trong tab Live ghi các lần inject; **Save as test case** lưu chúng thành case mới ở tab Test.
 
 ## Làm tiếp
 - **Assistant** (tab cạnh Toolbar): mô tả hành vi bằng lời ("Cảnh báo HMI khi pin dưới 20% lúc xe đang chạy"), xem đề xuất
