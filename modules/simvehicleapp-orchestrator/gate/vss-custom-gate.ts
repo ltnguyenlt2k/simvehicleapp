@@ -130,16 +130,18 @@ for (const lang of LANGS) {
       for await (const c of res.body!) text += new TextDecoder().decode(c);
     } catch {}
     const ups = text.split("\n\n").map((b) => /^data: (.+)$/m.exec(b)?.[1]).filter(Boolean).map((d) => JSON.parse(d!));
-    return ups.filter((u) => u.field === "target").at(-1)?.value;
+    // The current value: a kuksa.val.v2 app (the default, ADR-0047) actuates and the gateway publishes it; a v1 app sets
+    // the target, which the gateway mirrors.
+    return ups.filter((u) => u.field === "value").at(-1)?.value;
   };
-  must((await set(out(withChime), off(withChime), "target")).ok && (await set(DROWSY, 0)).ok, `[${lang}] ${out(withChime)} reset`);
+  must((await set(out(withChime), off(withChime), "target")).ok && (await set(out(withChime), off(withChime))).ok && (await set(DROWSY, 0)).ok, `[${lang}] ${out(withChime)} reset`);
   await Bun.sleep(1000);
   must((await set(DROWSY, 2)).ok, `[${lang}] inject ${DROWSY} = 2`);
   await Bun.sleep(1500);
-  must((await target()) === on(withChime), `[${lang}] ${out(withChime)} target = ${JSON.stringify(on(withChime))} (drowsy)`);
+  must((await target()) === on(withChime), `[${lang}] ${out(withChime)} = ${JSON.stringify(on(withChime))} (drowsy)`);
   must((await set(DROWSY, 1)).ok, `[${lang}] inject ${DROWSY} = 1`);
   await Bun.sleep(1500);
-  must((await target()) === off(withChime), `[${lang}] ${out(withChime)} target = ${JSON.stringify(off(withChime))} (alert again)`);
+  must((await target()) === off(withChime), `[${lang}] ${out(withChime)} = ${JSON.stringify(off(withChime))} (alert again)`);
   must((await post(`${O}/runs/${r.id}/stop`, {})).ok, `[${lang}] stop requested`);
   while ((r = await get(`${O}/runs/${r.id}`)).state === "stopping" || r.state === "running") await Bun.sleep(100);
   must(r.state === "stopped", `[${lang}] run stopped`);
