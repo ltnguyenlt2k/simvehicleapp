@@ -90,10 +90,13 @@ await Bun.sleep(500);
 const injectedAt = Date.now();
 must((await set("Vehicle.Speed", 130)).ok, "inject Speed 130, held 3 s");
 await Bun.sleep(3000);
-const on = updates.find((u) => u.path === HAZARD && u.field === "target" && u.value === true && u.ts >= injectedAt - 50);
-must(on, `Hazard.IsSignaling target became true ${on ? `${on.ts - injectedAt} ms after Speed 130 (Stable for 2 s)` : ""}`);
-const mirrored = updates.find((u) => u.path === HAZARD && u.field === "value" && u.value === true && u.ts >= injectedAt - 50);
-must(mirrored, `Hazard current value follows the target ${mirrored && on ? `(${mirrored.ts - on.ts} ms after, gateway mirror)` : ""}`);
+// A kuksa.val.v2 app (the default, ADR-0047) actuates and the gateway, as the provider, publishes the current value;
+// a sdv.databroker.v1 app sets the target and the gateway mirrors it to the current value. Either way the current
+// value turns true; the target only for v1.
+const target = updates.find((u) => u.path === HAZARD && u.field === "target" && u.value === true && u.ts >= injectedAt - 50);
+const current = updates.find((u) => u.path === HAZARD && u.field === "value" && u.value === true && u.ts >= injectedAt - 50);
+must(current, `Hazard.IsSignaling became true ${current ? `${current.ts - injectedAt} ms after Speed 130 (Stable for 2 s)` : ""}`);
+console.log(target ? `  the app set the target (sdv.databroker.v1), mirrored ${current!.ts - target.ts} ms later` : "  the app actuated (kuksa.val.v2), the gateway published the current value");
 ctl.abort();
 
 // 4. the run's events: trace n2 → n3 on blocks b2/b3, logs; resume after Last-Event-ID (the run is
