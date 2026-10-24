@@ -48,8 +48,10 @@
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
-| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 1/8 + T08 ↷ M18 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
-| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Proposed) | 🔄 | 1/11 (T01 phân tích + ADR) — yêu cầu PO 2026-10-15 |
+| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 4/8 ✔ (T01, T02, T04a, T04), 3 🔄 (T03, T05, T06 — code xong, chờ E2E UI trên CI), T07 ☐ (gate, video, báo cáo); T08 ↷ M18 — yêu cầu PO 2026-10-15 |
+| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Proposed) | 🔄 | 1/11 ✔ (T01), 5 🔄 (T02–T06: test case, generator nhiều test, tab Test, tab Live, trợ lý soạn test — code + gate backend xong, chờ E2E UI trên CI), 5 ☐ (T07–T11) — yêu cầu PO 2026-10-15 |
+| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Proposed) | ☐ | 1/7 ✔ (T01 kiểm kê + phân tích + ADR); T02–T07 ☐, làm sau gate M18 — yêu cầu PO 2026-10-24 |
+| [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Proposed) | ☐ | phân tích + nghiên cứu upstream ✔; spike T01 và T02–T09 ☐ (spike làm sớm được) — yêu cầu PO 2026-10-24 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -429,4 +431,4 @@ Yêu cầu PO 2026-10-24 · Thiết kế: [M20](design/M20-wasm-targets.md) · C
 
 ---
 
-*Cập nhật lần cuối: 2026-10-07 (thêm M15 theo yêu cầu PO). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*
+*Cập nhật lần cuối: 2026-10-24 (bảng tổng quan M17–M18 theo tiến độ thật; thêm M19, M20 theo yêu cầu PO). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*
