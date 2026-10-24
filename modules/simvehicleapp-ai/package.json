@@ -22,6 +22,9 @@
   },
   "overrides": {
     "@simvehicleapp/contracts": "file:../simvehicleapp-contracts",
-    "ajv": "8.18.0"
+    "ajv": "8.18.0",
+    "body-parser": "2.4.0",
+    "ip-address": "10.7.4",
+    "zod": "4.6.6"
   }
 }

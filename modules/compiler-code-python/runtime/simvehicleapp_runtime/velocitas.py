@@ -213,7 +213,8 @@ class KuksaV2VehicleAccess(VelocitasVehicleAccess):
         from .kuksa_v2 import val_pb2
 
         reply = await self._vdb.GetValue(val_pb2.GetValueRequest(signal_id=self._signal(path)))
-        return from_v2(reply.data_point.value) if reply.HasField("data_point") else None
+        # An unset data point reads as an empty Value, which from_v2 maps to None.
+        return from_v2(reply.data_point.value)
 
     async def prefetch(self, paths: Dict[str, str]) -> None:
         for path, type_ in sorted(paths.items()):
