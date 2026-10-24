@@ -778,7 +778,7 @@ export interface BackendCapabilitiesV1 {
  */
 export interface ToolchainJobV1 {
   id: string;
-  kind: "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model";
+  kind: "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model" | "image";
   project: string;
   options?: ToolchainJobOptions;
   state: "queued" | "running" | "succeeded" | "failed" | "cancelled";
@@ -822,6 +822,18 @@ export interface ToolchainJobOptions {
    * run: start the app on a vehicle databroker of its own, loading the project's vendored VSS file (ADR-0057).
    */
   sandbox?: boolean;
+  /**
+   * image: the OCI image of the app (binary, its shared libraries, AppManifest, notices) pushed without a Docker daemon (ADR-0060, M18-T10). The last log line is `SVIMAGE {reference, digest, bytes, files}`.
+   */
+  image?: {
+    reference: string;
+    /**
+     * http registry (a lab registry).
+     */
+    insecure?: boolean;
+    username?: string;
+    password?: string;
+  };
 }
 /**
  * Trace event as streamed to the studio (analysis/08 §3.1, ADR-0027). Produced identically by the simulator and by orchestrator TraceIngest from runtime `SVTRACE {…}` lines (`#/$defs/runtimeLine`).
@@ -1143,7 +1155,7 @@ export interface GenerateRequest {
   }[];
 }
 export interface ToolchainJobRequest {
-  kind: "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model";
+  kind: "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model" | "image";
   project: string;
   options?: ToolchainJobOptions;
 }
