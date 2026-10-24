@@ -104,6 +104,25 @@ services:
     networks: [sv-internal]
     restart: unless-stopped
 
+  vehicle-gateway:
+    image: simvehicleapp/vehicle-gateway:dev
+    build:
+      context: .
+      dockerfile: services/vehicle-gateway/Dockerfile
+      additional_contexts:
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+    environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      # One port per deployment (ADR-0060): the deployed app's databroker address is vehicle-gateway:<port>.
+      SV_VEHICLE_GATEWAY_PORTS: ${SV_VEHICLE_GATEWAY_PORTS:-57000-57099}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+    # Internal only (control API :4060, routes 57000-57099 on sv-internal); it reaches deploy targets outside.
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    networks: [sv-internal]
+    restart: unless-stopped
+
 volumes:
   sv-workspace:
 

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/vehicle-gateway.v1.yaml` (new service, ADR-0060, M18-T09): deployment routes to a deploy target's databroker — `PUT/DELETE /routes/{id}` (target, tls, token, mode read-only|read-write, actuators), `GET /routes/{id}/audit`, `GET /routes`, `POST /probe` (Test connection: server and missing paths).
 - `openapi/signal-gateway.v1.yaml` (additive, ADR-0058 §6, M18-T05): `GET /messages?prefix=` — SSE of the app's MQTT messages (HMI notifications and other publishes).
 - `openapi/signal-gateway.v1.yaml` (additive, ADR-0058 §4, M18-T04): `POST /play` `observe` and `Playback.observed` — what the app did during a playback, for grading a test case on the vehicle stack.
 - Test cases (additive, ADR-0058 §2/§9, M18-T02): `schemas/scenario.v1` 1.1 — `within` on expected writes/publishes, `expect.never`, expectations as a subset (1.0 unchanged: exact lists, C01–C45 unchanged); `generateRequest.scenarios[]` and orchestrator `startGeneration.scenarios[]` take several entries per workflow with `caseName` (one generated test each).

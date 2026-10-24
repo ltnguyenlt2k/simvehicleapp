@@ -3,7 +3,7 @@ import Ajv2020 from "ajv/dist/2020.js";
 import { readFileSync, readdirSync } from "node:fs";
 import { CONTRACTS_VERSION, ContractValidator, openapiDir } from "./index.ts";
 
-const EXPECTED = ["ai-assistant", "backend-plugin", "compiler", "orchestrator", "signal-gateway", "toolchain", "vss-catalog", "workspace"];
+const EXPECTED = ["ai-assistant", "backend-plugin", "compiler", "orchestrator", "signal-gateway", "toolchain", "vehicle-gateway", "vss-catalog", "workspace"];
 // Ajv mis-evaluates `$dynamicRef` together with `unevaluatedProperties`. In this meta-schema `#meta` only
 // points at `$defs/schema` (any object/boolean; Schema Objects are checked separately), so a plain `$ref` is equivalent.
 const oas = JSON.parse(

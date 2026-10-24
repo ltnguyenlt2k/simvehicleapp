@@ -26,6 +26,10 @@
         "@grpc/proto-loader": "0.8.0",
       },
     },
+    "services/vehicle-gateway": {
+      "name": "@simvehicleapp/vehicle-gateway",
+      "version": "0.1.0",
+    },
     "services/workspace": {
       "name": "@simvehicleapp/workspace-service",
       "version": "0.1.0",
@@ -70,6 +74,8 @@
     "@simvehicleapp/service-kit": ["@simvehicleapp/service-kit@file:../simvehicleapp-contracts/packages/service-kit", { "peerDependencies": { "@simvehicleapp/contracts": "1.0.0-alpha.1" } }],
 
     "@simvehicleapp/signal-gateway": ["@simvehicleapp/signal-gateway@workspace:services/signal-gateway"],
+
+    "@simvehicleapp/vehicle-gateway": ["@simvehicleapp/vehicle-gateway@workspace:services/vehicle-gateway"],
 
     "@simvehicleapp/workspace-service": ["@simvehicleapp/workspace-service@workspace:services/workspace"],
 

@@ -1,0 +1,196 @@
+openapi: 3.1.0
+info:
+  title: SimVehicleApp Vehicle Gateway API
+  version: 1.0.0-alpha.1
+  description: "Deployment routes to a deploy target's KUKSA databroker (ADR-0060, M18-T09). Each route is an h2c port on sv-internal that a deployed app uses as its databroker: kuksa.val.v2 reads always pass; Actuate/BatchActuate only in read-write mode and only on the app's actuators; provider methods (PublishValue, OpenProviderStream) never. TLS and the target token are added by the gateway. This API is the orchestrator's control of the routes."
+  license: { name: Apache-2.0, identifier: Apache-2.0 }
+servers:
+  - url: http://vehicle-gateway:4060
+    description: Compose internal network (not published to the host).
+security:
+  - internal: []
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Service is up.
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1#/$defs/health" }
+  /version:
+    get:
+      operationId: version
+      tags: [service]
+      security: []
+      responses:
+        "200":
+          description: Name, version, commit and contracts version (ADR-0007 §7).
+          content:
+            application/json:
+              schema: { $ref: "urn:simvehicleapp:contracts:service-info:1.0.0-alpha.1" }
+  /routes:
+    get:
+      operationId: listRoutes
+      tags: [routes]
+      responses:
+        "200":
+          description: Open routes.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [routes]
+                additionalProperties: false
+                properties:
+                  routes:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, address, target, mode]
+                      additionalProperties: false
+                      properties:
+                        id: { $ref: "#/components/schemas/RouteId" }
+                        address: { $ref: "#/components/schemas/Address" }
+                        target: { $ref: "#/components/schemas/Target" }
+                        mode: { $ref: "#/components/schemas/Mode" }
+  /routes/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { $ref: "#/components/schemas/RouteId" } }
+    put:
+      operationId: openRoute
+      tags: [routes]
+      description: "Opens (or replaces) the route of a deployment. With read-write, the actuators' ids on the target are resolved (ListMetadata) so an Actuate by id is checked too."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target, mode]
+              additionalProperties: false
+              properties:
+                target: { $ref: "#/components/schemas/Target" }
+                tls: { type: boolean, default: false }
+                token: { type: string, maxLength: 4096, description: "Sent to the target as `authorization: Bearer <token>`; never returned." }
+                mode: { $ref: "#/components/schemas/Mode" }
+                actuators: { type: array, maxItems: 200, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+      responses:
+        "200":
+          description: The route's address for the app (`SDV_VEHICLEDATABROKER_ADDRESS`).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, address, port, mode]
+                additionalProperties: false
+                properties:
+                  id: { $ref: "#/components/schemas/RouteId" }
+                  address: { $ref: "#/components/schemas/Address" }
+                  port: { type: integer, minimum: 1, maximum: 65535 }
+                  mode: { $ref: "#/components/schemas/Mode" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "503": { description: "`no_route_port`: every route port is in use (SV_VEHICLE_GATEWAY_PORTS)." }
+    delete:
+      operationId: closeRoute
+      tags: [routes]
+      responses:
+        "204": { description: Closed; the app's and the target's connections end. }
+        "404": { description: No such route. }
+  /routes/{id}/audit:
+    parameters:
+      - { name: id, in: path, required: true, schema: { $ref: "#/components/schemas/RouteId" } }
+    get:
+      operationId: routeAudit
+      tags: [routes]
+      responses:
+        "200":
+          description: "Refused calls and writes (newest last, at most 1000), and the calls forwarded by method."
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [audit, forwarded]
+                additionalProperties: false
+                properties:
+                  audit:
+                    type: array
+                    items:
+                      type: object
+                      required: [ts, method, allowed]
+                      additionalProperties: false
+                      properties:
+                        ts: { type: integer }
+                        method: { type: string }
+                        allowed: { type: boolean }
+                        signal: { type: string, description: "VSS path, or `#<id>` for an Actuate by id." }
+                        reason: { type: string }
+                  forwarded: { type: object, additionalProperties: { type: integer, minimum: 0 } }
+        "404": { description: No such route. }
+  /probe:
+    post:
+      operationId: probeTarget
+      tags: [routes]
+      description: "Test connection of a deploy target: GetServerInfo, then ListMetadata of each path (the signals the app uses)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target]
+              additionalProperties: false
+              properties:
+                target: { $ref: "#/components/schemas/Target" }
+                tls: { type: boolean, default: false }
+                token: { type: string, maxLength: 4096 }
+                paths: { type: array, maxItems: 200, items: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/vssPath" } }
+      responses:
+        "200":
+          description: Reachable (server, missing paths) or not (gRPC status and message).
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required: [reachable, api, server, missing]
+                    additionalProperties: false
+                    properties:
+                      reachable: { const: true }
+                      api: { const: kuksa.val.v2 }
+                      server: { type: object, additionalProperties: false, properties: { name: { type: string }, version: { type: string } } }
+                      missing: { type: array, items: { type: string } }
+                  - type: object
+                    required: [reachable, status, message]
+                    additionalProperties: false
+                    properties:
+                      reachable: { const: false }
+                      status: { type: integer }
+                      message: { type: string }
+        "400": { $ref: "#/components/responses/Invalid" }
+components:
+  securitySchemes:
+    internal:
+      type: apiKey
+      in: header
+      name: x-sv-internal
+      description: INTERNAL_API_SECRET shared by internal services (ADR-0007 §5).
+  schemas:
+    RouteId: { type: string, pattern: "^[A-Za-z0-9_-]{1,64}$", description: "The deployment's id." }
+    Target: { type: string, pattern: "^[A-Za-z0-9.-]{1,253}:[0-9]{2,5}$", description: "host:port of the target databroker." }
+    Address: { type: string, pattern: "^[a-z0-9-]+:[0-9]{2,5}$", description: "vehicle-gateway:<port> on sv-internal." }
+    Mode: { enum: [read-only, read-write] }
+  responses:
+    Invalid:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, message]
+            properties:
+              error: { type: string }
+              message: { type: string }

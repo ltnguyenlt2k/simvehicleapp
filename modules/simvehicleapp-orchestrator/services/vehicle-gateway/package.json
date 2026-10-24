@@ -1,0 +1,13 @@
+{
+  "name": "@simvehicleapp/vehicle-gateway",
+  "version": "0.1.0",
+  "private": true,
+  "description": "vehicle-gateway on :4060 (openapi/vehicle-gateway.v1.yaml, ADR-0060): per-deployment gRPC routes to a deploy target's KUKSA databroker — kuksa.val.v2 method allowlist, actuator paths, TLS/token, audit.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test"
+  }
+}
