@@ -78,10 +78,10 @@
 - [ ] Eval: fake provider (unit, ✔) + model thật của PO: `eval/tests-eval.ts` đã viết; lần chạy 2026-10-24 không đo được vì endpoint của PO trả 500 (model `qwen3.8:27b` không có trên server).
 
 ### T07: Block gọn + Logic view
-- [ ] Block gọn mặc định; toggle Details (lưu theo người dùng); handle neo như cũ.
-- [ ] `lib/sv/logic-view.ts`: graph ⇒ văn bản có cấu trúc (trigger, nhánh lồng, chuỗi hành động); tiếng Anh/tiếng Việt; tất định.
-- [ ] Chọn câu ⇒ chọn/căn giữa block; lỗi lint hiện trong câu.
-- [ ] Vitest: 41 BlockSpec, 7 golden, chạy 2 lần giống nhau.
+- [x] Block gọn mặc định; toggle Details (lưu theo trình duyệt, ADR-0059 Notes); handle neo như cũ (định vị từ đáy block).
+- [x] `lib/sv/logic-view.ts`: graph ⇒ văn bản có cấu trúc (trigger, nhánh lồng, chuỗi hành động, Loop/Parallel lồng, nhánh hội tụ thành tham chiếu, block không trigger nào chạy tới); tất định. **Chỉ tiếng Anh** (UI chưa có tiếng Việt, ADR-0059 Notes).
+- [x] Chọn câu ⇒ chọn/căn giữa block; lỗi lint hiện trong câu.
+- [x] Vitest: 41 BlockSpec (quy tắc câu tóm tắt, `block-summary.test.ts`), 7 golden (snapshot), chạy 2 lần giống nhau; panel render test. E2E `m18-test-cases` (compact ⇄ Details, Logic, chọn câu) chạy trên CI.
 
 ### T08: Làn, giá trị sống, dữ liệu block trước
 - [ ] Auto layout xếp mỗi trigger một làn; nhánh then lên, else xuống; vùng nền có tên trigger.

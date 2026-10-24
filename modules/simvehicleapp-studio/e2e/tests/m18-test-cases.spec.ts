@@ -16,7 +16,8 @@ import {
  * from the workflow (boundary values, Stable for held and broken) with their expectations locked
  * from the simulator, every case passes Simulate all, cases are deleted and kept across a reload;
  * test cases the assistant proposes (scenario_propose, the ai-assistant mocked at the BFF) are added
- * to the Test tab from the assistant card.
+ * to the Test tab from the assistant card. M18-T07: blocks are compact until selected or Details is on, and the Logic
+ * view reads the workflow as sentences — a sentence selects its block.
  */
 
 const SPEED = 'Vehicle.Speed'
@@ -180,4 +181,39 @@ test.describe('M18 Test cases', () => {
     await tab.locator('[data-sv="test-simulate-all"]').click()
     await expect(tab.locator('[data-sv-outcome="passed"]')).toHaveCount(2, { timeout: 30_000 })
   })
+
+  test('compact blocks ⇄ Details; Logic view reads the workflow and a sentence selects its block', async ({
+    page,
+  }) => {
+    await signUp(page, newUser('m18lv', 'Playwright Logic view'))
+    await setAutoConnect(page, false)
+    await page.reload()
+    await createWorkflow(page)
+    await buildOverspeed(page)
+    // Nothing selected: every vehicle block is compact, its summary still shown.
+    await page.keyboard.press('Escape')
+    const trigger = nodeByName(page, 'When Speed changes 1')
+    await page.locator('.react-flow__pane').click({ position: { x: 20, y: 400 } })
+    await expect(trigger.locator('[data-sv-compact]')).toHaveCount(1)
+    await expect(trigger.locator('[data-sv="block-summary"]')).toContainText('When Speed changes')
+    const details = page.locator('[data-sv-view="details"]')
+    await details.click()
+    await expect(details).toHaveAttribute('aria-pressed', 'true')
+    await expect(trigger.locator('[data-sv-compact]')).toHaveCount(0)
+    await details.click()
+
+    await page.locator('[data-sv-view="logic"]').click()
+    const logic = page.locator('[data-sv="logic-view"]')
+    await expect(logic).toBeVisible()
+    await expect(logic.locator('[data-sv-logic-line="trigger"]')).toContainText('When Speed changes')
+    await expect(logic.locator('[data-sv-logic-line="branch"]')).toContainText('stable ⇒')
+    const set = logic.locator('[data-sv-logic-line="step"]', { hasText: 'Set Hazard.IsSignaling = true' })
+    await expect(set).toBeVisible()
+    await set.click()
+    // The editor panel opens on that block.
+    await expect(page.locator('[data-tab-content="editor"]')).toContainText('Set IsSignaling 1')
+    await logic.getByRole('button', { name: 'Close Logic view' }).click()
+    await expect(logic).toHaveCount(0)
+  })
+
 })

@@ -68,6 +68,7 @@ import { useWorkflowMap } from '@/hooks/queries/workflows'
 import { useReactiveConditions } from '@/hooks/use-reactive-conditions'
 import { useSelectorDisplayName } from '@/hooks/use-selector-display-name'
 import { useSvCanvasHighlightStore } from '@/stores/sv/canvas-highlight/store'
+import { useSvCanvasViewStore } from '@/stores/sv/canvas-view/store'
 import { useVariablesStore } from '@/stores/variables/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
@@ -632,6 +633,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
     return values
   }, [type, subBlockState])
 
+  /**
+   * SV: compact vehicle blocks (ADR-0059 §1): the summary, data chips and branch labels only; the settings rows show
+   * on the selected block, in previews, or for every block with Details on.
+   */
+  const svDetails = useSvCanvasViewStore((s) => s.details)
+  const svCompact = svValues !== undefined && !svDetails && !selected && !data.isPreview
+
   /** SV: named branch handles of SimVehicleApp flow blocks (then/else, ok/timeout, case-<i>…). */
   const svHandles = useMemo(() => {
     const spec = config.svHandles
@@ -742,7 +750,7 @@ export const WorkflowBlock = memo(function WorkflowBlock({
         blockType: type,
         category: config.category,
         displayTriggerMode,
-        visibleSubBlockCount: totalRenderedRowCount,
+        visibleSubBlockCount: svCompact ? 0 : totalRenderedRowCount,
         conditionRowCount: conditionRows.length,
         routerRowCount: routerRows.length,
       })
@@ -752,6 +760,7 @@ export const WorkflowBlock = memo(function WorkflowBlock({
       config.category,
       displayTriggerMode,
       totalRenderedRowCount,
+      svCompact,
       conditionRows.length,
       routerRows.length,
       horizontalHandles,
@@ -782,6 +791,7 @@ export const WorkflowBlock = memo(function WorkflowBlock({
         onClick={handleClick}
         onKeyDown={(event) => handleKeyboardActivation(event, handleClick)}
         data-sv-highlighted={svHighlighted || undefined}
+        data-sv-compact={svCompact || undefined}
         className={cn(
           'workflow-drag-handle relative z-[20] w-[250px] cursor-grab select-none rounded-lg border border-[var(--border-1)] bg-[var(--surface-2)] [&:active]:cursor-grabbing',
           svHighlighted && 'ring-2 ring-[var(--brand-accent)]'
@@ -979,7 +989,7 @@ export const WorkflowBlock = memo(function WorkflowBlock({
                   />
                 ))}
               </>
-            ) : (
+            ) : svCompact ? null : (
               subBlockRows.map((row, rowIndex) =>
                 row.flatMap((subBlock) => {
                   const rawValue = subBlockState[subBlock.id]?.value

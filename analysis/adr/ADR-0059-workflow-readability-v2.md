@@ -83,3 +83,9 @@ flowchart LR
 - Golden graph-adapter/IR không đổi; full luồng `@live` + video.
 
 ## Notes / Deviations
+- 2026-10-24 — **T07 implement** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - Logic view là **panel nổi trên canvas** (nút **Logic** trên thanh hành động), không thay hẳn canvas. Như vậy vừa đọc câu vừa thấy block được căn giữa khi bấm.
+  - Chỉ có câu **tiếng Anh**: UI của studio chưa có tiếng Việt, và câu tóm tắt block (ADR-0055) cũng tiếng Anh. Tiếng Việt làm cùng lúc với i18n UI.
+  - **Details** lưu theo trình duyệt (zustand `persist`, chỉ trường `details`), chưa theo tài khoản.
+  - Block chỉ còn câu tóm tắt, chip dữ liệu và nhãn nhánh. Các dòng cài đặt hiện khi block được chọn, khi bật Details, hoặc trong bản xem trước (diff của trợ lý).
+  - Nhánh hội tụ (hai nhánh cùng tới một block) chỉ viết block đó một lần; lần sau là "↺ continues at …". Vòng lặp kết thúc bằng tham chiếu, không lặp vô hạn. Block không trigger nào chạy tới nằm ở đoạn cuối "Not run by any trigger".

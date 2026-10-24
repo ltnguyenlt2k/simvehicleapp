@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback } from 'react'
-import { FlaskConical, ShieldCheck } from 'lucide-react'
-import { toast } from '@/components/emcn'
+import { FlaskConical, ListTree, Rows3, ShieldCheck } from 'lucide-react'
+import { Button, toast } from '@/components/emcn'
+import { cn } from '@/lib/core/utils/cn'
 import {
   MyRunsMenu,
   RunButtons,
@@ -20,9 +21,36 @@ import { useSvActionStatus } from '@/app/workspace/[workspaceId]/w/[workflowId]/
 import { useSvVerify } from '@/hooks/queries/sv-lint'
 import { useSaveSvScenario, useSvScenario, useSvSimulate } from '@/hooks/queries/sv-simulation'
 import { useUpdateSvTestCase } from '@/hooks/queries/sv-test-cases'
+import { useSvCanvasViewStore } from '@/stores/sv/canvas-view/store'
 import { useSvLintStore } from '@/stores/sv/lint/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 import { useSvTestStore } from '@/stores/sv/test/store'
+
+interface ViewToggleProps {
+  view: 'logic' | 'details'
+  label: string
+  icon: typeof ListTree
+  pressed: boolean
+  title: string
+  onToggle: () => void
+}
+
+/** A view of the canvas that is on or off (Logic view, block Details — ADR-0059). */
+function ViewToggle({ view, label, icon: Icon, pressed, title, onToggle }: ViewToggleProps) {
+  return (
+    <Button
+      variant='ghost'
+      size='sm'
+      aria-pressed={pressed}
+      data-sv-view={view}
+      title={title}
+      onClick={onToggle}
+      className={cn(pressed && 'bg-[var(--surface-active)]')}
+    >
+      <Icon className='size-[14px]' /> {label}
+    </Button>
+  )
+}
 
 /** A thin divider between the groups of the bar. */
 function Separator() {
@@ -37,7 +65,8 @@ function Separator() {
  * on the vehicle stack.
  *
  * The bar follows the work (ADR-0054, M16-T06): check (Verify, Simulate) │ generate and run (SynCode, Run, Stop) │
- * open and take out (Open IDE, Export), then the app the actions use and a status pill. The sensible next step is the
+ * open and take out (Open IDE, Export) │ views of the canvas (Logic, Details — ADR-0059), then the app the actions use and a
+ * status pill. The sensible next step is the
  * primary button; why an action cannot run is said in words in the bar, not only in a tooltip (inside the bar, not
  * a row under it: a row appearing with the first error would shift the canvas under the user's pointer).
  */
@@ -149,6 +178,9 @@ export function SvActionBar() {
     })
   }, [verify])
 
+  const logicOpen = useSvCanvasViewStore((s) => s.logicOpen)
+  const details = useSvCanvasViewStore((s) => s.details)
+
   const verifying = verifyStatus === 'verifying'
   const simulating = simStatus === 'running'
   return (
@@ -190,6 +222,23 @@ export function SvActionBar() {
         <Separator />
         <OpenIdeButton />
         <ExportButton />
+        <Separator />
+        <ViewToggle
+          view='logic'
+          label='Logic'
+          icon={ListTree}
+          pressed={logicOpen}
+          title='Read the workflow as sentences'
+          onToggle={() => useSvCanvasViewStore.getState().setLogicOpen(!logicOpen)}
+        />
+        <ViewToggle
+          view='details'
+          label='Details'
+          icon={Rows3}
+          pressed={details}
+          title='Show the settings of every block'
+          onToggle={() => useSvCanvasViewStore.getState().setDetails(!details)}
+        />
         <div className='ml-2 flex min-w-0 items-center gap-2'>
           <SvAppChip />
           <SvStatusPill pill={status.pill} />

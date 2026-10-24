@@ -5,7 +5,7 @@ import { Badge } from '@/components/emcn'
 import { blockSummary, type SvBlockRole } from '@/lib/sv/block-summary'
 
 /** Tag and colour per role (ADR-0055): the category reads at a glance, with existing badge tokens. */
-const ROLE = {
+export const SV_ROLE_TAG = {
   when: { tag: 'WHEN', variant: 'purple' },
   if: { tag: 'IF', variant: 'amber' },
   flow: { tag: 'FLOW', variant: 'gray' },
@@ -32,7 +32,7 @@ export const SvBlockSummaryLine = memo(function SvBlockSummaryLine({
 }: SvBlockSummaryLineProps) {
   const summary = blockSummary(type, values)
   if (!summary) return null
-  const role = ROLE[summary.role]
+  const role = SV_ROLE_TAG[summary.role]
   return (
     <div
       data-sv='block-summary'
