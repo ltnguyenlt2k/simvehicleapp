@@ -3,9 +3,11 @@ import { requestJson } from '@/lib/api/client/request'
 import {
   type SvCreateDeployTargetBody,
   type SvDeployMode,
+  type SvPushImageBody,
   svCreateDeployTargetContract,
   svDeleteDeployTargetContract,
   svListDeployTargetsContract,
+  svPushImageContract,
   svStartDeploymentContract,
   svTestDeployTargetContract,
 } from '@/lib/api/contracts/sv'
@@ -92,5 +94,12 @@ export function useStartSvDeployment() {
       queryClient.invalidateQueries({ queryKey: svRunKeys.list(v.projectId) })
       queryClient.invalidateQueries({ queryKey: svRunKeys.mine() })
     },
+  })
+}
+
+export function usePushSvImage() {
+  return useMutation({
+    mutationFn: ({ projectId, body }: { projectId: string; body: SvPushImageBody }) =>
+      requestJson(svPushImageContract, { params: { id: projectId }, body }),
   })
 }

@@ -12,12 +12,17 @@ import {
   ChipModalHeader,
   toast,
 } from '@/components/emcn'
-import type { SvDeployMode, SvTestDeployTargetResult } from '@/lib/api/contracts/sv'
+import type {
+  SvDeployMode,
+  SvPushImageResult,
+  SvTestDeployTargetResult,
+} from '@/lib/api/contracts/sv'
 import { graphSignalPaths } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/signals-model'
 import { useWorkflowRuns } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/use-run-follow'
 import { SvActionButton } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/sv-action-button'
 import {
   useCreateSvDeployTarget,
+  usePushSvImage,
   useStartSvDeployment,
   useSvDeployTargets,
   useTestSvDeployTarget,
@@ -93,6 +98,15 @@ function DeployModal({ open, onOpenChange }: DeployModalProps) {
   const { data: targets = [] } = useSvDeployTargets(workspaceId)
   const sameRelease = targets.filter((t) => t.vssRelease === project?.vssRelease)
   const [targetId, setTargetId] = useState<string>(sameRelease[0]?.id ?? NEW_TARGET)
+  const [how, setHow] = useState<'databroker' | 'image'>('databroker')
+  const [image, setImage] = useState({
+    reference: '',
+    protocol: 'https',
+    username: '',
+    password: '',
+  })
+  const [pushed, setPushed] = useState<SvPushImageResult | null>(null)
+  const push = usePushSvImage()
   const [mode, setMode] = useState<SvDeployMode>('read-only')
   const [confirmWrite, setConfirmWrite] = useState(false)
   const [draft, setDraft] = useState({ name: '', address: '', tls: 'no', token: '' })
@@ -182,7 +196,25 @@ function DeployModal({ open, onOpenChange }: DeployModalProps) {
     )
   }
 
-  const busy = create.isPending || test.isPending || start.isPending
+  const onPush = () =>
+    push.mutate(
+      {
+        projectId: project.id,
+        body: {
+          reference: image.reference.trim(),
+          ...(image.protocol === 'http' ? { insecure: true } : {}),
+          ...(image.username ? { username: image.username, password: image.password } : {}),
+        },
+      },
+      {
+        onSuccess: (r) => {
+          setPushed(r)
+          toast.success(`Image pushed: ${r.reference}`)
+        },
+        onError: (e) => toast.error(`Image: ${e.message}`),
+      }
+    )
+  const busy = create.isPending || test.isPending || start.isPending || push.isPending
   const draftOk =
     !isNew || (draft.name.trim() && /^[A-Za-z0-9.-]{1,253}:[0-9]{2,5}$/.test(draft.address.trim()))
   return (
@@ -196,135 +228,216 @@ function DeployModal({ open, onOpenChange }: DeployModalProps) {
         </p>
         <ChipModalField
           type='dropdown'
-          title='Target'
-          value={isNew ? NEW_TARGET : targetId}
-          onChange={(v) => {
-            setTargetId(v)
-            setTested(null)
-          }}
+          title='Deploy as'
+          value={how}
+          onChange={(v) => setHow(v as 'databroker' | 'image')}
           options={[
-            ...sameRelease.map((t) => ({
-              value: t.id,
-              label: `${t.name} — ${t.address}${t.tls ? ' (TLS)' : ''}`,
-            })),
-            { value: NEW_TARGET, label: 'Add a deploy target…' },
+            { value: 'databroker', label: 'Run it here on a vehicle databroker (bench, HIL, car)' },
+            {
+              value: 'image',
+              label: 'Container image pushed to a registry (run it on the vehicle)',
+            },
           ]}
-          hint={`Targets of VSS ${project.vssRelease}, the release of this app.`}
         />
-        {isNew && (
-          <ChipModalField
-            type='input'
-            title='Name'
-            value={draft.name}
-            onChange={(v) => setDraft((d) => ({ ...d, name: v }))}
-            placeholder='HIL bench'
-            maxLength={80}
-            required
-          />
-        )}
-        {isNew && (
-          <ChipModalField
-            type='input'
-            title='Databroker address'
-            value={draft.address}
-            onChange={(v) => setDraft((d) => ({ ...d, address: v }))}
-            placeholder='bench.lab:55555'
-            maxLength={260}
-            required
-            hint='host:port of the KUKSA databroker (kuksa.val.v2). Only workspace admins add targets.'
-          />
-        )}
-        {isNew && (
-          <ChipModalField
-            type='dropdown'
-            title='TLS'
-            value={draft.tls}
-            onChange={(v) => setDraft((d) => ({ ...d, tls: v }))}
-            options={[
-              { value: 'no', label: 'No (lab network)' },
-              { value: 'yes', label: 'Yes' },
-            ]}
-          />
-        )}
-        {isNew && (
-          <ChipModalField
-            type='input'
-            inputType='password'
-            title='Token'
-            value={draft.token}
-            onChange={(v) => setDraft((d) => ({ ...d, token: v }))}
-            placeholder='optional'
-            maxLength={4096}
-            hint='Sent to the target as a bearer token; stored encrypted, never shown again.'
-          />
-        )}
-        <ChipModalField type='custom' title='Test connection'>
-          <div className='flex flex-col items-start gap-1'>
-            <Button
-              size='sm'
-              variant='ghost'
-              data-sv='deploy-test'
-              disabled={busy || !draftOk}
-              onClick={() => void onTest()}
-            >
-              {test.isPending ? 'Testing...' : 'Test connection'}
-            </Button>
-            {tested && (
-              <span
-                data-sv='deploy-tested'
-                data-sv-reachable={tested.reachable}
-                className={
-                  tested.reachable && !tested.missing.length
-                    ? 'text-[var(--text-success)] text-small'
-                    : 'text-[var(--text-error)] text-small'
-                }
-              >
-                {testedText(tested)}
-              </span>
+        {how === 'image' && (
+          <>
+            <ChipModalField
+              type='input'
+              title='Image'
+              value={image.reference}
+              onChange={(v) => setImage((i) => ({ ...i, reference: v }))}
+              placeholder='registry.lab:5000/vehicle/hazard:1.0'
+              maxLength={400}
+              required
+              hint='registry/repository:tag. The image runs FROM scratch: the app, its libraries, the AppManifest and notices (C++ and Rust).'
+            />
+            <ChipModalField
+              type='dropdown'
+              title='Registry'
+              value={image.protocol}
+              onChange={(v) => setImage((i) => ({ ...i, protocol: v }))}
+              options={[
+                { value: 'https', label: 'HTTPS' },
+                { value: 'http', label: 'HTTP (a lab registry)' },
+              ]}
+            />
+            <ChipModalField
+              type='input'
+              title='Username'
+              value={image.username}
+              onChange={(v) => setImage((i) => ({ ...i, username: v }))}
+              placeholder='optional'
+              maxLength={256}
+            />
+            <ChipModalField
+              type='input'
+              inputType='password'
+              title='Password'
+              value={image.password}
+              onChange={(v) => setImage((i) => ({ ...i, password: v }))}
+              placeholder='optional'
+              maxLength={4096}
+            />
+            {pushed && (
+              <ChipModalField type='custom' title='Pushed'>
+                <span
+                  data-sv='image-pushed'
+                  className='break-all font-mono text-[var(--text-primary)] text-small'
+                >
+                  {`${pushed.reference}@${pushed.digest} (${Math.round(pushed.bytes / 1024)} KiB)`}
+                </span>
+              </ChipModalField>
             )}
-          </div>
-        </ChipModalField>
-        <ChipModalField
-          type='dropdown'
-          title='Mode'
-          value={mode}
-          onChange={(v) => {
-            setMode(v as SvDeployMode)
-            setConfirmWrite(false)
-          }}
-          options={[
-            { value: 'read-only', label: 'Read-only — the app only reads the target (safe)' },
-            { value: 'read-write', label: 'Read-write — the app may set its actuators (admins)' },
-          ]}
-        />
-        {mode === 'read-write' && (
-          <ChipModalField
-            type='custom'
-            title='The app will be able to set'
-            hint='Only these actuators; every write is audited.'
-          >
-            <label className='flex items-start gap-2 text-[var(--text-primary)] text-small'>
-              <input
-                type='checkbox'
-                checked={confirmWrite}
-                onChange={(e) => setConfirmWrite(e.target.checked)}
-                data-sv='deploy-confirm-write'
+          </>
+        )}
+        {how === 'databroker' && (
+          <>
+            <ChipModalField
+              type='dropdown'
+              title='Target'
+              value={isNew ? NEW_TARGET : targetId}
+              onChange={(v) => {
+                setTargetId(v)
+                setTested(null)
+              }}
+              options={[
+                ...sameRelease.map((t) => ({
+                  value: t.id,
+                  label: `${t.name} — ${t.address}${t.tls ? ' (TLS)' : ''}`,
+                })),
+                { value: NEW_TARGET, label: 'Add a deploy target…' },
+              ]}
+              hint={`Targets of VSS ${project.vssRelease}, the release of this app.`}
+            />
+            {isNew && (
+              <ChipModalField
+                type='input'
+                title='Name'
+                value={draft.name}
+                onChange={(v) => setDraft((d) => ({ ...d, name: v }))}
+                placeholder='HIL bench'
+                maxLength={80}
+                required
               />
-              <span>
-                {actuators.length ? actuators.join(', ') : 'no actuator (the workflow sets none)'}
-              </span>
-            </label>
-          </ChipModalField>
+            )}
+            {isNew && (
+              <ChipModalField
+                type='input'
+                title='Databroker address'
+                value={draft.address}
+                onChange={(v) => setDraft((d) => ({ ...d, address: v }))}
+                placeholder='bench.lab:55555'
+                maxLength={260}
+                required
+                hint='host:port of the KUKSA databroker (kuksa.val.v2). Only workspace admins add targets.'
+              />
+            )}
+            {isNew && (
+              <ChipModalField
+                type='dropdown'
+                title='TLS'
+                value={draft.tls}
+                onChange={(v) => setDraft((d) => ({ ...d, tls: v }))}
+                options={[
+                  { value: 'no', label: 'No (lab network)' },
+                  { value: 'yes', label: 'Yes' },
+                ]}
+              />
+            )}
+            {isNew && (
+              <ChipModalField
+                type='input'
+                inputType='password'
+                title='Token'
+                value={draft.token}
+                onChange={(v) => setDraft((d) => ({ ...d, token: v }))}
+                placeholder='optional'
+                maxLength={4096}
+                hint='Sent to the target as a bearer token; stored encrypted, never shown again.'
+              />
+            )}
+            <ChipModalField type='custom' title='Test connection'>
+              <div className='flex flex-col items-start gap-1'>
+                <Button
+                  size='sm'
+                  variant='ghost'
+                  data-sv='deploy-test'
+                  disabled={busy || !draftOk}
+                  onClick={() => void onTest()}
+                >
+                  {test.isPending ? 'Testing...' : 'Test connection'}
+                </Button>
+                {tested && (
+                  <span
+                    data-sv='deploy-tested'
+                    data-sv-reachable={tested.reachable}
+                    className={
+                      tested.reachable && !tested.missing.length
+                        ? 'text-[var(--text-success)] text-small'
+                        : 'text-[var(--text-error)] text-small'
+                    }
+                  >
+                    {testedText(tested)}
+                  </span>
+                )}
+              </div>
+            </ChipModalField>
+            <ChipModalField
+              type='dropdown'
+              title='Mode'
+              value={mode}
+              onChange={(v) => {
+                setMode(v as SvDeployMode)
+                setConfirmWrite(false)
+              }}
+              options={[
+                { value: 'read-only', label: 'Read-only — the app only reads the target (safe)' },
+                {
+                  value: 'read-write',
+                  label: 'Read-write — the app may set its actuators (admins)',
+                },
+              ]}
+            />
+            {mode === 'read-write' && (
+              <ChipModalField
+                type='custom'
+                title='The app will be able to set'
+                hint='Only these actuators; every write is audited.'
+              >
+                <label className='flex items-start gap-2 text-[var(--text-primary)] text-small'>
+                  <input
+                    type='checkbox'
+                    checked={confirmWrite}
+                    onChange={(e) => setConfirmWrite(e.target.checked)}
+                    data-sv='deploy-confirm-write'
+                  />
+                  <span>
+                    {actuators.length
+                      ? actuators.join(', ')
+                      : 'no actuator (the workflow sets none)'}
+                  </span>
+                </label>
+              </ChipModalField>
+            )}
+          </>
         )}
       </ChipModalBody>
       <ChipModalFooter
         onCancel={() => onOpenChange(false)}
         cancelDisabled={busy}
-        primaryAction={{
-          label: start.isPending ? 'Deploying...' : 'Deploy',
-          onClick: () => void onDeploy(),
-          disabled: busy || !draftOk || (mode === 'read-write' && !confirmWrite),
-        }}
+        primaryAction={
+          how === 'image'
+            ? {
+                label: push.isPending ? 'Building and pushing...' : 'Push image',
+                onClick: onPush,
+                disabled: busy || !image.reference.trim(),
+              }
+            : {
+                label: start.isPending ? 'Deploying...' : 'Deploy',
+                onClick: () => void onDeploy(),
+                disabled: busy || !draftOk || (mode === 'read-write' && !confirmWrite),
+              }
+        }
       />
     </ChipModal>
   )

@@ -624,6 +624,44 @@ paths:
         "202": { description: The deployment (a Run with `deploy`)., content: { application/json: { schema: { $ref: "#/components/schemas/Run" } } } }
         "404": { description: Unknown project or deploy target of the workspace. }
         "409": { description: "Already deployed, the target serves another VSS release, no generation, or `DEPLOY_QUOTA_EXCEEDED` (a diagnostics array)." }
+  /projects/{id}/images:
+    post:
+      operationId: pushImage
+      tags: [deploy]
+      description: "Deploy as a container image (ADR-0060, M18-T10): the toolchain packs the app (binary, its shared libraries, AppManifest, notices) as an OCI image FROM scratch and pushes it to the registry without a Docker daemon. Synchronous: answers when the image is pushed."
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reference]
+              additionalProperties: false
+              properties:
+                reference: { type: string, description: "registry/repository[:tag]" }
+                insecure: { type: boolean, description: "http registry (a lab registry)." }
+                username: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Pushed.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [reference, digest, bytes, files, generationId]
+                additionalProperties: false
+                properties:
+                  reference: { type: string }
+                  digest: { type: string, pattern: "^sha256:[0-9a-f]+$" }
+                  bytes: { type: integer }
+                  files: { type: integer }
+                  generationId: { type: string }
+        "400": { description: Invalid reference. }
+        "409": { description: The app is not ready or its latest SynCode did not pass. }
+        "422": { description: "`image_failed`: the build or the push failed (message, last log lines); Python apps are not supported yet." }
   /runs/{rid}/audit:
     get:
       operationId: deploymentAudit

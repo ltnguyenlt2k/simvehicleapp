@@ -30,6 +30,18 @@
 
 Một app có thể vừa Deploy (bản đang chạy trên target), vừa Run (bản thử với tín hiệu giả lập) cùng lúc. Run/Stop trên thanh hành động chỉ tác động lên Run.
 
+## Container image
+Khi app chạy trên chính thiết bị của xe thay vì trong SimVehicleApp: hộp thoại Deploy → **Deploy as: Container image**.
+- **Image**: `registry/repository:tag`, ví dụ `registry.lab:5000/vehicle/hazard:1.0`.
+- **Registry**: HTTPS, hoặc HTTP cho registry trong lab. **Username/Password** nếu registry yêu cầu.
+- **Push image** build bản Release, dựng image `FROM scratch` và đẩy lên registry. Image gồm binary `/app`, các thư viện nó dùng, `AppManifest.json` và `/licenses/`. Xong thì hộp thoại hiện digest.
+- Chạy trên thiết bị:
+  ```bash
+  docker run -e SDV_VEHICLEDATABROKER_ADDRESS=grpc://<databroker>:55555 -e SDV_MQTT_ADDRESS=mqtt://<broker>:1883 <image>@<digest>
+  ```
+  App mặc định dùng `kuksa.val.v2`. Cần `KUKSA_DATABROKER_API=sdv.databroker.v1` nếu databroker chỉ có v1.
+- Kích thước đo được: app C++ khoảng 20 MB, app Rust khoảng 5 MB. App Python chưa hỗ trợ.
+
 ## Bên trong
 - App của deployment nối tới **vehicle-gateway** (`vehicle-gateway:<port>`), không nối thẳng tới target. Gateway thêm TLS và token, cho qua phương thức đọc và chặn phương thức ghi theo mode.
 - Audit một deployment: `GET /runs/<id>/audit` của orchestrator, ví dụ `scripts/sv` hoặc `curl` trong mạng `sv-internal`.

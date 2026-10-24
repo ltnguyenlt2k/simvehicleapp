@@ -7,7 +7,7 @@ import type { Sandbox, SandboxProvider } from "./sandbox.ts";
  * queue is tested with fake commands.
  */
 
-export type JobKind = "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model";
+export type JobKind = "init" | "deps" | "build" | "test" | "format-check" | "run" | "stop" | "generate-model" | "image";
 export type JobState = "queued" | "running" | "succeeded" | "failed" | "cancelled";
 
 export interface JobOptions {
@@ -16,6 +16,8 @@ export interface JobOptions {
   runJobId?: string;
   /** `run` only: start the app on a vehicle databroker of its own (ADR-0057). */
   sandbox?: boolean;
+  /** `image` only: where to push the app's OCI image (ADR-0060, M18-T10). */
+  image?: { reference: string; insecure?: boolean; username?: string; password?: string };
 }
 
 export interface Diagnostic {
@@ -92,7 +94,7 @@ const MAX_LINES = 50_000;
 const RUN_DROP_CHUNK = 5_000;
 const MAX_JOBS = 200;
 const ANSI = /\x1b\[[0-9;?]*[A-Za-z]/g;
-const BUILD_KINDS: ReadonlySet<JobKind> = new Set(["init", "deps", "build", "test", "format-check", "generate-model"]);
+const BUILD_KINDS: ReadonlySet<JobKind> = new Set(["init", "deps", "build", "test", "format-check", "generate-model", "image"]);
 
 export class ConflictError extends Error {}
 

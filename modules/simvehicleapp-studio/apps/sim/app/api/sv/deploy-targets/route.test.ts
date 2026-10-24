@@ -39,6 +39,7 @@ import { DELETE as deleteTarget } from '@/app/api/sv/deploy-targets/[id]/route'
 import { POST as testTarget } from '@/app/api/sv/deploy-targets/[id]/test/route'
 import { POST as createTarget, GET as listTargets } from '@/app/api/sv/deploy-targets/route'
 import { POST as deploy } from '@/app/api/sv/projects/[id]/deployments/route'
+import { POST as pushImage } from '@/app/api/sv/projects/[id]/images/route'
 
 const reply = (status: number, body: unknown) =>
   new Response(status === 204 ? null : JSON.stringify(body), {
@@ -214,5 +215,47 @@ describe('/api/sv/deploy-targets and deployments (ADR-0060, M18-T09)', () => {
     )
     expect(quota.status).toBe(409)
     expect(await quota.json()).toMatchObject({ code: 'DEPLOY_QUOTA_EXCEEDED' })
+  })
+
+  it('pushes the app image to a registry (M18-T10); a failed push says why', async () => {
+    mockCall.mockResolvedValueOnce(
+      reply(200, {
+        reference: 'reg:5000/lka:1',
+        digest: 'sha256:ab',
+        bytes: 9,
+        files: 8,
+        generationId: 'g_1',
+      })
+    )
+    const ok = await pushImage(
+      req('POST', 'http://localhost/api/sv/projects/p1/images', {
+        reference: 'reg:5000/lka:1',
+        insecure: true,
+      }),
+      ctx
+    )
+    expect(ok.status).toBe(200)
+    expect(mockCall.mock.calls[0][1]).toBe('/projects/p1/images')
+    expect(mockCall.mock.calls[0][2].body).toEqual({ reference: 'reg:5000/lka:1', insecure: true })
+    expect(
+      (
+        await pushImage(
+          req('POST', 'http://localhost/api/sv/projects/p1/images', { reference: 'nope' }),
+          ctx
+        )
+      ).status
+    ).toBe(400)
+    mockCall.mockResolvedValueOnce(
+      reply(422, {
+        error: 'image_failed',
+        message: 'push failed: registry refused the manifest: 401',
+      })
+    )
+    const failed = await pushImage(
+      req('POST', 'http://localhost/api/sv/projects/p1/images', { reference: 'reg:5000/lka:1' }),
+      ctx
+    )
+    expect(failed.status).toBe(422)
+    expect((await failed.json()).error).toContain('401')
   })
 })

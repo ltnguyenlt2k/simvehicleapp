@@ -1123,3 +1123,35 @@ export type SvDeployTarget = z.output<typeof svDeployTargetSchema>
 export type SvCreateDeployTargetBody = z.input<typeof svCreateDeployTargetBodySchema>
 export type SvTestDeployTargetResult = z.output<typeof svTestDeployTargetResultSchema>
 export type SvDeployMode = 'read-only' | 'read-write'
+
+export const svPushImageBodySchema = z.object({
+  reference: z
+    .string()
+    .trim()
+    .regex(
+      /^[A-Za-z0-9.-]+(:[0-9]{2,5})?\/[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*(:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?$/,
+      'reference must be registry/repository[:tag]'
+    ),
+  insecure: z.boolean().optional(),
+  username: z.string().max(256).optional(),
+  password: z.string().max(4096).optional(),
+})
+export const svPushImageResultSchema = z.object({
+  reference: z.string(),
+  digest: z.string(),
+  bytes: z.number(),
+  files: z.number(),
+  generationId: z.string(),
+})
+
+/** `POST /api/sv/projects/[id]/images` — deploy as a container image: the app's OCI image pushed to a registry. */
+export const svPushImageContract = defineRouteContract({
+  method: 'POST',
+  path: '/api/sv/projects/[id]/images',
+  params: svProjectParamsSchema,
+  body: svPushImageBodySchema,
+  response: { mode: 'json', schema: svPushImageResultSchema },
+})
+
+export type SvPushImageBody = z.input<typeof svPushImageBodySchema>
+export type SvPushImageResult = z.output<typeof svPushImageResultSchema>

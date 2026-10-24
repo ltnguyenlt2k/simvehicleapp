@@ -116,10 +116,35 @@ function runEnv(options: JobOptions): Record<string, string> {
   return env;
 }
 
+/**
+ * `image` (ADR-0060, M18-T10): the app's OCI image pushed to a registry without Docker — `image-cli.ts` (run by this
+ * agent's own bun) packs build/bin/app with its shared libraries, the AppManifest and the notices.
+ */
+function imageStep(dir: string, options: JobOptions): Step {
+  const img = options.image;
+  if (!img?.reference) throw new PlanError("image: a registry reference is required");
+  return {
+    label: `image ${img.reference}`,
+    argv: [process.execPath, join(import.meta.dir, "image-cli.ts"), "--binary", join(dir, "build/bin/app"), "--project", dir, "--reference", img.reference, ...(img.insecure ? ["--insecure"] : [])],
+    cwd: dir,
+    ...(img.username ? { env: { SV_IMAGE_USERNAME: img.username, SV_IMAGE_PASSWORD: img.password ?? "" } } : {}),
+    check: (lines) => (lines.some((l) => l.startsWith("SVIMAGE ")) ? null : "the image was not pushed (see the log)"),
+  };
+}
+
 export function createPlanner(cfg: AgentConfig = defaultConfig()) {
   return (kind: JobKind, project: string, options: JobOptions): Plan => {
     const dir = projectDir(cfg, project);
     if (!existsSync(join(dir, ".velocitas.json"))) throw new PlanError(`project ${project} does not exist or is not a Velocitas project`);
+    if (kind === "image") {
+      const lang = cfg.toolchain ?? "cpp";
+      if (lang === "python") throw new PlanError("image: Python apps need PyInstaller and staticx to be packed (template Dockerfile); not available in this toolchain yet");
+      const steps: Step[] =
+        lang === "cpp"
+          ? [{ label: "./build.sh -r (Release for the image)", argv: bash("./build.sh -r"), cwd: dir, check: (lines) => lines.find((l) => /^FAILED: |^ninja: build stopped|^CMake Error/.test(l)) ?? null }]
+          : [];
+      return { steps: [...steps, imageStep(dir, options)], failCode: "BUILD_FAILED", failStage: "build" };
+    }
     if ((cfg.toolchain ?? "cpp") === "python") return pythonPlan(cfg, dir, kind, options);
     if (cfg.toolchain === "rust") return rustPlan(dir, kind, options);
     const artifact = (rel: string) => () => (existsSync(join(dir, rel)) ? null : `${rel} was not produced (see the build log)`);

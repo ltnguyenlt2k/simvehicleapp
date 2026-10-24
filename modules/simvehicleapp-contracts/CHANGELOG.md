@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (additive, ADR-0060, M18-T10): `POST /projects/{id}/images` — the app's OCI image pushed to a registry. `schemas/toolchain-job.v1.schema.json`: kind `image`, option `image {reference, insecure, username, password}` (C++ and Rust; the last log line is `SVIMAGE {…}`).
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0060, M18-T09): deploy targets per workspace — `GET/POST /deploy-targets`, `DELETE /deploy-targets/{tid}`, `POST /deploy-targets/{tid}/test` (`DeployTarget`, the token sealed and never returned: `hasToken`); `POST /projects/{id}/deployments` (a `Run` with `deploy {targetId, targetName, mode}`, no expiry, 409 `DEPLOY_QUOTA_EXCEEDED`); `GET /runs/{rid}/audit`.
 - `openapi/signal-gateway.v1.yaml` (additive, ADR-0060, M18-T09): `sandbox` may be `vehicle-gateway:<port>`, a deployment's route — read only: inject, `/play` and `PUT /mirror` answer 409 `SIMULATED_INPUT_DISABLED`. Diagnostics catalog: `SIMULATED_INPUT_DISABLED`, `DEPLOY_QUOTA_EXCEEDED`, `DEPLOY_TARGET_UNREACHABLE` (new).
 - `openapi/vehicle-gateway.v1.yaml` (new service, ADR-0060, M18-T09): deployment routes to a deploy target's databroker — `PUT/DELETE /routes/{id}` (target, tls, token, mode read-only|read-write, actuators), `GET /routes/{id}/audit`, `GET /routes`, `POST /probe` (Test connection: server and missing paths).

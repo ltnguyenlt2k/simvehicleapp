@@ -304,6 +304,31 @@ export function createOrchestratorHandler(d: AppDeps) {
           throw e;
         }
       }
+      // Deploy as a container image (ADR-0060, M18-T10): the app's OCI image pushed to a registry by its toolchain.
+      if (parts[2] === "images" && parts.length === 3 && req.method === "POST") {
+        const b = await readBody(req);
+        if (b instanceof Response) return b;
+        const { reference, insecure, username, password } = b as Record<string, unknown>;
+        if (typeof reference !== "string" || !/^[A-Za-z0-9.-]+(:[0-9]{2,5})?\/[a-z0-9]+([._-][a-z0-9]+)*(\/[a-z0-9]+([._-][a-z0-9]+)*)*(:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?$/.test(reference))
+          return json(400, { error: "invalid_request", message: "reference must be registry/repository[:tag]" });
+        if ((insecure !== undefined && typeof insecure !== "boolean") || (username !== undefined && typeof username !== "string") || (password !== undefined && typeof password !== "string"))
+          return json(400, { error: "invalid_request", message: "insecure must be a boolean, username and password strings" });
+        if (project.status !== "ready") return json(409, { error: "not_ready", message: `${project.name} is not ready` });
+        const latest = await d.repo.latestGeneration(project.id);
+        if (latest?.state !== "succeeded") return json(409, { error: "conflict", message: "SynCode the app first: its latest SynCode must have passed" });
+        const lines: string[] = [];
+        const job = await d.clients.job(project.language, "image", project.slug, (l) => void lines.push(l.msg), {
+          image: { reference, ...(insecure ? { insecure: true } : {}), ...(username ? { username: username as string, password: (password as string | undefined) ?? "" } : {}) },
+        });
+        const pushed = lines.map((l) => /^SVIMAGE (\{.*\})$/.exec(l)?.[1]).find(Boolean);
+        if (job.state !== "succeeded" || !pushed) {
+          ctx.log.warn("image failed", { project: project.slug, reference, state: job.state });
+          return json(422, { error: "image_failed", message: job.diagnostics[0]?.message ?? lines.filter((l) => /fail|error|refused|not/i.test(l)).at(-1) ?? "the image was not pushed", log: lines.slice(-20) });
+        }
+        const result = JSON.parse(pushed) as { reference: string; digest: string; bytes: number; files: number };
+        ctx.log.info("image pushed", { project: project.slug, reference, digest: result.digest, bytes: result.bytes });
+        return json(200, { ...result, generationId: latest.id });
+      }
       if (parts[2] === "deployments" && parts.length === 3 && req.method === "POST") {
         if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });
         const b = await readBody(req);

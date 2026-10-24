@@ -107,8 +107,8 @@
 - [x] Gate (`gate/m18-deploy.sh` PASS 2026-10-24): service "external-databroker" + feeder giả lập (như CAN provider) ⇒ app chạy logic với dữ liệu tự đến; read-only chặn ghi; bật ghi ⇒ actuator đổi.
 
 ### T10: Deploy Container image
-- [ ] Build image từ `app/Dockerfile` (toolchain), đóng kèm AppManifest + NOTICE/license; push registry (cấu hình target `kind: registry`).
-- [ ] Gate với registry cục bộ trong compose.
+- [x] Image OCI `FROM scratch` dựng không cần Docker daemon (job `image` của toolchain: binary + thư viện `ldd` + AppManifest + NOTICE), đẩy bằng HTTP API của registry; `POST /projects/{id}/images`; hộp thoại Deploy → **Container image** (ADR-0060 Notes: không dùng `app/Dockerfile` vì luật cứng 10). Python: chưa hỗ trợ.
+- [x] Gate với registry cục bộ (`gate/m18-image.sh` PASS cho C++ và Rust, 2026-10-24).
 
 ### T11: Đóng milestone
 - [ ] Gate M18 (test case, Play chấm điểm, Deploy Remote) trên stack dev + nightly.

@@ -26,7 +26,7 @@
     }
   },
   "$defs": {
-    "kind": { "enum": ["init", "deps", "build", "test", "format-check", "run", "stop", "generate-model"] },
+    "kind": { "enum": ["init", "deps", "build", "test", "format-check", "run", "stop", "generate-model", "image"] },
     "options": {
       "title": "ToolchainJobOptions",
       "type": "object",
@@ -40,7 +40,19 @@
           "additionalProperties": { "type": "string" }
         },
         "runJobId": { "type": "string", "description": "stop: job id of the run to stop." },
-        "sandbox": { "type": "boolean", "description": "run: start the app on a vehicle databroker of its own, loading the project's vendored VSS file (ADR-0057)." }
+        "sandbox": { "type": "boolean", "description": "run: start the app on a vehicle databroker of its own, loading the project's vendored VSS file (ADR-0057)." },
+        "image": {
+          "description": "image: the OCI image of the app (binary, its shared libraries, AppManifest, notices) pushed without a Docker daemon (ADR-0060, M18-T10). The last log line is `SVIMAGE {reference, digest, bytes, files}`.",
+          "type": "object",
+          "required": ["reference"],
+          "additionalProperties": false,
+          "properties": {
+            "reference": { "type": "string", "pattern": "^[A-Za-z0-9.-]+(:[0-9]{2,5})?/[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*(:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127})?$" },
+            "insecure": { "type": "boolean", "description": "http registry (a lab registry)." },
+            "username": { "type": "string", "maxLength": 256 },
+            "password": { "type": "string", "maxLength": 4096 }
+          }
+        }
       }
     },
     "request": {

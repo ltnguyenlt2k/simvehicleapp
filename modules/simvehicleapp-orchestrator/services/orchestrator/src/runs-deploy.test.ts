@@ -184,3 +184,34 @@ describe("deploy targets and deployments over HTTP (openapi/orchestrator.v1.yaml
     expect((await call("DELETE", `/deploy-targets/${t.id}?workspaceId=w1`)).status).toBe(204);
   });
 });
+
+describe("container image (ADR-0060, M18-T10)", () => {
+  test("POST /projects/{id}/images runs the toolchain image job and answers its digest; a failed push is 422", async () => {
+    const { createOrchestratorHandler } = await import("./app.ts");
+    const { repo, s, project, gen } = await setup();
+    const jobs: unknown[] = [];
+    let ok = true;
+    (s.clients as unknown as Record<string, unknown>).job = async (_l: string, kind: string, _p: string, onLine: (l: LogLine) => void, options: unknown) => {
+      jobs.push({ kind, options });
+      onLine({ runId: "j", seq: 0, ts: 1, stream: "stdout", level: "info", msg: "image: /app with 5 shared libraries" });
+      if (ok) onLine({ runId: "j", seq: 1, ts: 2, stream: "stdout", level: "info", msg: 'SVIMAGE {"reference":"registry:5000/lka:1","digest":"sha256:abc","bytes":42,"files":7}' });
+      else onLine({ runId: "j", seq: 1, ts: 2, stream: "stderr", level: "error", msg: "push failed: registry refused the manifest: 401" });
+      return { id: "j", state: ok ? "succeeded" : "failed", exitCode: ok ? 0 : 1, diagnostics: [] };
+    };
+    const handler = createOrchestratorHandler({ repo, clients: s.clients, hub: new EventHub(), kick() {}, background() {} });
+    const ctx = { log: { info() {}, warn() {}, error() {}, debug() {}, child() { return this; } }, requestId: "t" } as never;
+    const call = (body: unknown) => handler(new Request(`http://o/projects/${p.id}/images`, { method: "POST", body: JSON.stringify(body), headers: { "content-type": "application/json" } }), ctx);
+    const p = await project("lka");
+    expect((await call({ reference: "registry:5000/lka:1" })).status).toBe(409); // no SynCode yet
+    await gen(p);
+    expect((await call({ reference: "not a ref" })).status).toBe(400);
+    const res = await call({ reference: "registry:5000/lka:1", insecure: true });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ reference: "registry:5000/lka:1", digest: "sha256:abc", bytes: 42 });
+    expect(jobs).toEqual([{ kind: "image", options: { image: { reference: "registry:5000/lka:1", insecure: true } } }]);
+    ok = false;
+    const failed = await call({ reference: "registry:5000/lka:1", username: "u", password: "p" });
+    expect(failed.status).toBe(422);
+    expect((await failed.json()).message).toContain("401");
+  });
+});

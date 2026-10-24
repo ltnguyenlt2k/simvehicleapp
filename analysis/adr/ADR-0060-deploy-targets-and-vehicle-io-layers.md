@@ -126,6 +126,20 @@ flowchart TB
 - Full luồng `@live` + README.
 
 ## Notes / Deviations
+- 2026-10-24 — **Gate image PASS** (`gate/m18-image.sh`, stack dev; registry `registry:2` trên `sv-internal`):
+  - C++ GW-A: build Release + đẩy trong 25 s, image nén 8,1 MB (8 file), 19,8 MB khi giải nén.
+  - Rust GW-A: 1 s, 2,6 MB nén, 5,4 MB.
+  - Pull theo digest rồi `docker run` với databroker của stack ⇒ app phát `app.started`. So sánh: image toolchain-cpp hơn 4 GB; Dockerfile của template cũng dựng `FROM scratch`.
+- 2026-10-24 — **Thiết kế T10 Container image** (theo uỷ quyền PO — chờ PO xác nhận):
+  - Không gọi `docker build`: luật cứng 10 cấm mount `docker.sock`, và Dockerfile của template cần Docker daemon.
+  - Toolchain agent có thêm job `image`:
+    1. build Release;
+    2. dựng rootfs `FROM scratch` gồm binary `/app`, các thư viện động mà `ldd` liệt kê (spike: app C++ chỉ cần libstdc++, libm, libc, libgcc_s, ld-linux; thư viện Conan đã tĩnh), `/AppManifest.json` và `/licenses/` (NOTICE);
+    3. tự viết image OCI (layer tar.gz, config `Cmd ["/app"]`, manifest) và **đẩy bằng HTTP API OCI distribution** (upload blob monolithic, PUT manifest). Không cần daemon, không cần quyền đặc biệt.
+  - Image giống Dockerfile của template: chạy từ `scratch`, `WORKDIR /tmp`.
+  - v1 hỗ trợ C++ và Rust. Python cần pyinstaller + staticx (template Python) mà toolchain chưa có, nên trả lỗi rõ ràng (`IMAGE_LANGUAGE_UNSUPPORTED` trong log job, chưa có mã diagnostic).
+  - Orchestrator: `POST /projects/{id}/images {reference host:port/repo:tag, insecure?, username?, password?}` chạy job, trả `{reference, digest, bytes}`. Studio: hộp thoại Deploy có mục **Container image**.
+  - Gate: registry `registry:2` trong mạng `sv-internal`. Image được đẩy lên rồi `docker run` trên host với databroker của stack, app phải phát `app.started`.
 - 2026-10-24 — **UI Deploy (studio)** (theo uỷ quyền PO — chờ PO xác nhận):
   - Target được quản lý **ngay trong hộp thoại Deploy** (chọn, thêm, Test connection), chưa có trang Settings → Deploy targets riêng. Như vậy không phải sửa điều hướng Settings của Sim; một trang quản lý (xoá, sửa) có thể thêm sau.
   - Phân quyền ở BFF: xem target là thành viên; thêm/xoá target là admin; Test connection và deploy read-only là người có quyền ghi; read-write là admin.
