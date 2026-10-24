@@ -19,28 +19,28 @@
     },
     {
       "startLine": 42,
-      "endLine": 49,
+      "endLine": 50,
       "nodeId": "n2",
       "blockId": "b2",
       "workflowId": "gw_a"
     },
     {
-      "startLine": 51,
-      "endLine": 58,
+      "startLine": 52,
+      "endLine": 59,
       "nodeId": "n3",
       "blockId": "b3",
       "workflowId": "gw_a"
     },
     {
-      "startLine": 60,
-      "endLine": 67,
+      "startLine": 61,
+      "endLine": 68,
       "nodeId": "n4",
       "blockId": "b4",
       "workflowId": "gw_a"
     },
     {
-      "startLine": 69,
-      "endLine": 76,
+      "startLine": 70,
+      "endLine": 77,
       "nodeId": "n6",
       "blockId": "b6",
       "workflowId": "gw_a"

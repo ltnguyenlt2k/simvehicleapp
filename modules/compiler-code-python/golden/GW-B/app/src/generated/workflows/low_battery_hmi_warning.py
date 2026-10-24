@@ -36,6 +36,10 @@ def bind(runtime: Runtime) -> None:
             V.compare("<", c.out("n1", "value"), 20), lambda: c.signal(is_moving)
         ),
         {"else": "", "then": "n3"},
+        [
+            ("n1.value", "float", lambda c: c.out("n1", "value")),
+            ("Vehicle.IsMoving", "boolean", lambda c: c.signal(is_moving)),
+        ],
     )
 
     # n3 · comm.mqtt_publish · block b3

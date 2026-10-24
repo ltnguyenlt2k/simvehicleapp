@@ -28,6 +28,8 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   Current value of a workflow variable.
 - `int64_t nowMs() const`
   `now_ms`: milliseconds of the app clock.
+- `struct EvalRef`
+  A reference of a decision's expression: its trace key, IR type and value (trace `data.eval`, ADR-0062 §2).
 - `template <class F> Expr expr(F f)`
   Wraps a typed lambda `T(Ctx&)` as an `Expr`.
 - `struct Concurrency`
@@ -62,15 +64,17 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   `vehicle.read`/`read_attribute`: latest value (`fresh` asks the vehicle) ⇒ outputs `value`, `timestamp`.
 - `void write(Node n, const SignalRef& s, Expr value, bool awaitAck, OnError onError, Next next)`
   `vehicle.write`: sets the actuator target; `awaitAck` waits for the databroker; errors take `error`/`onError`.
-- `void branch(Node n, Cond condition, Next next)`
+- `/** 'control.branch': 'then' or 'else'. */ void branch(Node n, Cond condition, Next next, Refs refs =`
+  Decisions take the references of their expression (`refs`): on exit the trace carries `data.eval` — each reference's value and the expression's value right after it decided (ADR-0062 §2).
+- `void branch(Node n, Cond condition, Next next, Refs refs =`
   `control.branch`: `then` or `else`.
-- `void switchOn(Node n, Expr value, std::vector<Expr> cases, Next next)`
+- `void switchOn(Node n, Expr value, std::vector<Expr> cases, Next next, Refs refs =`
   `control.switch`: the first `case_i` equal to `value`, else `default`.
 - `void wait(Node n, int64_t durationMs, Next next)`
   `control.wait`: continues after `durationMs` (cancelled with the run).
-- `void waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next)`
+- `void waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next, Refs refs =`
   `control.wait_until`: `ok` as soon as `condition` holds, `timeout` after `timeoutMs`.
-- `void stableFor(Node n, Cond condition, int64_t durationMs, Next next)`
+- `void stableFor(Node n, Cond condition, int64_t durationMs, Next next, Refs refs =`
   `control.stable_for`: `stable` if `condition` holds for `durationMs`, `broken` when it stops holding.
 - `void repeat(Node n, int64_t count, int64_t intervalMs, const std::string& body, Next next)`
   `control.repeat`: runs `body` `count` times (output `index`), `intervalMs` apart.

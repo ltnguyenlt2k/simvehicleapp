@@ -118,6 +118,10 @@ Xem Decision 8. Thêm:
 - test gateway: inject ⇒ `source: inject`, app write ⇒ `source: app`, playback ⇒ `playback`.
 
 ## Notes / Deviations
+- 2026-10-24 — **T02b: runtime phát `eval`** (Claude Code):
+  - API runtime: `branch`, `switch`, `wait_until`, `stable_for` nhận thêm `refs` = danh sách (key, kiểu IR, hàm giá trị); `switch` nhận thêm kiểu của giá trị. C++ và Python dùng tham số mặc định nên code viết tay cũ vẫn biên dịch. Rust không có tham số mặc định nên tham số là bắt buộc (không có code viết tay nào gọi các hàm này).
+  - Runtime tính `refs` và `result` ngay lúc `exit`, cùng thời điểm với simulator. Lỗi đánh giá ⇒ `null`; chuỗi cắt ở 120 đơn vị UTF-16 để khớp `slice` của JS.
+  - Trigger (`crosses_above`…) không có `eval`: trigger không có sự kiện `exit`, và `trigger.outputs` đã có `value`/`previous`.
 - 2026-10-24 — **T06: giải thích FAIL và tạo case từ lần chạy** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - **Giải thích** (`lib/sv/fail-explain.ts`) cho mỗi kỳ vọng không đạt của lần Simulate:
     - có write cùng giá trị nhưng khác thời điểm ⇒ "written at … instead";

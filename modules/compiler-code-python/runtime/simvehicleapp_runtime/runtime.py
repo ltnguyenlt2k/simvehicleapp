@@ -23,6 +23,10 @@ from .values import EvalError
 
 Expr = Callable[["Ctx"], Any]
 Cond = Callable[["Ctx"], bool]
+# A reference of a decision's expression: trace key, IR type and value (trace ``data.eval``, ADR-0062 §2).
+Refs = List[Tuple[str, str, Expr]]
+EVAL_MAX_REFS = 8
+EVAL_MAX_TEXT = 120
 #: IR identity of a trigger or node: (``nK``, block id).
 Node = Tuple[str, str]
 #: Output handle → next node id; "" ends the run (IR ``next``).
@@ -197,6 +201,26 @@ class _TriggerDef:
         self.json_payload = False
 
 
+_DECISIONS = ("branch", "switch", "wait_until", "stable_for")
+
+
+def _eval_json(f: Callable[[], Any]) -> Any:
+    """A JSON value for ``data.eval``, None when it cannot be evaluated; text cut at 120 UTF-16 units (as the simulator)."""
+    try:
+        v = f()
+    except EvalError:
+        return None
+    if isinstance(v, str) and len(v.encode("utf-16-le")) // 2 > EVAL_MAX_TEXT:
+        out, units = "", 0
+        for ch in v:
+            w = 2 if ord(ch) > 0xFFFF else 1
+            if units + w > EVAL_MAX_TEXT - 1:
+                break
+            out, units = out + ch, units + w
+        return out + "\u2026"
+    return v
+
+
 class _NodeDef:
     def __init__(self, node: Node, kind: str, next: Next) -> None:
         self.id, self.block_id = node
@@ -210,6 +234,8 @@ class _NodeDef:
         self.high: Optional[Expr] = None
         self.cases: List[Expr] = []
         self.condition: Optional[Cond] = None
+        self.refs: Refs = []
+        self.value_type = ""
         self.ms = 0
         self.count = 0
         self.max_iterations = 0
@@ -395,26 +421,38 @@ class Workflow:
         d.on_error = on_error
         d.has_on_error = True
 
-    def branch(self, n: Node, condition: Optional[Cond], next: Next) -> None:
-        self._add(n, "branch", next).condition = condition
+    def branch(self, n: Node, condition: Optional[Cond], next: Next, refs: Optional[Refs] = None) -> None:
+        d = self._add(n, "branch", next)
+        d.condition = condition
+        d.refs = refs or []
 
-    def switch(self, n: Node, value: Expr, cases: List[Expr], next: Next) -> None:
+    def switch(
+        self, n: Node, value: Expr, cases: List[Expr], next: Next, refs: Optional[Refs] = None, value_type: str = ""
+    ) -> None:
         d = self._add(n, "switch", next)
         d.value = value
         d.cases = cases
+        d.refs = refs or []
+        d.value_type = value_type
 
     def wait(self, n: Node, duration_ms: int, next: Next) -> None:
         self._add(n, "wait", next).ms = duration_ms
 
-    def wait_until(self, n: Node, condition: Optional[Cond], timeout_ms: int, next: Next) -> None:
+    def wait_until(
+        self, n: Node, condition: Optional[Cond], timeout_ms: int, next: Next, refs: Optional[Refs] = None
+    ) -> None:
         d = self._add(n, "wait_until", next)
         d.condition = condition
         d.ms = timeout_ms
+        d.refs = refs or []
 
-    def stable_for(self, n: Node, condition: Optional[Cond], duration_ms: int, next: Next) -> None:
+    def stable_for(
+        self, n: Node, condition: Optional[Cond], duration_ms: int, next: Next, refs: Optional[Refs] = None
+    ) -> None:
         d = self._add(n, "stable_for", next)
         d.condition = condition
         d.ms = duration_ms
+        d.refs = refs or []
 
     def repeat(self, n: Node, count: int, interval_ms: int, body: str, next: Next) -> None:
         d = self._add(n, "repeat", next)
@@ -943,12 +981,26 @@ class Runtime:
                 end()
                 return
             if handle is not None:
-                self._trace_node("exit", r, node, {"handle": handle})
+                data: Dict[str, Any] = {"handle": handle}
+                if node.kind in _DECISIONS:
+                    data["eval"] = self._eval_of(r, node)
+                self._trace_node("exit", r, node, data)
             else:
                 self._trace_node("exit", r, node)
             self._chain(f, node.next.get(handle, "") if handle is not None else "", end)
 
         self._exec(f, node, k)
+
+    def _eval_of(self, run: _Run, node: _NodeDef) -> Dict[str, Any]:
+        """Why a decision went the way it did (ADR-0062 §2): each reference's value right after it decided and the
+        expression's value, like the simulator (at most 8 references, in order of appearance)."""
+        c = Ctx(self, run.trigger.wf, run)
+        refs = {key: _eval_json(lambda: V.to_json(f(c), type_)) for key, type_, f in node.refs[:EVAL_MAX_REFS]}
+        if node.kind == "switch":
+            result = _eval_json(lambda: V.to_json(node.value(c), node.value_type or None))
+        else:
+            result = _eval_json(lambda: node.condition(c) is True if node.condition else None)
+        return {"refs": refs, "result": result}
 
     def _on_error(self, run: _Run, node: _NodeDef, reason: str, message: str) -> Optional[str]:
         """I/O error: ``error`` branch when connected, else ``onError`` (continue = log + next, stop = end run)."""

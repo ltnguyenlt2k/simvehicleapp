@@ -42,12 +42,12 @@
     },
     {
       "path": "app/src/generated/sourcemap/WindowCloseOnRain.map.json",
-      "sha256": "8c140bbb74eafa1da38155e832c5bc0623425ca7899721e89cff690bcfdf298d",
+      "sha256": "0f7dd5b212bb98b04803c53840641b014b0ebbb4094e4c98ba4f6cc55fd21253",
       "role": "config"
     },
     {
       "path": "app/src/generated/workflows/WindowCloseOnRain.cpp",
-      "sha256": "d88ca06d9069362870c4dfc5616ec35fc26b798b2c8d0970b397464548cd5959",
+      "sha256": "d06c9ad42055544e41ee8e003bf2c297500ca3aa914d604649cb137761daef29",
       "role": "source"
     },
     {

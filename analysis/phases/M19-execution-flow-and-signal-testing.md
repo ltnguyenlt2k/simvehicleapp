@@ -28,11 +28,12 @@
 ## Checklist chi tiết
 
 ### T02: Lý do rẽ nhánh trong trace
-- [ ] Đặc tả `data.eval = {refs, result}` trong `analysis/08` (trace) + mô tả trong `trace-event.v1` (description, không đổi schema).
-- [ ] Block: `sv_if`, `sv_switch`, `sv_stable_for`, `sv_wait_until`, trigger `crosses_above/below`, `rising/falling`.
-- [ ] `refs` theo thứ tự xuất hiện; tối đa 8; chuỗi ≤ 120 ký tự; int64 là chuỗi; chỉ ở level `node`.
-- [ ] Simulator + C++ + Python + Rust phát giống nhau; trace kỳ vọng conformance cập nhật một lần, review diff.
-- [ ] `golden-trace.ts`: `expected.trace.json` GW-A…G cập nhật có review (nguồn chuẩn cho parity).
+- [ ] Đặc tả `data.eval = {refs, result}` trong `analysis/08` (trace) + mô tả trong `trace-event.v1` (description, không đổi schema) — làm ở T07.
+- [x] Block quyết định: `sv_if` (`control.branch`), `sv_switch`, `sv_stable_for`, `sv_wait_until`. Trigger `crosses_above/below`, `rising/falling` **không** có `eval`: trigger không có `exit`, giá trị đã nằm ở `trigger.outputs` (`value`, `previous`) — đủ để Flow giải thích (ghi ở ADR-0062 Notes).
+- [x] `refs` theo thứ tự xuất hiện; tối đa 8; chuỗi ≤ 120 đơn vị UTF-16 (như JS); int64 là chuỗi (`toJson` theo kiểu IR); chỉ có khi level `node` (sự kiện `exit` không có ở level `trigger`).
+- [x] Simulator (T02a) + C++ + Python + Rust (T02b) phát giống nhau: generator truyền `refs` (key, kiểu IR, giá trị) vào `branch`/`switch`/`wait_until`/`stable_for`; runtime tính lúc `exit`. Conformance so cả `eval` cho golden.
+- [x] `expected.trace.json` GW-A/B/G cập nhật có review ở T02a; golden code C++/Python/Rust GW-A/B/G đổi byte có chủ đích ở T02b (chỉ thêm danh sách `refs` vào các quyết định; diff đã review).
+- Bằng chứng T02b 2026-10-24: C++ gtest 19/19 (GW-A so từng sự kiện, có `eval`), conformance C++ 53/53; Python pytest 43/43, conformance 53/53, ruff sạch trên code sinh; Rust fmt + clippy + test sạch (không feature `host`), conformance 53/53; generator `bun test` 15/17/17 với golden mới. Parity P3 so cả `eval` (bỏ strip) — chạy trên stack sau khi CI dựng image (T07).
 
 ### T03: Mô hình Flow
 - [x] Kiểu `FlowRun`, `FlowStep` (design §3.1); `cause` từ signal update gần nhất ≤ 1 s, cùng giá trị với `trigger.outputs.value`. Không khớp thì không có `cause`; view hiện `trigger.outputs`.

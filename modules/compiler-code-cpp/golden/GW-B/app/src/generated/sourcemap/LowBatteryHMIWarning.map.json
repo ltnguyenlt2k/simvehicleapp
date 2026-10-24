@@ -12,21 +12,21 @@
     },
     {
       "startLine": 35,
-      "endLine": 41,
+      "endLine": 42,
       "nodeId": "n2",
       "blockId": "b2",
       "workflowId": "gw_b"
     },
     {
-      "startLine": 43,
-      "endLine": 50,
+      "startLine": 44,
+      "endLine": 51,
       "nodeId": "n3",
       "blockId": "b3",
       "workflowId": "gw_b"
     },
     {
-      "startLine": 52,
-      "endLine": 59,
+      "startLine": 53,
+      "endLine": 60,
       "nodeId": "n4",
       "blockId": "b4",
       "workflowId": "gw_b"

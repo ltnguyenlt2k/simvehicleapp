@@ -1,5 +1,5 @@
 import { ExprEmitter, ExprUse, type IrExpr } from "./expr.ts";
-import { atom, call, type Node, prefix } from "./layout.ts";
+import { atom, call, display, type Node, prefix } from "./layout.ts";
 import { commentText, jsonNode, rsString, snakeCase } from "./rs.ts";
 import { CodeWriter, type SourceRange } from "./writer.ts";
 
@@ -132,6 +132,32 @@ export interface EmittedWorkflow {
 const slice = (items: Node[]): Node => prefix("&", { kind: "group", head: "", open: "[", items, close: "]", display: true });
 const tuple = (items: Node[]): Node => ({ kind: "group", head: "", open: "(", items, close: ")", display: false });
 
+const EVAL_MAX_REFS = 8;
+
+/** `$signal`/`$ref`/`$state` leaves of an expression, in order of first appearance, each once (as the simulator). */
+export function leafRefs(e: unknown): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  const walk = (x: unknown) => {
+    if (Array.isArray(x)) return x.forEach(walk);
+    if (!x || typeof x !== "object") return;
+    const o = x as Record<string, unknown>;
+    for (const k of ["$signal", "$ref", "$state"]) {
+      if (k in o) {
+        const key = `${k}:${String(o[k])}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ [k]: o[k] });
+        }
+        return;
+      }
+    }
+    for (const v of Object.values(o)) walk(v);
+  };
+  walk(e);
+  return out;
+}
+
 export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
   const names = localNames(ir);
   const signals = new Map(ir.signals.map((s) => [s.id, s]));
@@ -163,6 +189,20 @@ export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
   const value = (e: unknown) => closure((em) => em.emit(e).code);
   const castValue = (e: unknown, to: string) => closure((em) => em.castTo(em.emit(e), to));
   const q = (s: string) => atom(rsString(s));
+  /** `vec![(key, IR type, value), …]`: the references of a decision's expression (trace `data.eval`). */
+  const refs = (e: unknown): Node => ({
+    ...call(
+      "vec!",
+      leafRefs(e)
+        .slice(0, EVAL_MAX_REFS)
+        .map((leaf) => {
+          const key = "$signal" in leaf ? (signals.get(String(leaf.$signal))?.path ?? String(leaf.$signal)) : "$ref" in leaf ? String(leaf.$ref) : `state.${String(leaf.$state)}`;
+          return display("(", [q(key), q(new ExprEmitter(env, new ExprUse()).emit(leaf).type), value(leaf)]);
+        }),
+    ),
+    open: "[",
+    close: "]",
+  }) as Node;
   const next = (n: Record<string, string | null>) =>
     slice(
       Object.keys(n)
@@ -269,19 +309,19 @@ export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
             stmt(call("w.read", [id, local(String(a.signal)), bool(a.fresh === true), nx]));
             break;
           case "control.branch":
-            stmt(call("w.branch", [id, cond(a.condition), nx]));
+            stmt(call("w.branch", [id, cond(a.condition), nx, refs(a.condition)]));
             break;
           case "control.switch":
-            stmt(call("w.switch", [id, value(a.value), { ...call("vec!", ((a.cases as unknown[]) ?? []).map(value)), open: "[", close: "]" } as Node, nx]));
+            stmt(call("w.switch", [id, value(a.value), { ...call("vec!", ((a.cases as unknown[]) ?? []).map(value)), open: "[", close: "]" } as Node, nx, refs(a.value), q(new ExprEmitter(env, new ExprUse()).emit(a.value).type)]));
             break;
           case "control.wait":
             stmt(call("w.wait", [id, num(a.durationMs), nx]));
             break;
           case "control.wait_until":
-            stmt(call("w.wait_until", [id, cond(a.condition), num(a.timeoutMs), nx]));
+            stmt(call("w.wait_until", [id, cond(a.condition), num(a.timeoutMs), nx, refs(a.condition)]));
             break;
           case "control.stable_for":
-            stmt(call("w.stable_for", [id, cond(a.condition), num(a.durationMs), nx]));
+            stmt(call("w.stable_for", [id, cond(a.condition), num(a.durationMs), nx, refs(a.condition)]));
             break;
           case "control.repeat":
             stmt(call("w.repeat", [id, num(a.count), num(a.intervalMs), str(n.body?.entry), nx]));

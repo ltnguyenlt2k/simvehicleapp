@@ -86,7 +86,8 @@ void WindowCloseOnRain::bind(rt::Runtime& runtime) {
             return (((rt::eq(c.signal<int64_t>(position), int64_t{0}) && rt::eq(c.signal<int64_t>(position_s2), int64_t{0})) && rt::eq(c.signal<int64_t>(position_s3), int64_t{0})) && rt::eq(c.signal<int64_t>(position_s4), int64_t{0}));
         },
         10000,
-        {{"ok", "n7"}, {"timeout", "n8"}});
+        {{"ok", "n7"}, {"timeout", "n8"}},
+        rt::Refs{{"Vehicle.Cabin.Door.Row1.DriverSide.Window.Position", "uint8", rt::expr([position](rt::Ctx& c) { return c.signal<int64_t>(position); })}, {"Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position", "uint8", rt::expr([position_s2](rt::Ctx& c) { return c.signal<int64_t>(position_s2); })}, {"Vehicle.Cabin.Door.Row2.DriverSide.Window.Position", "uint8", rt::expr([position_s3](rt::Ctx& c) { return c.signal<int64_t>(position_s3); })}, {"Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position", "uint8", rt::expr([position_s4](rt::Ctx& c) { return c.signal<int64_t>(position_s4); })}});
 
     // n7 · comm.log · block b7
     w.log(

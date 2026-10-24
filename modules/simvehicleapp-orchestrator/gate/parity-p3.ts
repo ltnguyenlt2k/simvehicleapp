@@ -215,8 +215,6 @@ async function main() {
     const graph = JSON.parse(readFileSync(`${ROOT}/${g}/graph.json`, "utf8"));
     const scenario = Bun.YAML.parse(readFileSync(`${ROOT}/${g}/scenario.yaml`, "utf8")) as { initial?: Record<string, unknown>; inputs: { t: number }[]; until: number; [k: string]: unknown };
     const expected = (JSON.parse(readFileSync(`${ROOT}/${g}/expected.trace.json`, "utf8")) as TraceEvent[]).filter((e) => e.wf === graph.workflowId);
-    // The runtimes do not emit data.eval yet (ADR-0062 Notes, M19-T02b): compare without it.
-    for (const e of expected) if (e.data) delete e.data.eval;
     const t0 = Date.now();
     const queued = await (await post(`${O}/projects/${p.id}/generations`, { graphs: [graph], scenarios: [{ workflowId: graph.workflowId, scenario }] })).json();
     await (await fetch(`${O}/events?generationId=${queued.id}`, { headers: h })).text();

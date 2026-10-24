@@ -44,6 +44,10 @@ pub fn bind(runtime: &Runtime) {
             )
         ),
         &[("else", ""), ("then", "n3")],
+        vec![
+            ("n1.value", "float", Box::new(|c: &Ctx| c.out("n1", "value"))),
+            ("Vehicle.IsMoving", "boolean", Box::new(|c: &Ctx| c.signal("s1", "Vehicle.IsMoving"))),
+        ],
     );
 
     // n3 · comm.mqtt_publish · block b3

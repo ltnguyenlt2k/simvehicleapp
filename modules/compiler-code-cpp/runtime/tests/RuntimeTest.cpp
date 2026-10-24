@@ -34,7 +34,8 @@ void bindGwA(Runtime& r) {
     w.onSignalChanged({"n5", "b5"}, speed, Change::CrossesBelow, fromJson(Value(110), "float"), 0, {Policy::Restart},
                       kChange, "n6");
     w.stableFor({"n2", "b2"}, [](Ctx& c) { return gt(c.out<float>("n1", "value"), int64_t{120}); }, 2000,
-                {{"broken", ""}, {"stable", "n3"}});
+                {{"broken", ""}, {"stable", "n3"}},
+                Refs{{"n1.value", "float", expr([](Ctx& c) { return c.out<float>("n1", "value"); })}});
     w.write({"n3", "b3"}, hazard, expr([](Ctx&) { return true; }), true, OnError::Continue,
             {{"error", ""}, {"next", "n4"}});
     w.publish({"n4", "b4"}, hmi, expr([](Ctx& c) {
@@ -67,11 +68,7 @@ const char* kGwAScenario = R"({
 TEST(RuntimeTest, goldenGwAMatchesTheFrozenTraceEventForEvent) {
     const Value sc = scenarioOf(kGwAScenario);
     const auto r = runScenario(bindGwA, sc, "golden");
-    Value wantTrace = readJson("golden/GW-A/expected.trace.json");
-    // The runtime does not emit data.eval yet (ADR-0062 Notes, M19-T02b): compare the trace without it.
-    for (size_t i = 0; i < wantTrace.size(); ++i) {
-        if (wantTrace[i].contains("data")) wantTrace[i]["data"].erase("eval");
-    }
+    const Value wantTrace = readJson("golden/GW-A/expected.trace.json");
     const Value wantWrites = readJson("golden/GW-A/expected.writes.json");
     ASSERT_EQ(stringify(r.writes), stringify(wantWrites));
     ASSERT_EQ(r.trace.size(), wantTrace.size());

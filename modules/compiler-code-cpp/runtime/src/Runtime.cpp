@@ -19,6 +19,38 @@ namespace simvehicleapp::rt {
 
 namespace {
 
+constexpr size_t kEvalMaxRefs = 8;
+constexpr size_t kEvalMaxText = 120;
+
+/** Length in UTF-16 code units, as JavaScript counts a string (the simulator cuts `data.eval` text the same way). */
+size_t utf8Length(const std::string& s) {
+    size_t n = 0;
+    for (size_t i = 0; i < s.size(); ++i) {
+        const auto b = static_cast<unsigned char>(s[i]);
+        if ((b & 0xC0) != 0x80) {
+            n += b >= 0xF0 ? 2 : 1;
+        }
+    }
+    return n;
+}
+
+/** The first `units` UTF-16 code units of `s`, never splitting a character. */
+std::string utf8Prefix(const std::string& s, size_t units) {
+    size_t n = 0;
+    size_t i = 0;
+    while (i < s.size()) {
+        const auto b = static_cast<unsigned char>(s[i]);
+        const size_t len = b < 0x80 ? 1 : b >= 0xF0 ? 4 : b >= 0xE0 ? 3 : 2;
+        const size_t w = b >= 0xF0 ? 2 : 1;
+        if (n + w > units) {
+            break;
+        }
+        n += w;
+        i += len;
+    }
+    return s.substr(0, i);
+}
+
 enum Kind {
     kAppStart,
     kSignalChanged,
@@ -150,6 +182,8 @@ struct Workflow::NodeDef {
     Expr high;
     std::vector<Expr> cases;
     Cond condition;
+    Refs refs;
+    std::string valueType;
     int64_t ms = 0;
     int64_t count = 0;
     int64_t maxIterations = 0;
@@ -809,6 +843,9 @@ struct Runtime::Impl {
             if (handle) {
                 Value d = Value::object();
                 d["handle"] = *handle;
+                if (isDecision(node.kind)) {
+                    d["eval"] = evalOf(r, node);
+                }
                 traceNode("exit", r, node, d);
             } else {
                 traceNode("exit", r, node);
@@ -822,6 +859,44 @@ struct Runtime::Impl {
             }
             chain(f, nextId, end);
         });
+    }
+
+    static bool isDecision(int kind) {
+        return kind == kBranch || kind == kSwitch || kind == kWaitUntil || kind == kStableFor;
+    }
+
+    /** A JSON value for `data.eval`, null when it cannot be evaluated; text cut at 120 characters. */
+    template <class F> static Value evalJson(F f) {
+        try {
+            Value v = f();
+            if (v.is_string()) {
+                const std::string& t = v.get_ref<const std::string&>();
+                if (utf8Length(t) > kEvalMaxText) {
+                    v = utf8Prefix(t, kEvalMaxText - 1) + "\u2026";
+                }
+            }
+            return v;
+        } catch (const EvalError&) {
+            return Value(nullptr);
+        }
+    }
+
+    /**
+     * Why a decision went the way it did (ADR-0062 §2): each reference's value right after it decided and the
+     * expression's value, like the simulator (at most 8 references, in order of appearance).
+     */
+    Value evalOf(RunState& run, const NodeDef& node) {
+        Ctx c(rt, *run.trigger->wf, &run);
+        Value refs = Value::object();
+        for (size_t i = 0; i < node.refs.size() && i < kEvalMaxRefs; ++i) {
+            const EvalRef& ref = node.refs[i];
+            refs[ref.key] = evalJson([&] { return toJson(ref.value(c), ref.type); });
+        }
+        Value e = Value::object();
+        e["refs"] = refs;
+        e["result"] = node.kind == kSwitch ? evalJson([&] { return toJson(node.value(c), node.valueType); })
+                                           : evalJson([&] { return Value(node.condition(c)); });
+        return e;
     }
 
     /** I/O error: `error` branch when connected, else `onError` (continue = log + next, stop = end run). */
@@ -1386,28 +1461,34 @@ void Workflow::write(Node n, const SignalRef& s, Expr value, bool awaitAck, OnEr
     d.hasOnError = true;
 }
 
-void Workflow::branch(Node n, Cond condition, Next next) {
-    add(n, kBranch, std::move(next)).condition = std::move(condition);
+void Workflow::branch(Node n, Cond condition, Next next, Refs refs) {
+    auto& d = add(n, kBranch, std::move(next));
+    d.condition = std::move(condition);
+    d.refs = std::move(refs);
 }
 
-void Workflow::switchOn(Node n, Expr value, std::vector<Expr> cases, Next next) {
+void Workflow::switchOn(Node n, Expr value, std::vector<Expr> cases, Next next, Refs refs, std::string valueType) {
     auto& d = add(n, kSwitch, std::move(next));
     d.value = std::move(value);
     d.cases = std::move(cases);
+    d.refs = std::move(refs);
+    d.valueType = std::move(valueType);
 }
 
 void Workflow::wait(Node n, int64_t durationMs, Next next) { add(n, kWait, std::move(next)).ms = durationMs; }
 
-void Workflow::waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next) {
+void Workflow::waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next, Refs refs) {
     auto& d = add(n, kWaitUntil, std::move(next));
     d.condition = std::move(condition);
     d.ms = timeoutMs;
+    d.refs = std::move(refs);
 }
 
-void Workflow::stableFor(Node n, Cond condition, int64_t durationMs, Next next) {
+void Workflow::stableFor(Node n, Cond condition, int64_t durationMs, Next next, Refs refs) {
     auto& d = add(n, kStableFor, std::move(next));
     d.condition = std::move(condition);
     d.ms = durationMs;
+    d.refs = std::move(refs);
 }
 
 void Workflow::repeat(Node n, int64_t count, int64_t intervalMs, const std::string& body, Next next) {

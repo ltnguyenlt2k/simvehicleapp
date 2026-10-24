@@ -16,6 +16,11 @@ use crate::values::{self as v, EvalError, Value, R};
 
 /// An IR expression compiled to a closure.
 pub type Expr = Box<dyn Fn(&Ctx) -> R>;
+/// The references of a decision's expression: trace key, IR type and value of each (trace `data.eval`, ADR-0062 §2).
+pub type Refs = Vec<(&'static str, &'static str, Expr)>;
+
+const EVAL_MAX_REFS: usize = 8;
+const EVAL_MAX_TEXT: usize = 120;
 
 // ---- ports ------------------------------------------------------------------------------------------------------
 
@@ -286,6 +291,8 @@ struct NodeDef {
     high: Option<Expr>,
     cases: Vec<Expr>,
     condition: Option<Expr>,
+    refs: Refs,
+    value_type: &'static str,
     ms: i64,
     count: i64,
     max_iterations: i64,
@@ -321,6 +328,8 @@ impl NodeDef {
             high: None,
             cases: Vec::new(),
             condition: None,
+            refs: Vec::new(),
+            value_type: "",
             ms: 0,
             count: 0,
             max_iterations: 0,
@@ -526,28 +535,59 @@ impl Wf {
             d.has_on_error = true;
         });
     }
-    pub fn branch(&self, n: Node, condition: Option<Expr>, next: Next) {
-        self.add(n, NKind::Branch, next, |d| d.condition = condition);
+    /// Decisions take the references of their expression (`refs`): on exit the trace carries `data.eval` — each
+    /// reference's value and the expression's value right after it decided (ADR-0062 §2).
+    pub fn branch(&self, n: Node, condition: Option<Expr>, next: Next, refs: Refs) {
+        self.add(n, NKind::Branch, next, |d| {
+            d.condition = condition;
+            d.refs = refs;
+        });
     }
-    pub fn switch(&self, n: Node, value: Expr, cases: Vec<Expr>, next: Next) {
+    pub fn switch(
+        &self,
+        n: Node,
+        value: Expr,
+        cases: Vec<Expr>,
+        next: Next,
+        refs: Refs,
+        value_type: &'static str,
+    ) {
         self.add(n, NKind::Switch, next, |d| {
             d.value = Some(value);
             d.cases = cases;
+            d.refs = refs;
+            d.value_type = value_type;
         });
     }
     pub fn wait(&self, n: Node, duration_ms: i64, next: Next) {
         self.add(n, NKind::Wait, next, |d| d.ms = duration_ms);
     }
-    pub fn wait_until(&self, n: Node, condition: Option<Expr>, timeout_ms: i64, next: Next) {
+    pub fn wait_until(
+        &self,
+        n: Node,
+        condition: Option<Expr>,
+        timeout_ms: i64,
+        next: Next,
+        refs: Refs,
+    ) {
         self.add(n, NKind::WaitUntil, next, |d| {
             d.condition = condition;
             d.ms = timeout_ms;
+            d.refs = refs;
         });
     }
-    pub fn stable_for(&self, n: Node, condition: Option<Expr>, duration_ms: i64, next: Next) {
+    pub fn stable_for(
+        &self,
+        n: Node,
+        condition: Option<Expr>,
+        duration_ms: i64,
+        next: Next,
+        refs: Refs,
+    ) {
         self.add(n, NKind::StableFor, next, |d| {
             d.condition = condition;
             d.ms = duration_ms;
+            d.refs = refs;
         });
     }
     pub fn repeat(&self, n: Node, count: i64, interval_ms: i64, body: &str, next: Next) {
@@ -1627,6 +1667,31 @@ impl Inner {
         e(&Ctx { rt: self, wf, run })
     }
 
+    /// Why a decision went the way it did (ADR-0062 §2): each reference's value right after it decided and the
+    /// expression's value, like the simulator (at most 8 references, in order of appearance).
+    fn eval_of(&self, run: &RunState, nd: &NodeDef) -> Value {
+        let wf = Self::wf_of(&run.trigger);
+        let json = |r: R, t: Option<&str>| match r {
+            Ok(x) => eval_text(v::to_json(&x, t)),
+            Err(_) => Value::Null,
+        };
+        let refs = nd
+            .refs
+            .iter()
+            .take(EVAL_MAX_REFS)
+            .map(|(k, t, e)| (k.to_string(), json(self.eval(&wf, Some(run), e), Some(t))))
+            .collect();
+        let result = match (&nd.kind, &nd.value, &nd.condition) {
+            (NKind::Switch, Some(e), _) => {
+                let t = (!nd.value_type.is_empty()).then_some(nd.value_type);
+                json(self.eval(&wf, Some(run), e), t)
+            }
+            (_, _, Some(c)) => json(self.eval(&wf, Some(run), c), None),
+            _ => Value::Null,
+        };
+        Value::obj(vec![("refs", Value::Object(refs)), ("result", result)])
+    }
+
     fn safe_cond(&self, wf: &Wf, run: Option<&RunState>, cond: Option<&Expr>) -> bool {
         match cond {
             None => false,
@@ -1656,12 +1721,16 @@ impl Inner {
                 return end();
             }
             match handle {
-                Some(h) => rt.trace_node(
-                    "exit",
-                    &r,
-                    &nd,
-                    Some(Value::obj(vec![("handle", Value::str(h))])),
-                ),
+                Some(h) => {
+                    let mut data = vec![("handle".to_string(), Value::str(h))];
+                    if matches!(
+                        nd.kind,
+                        NKind::Branch | NKind::Switch | NKind::WaitUntil | NKind::StableFor
+                    ) {
+                        data.push(("eval".to_string(), rt.eval_of(&r, &nd)));
+                    }
+                    rt.trace_node("exit", &r, &nd, Some(Value::Object(data)))
+                }
                 None => rt.trace_node("exit", &r, &nd, None),
             }
             let next = handle
@@ -2186,4 +2255,25 @@ fn leak(s: String) -> &'static str {
             .entry(s.clone())
             .or_insert_with(|| Box::leak(s.into_boxed_str()))
     })
+}
+
+/// Text of `data.eval` cut at 120 UTF-16 units, as the simulator cuts it.
+fn eval_text(x: Value) -> Value {
+    match x {
+        Value::Str(s) if s.encode_utf16().count() > EVAL_MAX_TEXT => {
+            let mut out = String::new();
+            let mut units = 0;
+            for ch in s.chars() {
+                let w = ch.len_utf16();
+                if units + w > EVAL_MAX_TEXT - 1 {
+                    break;
+                }
+                units += w;
+                out.push(ch);
+            }
+            out.push('\u{2026}');
+            Value::Str(out)
+        }
+        other => other,
+    }
 }

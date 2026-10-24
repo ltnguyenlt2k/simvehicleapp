@@ -27,12 +27,12 @@
     },
     {
       "path": "app/src/generated/sourcemap/low_battery_hmi_warning.map.json",
-      "sha256": "9cb72662b23427e753814e85193337bb28d72da8cb2f6e0c95bf7651c02a015e",
+      "sha256": "abc71e18694d0f47a3cc96dbc81c8e87f7e20c6866a26d276e155fd341ddb3c9",
       "role": "config"
     },
     {
       "path": "app/src/generated/workflows/low_battery_hmi_warning.rs",
-      "sha256": "15e749f6bf6c62635a3257fc7c00066291673712c5de2df605039b84969391bc",
+      "sha256": "23c1575fc5b9be92e554f86500ba87b480008d2cf3113786847d9f5babf01227",
       "role": "source"
     },
     {

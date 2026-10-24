@@ -42,12 +42,12 @@
     },
     {
       "path": "app/src/generated/sourcemap/LowBatteryHMIWarning.map.json",
-      "sha256": "3899c2ce130e1682211655ef2474b54fe02899b32f078cfe09dc968fd3cee03b",
+      "sha256": "a5b78dc954e4d5b025109abe4d6330028f09d70650e34b7cbe1024834a4d0457",
       "role": "config"
     },
     {
       "path": "app/src/generated/workflows/LowBatteryHMIWarning.cpp",
-      "sha256": "ac14243b4a8b6029b7c6e88a5572e9f394b1f94ce4e4cb41fe1335c705d93b1f",
+      "sha256": "10a7eef4863af2ac2205e57768263b6678714910c832fb50e8fac0f07552fd9a",
       "role": "source"
     },
     {

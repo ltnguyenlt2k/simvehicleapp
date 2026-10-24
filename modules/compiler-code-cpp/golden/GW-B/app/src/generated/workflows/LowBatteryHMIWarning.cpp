@@ -38,7 +38,8 @@ void LowBatteryHMIWarning::bind(rt::Runtime& runtime) {
         [is_moving](rt::Ctx& c) {
             return (rt::lt(c.out<float>("n1", "value"), int64_t{20}) && c.signal<bool>(is_moving));
         },
-        {{"else", ""}, {"then", "n3"}});
+        {{"else", ""}, {"then", "n3"}},
+        rt::Refs{{"n1.value", "float", rt::expr([](rt::Ctx& c) { return c.out<float>("n1", "value"); })}, {"Vehicle.IsMoving", "boolean", rt::expr([is_moving](rt::Ctx& c) { return c.signal<bool>(is_moving); })}});
 
     // n3 · comm.mqtt_publish · block b3
     w.publish(

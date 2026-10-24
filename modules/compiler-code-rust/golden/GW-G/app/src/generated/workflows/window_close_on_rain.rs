@@ -124,6 +124,40 @@ pub fn bind(runtime: &Runtime) {
         ),
         10000,
         &[("ok", "n7"), ("timeout", "n8")],
+        vec![
+            (
+                "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position",
+                "uint8",
+                Box::new(
+                    |c: &Ctx| c.signal("s1", "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position")
+                ),
+            ),
+            (
+                "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position",
+                "uint8",
+                Box::new(
+                    |c: &Ctx| c.signal(
+                        "s2", "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position"
+                    )
+                ),
+            ),
+            (
+                "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position",
+                "uint8",
+                Box::new(
+                    |c: &Ctx| c.signal("s3", "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position")
+                ),
+            ),
+            (
+                "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position",
+                "uint8",
+                Box::new(
+                    |c: &Ctx| c.signal(
+                        "s4", "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position"
+                    )
+                ),
+            ),
+        ],
     );
 
     // n7 · comm.log · block b7

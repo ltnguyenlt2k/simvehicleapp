@@ -47,6 +47,7 @@ pub fn bind(runtime: &Runtime) {
         Some(Box::new(|c: &Ctx| v::compare(">", &c.out("n1", "value")?, &Value::Int(120)))),
         2000,
         &[("broken", ""), ("stable", "n3")],
+        vec![("n1.value", "float", Box::new(|c: &Ctx| c.out("n1", "value")))],
     );
 
     // n3 · vehicle.write · block b3

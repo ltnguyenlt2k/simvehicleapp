@@ -137,6 +137,32 @@ export interface EmittedWorkflow {
   ranges: SourceRange[];
 }
 
+const EVAL_MAX_REFS = 8;
+
+/** `$signal`/`$ref`/`$state` leaves of an expression, in order of first appearance, each once (as the simulator). */
+export function leafRefs(e: unknown): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  const walk = (x: unknown) => {
+    if (Array.isArray(x)) return x.forEach(walk);
+    if (!x || typeof x !== "object") return;
+    const o = x as Record<string, unknown>;
+    for (const k of ["$signal", "$ref", "$state"]) {
+      if (k in o) {
+        const key = `${k}:${String(o[k])}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ [k]: o[k] });
+        }
+        return;
+      }
+    }
+    for (const v of Object.values(o)) walk(v);
+  };
+  walk(e);
+  return out;
+}
+
 export function emitWorkflow(ir: WorkflowIr, className: string, headerPath: string): EmittedWorkflow {
   const names = localNames(ir);
   const signals = new Map(ir.signals.map((s) => [s.id, s]));
@@ -164,6 +190,16 @@ export function emitWorkflow(ir: WorkflowIr, className: string, headerPath: stri
     return asExpr ? `rt::expr(${l})` : l;
   };
   const cond = (e: unknown) => (e === undefined ? "nullptr" : fn(e, (x) => x.code, false));
+  /** `rt::Refs` of a decision's expression: key, IR type and value of each reference (trace `data.eval`). */
+  const refs = (e: unknown) =>
+    `rt::Refs{${leafRefs(e)
+      .slice(0, EVAL_MAX_REFS)
+      .map((leaf) => {
+        const key = "$signal" in leaf ? (signals.get(String(leaf.$signal))?.path ?? String(leaf.$signal)) : "$ref" in leaf ? String(leaf.$ref) : `state.${String(leaf.$state)}`;
+        const type = new ExprEmitter(env, new ExprUse()).emit(leaf).type;
+        return `{${cppString(key)}, ${cppString(type)}, ${value(leaf)}}`;
+      })
+      .join(", ")}}`;
   const value = (e: unknown) => fn(e, (x) => x.code, true);
   const castValue = (e: unknown, to: string) => fn(e, (x, em) => em.castTo(x, to), true);
   const next = (n: Record<string, string | null>) =>
@@ -267,19 +303,19 @@ export function emitWorkflow(ir: WorkflowIr, className: string, headerPath: stri
             w.call("w.read", [id, names.get(String(a.signal))!, a.fresh === true ? "true" : "false", nx]);
             break;
           case "control.branch":
-            w.call("w.branch", [id, cond(a.condition), nx]);
+            w.call("w.branch", [id, cond(a.condition), nx, refs(a.condition)]);
             break;
           case "control.switch":
-            w.call("w.switchOn", [id, value(a.value), `{${((a.cases as unknown[]) ?? []).map(value).join(", ")}}`, nx]);
+            w.call("w.switchOn", [id, value(a.value), `{${((a.cases as unknown[]) ?? []).map(value).join(", ")}}`, nx, refs(a.value), cppString(new ExprEmitter(env, new ExprUse()).emit(a.value).type)]);
             break;
           case "control.wait":
             w.call("w.wait", [id, num(a.durationMs), nx]);
             break;
           case "control.wait_until":
-            w.call("w.waitUntil", [id, cond(a.condition), num(a.timeoutMs), nx]);
+            w.call("w.waitUntil", [id, cond(a.condition), num(a.timeoutMs), nx, refs(a.condition)]);
             break;
           case "control.stable_for":
-            w.call("w.stableFor", [id, cond(a.condition), num(a.durationMs), nx]);
+            w.call("w.stableFor", [id, cond(a.condition), num(a.durationMs), nx, refs(a.condition)]);
             break;
           case "control.repeat":
             w.call("w.repeat", [id, num(a.count), num(a.intervalMs), str(n.body?.entry), nx]);

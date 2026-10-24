@@ -46,7 +46,8 @@ void StableOverspeedWarning::bind(rt::Runtime& runtime) {
             return rt::gt(c.out<float>("n1", "value"), int64_t{120});
         },
         2000,
-        {{"broken", ""}, {"stable", "n3"}});
+        {{"broken", ""}, {"stable", "n3"}},
+        rt::Refs{{"n1.value", "float", rt::expr([](rt::Ctx& c) { return c.out<float>("n1", "value"); })}});
 
     // n3 · vehicle.write · block b3
     w.write(

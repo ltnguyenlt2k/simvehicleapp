@@ -27,7 +27,7 @@
     },
     {
       "path": "app/src/generated/sourcemap/low_battery_hmi_warning.map.json",
-      "sha256": "e0287b823037a9b74232a3045708e70fa62786f2c04d2977e80f310b57405fce",
+      "sha256": "09406f5e8cdc7732eef7a05c282b05f1e5cffa20e2b97eeffc6e78e8ffda756c",
       "role": "config"
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "path": "app/src/generated/workflows/low_battery_hmi_warning.py",
-      "sha256": "ea465171c896dd6cce400957cefa2189127400748c2eb788bf43d64ce9cf9a68",
+      "sha256": "fe49c13b94775e6a527d915d59dbec974fe63233f82f7f8bcf41a9494751651a",
       "role": "source"
     },
     {

@@ -44,6 +44,7 @@ def bind(runtime: Runtime) -> None:
         lambda c: V.compare(">", c.out("n1", "value"), 120),
         2000,
         {"broken": "", "stable": "n3"},
+        [("n1.value", "float", lambda c: c.out("n1", "value"))],
     )
 
     # n3 · vehicle.write · block b3

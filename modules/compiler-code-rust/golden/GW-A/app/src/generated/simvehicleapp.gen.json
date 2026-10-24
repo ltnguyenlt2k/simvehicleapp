@@ -27,7 +27,7 @@
     },
     {
       "path": "app/src/generated/sourcemap/stable_overspeed_warning.map.json",
-      "sha256": "306416d01131f1f64d136b8cef2efb9fca2d5bc501c7c3b92fa1cbdcad6f42c0",
+      "sha256": "34a6237c948dbedd02b5a03c568b065c68ad9fcdf353a85037d49fc92136f482",
       "role": "config"
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "path": "app/src/generated/workflows/stable_overspeed_warning.rs",
-      "sha256": "c8c892c456ea1018bd5d91fdb248bbcb319bb0e37f13b7d488a04132810be56c",
+      "sha256": "d8daa557ed2a41a25c5166e7ba06ac299282c2657969a8312348137db93bcdec",
       "role": "source"
     },
     {

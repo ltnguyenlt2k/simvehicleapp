@@ -129,6 +129,32 @@ export interface EmittedWorkflow {
   ranges: SourceRange[];
 }
 
+const EVAL_MAX_REFS = 8;
+
+/** `$signal`/`$ref`/`$state` leaves of an expression, in order of first appearance, each once (as the simulator). */
+export function leafRefs(e: unknown): Record<string, unknown>[] {
+  const out: Record<string, unknown>[] = [];
+  const seen = new Set<string>();
+  const walk = (x: unknown) => {
+    if (Array.isArray(x)) return x.forEach(walk);
+    if (!x || typeof x !== "object") return;
+    const o = x as Record<string, unknown>;
+    for (const k of ["$signal", "$ref", "$state"]) {
+      if (k in o) {
+        const key = `${k}:${String(o[k])}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          out.push({ [k]: o[k] });
+        }
+        return;
+      }
+    }
+    for (const v of Object.values(o)) walk(v);
+  };
+  walk(e);
+  return out;
+}
+
 export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
   const names = localNames(ir);
   const signals = new Map(ir.signals.map((s) => [s.id, s]));
@@ -149,6 +175,17 @@ export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
   const lambda = (wrap: (em: ExprEmitter) => Node) => prefix("lambda c: ", wrap(new ExprEmitter(env, new ExprUse())));
   const cond = (e: unknown) => (e === undefined ? atom("None") : lambda((em) => em.emit(e).code));
   const value = (e: unknown) => lambda((em) => em.emit(e).code);
+  /** Refs of a decision's expression: `(key, IR type, value)` of each reference (trace `data.eval`). */
+  const refs = (e: unknown) =>
+    display(
+      "[",
+      leafRefs(e)
+        .slice(0, EVAL_MAX_REFS)
+        .map((leaf) => {
+          const key = "$signal" in leaf ? (signals.get(String(leaf.$signal))?.path ?? String(leaf.$signal)) : "$ref" in leaf ? String(leaf.$ref) : `state.${String(leaf.$state)}`;
+          return display("(", [q(key), q(new ExprEmitter(env, new ExprUse()).emit(leaf).type), value(leaf)]);
+        }),
+    );
   const castValue = (e: unknown, to: string) => lambda((em) => em.castTo(em.emit(e), to));
   const q = (s: string) => atom(pyString(s));
   const next = (n: Record<string, string | null>) =>
@@ -253,19 +290,19 @@ export function emitWorkflow(ir: WorkflowIr): EmittedWorkflow {
             w.stmt(call("w.read", [id, local(String(a.signal)), bool(a.fresh === true), nx]));
             break;
           case "control.branch":
-            w.stmt(call("w.branch", [id, cond(a.condition), nx]));
+            w.stmt(call("w.branch", [id, cond(a.condition), nx, refs(a.condition)]));
             break;
           case "control.switch":
-            w.stmt(call("w.switch", [id, value(a.value), display("[", ((a.cases as unknown[]) ?? []).map(value)), nx]));
+            w.stmt(call("w.switch", [id, value(a.value), display("[", ((a.cases as unknown[]) ?? []).map(value)), nx, refs(a.value), q(new ExprEmitter(env, new ExprUse()).emit(a.value).type)]));
             break;
           case "control.wait":
             w.stmt(call("w.wait", [id, num(a.durationMs), nx]));
             break;
           case "control.wait_until":
-            w.stmt(call("w.wait_until", [id, cond(a.condition), num(a.timeoutMs), nx]));
+            w.stmt(call("w.wait_until", [id, cond(a.condition), num(a.timeoutMs), nx, refs(a.condition)]));
             break;
           case "control.stable_for":
-            w.stmt(call("w.stable_for", [id, cond(a.condition), num(a.durationMs), nx]));
+            w.stmt(call("w.stable_for", [id, cond(a.condition), num(a.durationMs), nx, refs(a.condition)]));
             break;
           case "control.repeat":
             w.stmt(call("w.repeat", [id, num(a.count), num(a.intervalMs), str(n.body?.entry), nx]));

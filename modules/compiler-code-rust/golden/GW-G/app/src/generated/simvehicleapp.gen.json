@@ -27,7 +27,7 @@
     },
     {
       "path": "app/src/generated/sourcemap/window_close_on_rain.map.json",
-      "sha256": "a87048abdaa1880bd514a81c0253ae436e83567519ced1046759f1de1f8a3629",
+      "sha256": "c1594b8265d3ea3e80f8ffd507e89eccb13a291e48c1f74f3165273a98f4b250",
       "role": "config"
     },
     {
@@ -37,7 +37,7 @@
     },
     {
       "path": "app/src/generated/workflows/window_close_on_rain.rs",
-      "sha256": "ac08ae2607dda105d567a73c499735ba8b178cdd45a98ff535cec54294ec019a",
+      "sha256": "d4e7b2759c13343aeaa6bc484f5fe2e2b50ee5f76a109846f9f59b170e8b2608",
       "role": "source"
     },
     {

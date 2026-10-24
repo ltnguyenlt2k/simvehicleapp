@@ -89,6 +89,14 @@ private:
 using Expr = std::function<Value(Ctx&)>;
 using Cond = std::function<bool(Ctx&)>;
 
+/** A reference of a decision's expression: its trace key, IR type and value (trace `data.eval`, ADR-0062 §2). */
+struct EvalRef {
+    std::string key;
+    std::string type;
+    Expr value;
+};
+using Refs = std::vector<EvalRef>;
+
 /** Wraps a typed lambda `T(Ctx&)` as an `Expr`. */
 template <class F> Expr expr(F f) {
     return [f](Ctx& c) { return toValue(f(c)); };
@@ -180,16 +188,21 @@ public:
     void read(Node n, const SignalRef& s, bool fresh, Next next);
     /** `vehicle.write`: sets the actuator target; `awaitAck` waits for the databroker; errors take `error`/`onError`. */
     void write(Node n, const SignalRef& s, Expr value, bool awaitAck, OnError onError, Next next);
+    /**
+     * Decisions take the references of their expression (`refs`): on exit the trace carries `data.eval` — each
+     * reference's value and the expression's value right after it decided (ADR-0062 §2).
+     */
     /** `control.branch`: `then` or `else`. */
-    void branch(Node n, Cond condition, Next next);
+    void branch(Node n, Cond condition, Next next, Refs refs = {});
     /** `control.switch`: the first `case_i` equal to `value`, else `default`. */
-    void switchOn(Node n, Expr value, std::vector<Expr> cases, Next next);
+    void switchOn(Node n, Expr value, std::vector<Expr> cases, Next next, Refs refs = {},
+                  std::string valueType = "");
     /** `control.wait`: continues after `durationMs` (cancelled with the run). */
     void wait(Node n, int64_t durationMs, Next next);
     /** `control.wait_until`: `ok` as soon as `condition` holds, `timeout` after `timeoutMs`. */
-    void waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next);
+    void waitUntil(Node n, Cond condition, int64_t timeoutMs, Next next, Refs refs = {});
     /** `control.stable_for`: `stable` if `condition` holds for `durationMs`, `broken` when it stops holding. */
-    void stableFor(Node n, Cond condition, int64_t durationMs, Next next);
+    void stableFor(Node n, Cond condition, int64_t durationMs, Next next, Refs refs = {});
     /** `control.repeat`: runs `body` `count` times (output `index`), `intervalMs` apart. */
     void repeat(Node n, int64_t count, int64_t intervalMs, const std::string& body, Next next);
     /** `control.while`: runs `body` while `condition` holds; beyond `maxIterations` the run stops (`loop_guard`). */

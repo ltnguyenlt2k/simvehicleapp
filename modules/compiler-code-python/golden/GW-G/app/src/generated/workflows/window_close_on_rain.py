@@ -93,6 +93,28 @@ def bind(runtime: Runtime) -> None:
         ),
         10000,
         {"ok": "n7", "timeout": "n8"},
+        [
+            (
+                "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position",
+                "uint8",
+                lambda c: c.signal(position),
+            ),
+            (
+                "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position",
+                "uint8",
+                lambda c: c.signal(position_s2),
+            ),
+            (
+                "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position",
+                "uint8",
+                lambda c: c.signal(position_s3),
+            ),
+            (
+                "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position",
+                "uint8",
+                lambda c: c.signal(position_s4),
+            ),
+        ],
     )
 
     # n7 · comm.log · block b7
