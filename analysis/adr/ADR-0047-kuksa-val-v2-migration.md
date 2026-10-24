@@ -80,6 +80,11 @@ sequenceDiagram
 - Gate nâng databroker: cả ba backend P3 7/7 trên v2 + signal-gateway provider; E2E live (tutorial, m12-python-live).
 
 ## Notes / Deviations
+- 2026-10-24 — Hai gate của nightly vẫn giả định app chạy `sdv.databroker.v1`, nên FAIL khi v2 là mặc định:
+  - gate M8 chờ *target* của Hazard;
+  - harness parity P3 tắt provider khi không đặt `SV_PARITY_API`, nên app v2 bị từ chối ghi (`write_failed: Provider … not available`), chỉ đạt 1/7.
+  - Sửa: gate M8 chấp nhận giá trị hiện tại (v2) hoặc target (v1); parity mặc định v2 như orchestrator.
+  - Kết quả trên stack dev: M8 PASS, parity 7/7.
 - 2026-10-17 — **Bước 3 xong cho cả ba backend, đã đổi mặc định sang `kuksa.val.v2`.** Theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận.
   - **C++:** SDK 0.7.1 đã có client v2 (`KUKSA_DATABROKER_API=kuksa.val.v2`, ghi = `BatchActuate`). Runtime dùng `IVehicleDataBrokerClient::createInstance`, nên chỉ cần env. Orchestrator đặt cả `KUKSA_DATABROKER_API` lẫn `SV_DATABROKER_API`. Parity P3 7/7 ([bằng chứng](../../docs/reports/evidence/M14-parity-p3-cpp-kuksa-val-v2.json)), log app: "Using Kuksa Databroker kuksa.val.v2 API".
   - **Python:** SDK 0.15.7 chỉ có v1.
