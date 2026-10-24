@@ -9,7 +9,7 @@
 
 ![Full luồng: workflow rẽ nhánh kéo thả → câu tóm tắt + nhãn nhánh → Simulate → SynCode tự tạo app → Run trên KUKSA → Vehicle apps → Export → IDE → trợ lý AI → restart](docs/media/full-flow.gif)
 
-**Video full luồng** (720p, 103 s, có chú thích từng bước; quay 2026-10-24 trên bản mới nhất): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
+**Video full luồng** (720p, 110 s, có chú thích từng bước; quay 2026-10-24 trên bản mới nhất): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
 - Video được quay tự động bởi E2E `modules/simvehicleapp-studio/e2e/tests/m15-full-flow.spec.ts` chạy trên stack thật.
 - Tái tạo bằng một lệnh: `scripts/sv demo-video`. Cần stack đang chạy với `SV_AI_PROVIDER=fake`; khoảng chờ build được cắt tự động.
 
@@ -18,17 +18,17 @@ Các chặng:
 2–6. Kéo thả workflow **6 block có rẽ nhánh**: When Vehicle.Speed changes → If > 120.
    - Nhánh *then*: Stable for 2 s → Set Hazard = true → thông báo HMI "Overspeed".
    - Nhánh *else*: Set Hazard = false.
-7. Mỗi block hiện câu tóm tắt (WHEN / IF / DO / SEND); cạnh có nhãn `then` / `else` / `stable`; lint sạch.
+7. Block gọn hiện câu tóm tắt (WHEN / IF / DO / SEND); cạnh có nhãn `then` / `else` / `stable`; lint sạch. **Logic** đọc cả workflow thành câu, bấm câu chọn block.
 8. Tab **Test** (dock Problems · Test · Live): Simulate trên đồng hồ ảo: 100 ⇒ tắt, 130 trong 2 s ⇒ bật + HMI, 90 ⇒ tắt. **Generate tests** sinh test case từ chính workflow; mỗi case thành một test của app khi SynCode.
 9–10. Bấm **SynCode**: workflow chưa có app nên hộp thoại hỏi tên một lần. App được chuẩn bị rồi SynCode tự chạy: graph → IR → C++ → build → test (không LLM). Pill hiện `Built ✓`, **Run** thành nút chính.
-11–13. Run trên KUKSA databroker, tab **Live**: inject tốc độ (ô nhập theo kiểu tín hiệu), đèn hazard bật kèm cảnh báo HMI (Messages), rồi tắt khi giảm tốc.
+11–13. Run trên KUKSA databroker, tab **Live**: inject tốc độ (ô nhập theo kiểu tín hiệu), đèn hazard bật kèm cảnh báo HMI (Messages), rồi tắt khi giảm tốc. **Deploy**: cùng app lên databroker của xe/bench (tín hiệu thật, inject bị tắt) hoặc thành container image — Test connection.
 14. Trang **Vehicle apps** (dung lượng, quota, Clean / Delete / Repair) và **System status** (đĩa, app, hàng đợi).
 15. Export zip.
 16. Open IDE (code-server).
 17–18. Trợ lý AI (provider giả lập offline) đề xuất patch; duyệt rồi Accept.
 19. Restart stack: workflow, app và code sinh vẫn còn.
 
-Video ngắn hơn theo tutorial "Overspeed warning" (59 s, quay 2026-10-24): [docs/media/demo.mp4](docs/media/demo.mp4) (`scripts/sv demo-video --tutorial`). Làm theo:
+Video ngắn hơn theo tutorial "Overspeed warning" (51 s, quay 2026-10-24): [docs/media/demo.mp4](docs/media/demo.mp4) (`scripts/sv demo-video --tutorial`). Làm theo:
 [tutorial](docs/user-guide/tutorial.md) · Tài liệu: [docs/README.md](docs/README.md).
 
 ---

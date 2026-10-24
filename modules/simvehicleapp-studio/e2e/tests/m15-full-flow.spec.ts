@@ -185,6 +185,14 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   ])
   await pause(page, 1500)
 
+  await caption(page, '7 · Logic: the whole workflow as sentences — a sentence selects its block')
+  await page.locator('[data-sv-view="logic"]').click()
+  const logic = page.locator('[data-sv="logic-view"]')
+  await expect(logic.locator('[data-sv-logic-line="branch"]')).toHaveCount(3)
+  await logic.locator('[data-sv-logic-line="step"]', { hasText: 'holds for 2 s' }).click()
+  await pause(page, 1500)
+  await logic.getByRole('button', { name: 'Close Logic view' }).click()
+
   await caption(page, '8 · Simulate without building: 100 ⇒ off, 130 for 2 s ⇒ on + HMI, 90 ⇒ off')
   await page.locator('[data-sv-tab="simulation"]').click()
   await page.locator('[data-sv="scenario-editor"]').getByRole('button', { name: 'YAML' }).click()
@@ -284,6 +292,21 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   await expect(page.locator('[data-sv="run-state"]')).toHaveAttribute('data-sv-state', 'stopped', {
     timeout: 15_000,
   })
+
+  await caption(
+    page,
+    '13 · Deploy: the same app on a vehicle databroker — signals from the car, not simulated'
+  )
+  await page.locator('[data-sv-action="deploy"]').click()
+  const deployDialog = page.getByRole('dialog')
+  await deployDialog.getByPlaceholder('HIL bench').fill('Bench (stack databroker)')
+  await deployDialog.getByPlaceholder('bench.lab:55555').fill('databroker:55555')
+  await deployDialog.locator('[data-sv="deploy-test"]').click()
+  await expect(deployDialog.locator('[data-sv="deploy-tested"]')).toContainText('Reachable', {
+    timeout: 30_000,
+  })
+  await pause(page, 2000)
+  await page.keyboard.press('Escape')
 
   await caption(
     page,
