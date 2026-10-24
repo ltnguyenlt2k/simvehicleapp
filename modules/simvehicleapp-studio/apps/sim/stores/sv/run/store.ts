@@ -1,9 +1,12 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import type { SvLogLine, SvTraceEvent } from '@/lib/api/contracts/sv'
+import type { FlowSignal } from '@/lib/sv/flow-trace'
 
 /** Entries the Run console keeps (virtualized list, ADR-0027 §5); the orchestrator keeps 20 000. */
 export const SV_RUN_CONSOLE_LIMIT = 5000
+/** Signal changes kept to name what fired each run in the Flow pane (ADR-0062 §1). */
+export const SV_RUN_SIGNAL_LIMIT = 2000
 
 /** One line of the Run console: a log line or a trace event. */
 export type SvRunEntry =
@@ -36,6 +39,8 @@ interface SvRunState {
   lastSeq: number
   /** Live state per workflow, then per block. */
   blocks: Record<string, Record<string, SvLiveBlock>>
+  /** Latest signal changes seen by the Live tab, oldest first. */
+  signals: FlowSignal[]
   /** Bumped to bring the Run console to the front. */
   focusRunConsole: number
   follow: (projectId: string, runId: string) => void
@@ -44,6 +49,7 @@ interface SvRunState {
     runId: string,
     items: { event: 'log' | 'trace'; data: SvLogLine | SvTraceEvent }[]
   ) => void
+  pushSignal: (signal: FlowSignal) => void
   showRunConsole: () => void
   clear: () => void
 }
@@ -55,6 +61,7 @@ const initialState = {
   entries: [] as SvRunEntry[],
   lastSeq: -1,
   blocks: {} as SvRunState['blocks'],
+  signals: [] as FlowSignal[],
   focusRunConsole: 0,
 }
 
@@ -142,6 +149,13 @@ export const useSvRunStore = create<SvRunState>()(
             lastSeq: fresh[fresh.length - 1].data.seq,
           }
         }),
+      pushSignal: (signal) =>
+        set((s) => ({
+          signals:
+            s.signals.length >= SV_RUN_SIGNAL_LIMIT
+              ? [...s.signals.slice(1 - SV_RUN_SIGNAL_LIMIT), signal]
+              : [...s.signals, signal],
+        })),
       showRunConsole: () => set((s) => ({ focusRunConsole: s.focusRunConsole + 1 })),
       clear: () => set(initialState),
     }),

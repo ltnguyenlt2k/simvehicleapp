@@ -38,6 +38,12 @@ inputs:
 
 Timeline dưới case liệt kê từng lần ghi tín hiệu, từng thông báo HMI và log. Kéo thanh tua để xem block nào chạy lúc nào. **Mỗi test case trở thành một test của app khi SynCode** (C++, Python, Rust).
 
+**Flow** (công tắc *Timeline / Flow* cạnh thanh tua) hiện cùng kết quả đó theo **lần chạy** của từng trigger, mới nhất ở trên:
+- dòng đầu: trigger, input đã kích hoạt nó (vd. `Vehicle.Speed = 130 (scenario input)`), kết quả (`done`, `cancelled`, `failed`) và thời gian;
+- mở ra là các block lần chạy đó đi qua: nhánh đã rẽ (`→ then`, `→ else`, `→ stable`…) kèm giá trị của điều kiện lúc quyết định (vd. `Speed = 130 ⇒ true`), thời gian mỗi block (gồm thời gian chờ của *Stable for* / *Wait until*), rồi tín hiệu block ghi, log và tin MQTT;
+- bấm một lần chạy ⇒ thanh tua nhảy tới lúc nó bắt đầu; tua ⇒ lần chạy tại con trỏ được tô sáng. Bấm một block ⇒ chọn block đó trên canvas;
+- lọc theo trigger và kết quả; nút tải xuống lưu trace gốc + các lần chạy dạng JSONL.
+
 ## 2. Run + tab Live (app thật trên databroker)
 1. Workflow phải nằm trong một vehicle app. Bấm **SynCode** sau mỗi lần sửa workflow: **Run chạy bản build gần nhất**, không phải canvas hiện tại.
 2. Bấm **Run**, đợi pill hiện `Running`.
@@ -53,7 +59,8 @@ Timeline dưới case liệt kê từng lần ghi tín hiệu, từng thông bá
 5. Xem kết quả:
    - **Signals:** cột *Target* của actuator là giá trị app vừa ghi; *Current* theo sau (stack giả lập xe thực hiện lệnh).
    - **Run console** (pane đầu của tab Live): log của app và trace từng block đã chạy.
-   - **Messages** (pane thứ hai): thông báo HMI hiện thành thẻ; các tin MQTT khác của app hiện kèm topic.
+   - **Flow** (pane thứ hai): từng lần chạy của workflow giống Flow ở Simulate. Giá trị bạn vừa inject hiện `(you injected)`. App thật chưa gửi giá trị của điều kiện (M19-T02b), nên chỉ thấy nhánh đã rẽ. Khi bạn cuộn xuống, Flow dừng theo dõi; bấm **Paused — show newest** để quay lại.
+   - **Messages** (pane thứ ba): thông báo HMI hiện thành thẻ; các tin MQTT khác của app hiện kèm topic.
    - Badge trên block cho biết block nào vừa chạy.
 
 **Ví dụ LKA** ("Lane departure warning" → If `Vehicle.Speed > 10` → *then* HMI "LKA: chệch làn" → Set `IsEnabled = true`; *else* log):

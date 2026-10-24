@@ -68,8 +68,10 @@ export interface FlowResult {
 }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
-/** A signal update counts as a trigger's cause within this window before it. */
+/** A signal update counts as a trigger's cause up to this long before it… */
 const CAUSE_WINDOW_MS = 1000
+/** …or this long after: on the stack the gateway stamps the update, the app the trigger (ADR-0062 §3). */
+const CAUSE_SKEW_MS = 250
 
 export function flowRuns(
   trace: readonly FlowTraceEvent[],
@@ -177,16 +179,16 @@ export function flowRuns(
   return { runs: newest.slice(0, limit), hidden: Math.max(0, newest.length - limit) }
 }
 
-/** The latest change of a signal just before the trigger with the value the trigger fired with. */
+/** The change of a signal closest to the trigger with the value the trigger fired with. */
 function causeOf(run: FlowRun, signals: readonly FlowSignal[]): FlowRun['cause'] {
   const value = run.trigger.outputs.value
   if (value === undefined) return undefined
   let best: FlowSignal | undefined
   for (const s of signals) {
     if (s.field && s.field !== 'value') continue
-    if (s.ts > run.trigger.ts || run.trigger.ts - s.ts > CAUSE_WINDOW_MS || !same(s.value, value))
-      continue
-    if (!best || s.ts > best.ts) best = s
+    const d = run.trigger.ts - s.ts
+    if (d < -CAUSE_SKEW_MS || d > CAUSE_WINDOW_MS || !same(s.value, value)) continue
+    if (!best || Math.abs(d) < Math.abs(run.trigger.ts - best.ts)) best = s
   }
   return best
     ? {
@@ -218,6 +220,7 @@ export function evalText(e: FlowEval): string {
 
 /** Words for where a signal value came from. */
 export const SOURCE_TEXT: Record<string, string> = {
+  scenario: 'scenario input',
   inject: 'you injected',
   playback: 'test playback',
   mirror: 'simulated vehicle',
@@ -228,3 +231,12 @@ export const SOURCE_TEXT: Record<string, string> = {
 /** Milliseconds a step took, or null while it runs. */
 export const stepDuration = (s: FlowStep) =>
   s.exitedAt === undefined ? null : s.exitedAt - s.enteredAt
+
+/** Download of a flow (M19-T04): one JSON object per line — the raw trace events, then the runs it was read as. */
+export function flowJsonl(trace: readonly FlowTraceEvent[], result: FlowResult): string {
+  const lines = [
+    ...trace.map((e) => JSON.stringify({ type: 'trace', ...e })),
+    ...[...result.runs].reverse().map((r) => JSON.stringify({ type: 'run', ...r })),
+  ]
+  return lines.length ? `${lines.join('\n')}\n` : ''
+}

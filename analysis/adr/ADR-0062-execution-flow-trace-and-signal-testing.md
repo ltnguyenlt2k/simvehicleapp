@@ -118,6 +118,11 @@ Xem Decision 8. Thêm:
 - test gateway: inject ⇒ `source: inject`, app write ⇒ `source: app`, playback ⇒ `playback`.
 
 ## Notes / Deviations
+- 2026-10-24 — **T03/T04: nối lần chạy với tín hiệu gây ra nó** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - `cause` = signal update **gần trigger nhất** có cùng giá trị với `trigger.outputs.value`, trong khoảng từ 1 s trước tới 250 ms sau trigger. Lý do: trên stack, gateway đóng dấu thời gian cho update, còn app đóng dấu cho trigger, nên update có thể đến sau trigger vài chục ms. 250 ms là cùng cửa sổ với nguồn tín hiệu ở §3.
+  - Không có update khớp thì không có `cause`; Flow hiện giá trị của trigger.
+  - Trước T05 (gateway gắn `source`), tab Live tự đánh dấu `inject` cho giá trị người dùng vừa inject. Simulate và Test đánh dấu input của scenario là `scenario` (thêm vào danh sách nguồn ở §3, chỉ có ở phía studio, không vào contract).
+  - Bấm một write trong Flow chưa mở signal ở bảng Signals: write hiện đường dẫn và giá trị. Chuyển sang T05, cùng lúc với dòng input của console.
 - 2026-10-24 — **T02 chia làm hai** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - Khi đọc source: runtime C++/Python/Rust nhận điều kiện của `branch`, `switch`, `stable_for`, `wait_until` dưới dạng hàm do generator sinh ra, ví dụ `w.branch(…, [](Ctx&){ return … > 120; })`. Runtime không biết biểu thức tham chiếu tới những gì, nên không tự đọc được giá trị toán hạng. Muốn runtime phát `eval`, generator phải truyền thêm danh sách tham chiếu, và golden code của 3 backend đổi byte.
   - **T02a:** simulator phát `data.eval` (Simulate, Test, Generate tests: nơi người dùng hỏi "vì sao" nhiều nhất). Parity P3 và so trace bỏ qua khoá `eval` cho tới T02b. Run live vẫn có `handle` (nhánh đã đi) mà chưa có giá trị toán hạng.

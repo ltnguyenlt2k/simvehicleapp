@@ -99,7 +99,9 @@ describe('flow of a workflow (ADR-0062 §1, M19-T03)', () => {
     const signals = [
       { path: 'Vehicle.Speed', ts: 400, value: 130, source: 'inject' },
       { path: 'Vehicle.Speed', ts: 998, value: 130, source: 'inject' },
-      { path: 'Vehicle.Speed', ts: 1499, value: 90, source: 'playback' },
+      // stamped by the gateway a little after the app's trigger
+      { path: 'Vehicle.Speed', ts: 1620, value: 90, source: 'playback' },
+      { path: 'Vehicle.Speed', ts: 1900, value: 95, source: 'inject' },
     ]
     const { runs } = flowRuns(t, signals)
     const [r3, r2, r1] = runs

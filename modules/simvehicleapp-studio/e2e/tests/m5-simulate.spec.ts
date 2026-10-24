@@ -91,6 +91,20 @@ test.describe('M5 Simulate', () => {
     await expect(set.locator('[data-sv="trace-badge"]')).toHaveAttribute('data-sv-replay', 'done')
     await expect(set.locator('[data-sv="trace-badge"]')).toHaveText('1×')
 
+    // Flow (M19-T04): the same simulation as runs — the input that fired it, the stable branch with its operand,
+    // the write; picking the run moves the replay to its start.
+    await timeline.getByRole('radio', { name: 'Flow' }).click()
+    const flowRun = timeline.locator('[data-sv-flow-run]').first()
+    await expect(flowRun).toContainText('Vehicle.Speed = 130 (scenario input)')
+    await expect(flowRun.locator('[data-sv-flow-handle="stable"]')).toBeVisible()
+    await expect(flowRun.locator('[data-sv-flow-eval]').first()).toContainText('130')
+    await expect(
+      flowRun.locator('[data-sv-flow-write="Vehicle.Body.Lights.Hazard.IsSignaling"]')
+    ).toBeVisible()
+    await flowRun.locator('button').first().click()
+    await expect(page.locator('[data-sv="sim-cursor"]')).toContainText('1000 /')
+    await timeline.getByRole('radio', { name: 'Timeline' }).click()
+
     // The scenario was saved with the workflow.
     await page.reload()
     await page.locator('[data-sv-tab="simulation"]').click()

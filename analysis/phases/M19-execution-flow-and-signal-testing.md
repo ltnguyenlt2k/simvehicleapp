@@ -42,11 +42,12 @@
 - Bằng chứng 2026-10-24: `lib/sv/flow-trace.test.ts` 9/9 (snapshot GW-B; GW-A…G: số run = số trigger, write gắn đủ; trace sao chép cho cùng kết quả; 5 000 sự kiện < 50 ms); tsc hẹp sạch; biome sạch.
 
 ### T04: Flow view
-- [ ] Live: pane thứ ba "Flow" cạnh Run console / Messages; follow mặc định, ⏸ khi người dùng cuộn.
-- [ ] Simulate: Flow cạnh timeline; bấm lần chạy ⇒ con trỏ tua nhảy tới; tua ⇒ lần chạy tương ứng sáng.
-- [ ] Test: mỗi case mở Flow của case đó (Simulate hoặc Play).
-- [ ] Bấm bước ⇒ chọn/căn giữa block; bấm write ⇒ mở signal ở Signals.
-- [ ] Lọc theo trigger/block/kết quả; tải JSONL (trace gốc + flow).
+- [x] Live: pane "Flow" giữa Run console và Messages (`LiveFlowTab`, trace của workflow đang mở + signal update từ bảng Signals, run store giữ 2 000); follow mặc định, ⏸ khi người dùng cuộn.
+- [x] Simulate: công tắc Timeline / Flow; bấm lần chạy ⇒ con trỏ tua nhảy tới `startedAt`; tua ⇒ lần chạy chứa con trỏ sáng và mở.
+- [x] Test: tab Test dùng cùng `SimulationTimeline` cho case đang chọn nên mỗi case có Flow của lần Simulate. Flow của Play (app thật) là pane Flow ở Live.
+- [x] Bấm bước ⇒ chọn block. Bấm write ⇒ mở signal ở Signals: **chuyển T05** (ADR-0062 Notes).
+- [x] Lọc theo trigger và kết quả (lọc theo block: chưa làm, vì một lần chạy thường ≤ 10 block); tải JSONL (`flowJsonl`: trace gốc rồi các lần chạy).
+- Bằng chứng 2026-10-24: vitest `flow-panel.test.tsx` 3/3, `flow-trace.test.ts` 9/9, run/sim/stores 58 test; tsc hẹp sạch. E2E: `m5-simulate` thêm chặng Flow (CI); `m15-full-flow` `@live` thêm chặng Flow ở Live (chạy ở T07 trên stack dev).
 
 ### T05: Nguồn tín hiệu + console
 - [ ] Contract `signal-update.v1`: `source` ∈ {inject, playback, mirror, app, vehicle}, `actor` (optional); CHANGELOG; OpenAPI gateway.

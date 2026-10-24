@@ -20,6 +20,7 @@ import { usePlaySvScenario, useSetSvSignal } from '@/hooks/queries/sv-runs'
 import { useSvScenario } from '@/hooks/queries/sv-simulation'
 import { useCreateSvTestCase } from '@/hooks/queries/sv-test-cases'
 import { useSvLintStore } from '@/stores/sv/lint/store'
+import { useSvRunStore } from '@/stores/sv/run/store'
 import { useSvSimulationStore } from '@/stores/sv/simulation/store'
 import { useSvTestStore } from '@/stores/sv/test/store'
 
@@ -271,6 +272,8 @@ export function SignalsPanel() {
       const v = svSignalUpdateSchema.safeParse(JSON.parse((e as MessageEvent<string>).data))
       if (!v.success) return
       setValues((prev) => applySignalUpdates(prev, [v.data]))
+      const injected = injectedRef.current.has(`${v.data.path}=${JSON.stringify(v.data.value)}`)
+      useSvRunStore.getState().pushSignal({ ...v.data, ...(injected ? { source: 'inject' } : {}) })
       // While recording, an actuator the app changed (target, or current through a provider) is a proposed expectation.
       const rec = recordingRef.current
       const u = v.data

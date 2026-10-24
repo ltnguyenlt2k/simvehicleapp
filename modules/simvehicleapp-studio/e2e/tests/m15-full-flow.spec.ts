@@ -287,6 +287,13 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   await caption(page, '13 · Back to 90 km/h ⇒ the else branch switches them off')
   await expect(hazardTarget).toHaveText('false', { timeout: 10_000 })
   await pause(page, 1200)
+  // Flow (M19-T04): the newest run was fired by the 90 the user injected and took the else branch.
+  await page.locator('[data-sv-live-pane="flow"]').click()
+  const newest = page.locator('[data-sv-flow-run]').first()
+  await expect(newest).toContainText(`${SPEED} = 90 (you injected)`, { timeout: 10_000 })
+  await expect(newest.locator('[data-sv-flow-handle="else"]')).toBeVisible()
+  await pause(page, 1500)
+  await page.locator('[data-sv-live-pane="run-console"]').click()
   await page.locator('[data-sv-tab="live"]').click()
   await page.locator('[data-sv-action="stop"]').click()
   await expect(page.locator('[data-sv="run-state"]')).toHaveAttribute('data-sv-state', 'stopped', {

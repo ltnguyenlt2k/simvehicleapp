@@ -1,3 +1,4 @@
+export { FlowPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/flow-panel'
 export { MessagesPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/messages-panel'
 export { MyRunsMenu } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/my-runs-menu'
 export { RunButtons } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/run/run-buttons'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { generateId } from '@sim/utils/id'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/emcn'
@@ -12,6 +12,7 @@ import {
   ProblemsList,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint/problems-panel'
 import {
+  FlowPanel,
   MessagesPanel,
   RunConsole,
   SignalsPanel,
@@ -187,9 +188,39 @@ function RunConsoleTab() {
   return <RunConsole run={run} blockName={blockName} />
 }
 
+const clock = (ts: number) =>
+  new Date(ts).toLocaleTimeString(undefined, { hour12: false, fractionalSecondDigits: 3 })
+
+/** Flow pane of the Live tab (M19-T04): the runs of the open workflow in the followed run. */
+function LiveFlowTab() {
+  const workflowId = useSvLintStore((s) => s.workflowId)
+  const entries = useSvRunStore((s) => s.entries)
+  const signals = useSvRunStore((s) => s.signals)
+  const runId = useSvRunStore((s) => s.runId)
+  const blocks = useWorkflowStore((s) => s.blocks)
+  const blockName = useCallback((blockId: string) => blocks[blockId]?.name, [blocks])
+  const trace = useMemo(
+    () =>
+      entries.flatMap((e) => (e.kind === 'trace' && e.event.wf === workflowId ? [e.event] : [])),
+    [entries, workflowId]
+  )
+  return (
+    <FlowPanel
+      trace={trace}
+      signals={signals}
+      blockName={blockName}
+      onSelectBlock={(id) => focusField(id)}
+      timeText={clock}
+      live
+      emptyText='No run of this workflow yet — Run the app, then inject a signal'
+      downloadName={`flow-${runId ?? 'live'}.jsonl`}
+    />
+  )
+}
+
 /**
- * Live tab (M18-T05, ADR-0058 §6): the app's signals — watch and inject — next to its run console or its MQTT
- * messages.
+ * Live tab (M18-T05, ADR-0058 §6): the app's signals — watch and inject — next to its run console, its Flow
+ * (M19-T04) or its MQTT messages.
  */
 function LiveTab({ pane, onPane }: { pane: LivePane; onPane: (p: LivePane) => void }) {
   return (
@@ -213,7 +244,13 @@ function LiveTab({ pane, onPane }: { pane: LivePane; onPane: (p: LivePane) => vo
             </Button>
           ))}
         </div>
-        {pane === 'run-console' ? <RunConsoleTab /> : <MessagesPanel />}
+        {pane === 'run-console' ? (
+          <RunConsoleTab />
+        ) : pane === 'flow' ? (
+          <LiveFlowTab />
+        ) : (
+          <MessagesPanel />
+        )}
       </div>
     </div>
   )
@@ -221,6 +258,7 @@ function LiveTab({ pane, onPane }: { pane: LivePane; onPane: (p: LivePane) => vo
 
 const LIVE_PANES = [
   { id: 'run-console', label: 'Run console' },
+  { id: 'flow', label: 'Flow' },
   { id: 'messages', label: 'Messages' },
 ] as const
 type LivePane = (typeof LIVE_PANES)[number]['id']
