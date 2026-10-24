@@ -187,6 +187,13 @@ namespace testing { class MockVehicle; class VirtualClock; class ScenarioPlayer;
 
 ---
 
+## 7b. Target WebAssembly cho C++ và Rust (M20, ADR-0061)
+- Không phải ngôn ngữ mới: `compiler-code-cpp` và `compiler-code-rust` có thêm target `wasm` (backend id `cpp-wasm`, `rust-wasm`, base URL `/wasm`), **cùng emitter** với target native.
+- Guest: core module `wasm32-wasip1` kiểu reactor, ABI `sv-wasm-abi/1` (import module `sv`, export `sv_*`, giá trị JSON). Không dùng Velocitas SDK.
+- Host chung `sv-wasm-host` (module `modules/wasm-host`, Wasmtime LTS) nối KUKSA `kuksa.val.v2` + MQTT, in `SVTRACE`, áp allowlist `sv-app.json` và giới hạn bộ nhớ/CPU.
+- Toolchain `toolchain-wasm` (wasi-sdk-34, Rust `wasm32-wasip1`, wasm-tools). Test sinh ra chạy trong guest qua `sv_run_tests`.
+- Chi tiết: [design M20](../docs/design/M20-wasm-targets.md).
+
 ## 8. Thêm một ngôn ngữ mới — checklist
 1. Tạo repo `compiler-code-<lang>` theo cấu trúc §1, implement contract §2.
 2. Viết runtime `<lang>` với đủ semantics [05 §3](05-blocks-and-execution-model.md#3-ngữ-nghĩa-thực-thi-execution-semantics) + trace format.

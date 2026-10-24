@@ -70,6 +70,8 @@ flowchart TB
     E58["0058 Test case + dock Test/Live + trợ lý soạn test"]
     E59["0059 Workflow dễ đọc v2: block gọn, Logic view"]
     E60["0060 Deploy target + ranh giới VSS với layer I/O"]
+    E61["0061 Target WASM cho C++/Rust + sv-wasm-host"]
+    E62["0062 Luồng thực thi (Flow): lý do nhánh, nguồn tín hiệu"]
   end
   A2 --> A7
   A2 --> A9
@@ -78,6 +80,9 @@ flowchart TB
   A3 --> A8 --> B11
   A4 --> A8 & C28 & B12
   A5 --> C25 & C24
+  C20 & C22 --> E61
+  C27 & E58 --> E62
+  E62 --> E61
   B10 --> B11 & B15
   B11 --> B13 --> B14
   B12 --> B14 & C21 & B17
@@ -155,6 +160,8 @@ flowchart TB
 | [0058](ADR-0058-test-workbench-scenarios-as-tests.md) | Nhiều test case có kỳ vọng mỗi workflow; dock Problems/Test/Live; Generate tests + độ phủ; trợ lý soạn test | L1 | M18 |
 | [0059](ADR-0059-workflow-readability-v2.md) | Block gọn, Logic view tất định, làn theo trigger, giá trị sống, "Data from earlier blocks" | L2 | M18 |
 | [0060](ADR-0060-deploy-targets-and-vehicle-io-layers.md) | Deploy: target databroker từ xa / image / Kanto (hoãn); read-only + audit; VSS là ranh giới với layer CAN | L0 | M18 |
+| [0061](ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md) | Target `wasm` cho backend C++ và Rust (cùng emitter), ABI `sv-wasm-abi/1` (core module wasip1 reactor, JSON), host chung `sv-wasm-host` (Wasmtime LTS, KUKSA v2, allowlist, giới hạn) | L1 | M20 |
+| [0062](ADR-0062-execution-flow-trace-and-signal-testing.md) | Mô hình Flow chung cho Simulate/Test/Run, `data.eval` (lý do rẽ nhánh), `signal-update.source`, console dạng câu, giải thích case FAIL | L1 | M19 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

@@ -397,6 +397,36 @@ Yêu cầu PO 2026-10-15 · Thiết kế: [M18](design/M18-test-workbench-readab
 | Deploy Container image | 0060 | ☐ | | T10 |
 | Gate + full luồng `@live` + video + README + báo cáo | 0058–0060 | ☐ | | T11 |
 
+
+## M19 — Luồng thực thi (Flow) và thử tín hiệu chỉn chu
+Yêu cầu PO 2026-10-24 · Thiết kế: [M19](design/M19-execution-flow-and-signal-testing.md) · Chi tiết: [phases/M19](../analysis/phases/M19-execution-flow-and-signal-testing.md) · ADR [0062](../analysis/adr/ADR-0062-execution-flow-trace-and-signal-testing.md) (Proposed — chờ PO xác nhận). Bắt đầu implement sau gate M18 (luật cứng 7); T01 làm ngay.
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Phân tích + kiểm kê + thiết kế + ADR + kế hoạch | 0062 | ✔ | 2026-10-24 Claude Code: kiểm kê 8 nơi tạo tín hiệu thử và 4 nơi hiện luồng ([design §2](design/M19-execution-flow-and-signal-testing.md)). Thiếu: lý do rẽ nhánh trong trace, nguồn tín hiệu (`signal-update` chỉ có `path, ts, value, field`), console là JSON thô và phẳng, case FAIL không chỉ điểm lệch | T01 |
+| `data.eval` (lý do rẽ nhánh) trong simulator + 3 runtime | 0062 | ☐ | | T02 |
+| Mô hình Flow `lib/sv/flow-trace.ts` | 0062 | ☐ | | T03 |
+| Flow view: Live, Simulate, Test; chọn bước ⇒ block; tải JSONL | 0062 | ☐ | | T04 |
+| Nguồn tín hiệu ở gateway; Run console dạng câu + Raw + dòng input | 0062 | ☐ | | T05 |
+| Giải thích case FAIL; "Make test case from this run" | 0062 | ☐ | | T06 |
+| Gate + full luồng `@live` + video + README + báo cáo | 0062 | ☐ | | T07 |
+
+## M20 — Target WebAssembly cho C++ và Rust + host runtime
+Yêu cầu PO 2026-10-24 · Thiết kế: [M20](design/M20-wasm-targets.md) · Chi tiết: [phases/M20](../analysis/phases/M20-wasm-targets.md) · ADR [0061](../analysis/adr/ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md) (Proposed — chờ PO xác nhận). Spike T01 làm được sớm; các task còn lại sau gate M18 (và M19-T02).
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Phân tích + nghiên cứu upstream + thiết kế + ADR + kế hoạch | 0061 | ✔ | 2026-10-24 Claude Code, tra nguồn chính thức:<br>• Wasmtime v48 LTS (24 tháng), v50 mới nhất;<br>• WAMR-2.4.5, wasi-sdk-34 (exception tắt mặc định, không spawn thread);<br>• Rust `wasm32-wasip1/p2/p3` Tier 2;<br>• không có SDK WASM của Velocitas/KUKSA ⇒ cần host làm cầu nối.<br>Source: runtime Rust đã tách lõi/host; C++ `Strand::run` chờ bằng `condition_variable` (phải có chế độ host bơm), 7 chỗ `throw`; contract chỉ cho `language` cpp/python/rust và bắt buộc template Velocitas ⇒ cần bump contract | T01 (phân tích) |
+| Spike guest C++/Rust trên Wasmtime + `iwasm`, đo, chốt pin | 0061 | ☐ | | T01 |
+| Contract ABI `sv-wasm-abi/1`, capabilities `target`, `Project.target` | 0061 | ☐ | | T02 |
+| `sv-wasm-host` (Wasmtime, KUKSA v2, MQTT, SVTRACE, allowlist, giới hạn) | 0061 | ☐ | | T03 |
+| Backend `cpp-wasm` (runtime không exception, Strand bơm, adapter, golden) | 0061 | ☐ | | T04 |
+| Backend `rust-wasm` (feature `wasm`, cdylib, golden) | 0061 | ☐ | | T05 |
+| `toolchain-wasm` + plan build/test/run + profile `wasm` | 0061 | ☐ | | T06 |
+| Studio/orchestrator: chọn target, Run, Export, Deploy image | 0061 | ☐ | | T07 |
+| Conformance C01–C45, parity P3, tái lập, an toàn, đo hiệu năng | 0061 | ☐ | | T08 |
+| Gate + full luồng `@live` + video + README + báo cáo | 0061 | ☐ | | T09 |
+
 ---
 
 *Cập nhật lần cuối: 2026-10-07 (thêm M15 theo yêu cầu PO). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*

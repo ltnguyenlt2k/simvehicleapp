@@ -35,6 +35,10 @@ flowchart LR
   M12 --> M15["M15 E2E toàn diện + video demo (bước cuối)"]
   M13 --> M15
   M14 --> M15
+  M15 -.-> M18["M16–M18 trải nghiệm, run slot, bàn thử nghiệm"]
+  M18 --> M19["M19 Luồng thực thi (Flow) + thử tín hiệu"]
+  M19 --> M20["M20 Target WASM C++/Rust + sv-wasm-host"]
+  M13 --> M20
 ```
 
 **Đường găng (critical path):** M0 → M1 → M2 → M3 → M4 → M6 → M7 → M8 → M11.
@@ -64,6 +68,8 @@ flowchart LR
 | [M13](phases/M13-rust-backend.md) | Rust feasibility | báo cáo + prototype GW-A | 0041 | 30 | 3 |
 | [M14](phases/M14-services-curated-multiuser.md) | Mở rộng | gRPC service block, standalone mode, curated multi-VSS blocks, multi-user workspaces, kuksa.val.v2 | 0043+ | 23–25 | 6+ |
 | [M15](phases/M15-final-e2e-demo-video.md) | E2E toàn diện + video demo | Playwright: mọi kéo thả, 7 golden bằng UI, full luồng signup→run→export, cộng tác, lỗi service; 3 run xanh liên tiếp; video full luồng trong README | — | (mới) | 2–3 |
+| [M19](phases/M19-execution-flow-and-signal-testing.md) | Luồng thực thi + thử tín hiệu | Mô hình Flow chung (Simulate/Test/Live), `data.eval`, nguồn tín hiệu, console dạng câu, giải thích case FAIL | 0062 | (mới, PO 2026-10-24) | 3 |
+| [M20](phases/M20-wasm-targets.md) | Target WASM C++/Rust | target `cpp-wasm`/`rust-wasm` (cùng emitter), ABI `sv-wasm-abi/1`, `sv-wasm-host` (Wasmtime LTS), `toolchain-wasm`, conformance + parity | 0061 | (mới, PO 2026-10-24) | 6 |
 
 **MVP (v1.0) = M0 → M11** ≈ 48 người-tuần; với đội 4 dev (1 FE, 2 BE/TS, 1 C++/Velocitas) ≈ 4–5 tháng lịch có song song. Đây là ước lượng kế hoạch, cần cập nhật theo throughput và thời gian build thực tế; Python/Rust và M14 nằm sau v1.0.
 

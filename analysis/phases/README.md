@@ -25,3 +25,5 @@
 - [M16 — Trải nghiệm end-user + kiểm soát tài nguyên](M16-ux-and-capacity.md) (PO 2026-10-14)
 - [M17 — Dọn bề mặt Sim còn sót + runtime xe dùng chung](M17-editor-leftovers-and-run-slot.md) (PO 2026-10-15)
 - [M18 — Bàn thử nghiệm, workflow dễ đọc v2, Deploy](M18-test-workbench-readability-deploy.md) (PO 2026-10-15)
+- [M19 — Luồng thực thi (Flow) và thử tín hiệu chỉn chu](M19-execution-flow-and-signal-testing.md) (PO 2026-10-24)
+- [M20 — Target WebAssembly cho C++ và Rust + host runtime](M20-wasm-targets.md) (PO 2026-10-24)
