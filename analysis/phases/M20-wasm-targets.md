@@ -45,12 +45,13 @@
 - Bằng chứng 2026-10-25: contracts `bun test` 400/400 + `check`; orchestrator tsc sạch, `bun test` 133 pass (5 test workspace FAIL do `tar` trong thư mục tạm của máy này, như trước); studio vitest 311.
 
 ### T03: Host
-Chia **T03a** (lõi, xong 2026-10-25) và **T03b** (databroker, MQTT, chế độ run, image).
+Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); cả hai xong 2026-10-25.
 - [x] Vòng lặp sự kiện + epoch deadline + `ResourceLimiter`; mã lỗi/trace `wasm_limit` (và `wasm_trap`) — T03a: `Host`, `pump`, `Ticker` 10 ms, `StoreLimits`.
-- [ ] KUKSA v2 với `waitForReady`/kết nối lại; MQTT — T03b (dùng `kuksa-rust-sdk =0.2.2` như runtime Rust thay cho proto vendored; ghi ADR-0061 Notes).
-- [ ] Env giống app native; chạy được trong sandbox ADR-0057 — T03b.
+- [x] KUKSA v2 (`kuksa-rust-sdk =0.2.2`, như runtime Rust): subscribe tự kết nối lại sau 2,5 s, giá trị đầu đánh dấu `initial` (baseline), chờ tối đa 2 s trước `app.started`; ghi = `Actuate`; MQTT `rumqttc` với filter `+`/`#`.
+- [x] Env giống app native (`SDV_VEHICLEDATABROKER_ADDRESS`, `SDV_MQTT_ADDRESS`, `SV_TRACE_LEVEL`); sandbox ADR-0057 chỉ đổi địa chỉ databroker nên dùng được, kiểm khi orchestrator chạy app WASM (T07).
 - [x] Allowlist path/topic từ `sv-app.json`; `forbidden` — T03a (`allow.rs`; `vdb_set` ngoài danh sách ⇒ `set_result` `forbidden`, đọc ⇒ `-2`).
 - [x] `--test` (gọi `sv_run_tests`, in kết quả, exit code = số FAIL), `--precompile` — T03a.
+- Bằng chứng T03b: `cargo test` 6/6 (thêm đổi giá trị v2 ⇄ JSON có kiểm miền `uint8`…, match topic MQTT); `gate/live.sh` trên databroker 0.5.0 thật: giá trị đầu `initial`, thay đổi từ signal-gateway tới guest, `vdb.connected`/`app.started`, `set_result` ("Provider … does not exist" khi không có run); image 94 MB build được.
 - Bằng chứng T03a: `modules/wasm-host` `cargo test` 4/4 (guest WAT: import + allowlist + cache `vdb_current` + trace `SVTRACE`; quá hạn ⇒ `wasm_limit`; trap ⇒ `wasm_trap`; `memory.grow` quá 64 MiB ⇒ `-1`; `.cwasm` của engine khác bị từ chối; thiếu export ⇒ báo tên); rustfmt + clippy `-D warnings` sạch; job CI `wasm-host` mới.
 
 ### T04 / T05: Backend

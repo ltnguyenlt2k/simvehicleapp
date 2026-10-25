@@ -1,0 +1,27 @@
+;; Live gate guest (M20-T03b): subscribes to Vehicle.Speed, logs every event it gets, and on its second event asks
+;; for Hazard = true (a write the databroker hands to the actuator's provider, or refuses when there is none).
+(module
+  (import "sv" "log" (func $log (param i32 i32 i32)))
+  (import "sv" "vdb_subscribe" (func $sub (param i32 i32 i32 i32) (result i32)))
+  (import "sv" "vdb_set" (func $set (param i32 i32 i32 i32 i32 i32) (result i32)))
+  (memory (export "memory") 2)
+  (global $heap (mut i32) (i32.const 4096))
+  (global $events (mut i32) (i32.const 0))
+  (data (i32.const 0) "Vehicle.Speed")
+  (data (i32.const 16) "float")
+  (data (i32.const 32) "Vehicle.Body.Lights.Hazard.IsSignaling")
+  (data (i32.const 80) "boolean")
+  (data (i32.const 96) "true")
+  (func (export "sv_alloc") (param $n i32) (result i32)
+    (local $p i32) (local.set $p (global.get $heap))
+    (global.set $heap (i32.add (global.get $heap) (local.get $n))) (local.get $p))
+  (func (export "sv_free") (param i32 i32))
+  (func (export "sv_stop"))
+  (func (export "sv_init") (param i32 i32) (result i32)
+    (drop (call $sub (i32.const 0) (i32.const 13) (i32.const 16) (i32.const 5))) (i32.const 0))
+  (func (export "sv_on_event") (param $p i32) (param $n i32)
+    (call $log (i32.const 1) (local.get $p) (local.get $n))
+    (global.set $events (i32.add (global.get $events) (i32.const 1)))
+    (if (i32.eq (global.get $events) (i32.const 2)) (then
+      (drop (call $set (i32.const 32) (i32.const 38) (i32.const 80) (i32.const 7) (i32.const 96) (i32.const 4))))))
+  (func (export "sv_step") (param i64) (result i64) (i64.const -1)))

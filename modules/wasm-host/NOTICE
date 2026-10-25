@@ -5,5 +5,9 @@ This module depends on (Cargo, not vendored):
 - wasmtime, wasmtime-wasi 48.0.7 — Bytecode Alliance, Apache-2.0 WITH LLVM-exception
 - serde_json — MIT OR Apache-2.0
 - anyhow — MIT OR Apache-2.0
+- tokio — MIT
+- kuksa-rust-sdk 0.2.2 — Eclipse KUKSA, Apache-2.0
+- tonic — MIT
+- rumqttc — Apache-2.0
 - wat (tests) — Apache-2.0 WITH LLVM-exception
 Full dependency tree: Cargo.lock.

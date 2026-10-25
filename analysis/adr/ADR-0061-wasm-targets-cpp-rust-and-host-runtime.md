@@ -146,6 +146,11 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-25 — **T03b** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - ABI thêm `initial: true` cho giá trị đầu của mỗi subscription. Guest coi đó là baseline (như prefetch của host native) để trigger không chạy khi app vừa khởi động.
+  - Host in `vdb.connected`/`app.started`; guest in `app.stopping`.
+  - App WASM chỉ dùng `kuksa.val.v2`: đặt `SV_DATABROKER_API` khác thì host báo lỗi.
+  - Image host build độc lập từ module (build context trong module, luật cứng 2). Đưa vào compose/release ở T06.
 - 2026-10-25 — **T03 chia T03a/T03b** (Claude Code):
   - T03a là lõi host: Wasmtime, ABI, giới hạn, `--test`, `--precompile`, test bằng guest WAT, không cần toolchain wasm.
   - T03b là databroker/MQTT/run/image. Dùng `kuksa-rust-sdk =0.2.2` (cùng pin với runtime Rust) cho `kuksa.val.v2`, không vendor proto riêng: ít mã phải giữ hơn, cùng nguồn đã kiểm license.

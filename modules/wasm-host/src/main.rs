@@ -1,7 +1,7 @@
 //! `sv-wasm-host` command line (ADR-0061, contracts `abi/sv-wasm-abi.v1.md`):
 //!   sv-wasm-host --precompile app.wasm app.cwasm
 //!   sv-wasm-host --test app.wasm|app.cwasm cases.json [sv-app.json]   exit code = failed cases
-//!   sv-wasm-host app.wasm|app.cwasm [sv-app.json]                     run on the databroker (M20-T03b)
+//!   sv-wasm-host app.wasm|app.cwasm [sv-app.json]                     run on the databroker and MQTT
 
 use std::process::ExitCode;
 
@@ -84,8 +84,23 @@ fn run(args: &[String]) -> Result<i32> {
             print(host.take_lines());
             Ok(failed?.clamp(0, 100))
         }
-        Some(_) => {
-            bail!("running on the databroker comes with M20-T03b; use --test or --precompile")
+        Some(module) => {
+            let m = abi::load(
+                &engine,
+                &std::fs::read(module).with_context(|| format!("reading {module}"))?,
+            )?;
+            let host = Host::new(
+                &engine,
+                &m,
+                allowlist(args.get(1), module)?,
+                &limits(),
+                abi::monotonic(),
+            )?;
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()?;
+            tokio::task::LocalSet::new().block_on(&rt, sv_wasm_host::live::run(host))?;
+            Ok(0)
         }
         None => bail!("usage: sv-wasm-host [--precompile|--test] app.wasm …"),
     }

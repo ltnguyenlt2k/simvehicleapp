@@ -18,4 +18,6 @@ Kiểm tra (trong image Rust đã pin, như CI):
 docker run --rm -v "$PWD":/src:ro rust:1.98.1-slim-bookworm bash -c 'cp -r /src /tmp/w && cd /tmp/w && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test'
 ```
 
-Trạng thái: T03a xong (lõi ABI, giới hạn, precompile, `--test`, `MockVehicle`). T03b: databroker `kuksa.val.v2` + MQTT + chế độ run + image.
+Chạy trên stack: `SDV_VEHICLEDATABROKER_ADDRESS` (mặc định `grpc://127.0.0.1:55555`, chỉ `kuksa.val.v2`), `SDV_MQTT_ADDRESS`, `SV_TRACE_LEVEL` — như app native. Gate trên stack dev: `gate/live.sh` (cần `cargo build --release`).
+
+Image: `docker build -t simvehicleapp/wasm-host:dev modules/wasm-host` (94 MB). `toolchain-wasm` và image deploy của app WASM sẽ copy binary từ image này (M20-T06).

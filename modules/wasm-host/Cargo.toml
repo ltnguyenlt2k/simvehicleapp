@@ -16,6 +16,11 @@ anyhow = "1"
 serde_json = { version = "1", features = ["preserve_order"] }
 wasmtime = { version = "=48.0.7", default-features = false, features = ["anyhow", "cranelift", "runtime", "std", "wat", "gc", "gc-drc", "parallel-compilation"] }
 wasmtime-wasi = { version = "=48.0.7", default-features = false, features = ["p1"] }
+# The databroker over kuksa.val.v2 and MQTT, with the pins of the Rust runtime's host (compiler-code-rust).
+tokio = { version = "1", features = ["rt", "time", "macros", "sync", "signal", "net"] }
+kuksa-rust-sdk = "=0.2.2"
+tonic = { version = "0.14", default-features = false, features = ["transport", "channel", "codegen"] }
+rumqttc = "0.24"
 
 [dev-dependencies]
 wat = "1"

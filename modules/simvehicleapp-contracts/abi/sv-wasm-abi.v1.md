@@ -51,7 +51,8 @@ Each `(path, type)` / `(topic, payload)` pair is four `i32` (two strings).
 
 ### 4.1 Events
 ```jsonc
-{"kind": "signal", "sub": 3, "path": "Vehicle.Speed", "value": 121, "ts": 1792851821684}
+{"kind": "signal", "sub": 3, "path": "Vehicle.Speed", "value": 121, "ts": 1792851821684, "initial": true}  // first value of a subscription: the baseline, like the native prefetch (no trigger)
+{"kind": "signal", "sub": 3, "path": "Vehicle.Speed", "value": 131, "ts": 1792851824777}
 {"kind": "get_result", "req": 7, "value": 121, "error": ""}
 {"kind": "set_result", "req": 8, "error": ""}          // "forbidden", "type", "rejected: …", "unavailable"
 {"kind": "mqtt", "sub": 2, "topic": "app/cmd", "payload": "…"}
@@ -74,6 +75,9 @@ Each `(path, type)` / `(topic, payload)` pair is four `i32` (two strings).
 - **Determinism:** the runtime does not use `random_get` or wall-clock time beyond `now_ms`; trace and writes are the
   same as the native runtime's for the same inputs (conformance, parity P3).
 
+- **Lifecycle:** the host prints `vdb.connected` and `app.started` once every subscription made in `sv_init` has its
+  first value (at most 2 s, as the native host); the guest emits `app.stopping` in `sv_stop`.
+
 ## 6. Host environment
-The host reads the same variables as a native app (`SV_DATABROKER_ADDRESS`, `SV_DATABROKER_API`, `SV_MQTT_*`,
-`SV_TRACE_LEVEL`) and prints `SVTRACE {…}` lines like the native runtimes, so the orchestrator's trace ingest is shared.
+The host reads the same variables as a native app (`SDV_VEHICLEDATABROKER_ADDRESS`, `SDV_MQTT_ADDRESS`,
+`SV_TRACE_LEVEL`; `SV_DATABROKER_API` must be `kuksa.val.v2` when set) and prints `SVTRACE {…}` lines like the native runtimes, so the orchestrator's trace ingest is shared.

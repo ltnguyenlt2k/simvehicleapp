@@ -394,7 +394,7 @@ jobs:
         run: conformance/conformance.sh
 
   wasm-host:
-    name: wasm-host (sv-wasm-host — ABI, limits, precompile; rustfmt, clippy)
+    name: wasm-host (sv-wasm-host — ABI, limits, precompile, kuksa.val.v2/MQTT; rustfmt, clippy)
     needs: changes
     if: needs.changes.outputs.wasm_host == 'true'
     runs-on: ubuntu-24.04
@@ -403,7 +403,8 @@ jobs:
       - name: rustfmt, clippy (-D warnings) and tests in the pinned Rust image
         run: >-
           docker run --rm -v "$PWD/modules/wasm-host":/src:ro rust:1.98.1-slim-bookworm bash -c 'cp -r /src /tmp/w && cd /tmp/w
-          && rm -rf target .cargo && rustup component add rustfmt clippy >/dev/null && cargo fmt --check
+          && rm -rf target .cargo && apt-get update -qq && apt-get install -y -qq cmake g++ make >/dev/null
+          && rustup component add rustfmt clippy >/dev/null && cargo fmt --check
           && cargo clippy --locked --all-targets -j4 -- -D warnings && cargo test --locked -q -j4'
 
   codegen-rust:
