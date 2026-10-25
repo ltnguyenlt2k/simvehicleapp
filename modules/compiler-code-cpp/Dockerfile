@@ -6,7 +6,7 @@ COPY --from=contracts / /src/simvehicleapp-contracts/
 COPY generator/package.json generator/bun.lock generator/bunfig.toml generator/
 RUN cd generator && bun install --frozen-lockfile --production
 COPY generator/src generator/src
-COPY backend.yaml ./
+COPY backend.yaml backend.wasm.yaml ./
 # Served by GET /runtime/files and GET /template-overlay/files (tests excluded by .dockerignore).
 COPY runtime runtime
 COPY template-overlay template-overlay
