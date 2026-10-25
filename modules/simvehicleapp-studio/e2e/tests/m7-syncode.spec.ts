@@ -205,6 +205,61 @@ test.describe('M7 SynCode', () => {
     await expect(pageRoot).toContainText('No vehicle apps yet')
   })
 
+  test('Vehicle apps offers the WebAssembly runtime when the stack runs its backend and toolchain (ADR-0061)', async ({
+    page,
+  }) => {
+    await workflowWithTrigger(page, 'm7w')
+    const state = {
+      projects: [] as ReturnType<typeof project>[],
+      created: null as Record<string, unknown> | null,
+    }
+    await page.route(/\/api\/sv\/system(\?|$)/, (route) =>
+      route.fulfill({
+        json: {
+          studio: { version: 'e2e', commit: 'e2e' },
+          services: ['codegen-cpp', 'toolchain-cpp', 'codegen-cpp-wasm', 'toolchain-cpp-wasm'].map(
+            (service) => ({
+              service,
+              status: 'ok',
+            })
+          ),
+        },
+      })
+    )
+    await page.route(/\/api\/sv\/projects(\?|$)/, (route) => {
+      if (route.request().method() === 'POST') {
+        state.created = route.request().postDataJSON()
+        state.projects = [{ ...project([]), target: 'wasm' }]
+        return route.fulfill({ json: state.projects[0] })
+      }
+      return route.fulfill({ json: { projects: state.projects } })
+    })
+    await page.route(`**/api/sv/projects/${PROJECT_ID}/size`, (route) =>
+      route.fulfill({ json: { bytes: 1024 ** 2, buildBytes: 0 } })
+    )
+    await page.route(/\/api\/sv\/capacity(\?|$)/, (route) =>
+      route.fulfill({
+        json: {
+          disk: { freeBytes: 50 * 1024 ** 3, totalBytes: 100 * 1024 ** 3, level: 'ok' },
+          host: { apps: state.projects.length, limit: 100 },
+          workspace: { apps: state.projects.length, limit: 10 },
+          queue: { queued: 0, limit: 20 },
+        },
+      })
+    )
+    await page.getByRole('link', { name: 'Vehicle apps' }).click()
+    await page.getByRole('textbox', { name: 'App name' }).fill('Wasm App')
+    await page.getByLabel('Runtime').click()
+    await page
+      .getByRole('menuitem', { name: 'WebAssembly (sv-wasm-host)' })
+      .or(page.getByRole('menuitemcheckbox', { name: 'WebAssembly (sv-wasm-host)' }))
+      .click()
+    await page.locator('[data-sv="project-create-submit"]').click()
+    const card = page.locator('[data-sv-project="wasm-app"]')
+    await expect(card).toContainText('C++ · WebAssembly')
+    expect(state.created).toMatchObject({ name: 'Wasm App', language: 'cpp', target: 'wasm' })
+  })
+
   test('SynCode on a workflow in no app creates the app, waits for it and starts by itself (M16-T05)', async ({
     page,
   }) => {
