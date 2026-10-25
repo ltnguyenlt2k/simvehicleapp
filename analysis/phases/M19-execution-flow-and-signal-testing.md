@@ -33,7 +33,7 @@
 - [x] `refs` theo thứ tự xuất hiện; tối đa 8; chuỗi ≤ 120 đơn vị UTF-16 (như JS); int64 là chuỗi (`toJson` theo kiểu IR); chỉ có khi level `node` (sự kiện `exit` không có ở level `trigger`).
 - [x] Simulator (T02a) + C++ + Python + Rust (T02b) phát giống nhau: generator truyền `refs` (key, kiểu IR, giá trị) vào `branch`/`switch`/`wait_until`/`stable_for`; runtime tính lúc `exit`. Conformance so cả `eval` cho golden.
 - [x] `expected.trace.json` GW-A/B/G cập nhật có review ở T02a; golden code C++/Python/Rust GW-A/B/G đổi byte có chủ đích ở T02b (chỉ thêm danh sách `refs` vào các quyết định; diff đã review).
-- Bằng chứng T02b 2026-10-24: C++ gtest 19/19 (GW-A so từng sự kiện, có `eval`), conformance C++ 53/53; Python pytest 43/43, conformance 53/53, ruff sạch trên code sinh; Rust fmt + clippy + test sạch (không feature `host`), conformance 53/53; generator `bun test` 15/17/17 với golden mới. Parity P3 so cả `eval` (bỏ strip) — chạy trên stack sau khi CI dựng image (T07).
+- Bằng chứng T02b 2026-10-24: C++ gtest 19/19 (GW-A so từng sự kiện, có `eval`), conformance C++ 53/53; Python pytest 43/43, conformance 53/53, ruff sạch trên code sinh; Rust fmt + clippy + test sạch (không feature `host`), conformance 53/53; generator `bun test` 15/17/17 với golden mới. Parity P3 so cả `eval`: **7/7** trên stack dev 2026-10-25 (image CI @ `5750f96a`).
 
 ### T03: Mô hình Flow
 - [x] Kiểu `FlowRun`, `FlowStep` (design §3.1); `cause` từ signal update gần nhất ≤ 1 s, cùng giá trị với `trigger.outputs.value`. Không khớp thì không có `cause`; view hiện `trigger.outputs`.

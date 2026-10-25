@@ -289,6 +289,7 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   await pause(page, 1200)
   // Flow (M19-T04): the newest run was fired by the 90 the user injected and took the else branch.
   await page.locator('[data-sv-live-pane="flow"]').click()
+  await caption(page, '13 · Flow: the run your 90 fired, the branch it took and why, what it wrote')
   const newest = page.locator('[data-sv-flow-run]').first()
   await expect(newest).toContainText(`${SPEED} = 90 (you injected)`, { timeout: 10_000 })
   await expect(newest.locator('[data-sv-flow-handle="else"]')).toBeVisible()

@@ -118,5 +118,35 @@ test.describe('M5 Simulate', () => {
     await page.locator('[data-sv-tab="simulation"]').click()
     await expect(page.locator('[data-sv="scenario-input-row"]')).toHaveCount(1)
     await expect(page.getByRole('textbox', { name: 'Input signal' })).toHaveValue('Vehicle.Speed')
+
+    // Why the case failed (M19-T06): expecting the hazard at 1000 ms says when it really came.
+    await page.locator('[data-sv="scenario-editor"]').getByRole('button', { name: 'YAML' }).click()
+    await page
+      .getByRole('textbox', { name: 'Scenario YAML' })
+      .fill(
+        [
+          'scenarioVersion: 1.1.0',
+          'name: Overspeed',
+          'until: 5000',
+          'initial:',
+          '  Vehicle.Speed: 100',
+          '  Vehicle.Body.Lights.Hazard.IsSignaling: false',
+          'inputs:',
+          '  - { t: 1000, path: Vehicle.Speed, value: 130 }',
+          'expect:',
+          '  writes:',
+          '    - { t: 1000, path: Vehicle.Body.Lights.Hazard.IsSignaling, value: true }',
+        ].join('\n')
+      )
+    await page.getByRole('button', { name: 'Apply' }).click()
+    await page.locator('[data-sv-action="simulate"]').click()
+    const why = page.locator('[data-sv="fail-explain"]')
+    await expect(why).toContainText(
+      'Expected Vehicle.Body.Lights.Hazard.IsSignaling = true at 1000 ms',
+      {
+        timeout: 30_000,
+      }
+    )
+    await expect(why).toContainText('written at 3000 ms instead')
   })
 })

@@ -54,8 +54,12 @@ Khi cảnh báo vật cản hết (`!<…IsWarning>`), đèn phanh trở về `"
 ## Tự dựng và kiểm tra
 1. Studio: tạo workflow như bảng trên, chọn tín hiệu trong bảng Signals.
 2. **Simulate** với cùng chuỗi input: timeline phải khớp file `scenario.yaml` của case.
+   - Chuyển sang **Flow** để xem từng lần chạy: trigger nào chạy, nhánh nào được chọn, và giá trị lúc quyết định (vd. `Speed = 72 ⇒ true`).
+   - Case không đạt thì khung **Why the case failed** chỉ ra quyết định đầu tiên đã rẽ khác.
 3. **SynCode** sinh code. Test sinh ra cho project dùng cùng scenario và kiểm cả writes lẫn nội dung HMI (`expect.publishes`).
 4. **Run** trên databroker, inject tín hiệu ở bảng Signals, xem actuator và log HMI.
+   - Pane **Flow** ở tab Live cho thấy cùng luồng đó trên app thật, kèm nguồn của từng giá trị.
+   - **Make test case from this run** biến một lần chạy thành test case.
 
 Với giá trị enum chuỗi trong biểu thức (ví dụ `"ACTIVE"`), cần để trong dấu ngoặc kép. Ô nhập giá trị của block
 `Set actuator` có gợi ý nhanh (quick pick) các giá trị hợp lệ cho actuator boolean hoặc có danh sách `allowed`.

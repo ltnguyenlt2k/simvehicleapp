@@ -9,7 +9,7 @@
 
 ![Full luồng: workflow rẽ nhánh kéo thả → câu tóm tắt + nhãn nhánh → Simulate → SynCode tự tạo app → Run trên KUKSA → Vehicle apps → Export → IDE → trợ lý AI → restart](docs/media/full-flow.gif)
 
-**Video full luồng** (720p, 110 s, có chú thích từng bước; quay 2026-10-24 trên bản mới nhất): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
+**Video full luồng** (720p, 116 s, có chú thích từng bước; quay 2026-10-25 trên bản mới nhất): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
 - Video được quay tự động bởi E2E `modules/simvehicleapp-studio/e2e/tests/m15-full-flow.spec.ts` chạy trên stack thật.
 - Tái tạo bằng một lệnh: `scripts/sv demo-video`. Cần stack đang chạy với `SV_AI_PROVIDER=fake`; khoảng chờ build được cắt tự động.
 
@@ -19,16 +19,16 @@ Các chặng:
    - Nhánh *then*: Stable for 2 s → Set Hazard = true → thông báo HMI "Overspeed".
    - Nhánh *else*: Set Hazard = false.
 7. Block gọn hiện câu tóm tắt (WHEN / IF / DO / SEND); cạnh có nhãn `then` / `else` / `stable`; lint sạch. **Logic** đọc cả workflow thành câu, bấm câu chọn block.
-8. Tab **Test** (dock Problems · Test · Live): Simulate trên đồng hồ ảo: 100 ⇒ tắt, 130 trong 2 s ⇒ bật + HMI, 90 ⇒ tắt. **Generate tests** sinh test case từ chính workflow; mỗi case thành một test của app khi SynCode.
+8. Tab **Test** (dock Problems · Test · Live): Simulate trên đồng hồ ảo: 100 ⇒ tắt, 130 trong 2 s ⇒ bật + HMI, 90 ⇒ tắt. Công tắc **Timeline / Flow** hiện kết quả theo lần chạy (nhánh đã rẽ kèm giá trị điều kiện). **Generate tests** sinh test case từ chính workflow; mỗi case thành một test của app khi SynCode; case không đạt có khung **Why the case failed**.
 9–10. Bấm **SynCode**: workflow chưa có app nên hộp thoại hỏi tên một lần. App được chuẩn bị rồi SynCode tự chạy: graph → IR → C++ → build → test (không LLM). Pill hiện `Built ✓`, **Run** thành nút chính.
-11–13. Run trên KUKSA databroker, tab **Live**: inject tốc độ (ô nhập theo kiểu tín hiệu), đèn hazard bật kèm cảnh báo HMI (Messages), rồi tắt khi giảm tốc. **Deploy**: cùng app lên databroker của xe/bench (tín hiệu thật, inject bị tắt) hoặc thành container image — Test connection.
+11–13. Run trên KUKSA databroker, tab **Live**: inject tốc độ (ô nhập theo kiểu tín hiệu), đèn hazard bật kèm cảnh báo HMI (Messages), rồi tắt khi giảm tốc. Pane **Flow** hiện lần chạy do giá trị bạn inject gây ra (`you injected`), nhánh `else` và giá trị app đã ghi; Run console viết trace thành câu. **Deploy**: cùng app lên databroker của xe/bench (tín hiệu thật, inject bị tắt) hoặc thành container image — Test connection.
 14. Trang **Vehicle apps** (dung lượng, quota, Clean / Delete / Repair) và **System status** (đĩa, app, hàng đợi).
 15. Export zip.
 16. Open IDE (code-server).
 17–18. Trợ lý AI (provider giả lập offline) đề xuất patch; duyệt rồi Accept.
 19. Restart stack: workflow, app và code sinh vẫn còn.
 
-Video ngắn hơn theo tutorial "Overspeed warning" (51 s, quay 2026-10-24): [docs/media/demo.mp4](docs/media/demo.mp4) (`scripts/sv demo-video --tutorial`). Làm theo:
+Video ngắn hơn theo tutorial "Overspeed warning" (55 s, quay 2026-10-25): [docs/media/demo.mp4](docs/media/demo.mp4) (`scripts/sv demo-video --tutorial`). Làm theo:
 [tutorial](docs/user-guide/tutorial.md) · Tài liệu: [docs/README.md](docs/README.md).
 
 ---
@@ -116,7 +116,7 @@ flowchart TB
 | **IDE** | Optional `code-server` (web VS Code) built `FROM` the same toolchain image — open it only when you want to hand-edit generated code or debug. |
 | **AI assistant** | A chat panel (not the old Copilot) wired to your own LLM key from `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) plus an MCP server/client — it proposes workflow patches, it does not write production C++. |
 | **Architecture record** | 47 ADRs (`analysis/adr/`), each re-verified against real upstream source (GitHub, npm registry, actual `.clang-format`/schema files) rather than assumption — see the 2026-10-01 review log in the ADR index. |
-| **Status (2026-10-24)** | M0–M10 gates passed; C++, Python and Rust backends pass parity 7/7 on KUKSA; M16 done (vehicle app lifecycle, host capacity limits, stateful action bar, focused UI, block summaries). M17–M18 (run sandboxes, test cases, Test/Live tabs) are in progress. Planned at the PO's request of 2026-10-24: M19, an execution Flow view shared by Simulate, Test and Live ([ADR-0062](analysis/adr/ADR-0062-execution-flow-trace-and-signal-testing.md)); M20, C++ and Rust compiled to WebAssembly and run by a shared WASM host ([ADR-0061](analysis/adr/ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md)). Live tracking: [docs/ROADMAP.md](docs/ROADMAP.md). |
+| **Status (2026-10-25)** | M0–M10 gates passed; C++, Python and Rust backends pass parity 7/7 on KUKSA; M16 done (vehicle app lifecycle, host capacity limits, stateful action bar, focused UI, block summaries). M17–M18 (run sandboxes, test cases, Test/Live tabs, Deploy) pass their technical gates and wait for PO sign-off. M19 (PO request of 2026-10-24) adds the execution Flow shared by Simulate, Test and Live: every decision says why it went its way, every signal says where it came from, a failed case says where it went wrong ([ADR-0062](analysis/adr/ADR-0062-execution-flow-trace-and-signal-testing.md)). Next, M20: C++ and Rust compiled to WebAssembly and run by a shared WASM host ([ADR-0061](analysis/adr/ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md)). Live tracking: [docs/ROADMAP.md](docs/ROADMAP.md). |
 | **License** | SimVehicleApp's own code: Apache-2.0. Built on Apache-2.0 upstream (Sim, Eclipse Velocitas, Eclipse KUKSA) and MPL-2.0 (COVESA VSS data). The Sim Enterprise (`ee/`) surface and anything AGPL (Scratch) are explicitly excluded — see [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
 ---
@@ -137,7 +137,7 @@ flowchart TB
 | **IDE** | `code-server` (VS Code chạy trên web) tuỳ chọn, build `FROM` cùng image toolchain — chỉ mở khi cần sửa tay code đã sinh hoặc debug. |
 | **AI assistant** | Khung chat (thay Copilot cũ) gắn API key LLM riêng từ `.env` (Anthropic/OpenAI/Gemini/Ollama/OpenAI-compatible) cộng MCP server/client — chỉ đề xuất patch workflow, không viết C++ production. |
 | **Hồ sơ kiến trúc** | 47 ADR (`analysis/adr/`), mỗi cái đã verify lại bằng source thật (GitHub, npm registry, file `.clang-format`/schema thật) thay vì suy đoán — xem log review 2026-10-01 trong mục lục ADR. |
-| **Trạng thái (2026-10-24)** | Gate M0–M10 PASS; backend C++, Python, Rust đều parity 7/7 trên KUKSA. M16 xong (vòng đời vehicle app, giới hạn dung lượng host, thanh hành động có trạng thái, UI tập trung, câu tóm tắt block). M17–M18 (sandbox mỗi run, test case, tab Test/Live) đang làm. Đã lên kế hoạch theo yêu cầu PO 2026-10-24: M19 — Flow view chung cho Simulate, Test và Live ([ADR-0062](analysis/adr/ADR-0062-execution-flow-trace-and-signal-testing.md)); M20 — C++ và Rust biên dịch ra WebAssembly, chạy trên một host WASM chung ([ADR-0061](analysis/adr/ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md)). Tiến độ sống: [docs/ROADMAP.md](docs/ROADMAP.md). |
+| **Trạng thái (2026-10-25)** | Gate M0–M10 PASS; backend C++, Python, Rust đều parity 7/7 trên KUKSA. M16 xong (vòng đời vehicle app, giới hạn dung lượng host, thanh hành động có trạng thái, UI tập trung, câu tóm tắt block). M17–M18 (sandbox mỗi run, test case, tab Test/Live, Deploy) PASS gate kỹ thuật, chờ PO duyệt. M19 (yêu cầu PO 2026-10-24) thêm Flow chung cho Simulate, Test và Live: mỗi quyết định nói vì sao rẽ nhánh, mỗi tín hiệu nói đến từ đâu, case không đạt chỉ ra chỗ sai ([ADR-0062](analysis/adr/ADR-0062-execution-flow-trace-and-signal-testing.md)). Tiếp theo, M20 — C++ và Rust biên dịch ra WebAssembly, chạy trên một host WASM chung ([ADR-0061](analysis/adr/ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md)). Tiến độ sống: [docs/ROADMAP.md](docs/ROADMAP.md). |
 | **License** | Code riêng của SimVehicleApp: Apache-2.0. Dựa trên upstream Apache-2.0 (Sim, Eclipse Velocitas, Eclipse KUKSA) và MPL-2.0 (dữ liệu COVESA VSS). Bề mặt Sim Enterprise (`ee/`) và mọi thứ AGPL (Scratch) đều bị loại trừ tường minh — xem [ADR-0004](analysis/adr/ADR-0004-license-compliance.md). |
 
 ---
@@ -195,7 +195,7 @@ Máy cấu hình thấp hoặc chỉ để chạy: dùng image dựng sẵn củ
 3. **SynCode:** sinh code C++/Python/Rust, build và test.
    - Workflow chưa có vehicle app ⇒ hộp thoại hỏi tên và ngôn ngữ một lần. App sẵn sàng thì SynCode tự chạy.
    - Release VSS lấy theo workflow.
-4. **Run:** chạy app thật trên KUKSA databroker. Tab **Signals** để inject/xem tín hiệu, **Run console** xem log và trace.
+4. **Run:** chạy app thật trên KUKSA databroker. Tab **Live**: bảng Signals để inject/xem tín hiệu; **Run console** xem log và trace viết thành câu (công tắc Raw); **Flow** xem từng lần chạy: cái gì kích hoạt (và từ đâu: inject, playback, app, xe), nhánh đã rẽ kèm giá trị điều kiện, app đã ghi gì. Bấm **Make test case from this run** để khoá hành vi đó thành test case ([hướng dẫn](docs/user-guide/test-signals.md)).
 5. **Open IDE / Export:** mở code-server đúng project, hoặc tải zip build được ngoài SimVehicleApp.
 6. **Menu workflow (…) → Download workflow (.json):** tải workflow kèm release VSS và scenario. **Import** khôi phục cả hai; **Duplicate** cũng copy cả hai.
 

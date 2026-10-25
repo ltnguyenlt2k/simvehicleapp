@@ -152,8 +152,8 @@ test.describe('M8 live run on the real stack', () => {
     )
     await expect(set.locator('[data-sv="trace-badge"]')).toHaveText(/\d+×/)
     await page.locator('[data-sv-tab="live"]').click()
-    await consoleHas(page, '· Stable for 1')
-    await consoleHas(page, '· Set IsSignaling 1')
+    await consoleHas(page, '→ Stable for 1')
+    await consoleHas(page, '→ Set IsSignaling 1')
 
     // reload: the run log comes back from the stored stream
     await page.reload()
@@ -163,7 +163,7 @@ test.describe('M8 live run on the real stack', () => {
       timeout: 30_000,
     })
     await expect(page.getByRole('log', { name: 'Run console' })).toContainText(
-      '· Set IsSignaling 1'
+      '→ Set IsSignaling 1'
     )
 
     // Stop < 5 s
