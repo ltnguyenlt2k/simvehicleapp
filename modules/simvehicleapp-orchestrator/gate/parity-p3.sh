@@ -3,6 +3,7 @@
 # on the KUKSA databroker, scenarios played by the signal-gateway, traces compared with the goldens.
 # Creates a fresh project and deletes it on exit (SV_KEEP_APPS=1 keeps it); never removes volumes. Report: $SV_PARITY_REPORT (default parity-p3.json).
 #   modules/simvehicleapp-orchestrator/gate/parity-p3.sh [GW-A,GW-C]       env SV_PARITY_LANGUAGE=python: the Python backend (M12)
+#   SV_PARITY_TARGET=wasm: the language's WebAssembly app (ADR-0061; needs the wasm profile)
 #   SV_PARITY_API: the API the apps run on — kuksa.val.v2 by default (the orchestrator's default, ADR-0047);
 #   sdv.databroker.v1 when the stack sets SV_DATABROKER_API=*=sdv.databroker.v1
 set -euo pipefail
@@ -16,5 +17,5 @@ export INTERNAL_API_SECRET SLUG GOLDENS
 source scripts/lib/sv-apps.sh
 trap 'sv_delete_apps "$SLUG"' EXIT
 docker run --rm --network simvehicleapp_sv-internal --user "$(id -u):$(id -g)" -e HOME=/tmp -e INTERNAL_API_SECRET -e SLUG -e GOLDENS \
-  -e SV_PARITY_DEBUG -e SV_PARITY_LANGUAGE -e SV_PARITY_API -e SV_PARITY_REPORT=/out/$(basename "$out") -v "$(dirname "$out")":/out \
+  -e SV_PARITY_DEBUG -e SV_PARITY_LANGUAGE -e SV_PARITY_TARGET -e SV_PARITY_API -e SV_PARITY_REPORT=/out/$(basename "$out") -v "$(dirname "$out")":/out \
   -v "$PWD":/repo:ro -w /repo/modules/simvehicleapp-orchestrator oven/bun:1.3.8 bun gate/parity-p3.ts
