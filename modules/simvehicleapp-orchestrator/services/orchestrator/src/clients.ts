@@ -232,6 +232,8 @@ export function httpClients(e: Endpoints): Clients {
       return Promise.all(
         targets.map(async ([service, url]): Promise<ServiceStatus> => {
           const t0 = performance.now();
+          // A WebAssembly backend is a path of its codegen service (`…/wasm`, ADR-0061): the service answers health.
+          url = url.replace(/\/wasm\/?$/, "");
           try {
             const health = await fetch(`${url}/healthz`, { signal: AbortSignal.timeout(2000) });
             const latencyMs = Math.round(performance.now() - t0);

@@ -21,7 +21,8 @@ describe("clients.system()", () => {
       compiler: `http://127.0.0.1:${up.port}`,
       workspace: `http://127.0.0.1:${degraded.port}`,
       signalGateway: "http://127.0.0.1:1",
-      backends: { cpp: `http://127.0.0.1:${up.port}` },
+      // a WebAssembly backend is a path of the same service: its health is the service's (ADR-0061)
+      backends: { cpp: `http://127.0.0.1:${up.port}`, "cpp-wasm": `http://127.0.0.1:${up.port}/wasm` },
       toolchains: { cpp: "http://127.0.0.1:1" },
       secret: "s",
     });
@@ -31,6 +32,7 @@ describe("clients.system()", () => {
       ["workspace", "degraded"],
       ["signal-gateway", "down"],
       ["codegen-cpp", "ok"],
+      ["codegen-cpp-wasm", "ok"],
       ["toolchain-cpp", "down"],
     ]);
     expect(s[0]).toMatchObject({ version: "0.4.0", commit: "abc", contracts: "1.0.0-alpha.1" });

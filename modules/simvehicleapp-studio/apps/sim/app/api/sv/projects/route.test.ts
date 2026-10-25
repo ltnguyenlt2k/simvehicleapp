@@ -153,6 +153,27 @@ describe('/api/sv/projects (M07-T17)', () => {
     )
     expect(py.status).toBe(200)
     expect(mockCall.mock.calls[2][2].body).toMatchObject({ slug: 'py', language: 'python' })
+    expect(mockCall.mock.calls[2][2].body.target).toBeUndefined()
+
+    // A WebAssembly app (ADR-0061): the target goes to the orchestrator.
+    mockCall.mockResolvedValueOnce(reply(201, project('p3', { language: 'rust', target: 'wasm' })))
+    const wasm = await POST(
+      createMockRequest('POST', {
+        workspaceId: WS,
+        name: 'W',
+        slug: 'w',
+        vssRelease: 'v4.0',
+        workflowIds: [],
+        language: 'rust',
+        target: 'wasm',
+      })
+    )
+    expect(wasm.status).toBe(200)
+    expect(mockCall.mock.calls[3][2].body).toMatchObject({
+      slug: 'w',
+      language: 'rust',
+      target: 'wasm',
+    })
   })
 
   it('refuses to create without write access and relays a taken folder name', async () => {

@@ -59,7 +59,7 @@ export function ProjectCard({ project, workspaceId, workflows, canEdit }: Projec
   const status = STATUS[project.status]
   const details = [
     `/workspace/projects/${project.slug}`,
-    LANGUAGE[project.language] ?? project.language,
+    `${LANGUAGE[project.language] ?? project.language}${project.target === 'wasm' ? ' · WebAssembly' : ''}`,
     `VSS ${project.vssRelease}`,
     project.appName,
     size ? formatFileSize(size.bytes) : null,

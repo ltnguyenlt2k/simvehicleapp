@@ -57,7 +57,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const parsed = await parseRequest(svCreateProjectContract, request, {})
   if (!parsed.success) return parsed.response
-  const { workspaceId, name, slug, vssRelease, workflowIds, language } = parsed.data.body
+  const { workspaceId, name, slug, vssRelease, workflowIds, language, target } = parsed.data.body
   const access = await checkWorkspaceAccess(workspaceId, session.user.id)
   if (!access.hasAccess) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
   if (!access.canWrite) return NextResponse.json({ error: 'Access denied' }, { status: 403 })
@@ -85,7 +85,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
 
   const created = await orchestrator('/projects', {
     method: 'POST',
-    body: { slug, name, language, vssRelease },
+    body: { slug, name, language, ...(target === 'wasm' ? { target } : {}), vssRelease },
   })
   if (created instanceof NextResponse) return created
   if (created.status !== 201) return upstreamError(created)

@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, ChipInput, ChipSelect, toast } from '@/components/emcn'
 import { appSlugOf, SV_APP_SLUG } from '@/lib/sv/app-slug'
-import { installedLanguages, type SvLanguage } from '@/lib/sv/languages'
+import {
+  installedLanguages,
+  SV_RUNTIMES,
+  type SvLanguage,
+  type SvRuntime,
+  wasmAvailable,
+} from '@/lib/sv/languages'
 import { useUserPermissionsContext } from '@/app/workspace/[workspaceId]/providers/workspace-permissions-provider'
 import { CapacityBar } from '@/app/workspace/[workspaceId]/vehicle-projects/components/capacity-bar'
 import { ProjectCard } from '@/app/workspace/[workspaceId]/vehicle-projects/components/project-card'
@@ -34,6 +40,8 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
   const [language, setLanguage] = useState<SvLanguage>('cpp')
   const { data: system } = useSvSystemStatus()
   const languages = installedLanguages(system?.services)
+  const [runtime, setRuntime] = useState<SvRuntime>('velocitas')
+  const canWasm = wasmAvailable(system?.services, language)
 
   const releases = catalog?.releases ?? []
   const defaultRelease = releases.find((r) => r.default)?.release ?? releases[0]?.release
@@ -53,7 +61,15 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
   const onCreate = () => {
     if (!name.trim() || !slugValid || !vssRelease) return
     createProject.mutate(
-      { workspaceId, name: name.trim(), slug, vssRelease, workflowIds: [], language },
+      {
+        workspaceId,
+        name: name.trim(),
+        slug,
+        vssRelease,
+        workflowIds: [],
+        language,
+        ...(canWasm && runtime === 'wasm' ? { target: 'wasm' as const } : {}),
+      },
       {
         onSuccess: (project) => {
           toast.success(`Vehicle app ${project.name} created — preparing its folder`)
@@ -121,6 +137,17 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
                 options={languages.map((l) => ({ label: l.label, value: l.value }))}
               />
             </div>
+            {canWasm && (
+              <div className='flex flex-col gap-1 text-[12px] text-[var(--text-secondary)]'>
+                <span>Runtime</span>
+                <ChipSelect
+                  aria-label='Runtime'
+                  value={runtime}
+                  onChange={(v) => setRuntime(v as SvRuntime)}
+                  options={SV_RUNTIMES.map((r) => ({ label: r.label, value: r.value }))}
+                />
+              </div>
+            )}
             <Button
               variant='primary'
               data-sv='project-create-submit'

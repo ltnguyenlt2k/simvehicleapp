@@ -549,6 +549,8 @@ export const svCreateProjectBodySchema = z.object({
   workflowIds: z.array(workflowIdSchema).max(500),
   /** Language of the generated app (ADR-0040, ADR-0041); the stack must have its backend and toolchain. */
   language: z.enum(['cpp', 'python', 'rust']).default('cpp'),
+  /** What the app runs on (ADR-0061): `wasm` needs the language's WebAssembly backend and toolchain. */
+  target: z.enum(['velocitas', 'wasm']).optional(),
 })
 
 /** `POST /api/sv/projects` — create a C++ or Python project in the workspace and assign workflows. */

@@ -14,7 +14,13 @@ import {
 import { isApiClientError } from '@/lib/api/client/errors'
 import type { SvProject } from '@/lib/api/contracts/sv'
 import { appSlugWithSuffix, freeAppSlug } from '@/lib/sv/app-slug'
-import { installedLanguages, type SvLanguage } from '@/lib/sv/languages'
+import {
+  installedLanguages,
+  SV_RUNTIMES,
+  type SvLanguage,
+  type SvRuntime,
+  wasmAvailable,
+} from '@/lib/sv/languages'
 import { toastSvError } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/syncode/capacity-toast'
 import { useCreateSvProject, useUpdateSvProjectWorkflows } from '@/hooks/queries/sv-projects'
 import { useSvSystemStatus } from '@/hooks/queries/sv-system'
@@ -64,6 +70,8 @@ export function CreateAppModal({
   const [name, setName] = useState(workflowName)
   const [language, setLanguage] = useState<SvLanguage>('cpp')
   const languages = installedLanguages(system?.services)
+  const [runtime, setRuntime] = useState<SvRuntime>('velocitas')
+  const canWasm = wasmAvailable(system?.services, language)
   const sameRelease = projects.filter(
     (p) =>
       p.vssRelease === vssRelease &&
@@ -96,6 +104,7 @@ export function CreateAppModal({
       vssRelease,
       workflowIds: [workflowId],
       language,
+      ...(canWasm && runtime === 'wasm' ? { target: 'wasm' as const } : {}),
     }
     try {
       return await create.mutateAsync(body)
@@ -168,6 +177,16 @@ export function CreateAppModal({
             value={language}
             onChange={(v) => setLanguage(v as SvLanguage)}
             options={languages.map((l) => ({ value: l.value, label: l.label }))}
+          />
+        )}
+        {isNew && canWasm && (
+          <ChipModalField
+            type='dropdown'
+            title='Runtime'
+            hint='WebAssembly: one small module run by sv-wasm-host, sandboxed with memory and time limits.'
+            value={runtime}
+            onChange={(v) => setRuntime(v as SvRuntime)}
+            options={SV_RUNTIMES.map((r) => ({ value: r.value, label: r.label }))}
           />
         )}
         <ChipModalField
