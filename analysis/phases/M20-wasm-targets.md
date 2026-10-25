@@ -93,11 +93,20 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
 - [x] Deploy image (ADR-0060): job `image` của toolchain-wasm build module rồi đóng image `FROM scratch` gồm `sv-wasm-host` (cùng các thư viện `ldd`), `app.cwasm`, `sv-app.json`; lệnh chạy `/app /app.cwasm /sv-app.json`. Gate `m18-image.sh <lang> wasm` trên stack dev: **C++ và Rust PASS** (push không cần Docker, khoảng 9 MB nén / 25 MB giải nén, pull theo digest, chạy ⇒ `app.started`).
 - [ ] E2E UI: chọn Runtime WebAssembly trong hộp thoại tạo app (studio image, CI) — làm ở T09 cùng full luồng.
 
-### T07: Studio/orchestrator
-- [ ] Tạo project: "Runtime: Velocitas (native) / WebAssembly"; Vehicle apps hiện target.
-- [ ] Run, Signals, Test/Play, Flow chạy như native.
-- [ ] Export: source + build files + `sv-app.json` + README chạy bằng `sv-wasm-host`; NOTICE có Wasmtime/wasi-sdk.
-- [ ] Deploy image `FROM simvehicleapp/wasm-host`.
+### T08: Conformance, parity, tái lập, an toàn, hiệu năng (2026-10-25, stack dev)
+- [x] Conformance: `gate/m20-wasm-conformance.sh cpp|rust` — mọi case golden + conformance sinh bằng `/wasm/generate`, build trong toolchain-wasm, chạy trong guest bằng `sv-wasm-host --test`; golden so `expected.writes` và cả `expected.trace` theo thứ tự (bỏ `runId`/`seq` của lần chạy simulator). **cpp-wasm 52/52, rust-wasm 52/52.**
+- [x] Parity P3 trên `kuksa.val.v2` (`SV_PARITY_TARGET=wasm`): **7/7 cho C++ và Rust**, drift tối đa 6 ms. SynCode của app WASM 3–6 s (C++ native: 19 s).
+- [x] Tái lập: hai lần build GW-A ở thư mục mới cho cùng sha256 (C++ `30226bdc…`, Rust `eebb138c…`).
+- [x] An toàn: test của host (T03) — ghi ngoài allowlist ⇒ `forbidden`, đọc ngoài allowlist ⇒ `-2`, vượt 64 MiB ⇒ `memory.grow` trả `-1`, quá hạn 200 ms ⇒ `wasm_limit`, trap ⇒ `wasm_trap`; host không crash, in trace `error` rồi dừng app.
+- [x] Hiệu năng (GW-A):
+  | | C++ WASM | Rust WASM | C++ native (tham chiếu) |
+  |---|---|---|---|
+  | `.wasm` sau strip | 1,06 MB | 348 KB | binary 19,8 MB (image giải nén, M18) |
+  | `.cwasm` | 2,7 MB | 1,1 MB | — |
+  | RSS lúc chạy (docker stats, chờ tín hiệu) | 11,2 MiB | 2,9 MiB | chưa đo riêng (app native chạy trong container toolchain) |
+  | Image deploy (nén / giải nén) | 9,0 / 25,1 MB | 8,7 / 23,4 MB | 8,1 / 19,8 MB |
+  | `sv_step` trung bình (spike) | 0,4–0,7 µs | 0,4–0,5 µs | — |
+- Còn: chạy hai gate trên nightly khi image `toolchain-wasm` được build trên CI.
 
 ### T09: Đóng milestone
 - [ ] Gate M20; full luồng `@live` cho project WASM C++ và Rust; quay lại video.
