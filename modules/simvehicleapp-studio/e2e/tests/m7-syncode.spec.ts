@@ -230,7 +230,7 @@ test.describe('M7 SynCode', () => {
     await page.route(/\/api\/sv\/projects(\?|$)/, (route) => {
       if (route.request().method() === 'POST') {
         state.created = route.request().postDataJSON()
-        state.projects = [{ ...project([]), target: 'wasm' }]
+        state.projects = [{ ...project([]), name: 'Wasm App', slug: 'wasm-app', target: 'wasm' }]
         return route.fulfill({ json: state.projects[0] })
       }
       return route.fulfill({ json: { projects: state.projects } })
