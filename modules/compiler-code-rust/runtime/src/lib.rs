@@ -10,6 +10,10 @@ pub mod values;
 #[cfg(feature = "host")]
 pub mod host;
 
+/// The runtime as a WebAssembly guest of `sv-wasm-host` (ADR-0061).
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 pub use runtime::{
     Ctx, Expr, PubSub, Runtime, SignalRef, StateRef, StdoutTraceSink, TopicRef, TraceRecord,
     TraceSink, VehicleAccess, Workflow,

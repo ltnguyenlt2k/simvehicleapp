@@ -1,0 +1,21 @@
+{
+  "file": "app/src/generated/workflows/periodic_telemetry.rs",
+  "workflowId": "gw_e",
+  "irHash": "sha256:77be02a978f54386a11eded8c64a0b9fe9e91508d154b7a6641ff7996deb1c03",
+  "ranges": [
+    {
+      "startLine": 22,
+      "endLine": 30,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_e"
+    },
+    {
+      "startLine": 32,
+      "endLine": 53,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_e"
+    }
+  ]
+}

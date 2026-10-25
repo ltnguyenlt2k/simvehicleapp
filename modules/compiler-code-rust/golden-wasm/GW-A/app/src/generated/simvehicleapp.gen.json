@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_a",
+      "revision": 1,
+      "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "8294b47fbf2134a213ab688a056a7eca908077203f584eb2a1bd0d8cf3d32034",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "4dbeeab62519651231332acb170108c138ca98437fa396acd20bf0ffe03fb8e7",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/stable_overspeed_warning.map.json",
+      "sha256": "34a6237c948dbedd02b5a03c568b065c68ad9fcdf353a85037d49fc92136f482",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "0ae18fe262f6aeb603cb1becd491ce72254d6974c809f4d34879c312d497848e",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/wasm.rs",
+      "sha256": "84f882163dae99c18efd75e515394131f9e615b64f4c1ee4a199b0b3d5623fd4",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "0ea105a37d7cbaef8e2dd18caab9c4b837b45fe7e77573d4533d60f6c8d2d69b",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/stable_overspeed_warning.rs",
+      "sha256": "d8daa557ed2a41a25c5166e7ba06ac299282c2657969a8312348137db93bcdec",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "abedb3339710496645e342882e0f0cf8ffae1e833b79cf6fb545f3a0c34582d6",
+      "role": "test"
+    }
+  ]
+}

@@ -432,12 +432,15 @@ jobs:
         run: |
           want=$(git rev-parse HEAD:modules/velocitas-stack/templates/vehicle-app-rust-template)
           grep -q "templateSha: $want" ../backend.yaml || { echo "templateSha must be $want (template changed)"; exit 1; }
+          want=$(git rev-parse HEAD:modules/velocitas-stack/templates/wasm-app-rust)
+          grep -q "templateSha: $want" ../backend.wasm.yaml || { echo "backend.wasm.yaml templateSha must be $want (template changed)"; exit 1; }
       - name: Runtime — rustfmt, clippy (-D warnings) and unit tests, with the host feature (kuksa-rust-sdk builds protoc)
         run: >-
           docker run --rm -v "$PWD/../runtime":/src:ro rust:1.98.1-slim-bookworm bash -c 'cp -r /src /tmp/w && cd /tmp/w
           && apt-get update -qq && apt-get install -y -qq cmake g++ >/dev/null
           && rustup component add rustfmt clippy >/dev/null && cargo fmt --check
-          && cargo clippy --features host --all-targets -j4 -- -D warnings && cargo test --features host -q -j4'
+          && cargo clippy --features host --all-targets -j4 -- -D warnings && cargo test --features host -q -j4
+          && cargo clippy --features wasm --all-targets -j4 -- -D warnings && cargo test --features wasm -q -j4'
       - name: Conformance P1 — 38 conformance + 7 goldens + string fuzz, generated Rust on the runtime
         run: conformance/conformance.sh
 

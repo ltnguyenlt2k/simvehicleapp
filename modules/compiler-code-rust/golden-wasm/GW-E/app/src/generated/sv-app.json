@@ -1,0 +1,13 @@
+{
+  "app": "PeriodicTelemetryApp",
+  "signals": {
+    "read": [
+      "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current",
+      "Vehicle.Speed"
+    ],
+    "write": []
+  },
+  "topics": [
+    "simvehicleapp/telemetry"
+  ]
+}

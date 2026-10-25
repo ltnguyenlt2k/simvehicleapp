@@ -1,0 +1,12 @@
+# The WebAssembly target of the Rust backend (ADR-0061, M20-T05): GET /wasm/capabilities is backend.yaml with these
+# fields replaced. Same emitter and opcodes as the native target; the app is a wasm32-wasip1 guest of sv-wasm-host.
+id: rust-wasm
+target:
+  kind: wasm
+  triple: wasm32-wasip1
+  abi: sv-wasm-abi/1
+  host: { name: sv-wasm-host, version: 0.1.0 }
+toolchain:
+  id: toolchain-wasm
+  template: wasm-app-rust
+  templateSha: cc6f89875174cd226f5f045c909f657795fa7d30  # git tree id of velocitas-stack/templates/wasm-app-rust

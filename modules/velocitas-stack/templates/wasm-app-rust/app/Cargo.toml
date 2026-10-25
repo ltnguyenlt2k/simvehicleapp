@@ -1,0 +1,20 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+
+# A WebAssembly vehicle app (ADR-0061): a wasm32-wasip1 module run by sv-wasm-host (sv-wasm-abi/1).
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+simvehicleapp-runtime = { path = "src/simvehicleapp-runtime", features = ["wasm"] }
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+panic = "abort"

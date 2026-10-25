@@ -1,0 +1,11 @@
+{
+  "app": "WelcomeSequenceApp",
+  "signals": {
+    "read": [],
+    "write": [
+      "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity",
+      "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn"
+    ]
+  },
+  "topics": []
+}

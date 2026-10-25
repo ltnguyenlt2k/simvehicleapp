@@ -1,0 +1,16 @@
+{
+  "app": "WindowCloseOnRainApp",
+  "signals": {
+    "read": [
+      "Vehicle.Body.Raindetection.Intensity",
+      "Vehicle.Speed"
+    ],
+    "write": [
+      "Vehicle.Cabin.Door.Row1.DriverSide.Window.Position",
+      "Vehicle.Cabin.Door.Row1.PassengerSide.Window.Position",
+      "Vehicle.Cabin.Door.Row2.DriverSide.Window.Position",
+      "Vehicle.Cabin.Door.Row2.PassengerSide.Window.Position"
+    ]
+  },
+  "topics": []
+}

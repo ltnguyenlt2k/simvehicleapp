@@ -1,0 +1,40 @@
+[
+  {
+    "name": "GW-F Welcome Sequence",
+    "workflow": "gw_f",
+    "scenario": {
+      "scenarioVersion": "1.0.0",
+      "name": "GW-F Welcome Sequence",
+      "vss": {
+        "release": "v4.0"
+      },
+      "until": 2000,
+      "initial": {
+        "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn": false,
+        "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity": 10
+      },
+      "inputs": [],
+      "expect": {
+        "writes": [
+          {
+            "t": 0,
+            "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.IsLightOn",
+            "value": true
+          },
+          {
+            "t": 500,
+            "path": "Vehicle.Cabin.Light.AmbientLight.Row1.DriverSide.Intensity",
+            "value": 80
+          }
+        ],
+        "trace": [
+          {
+            "ev": "exit",
+            "blockId": "b6",
+            "ts": 500
+          }
+        ]
+      }
+    }
+  }
+]

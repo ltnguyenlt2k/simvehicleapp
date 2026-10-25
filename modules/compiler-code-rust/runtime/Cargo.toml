@@ -11,6 +11,8 @@ publish = false
 default = []
 # The databroker/MQTT host of a generated app (kuksa-rust-sdk, sdv.databroker.v1).
 host = ["dep:tokio", "dep:kuksa-rust-sdk", "dep:rumqttc", "dep:tonic"]
+# The runtime as a WebAssembly guest of sv-wasm-host (sv-wasm-abi/1, ADR-0061): no network dependency.
+wasm = []
 
 [dependencies]
 serde_json = { version = "1", features = ["preserve_order"] }

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { RequestContext } from "@simvehicleapp/service-kit";
 import { type FileBundle, MODULE_DIR, overlayBundle, runtimeBundle } from "./bundle.ts";
 import { generate } from "./generate.ts";
+import type { Target } from "./project.ts";
 
 /**
  * HTTP surface of the Rust backend (`openapi/backend-plugin.v1.yaml`): /capabilities, /generate,
@@ -14,23 +15,28 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
 /** Generation requests carry IR documents; 8 MB is far above the compiler's 1 MB graph limit. */
 const MAX_BODY_BYTES = 8 * 1024 * 1024;
 
-/** backend.yaml as JSON (GET /capabilities). */
-export function capabilities(moduleDir = MODULE_DIR): Record<string, unknown> {
-  return Bun.YAML.parse(readFileSync(join(moduleDir, "backend.yaml"), "utf8")) as Record<string, unknown>;
+/** backend.yaml as JSON (GET /capabilities); the WebAssembly target replaces fields with backend.wasm.yaml (ADR-0061). */
+export function capabilities(moduleDir = MODULE_DIR, target: Target = "velocitas"): Record<string, unknown> {
+  const base = Bun.YAML.parse(readFileSync(join(moduleDir, "backend.yaml"), "utf8")) as Record<string, unknown>;
+  if (target === "velocitas") return base;
+  return { ...base, ...(Bun.YAML.parse(readFileSync(join(moduleDir, "backend.wasm.yaml"), "utf8")) as Record<string, unknown>) };
 }
 
 export function createBackendHandler(moduleDir = MODULE_DIR) {
   // Everything static is read once at start-up; requests never touch the disk.
-  const caps = JSON.stringify(capabilities(moduleDir));
+  const caps = { velocitas: JSON.stringify(capabilities(moduleDir)), wasm: JSON.stringify(capabilities(moduleDir, "wasm")) };
   const bundles: Record<string, FileBundle> = {
     "/runtime/files": runtimeBundle(moduleDir),
     "/template-overlay/files": overlayBundle(moduleDir),
   };
   return async (req: Request, ctx: RequestContext): Promise<Response> => {
-    const { pathname } = new URL(req.url);
+    const url = new URL(req.url).pathname;
+    // The WebAssembly target is the same backend under /wasm (SV_BACKENDS rust-wasm=http://codegen-rust:4130/wasm).
+    const target: Target = url === "/wasm" || url.startsWith("/wasm/") ? "wasm" : "velocitas";
+    const pathname = target === "wasm" ? url.slice("/wasm".length) || "/" : url;
     if (pathname === "/capabilities" || pathname in bundles) {
       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
-      return pathname === "/capabilities" ? new Response(caps, { headers: { "content-type": "application/json" } }) : json(200, bundles[pathname]);
+      return pathname === "/capabilities" ? new Response(caps[target], { headers: { "content-type": "application/json" } }) : json(200, bundles[pathname]);
     }
     if (pathname === "/generate") {
       if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -41,7 +47,7 @@ export function createBackendHandler(moduleDir = MODULE_DIR) {
       } catch {
         return json(400, { error: "invalid_json" });
       }
-      const r = generate(body);
+      const r = generate(body, target);
       if (r.ok) return json(200, r.fileSet);
       if (r.status === 400) return json(400, { error: "invalid_request", message: r.error });
       ctx.log.info("generate rejected", { codes: r.diagnostics.map((d) => d.code) });

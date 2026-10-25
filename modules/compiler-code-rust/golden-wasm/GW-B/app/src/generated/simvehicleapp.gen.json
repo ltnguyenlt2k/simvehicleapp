@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_b",
+      "revision": 1,
+      "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "ef0775d100252f71416a9a968044f14b432b046ce7b11aba356d686d5fd015d6",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "ca6272d5f3cbe850207f65476101de56768f8a263f61fcb6811ccafd8f7581d8",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/low_battery_hmi_warning.map.json",
+      "sha256": "abc71e18694d0f47a3cc96dbc81c8e87f7e20c6866a26d276e155fd341ddb3c9",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "3ad5222f354a0ae8983f26eaeb0f13539582fa636c70ff027757802a2b000cba",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/wasm.rs",
+      "sha256": "9bd0523cd467f42b9adf33737fffe4271dd362d01d439460fa0c5b8df7761947",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/low_battery_hmi_warning.rs",
+      "sha256": "23c1575fc5b9be92e554f86500ba87b480008d2cf3113786847d9f5babf01227",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "5af80056775307bd7d013f4aec2124d70eece5d6ef9809a93bc7c4045801d0f2",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "aeadc5c05aaab440fec6b761c88eff0a1e73ca00ca540e29a489061bc05d5bc7",
+      "role": "test"
+    }
+  ]
+}

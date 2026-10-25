@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_g",
+      "revision": 1,
+      "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "ff0bae36ee016336eebb1f85ce6ba6372a3fbacae24e795bfb92ce71a1e2dedd",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "ef1ce119cd6965e8658be207aec428408ec0348324561f66ee53f7ddcb1413b1",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/window_close_on_rain.map.json",
+      "sha256": "c1594b8265d3ea3e80f8ffd507e89eccb13a291e48c1f74f3165273a98f4b250",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "0bf7e94f296f0d26fcf1105db309c2d3f2806ce980a4f7141a6334cf091f4db5",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/wasm.rs",
+      "sha256": "31df9f7b945151072aa0f94e682499350980b54cb474b9486d6ccd4d246ad9df",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "191c971ecaacd7ae90d4356c8a05041b5f66992b7a2cf8fdefcbe68c41ee9311",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/window_close_on_rain.rs",
+      "sha256": "d4e7b2759c13343aeaa6bc484f5fe2e2b50ee5f76a109846f9f59b170e8b2608",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "e530725b91435f9050fb09c10e47e060e9f9500234668a67489461327482b87c",
+      "role": "test"
+    }
+  ]
+}

@@ -64,6 +64,10 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
     - Chạy live trên databroker thật: trigger 130 với `previous` 100 (baseline đúng), `stable` + `eval` sau 2 s, write, publish HMI, `app.stopping`.
     - gtest native 19/19, golden generator không đổi.
   - **C++ generator + template (2026-10-25):** target `wasm` (`/wasm/*`), golden `golden-wasm/GW-A…G` tất định, template `velocitas-stack/templates/wasm-app-cpp` (CMake wasi-sdk, user hooks). Bảy golden wasm biên dịch bằng wasi-sdk-34 và đạt `expected.writes` của golden trong guest (`sv-wasm-host --test`, 7/7 PASS); generator `bun test` 24/24.
+  - **Rust (2026-10-25):** runtime feature `wasm` (`src/wasm.rs`: export qua macro `wasm_app!` sinh trong crate app, adapter host, `run_tests`; import có bản giả cho test native) + `Strand::next_due_ms`; generator target `/wasm` (`wasm.rs`, `sv-app.json`, `cases.json`; `app.rs`/`workflows/**` giống native); template `velocitas-stack/templates/wasm-app-rust` (cdylib, `Cargo.lock` để build offline); `golden-wasm` GW-A…G. Bằng chứng:
+    - bảy golden build `wasm32-wasip1` offline, khoảng 345 KB mỗi app, và đạt `expected.writes` trên `sv-wasm-host --test` (7/7);
+    - runtime: clippy `-D warnings` sạch có và không có feature `wasm`, test 8/8;
+    - generator `bun test` 26/26, golden native không đổi.
   - Host sửa: chờ giá trị đầu xong mới gửi `start` (rút hết event đang xếp hàng); thiếu bước này thì `previous` thành `null`.
 - [x] Test sinh ra: test case nhúng JSON ⇒ `sv_run_tests` (C++: `cases.json` `[{name, workflow, scenario}]`, mỗi case chỉ bind workflow của nó như test native).
 

@@ -77,6 +77,17 @@ impl Strand {
         self.events.borrow_mut().remove(&id);
     }
 
+    /// Due time of the next event that is not cancelled (a WebAssembly host wakes the guest then).
+    pub fn next_due_ms(&self) -> Option<i64> {
+        let events = self.events.borrow();
+        self.heap
+            .borrow()
+            .iter()
+            .filter(|Reverse((_, id))| events.contains_key(id))
+            .map(|Reverse((at, _))| *at)
+            .min()
+    }
+
     fn pop_due(&self, limit: i64) -> Option<Event> {
         loop {
             if self.stopped.get() {

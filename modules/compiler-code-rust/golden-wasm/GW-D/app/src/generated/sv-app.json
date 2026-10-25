@@ -1,0 +1,15 @@
+{
+  "app": "AutoDoorLockApp",
+  "signals": {
+    "read": [
+      "Vehicle.Speed"
+    ],
+    "write": [
+      "Vehicle.Cabin.Door.Row1.DriverSide.IsLocked",
+      "Vehicle.Cabin.Door.Row1.PassengerSide.IsLocked",
+      "Vehicle.Cabin.Door.Row2.DriverSide.IsLocked",
+      "Vehicle.Cabin.Door.Row2.PassengerSide.IsLocked"
+    ]
+  },
+  "topics": []
+}

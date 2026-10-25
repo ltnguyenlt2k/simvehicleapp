@@ -1,0 +1,15 @@
+{
+  "app": "LowBatteryHMIWarningApp",
+  "signals": {
+    "read": [
+      "Vehicle.IsMoving",
+      "Vehicle.Powertrain.TractionBattery.StateOfCharge.Current"
+    ],
+    "write": [
+      "Vehicle.Cabin.Light.InteractiveLightBar.Color"
+    ]
+  },
+  "topics": [
+    "simvehicleapp/low-battery-hmi-warning/hmi"
+  ]
+}

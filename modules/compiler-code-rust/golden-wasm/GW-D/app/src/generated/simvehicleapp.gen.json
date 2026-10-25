@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "rust-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_d",
+      "revision": 1,
+      "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/app.rs",
+      "sha256": "96c14c86e6232617ec6a4b3991e971f865950268ed83b852f58005d4460d0a9e",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/mod.rs",
+      "sha256": "fa089f11c7cbe4f6fab16b43b8aab4c73fc8fea7ac4175c51984795b10a3ef5f",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/sourcemap/auto_door_lock.map.json",
+      "sha256": "43efed35e8419a7164fdbab4822af00f8aceedd422e9a5cbb271e28f7c4b13a0",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "03ea50a88c927190126add69e5dfe09009d28797e9cace9583fb52d33ce7a1d6",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/wasm.rs",
+      "sha256": "2f47d5bff09dffcdb720af15abbf219b27306a5a933858030441cbd7d9d5c4fe",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/auto_door_lock.rs",
+      "sha256": "1180ee590a0985f64ea574ce0b6b3e7c68de082bfd7d25a333f9419ba0954550",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/mod.rs",
+      "sha256": "fb16aeb184220479d3c3e2bb9286412ba45211d6943991bc2bf3288f7fe5860b",
+      "role": "source"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "fe1dd53fd7b2103b91256d148ca11cb1f6bb9f2742521dd493c165c3f51004e9",
+      "role": "test"
+    }
+  ]
+}

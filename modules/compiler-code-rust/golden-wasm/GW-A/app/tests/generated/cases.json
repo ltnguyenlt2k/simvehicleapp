@@ -1,0 +1,54 @@
+[
+  {
+    "name": "GW-A stable overspeed",
+    "workflow": "gw_a",
+    "scenario": {
+      "scenarioVersion": "1.0.0",
+      "name": "GW-A stable overspeed",
+      "vss": {
+        "release": "v4.0"
+      },
+      "until": 8000,
+      "initial": {
+        "Vehicle.Speed": 0,
+        "Vehicle.Body.Lights.Hazard.IsSignaling": false
+      },
+      "inputs": [
+        {
+          "t": 1000,
+          "path": "Vehicle.Speed",
+          "value": 100
+        },
+        {
+          "t": 2000,
+          "path": "Vehicle.Speed",
+          "value": 130
+        },
+        {
+          "t": 3000,
+          "path": "Vehicle.Speed",
+          "value": 135
+        },
+        {
+          "t": 6000,
+          "path": "Vehicle.Speed",
+          "value": 105
+        }
+      ],
+      "expect": {
+        "writes": [
+          {
+            "t": 5000,
+            "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+            "value": true
+          },
+          {
+            "t": 6000,
+            "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+            "value": false
+          }
+        ]
+      }
+    }
+  }
+]
