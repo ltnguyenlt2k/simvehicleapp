@@ -260,21 +260,32 @@ pub async fn run(mut host: Host) -> Result<()> {
     if code != 0 {
         bail!("the app did not start (sv_init returned {code})");
     }
-    let mut due = abi::pump(&mut host, &mut car)?;
+    abi::pump(&mut host, &mut car)?;
     print(host.take_lines());
     // First values (baselines) before the app counts as started, at most READY.
     let start = tokio::time::Instant::now();
     while pending.get() > 0 && start.elapsed() < READY {
         if let Ok(Some(e)) = tokio::time::timeout(Duration::from_millis(20), rx.recv()).await {
             host.deliver(&e)?;
-            due = abi::pump(&mut host, &mut car)?;
+            abi::pump(&mut host, &mut car)?;
             print(host.take_lines());
         }
     }
     if pending.get() > 0 {
         eprintln!("sv-wasm-host: some subscriptions are not open after {READY:?}, starting anyway");
     }
+    // A subscription counts as open just before its first value is queued: deliver what is queued, so every baseline
+    // is in before `start`.
+    while let Ok(e) = rx.try_recv() {
+        host.deliver(&e)?;
+        abi::pump(&mut host, &mut car)?;
+        print(host.take_lines());
+    }
     lifecycle(&app, "vdb.connected");
+    // The baselines are in: the guest starts its workflows (ABI §4.1 `start`), then the app counts as started.
+    host.deliver(r#"{"kind":"start"}"#)?;
+    let mut due = abi::pump(&mut host, &mut car)?;
+    print(host.take_lines());
     lifecycle(&app, "app.started");
 
     let mut term = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;

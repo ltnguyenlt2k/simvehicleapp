@@ -129,4 +129,15 @@ uint64_t Strand::events() const {
     return m_events;
 }
 
+int64_t Strand::nextDueMs() const {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    int64_t due = -1;
+    for (const auto& e : m_heap) {
+        if (m_cancelled.count(e.seq) == 0 && (due < 0 || e.at < due)) {
+            due = e.at;
+        }
+    }
+    return due;
+}
+
 } // namespace simvehicleapp::rt

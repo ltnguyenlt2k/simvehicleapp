@@ -56,6 +56,7 @@ Each `(path, type)` / `(topic, payload)` pair is four `i32` (two strings).
 {"kind": "get_result", "req": 7, "value": 121, "error": ""}
 {"kind": "set_result", "req": 8, "error": ""}          // "forbidden", "type", "rejected: …", "unavailable"
 {"kind": "mqtt", "sub": 2, "topic": "app/cmd", "payload": "…"}
+{"kind": "start"}                                       // baselines are in: start the workflows (once, after sv_init)
 {"kind": "stop"}
 ```
 
@@ -75,8 +76,10 @@ Each `(path, type)` / `(topic, payload)` pair is four `i32` (two strings).
 - **Determinism:** the runtime does not use `random_get` or wall-clock time beyond `now_ms`; trace and writes are the
   same as the native runtime's for the same inputs (conformance, parity P3).
 
-- **Lifecycle:** the host prints `vdb.connected` and `app.started` once every subscription made in `sv_init` has its
-  first value (at most 2 s, as the native host); the guest emits `app.stopping` in `sv_stop`.
+- **Lifecycle:** `sv_init` binds the workflows and subscribes their signals; once every subscription has its first
+  value (at most 2 s, as the native host) the host prints `vdb.connected`, delivers `start` (the guest reads the
+  baselines with `vdb_current` and starts its workflows) and prints `app.started`. The guest emits `app.stopping` in
+  `sv_stop`.
 
 ## 6. Host environment
 The host reads the same variables as a native app (`SDV_VEHICLEDATABROKER_ADDRESS`, `SDV_MQTT_ADDRESS`,

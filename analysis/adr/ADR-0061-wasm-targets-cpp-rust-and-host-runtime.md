@@ -146,6 +146,9 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-25 — **T04, runtime C++ dạng guest** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - ABI thêm event `start`. `sv_init` chỉ bind workflow và subscribe tín hiệu; host chờ giá trị đầu rồi gửi `start`; guest đọc baseline bằng `vdb_current` rồi mới `Runtime::start()`. Thứ tự giống prefetch ⇒ start của app native, nên `previous` của trigger đúng.
+  - Giữ exception của runtime C++ (`-fwasm-exceptions`, đề xuất từ spike T01), không viết lại thành mã lỗi. Chưa xác nhận với `iwasm`.
 - 2026-10-25 — **T03b** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - ABI thêm `initial: true` cho giá trị đầu của mỗi subscription. Guest coi đó là baseline (như prefetch của host native) để trigger không chạy khi app vừa khởi động.
   - Host in `vdb.connected`/`app.started`; guest in `app.stopping`.

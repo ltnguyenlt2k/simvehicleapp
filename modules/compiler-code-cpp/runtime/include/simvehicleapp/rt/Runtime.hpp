@@ -279,6 +279,9 @@ public:
     void stopAll();
     bool stopped() const { return m_stopped; }
 
+    /** Every signal the workflows read or write, with its VSS type (a WebAssembly app subscribes them before start). */
+    std::vector<std::pair<std::string, std::string>> signals() const;
+
     Strand& strand() { return m_strand; }
     uint64_t runs() const { return m_runCount; }
 

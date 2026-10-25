@@ -112,6 +112,8 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   Reads the baselines, subscribes signals and topics, and posts the app start (app_start triggers, timers, condition baselines) on the strand.
 - `void stopAll()`
   Cancels every run; the strand keeps running other events.
+- `std::vector<std::pair<std::string, std::string>> signals() const`
+  Every signal the workflows read or write, with its VSS type (a WebAssembly app subscribes them before start).
 
 ## `simvehicleapp/rt/Value.hpp` — Giá trị, định dạng, ép kiểu, so sánh (ngữ nghĩa IR_SPEC)
 
@@ -194,6 +196,8 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   Real clock: runs events as they become due until `stop`.
 - `uint64_t events() const`
   Number of events run so far.
+- `int64_t nextDueMs() const`
+  Due time of the next event that is not cancelled, -1 when none (a WebAssembly host wakes the guest then).
 
 ## `simvehicleapp/rt/Access.hpp` — Truy cập xe / MQTT (adapter thay được)
 
@@ -253,3 +257,14 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
   Declares the workflows (generated).
 - `virtual void onAppStart()`
   User hooks (`app/src/user/UserHooks.*`), called around the workflows.
+
+## `simvehicleapp/rt/Wasm.hpp` — Runtime dạng guest WebAssembly (`sv-wasm-abi/1`, ADR-0061): app đăng ký, `src/Wasm.cpp` cài các export (chỉ target wasm)
+
+- `namespace simvehicleapp::rt::wasm`
+  The runtime as a WebAssembly guest (ADR-0061, contracts `abi/sv-wasm-abi.v1.md`): `src/Wasm.cpp` implements the `sv_*` exports over the `sv.*` imports of `sv-wasm-host`; a generated app only registers itself.
+- `std::function<void(Runtime&)> bind`
+  Declares the workflows (generated).
+- `std::function<void()> onAppStart = []`
+  User hooks (`app/src/user/UserHooks.*`).
+- `bool registerApp(App app)`
+  Called once by the generated `MainWasm.cpp` from a static initializer (run by the reactor's `_initialize`).

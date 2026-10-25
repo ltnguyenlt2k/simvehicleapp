@@ -69,6 +69,8 @@ public:
 
     /** Number of events run so far. */
     uint64_t events() const;
+    /** Due time of the next event that is not cancelled, -1 when none (a WebAssembly host wakes the guest then). */
+    int64_t nextDueMs() const;
 
 private:
     struct Event {

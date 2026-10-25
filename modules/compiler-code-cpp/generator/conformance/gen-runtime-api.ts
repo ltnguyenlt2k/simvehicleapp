@@ -20,6 +20,7 @@ const HEADERS: Record<string, string> = {
   "Access.hpp": "Truy cập xe / MQTT (adapter thay được)",
   "Testing.hpp": "Mock vehicle/MQTT, chạy scenario, kiểm kỳ vọng",
   "Velocitas.hpp": "Adapter Velocitas SDK 0.7.1 và host `AppBase` (chỉ trong project)",
+  "Wasm.hpp": "Runtime dạng guest WebAssembly (`sv-wasm-abi/1`, ADR-0061): app đăng ký, `src/Wasm.cpp` cài các export (chỉ target wasm)",
 };
 
 /** `/** … *\/` doc comments and the declaration that follows each one. */

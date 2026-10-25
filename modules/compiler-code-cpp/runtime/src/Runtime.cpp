@@ -1602,6 +1602,10 @@ void Runtime::start() {
     m_strand.postAt(0, [this] { m_impl->startApp(); });
 }
 
+std::vector<std::pair<std::string, std::string>> Runtime::signals() const {
+    return {m_impl->pathType.begin(), m_impl->pathType.end()};
+}
+
 void Runtime::stopAll() {
     m_stopped = true;
     m_impl->appToken->cancel();
