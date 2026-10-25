@@ -57,7 +57,7 @@
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) PO chấp thuận 2026-10-25 ([report](reports/M12.md)) |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); **Go experimental** — PO chấp thuận 2026-10-25 (ADR-0041 Accepted) ([report](reports/M13.md)) |
 | [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052, 0063 (Accepted 2026-10-25) | ✔ | 2026-10-25 (M21): #1, #3, #4, #5, #7, #8, #10, #11 ✔; #2 gRPC, #6 Quick Run, `sv_rate` không làm (lý do ở ADR); #9 IDE proxy ✔ (kiểm trên stack) |
-| [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
+| [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | ✔ | 12/12 ✔ — PO chấp thuận ma trận + video 2026-10-25; quay lại lần cuối (M21 D16) |
 | [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Accepted 2026-10-25) | ✔ | 10/10 ✔, gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M16.md)) |
 | [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Accepted 2026-10-25) | ✔ | 8/8 ✔ (T08 ↷ M18), gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M17.md)) |
 | [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Accepted 2026-10-25) | ✔ | 11/11 ✔ (T06: eval model thật chờ server PO sửa, M21 D7), gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M18.md)) |
@@ -349,7 +349,7 @@ Phụ thuộc: **toàn bộ** M0–M14 (plan, ADR, ROADMAP xong) · Chi tiết: 
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Ma trận kịch bản E2E `e2e/SCENARIOS.md` | — | 🔄 | Claude Code 2026-10-07: [SCENARIOS](../modules/simvehicleapp-studio/e2e/SCENARIOS.md) A–H truy ngược FR/ADR, cột test hiện có; chờ PO review | T01 |
+| Ma trận kịch bản E2E `e2e/SCENARIOS.md` | — | ✔ | Claude Code 2026-10-07: [SCENARIOS](../modules/simvehicleapp-studio/e2e/SCENARIOS.md) A–H truy ngược FR/ADR, cột test hiện có; chờ PO review · 2026-10-25 (M21 D16): PO chấp thuận; video quay lại lần cuối trên stack `f7d8ec01` (full flow + restart + tutorial PASS) | T01 |
 | Kéo thả từ toolbar: mọi block, vào/ra container, thả bị từ chối | — | ✔ | 2026-10-07: `m15-toolbar` 38 block, `m15-containers` (vào Loop/Parallel, Remove from Subflow), `m15-viewer` (quyền read không thả được) — CI `72d14c4`; tìm ra lỗi Battery status (đã sửa) | T02 |
 | Kéo thả từ panel Vehicle: mọi kind × release v4.0/v4.2, menu đúng kind | 0010, 0011 | ✔ | 2026-10-07: `m15-vehicle-panel` PASS CI `419f2d9` (sensor/actuator/attribute/array × v4.0/v4.2 + click) | T03 |
 | Nối mọi handle, nối sai bị chặn, undo/redo, copy/paste, đổi tên ⇒ ref cập nhật | 0011, 0013 | ✔ | 2026-10-07: `m15-connect-edit` PASS CI `419f2d9` (then/else, đổi tên ⇒ `<speed.value>`, vòng bị từ chối, xoá/undo/redo, copy/paste) | T04 |
@@ -357,8 +357,8 @@ Phụ thuộc: **toàn bộ** M0–M14 (plan, ADR, ROADMAP xong) · Chi tiết: 
 | Full luồng signup → dựng → lint → Simulate → SynCode → build → Run → Signals → IDE → Export → AI → restart | toàn bộ | ✔ | 2026-10-07: `m15-full-flow @live` + `@live-restart` PASS local (1,1 phút + 7 s, bản sửa `bdfd92b`); phần restart tìm ra lỗi **mất dữ liệu**: trợ lý gửi graph rỗng khi canvas chưa nạp ⇒ Accept xoá block cũ — đã sửa (lint chỉ phát graph khi workflow nạp xong + chặn proposal lệch) + E2E hồi quy `m15-assistant-reload` | T06 |
 | Cộng tác realtime + mất kết nối/restart service | — | ✔ | 2026-10-07: 3 phiên đồng thời (CI); `@live` dừng compiler 6/6 PASS trên `72d14c4` sau khi sửa lỗi panel kẹt \"Checks unavailable\" (socket keep-alive chết ⇒ BFF retry + lint lại mỗi 5 s); restart service: `@live-restart` | T07 |
 | 3 run CI xanh liên tiếp, 0 flaky | — | ✔ | 2026-10-07: `419f2d9`, `b6f6a5e`, `f520fd9` xanh liên tiếp (toàn bộ E2E không `@live`); flake CI duy nhất (kéo khi tìm kiếm còn render) đã sửa gốc | T08 |
-| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | 🔄 | 2026-10-07: `scripts/demo-video.sh` (Playwright image + restart + ffmpeg: freezedetect cắt chờ ⇒ mp4 720p 84 s + GIF); bản quay đầu tiên trong README | T09 |
-| Hậu kỳ + checklist xem video (PO ký) | — | 🔄 | 2026-10-07: tự kiểm (contact sheet): đủ 15 chặng có chú thích, không lỗi UI, chỉ user giả `example.com`, không secret; **chờ PO xem + ký** | T10 |
+| Kịch bản quay video tất định `scripts/sv demo-video` (1920×1080, chú thích) | — | ✔ | 2026-10-07: `scripts/demo-video.sh` (Playwright image + restart + ffmpeg: freezedetect cắt chờ ⇒ mp4 720p 84 s + GIF); bản quay đầu tiên trong README · 2026-10-25 (M21 D16): PO chấp thuận; video quay lại lần cuối trên stack `f7d8ec01` (full flow + restart + tutorial PASS) | T09 |
+| Hậu kỳ + checklist xem video (PO ký) | — | ✔ | 2026-10-07: tự kiểm (contact sheet): đủ 15 chặng có chú thích, không lỗi UI, chỉ user giả `example.com`, không secret; **chờ PO xem + ký** · 2026-10-25 (M21 D16): PO chấp thuận; video quay lại lần cuối trên stack `f7d8ec01` (full flow + restart + tutorial PASS) | T10 |
 | Video trong README tổng, kiểm hiển thị thật trên GitHub | — | ✔ | 2026-10-07 `b6f6a5e`: README render của GitHub (API html) có GIF động inline + link mp4 1,35 MB | T11 |
 | Báo cáo `docs/reports/M15.md` | — | ✔ | [M15.md](reports/M15.md) — gate **chưa PASS** (3 lượt CI, PO) | T12 |
 
@@ -463,7 +463,7 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 | D13 | #7 Sub-workflow + `sv_rate` | sub-workflow: làm (inline lúc compile); `sv_rate`: không làm (lệch thời gian thực ⇒ trái tất định parity; gia tốc đã có trong VSS) | ✔ 2026-10-25: [ADR-0063](../analysis/adr/ADR-0063-sub-workflow-inline-call.md); `expandCalls` + 5 mã diagnostic mới; block `sv_on_call`/`sv_call_workflow` (spec, studio, chọn workflow); `callees` ở compiler/orchestrator/BFF; C46 PASS compiler + simulator; core 1165, compiler service 17, orchestrator, contracts 417, studio parity 260 test PASS. CI xanh `f7d8ec01`: conformance C46 PASS C++/Python/Rust, E2E toolbar thả cả hai block |
 | D14 | #8 Kanto | manifest deploy, không chạy Kanto trong stack | ✔ 2026-10-25: image push trả descriptor kanto-cm v1.0.0 (kiểm source), nút **Download Kanto descriptor**, [deploy](user-guide/deploy.md); chưa thử trên xe Kanto thật |
 | D15 | #9 IDE proxy + SSO | profile `remote-ide` (Caddy + forward-auth) | ✔ 2026-10-25: kiểm trên stack — không phiên 401, có phiên tới code-server (vẫn hỏi mật khẩu); [DEPLOY](DEPLOY.md) |
-| D16 | M15 T01/T09/T10 | PO chấp thuận; ✔ sau lần quay video cuối | ☐ |
+| D16 | M15 T01/T09/T10 | PO chấp thuận; ✔ sau lần quay video cuối | ✔ 2026-10-25: full flow `@live` + `@live-restart` + tutorial PASS, video quay lại trên `f7d8ec01` |
 
 ---
 
