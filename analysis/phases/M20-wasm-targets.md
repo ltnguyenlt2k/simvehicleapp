@@ -106,11 +106,12 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
   | RSS lúc chạy (docker stats, chờ tín hiệu) | 11,2 MiB | 2,9 MiB | chưa đo riêng (app native chạy trong container toolchain) |
   | Image deploy (nén / giải nén) | 9,0 / 25,1 MB | 8,7 / 23,4 MB | 8,1 / 19,8 MB |
   | `sv_step` trung bình (spike) | 0,4–0,7 µs | 0,4–0,5 µs | — |
-- Còn: chạy hai gate trên nightly khi image `toolchain-wasm` được build trên CI.
+- Nightly: job `wasm` trong `.github/workflows/nightly.yml` build `wasm-host` + `toolchain-wasm` và chạy conformance, parity P3, ADAS live cho C++ và Rust (2026-10-25; chờ lần chạy đầu).
 
 ### T09: Đóng milestone
 - [ ] Gate M20; full luồng `@live` cho project WASM C++ và Rust; quay lại video.
-- [ ] README chính + `docs/user-guide/wasm.md`; `docs/reports/M20.md`; ROADMAP; CHANGELOG; `sv refresh`.
+- [x] README chính + `docs/user-guide/wasm.md`; báo cáo nháp `docs/reports/M20.md`; ROADMAP.
+- [ ] Nightly `wasm` xanh; `sv refresh`; báo cáo chốt.
 
 ## Acceptance gate
 1. Cùng một workflow ⇒ SynCode ra app C++→WASM và Rust→WASM; Run trên stack bằng `sv-wasm-host`; inject ⇒ actuator đổi; Flow hiện đủ luồng.
