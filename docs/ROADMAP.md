@@ -447,7 +447,7 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 | # | Mục | Quyết định | Trạng thái |
 |---|---|---|---|
 | D1 | Nightly xanh 3 đêm (M11 parity + E2E) | giữ tiêu chí, đếm từ `5d5f4413` | 🔄 |
-| D2 | Cleanup Sim đợt 3b | làm theo lô | ☐ |
+| D2 | Cleanup Sim đợt 3b | làm theo lô | 🔄 2026-10-25 lô 1: gỡ 12 block LLM của Sim + handler agent/evaluator/router (blocks/executor 1313 test PASS, upstream tree PASS); giữ `providers/` (Knowledge Base/Tables/wand của Sim dùng, đã ẩn) — lý do ở ADR-0008 Notes 2026-10-25. Chờ CI |
 | D3 | osv studio | cùng D2 | ☐ |
 | D4 | Docs (M11-T08) | PO chấp thuận | ✔ 2026-10-25 |
 | D5 | Usability 5 người | thay bằng cognitive walkthrough, ghi rõ chưa test người thật | ✔ 2026-10-25 ([báo cáo](reviews/usability-walkthrough-2026-10-25.md)) |

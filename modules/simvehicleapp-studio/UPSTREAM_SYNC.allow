@@ -1055,3 +1055,24 @@ apps/sim/app/workspace/[workspaceId]/w/[workflowId]/utils/auto-layout-utils.ts
 
 # M18-T09 — Deploy: deploy targets and deployments hooks (ADR-0060)
 apps/sim/hooks/queries/sv-deploy.ts
+
+# M21 D2 (M11-T03 round 3b) — Sim's LLM blocks and their executor handlers removed (ADR-0008 Notes 2026-10-25)
+apps/sim/blocks/blocks/a2a.ts
+apps/sim/blocks/blocks/agent.test.ts
+apps/sim/blocks/blocks/agent.ts
+apps/sim/blocks/blocks/enrichment.ts
+apps/sim/blocks/blocks/evaluator.ts
+apps/sim/blocks/blocks/guardrails.ts
+apps/sim/blocks/blocks/image_generator.ts
+apps/sim/blocks/blocks/router.ts
+apps/sim/blocks/blocks/thinking.ts
+apps/sim/blocks/blocks/translate.ts
+apps/sim/blocks/blocks/tts.ts
+apps/sim/blocks/blocks/video_generator.ts
+apps/sim/blocks/blocks/vision.ts
+apps/sim/executor/handlers/agent/agent-handler.test.ts
+apps/sim/executor/handlers/agent/memory.test.ts
+apps/sim/executor/handlers/agent/memory.ts
+apps/sim/executor/handlers/evaluator/evaluator-handler.test.ts
+apps/sim/executor/handlers/router/router-handler.test.ts
+packages/testing/src/mocks/executor.mock.ts

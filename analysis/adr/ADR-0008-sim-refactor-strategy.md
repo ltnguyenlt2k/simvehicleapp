@@ -71,3 +71,14 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
    `docker/app.Dockerfile` đổi sang `node`; code runtime không dùng API riêng của Bun (chỉ script build bundle).
    libvips 1.3.4 (sharp 0.35.5): thêm ngoại lệ LGPL cùng cơ sở với bản 1.2.x PO đã duyệt.
 - 2026-10-14 (đợt 3c, bảo mật cùng major, theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận): osv studio **20 → 14 gói**. `next`/`@next/env` 16.3.7 → 16.3.8 (6 advisory); OpenTelemetry 0.217/2.9 → 0.223/2.12 (`otlp-transformer` ≥ 0.221 bỏ hẳn `protobufjs` ⇒ hết protobufjs 8.0.1, 11 advisory); override `protobufjs` 7.6.5 (chỉ còn một major); lock lồng `gray-matter/js-yaml` 3.15.2, `posthog-js/fflate` 0.4.9, fflate 0.8.3. Mọi bản ≥ 7 ngày (`minimumReleaseAge`). Còn 14: cần nâng major (uuid 8/10→11, image-size 1→2, deepmerge-ts 7→8, csv-parse 6→7, katex →0.18, file-type 16→21, postcss-selector-parser 6→7, esbuild 0.18 dev) hoặc chưa có bản sửa (xlsx từ CDN, braces, sprintf-js, `packages/cli`) — chờ PO.
+
+## Notes / Deviations (2026-10-25) — đợt 3b hoàn tất phần block AI (M21 D2, PO chấp thuận toàn bộ)
+- **Đã gỡ** block LLM của Sim (`agent`, `router`/`router_v2`, `evaluator`, `guardrails`, `thinking`, `translate`, `tts`, `vision`/`vision_v2`, `image_generator`/`_v2`, `video_generator`/`_v2`/`_v3`, `enrichment`, `a2a`) khỏi registry và mã nguồn, cùng handler executor `agent`, `evaluator`, `router`. Từ đây không ai tạo, tải hay chạy được các block đó. Tiêu chí v1.0 (13 §5) "không còn block AI" ⇒ đạt cho **block**.
+- **Giữ lại có chủ đích:** thư viện `providers/` của Sim và handler `mothership`. Lý do (đã kiểm source):
+  - `providers/` còn được Knowledge Base (embedding), Tables (enrichment details), trợ lý viết code `wand`, giá trong Logs và trang landing dùng: 117 file;
+  - các tính năng đó của Sim đã ẩn khỏi studio (allowlist M1, ADR-0056), không route `/api/sv/*` nào gọi;
+  - gỡ hẳn nghĩa là viết lại các tính năng Sim đó, rủi ro hồi quy lớn và không có giá trị cho sản phẩm xe.
+- **Nợ còn lại**, ghi để làm khi có nhu cầu tách fork sâu hơn:
+  - gỡ `providers/` cùng Knowledge Base/Tables/wand;
+  - gỡ handler `mothership`.
+- Trợ lý AI của SimVehicleApp là module riêng (`simvehicleapp-ai`, ADR-0030), không dùng `providers/` của studio.
