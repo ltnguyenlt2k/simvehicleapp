@@ -1,6 +1,8 @@
 # ide-vscode — self-contained compose fragment. Building it needs image simvehicleapp/toolchain-cpp:dev (from velocitas-stack).
 services:
   ide-cpp:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: simvehicleapp/ide-cpp:dev
     build:
       context: .
@@ -31,6 +33,8 @@ services:
 
   # Python (ADR-0040, profile `python`): the same IDE on toolchain-python.
   ide-python:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: simvehicleapp/ide-python:dev
     profiles: ["python"]
     build:

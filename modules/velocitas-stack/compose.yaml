@@ -12,6 +12,8 @@ services:
     restart: "no"
 
   toolchain-cpp:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     # docker-init as PID 1 reaps orphans (git of SynCode builds, sandbox databrokers) — bun as PID 1 does not.
     init: true
     image: simvehicleapp/toolchain-cpp:dev
@@ -60,6 +62,8 @@ services:
     restart: "no"
 
   toolchain-python:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     # docker-init as PID 1 reaps orphans (git of SynCode builds, sandbox databrokers) — bun as PID 1 does not.
     init: true
     image: simvehicleapp/toolchain-python:dev
@@ -91,6 +95,8 @@ services:
   # Rust (ADR-0041, feasibility — experimental, not Velocitas tooling): opt-in with the `rust` profile and
   # rust=… in SV_BACKENDS/SV_TOOLCHAINS. Needs image simvehicleapp/codegen-rust:dev (its runtime crate is the seed's).
   toolchain-rust:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     # docker-init as PID 1 reaps orphans (git of SynCode builds, sandbox databrokers) — bun as PID 1 does not.
     init: true
     image: simvehicleapp/toolchain-rust:dev
@@ -121,6 +127,8 @@ services:
     depends_on: [databroker, mqtt]
 
   toolchain-wasm:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     # WebAssembly apps in C++ and Rust (ADR-0061): wasi-sdk, rust wasm32-wasip1, wasm-tools and sv-wasm-host.
     init: true
     image: simvehicleapp/toolchain-wasm:dev
@@ -152,6 +160,8 @@ services:
     depends_on: [databroker, mqtt]
 
   databroker:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
     # VSS 4.0 metadata: the image default is identical, we mount our pinned copy explicitly.
     command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss/vss_rel_4.0.json"]
@@ -163,6 +173,8 @@ services:
   # One databroker per supported VSS release (ADR-0024 §6): runs of a v4.2 project use this one
   # (SV_DATABROKERS). Internal only; a databroker idles at a few MB, so it runs by default.
   databroker-v4-2:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
     command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss/vss_rel_4.2.json"]
     volumes:
@@ -173,6 +185,8 @@ services:
   # which sets SV_VSS_CUSTOM_FILE (<release>/vss_rel_<x>.json in volume sv-vss-custom) and maps the release to
   # databroker-custom:55555 in SV_DATABROKERS. One custom model is live at a time; the catalog serves all of them.
   databroker-custom:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
     profiles: ["vss-custom"]
     command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss-custom/${SV_VSS_CUSTOM_FILE:-none}"]
@@ -181,6 +195,8 @@ services:
     networks: [sv-internal]
 
   mqtt:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: eclipse-mosquitto:2.0.14
     command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
     volumes:

@@ -3,6 +3,8 @@
 # (no Trigger.dev, no Redis, no pii, no copilot backend).
 services:
   studio-db:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: pgvector/pgvector:pg17
     environment:
       POSTGRES_USER: postgres
@@ -24,6 +26,8 @@ services:
     networks: [sv-internal]
 
   studio-realtime:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: simvehicleapp/studio-realtime:dev
     build: { context: ., dockerfile: docker/realtime.Dockerfile }
     environment:
@@ -39,6 +43,8 @@ services:
     networks: [sv-internal, sv-edge]
 
   studio:
+    # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
+    restart: unless-stopped
     image: simvehicleapp/studio:dev
     build:
       context: .

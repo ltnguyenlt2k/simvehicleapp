@@ -125,3 +125,7 @@ docker image prune -f         # xoá image cũ không còn dùng
 3. Chạy lại một nhóm khi cần: Actions → release-images → Run workflow (`tag`, `groups`).
 4. Thêm image mới vào compose thì phải thêm vào `deploy/image-groups.txt`. CI (`scripts/ci/image_groups.py`) sẽ fail
    nếu thiếu.
+
+## Khởi động lại sau khi Docker/WSL khởi động lại
+Mọi service chạy lâu của stack (database studio, studio, databroker, MQTT, toolchain, IDE, các service Bun) có `restart: unless-stopped`: Docker hay WSL khởi động lại thì chúng tự chạy lại. Ngày 2026-10-25, `studio-db` chưa có chính sách này nên nằm dừng sau khi daemon khởi động lại, kéo orchestrator ngừng theo. Service chạy một lần (`studio-migrations`) và image chỉ để build (`wasm-host`, `devcontainer-*`) không tự khởi động lại.
+
