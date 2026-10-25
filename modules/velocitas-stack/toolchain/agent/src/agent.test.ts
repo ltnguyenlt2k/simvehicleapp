@@ -312,6 +312,11 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     writeFileSync(join(cpp, "app/tests/generated/cases.json"), "[]");
     expect(plan("test", "wasm-cpp", {}).steps[0]!.argv).toEqual(["sv-wasm-host", "--test", "build/app.cwasm", "app/tests/generated/cases.json"]);
     expect(plan("run", "wasm-cpp", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]).toMatchObject({ argv: ["sv-wasm-host", "build/app.cwasm", "app/src/generated/sv-app.json"], env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } });
+    // the image: sv-wasm-host + the module + its allowlist (ADR-0060/0061)
+    const img = plan("image", "wasm-cpp", { image: { reference: "localhost:5000/a:1" } });
+    expect(img.steps.map((x) => x.label)).toEqual(["build the module for the image", "image localhost:5000/a:1"]);
+    expect(img.steps[1]!.argv.join(" ")).toContain("--module " + join(cpp, "build/app.cwasm"));
+    expect(img.steps[1]!.argv.join(" ")).toContain("sv-app.json");
     // a Velocitas project is not a WebAssembly one; another language has no wasm toolchain
     expect(() => plan("build", "comfort-app", {})).toThrow("not a WebAssembly project");
     mk("wasm-py", "python");

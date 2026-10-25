@@ -18,7 +18,7 @@ const get = async (url: string) => (await fetch(url, { headers: h })).json();
 const post = (url: string, body: unknown) => fetch(url, { method: "POST", headers: h, body: JSON.stringify(body), signal: AbortSignal.timeout(900_000) });
 
 const graph = JSON.parse(readFileSync("/repo/modules/simvehicleapp-contracts/fixtures/golden/GW-A/graph.json", "utf8"));
-let p = await (await post(`${O}/projects`, { slug, name: "Gate image", language: process.env.LANG_ID ?? "cpp", vssRelease: "v4.0" })).json();
+let p = await (await post(`${O}/projects`, { slug, name: "Gate image", language: process.env.LANG_ID ?? "cpp", ...(process.env.TARGET === "wasm" ? { target: "wasm" } : {}), vssRelease: "v4.0" })).json();
 const t0 = Date.now();
 while (p.status === "creating" && Date.now() - t0 < 600_000) {
   await Bun.sleep(2000);

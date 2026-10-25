@@ -121,12 +121,16 @@ function runEnv(options: JobOptions): Record<string, string> {
  * `image` (ADR-0060, M18-T10): the app's OCI image pushed to a registry without Docker — `image-cli.ts` (run by this
  * agent's own bun) packs build/bin/app with its shared libraries, the AppManifest and the notices.
  */
-function imageStep(dir: string, options: JobOptions): Step {
+/** `wasm`: the image is sv-wasm-host running the precompiled module with its allowlist (ADR-0061). */
+function imageStep(dir: string, options: JobOptions, wasm = false): Step {
   const img = options.image;
   if (!img?.reference) throw new PlanError("image: a registry reference is required");
+  const app = wasm
+    ? ["--binary", process.env.SV_WASM_HOST_BIN ?? "/usr/local/bin/sv-wasm-host", "--module", join(dir, "build/app.cwasm"), "--allowlist", join(dir, "app/src/generated/sv-app.json")]
+    : ["--binary", join(dir, "build/bin/app")];
   return {
     label: `image ${img.reference}`,
-    argv: [process.execPath, join(import.meta.dir, "image-cli.ts"), "--binary", join(dir, "build/bin/app"), "--project", dir, "--reference", img.reference, ...(img.insecure ? ["--insecure"] : [])],
+    argv: [process.execPath, join(import.meta.dir, "image-cli.ts"), ...app, "--project", dir, "--reference", img.reference, ...(img.insecure ? ["--insecure"] : [])],
     cwd: dir,
     ...(img.username ? { env: { SV_IMAGE_USERNAME: img.username, SV_IMAGE_PASSWORD: img.password ?? "" } } : {}),
     check: (lines) => (lines.some((l) => l.startsWith("SVIMAGE ")) ? null : "the image was not pushed (see the log)"),
@@ -366,6 +370,15 @@ function wasmPlan(dir: string, kind: JobKind, options: JobOptions): Plan {
     }
     case "format-check":
       return { steps: [{ label: lang === "rust" ? "cargo fmt --check" : "no formatter for generated C++ (laid out by SimVehicleApp)", argv: lang === "rust" ? bash("cargo fmt --manifest-path app/Cargo.toml --check") : ["true"], cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "image":
+      return {
+        steps: [
+          { label: "build the module for the image", argv: bash(`${build} && ${WASM_FINISH}`), cwd: dir },
+          imageStep(dir, options, true),
+        ],
+        failCode: "BUILD_FAILED",
+        failStage: "build",
+      };
     case "run": {
       const env = runEnv(options);
       if (!existsSync(join(dir, "build/app.cwasm"))) throw new PlanError("build/app.cwasm is missing: build the project first");

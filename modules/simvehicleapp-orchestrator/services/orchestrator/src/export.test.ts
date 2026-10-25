@@ -48,6 +48,19 @@ describe("export (M09-T06, ADR-0031 §1)", () => {
     expect(rsThird).toContain("kuksa-rust-sdk 0.2.2");
   });
 
+  test("a WebAssembly project's README says how to build the module and run it on sv-wasm-host (ADR-0061)", async () => {
+    const { project, gen } = await setup();
+    const [cpp, , cppThird] = exportExtras({ ...project, target: "wasm" }, gen, null).slice(-3).map((f) => f.content);
+    expect(cpp).toContain("wasi-sdk-p1.cmake");
+    expect(cpp).toContain("sv-wasm-host build/app.cwasm app/src/generated/sv-app.json");
+    expect(cpp).toContain("kuksa.val.v2");
+    expect(cpp).not.toContain("app/Dockerfile");
+    expect(cpp).toContain("the SimVehicleApp WebAssembly template");
+    expect(cppThird).toContain("wasi-sdk 34");
+    const [rs] = exportExtras({ ...project, language: "rust", target: "wasm" }, gen, null).slice(-3).map((f) => f.content);
+    expect(rs).toContain("--target wasm32-wasip1");
+  });
+
   test("POST /projects/{id}/export streams the workspace zip of the latest successful generation; a license without export.source is 403", async () => {
     const { repo, project } = await setup();
     const sent: unknown[] = [];

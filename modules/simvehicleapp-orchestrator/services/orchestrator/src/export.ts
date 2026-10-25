@@ -108,8 +108,56 @@ Fetched by cargo (Cargo.lock), not included:
 - protobuf (built from source by protobuf-src) — BSD-3-Clause
 `,
   },
+  "cpp-wasm": {
+    app: "A C++ vehicle app built for WebAssembly (SimVehicleApp's wasm-app-cpp template, ADR-0061)",
+    own: "`app/src/user/UserHooks.*`",
+    template: "the SimVehicleApp WebAssembly C++ template (Apache-2.0)",
+    build: `With wasi-sdk-34 and the nlohmann/json 3.11 headers (\`SV_JSON_INCLUDE\`):
+
+\`\`\`sh
+cmake -S app -B build -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK_PATH/share/cmake/wasi-sdk-p1.cmake -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+sv-wasm-host --precompile build/app.wasm build/app.cwasm
+sv-wasm-host --test build/app.cwasm app/tests/generated/cases.json   # the test cases saved with the workflows
+\`\`\``,
+    run: "sv-wasm-host build/app.cwasm app/src/generated/sv-app.json",
+    thirdParty: `Included in this project:
+- The SimVehicleApp WebAssembly C++ template (CMake project, user hooks) — Apache-2.0.
+- COVESA Vehicle Signal Specification document (app/vss/) — MPL-2.0, unmodified.
+
+Not included, needed to build and run:
+- wasi-sdk 34 (clang, wasi-libc, libc++) — Apache-2.0 WITH LLVM-exception and others (see wasi-sdk)
+- nlohmann/json 3.11 (header-only) — MIT
+- sv-wasm-host (Wasmtime 48) — Apache-2.0 / Apache-2.0 WITH LLVM-exception
+`,
+  },
+  "rust-wasm": {
+    app: "A Rust vehicle app built for WebAssembly (SimVehicleApp's wasm-app-rust template, ADR-0061)",
+    own: "`app/src/user_hooks.rs`",
+    template: "the SimVehicleApp WebAssembly Rust template (Apache-2.0)",
+    build: `With Rust 1.98 and the \`wasm32-wasip1\` target:
+
+\`\`\`sh
+cargo build --manifest-path app/Cargo.toml --release --target wasm32-wasip1
+sv-wasm-host --precompile app/target/wasm32-wasip1/release/app.wasm app.cwasm
+sv-wasm-host --test app.cwasm app/tests/generated/cases.json   # the test cases saved with the workflows
+\`\`\``,
+    run: "sv-wasm-host app.cwasm app/src/generated/sv-app.json",
+    thirdParty: `Included in this project:
+- The SimVehicleApp WebAssembly Rust template (cdylib crate, user hooks) — Apache-2.0.
+- COVESA Vehicle Signal Specification document (app/vss/) — MPL-2.0, unmodified.
+
+Fetched by cargo (Cargo.lock), not included:
+- serde_json and its dependencies — MIT / Apache-2.0
+Needed to run, not included:
+- sv-wasm-host (Wasmtime 48) — Apache-2.0 / Apache-2.0 WITH LLVM-exception
+`,
+  },
 } as const;
-const languageOf = (p: Project) => LANGUAGE[p.language === "python" ? "python" : p.language === "rust" ? "rust" : "cpp"];
+const languageOf = (p: Project) =>
+  p.target === "wasm"
+    ? LANGUAGE[p.language === "rust" ? "rust-wasm" : "cpp-wasm"]
+    : LANGUAGE[p.language === "python" ? "python" : p.language === "rust" ? "rust" : "cpp"];
 
 function readme(p: Project, g: Generation | null): string {
   const lang = languageOf(p);
@@ -128,15 +176,16 @@ ${workflows}
 - \`app/src/simvehicleapp-runtime/\` — the SimVehicleApp runtime the generated code runs on (Apache-2.0).
 - \`app/vss/\` — the VSS ${p.vssRelease} document the vehicle model is generated from (COVESA, MPL-2.0).
 - \`.simvehicleapp/workflows/*.graph.json\` — the workflows (WorkflowGraph v1), importable in SimVehicleApp.
-- Everything else comes from the Velocitas template.
+- Everything else comes from ${p.target === "wasm" ? "the SimVehicleApp WebAssembly template" : "the Velocitas template"}.
 
 ## Build
 ${lang.build}
 
-Container image of the app (the template's Dockerfile): \`docker build -f app/Dockerfile .\`
-
-Run against a KUKSA databroker (\`sdv.databroker.v1\`, e.g. kuksa-databroker 0.5.0 with
-\`--enable-databroker-v1\`) and an MQTT broker:
+${
+  p.target === "wasm"
+    ? "Run with sv-wasm-host against a KUKSA databroker (`kuksa.val.v2`, e.g. kuksa-databroker 0.5.0) and an MQTT broker;\nthe host only lets the app touch the signals and topics of `app/src/generated/sv-app.json`:"
+    : "Container image of the app (the template's Dockerfile): `docker build -f app/Dockerfile .`\n\nRun against a KUKSA databroker (`sdv.databroker.v1`, e.g. kuksa-databroker 0.5.0 with\n`--enable-databroker-v1`) and an MQTT broker:"
+}
 
 \`\`\`sh
 SDV_MIDDLEWARE_TYPE=native SDV_VEHICLEDATABROKER_ADDRESS=grpc://127.0.0.1:55555 \\

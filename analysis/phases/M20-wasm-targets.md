@@ -89,7 +89,9 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
     4. agent kiểm artifact run theo toolchain (`build/app.cwasm` cho wasm);
     5. overlay native (main.rs host native) bị áp vào project WASM ⇒ `/wasm/template-overlay/files` chỉ trả user hooks;
     6. `lib.rs` template Rust chưa theo rustfmt.
-- [ ] Export WASM (zip có `app.wasm`/`app.cwasm`, `sv-app.json`, README chạy bằng `sv-wasm-host`); Deploy image (ADR-0060) chứa host + `.cwasm`; E2E UI tạo app WASM.
+- [x] Export WASM: README/NOTICE/THIRD-PARTY của project `target: wasm` hướng dẫn build bằng wasi-sdk hoặc cargo `wasm32-wasip1` và chạy bằng `sv-wasm-host` (v2, allowlist), không nhắc Dockerfile Velocitas (test export).
+- [x] Deploy image (ADR-0060): job `image` của toolchain-wasm build module rồi đóng image `FROM scratch` gồm `sv-wasm-host` (cùng các thư viện `ldd`), `app.cwasm`, `sv-app.json`; lệnh chạy `/app /app.cwasm /sv-app.json`. Gate `m18-image.sh <lang> wasm` trên stack dev: **C++ và Rust PASS** (push không cần Docker, khoảng 9 MB nén / 25 MB giải nén, pull theo digest, chạy ⇒ `app.started`).
+- [ ] E2E UI: chọn Runtime WebAssembly trong hộp thoại tạo app (studio image, CI) — làm ở T09 cùng full luồng.
 
 ### T07: Studio/orchestrator
 - [ ] Tạo project: "Runtime: Velocitas (native) / WebAssembly"; Vehicle apps hiện target.

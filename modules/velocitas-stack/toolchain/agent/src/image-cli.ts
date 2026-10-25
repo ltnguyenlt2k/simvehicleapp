@@ -1,5 +1,7 @@
 /**
- * `bun src/image-cli.ts --binary <path> --project <dir> --reference <registry/repo:tag> [--insecure]` (ADR-0060,
+ * `bun src/image-cli.ts --binary <path> --project <dir> --reference <registry/repo:tag> [--insecure]
+ *   [--module app.cwasm --allowlist sv-app.json]` (ADR-0060; the two last for a WebAssembly app, ADR-0061: the binary is
+ *   sv-wasm-host and the image runs it on the module) (ADR-0060,
  * M18-T10): the app's image without Docker — the binary as /app, the shared libraries `ldd` lists (and the loader),
  * the project's AppManifest and notices; pushed to the registry. Credentials: SV_IMAGE_USERNAME / SV_IMAGE_PASSWORD.
  * Prints one `SVIMAGE {"reference","digest","bytes","files"}` line at the end.
@@ -44,6 +46,15 @@ if (import.meta.main) {
   const libs = statik ? [] : lddLibraries(text);
   const files: ImageFile[] = [{ path: "app", data: readFileSync(binary), mode: 0o755 }];
   for (const lib of libs) files.push({ path: lib.replace(/^\//, ""), data: readFileSync(realpathSync(lib)), mode: statSync(realpathSync(lib)).mode & 0o777 });
+  const wasmModule = arg("module");
+  const allow = arg("allowlist");
+  if (wasmModule) {
+    if (!existsSync(wasmModule) || !allow || !existsSync(allow)) {
+      console.error("a WebAssembly image needs --module (the precompiled app) and --allowlist (sv-app.json)");
+      process.exit(2);
+    }
+    files.push({ path: "app.cwasm", data: readFileSync(wasmModule), mode: 0o644 }, { path: "sv-app.json", data: readFileSync(allow), mode: 0o644 });
+  }
   for (const [from, to] of [
     ["app/AppManifest.json", "AppManifest.json"],
     ["NOTICE", "licenses/NOTICE"],
@@ -55,7 +66,7 @@ if (import.meta.main) {
   }
   console.log(`image: /app${statik ? " (static)" : ` with ${libs.length} shared libraries: ${libs.map((l) => l.split("/").pop()).join(", ")}`}`);
   const img = buildImage(files, {
-    cmd: ["/app"],
+    cmd: wasmModule ? ["/app", "/app.cwasm", "/sv-app.json"] : ["/app"],
     env: ["PATH=/", "LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/lib64"],
     workingDir: "/tmp",
     labels: { "org.opencontainers.image.source": "SimVehicleApp", "org.opencontainers.image.title": reference },
