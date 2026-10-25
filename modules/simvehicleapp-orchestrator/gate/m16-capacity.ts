@@ -56,7 +56,10 @@ switch (process.env.STEP) {
       const r = await call("POST", `${O}/projects`, { slug: s, name: `Gate M16 ${s.slice(-1)}`, language: "cpp", vssRelease: "v4.0" });
       must(r.status === 201, `app ${s} created (${r.status})`);
     }
-    for (const s of [A, B]) must((await ready(s))?.status === "ready", `app ${s} ready`);
+    for (const s of [A, B]) {
+      const p = await ready(s);
+      must(p?.status === "ready", `app ${s} ready${p?.status === "ready" ? "" : ` (${p?.status}: ${p?.statusMessage ?? "no message"})`}`);
+    }
     const over = await call("POST", `${O}/projects`, { slug: `${slug}-c`, name: "Gate M16 c", language: "cpp", vssRelease: "v4.0" });
     must(over.status === 409 && (await codes(over)).includes("APP_QUOTA_EXCEEDED:host"), `a third app is refused: host quota (${over.status})`);
     const a = (await app(A))!;
