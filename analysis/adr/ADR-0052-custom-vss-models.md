@@ -1,6 +1,6 @@
 # ADR-0052: Mô hình VSS tuỳ biến (`vX.Y-<name>`): file riêng hoặc overlay, dùng xuyên suốt từ catalog tới databroker
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-14
 - **Level:** L0 System
 - **Deciders:** PO yêu cầu 2026-10-13 ("đổi thêm tín hiệu hoặc file khác nó có flexible theo không"); agent đề xuất và triển khai theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận

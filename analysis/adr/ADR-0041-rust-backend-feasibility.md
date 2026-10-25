@@ -1,6 +1,6 @@
 # ADR-0041: Rust backend — feasibility trước, dựa `kuksa-rust-sdk`
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L2
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L2
 - **Related:** FR-CG-04, R19; [00 §3.7](../00-research-findings.md#37-rust)
 
 ## Context

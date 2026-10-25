@@ -1,6 +1,6 @@
 # ADR-0057: Runtime xe cho nhiều người dùng — mỗi run có sandbox riêng, giới hạn bằng quota + thời hạn
 
-- **Status:** Proposed (theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận)
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-15 (sửa cùng ngày sau câu hỏi multi-user của PO, xem Notes)
 - **Level:** L1 Subsystem (orchestrator runs, toolchain agent, signal-gateway, studio)
 - **Deciders:** PO; Claude Code (đề xuất)

@@ -1,6 +1,6 @@
 # ADR-0051: Phân phối image dựng sẵn qua GitHub Release và chế độ triển khai cho máy cấu hình thấp
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-13
 - **Level:** L0 System
 - **Deciders:** PO (yêu cầu 2026-10-13: "pull images deploy cũng phải đầy đủ chức năng mà phải tiết kiệm tài nguyên, máy cấu hình thấp vẫn deploy được"); agent đề xuất

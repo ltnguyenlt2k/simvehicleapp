@@ -1,6 +1,6 @@
 # ADR-0053: Vehicle app tự cấp phát, có vòng đời đầy đủ, và kiểm soát tài nguyên host
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-14
 - **Level:** L0 System
 - **Deciders:** PO yêu cầu 2026-10-14; agent đề xuất theo uỷ quyền PO 2026-10-06, chờ PO xác nhận

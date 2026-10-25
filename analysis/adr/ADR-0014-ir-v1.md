@@ -1,6 +1,6 @@
 # ADR-0014: Canonical IR v1 (control graph + expression trees, hashed, versioned)
 
-- **Status:** Proposed — triển khai M4 theo uỷ quyền PO 2026-10-06, **chờ PO chấp thuận** khi verify cuối · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-WF-03, NFR-01; Master Plan Part 6; [06 §2](../06-ir-and-compiler.md#2-ir-v1--cấu-trúc)
 
 ## Context

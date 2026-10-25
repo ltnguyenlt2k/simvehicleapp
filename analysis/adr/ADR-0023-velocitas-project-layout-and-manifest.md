@@ -1,6 +1,6 @@
 # ADR-0023: Layout project Velocitas & thuật toán merge AppManifest v3
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-CG-05, FR-WF-05, R10; Master Plan 8.3, 8.5; [03 §6](../03-system-architecture.md#6-workspace-layout-volume-sv-workspace)
 
 ## Context

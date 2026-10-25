@@ -1,6 +1,6 @@
 # ADR-0044: Standalone service app (1 workflow → 1 Vehicle App) — hoãn, phụ thuộc ADR-0043
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-07
 - **Level:** L1 Subsystem
 - **Deciders:** Claude Code theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận

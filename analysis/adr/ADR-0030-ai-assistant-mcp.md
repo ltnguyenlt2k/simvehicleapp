@@ -1,6 +1,6 @@
 # ADR-0030: AI Assistant thay Copilot — chat + provider từ `.env` + MCP server/client + WorkflowPatch
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-AI-01..05, FR-CG-07, R20; [09](../09-ai-assistant-mcp.md); [00 F3](../00-research-findings.md#24-phát-hiện-quan-trọng--lệch-so-với-master-plan-v2)
 
 ## Context

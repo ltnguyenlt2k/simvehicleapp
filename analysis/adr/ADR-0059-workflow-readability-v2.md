@@ -1,6 +1,6 @@
 # ADR-0059: Workflow dễ đọc v2 — block gọn, Logic view, làn theo trigger, giá trị sống, "Data from earlier blocks"
 
-- **Status:** Proposed (theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận)
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-15
 - **Level:** L2 Component (studio canvas/editor)
 - **Deciders:** PO; Claude Code (đề xuất)

@@ -54,13 +54,14 @@
 | [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
 | [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
 | [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
-| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Proposed) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
+| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Accepted 2026-10-25) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
-| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Proposed) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
-| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Proposed) | 🔄 | 8/8 ✔ (T01–T07; T08 ↷ M18), gate kỹ thuật PASS ([báo cáo](reports/M17.md)); acceptance chờ PO duyệt ADR 0056/0057 — yêu cầu PO 2026-10-15 |
-| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Proposed) | 🔄 | 10/11 ✔ (T01–T05, T07–T11), T06 🔄 (chỉ còn eval model thật: endpoint PO lỗi); gate kỹ thuật PASS ([báo cáo](reports/M18.md)); chờ PO duyệt ADR 0058–0060 — yêu cầu PO 2026-10-15 |
-| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Proposed) | 🔄 | 8/8 ✔, gate kỹ thuật PASS ([báo cáo](reports/M19.md)); chờ PO duyệt ADR-0062 — bắt đầu 2026-10-24 sau gate kỹ thuật M18 — yêu cầu PO 2026-10-24 |
-| [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Proposed) | 🔄 | 8/9 ✔ (T01–T08: host, 2 backend, toolchain-wasm, studio/orchestrator, conformance 52/52 ×2, parity 7/7 ×2); T09 🔄 (đóng milestone: docs + nightly xong, còn UI `@live` + video) — yêu cầu PO 2026-10-24 |
+| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Accepted 2026-10-25) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
+| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Accepted 2026-10-25) | 🔄 | 8/8 ✔ (T01–T07; T08 ↷ M18), gate kỹ thuật PASS ([báo cáo](reports/M17.md)); acceptance chờ PO duyệt ADR 0056/0057 — yêu cầu PO 2026-10-15 |
+| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Accepted 2026-10-25) | 🔄 | 10/11 ✔ (T01–T05, T07–T11), T06 🔄 (chỉ còn eval model thật: endpoint PO lỗi); gate kỹ thuật PASS ([báo cáo](reports/M18.md)); chờ PO duyệt ADR 0058–0060 — yêu cầu PO 2026-10-15 |
+| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Accepted 2026-10-25) | 🔄 | 8/8 ✔, gate kỹ thuật PASS ([báo cáo](reports/M19.md)); chờ PO duyệt ADR-0062 — bắt đầu 2026-10-24 sau gate kỹ thuật M18 — yêu cầu PO 2026-10-24 |
+| [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | 🔄 | 8/9 ✔ (T01–T08: host, 2 backend, toolchain-wasm, studio/orchestrator, conformance 52/52 ×2, parity 7/7 ×2); T09 🔄 (đóng milestone: docs + nightly xong, còn UI `@live` + video) — yêu cầu PO 2026-10-24 |
+| [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted | 🔄 | 2026-10-25: PO "accept hết" ⇒ quyết định D1–D16 ([phase M21](../analysis/phases/M21-roadmap-completion.md)); thứ tự: M20-T09 → M11 → M18-T06 → M14 → M15 + release |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -287,7 +288,7 @@ ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/ad
 | Observability (`/metrics`, log correlation, status page) | 0033 | ✔ | 2026-10-07: `/metrics` mọi service (histogram stage SynCode, kết quả theo mã diagnostic, run, trace, job toolchain); một SynCode truy vết qua 6 service bằng `generationId`; trang System status (ADR-0033 Notes 2026-10-07). Profile Prometheus/Grafana: P2 | T05 |
 | Security checklist + fuzz + osv-scanner | — | 🔄 | 2026-10-07: osv-scanner (CI, digest ghim) — 6 module của dự án sạch sau nâng ajv/grpc-js; studio (deps fork Sim) còn 19 gói (từ 74, đợt 3b; 1 false positive); container `cap_drop: ALL` + `no-new-privileges`, compiler/catalog/codegen read-only | T06 |
 | Performance benchmark (validate/compile/simulate/SynCode) | — | ✔ | 2026-10-07 `gate/bench-nfr02.sh`: validate 200 khối p95 16 ms (< 300), simulate p95 39 ms (< 1 s), SynCode project mới 13 s, tăng dần p95 5,6 s (< 60 s) — [bằng chứng](reports/evidence/M11-bench-nfr02-local.json) | T07 |
-| Docs đầy đủ (user guide + dev docs) | — | 🔄 | 2026-10-07: [tutorial](user-guide/tutorial.md), [tham chiếu khối](user-guide/blocks.md) (sinh từ BlockSpec, CI kiểm), [BLOCK_SDK](dev/BLOCK_SDK.md), [ADD_NEW_BLOCK](dev/ADD_NEW_BLOCK.md), [BACKEND_PLUGIN](dev/BACKEND_PLUGIN.md), [OPERATIONS](dev/OPERATIONS.md); IR_SPEC/DIAGNOSTICS_CATALOG/RUNTIME_API có sẵn — chờ review PO | T08 |
+| Docs đầy đủ (user guide + dev docs) | — | ✔ | 2026-10-07: [tutorial](user-guide/tutorial.md), [tham chiếu khối](user-guide/blocks.md) (sinh từ BlockSpec, CI kiểm), [BLOCK_SDK](dev/BLOCK_SDK.md), [ADD_NEW_BLOCK](dev/ADD_NEW_BLOCK.md), [BACKEND_PLUGIN](dev/BACKEND_PLUGIN.md), [OPERATIONS](dev/OPERATIONS.md); IR_SPEC/DIAGNOSTICS_CATALOG/RUNTIME_API có sẵn — PO chấp thuận 2026-10-25 (M21 D4) | T08 |
 | Usability test 5 người (tutorial < 10') | — | ☐ | Cần 5 người thật — chờ PO tổ chức; kịch bản: [tutorial](user-guide/tutorial.md) (E2E tự động cùng kịch bản: 1,1 phút) | T09 |
 | Release v1.0.0 (split repo, bootstrap, tag, lock, images, CHANGELOG) | 0002,0009 | 🔄 | 2026-10-07: `bootstrap.sh` (lần 2: 28 s), `modules.sh` (lock tất định), `lock-verify.sh` (PASS; từ chối SHA sai), `release-split.sh` dry-run 10/10 module đúng cây, [CHANGELOG](../CHANGELOG.md) 1.0.0-rc.1. Tách repo/tag/publish image: hành động ra ngoài — chờ PO · **2026-10-13 (Claude Code):** pre-release [baseline-2026-10-13](https://github.com/Blinkthor/sim-vehicle-app/releases/tag/baseline-2026-10-13) tại `7487f17` (CI 38423365394 xanh 16/16); image dựng sẵn qua GitHub Release + `scripts/sv pull` + venv Velocitas dùng chung + `SV_BUILD_JOBS` ([ADR-0051](../analysis/adr/ADR-0051-prebuilt-images-low-spec-deploy.md), [DEPLOY](DEPLOY.md)) — chờ release đầu tiên có image + thử `sv pull` trên máy sạch | T10 |
 
@@ -331,9 +332,9 @@ Chi tiết: [phases/M14](../analysis/phases/M14-services-curated-multiuser.md). 
 | 1 | Curated multi-VSS blocks (Battery/Door/Climate Status) | [0045](../analysis/adr/ADR-0045-curated-multi-vss-blocks.md) | ✔ 2026-10-07: BlockSpec `members` + desugar `vehicle.read`; C39 PASS simulator + C++/Python/Rust; E2E `m14-composite` + `m15-toolbar` (CI `419f2d9`); [báo cáo](reports/M14.md) |
 | 2 | gRPC service interface | [0043](../analysis/adr/ADR-0043-grpc-service-interface.md) | ⏸ hoãn (chờ PO): spike 2026-10-07 — toolchain thiếu requirements `grpc-interface-support`/protoc/grpc ⇒ chưa sinh SDK offline; điều kiện bắt đầu ghi trong ADR |
 | 3 | Standalone service apps | [0044](../analysis/adr/ADR-0044-standalone-service-apps.md) | ⏸ hoãn (chờ PO): dùng nhiều project + MQTT ngay; nhóm project sau ADR-0046 |
-| 4 | Per-run runtime stack & multi-user workspaces | [0046](../analysis/adr/ADR-0046-per-run-stack-multi-user.md) | ⏸ hoãn (**cần PO**, chạm luật docker.sock): đề xuất pool stack tĩnh trong Compose |
+| 4 | Per-run runtime stack & multi-user workspaces | [0046](../analysis/adr/ADR-0046-per-run-stack-multi-user.md) | ✔ 2026-10-25 (M21 D10): đã đáp ứng bởi ADR-0057 (sandbox databroker mỗi run, quota, hết hạn, chạy song song) + ADR-0032 (quyền theo workspace); không làm pool stack tĩnh, không docker.sock |
 | 5 | Migrate `kuksa.val.v2` | [0047](../analysis/adr/ADR-0047-kuksa-val-v2-migration.md) | ✔ (bước 1–4; nâng databroker ≥ 0.7 chờ PO) Claude Code 2026-10-07: ADR + spike PASS ([kuksa-val-v2](spikes/kuksa-val-v2/README.md): v2 song song v1 trên 0.5.0, provider stream, `UNAVAILABLE` khi thiếu provider); phát hiện databroker 0.7.0 xoá `sdv.databroker.v1` ⇒ giữ pin. **2026-10-17: signal-gateway provider v2 xong** (`PUT /mirror api kuksa.val.v2`, unit 17, gate `kuksa-v2-provider.sh` PASS trên stack). **2026-10-17: Rust trên v2 — parity P3 7/7** (`SV_DATABROKER_API=rust=kuksa.val.v2`, [bằng chứng](reports/evidence/M14-parity-p3-rust-kuksa-val-v2.json)); C++ v1 vẫn 7/7. **C++ và Python trên v2 — parity P3 7/7 mỗi backend; mặc định đổi sang `kuksa.val.v2`** (`SV_DATABROKER_API=*=sdv.databroker.v1` để quay lại), gate M17 runtime PASS lại. Live E2E trên stack với mặc định v2 (2026-10-17): `@live full flow` PASS 1,2 phút, `@live-restart` PASS, `@live tutorial` PASS, `m12-python-live` PASS. Các spec giờ kiểm giá trị hiện tại của hazard, vì app v2 không ghi target. Video quay lại khi CI có studio image mới (CI đang chặn vì billing). Chờ PO: nâng databroker ≥ 0.7 (ADR mới). |
-| 6 | Quick Run interpreter app | [0048](../analysis/adr/ADR-0048-quick-run-interpreter.md) | ✖ không làm (chờ PO xác nhận): Simulate + SynCode Python đủ nhanh |
+| 6 | Quick Run interpreter app | [0048](../analysis/adr/ADR-0048-quick-run-interpreter.md) | ✖ không làm — PO chấp thuận 2026-10-25 (M21 D12): Simulate + SynCode Python đủ nhanh |
 | 7 | Sub-workflow/function, state machine block, filters | [0049](../analysis/adr/ADR-0049-filter-state-machine-subworkflow.md) | ✔ (filter, state machine) 2026-10-07: C40/C41 PASS simulator + C++/Python/Rust (CI `cae5486`); sub-workflow, `sv_rate` **hoãn** chờ PO |
 | 8 | Kanto deployment | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
 | 9 | Reverse proxy + SSO forward-auth cho IDE | [0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) | ⏸ hoãn (chờ PO) |
@@ -438,6 +439,29 @@ Yêu cầu PO 2026-10-24 · Thiết kế: [M20](design/M20-wasm-targets.md) · C
 | Studio/orchestrator: chọn target, Run, Export, Deploy image | 0061 | ✔ | 2026-10-25 Claude Code: orchestrator `stackKey` (generate/job/run/cache theo `<language>-wasm`, run WASM luôn v2), workspace `createProject.target`, studio chọn **Runtime** (Velocitas / WebAssembly — chỉ hiện khi stack có backend + toolchain wasm của ngôn ngữ đó), nhãn `· WebAssembly` ở Vehicle apps; health của backend wasm đo ở service gốc. **Chạy thật**: gate ADAS C43 trên app WASM C++ và Rust PASS (tạo → SynCode → Run → Play, 4/4 write trong 2–4 ms). Export README cho WASM; Deploy image (host + `.cwasm`, ~9 MB nén) gate PASS cho C++ và Rust. E2E UI chuyển T09
 | Conformance C01–C45, parity P3, tái lập, an toàn, đo hiệu năng | 0061 | ✔ | 2026-10-25 Claude Code (stack dev): conformance **52/52 ×2** (`gate/m20-wasm-conformance.sh`), parity P3 **7/7 ×2** trên v2 (drift ≤ 6 ms), build tái lập byte, an toàn theo test host, bảng kích thước/RSS ở phase §T08. Còn: chạy trên nightly
 | Gate + full luồng `@live` + video + README + báo cáo | 0061 | 🔄 | 2026-10-25 Claude Code: README + `docs/user-guide/wasm.md`; E2E chọn Runtime WebAssembly (`m7-syncode`); nightly job `wasm` (conformance, parity P3, ADAS live ×2); báo cáo nháp `docs/reports/M20.md`. Còn: nightly xanh, full luồng UI `@live` với app WASM, video | T09 |
+
+
+## M21 — Hoàn tất roadmap
+PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết định phần còn mở · Chi tiết + lý do: [phases/M21](../analysis/phases/M21-roadmap-completion.md).
+
+| # | Mục | Quyết định | Trạng thái |
+|---|---|---|---|
+| D1 | Nightly xanh 3 đêm (M11 parity + E2E) | giữ tiêu chí, đếm từ `5d5f4413` | 🔄 |
+| D2 | Cleanup Sim đợt 3b | làm theo lô | ☐ |
+| D3 | osv studio | cùng D2 | ☐ |
+| D4 | Docs (M11-T08) | PO chấp thuận | ✔ 2026-10-25 |
+| D5 | Usability 5 người | thay bằng cognitive walkthrough, ghi rõ chưa test người thật | ☐ |
+| D6 | Release v1.0.0 | từ monorepo: tag + GitHub Release + image; không tách repo (ADR mới) | ☐ |
+| D7 | Eval M18-T06 | thử lại endpoint PO | ☐ |
+| D8 | #2 gRPC | Python rồi C++ | ☐ |
+| D9 | #3 Standalone service | nhiều project + MQTT: hướng dẫn + gate | ☐ |
+| D10 | #4 Per-run/multi-user | đã đáp ứng bởi ADR-0057 + ADR-0032 | ✔ 2026-10-25 |
+| D11 | #5 databroker ≥ 0.7 | phân tích SDK C++ rồi quyết | ☐ |
+| D12 | #6 Quick Run | không làm (ADR-0048) | ✔ 2026-10-25 |
+| D13 | #7 Sub-workflow + `sv_rate` | làm (inline lúc compile) | ☐ |
+| D14 | #8 Kanto | manifest deploy, không chạy Kanto trong stack | ☐ |
+| D15 | #9 IDE proxy + SSO | profile `remote-ide` (Caddy + forward-auth) | ☐ |
+| D16 | M15 T01/T09/T10 | PO chấp thuận; ✔ sau lần quay video cuối | ☐ |
 
 ---
 

@@ -1,6 +1,6 @@
 # ADR-0042: Semantic parity testing (Simulator ≡ Runtime ≡ Binary thật)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L2
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L2
 - **Related:** FR-RUN-07, R7; Master Plan Phase 27; [14 §3](../14-testing-strategy.md#3-parity-so-sánh-gì)
 
 ## Decision

@@ -1,6 +1,6 @@
 # ADR-0031: Export project & điểm chặn license (entitlement)
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-EXP-01/02; [10 §2–3](../10-ide-export-licensing.md#2-export--download)
 
 ## Decision

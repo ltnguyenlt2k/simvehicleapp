@@ -1,6 +1,6 @@
 # ADR-0021: Runtime C++ `simvehicleapp-runtime-cpp` — strand, policies, trace, cô lập SDK
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-CG-06; Master Plan 3.4, 8.1, 8.2, 8.7, ADR-005 cũ; [04 §3](../04-velocitas-deep-dive.md#3-vấn-đề-đồng-thời-trong-c-sdk--giải-pháp); [07 §4](../07-codegen-backends.md#4-runtime-c-simvehicleapp-runtime-cpp--api-công-khai-v01)
 
 ## Context

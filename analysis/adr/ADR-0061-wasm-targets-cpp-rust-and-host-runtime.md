@@ -1,6 +1,6 @@
 # ADR-0061: Target WebAssembly cho backend C++ và Rust, chạy trên một host runtime WASM chung (`sv-wasm-host`)
 
-- **Status:** Proposed (yêu cầu PO 2026-10-24; quyết định chi tiết theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận)
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-24
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)

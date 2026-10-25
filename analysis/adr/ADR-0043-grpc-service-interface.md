@@ -1,6 +1,6 @@
 # ADR-0043: Block gọi gRPC service (`service.grpc_call`) qua AppManifest `grpc-interface` — hoãn tới khi toolchain sinh SDK offline
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-07
 - **Level:** L1 Subsystem
 - **Deciders:** Claude Code theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận

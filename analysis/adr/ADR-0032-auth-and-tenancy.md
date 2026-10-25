@@ -1,6 +1,6 @@
 # ADR-0032: Auth & tenancy
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** NFR-04, Q1; Master Plan 12.3
 
 ## Decision

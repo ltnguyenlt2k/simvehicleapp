@@ -1,6 +1,6 @@
 # ADR-0060: Deploy — target ngoài stack giả lập (databroker từ xa, image, Kanto) và ranh giới VSS với layer I/O xe (CAN)
 
-- **Status:** Proposed (theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận)
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-15
 - **Level:** L0 System
 - **Deciders:** PO; Claude Code (đề xuất)

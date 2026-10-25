@@ -1,6 +1,6 @@
 # ADR-0020: Backend Plugin Contract — `compiler-code-<lang>` là service thuần, thay thế được
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-CG-02, R10; [07 §1–2](../07-codegen-backends.md); ADR-0002, ADR-0007
 
 ## Context

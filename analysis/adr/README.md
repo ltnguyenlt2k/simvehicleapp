@@ -3,6 +3,8 @@
 > ADR = Architecture Decision Record. Mỗi ADR ghi **một** quyết định: bối cảnh → quyết định → phương án đã loại → hệ quả → việc cần làm → cách kiểm chứng.
 > Trạng thái ban đầu của tất cả: **Proposed**. Chuyển **Accepted** theo [roadmap §4](../13-implementation-roadmap.md#4-quy-tắc-chuyển-trạng-thái-adr). Template: [TEMPLATE.md](TEMPLATE.md).
 
+> **2026-10-25: PO chấp thuận toàn bộ** ("tôi accept hết") — mọi ADR còn Proposed (0014–0062, 36 ADR) chuyển **Accepted**; các quyết định "theo uỷ quyền PO — chờ PO xác nhận" trong Notes được xác nhận. Việc còn hoãn trong M14 do agent tự phân tích và quyết định theo uỷ quyền này (ghi ở từng ADR + ROADMAP).
+
 > Hiện có 34 ADR. Status trong từng file là nguồn kiểm prerequisite. 2026-10-03: PO chấp thuận ADR-0004/0006/0007 (Accepted) — đủ ADR cho gate M0; ADR-0002 Accepted cho release, dev được điều chỉnh bởi ADR-0009. Xem [review và bằng chứng](../../docs/reports/2026-10-03-documentation-review.md); không coi review tài liệu là chấp thuận ADR.
 
 ## 1. Cây phân cấp quyết định

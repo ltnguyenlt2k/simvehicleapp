@@ -1,6 +1,6 @@
 # ADR-0055: Block thể hiện logic bằng hình: câu tóm tắt, màu theo loại, cổng và cạnh có nhãn, chip dữ liệu
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-14
 - **Level:** L2 Component
 - **Deciders:** PO yêu cầu 2026-10-14; agent đề xuất theo uỷ quyền PO 2026-10-06, chờ PO xác nhận

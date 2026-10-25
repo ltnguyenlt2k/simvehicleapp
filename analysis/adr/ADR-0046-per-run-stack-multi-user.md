@@ -1,6 +1,6 @@
 # ADR-0046: Per-run runtime stack & multi-user — hoãn; không nới luật "không docker.sock" khi chưa có quyết định PO
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-07
 - **Level:** L0 System
 - **Deciders:** Claude Code theo uỷ quyền PO 2026-10-06 — **cần PO quyết** (chạm luật cứng AGENTS §2.10)

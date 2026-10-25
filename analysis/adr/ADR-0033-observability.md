@@ -1,6 +1,6 @@
 # ADR-0033: Observability của chính hệ thống SimVehicleApp
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** NFR-08; Master Plan 13.2
 
 ## Decision

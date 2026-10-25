@@ -1,6 +1,6 @@
 # ADR-0022: Chiến lược sinh C++ — continuation-passing, typed model, source map
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-CG-01/06, FR-WF-04; Master Plan ADR-003 (source map), Part 18.7; [04 §7](../04-velocitas-deep-dive.md#7-hình-dạng-code-c-được-sinh-mục-tiêu); [07 §3, §5](../07-codegen-backends.md)
 
 ## Decision

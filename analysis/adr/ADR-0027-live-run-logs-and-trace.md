@@ -1,6 +1,6 @@
 # ADR-0027: Live Run, log & trace streaming về UI
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-RUN-03..06; [08](../08-run-debug-observe.md)
 
 ## Decision

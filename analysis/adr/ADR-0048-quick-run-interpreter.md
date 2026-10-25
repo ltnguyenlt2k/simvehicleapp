@@ -1,6 +1,6 @@
 # ADR-0048: Không làm "Quick Run interpreter app" — simulator + SynCode đã phủ nhu cầu
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-07
 - **Level:** L2 Component
 - **Deciders:** Claude Code theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận

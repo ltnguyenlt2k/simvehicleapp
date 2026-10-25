@@ -1,6 +1,6 @@
 # ADR-0040: Python backend `compiler-code-python`
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L2
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L2
 - **Related:** FR-CG-03; [07 §6](../07-codegen-backends.md#6-compiler-code-python-m12); ADR-0020
 
 ## Decision

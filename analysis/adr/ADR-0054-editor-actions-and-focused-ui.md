@@ -1,6 +1,6 @@
 # ADR-0054: Thanh hành động có trạng thái rõ ràng và UI chỉ giữ phần của toolchain
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-14
 - **Level:** L1 Subsystem
 - **Deciders:** PO yêu cầu 2026-10-14; agent đề xuất theo uỷ quyền PO 2026-10-06, chờ PO xác nhận

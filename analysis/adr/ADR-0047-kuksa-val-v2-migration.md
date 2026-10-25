@@ -1,6 +1,6 @@
 # ADR-0047: Chuyển sang `kuksa.val.v2` từng backend trên databroker 0.5.0, signal-gateway làm provider, rồi mới nâng databroker
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-07
 - **Level:** L1 Subsystem
 - **Deciders:** Claude Code theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận

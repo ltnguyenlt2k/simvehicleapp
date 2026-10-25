@@ -1,6 +1,6 @@
 # ADR-0026: Workspace service — single writer, atomic commit, path security
 
-- **Status:** Proposed · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** NFR-03/04; Master Plan 3.5, 8.4, 12.2; Phase 17
 
 ## Decision

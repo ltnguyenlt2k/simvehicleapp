@@ -1,6 +1,6 @@
 # ADR-0058: Bàn thử nghiệm — scenario thành nhiều test case có kỳ vọng; dock gộp thành Test / Live; trợ lý soạn test
 
-- **Status:** Proposed (theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận)
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-15
 - **Level:** L1 Subsystem (contracts scenario/generate, simulator, backends, studio, AI)
 - **Deciders:** PO; Claude Code (đề xuất)

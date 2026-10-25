@@ -1,6 +1,6 @@
 # ADR-0015: Hệ kiểu & đơn vị (theo VSS datatypes/units, conversion tường minh)
 
-- **Status:** Proposed — triển khai M4 theo uỷ quyền PO 2026-10-06, **chờ PO chấp thuận** khi verify cuối · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** Master Plan 6.4, 6.5; [06 §5](../06-ir-and-compiler.md)
 
 ## Context

@@ -1,6 +1,6 @@
 # ADR-0017: Simulator IR với virtual clock (TypeScript, trong `simvehicleapp-core`)
 
-- **Status:** Proposed — triển khai M5 theo uỷ quyền PO 2026-10-06, **chờ PO chấp thuận** · **Date:** 2026-09-30 · **Level:** L1
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25) · **Date:** 2026-09-30 · **Level:** L1
 - **Related:** FR-RUN-01; Master Plan 7.4; ADR-0006, ADR-0012
 
 ## Decision

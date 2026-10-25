@@ -1,6 +1,6 @@
 # ADR-0050: Hoãn Kanto deployment, reverse proxy + SSO forward-auth cho IDE, VSS overlay OEM (M14 #8–#10)
 
-- **Status:** Proposed
+- **Status:** Accepted (PO chấp thuận toàn bộ 2026-10-25)
 - **Date:** 2026-10-07
 - **Level:** L1 Subsystem
 - **Deciders:** Claude Code theo uỷ quyền PO 2026-10-06 — chờ PO xác nhận
