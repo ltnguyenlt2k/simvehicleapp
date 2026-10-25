@@ -80,6 +80,8 @@ $DC build orchestrator workspace signal-gateway vehicle-gateway toolchain-cpp ai
 # Python backend when the `python` profile is on (ADR-0040): only its agent layer rebuilds, like toolchain-cpp.
 if $DC config --services | grep -qx toolchain-python; then $DC build codegen-python toolchain-python; fi
 if $DC config --services | grep -qx toolchain-rust; then $DC build codegen-rust toolchain-rust; fi
+# WebAssembly (profile `wasm`, ADR-0061): toolchain-wasm copies the runtimes from the codegen images and the host.
+if $DC config --services | grep -qx toolchain-wasm; then $DC build codegen-cpp codegen-rust wasm-host && $DC build toolchain-wasm; fi
 # Toolchains first: they seed the volumes the IDEs share (concurrent first mounts race on the copy-up).
 $DC up -d $($DC config --services | grep -x 'toolchain-[a-z]*' | tr '\n' ' ')
 $DC up -d
