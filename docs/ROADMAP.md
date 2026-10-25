@@ -63,7 +63,7 @@
 | [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Accepted 2026-10-25) | ✔ | 11/11 ✔ (T06: eval model thật chờ server PO sửa, M21 D7), gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M18.md)) |
 | [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Accepted 2026-10-25) | ✔ | 8/8 ✔, gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M19.md)) |
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
-| [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted | 🔄 | 2026-10-25: PO "accept hết" ⇒ quyết định D1–D16 ([phase M21](../analysis/phases/M21-roadmap-completion.md)); thứ tự: M20-T09 → M11 → M18-T06 → M14 → M15 + release |
+| [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -448,12 +448,12 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 
 | # | Mục | Quyết định | Trạng thái |
 |---|---|---|---|
-| D1 | Nightly xanh 3 đêm (M11 parity + E2E) | giữ tiêu chí, đếm từ `5d5f4413` | 🔄 |
+| D1 | Nightly xanh 3 đêm (M11 parity + E2E) | giữ tiêu chí, đếm từ `5d5f4413` | 🔄 2026-10-25: nightly tay 40194570658 và 40208287299 xanh (sau các sửa lỗi gốc); cần 3 nightly **theo lịch** liên tiếp xanh |
 | D2 | Cleanup Sim đợt 3b | làm theo lô | ✔ 2026-10-25 lô 1: gỡ 12 block LLM của Sim + handler agent/evaluator/router (blocks/executor 1313 test PASS, upstream tree PASS); giữ `providers/` (Knowledge Base/Tables/wand của Sim dùng, đã ẩn) — lý do ở ADR-0008 Notes 2026-10-25. CI xanh `f7d8ec01` |
 | D3 | osv studio | cùng D2 | 🔄 2026-10-25 đợt 3d: next 16.4.2, dompurify, MCP SDK, follow-redirects, undici, vite, vitest, zod, hono, ip-address (cùng major, ≥ 7 ngày); nodemailer/body-parser chờ đủ tuổi; 8 gói cần major + 2 báo nhầm ghi ở ADR-0008 Notes. Chờ CI + osv nightly |
 | D4 | Docs (M11-T08) | PO chấp thuận | ✔ 2026-10-25 |
 | D5 | Usability 5 người | thay bằng cognitive walkthrough, ghi rõ chưa test người thật | ✔ 2026-10-25 ([báo cáo](reviews/usability-walkthrough-2026-10-25.md)) |
-| D6 | Release v1.0.0 | từ monorepo: tag + GitHub Release + image; không tách repo (ADR mới) | ☐ |
+| D6 | Release v1.0.0 | từ monorepo: tag + GitHub Release + image; không tách repo | 🔄 2026-10-25: `v1.0.0-rc.2` sẵn sàng tại `b5e53ceb` (CI 40210012943 + nightly 40208287299 xanh, ghi chú phát hành từ CHANGELOG M16–M21); tạo release công khai cần người dùng chạy/cho phép `gh release create v1.0.0-rc.2 --target b5e53ceb --prerelease …` (release-images tự gắn image). `v1.0.0` sau D1 |
 | D7 | Eval M18-T06 | thử lại endpoint PO | ✔ 2026-10-25: endpoint vẫn 500 (Ollama thiếu `qwen3.8:27b`); đóng theo test fake + E2E, eval thật chờ server của PO |
 | D8 | #2 gRPC | không làm trong v1.x (ADR-0043 Notes 2026-10-25: không có service gRPC trong môi trường mục tiêu, app ↔ app qua MQTT đã có; mở lại khi có service + proto thật) | ✔ 2026-10-25 (quyết định) |
 | D9 | #3 Standalone service | nhiều project + MQTT: hướng dẫn + gate | ✔ 2026-10-25: [multiple-apps](user-guide/multiple-apps.md); `gate/two-apps-mqtt.sh` PASS (C++, hai sandbox, nối chỉ qua MQTT) |
