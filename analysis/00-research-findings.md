@@ -16,7 +16,7 @@
 | `eclipse-velocitas/vehicle-app-cpp-sdk` | `v0.7.1` | `6323b657a99749fd9a6770b9b35a6e8c801a60bc` (2025-12-15) | Apache-2.0 | template dùng `vehicle-app-sdk/0.7.1` |
 | Velocitas devcontainer base image | `ghcr.io/eclipse-velocitas/devcontainer-base-images/cpp:v0.4` | — | Apache-2.0 | dùng làm base cho toolchain image |
 | Velocitas packages | `devenv-runtimes v4.1.0`, `devenv-devcontainer-setup v3.0.0`, `devenv-github-workflows v7.0.0`, `devenv-github-templates v1.0.5` | từ `.velocitas.json` template | Apache-2.0 | |
-| KUKSA Databroker | **`ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0`** | (mới nhất 0.7.1, 2026-08-26) | Apache-2.0 | 0.5.0 là bản Velocitas `runtime-local` đang test chung với SDK |
+| KUKSA Databroker | **`ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1`** (từ 2026-10-25, M21 D11; trước đó 0.5.0) | mới nhất 0.7.1 (2026-08-26, kiểm 2026-10-25) | Apache-2.0 | 0.7.0 xoá `sdv.databroker.v1`; mọi app SimVehicleApp dùng `kuksa.val.v2` (ADR-0047). Mặc định bind 127.0.0.1 khi chạy binary trần ⇒ luôn truyền `--address`. Velocitas `runtime-local` vẫn ghim 0.5.0 (v1) |
 | KUKSA Databroker CLI | `ghcr.io/eclipse-kuksa/kuksa-databroker-cli:0.5.0` | | Apache-2.0 | |
 | KUKSA Mock Provider | `ghcr.io/eclipse-kuksa/kuksa-mock-provider/mock-provider:0.4.1` | | Apache-2.0 | |
 | Mosquitto | `eclipse-mosquitto:2.0.14` | | EPL-2.0/EDL-1.0 | dùng image nguyên bản, không sửa |

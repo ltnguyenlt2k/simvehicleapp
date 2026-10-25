@@ -162,9 +162,9 @@ services:
   databroker:
     # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
     restart: unless-stopped
-    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
+    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1@sha256:529d8c6d3cc223362667672978bcb8f92c4d356b25aedd336e7a2e004d7279bd
     # VSS 4.0 metadata: the image default is identical, we mount our pinned copy explicitly.
-    command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss/vss_rel_4.0.json"]
+    command: ["--insecure", "--address", "0.0.0.0", "--vss", "/vss/vss_rel_4.0.json"]
     volumes:
       - ./vss:/vss:ro
     ports: ["127.0.0.1:${SV_DATABROKER_PORT:-55555}:55555"]
@@ -175,8 +175,8 @@ services:
   databroker-v4-2:
     # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
     restart: unless-stopped
-    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
-    command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss/vss_rel_4.2.json"]
+    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1@sha256:529d8c6d3cc223362667672978bcb8f92c4d356b25aedd336e7a2e004d7279bd
+    command: ["--insecure", "--address", "0.0.0.0", "--vss", "/vss/vss_rel_4.2.json"]
     volumes:
       - ./vss:/vss:ro
     networks: [sv-internal]
@@ -187,9 +187,9 @@ services:
   databroker-custom:
     # Comes back after a Docker/WSL restart (2026-10-25: a stopped studio-db took the stack down).
     restart: unless-stopped
-    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
+    image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1@sha256:529d8c6d3cc223362667672978bcb8f92c4d356b25aedd336e7a2e004d7279bd
     profiles: ["vss-custom"]
-    command: ["--insecure", "--enable-databroker-v1", "--vss", "/vss-custom/${SV_VSS_CUSTOM_FILE:-none}"]
+    command: ["--insecure", "--address", "0.0.0.0", "--vss", "/vss-custom/${SV_VSS_CUSTOM_FILE:-none}"]
     volumes:
       - sv-vss-custom:/vss-custom:ro
     networks: [sv-internal]

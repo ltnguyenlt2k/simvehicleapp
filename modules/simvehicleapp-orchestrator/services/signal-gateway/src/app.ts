@@ -6,7 +6,7 @@ import type { Playback, Player, Scenario } from "./player.ts";
 import { type Provider, type ProviderApi, ProviderRejected, provideActuators } from "./provider.ts";
 import { Sources, sourceOf } from "./sources.ts";
 import type { Subscribe } from "./mqtt.ts";
-import { toDatapoint } from "./values.ts";
+import { type Datapoint, toDatapoint } from "./values.ts";
 
 /**
  * HTTP surface of the signal-gateway (`openapi/signal-gateway.v1.yaml`): SSE of signal updates,
@@ -72,7 +72,7 @@ class Mirror {
   /** A v2 app: provide its actuators (each actuation is accepted and published as the current value). */
   private publishing = true;
 
-  async provide(api: ProviderApi, paths: string[], log: RequestContext["log"], publish = true) {
+  async provide(api: ProviderApi, paths: string[], publishValue: (path: string, value: unknown) => Promise<void>, log: RequestContext["log"], publish = true) {
     const same = this.provider && this.paths.length === paths.length && paths.every((p) => this.paths.includes(p));
     if (same) {
       // Same actuators: keep the claim (a re-claim leaves a gap where the app's writes are refused).
@@ -88,7 +88,7 @@ class Mirror {
     // The databroker frees our previous claim a moment after its stream closes: retry ALREADY_EXISTS briefly then.
     for (let attempt = 0; ; attempt++) {
       try {
-        this.provider = await provideActuators(api, paths, log, (e) => log.warn("provider stream ended", { err: e.message }), publish);
+        this.provider = await provideActuators(api, paths, publishValue, log, (e) => log.warn("provider stream ended", { err: e.message }), publish);
         return;
       } catch (e) {
         if (!hadOwn || attempt >= 10 || !(e instanceof ProviderRejected) || !e.message.startsWith("another provider")) throw e;
@@ -285,7 +285,7 @@ export function createGatewayHandler(d: GatewayDeps) {
         const api = d.providerApi?.(b.release!, b.sandbox);
         if (!api) return rejected(503, "no_databroker", "kuksa.val.v2 is not available for this databroker");
         try {
-          await m.provide(api, paths, ctx.log, b.publish !== false);
+          await m.provide(api, paths, (path, value) => r.broker.set(path, "value", value as Datapoint), ctx.log, b.publish !== false);
         } catch (e) {
           m.clear();
           return rejected(409, "provider_refused", (e as Error).message);

@@ -126,3 +126,25 @@ sequenceDiagram
 - 2026-10-07: ADR-0024 §7 dự kiến "chuyển C++ trước khi Python SDK hỗ trợ v2"; thực tế Velocitas Python SDK vẫn chưa hỗ
   trợ, nhưng runtime Python của SimVehicleApp dùng client raw nên có thể dùng stub v2 của `kuksa-client` — không phải
   chờ SDK. Rust đi trước vì stub v2 đã có trong dependency đang khoá.
+- **2026-10-25 (M21 D11, PO chấp thuận toàn bộ): nâng databroker lên 0.7.1** — bước cuối của Decision §4.
+  - **Pin:** `ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1@sha256:529d8c6d3cc223362667672978bcb8f92c4d356b25aedd336e7a2e004d7279bd`, kiểm trên GitHub releases + ghcr.io; dùng cho compose (v4.0, v4.2, custom) và binary sandbox trong toolchain cpp/python/rust/wasm.
+  - **Lý do:**
+    - 0.6.1 vá lỗ hổng `OpenProviderStream`: client chỉ có quyền đọc đăng ký làm provider, rồi trả giá trị giả cho client khác;
+    - 0.7.0 kiểm đầu vào v2 chặt hơn và tôn trọng `min_sample_interval`;
+    - 0.7.1 chịu được provider trả rỗng hoặc chậm, và nâng opentelemetry 0.32 (bảo mật).
+  - **Thay đổi:**
+    - bỏ `--enable-databroker-v1`;
+    - thêm `--address 0.0.0.0` (0.7 mặc định bind 127.0.0.1; image đặt `KUKSA_DATABROKER_ADDR`, binary chép vào toolchain thì không có biến này);
+    - orchestrator cảnh báo lúc khởi động nếu `SV_DATABROKER_API` còn chọn `sdv.databroker.v1`.
+  - **Giữ lại:**
+    - code v1 trong runtime (app export vẫn chạy được với broker cũ);
+    - signal-gateway dùng `kuksa.val.v1`, 0.7.1 vẫn phục vụ.
+  - **Lỗi tìm ra khi chạy thật:** từ 0.6.1, provider chưa claim tín hiệu (`ProvideSignalRequest`) mà gửi `PublishValuesRequest` ⇒ stream bị `ABORTED`. Khi đã claim, broker chuyển `UpdateFilterRequest`/`GetProviderValueRequest` sang provider; proto-loader giải mã `UpdateFilterRequest` lỗi (`m.duration_ms` null) làm đứt stream.
+    - **Sửa:** signal-gateway chỉ giữ vai provider actuation; giá trị được chấp nhận ghi làm current qua `kuksa.val.v1` Set, như mirror v1. `Datapoint` v1 và `Value` v2 có cùng oneof.
+    - Proto v2 vendored lên kuksa-proto `28bf76ae` (submodule của tag 0.7.1).
+  - **Gate trên stack dev (2026-10-25), PASS:**
+    - provider v2;
+    - parity P3 7/7: C++, Python, Rust, C++ WASM;
+    - M17 runtime;
+    - live smoke (M7 + M8);
+    - ADAS live C43.

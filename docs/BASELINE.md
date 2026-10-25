@@ -14,7 +14,8 @@
 | Image | Digest |
 |---|---|
 | ghcr.io/eclipse-velocitas/devcontainer-base-images/cpp:v0.4 | `sha256:a966412b938f34c34edd8411186130f630305590a56a7650204b23b687c3fc89` |
-| ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0 | `sha256:4fa9d98197fd7d144dccfba9473e83ea30b7eff3afb06e2acf558c588b8da1cc` |
+| ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1 | `sha256:529d8c6d3cc223362667672978bcb8f92c4d356b25aedd336e7a2e004d7279bd` (2026-10-25, M21 D11; trước đó 0.5.0 `sha256:4fa9d981…`) |
+| caddy:2.11.7-alpine (profile `remote-ide`, Apache-2.0, unmodified) | `sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f` (2026-10-25, M21 D15) |
 | eclipse-mosquitto:2.0.14 | `sha256:b5f3829be419e03d7dba8cf4a5870de64c702f840360386f6b856134300b0d15` |
 | ghcr.io/eclipse-kuksa/kuksa-mock-provider/mock-provider:0.4.1 | `sha256:bc61857ab6b29f70332daa10b2cd835729cecd6605cc5fe48a35f9e0236c32bb` |
 | pgvector/pgvector:pg17 | `sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f` |

@@ -183,8 +183,8 @@ ${lang.build}
 
 ${
   p.target === "wasm"
-    ? "Run with sv-wasm-host against a KUKSA databroker (`kuksa.val.v2`, e.g. kuksa-databroker 0.5.0) and an MQTT broker;\nthe host only lets the app touch the signals and topics of `app/src/generated/sv-app.json`:"
-    : "Container image of the app (the template's Dockerfile): `docker build -f app/Dockerfile .`\n\nRun against a KUKSA databroker (`sdv.databroker.v1`, e.g. kuksa-databroker 0.5.0 with\n`--enable-databroker-v1`) and an MQTT broker:"
+    ? "Run with sv-wasm-host against a KUKSA databroker (`kuksa.val.v2`, e.g. kuksa-databroker 0.7.1) and an MQTT broker;\nthe host only lets the app touch the signals and topics of `app/src/generated/sv-app.json`:"
+    : "Container image of the app (the template's Dockerfile): `docker build -f app/Dockerfile .`\n\nRun against a KUKSA databroker (`sdv.databroker.v1`, e.g. kuksa-databroker 0.7.1 with\n`--enable-databroker-v1`) and an MQTT broker:"
 }
 
 \`\`\`sh

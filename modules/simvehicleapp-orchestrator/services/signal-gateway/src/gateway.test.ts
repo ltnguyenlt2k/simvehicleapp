@@ -297,7 +297,7 @@ function fakeProviderApi() {
     },
     close() {},
   };
-  return { api, written, claimed, actuate: (id: number, value: unknown) => push?.({ batch_actuate_stream_request: { actuate_requests: [{ signal_id: { id }, value }] } }), cancelled: () => cancelled };
+  return { api, written, claimed, actuate: (id: number, value: unknown) => push?.({ batch_actuate_stream_request: { actuate_requests: [{ signal_id: { id }, value }] } }), send: (m: ProviderMessage) => push?.(m), cancelled: () => cancelled };
 }
 
 describe("kuksa.val.v2 provider (ADR-0047 §2, M14 #5)", () => {
@@ -312,19 +312,21 @@ describe("kuksa.val.v2 provider (ADR-0047 §2, M14 #5)", () => {
     return { pv, b, call };
   };
 
-  test("PUT /mirror with api kuksa.val.v2 claims the actuators; an actuation is accepted and published as current", async () => {
+  test("PUT /mirror with api kuksa.val.v2 claims the actuators; an actuation is accepted and written as current over v1", async () => {
     const { pv, b, call } = setup();
     expect((await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2" })).status).toBe(204);
     expect(pv.claimed.has(HZ)).toBe(true);
     expect(b.subs.size).toBe(0); // no v1 mirror subscription for a v2 app
     pv.actuate(65, { bool: true });
-    expect(pv.written.slice(1)).toEqual([
-      { batch_actuate_stream_response: { signal_id: { id: 65 }, error: { code: "ERROR_CODE_OK", message: "" } } },
-      { publish_values_request: { request_id: 1, data_points: { 65: { value: { bool: true } } } } },
-    ]);
-    // An actuator it does not provide is refused, not published.
+    // Only the answer goes on the stream: no ProvideSignalRequest, no PublishValues (databroker ≥ 0.6.1, M21 D11).
+    expect(pv.written.slice(1)).toEqual([{ batch_actuate_stream_response: { signal_id: { id: 65 }, error: { code: "ERROR_CODE_OK", message: "" } } }]);
+    await Bun.sleep(0);
+    expect(b.sets).toEqual([`${HZ}.value=true`]);
+    // An actuator it does not provide is refused, not written.
     pv.actuate(7, { bool: true });
     expect(pv.written.at(-1)).toMatchObject({ batch_actuate_stream_response: { error: { code: "ERROR_CODE_NOT_FOUND" } } });
+    await Bun.sleep(0);
+    expect(b.sets).toHaveLength(1);
     // The run ends: the claim is released.
     expect((await call({ release: "v4.0", paths: [], api: "kuksa.val.v2" })).status).toBe(204);
     expect(pv.cancelled()).toBe(1);
@@ -332,15 +334,18 @@ describe("kuksa.val.v2 provider (ADR-0047 §2, M14 #5)", () => {
   });
 
   test("publish false: actuations are accepted but the current value stays (no vehicle answers)", async () => {
-    const { pv, call } = setup();
+    const { pv, b, call } = setup();
     expect((await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2", publish: false })).status).toBe(204);
     pv.actuate(65, { bool: true });
     expect(pv.written.slice(1)).toEqual([{ batch_actuate_stream_response: { signal_id: { id: 65 }, error: { code: "ERROR_CODE_OK", message: "" } } }]);
-    // Switching back on the same actuators keeps the claim: no new stream, publishing again.
+    await Bun.sleep(0);
+    expect(b.sets).toEqual([]);
+    // Switching back on the same actuators keeps the claim: no new stream, writing again.
     expect((await call({ release: "v4.0", paths: [HZ], api: "kuksa.val.v2" })).status).toBe(204);
     expect(pv.cancelled()).toBe(0);
     pv.actuate(65, { bool: false });
-    expect(pv.written.at(-1)).toEqual({ publish_values_request: { request_id: 1, data_points: { 65: { value: { bool: false } } } } });
+    await Bun.sleep(0);
+    expect(b.sets).toEqual([`${HZ}.value=false`]);
   });
 
   test("another provider holds an actuator ⇒ 409 provider_refused; a bad api ⇒ 400; v1 stays the default", async () => {

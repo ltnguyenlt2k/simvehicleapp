@@ -94,7 +94,7 @@ export class ProcessSandboxes implements SandboxProvider {
   async start(project: string): Promise<Sandbox> {
     const vss = projectVssFile(this.cfg.projectsDir, project);
     const port = await this.allocate();
-    const proc = this.deps.spawn([this.cfg.bin, "--insecure", "--enable-databroker-v1", "--address", "0.0.0.0", "--port", String(port), "--worker-threads", "2", "--vss", vss]);
+    const proc = this.deps.spawn([this.cfg.bin, "--insecure", "--address", "0.0.0.0", "--port", String(port), "--worker-threads", "2", "--vss", vss]);
     let alive = true;
     void proc.exited.then(() => {
       alive = false;

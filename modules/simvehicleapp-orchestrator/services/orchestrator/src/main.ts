@@ -67,6 +67,11 @@ const rawKey = process.env.SV_LICENSE_PUBLIC_KEY?.trim() || (existsSync(keyFile)
 const publicKey = rawKey && !rawKey.startsWith("-----") ? Buffer.from(rawKey, "base64").toString("utf8") : rawKey;
 const entitlements = new EntitlementService(process.env.SV_LICENSE_MODE === "enforce" ? "enforce" : "full", loadLicense(process.env.SV_LICENSE_KEY, publicKey));
 log.info("license", entitlements.status);
+// Every backend's apps run on kuksa.val.v2 (ADR-0047 §4, parity P3 7/7 for C++, Python and Rust). The stack's
+// databroker 0.7.1 no longer serves sdv.databroker.v1 (M21 D11): an override to it only works against an older broker.
+const databrokerApis = { "*": "kuksa.val.v2", ...parseMap(process.env.SV_DATABROKER_API ?? "") };
+const onV1 = Object.entries(databrokerApis).filter(([, api]) => api === "sdv.databroker.v1").map(([backend]) => backend);
+if (onV1.length) log.warn("SV_DATABROKER_API selects sdv.databroker.v1, which databroker 0.7.1 no longer serves: these apps will not connect", { backends: onV1 });
 // One databroker per VSS release (ADR-0024 §6), the same map the signal-gateway uses.
 const runs = new RunManager({
   repo,
@@ -75,9 +80,7 @@ const runs = new RunManager({
   databrokers: parseMap(process.env.SV_DATABROKERS ?? "v4.0=databroker:55555,v4.2=databroker-v4-2:55555"),
   limits: runLimitsFromEnv(),
   deployLimits: { perWorkspace: Math.max(1, Number(process.env.SV_MAX_DEPLOYMENTS_PER_WORKSPACE ?? 2) || 2) },
-  // Every backend's apps run on kuksa.val.v2 (ADR-0047 §4, parity P3 7/7 for C++, Python and Rust); override per
-  // backend or for all, e.g. SV_DATABROKER_API=*=sdv.databroker.v1 or cpp=sdv.databroker.v1.
-  databrokerApis: { "*": "kuksa.val.v2", ...parseMap(process.env.SV_DATABROKER_API ?? "") },
+  databrokerApis,
   log,
   metrics: { runEnded: (state, code) => runsEnded.inc({ state, code: code ?? "" }), traceEvents: (n) => traceEvents.inc({}, n) },
 });

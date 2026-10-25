@@ -59,7 +59,7 @@ describe("per-run sandbox (ADR-0057)", () => {
     const b = await sb.start("p1");
     expect([a.address, b.address]).toEqual(["toolchain-cpp:56001", "toolchain-cpp:56002"]);
     expect(a.local).toBe("127.0.0.1:56001");
-    expect(spawned[0]).toEqual(["/bin/db", "--insecure", "--enable-databroker-v1", "--address", "0.0.0.0", "--port", "56001", "--worker-threads", "2", "--vss", join(dir, "p1", "app/vss/vss_rel_4.0.json")]);
+    expect(spawned[0]).toEqual(["/bin/db", "--insecure", "--address", "0.0.0.0", "--port", "56001", "--worker-threads", "2", "--vss", join(dir, "p1", "app/vss/vss_rel_4.0.json")]);
     await expect(sb.start("p1")).rejects.toThrow("no free sandbox port");
     await a.stop();
     await a.stop();

@@ -10,8 +10,8 @@
 # ---------------------------------------------------------------------------
 # Toolchain agent (ADR-0025 §2, toolchain.v1.yaml): Bun + sources + contracts at the same /src layout as the
 # other services (contracts read their JSON Schemas from disk, so no single-file binary).
-# KUKSA databroker 0.5.0 (docs/BASELINE.md digest): only its binary is copied below.
-FROM ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0@sha256:4fa9d98197fd7d144dccfba9473e83ea30b7eff3afb06e2acf558c588b8da1cc AS kuksa-databroker
+# KUKSA databroker 0.7.1 (docs/BASELINE.md digest): only its binary is copied below.
+FROM ghcr.io/eclipse-kuksa/kuksa-databroker:0.7.1@sha256:529d8c6d3cc223362667672978bcb8f92c4d356b25aedd336e7a2e004d7279bd AS kuksa-databroker
 FROM oven/bun:1.3.8-debian AS agent
 WORKDIR /src/velocitas-stack/toolchain/agent
 COPY --from=contracts / /src/simvehicleapp-contracts/
