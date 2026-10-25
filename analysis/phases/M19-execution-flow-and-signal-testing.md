@@ -63,10 +63,10 @@
 - Bằng chứng 2026-10-24: vitest `fail-explain.test.ts` 4/4 (ghi lệch giờ, nhánh broken kèm giá trị, run bị huỷ khi chờ, trigger không chạy, `never`, không block nào ghi), `case-from-run.test.ts` 3/3 (case hợp lệ với `svScenarioSchema`); studio vitest 364; tsc hẹp sạch. E2E `m5-simulate` thêm "Make test case" (CI). E2E cho "Why the case failed": chưa có, làm ở T07 cùng full luồng.
 
 ### T07: Đóng milestone
-- [ ] Gate M19 trên stack dev + nightly.
-- [ ] Full luồng `@live`: inject ⇒ Flow đúng nguồn/nhánh/giá trị; case FAIL chỉ đúng điểm lệch.
-- [ ] Quay lại video; README + `docs/user-guide/test-signals.md` + `scenarios.md`.
-- [ ] `docs/reports/M19.md`, ROADMAP, CHANGELOG, `sv refresh`.
+- [x] Gate M19 trên stack dev (parity P3 7/7 so cả `eval`) + nightly 40157499473 xanh.
+- [x] Full luồng `@live`: inject ⇒ Flow đúng nguồn (`you injected`) và nhánh (`else`); case FAIL chỉ đúng điểm lệch (E2E `m5-simulate`).
+- [x] Quay lại video (116 s, 55 s); README + `docs/user-guide/test-signals.md` + `scenarios.md`.
+- [x] `docs/reports/M19.md`, ROADMAP, CHANGELOG contracts, `sv refresh` (image CI @ `5750f96a`).
 
 ## Acceptance gate
 1. Ở Simulate, Test và Live, người dùng thấy cùng một cách hiển thị luồng: lần chạy → bước → nhánh (kèm giá trị điều kiện) → write.
