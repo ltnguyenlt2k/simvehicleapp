@@ -1,6 +1,4 @@
 import { stripVersionSuffix } from '@sim/utils/string'
-import { A2ABlock } from '@/blocks/blocks/a2a'
-import { AgentBlock } from '@/blocks/blocks/agent'
 import { ApiBlock } from '@/blocks/blocks/api'
 import { ApiTriggerBlock } from '@/blocks/blocks/api_trigger'
 import { ChatTriggerBlock } from '@/blocks/blocks/chat_trigger'
@@ -8,14 +6,10 @@ import { CirclebackBlock, CirclebackBlockMeta } from '@/blocks/blocks/circleback
 import { ConditionBlock } from '@/blocks/blocks/condition'
 import { CredentialBlock } from '@/blocks/blocks/credential'
 import { DeploymentsBlock } from '@/blocks/blocks/deployments'
-import { EnrichmentBlock, EnrichmentBlockMeta } from '@/blocks/blocks/enrichment'
-import { EvaluatorBlock } from '@/blocks/blocks/evaluator'
 import { FileBlock, FileV2Block, FileV3Block, FileV4Block, FileV5Block } from '@/blocks/blocks/file'
 import { FunctionBlock } from '@/blocks/blocks/function'
 import { GenericWebhookBlock } from '@/blocks/blocks/generic_webhook'
-import { GuardrailsBlock } from '@/blocks/blocks/guardrails'
 import { HumanInTheLoopBlock } from '@/blocks/blocks/human_in_the_loop'
-import { ImageGeneratorBlock, ImageGeneratorV2Block } from '@/blocks/blocks/image_generator'
 import { InputTriggerBlock } from '@/blocks/blocks/input_trigger'
 import { KnowledgeBlock } from '@/blocks/blocks/knowledge'
 import { LogsBlock, LogsV2Block } from '@/blocks/blocks/logs'
@@ -25,7 +19,6 @@ import { MemoryBlock } from '@/blocks/blocks/memory'
 // SV: mothership block removed (proprietary copilot backend, M01-T03)
 import { NoteBlock } from '@/blocks/blocks/note'
 import { ResponseBlock } from '@/blocks/blocks/response'
-import { RouterBlock, RouterV2Block } from '@/blocks/blocks/router'
 import { RssBlock, RssBlockMeta } from '@/blocks/blocks/rss'
 import { ScheduleBlock } from '@/blocks/blocks/schedule'
 import { SearchBlock } from '@/blocks/blocks/search'
@@ -33,16 +26,7 @@ import { SimWorkspaceEventBlock } from '@/blocks/blocks/sim_workspace_event'
 import { StartTriggerBlock } from '@/blocks/blocks/start_trigger'
 import { StarterBlock } from '@/blocks/blocks/starter'
 import { TableBlock } from '@/blocks/blocks/table'
-import { ThinkingBlock } from '@/blocks/blocks/thinking'
-import { TranslateBlock } from '@/blocks/blocks/translate'
-import { TtsBlock } from '@/blocks/blocks/tts'
 import { VariablesBlock } from '@/blocks/blocks/variables'
-import {
-  VideoGeneratorBlock,
-  VideoGeneratorV2Block,
-  VideoGeneratorV3Block,
-} from '@/blocks/blocks/video_generator'
-import { VisionBlock, VisionV2Block } from '@/blocks/blocks/vision'
 import { WaitBlock } from '@/blocks/blocks/wait'
 import { WebhookRequestBlock } from '@/blocks/blocks/webhook_request'
 import { WorkflowBlock } from '@/blocks/blocks/workflow'
@@ -59,8 +43,6 @@ import { SV_VEHICLE_BLOCKS } from '@/blocks/vehicle'
 
 /** All block configs keyed by block type. The execution source of truth. */
 const BLOCK_REGISTRY: Record<string, BlockConfig> = {
-  a2a: A2ABlock,
-  agent: AgentBlock,
   api: ApiBlock,
   api_trigger: ApiTriggerBlock,
   chat_trigger: ChatTriggerBlock,
@@ -68,8 +50,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   condition: ConditionBlock,
   credential: CredentialBlock,
   deployments: DeploymentsBlock,
-  enrichment: EnrichmentBlock,
-  evaluator: EvaluatorBlock,
   file: FileBlock,
   file_v2: FileV2Block,
   file_v3: FileV3Block,
@@ -77,10 +57,7 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   file_v5: FileV5Block,
   function: FunctionBlock,
   generic_webhook: GenericWebhookBlock,
-  guardrails: GuardrailsBlock,
   human_in_the_loop: HumanInTheLoopBlock,
-  image_generator: ImageGeneratorBlock,
-  image_generator_v2: ImageGeneratorV2Block,
   input_trigger: InputTriggerBlock,
   knowledge: KnowledgeBlock,
   logs: LogsBlock,
@@ -90,8 +67,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   memory: MemoryBlock,
   note: NoteBlock,
   response: ResponseBlock,
-  router: RouterBlock,
-  router_v2: RouterV2Block,
   rss: RssBlock,
   schedule: ScheduleBlock,
   search: SearchBlock,
@@ -99,15 +74,7 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   start_trigger: StartTriggerBlock,
   starter: StarterBlock,
   table: TableBlock,
-  thinking: ThinkingBlock,
-  translate: TranslateBlock,
-  tts: TtsBlock,
   variables: VariablesBlock,
-  video_generator: VideoGeneratorBlock,
-  video_generator_v2: VideoGeneratorV2Block,
-  video_generator_v3: VideoGeneratorV3Block,
-  vision: VisionBlock,
-  vision_v2: VisionV2Block,
   wait: WaitBlock,
   webhook_request: WebhookRequestBlock,
   workflow: WorkflowBlock,
@@ -131,7 +98,6 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
  */
 const BLOCK_META_REGISTRY: Record<string, BlockMeta> = {
   circleback: CirclebackBlockMeta,
-  enrichment: EnrichmentBlockMeta,
   rss: RssBlockMeta,
 }
 

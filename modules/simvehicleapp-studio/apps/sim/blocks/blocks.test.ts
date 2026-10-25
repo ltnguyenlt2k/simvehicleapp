@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.unmock('@/blocks/registry')
 
-import { generateRouterPrompt } from '@/blocks/blocks/router'
 import {
   getAllBlocks,
   getAllBlockTypes,
@@ -226,42 +225,6 @@ describe.concurrent('Blocks Module', () => {
     })
   })
 
-  describe('Agent block', () => {
-    it('should expose canonical file attachments and normalize file params', () => {
-      const block = getBlock('agent')
-
-      expect(block).toBeDefined()
-      const uploadSubBlock = block?.subBlocks.find((subBlock) => subBlock.id === 'attachmentFiles')
-      const advancedSubBlock = block?.subBlocks.find((subBlock) => subBlock.id === 'files')
-
-      expect(uploadSubBlock?.type).toBe('file-upload')
-      expect(uploadSubBlock?.canonicalParamId).toBe('files')
-      expect(uploadSubBlock?.multiple).toBe(true)
-      expect(advancedSubBlock?.canonicalParamId).toBe('files')
-      expect(block?.inputs.files).toEqual({
-        type: 'array',
-        description: 'Files to include with the latest user message',
-      })
-
-      expect(
-        block?.tools.config?.params?.({
-          model: 'gpt-4o',
-          files:
-            '[{"id":"file-1","key":"workspace/ws-1/example.png","name":"example.png","url":"/api/files/serve/workspace%2Fws-1%2Fexample.png?context=workspace","size":123,"type":"image/png"}]',
-        })
-      ).toMatchObject({
-        files: [
-          {
-            id: 'file-1',
-            key: 'workspace/ws-1/example.png',
-            name: 'example.png',
-            type: 'image/png',
-          },
-        ],
-      })
-    })
-  })
-
   describe('getBlocksByCategory', () => {
     it('should return blocks in the "blocks" category', () => {
       const blocks = getBlocksByCategory('blocks')
@@ -294,7 +257,6 @@ describe.concurrent('Blocks Module', () => {
   describe('isValidBlockType', () => {
     it('should return true for valid block types', () => {
       expect(isValidBlockType('function')).toBe(true)
-      expect(isValidBlockType('agent')).toBe(true)
       expect(isValidBlockType('condition')).toBe(true)
       expect(isValidBlockType('api')).toBe(true)
     })
@@ -471,42 +433,6 @@ describe.concurrent('Blocks Module', () => {
       })
     })
 
-    describe('RouterBlock', () => {
-      const block = getBlock('router')
-
-      it('should have correct metadata', () => {
-        expect(block?.type).toBe('router')
-        expect(block?.name).toBe('Router (Legacy)')
-        expect(block?.category).toBe('blocks')
-        expect(block?.authMode).toBe(AuthMode.ApiKey)
-      })
-
-      it('should have required prompt subBlock', () => {
-        const promptSubBlock = block?.subBlocks.find((sb) => sb.id === 'prompt')
-        expect(promptSubBlock).toBeDefined()
-        expect(promptSubBlock?.type).toBe('long-input')
-        expect(promptSubBlock?.required).toBe(true)
-      })
-
-      it('should have model combobox with default value', () => {
-        const modelSubBlock = block?.subBlocks.find((sb) => sb.id === 'model')
-        expect(modelSubBlock).toBeDefined()
-        expect(modelSubBlock?.type).toBe('combobox')
-        expect(modelSubBlock?.required).toBe(true)
-        expect(modelSubBlock?.defaultValue).toBe('claude-sonnet-4-6')
-      })
-
-      it('should have LLM tool access', () => {
-        expect(block?.tools.access).toContain('openai_chat')
-        expect(block?.tools.access).toContain('anthropic_chat')
-        expect(block?.tools.access).toContain('google_chat')
-      })
-
-      it('should have tools.config with tool selector function', () => {
-        expect(block?.tools.config).toBeDefined()
-        expect(typeof block?.tools.config?.tool).toBe('function')
-      })
-    })
   })
 
   describe('SubBlock Validation', () => {
@@ -662,17 +588,6 @@ describe.concurrent('Blocks Module', () => {
       expect(conditionBlock?.tools.access).toEqual([])
     })
 
-    it('should handle blocks with multiple tool access', () => {
-      const routerBlock = getBlock('router')
-      expect(routerBlock?.tools.access.length).toBeGreaterThan(1)
-    })
-
-    it('should handle blocks with tools.config', () => {
-      const routerBlock = getBlock('router')
-      expect(routerBlock?.tools.config).toBeDefined()
-      expect(typeof routerBlock?.tools.config?.tool).toBe('function')
-    })
-
     it('should handle blocks with hideFromToolbar flag', () => {
       const starterBlock = getBlock('starter')
       expect(starterBlock?.hideFromToolbar).toBe(true)
@@ -687,71 +602,6 @@ describe.concurrent('Blocks Module', () => {
 
       const apiBlock = getBlock('api')
       expect(apiBlock?.docsLink).toBe('https://docs.sim.ai/workflows/blocks/api')
-    })
-  })
-
-  describe('generateRouterPrompt', () => {
-    it('should generate a base prompt with routing instructions', () => {
-      const prompt = generateRouterPrompt('Route to the correct agent')
-      expect(prompt).toContain('You are an intelligent routing agent')
-      expect(prompt).toContain('Route to the correct agent')
-      expect(prompt).toContain('Response Format')
-    })
-
-    it('should include target blocks information when provided', () => {
-      const targetBlocks = [
-        {
-          id: 'block-1',
-          type: 'agent',
-          title: 'Customer Support Agent',
-          description: 'Handles customer inquiries',
-          subBlocks: { systemPrompt: 'You are a helpful customer support agent.' },
-        },
-        {
-          id: 'block-2',
-          type: 'agent',
-          title: 'Sales Agent',
-          description: 'Handles sales inquiries',
-          subBlocks: { systemPrompt: 'You are a sales agent.' },
-        },
-      ]
-
-      const prompt = generateRouterPrompt('Route to the correct agent', targetBlocks)
-
-      expect(prompt).toContain('Available Target Blocks')
-      expect(prompt).toContain('block-1')
-      expect(prompt).toContain('Customer Support Agent')
-      expect(prompt).toContain('block-2')
-      expect(prompt).toContain('Sales Agent')
-    })
-
-    it('should include current state when provided', () => {
-      const targetBlocks = [
-        {
-          id: 'block-1',
-          type: 'agent',
-          title: 'Agent',
-          currentState: { status: 'active', count: 5 },
-        },
-      ]
-
-      const prompt = generateRouterPrompt('Route based on state', targetBlocks)
-
-      expect(prompt).toContain('Current State')
-      expect(prompt).toContain('active')
-      expect(prompt).toContain('5')
-    })
-
-    it('should handle empty target blocks array', () => {
-      const prompt = generateRouterPrompt('Route to agent', [])
-      expect(prompt).toContain('You are an intelligent routing agent')
-      expect(prompt).toContain('Route to agent')
-    })
-
-    it('should handle empty prompt string', () => {
-      const prompt = generateRouterPrompt('')
-      expect(prompt).toContain('You are an intelligent routing agent')
-      expect(prompt).toContain('Routing Request:')
     })
   })
 
@@ -771,72 +621,6 @@ describe.concurrent('Blocks Module', () => {
       expect(codeSubBlock?.wandConfig?.prompt).toBeDefined()
     })
 
-    it('should have correct slider configurations', () => {
-      const routerBlock = getBlock('router')
-      const temperatureSubBlock = routerBlock?.subBlocks.find((sb) => sb.id === 'temperature')
-      expect(temperatureSubBlock?.type).toBe('slider')
-      expect(temperatureSubBlock?.min).toBe(0)
-      expect(temperatureSubBlock?.max).toBe(2)
-    })
-
-    it('should mark generator provider dropdowns as command-searchable', () => {
-      const imageGeneratorBlock = getBlock('image_generator_v2')
-      const videoGeneratorBlock = getBlock('video_generator_v3')
-
-      const imageProviderSubBlock = imageGeneratorBlock?.subBlocks.find(
-        (sb) => sb.id === 'provider'
-      )
-      const videoProviderSubBlock = videoGeneratorBlock?.subBlocks.find(
-        (sb) => sb.id === 'provider'
-      )
-      const imageProviderOptions = imageProviderSubBlock?.options
-      const videoProviderOptions = videoProviderSubBlock?.options
-
-      expect(imageGeneratorBlock?.hideFromToolbar).not.toBe(true)
-      expect(videoGeneratorBlock?.hideFromToolbar).not.toBe(true)
-      expect(imageProviderSubBlock?.commandSearchable).toBe(true)
-      expect(videoProviderSubBlock?.commandSearchable).toBe(true)
-      expect(imageProviderSubBlock?.value?.()).toBe('falai')
-      expect(videoProviderSubBlock?.value?.()).toBe('falai')
-      expect(
-        Array.isArray(imageProviderOptions) ? imageProviderOptions.map((option) => option.id) : []
-      ).toContain('falai')
-      expect(
-        Array.isArray(videoProviderOptions) ? videoProviderOptions.map((option) => option.id) : []
-      ).toContain('falai')
-      expect(getBlock('image_generator')?.hideFromToolbar).toBe(true)
-      expect(getBlock('video_generator_v2')?.hideFromToolbar).toBe(true)
-    })
-
-    it('should mark the agent model combobox as command-searchable', () => {
-      const agentBlock = getBlock('agent')
-      const modelSubBlock = agentBlock?.subBlocks.find((sb) => sb.id === 'model')
-
-      expect(agentBlock?.hideFromToolbar).not.toBe(true)
-      expect(modelSubBlock?.type).toBe('combobox')
-      expect(modelSubBlock?.commandSearchable).toBe(true)
-    })
-
-    it('should hide generator API keys on hosted only for Fal.ai providers', () => {
-      for (const blockType of ['image_generator_v2', 'video_generator_v3']) {
-        const block = getBlock(blockType)
-        const apiKeySubBlocks = block?.subBlocks.filter((sb) => sb.id === 'apiKey') ?? []
-
-        const falApiKeySubBlock = apiKeySubBlocks.find(
-          (sb) => sb.condition?.field === 'provider' && sb.condition.value === 'falai'
-        )
-        const nonFalApiKeySubBlock = apiKeySubBlocks.find(
-          (sb) =>
-            sb.condition?.field === 'provider' &&
-            sb.condition.value === 'falai' &&
-            sb.condition.not === true
-        )
-
-        expect(falApiKeySubBlock?.hideWhenHosted).toBe(true)
-        expect(nonFalApiKeySubBlock).toBeDefined()
-        expect(nonFalApiKeySubBlock?.hideWhenHosted).not.toBe(true)
-      }
-    })
   })
 
   describe('Block Consistency', () => {

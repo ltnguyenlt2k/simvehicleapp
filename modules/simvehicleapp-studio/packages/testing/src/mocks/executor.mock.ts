@@ -85,9 +85,6 @@ vi.mock('@/executor/utils/http', () => ({
   }),
 }))
 
-// Specific block utilities
-vi.mock('@/blocks/blocks/router')
-
 // Mock blocks module
 vi.mock('@/blocks')
 
