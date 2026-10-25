@@ -61,3 +61,8 @@ compile + SynCode + parity với signal của overlay.
   - **code-server giữ mật khẩu** (thêm một lớp).
   - **Giới hạn:** quyền theo phiên, không theo project. Code-server mở volume workspace chung.
   - **Hướng dẫn:** [DEPLOY](../../docs/DEPLOY.md) mục "Mở studio và IDE từ máy khác".
+  - **Kiểm trên stack dev 2026-10-25** (studio image `f7d8ec01`):
+    - `/ide/cpp/` không phiên ⇒ 401;
+    - studio `/login` qua proxy ⇒ 200;
+    - có phiên ⇒ `/api/sv/ide/authorize` 200 và `/ide/cpp/` tới code-server (302 tới `/ide/cpp/login`, trang "code-server login" 200);
+    - trang đó không phiên ⇒ 401.
