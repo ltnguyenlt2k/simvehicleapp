@@ -207,7 +207,7 @@ describe("container image (ADR-0060, M18-T10)", () => {
     expect((await call({ reference: "not a ref" })).status).toBe(400);
     const res = await call({ reference: "registry:5000/lka:1", insecure: true });
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ reference: "registry:5000/lka:1", digest: "sha256:abc", bytes: 42 });
+    expect(await res.json()).toMatchObject({ reference: "registry:5000/lka:1", digest: "sha256:abc", bytes: 42, kanto: { image: { name: "registry:5000/lka@sha256:abc" }, host_config: { network_mode: "host" } } });
     expect(jobs).toEqual([{ kind: "image", options: { image: { reference: "registry:5000/lka:1", insecure: true } } }]);
     ok = false;
     const failed = await call({ reference: "registry:5000/lka:1", username: "u", password: "p" });

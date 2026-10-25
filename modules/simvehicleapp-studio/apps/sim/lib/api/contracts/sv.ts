@@ -1148,6 +1148,15 @@ export const svPushImageResultSchema = z.object({
   bytes: z.number(),
   files: z.number(),
   generationId: z.string(),
+  /** Eclipse Kanto container-management descriptor of the pushed image (M21 D14; a file of kanto-cm's `ctr_dir`). */
+  kanto: z
+    .object({
+      container_name: z.string(),
+      image: z.object({ name: z.string() }),
+      host_config: z.record(z.string(), z.unknown()),
+      config: z.object({ env: z.array(z.string()) }),
+    })
+    .optional(),
 })
 
 /** `POST /api/sv/projects/[id]/images` — deploy as a container image: the app's OCI image pushed to a registry. */

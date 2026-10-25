@@ -661,6 +661,15 @@ paths:
                   bytes: { type: integer }
                   files: { type: integer }
                   generationId: { type: string }
+                  kanto:
+                    type: object
+                    description: "Eclipse Kanto container-management descriptor of the pushed image (M21 D14; kanto-cm v1.0.0 `types.Container` JSON, a file of its `deployment.ctr_dir`): the image by digest, host network, restart unless-stopped, the app's env pointed at the vehicle's databroker (kuksa.val.v2, 127.0.0.1:55555) and MQTT broker (127.0.0.1:1883). Deterministic for one image."
+                    required: [container_name, image, host_config, config]
+                    properties:
+                      container_name: { type: string }
+                      image: { type: object, required: [name], properties: { name: { type: string } } }
+                      host_config: { type: object }
+                      config: { type: object, properties: { env: { type: array, items: { type: string } } } }
         "400": { description: Invalid reference. }
         "409": { description: The app is not ready or its latest SynCode did not pass. }
         "422": { description: "`image_failed`: the build or the push failed (message, last log lines); Python apps are not supported yet." }

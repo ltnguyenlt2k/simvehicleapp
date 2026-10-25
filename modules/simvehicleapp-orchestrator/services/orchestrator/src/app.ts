@@ -11,6 +11,7 @@ import { createProject, DuplicateSlug } from "./projects.ts";
 import { ACTIVE_RUN_STATES, type DeployTarget, DuplicateTargetName, type Generation, initialVerification, type Project, type Repo, type Run, STAGES, stackKey } from "./repo.ts";
 import { openToken, sealToken } from "./secrets.ts";
 import { RunConflict, RunQuota, type RunManager } from "./runs.ts";
+import { kantoDescriptor } from "./kanto.ts";
 
 /**
  * HTTP surface of the orchestrator (`openapi/orchestrator.v1.yaml`): projects (vehicle apps) and their lifecycle
@@ -335,7 +336,7 @@ export function createOrchestratorHandler(d: AppDeps) {
         }
         const result = JSON.parse(pushed) as { reference: string; digest: string; bytes: number; files: number };
         ctx.log.info("image pushed", { project: project.slug, reference, digest: result.digest, bytes: result.bytes });
-        return json(200, { ...result, generationId: latest.id });
+        return json(200, { ...result, generationId: latest.id, kanto: kantoDescriptor(project.slug, result.reference, result.digest) });
       }
       if (parts[2] === "deployments" && parts.length === 3 && req.method === "POST") {
         if (!d.runs) return json(503, { error: "unavailable", message: "runs are not enabled" });

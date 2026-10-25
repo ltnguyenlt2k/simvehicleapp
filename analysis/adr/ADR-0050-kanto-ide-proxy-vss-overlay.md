@@ -37,3 +37,18 @@ compile + SynCode + parity với signal của overlay.
 
 ## Notes / Deviations
 - 2026-10-14: **#10 được làm** theo yêu cầu PO 2026-10-13 — [ADR-0052](ADR-0052-custom-vss-models.md) (release `vX.Y-<name>`, overlay JSON, `scripts/sv vss`, databroker-custom, vss-sync project); #8, #9 vẫn hoãn.
+- **2026-10-25 (M21 D14, PO chấp thuận toàn bộ): #8 Kanto — làm phía deploy, không chạy Kanto trong stack.**
+  - **Lý do:** chạy kanto-cm trong stack cần quyền điều khiển containerd/Docker (luật cứng 10); giá trị thật là đưa app lên xe.
+  - **Image push** (`POST /projects/{id}/images`, M18) trả thêm `kanto`: descriptor container-management đúng kiểu `types.Container` của kanto-cm v1.0.0, tức file trong `deployment.ctr_dir`. Đã kiểm source tag `v1.0.0`:
+    - `deployment.go` duyệt thư mục và gọi `util.ReadContainer`;
+    - field JSON lấy theo `container_name`, `image.name`, `host_config.network_mode`, `restart_policy.type`, `config.env`.
+  - **Nội dung descriptor:**
+    - image theo digest;
+    - mạng host;
+    - `unless-stopped`;
+    - env của app (`SDV_VEHICLEDATABROKER_ADDRESS`, `SDV_MQTT_ADDRESS`, `KUKSA_DATABROKER_API`/`SV_DATABROKER_API=kuksa.val.v2`, `SV_TRACE_LEVEL=trigger`).
+  - **Tất định:** cùng image ⇒ cùng bytes.
+  - **Studio:** hộp thoại Deploy → Container image có nút **Download Kanto descriptor**.
+  - **Contract:** additive (CHANGELOG contracts).
+  - **Test:** `kanto.test.ts`, `runs-deploy.test.ts`.
+  - **Chưa kiểm** trên một xe chạy Kanto thật: không có thiết bị.

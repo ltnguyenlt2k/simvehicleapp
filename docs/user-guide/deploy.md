@@ -41,6 +41,12 @@ Khi app chạy trên chính thiết bị của xe thay vì trong SimVehicleApp: 
   ```
   App mặc định dùng `kuksa.val.v2`. Cần `KUKSA_DATABROKER_API=sdv.databroker.v1` nếu databroker chỉ có v1.
 - Kích thước đo được: app C++ khoảng 20 MB, app Rust khoảng 5 MB. App Python chưa hỗ trợ.
+- **Eclipse Kanto** (xe chạy kanto-cm): sau khi push, bấm **Download Kanto descriptor**. Bạn nhận được file `<app>.json`, một descriptor container-management của kanto-cm v1.0.0, gồm:
+  - image theo digest;
+  - `network_mode: host` và `restart_policy: unless-stopped`;
+  - env trỏ tới databroker (`kuksa.val.v2`, `127.0.0.1:55555`) và MQTT (`127.0.0.1:1883`) của xe.
+
+  Chép file vào thư mục `deployment.ctr_dir` của kanto-cm: lúc khởi động, Kanto kéo image và chạy app. Sửa địa chỉ trong `config.env` nếu databroker hoặc broker của xe ở chỗ khác. SimVehicleApp không chạy Kanto trong stack ([ADR-0050](../../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) Notes).
 
 ## Bên trong
 - App của deployment nối tới **vehicle-gateway** (`vehicle-gateway:<port>`), không nối thẳng tới target. Gateway thêm TLS và token, cho qua phương thức đọc và chặn phương thức ghi theo mode.

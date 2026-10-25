@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/orchestrator.v1.yaml` (additive, ADR-0050 Notes, M21 D14): `POST /projects/{id}/images` answers `kanto` — the Eclipse Kanto container-management descriptor of the pushed image (by digest, host network, unless-stopped, env for the vehicle's databroker and MQTT).
 - `openapi/workspace.v1.yaml` (additive, ADR-0061, M20-T07): `createProject.target` (velocitas default | wasm: sources of the `<language>-wasm` backend and toolchain).
 - WebAssembly target (additive, ADR-0061, M20-T02): `abi/sv-wasm-abi.v1.md` (+ reference WIT) — the guest ⇄ `sv-wasm-host` ABI (imports `sv.*`, exports `sv_*`, events, limits, allowlist, error codes); `backend-capabilities.target {kind velocitas|wasm, triple, abi, host}` (absent = velocitas); `generation-manifest.target`; orchestrator `Project.target` and `createProject.target` (default velocitas; 422 `BACKEND_UNAVAILABLE` when no backend serves the language and target).
 - `schemas/trace-event.v1` (description only, ADR-0062 §2, M19-T02): `data.eval {refs, result}` on the `exit` of a decision — emitted by the simulator and the C++/Python/Rust runtimes; golden `expected.trace.json` GW-A/B/G carry it.

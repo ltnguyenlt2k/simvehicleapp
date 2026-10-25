@@ -55,6 +55,18 @@ function testedText(r: SvTestDeployTargetResult): string {
     : `Reachable (${server}); it has every signal this workflow uses`
 }
 
+/** Saves the Kanto container-management descriptor of a pushed image (`<app>.json`, M21 D14). */
+function downloadKanto(kanto: NonNullable<SvPushImageResult['kanto']>) {
+  const url = URL.createObjectURL(
+    new Blob([`${JSON.stringify(kanto, null, 2)}\n`], { type: 'application/json' })
+  )
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${kanto.container_name}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 /**
  * Deploy (ADR-0060, M18-T09): runs the app of the latest SynCode on a deploy target — a databroker outside the stack
  * whose signals come from the vehicle's layers (CAN, hardware). Simulated input (inject, Play, Record) is disabled
@@ -286,6 +298,24 @@ function DeployModal({ open, onOpenChange }: DeployModalProps) {
                 >
                   {`${pushed.reference}@${pushed.digest} (${Math.round(pushed.bytes / 1024)} KiB)`}
                 </span>
+              </ChipModalField>
+            )}
+            {pushed?.kanto && (
+              <ChipModalField type='custom' title='Eclipse Kanto'>
+                <div className='flex flex-col gap-1'>
+                  <Button
+                    variant='ghost'
+                    data-sv='kanto-descriptor'
+                    onClick={() => downloadKanto(pushed.kanto!)}
+                  >
+                    Download Kanto descriptor
+                  </Button>
+                  <span className='text-[var(--text-muted)] text-caption'>
+                    Put the file in the vehicle's kanto-cm containers directory
+                    (deployment.ctr_dir): Kanto pulls this image by digest and runs it next to the
+                    vehicle's databroker and MQTT broker.
+                  </span>
+                </div>
               </ChipModalField>
             )}
           </>
