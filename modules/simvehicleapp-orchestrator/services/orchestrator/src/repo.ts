@@ -17,6 +17,12 @@ export interface ProjectSettings {
   traceLevel: "off" | "trigger" | "node";
 }
 
+/**
+ * Key of a project's backend and toolchain in SV_BACKENDS / SV_TOOLCHAINS (ADR-0061): its language, or
+ * `<language>-wasm` for a WebAssembly app (`cpp-wasm`, `rust-wasm`).
+ */
+export const stackKey = (p: Pick<Project, "language" | "target">): string => (p.target === "wasm" ? `${p.language}-wasm` : p.language);
+
 export interface Project {
   id: string;
   slug: string;

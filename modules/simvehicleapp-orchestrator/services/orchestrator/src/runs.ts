@@ -1,6 +1,6 @@
 import type { Clients, Diagnostic, ToolchainJob } from "./clients.ts";
 import { type EventHub, itemOfRunEvent } from "./events.ts";
-import { ACTIVE_RUN_STATES, type Project, type Repo, type Run, type RunEvent } from "./repo.ts";
+import { ACTIVE_RUN_STATES, type Project, type Repo, type Run, type RunEvent, stackKey } from "./repo.ts";
 import { TraceIngest } from "./trace.ts";
 
 /**
@@ -118,7 +118,7 @@ export class RunManager {
     const stale = await this.d.repo.runs({ active: true, limit: 100 });
     for (const r of stale) {
       const project = await this.d.repo.project(r.projectId);
-      if (r.jobId && project) await this.d.clients.startJob(project.language, "stop", project.slug, { runJobId: r.jobId }).catch(() => null);
+      if (r.jobId && project) await this.d.clients.startJob(stackKey(project), "stop", project.slug, { runJobId: r.jobId }).catch(() => null);
       await this.d.repo.updateRun(r.id, { state: "stopped", finishedAt: this.now(), diagnostics: [...r.diagnostics, diag("RUN_CRASHED", "The orchestrator restarted during this run; the app was stopped")] });
     }
     return stale.length;
@@ -176,7 +176,8 @@ export class RunManager {
     const writes = (gen.runInfo?.signals ?? []).filter((s) => s.vssType === "actuator" && s.access.includes("write")).map((s) => s.path);
     // A v2 app actuates through a provider: the gateway provides its actuators instead of mirroring targets (ADR-0047 §2).
     // SV_DATABROKER_API selects the host of the Rust runtime, KUKSA_DATABROKER_API the client of the C++ SDK 0.7.1.
-    const api = databrokerApiOf(this.d.databrokerApis, project.language);
+    // A WebAssembly app speaks kuksa.val.v2 only (ADR-0061).
+    const api = project.target === "wasm" ? "kuksa.val.v2" : databrokerApiOf(this.d.databrokerApis, project.language);
     if (!sandbox) {
       await this.d.clients.mirror(project.vssRelease, writes, undefined, api).catch((e) => ingest.system(`signal mirroring is unavailable: ${(e as Error).message}`, "warn"));
     }
@@ -198,7 +199,7 @@ export class RunManager {
     if (sandbox) {
       // Where the run's databroker listens (the agent starts it before the app): the signal-gateway mirrors there and
       // the studio's Signals, inject and Play reach it (M17-T05).
-      const address = await this.sandboxAddress(project.language, job.value.id);
+      const address = await this.sandboxAddress(stackKey(project), job.value.id);
       if (address) {
         await this.d.repo.updateRun(run.id, { sandbox: address });
         ingest.system(`vehicle sandbox: this run's databroker is ${address}`);
@@ -251,8 +252,9 @@ export class RunManager {
     }
     await this.d.repo.updateRun(run.id, { sandbox: address });
     ingest.system(`▶ deploy ${project.slug} (generation ${generationId}, VSS ${project.vssRelease}) to ${target.name} (${target.address}${target.tls ? ", TLS" : ""}), ${mode}, through ${address}`);
-    const api = databrokerApiOf(this.d.databrokerApis, project.language);
-    const job = await this.d.clients.startJob(project.language, "run", project.slug, {
+    // A WebAssembly app speaks kuksa.val.v2 only (ADR-0061).
+    const api = project.target === "wasm" ? "kuksa.val.v2" : databrokerApiOf(this.d.databrokerApis, project.language);
+    const job = await this.d.clients.startJob(stackKey(project), "run", project.slug, {
       env: { SDV_VEHICLEDATABROKER_ADDRESS: `grpc://${address}`, SV_TRACE_LEVEL: level, SV_RUN_ID: run.id, SV_DATABROKER_API: api, KUKSA_DATABROKER_API: api },
     });
     if (!job.ok) {
@@ -294,7 +296,7 @@ export class RunManager {
     live?.ingest.system(reason === "expired" ? "■ the run reached its time limit: stopping (Extend keeps it running)" : "■ stop requested (SIGINT, SIGKILL after 5 s)");
     const project = await this.d.repo.project(run.projectId);
     if (run.jobId && project) {
-      const stop = await this.d.clients.startJob(project.language, "stop", project.slug, { runJobId: run.jobId }).catch(() => null);
+      const stop = await this.d.clients.startJob(stackKey(project), "stop", project.slug, { runJobId: run.jobId }).catch(() => null);
       if (!stop?.ok && !live) await this.finish(runId, "stopped", []);
     } else await this.finish(runId, "stopped", []);
     return this.d.repo.run(runId);
@@ -379,14 +381,14 @@ export class RunManager {
     await this.d.repo.updateRun(runId, { diagnostics: [diag("RUN_START_TIMEOUT", "The app did not report app.started within 30 s")] });
     if (live) live.stopRequested = true;
     const project = await this.d.repo.project(run.projectId);
-    if (run.jobId && project) await this.d.clients.startJob(project.language, "stop", project.slug, { runJobId: run.jobId }).catch(() => null);
+    if (run.jobId && project) await this.d.clients.startJob(stackKey(project), "stop", project.slug, { runJobId: run.jobId }).catch(() => null);
   }
 
   private async follow(project: Project, runId: string, jobId: string) {
     const live = this.live.get(runId)!;
     let job: ToolchainJob | null = null;
     try {
-      job = await this.d.clients.followJob(project.language, jobId, -1, (l) => {
+      job = await this.d.clients.followJob(stackKey(project), jobId, -1, (l) => {
         if (l.stream === "system" && /^job (succeeded|failed|cancelled)$/.test(l.msg)) return;
         live.ingest.line(l);
       });

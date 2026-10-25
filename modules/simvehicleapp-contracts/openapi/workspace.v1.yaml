@@ -49,6 +49,7 @@ paths:
               properties:
                 slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
                 language: { enum: [cpp, python, rust] }
+                target: { enum: [velocitas, wasm], default: velocitas, description: "What the app runs on (ADR-0061): wasm takes the template, overlay and runtime of the <language>-wasm backend and toolchain." }
                 appName: { type: string, pattern: "^[A-Z][A-Za-z0-9]*$" }
                 vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
       responses:

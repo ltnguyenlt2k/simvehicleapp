@@ -5,6 +5,6 @@
         "language": "cpp",
         "target": "wasm",
         "repoType": "app",
-        "appManifestPath": "app/src/generated/sv-app.json"
+        "appManifestPath": "app/AppManifest.json"
     }
 }

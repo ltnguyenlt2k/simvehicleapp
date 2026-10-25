@@ -1,5 +1,5 @@
 import type { Clients } from "./clients.ts";
-import { DuplicateSlug, type Project, type Repo } from "./repo.ts";
+import { DuplicateSlug, type Project, type Repo, stackKey } from "./repo.ts";
 
 /**
  * Project creation (M07-T13): the row (status `creating`), then in the background the workspace
@@ -45,9 +45,9 @@ export async function createProject(repo: Repo, clients: Clients, req: CreatePro
  */
 export async function provision(repo: Repo, clients: Clients, project: Project): Promise<void> {
   try {
-    const ws = await clients.createProject({ slug: project.slug, language: project.language, appName: project.appName, vssRelease: project.vssRelease });
+    const ws = await clients.createProject({ slug: project.slug, language: project.language, ...(project.target === "wasm" ? { target: "wasm" as const } : {}), appName: project.appName, vssRelease: project.vssRelease });
     if (!ws.ok && ws.status !== 409) throw new Error(ws.diagnostics[0]?.message ?? ws.message ?? `workspace ⇒ ${ws.status}`);
-    const init = await clients.job(project.language, "init", project.slug, () => {});
+    const init = await clients.job(stackKey(project), "init", project.slug, () => {});
     if (init.state !== "succeeded") throw new Error(init.diagnostics[0]?.message ?? "velocitas init failed");
     await repo.updateProject(project.id, { status: "ready", statusMessage: undefined });
   } catch (e) {

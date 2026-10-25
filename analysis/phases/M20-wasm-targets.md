@@ -76,6 +76,12 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
 - [x] RAM/đĩa (2026-10-25, máy dev): image 2,03 GB, build tại máy với `-j2`, không vượt RAM. Trong image: GW-A C++ (1,06 MB wasm, 2,7 MB cwasm) và Rust (347 KB, 1,08 MB) build + `--test` PASS.
 - Lưu ý: wasi-sdk 34 đổi tên toolchain file thành `share/cmake/wasi-sdk-p1.cmake` (không còn `wasi-sdk.cmake`).
 
+
+### T07: Orchestrator / studio
+- [x] Orchestrator: `stackKey(project)` = `<language>-wasm` cho project `target: wasm` — dùng cho generate, job init/build/test/image, run/stop/follow, sandbox, toolchain forget/gc. Run của app WASM luôn `kuksa.val.v2`. Test pipeline: project wasm đi qua backend + toolchain `cpp-wasm` (orchestrator 140/140 trong container).
+- [x] Workspace: `createProject.target` ⇒ template/overlay/runtime từ nguồn `<language>-wasm`, `project.json` ghi `target` (workspace 30/30 trong container). Template wasm có `app/AppManifest.json` tối thiểu, nên init/commit/vss-sync của workspace giữ nguyên.
+- [ ] Studio: chọn Runtime (Velocitas native / WebAssembly) khi tạo app, nhãn target ở Vehicle apps và thanh hành động; Export WASM; Deploy image (ADR-0060).
+
 ### T07: Studio/orchestrator
 - [ ] Tạo project: "Runtime: Velocitas (native) / WebAssembly"; Vehicle apps hiện target.
 - [ ] Run, Signals, Test/Play, Flow chạy như native.

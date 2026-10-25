@@ -1,7 +1,7 @@
 import type { Clients } from "./clients.ts";
 import type { CapacityProbe, Limits } from "./governance.ts";
 import { provision } from "./projects.ts";
-import { ACTIVE_RUN_STATES, type Project, type Repo } from "./repo.ts";
+import { ACTIVE_RUN_STATES, type Project, type Repo, stackKey } from "./repo.ts";
 import type { RunManager } from "./runs.ts";
 
 /**
@@ -66,7 +66,7 @@ export async function deleteApp(d: LifecycleDeps, project: Project): Promise<{ c
   const ws = await d.clients.workspaceDelete(project.slug);
   if (!ws.ok) throw new Error(`workspace could not delete ${project.slug} (${ws.status}${ws.message ? `: ${ws.message}` : ""})`);
   try {
-    const tc = await d.clients.toolchainForget(project.language, project.slug);
+    const tc = await d.clients.toolchainForget(stackKey(project), project.slug);
     if (!tc.ok) d.log?.warn("toolchain did not forget the app cache (the sweeper gc will)", { app: project.slug, status: tc.status });
   } catch (e) {
     d.log?.warn("toolchain did not forget the app cache (the sweeper gc will)", { app: project.slug, err: (e as Error).message });
@@ -96,7 +96,7 @@ export async function repairApp(d: LifecycleDeps, project: Project, background: 
   await quiesceGenerations(d, project, "repair");
   const ws = await d.clients.workspaceDelete(project.slug);
   if (!ws.ok) throw new Error(`workspace could not remove ${project.slug} (${ws.status})`);
-  await d.clients.toolchainForget(project.language, project.slug).catch(() => null);
+  await d.clients.toolchainForget(stackKey(project), project.slug).catch(() => null);
   await d.repo.updateProject(project.id, { status: "creating", statusMessage: undefined, depsInstalled: false });
   const fresh = (await d.repo.project(project.id))!;
   background(provision(d.repo, d.clients, fresh));
@@ -149,7 +149,7 @@ export async function sweep(d: LifecycleDeps, limits: Limits): Promise<SweepResu
     }
   }
   const alive = (await d.repo.projects()).map((p) => p.slug);
-  for (const language of new Set(["cpp", ...projects.map((p) => p.language)])) {
+  for (const language of new Set(["cpp", ...projects.map((p) => stackKey(p))])) {
     try {
       const r = await d.clients.toolchainGc(language, alive);
       if (r.ok) {

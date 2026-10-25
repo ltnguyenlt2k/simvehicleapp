@@ -32,6 +32,8 @@ export interface InitSources {
 export interface ProjectRequest {
   slug: string;
   language: "cpp" | "python" | "rust";
+  /** What the app runs on (ADR-0061): its template, overlay and runtime come from the `<language>-wasm` sources. */
+  target?: "velocitas" | "wasm";
   appName: string;
   vssRelease: string;
 }
@@ -63,17 +65,18 @@ function writeIn(dir: string, rel: string, content: string) {
 export async function initProject(store: Store, req: ProjectRequest, sources: InitSources): Promise<{ slug: string; appName: string; language: string; vssRelease: string; runtimeVersion: string }> {
   const target = store.projectDir(req.slug);
   if (existsSync(target)) throw new ProjectExists(`project ${req.slug} already exists`);
-  if (!sources.languages().includes(req.language)) throw new InitFailed(`no ${req.language} backend in this installation`);
+  const key = req.target === "wasm" ? `${req.language}-wasm` : req.language;
+  if (!sources.languages().includes(key)) throw new InitFailed(`no ${key} backend in this installation`);
   const staging = join(store.metaDir, "staging", `init-${req.slug}-${crypto.randomUUID().slice(0, 8)}`);
   try {
-    await untar(await sources.template(req.language), staging);
+    await untar(await sources.template(key), staging);
     if (!existsSync(join(staging, ".velocitas.json"))) throw new InitFailed("the template has no .velocitas.json");
 
-    const overlay = await sources.overlay(req.language);
+    const overlay = await sources.overlay(key);
     for (const rel of overlay.remove ?? []) rmSync(join(staging, normalizeRelative(rel)), { force: true });
     for (const f of overlay.files) writeIn(staging, f.path, f.content);
 
-    const runtime = await sources.runtime(req.language);
+    const runtime = await sources.runtime(key);
     for (const f of runtime.files) {
       if (!f.path.startsWith(RUNTIME_PREFIX)) throw new PathRejected(f.path, "runtime file outside the runtime directory");
       writeIn(staging, f.path, f.content);
@@ -103,7 +106,7 @@ export async function initProject(store: Store, req: ProjectRequest, sources: In
     }
     writeFileSync(join(staging, manifestRel), `${JSON.stringify(manifest, null, 4)}\n`);
 
-    const meta = { slug: req.slug, appName: req.appName, language: req.language, vssRelease: req.vssRelease, runtimeVersion: runtime.runtimeVersion };
+    const meta = { slug: req.slug, appName: req.appName, language: req.language, ...(req.target === "wasm" ? { target: "wasm" } : {}), vssRelease: req.vssRelease, runtimeVersion: runtime.runtimeVersion };
     writeIn(staging, ".simvehicleapp/project.json", `${JSON.stringify(meta, null, 2)}\n`);
     writeIn(staging, ".simvehicleapp/manifest-managed.json", `${JSON.stringify({ datapoints: [], reads: [], writes: [] }, null, 2)}\n`);
     if (existsSync(target)) throw new ProjectExists(`project ${req.slug} already exists`);

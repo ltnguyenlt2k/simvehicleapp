@@ -48,7 +48,7 @@ export interface ToolchainJob {
 export interface Clients {
   compile(graph: unknown, target: string): Promise<CompileResult>;
   generate(language: string, request: unknown): Promise<Outcome<FileSet>>;
-  createProject(body: { slug: string; language: string; appName: string; vssRelease: string }): Promise<Outcome<unknown>>;
+  createProject(body: { slug: string; language: string; target?: "velocitas" | "wasm"; appName: string; vssRelease: string }): Promise<Outcome<unknown>>;
   commit(slug: string, body: { generationId: string; fileset: FileSet; overwriteModified: boolean }): Promise<Outcome<unknown>>;
   /** Project VSS file ⇐ its release in vss-catalog (workspace `syncProjectVss`, ADR-0052); `changed` when rewritten. */
   syncVss(slug: string): Promise<Outcome<{ release: string; path: string | null; changed: boolean }>>;

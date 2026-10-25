@@ -10,4 +10,4 @@ target:
 toolchain:
   id: toolchain-wasm
   template: wasm-app-cpp
-  templateSha: 3660b52a5ff8ac66b283140b8056f11f48898909  # git tree id of velocitas-stack/templates/wasm-app-cpp
+  templateSha: 10856ad58f67d87b233e9cd6768fc7b0b6eb0397  # git tree id of velocitas-stack/templates/wasm-app-cpp

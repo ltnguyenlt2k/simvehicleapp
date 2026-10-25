@@ -36,12 +36,13 @@ export function createWorkspaceHandler(store: Store, sources: InitSources, capac
       if (url.pathname === "/projects" && req.method === "POST") {
         const b = await body(req);
         if (b instanceof Response) return b;
-        const { slug, language, appName, vssRelease } = b as Record<string, string>;
+        const { slug, language, appName, vssRelease, target } = b as Record<string, string>;
         if (typeof slug !== "string" || !SLUG.test(slug) || !["cpp", "python", "rust"].includes(language!) || !/^[A-Z][A-Za-z0-9]*$/.test(appName ?? "") || !/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/.test(vssRelease ?? "")) {
           return json(400, { error: "invalid_request", message: "slug, language (cpp|python|rust), appName (PascalCase) and vssRelease (vX.Y or vX.Y-<name>) are required" });
         }
+        if (target !== undefined && target !== "velocitas" && target !== "wasm") return json(400, { error: "invalid_request", message: "target must be velocitas or wasm" });
         try {
-          const p = await initProject(store, { slug, language: language as ProjectRequest["language"], appName: appName!, vssRelease: vssRelease! }, sources);
+          const p = await initProject(store, { slug, language: language as ProjectRequest["language"], ...(target === "wasm" ? { target: "wasm" as const } : {}), appName: appName!, vssRelease: vssRelease! }, sources);
           ctx.log.info("project created", { slug });
           return json(201, p);
         } catch (e) {

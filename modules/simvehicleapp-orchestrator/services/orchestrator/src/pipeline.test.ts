@@ -6,7 +6,8 @@ import type { Clients, FileSet, ToolchainJob } from "./clients.ts";
 import { ServiceUnavailable } from "./clients.ts";
 import { EventHub } from "./events.ts";
 import { present, runGeneration } from "./pipeline.ts";
-import { type Generation, initialVerification, MemoryRepo, type Project, STAGES } from "./repo.ts";
+import { provision } from "./projects.ts";
+import { type Generation, initialVerification, MemoryRepo, type Project, STAGES, stackKey } from "./repo.ts";
 
 const validator = new ContractValidator();
 const graph = JSON.parse(readFileSync(`${fixturesDir}golden/GW-A/graph.json`, "utf8"));
@@ -101,6 +102,27 @@ async function setup(projectPatch: Partial<Project> = {}) {
 const events = { line() {}, end() {} };
 
 describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
+  test("a WebAssembly project (ADR-0061) is generated and built by the <language>-wasm backend and toolchain", async () => {
+    const repo = new MemoryRepo();
+    const keys: string[] = [];
+    const { clients } = fakeClients({
+      generate: async (key) => (keys.push(`generate:${key}`), { ok: true, value: fileset }),
+      createProject: async (body) => (keys.push(`ws:${body.language}/${body.target ?? "velocitas"}`), { ok: true, value: {} }),
+      job: async (key, kind) => (keys.push(`job:${kind}:${key}`), { id: "j", state: "succeeded", exitCode: 0, diagnostics: [] }),
+    });
+    const project = await repo.createProject({ id: crypto.randomUUID(), slug: "wasm", name: "W", appName: "WApp", language: "cpp", target: "wasm", vssRelease: "v4.0", settings: { mqttTopicPrefix: "simvehicleapp/wasm", traceLevel: "node" }, status: "creating" });
+    await provision(repo, clients, project);
+    expect(keys).toEqual(["ws:cpp/wasm", "job:init:cpp-wasm"]);
+    const g: Generation = { id: `g_${crypto.randomUUID()}`, projectId: project.id, state: "running", stages: STAGES.map((name) => ({ name, state: "pending" })), verification: initialVerification(), diagnostics: [], generatedFiles: [], workflows: [], request: { graphs: [graph] }, createdAt: 0 };
+    await repo.createGeneration(g);
+    await runGeneration(g, { repo, clients, events });
+    expect(keys).toContain("generate:cpp-wasm");
+    expect(keys.filter((k) => k.startsWith("job:build") || k.startsWith("job:test"))).toEqual(["job:build:cpp-wasm", "job:test:cpp-wasm"]);
+    expect(stackKey({ language: "rust", target: "wasm" })).toBe("rust-wasm");
+    expect(stackKey({ language: "python" })).toBe("python");
+  });
+
+
   test("VSS sync (ADR-0052): a changed custom model is logged before the commit; a failed sync fails the write stage", async () => {
     const { repo, project, gen } = await setup();
     const lines: string[] = [];

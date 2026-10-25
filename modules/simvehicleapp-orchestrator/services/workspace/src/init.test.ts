@@ -36,6 +36,22 @@ const sources = (overrides: Partial<InitSources> = {}): InitSources => ({
 });
 
 describe("project creation (ADR-0026 §2, M07-T07)", () => {
+  test("a WebAssembly project (ADR-0061) takes template, overlay and runtime from the <language>-wasm sources", async () => {
+    const asked: string[] = [];
+    const src = sources({
+      languages: () => ["cpp", "cpp-wasm"],
+      template: async (l) => (asked.push(`template ${l}`), Bun.spawn(["tar", "-cf", "-", "-C", seed, "."], { stdout: "pipe" }).stdout),
+      overlay: async (l) => (asked.push(`overlay ${l}`), { runtimeVersion: "0.1.0", files: [] }),
+      runtime: async (l) => (asked.push(`runtime ${l}`), { runtimeVersion: "0.1.0", files: [] }),
+    });
+    const store = new Store(join(SCRATCH, "ws-wasm"));
+    await initProject(store, { slug: "wasm-app", language: "cpp", target: "wasm", appName: "WasmApp", vssRelease: "v4.0" }, src);
+    expect(asked).toEqual(["template cpp-wasm", "overlay cpp-wasm", "runtime cpp-wasm"]);
+    expect(JSON.parse(readFileSync(join(store.projectDir("wasm-app"), ".simvehicleapp/project.json"), "utf8"))).toMatchObject({ language: "cpp", target: "wasm" });
+    await expect(initProject(store, { slug: "wasm-rs", language: "rust", target: "wasm", appName: "WasmRs", vssRelease: "v4.0" }, src)).rejects.toThrow("no rust-wasm backend");
+  });
+
+
   test("template + overlay − sample + runtime + VSS of the release, renamed into place; the sample entries are gone", async () => {
     const store = new Store(join(SCRATCH, "ws1"));
     const meta = await initProject(store, { slug: "comfort-app", language: "cpp", appName: "ComfortApp", vssRelease: "v4.2" }, sources());

@@ -8,7 +8,7 @@ import { exportExtras } from "./export.ts";
 import { backendUnavailable, type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quotaExceeded } from "./governance.ts";
 import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp, type SweepResult } from "./lifecycle.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
-import { ACTIVE_RUN_STATES, type DeployTarget, DuplicateTargetName, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
+import { ACTIVE_RUN_STATES, type DeployTarget, DuplicateTargetName, type Generation, initialVerification, type Project, type Repo, type Run, STAGES, stackKey } from "./repo.ts";
 import { openToken, sealToken } from "./secrets.ts";
 import { RunConflict, RunQuota, type RunManager } from "./runs.ts";
 
@@ -325,7 +325,7 @@ export function createOrchestratorHandler(d: AppDeps) {
         const latest = await d.repo.latestGeneration(project.id);
         if (latest?.state !== "succeeded") return json(409, { error: "conflict", message: "SynCode the app first: its latest SynCode must have passed" });
         const lines: string[] = [];
-        const job = await d.clients.job(project.language, "image", project.slug, (l) => void lines.push(l.msg), {
+        const job = await d.clients.job(stackKey(project), "image", project.slug, (l) => void lines.push(l.msg), {
           image: { reference, ...(insecure ? { insecure: true } : {}), ...(username ? { username: username as string, password: (password as string | undefined) ?? "" } : {}) },
         });
         const pushed = lines.map((l) => /^SVIMAGE (\{.*\})$/.exec(l)?.[1]).find(Boolean);

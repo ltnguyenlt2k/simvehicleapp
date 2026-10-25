@@ -1,7 +1,7 @@
 import { type Clients, type Diagnostic, type FileSet, ServiceUnavailable } from "./clients.ts";
 import { compileDiagnostics, depsDiagnostics, testDiagnostics } from "./errors.ts";
 import type { Generation, LogLine, Project, Repo, RunInfo, Stage, StageInfo, Verdict } from "./repo.ts";
-import { STAGES } from "./repo.ts";
+import { STAGES, stackKey } from "./repo.ts";
 
 /**
  * SynCode pipeline (ADR-0026, analysis/03 §4): ir → codegen → write → deps → build → format-check →
@@ -115,7 +115,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
   /** A toolchain job; its lines are forwarded and kept for error mapping. */
   const job = async (kind: string, options?: Record<string, unknown>) => {
     const lines: string[] = [];
-    const result = await clients.job(project.language, kind, project.slug, (l) => {
+    const result = await clients.job(stackKey(project), kind, project.slug, (l) => {
       if (l.stream === "system" && /^job (succeeded|failed|cancelled)$/.test(l.msg)) return;
       lines.push(l.msg);
       emit(l.msg, l.level, l.stream === "system" ? "system" : l.stream, l.raw);
@@ -149,7 +149,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
     });
 
     await stage("codegen", async () => {
-      const r = await clients.generate(project.language, {
+      const r = await clients.generate(stackKey(project), {
         project: { slug: project.slug, appName: project.appName, language: project.language, mqttTopicPrefix: project.settings.mqttTopicPrefix, traceLevel: project.settings.traceLevel },
         workflows: irs,
         options: { emitTests: true },
