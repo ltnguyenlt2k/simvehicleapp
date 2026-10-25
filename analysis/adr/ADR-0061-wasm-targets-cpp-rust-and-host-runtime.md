@@ -146,6 +146,14 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-25 — **T02: contract** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - ABI chốt dạng nháp ở `contracts/abi/sv-wasm-abi.v1.md`; khoá khi T08 PASS.
+  - So với bản phác trong design §3.1, thêm:
+    - mã lỗi import (`-1` chưa có, `-2` forbidden, `-3` đối số sai, `-4` host mất kết nối);
+    - `_initialize` của reactor được host gọi trước `sv_init`;
+    - trace `wasm_trap` bên cạnh `wasm_limit`;
+    - EH của wasm cho guest C++ (theo spike T01, vẫn chờ PO).
+  - Chọn backend bằng khoá `<language>-wasm` trong `SV_BACKENDS` (vd. `cpp-wasm=http://codegen-cpp:4110/wasm`). Project `wasm` khi stack chưa có backend đó ⇒ 422 `BACKEND_UNAVAILABLE` (mã có sẵn, không thêm mã mới).
 - 2026-10-24 — **Spike T01** ([báo cáo](../../docs/spikes/M20-wasm-spike.md), Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - ABI tối thiểu chạy được với guest C++ (reactor, wasi-sdk-34) và Rust (`wasm32-wasip1`) trên Wasmtime v48.0.7. Pin wasi-sdk-34, Wasmtime v48.0.7, wasm-tools v1.262.0 đã kiểm sha256.
   - `.cwasm` phải do host biên dịch bằng đúng cấu hình engine lúc chạy: `.cwasm` của CLI bị engine C API từ chối vì khác GC collector.

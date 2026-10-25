@@ -39,9 +39,10 @@
 - Bằng chứng: [docs/spikes/M20-wasm-spike.md](../../docs/spikes/M20-wasm-spike.md), `spikes/m20-wasm/run.sh`.
 
 ### T02: Contract
-- [ ] `contracts/abi/sv-wasm-abi.v1.md` (import/export, mã hoá JSON, bất biến không tái nhập, lỗi) + WIT tham khảo.
-- [ ] `backend-capabilities`: `target {kind, triple, abi, host}`; điều kiện template khi `kind = wasm`.
-- [ ] `generation-manifest.target`; `Project.target` (orchestrator repo, studio contract `sv.ts`); migration mặc định `velocitas`.
+- [x] `contracts/abi/sv-wasm-abi.v1.md` (import/export, mã hoá JSON, bất biến không tái nhập, mã lỗi, giới hạn, allowlist, `.cwasm` do host biên dịch) + `sv-wasm-abi.v1.wit` tham khảo; thêm vào `CONTRACT.md`, `package.json` (`abi`), Dockerfile.
+- [x] `backend-capabilities`: `$defs.target {kind velocitas|wasm, triple, abi, host}`; `kind = wasm` bắt buộc `triple`, `abi`, `host`. Điều kiện template (`toolchain-wasm`) kiểm ở T04/T05 khi có backend thật.
+- [x] `generation-manifest.target`; `Project.target` (OpenAPI orchestrator, repo, migration `0005_sv_project_target.sql` mặc định `velocitas`, studio `sv.ts`). Tạo project `target: wasm` khi `SV_BACKENDS` chưa có `<language>-wasm` ⇒ 422 `BACKEND_UNAVAILABLE` (mã có sẵn).
+- Bằng chứng 2026-10-25: contracts `bun test` 400/400 + `check`; orchestrator tsc sạch, `bun test` 133 pass (5 test workspace FAIL do `tar` trong thư mục tạm của máy này, như trước); studio vitest 311.
 
 ### T03: Host
 - [ ] Vòng lặp sự kiện + epoch deadline + `ResourceLimiter`; mã lỗi/trace `wasm_limit`.

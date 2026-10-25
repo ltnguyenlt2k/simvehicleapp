@@ -5,5 +5,6 @@ FROM scratch
 COPY package.json LICENSE NOTICE CONTRACT.md /
 COPY schemas /schemas
 COPY openapi /openapi
+COPY abi /abi
 COPY fixtures /fixtures
 COPY packages /packages

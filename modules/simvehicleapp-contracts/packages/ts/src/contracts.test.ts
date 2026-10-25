@@ -299,6 +299,14 @@ describe("BackendCapabilities v1", () => {
   test("rejects unknown opcode", () => {
     expect(v.validate("backend-capabilities", { ...caps, opcodes: ["vehicle.teleport"] }).valid).toBe(false);
   });
+  test("target (ADR-0061): absent or velocitas; wasm needs triple, abi and host", () => {
+    v.assert("backend-capabilities", { ...caps, target: { kind: "velocitas" } });
+    const wasm = { kind: "wasm", triple: "wasm32-wasip1", abi: "sv-wasm-abi/1", host: { name: "sv-wasm-host", version: "0.1.0" } };
+    v.assert("backend-capabilities", { ...caps, id: "cpp-wasm", target: wasm });
+    expect(v.validate("backend-capabilities", { ...caps, target: { kind: "wasm", triple: "wasm32-wasip1" } }).valid).toBe(false);
+    expect(v.validate("backend-capabilities", { ...caps, target: { ...wasm, abi: "wasi" } }).valid).toBe(false);
+    expect(v.validate("backend-capabilities", { ...caps, target: { kind: "native" } }).valid).toBe(false);
+  });
 });
 
 describe("streams and jobs", () => {
@@ -374,6 +382,7 @@ describe("GenerationManifest v1", () => {
   test("deterministic in-tree copy (no generationId) and workspace record", () => {
     v.assert("generation-manifest", m);
     v.assert("generation-manifest", { ...m, generationId: "g_1", project: "comfort-app" });
+    v.assert("generation-manifest", { ...m, target: { kind: "wasm", triple: "wasm32-wasip1", abi: "sv-wasm-abi/1", host: { name: "sv-wasm-host", version: "0.1.0" } } });
   });
   test("rejects timestamps and unsafe paths", () => {
     expect(v.validate("generation-manifest", { ...m, generatedAt: 1 }).valid).toBe(false);

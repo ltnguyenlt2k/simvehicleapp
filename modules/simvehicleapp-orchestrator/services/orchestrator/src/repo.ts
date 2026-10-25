@@ -23,6 +23,8 @@ export interface Project {
   name: string;
   appName: string;
   language: "cpp" | "python" | "rust";
+  /** What the app runs on (ADR-0061); absent = velocitas (every project before M20). */
+  target?: "velocitas" | "wasm";
   vssRelease: string;
   settings: ProjectSettings;
   status: "creating" | "ready" | "failed";
@@ -384,6 +386,7 @@ export class PgRepo implements Repo {
       name: String(r.name),
       appName: String(r.app_name),
       language: r.language as Project["language"],
+      ...(r.target === "wasm" ? { target: "wasm" as const } : {}),
       vssRelease: String(r.vss_release),
       settings: parse<ProjectSettings>(r.settings),
       status: r.status as Project["status"],
@@ -402,8 +405,8 @@ export class PgRepo implements Repo {
 
   async createProject(p: Omit<Project, "workflows" | "depsInstalled">) {
     try {
-      await this.sql`INSERT INTO sv.project (id, slug, name, app_name, language, vss_release, settings, status, status_message)
-        VALUES (${p.id}, ${p.slug}, ${p.name}, ${p.appName}, ${p.language}, ${p.vssRelease}, ${p.settings}, ${p.status}, ${p.statusMessage ?? null})`;
+      await this.sql`INSERT INTO sv.project (id, slug, name, app_name, language, target, vss_release, settings, status, status_message)
+        VALUES (${p.id}, ${p.slug}, ${p.name}, ${p.appName}, ${p.language}, ${p.target ?? "velocitas"}, ${p.vssRelease}, ${p.settings}, ${p.status}, ${p.statusMessage ?? null})`;
     } catch (e) {
       if (String((e as { code?: string }).code ?? (e as Error).message).includes("23505") || /duplicate key/.test((e as Error).message)) throw new DuplicateSlug(p.slug);
       throw e;

@@ -263,6 +263,17 @@ describe("HTTP API + events (openapi/orchestrator.v1.yaml)", () => {
     expect(calls).toEqual(["ws:create", "job:init"]);
     expect((await (await call("GET", `/projects/${p.id}`)).json()).status).toBe("ready");
     expect((await call("POST", "/projects", { slug: "comfort", name: "Again", language: "cpp", vssRelease: "v4.0" })).status).toBe(409);
+    // Target (ADR-0061): velocitas by default; wasm needs the language's wasm backend; anything else is refused.
+    expect(p.target).toBe("velocitas");
+    expect((await call("POST", "/projects", { slug: "w1", name: "W", language: "cpp", vssRelease: "v4.0", target: "native" })).status).toBe(400);
+    const noWasm = await call("POST", "/projects", { slug: "w1", name: "W", language: "rust", vssRelease: "v4.0", target: "wasm" });
+    expect(noWasm.status).toBe(422);
+    expect(await noWasm.json()).toMatchObject([{ code: "BACKEND_UNAVAILABLE", data: { language: "rust", target: "wasm" } }]);
+    const hw = createOrchestratorHandler({ repo, clients, hub, kick: () => {}, background: (t) => void tasks.push(t), backends: ["cpp", "rust", "rust-wasm"] });
+    const wasm = await hw(new Request("http://o/projects", { method: "POST", body: JSON.stringify({ slug: "w1", name: "W", language: "rust", vssRelease: "v4.0", target: "wasm" }) }), ctx);
+    expect(wasm.status).toBe(201);
+    expect(await wasm.json()).toMatchObject({ slug: "w1", language: "rust", target: "wasm" });
+    expect((await repo.project("w1"))?.target).toBe("wasm");
     const wf = await (await call("PUT", `/projects/${p.id}/workflows`, { workflows: [{ simWorkflowId: "gw_a" }] })).json();
     expect(wf.workflows).toEqual([{ simWorkflowId: "gw_a", enabled: true }]);
     expect((await call("POST", `/projects/${p.id}/generations`, { graphs: [{ nope: 1 }] })).status).toBe(422);

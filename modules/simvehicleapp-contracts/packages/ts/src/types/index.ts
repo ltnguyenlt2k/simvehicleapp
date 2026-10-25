@@ -772,6 +772,19 @@ export interface BackendCapabilitiesV1 {
     template: string;
     templateSha: string;
   };
+  target?: Target;
+}
+/**
+ * What the backend's apps run on (ADR-0061). Absent: `velocitas`, a native Velocitas vehicle app. `wasm`: a WebAssembly guest (`triple`) speaking `abi` (contracts `abi/sv-wasm-abi.v1.md`), run by `host`.
+ */
+export interface Target {
+  kind: "velocitas" | "wasm";
+  triple?: string;
+  abi?: string;
+  host?: {
+    name: string;
+    version: string;
+  };
 }
 /**
  * Toolchain Agent job resource (`GET /jobs/:id`), ADR-0025 §2–4. Request body is `#/$defs/request`; stream lines are LogLine v1.
@@ -981,6 +994,7 @@ export interface GenerationManifestV1 {
   generationId?: string;
   project?: string;
   backend: string;
+  target?: Target1;
   runtimeVersion: string;
   contracts: string;
   /**
@@ -989,6 +1003,18 @@ export interface GenerationManifestV1 {
   workflows: [GenerationWorkflow, ...GenerationWorkflow[]];
   ownedRoots: OwnedRoots;
   files: GenerationFileEntry[];
+}
+/**
+ * What the backend's apps run on (ADR-0061). Absent: `velocitas`, a native Velocitas vehicle app. `wasm`: a WebAssembly guest (`triple`) speaking `abi` (contracts `abi/sv-wasm-abi.v1.md`), run by `host`.
+ */
+export interface Target1 {
+  kind: "velocitas" | "wasm";
+  triple?: string;
+  abi?: string;
+  host?: {
+    name: string;
+    version: string;
+  };
 }
 export interface GenerationWorkflow {
   workflowId: string;

@@ -5,7 +5,7 @@ import { type EventHub, itemOfLine, itemOfRunEvent } from "./events.ts";
 import { editorUrl, present } from "./pipeline.ts";
 import type { EntitlementService, Feature } from "./entitlements.ts";
 import { exportExtras } from "./export.ts";
-import { type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quotaExceeded } from "./governance.ts";
+import { backendUnavailable, type CapacityProbe, diskLow, type Limits, limitsFromEnv, queueFull, quotaExceeded } from "./governance.ts";
 import { AppBusy, AppNotFailed, cleanApp, deleteApp, repairApp, type SweepResult } from "./lifecycle.ts";
 import { createProject, DuplicateSlug } from "./projects.ts";
 import { ACTIVE_RUN_STATES, type DeployTarget, DuplicateTargetName, type Generation, initialVerification, type Project, type Repo, type Run, STAGES } from "./repo.ts";
@@ -42,6 +42,8 @@ export interface AppDeps {
   sweep?: () => Promise<SweepResult | null>;
   /** INTERNAL_API_SECRET: seals deploy target tokens at rest (ADR-0060). */
   secret?: string;
+  /** Backends of SV_BACKENDS (`cpp`, `rust-wasm`…): a project's language and target need one (ADR-0061). */
+  backends?: readonly string[];
   /** Wakes the generation worker. */
   kick(): void;
   background(p: Promise<void>): void;
@@ -55,6 +57,7 @@ const projectView = (p: Project, ideUrl?: string, ide = true) => {
     name: p.name,
     appName: p.appName,
     language: p.language,
+    target: p.target ?? "velocitas",
     vssRelease: p.vssRelease,
     settings: p.settings,
     status: p.status,
@@ -120,11 +123,16 @@ export function createOrchestratorHandler(d: AppDeps) {
       if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
       const b = await readBody(req);
       if (b instanceof Response) return b;
-      const { slug, name, language, vssRelease, appName, settings } = b as Record<string, unknown>;
+      const { slug, name, language, vssRelease, appName, settings, target } = b as Record<string, unknown>;
       if (typeof slug !== "string" || !SLUG.test(slug) || typeof name !== "string" || !name.trim() || name.length > 200 || !["cpp", "python", "rust"].includes(language as string) || typeof vssRelease !== "string" || !/^v[0-9]+\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$/.test(vssRelease)) {
         return json(400, { error: "invalid_request", message: "slug, name, language (cpp|python|rust) and vssRelease (vX.Y or vX.Y-<name>) are required" });
       }
       if (appName !== undefined && (typeof appName !== "string" || !/^[A-Z][A-Za-z0-9]*$/.test(appName))) return json(400, { error: "invalid_request", message: "appName must be PascalCase" });
+      if (target !== undefined && target !== "velocitas" && target !== "wasm") return json(400, { error: "invalid_request", message: "target must be velocitas or wasm" });
+      // A WebAssembly app needs the language's wasm backend (`cpp-wasm`, `rust-wasm` in SV_BACKENDS; ADR-0061).
+      if (target === "wasm" && !(d.backends ?? []).includes(`${language as string}-wasm`)) {
+        return json(422, [backendUnavailable(language as string, target)]);
+      }
       const s = (settings ?? {}) as Record<string, unknown>;
       if (s.traceLevel !== undefined && !["off", "trigger", "node"].includes(s.traceLevel as string)) return json(400, { error: "invalid_request", message: "settings.traceLevel must be off, trigger or node" });
       if (s.mqttTopicPrefix !== undefined && (typeof s.mqttTopicPrefix !== "string" || !/^[^#+]+$/.test(s.mqttTopicPrefix))) return json(400, { error: "invalid_request", message: "settings.mqttTopicPrefix must not contain # or +" });
@@ -138,7 +146,7 @@ export function createOrchestratorHandler(d: AppDeps) {
       const noDisk = await diskBlocks("app");
       if (noDisk) return noDisk;
       try {
-        const p = await createProject(d.repo, d.clients, { slug, name: name.trim(), language: language as Project["language"], vssRelease, ...(appName ? { appName: appName as string } : {}), settings: s as Partial<Project["settings"]> }, d.background);
+        const p = await createProject(d.repo, d.clients, { slug, name: name.trim(), language: language as Project["language"], ...(target === "wasm" ? { target: "wasm" as const } : {}), vssRelease, ...(appName ? { appName: appName as string } : {}), settings: s as Partial<Project["settings"]> }, d.background);
         ctx.log.info("project created", { slug });
         return json(201, view(p));
       } catch (e) {

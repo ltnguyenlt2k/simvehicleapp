@@ -16,6 +16,7 @@
     "generationId": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/id" },
     "project": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" },
     "backend": { "$ref": "urn:simvehicleapp:contracts:generated-fileset:1.0.0-alpha.1#/properties/backend" },
+    "target": { "$ref": "urn:simvehicleapp:contracts:backend-capabilities:1.0.0-alpha.1#/$defs/target", "description": "Target of the generated app (ADR-0061); absent = velocitas." },
     "runtimeVersion": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
     "contracts": { "$ref": "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/semver" },
     "workflows": {

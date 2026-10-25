@@ -430,7 +430,7 @@ Yêu cầu PO 2026-10-24 · Thiết kế: [M20](design/M20-wasm-targets.md) · C
 |---|---|---|---|---|
 | Phân tích + nghiên cứu upstream + thiết kế + ADR + kế hoạch | 0061 | ✔ | 2026-10-24 Claude Code, tra nguồn chính thức:<br>• Wasmtime v48 LTS (24 tháng), v50 mới nhất;<br>• WAMR-2.4.5, wasi-sdk-34 (exception tắt mặc định, không spawn thread);<br>• Rust `wasm32-wasip1/p2/p3` Tier 2;<br>• không có SDK WASM của Velocitas/KUKSA ⇒ cần host làm cầu nối.<br>Source: runtime Rust đã tách lõi/host; C++ `Strand::run` chờ bằng `condition_variable` (phải có chế độ host bơm), 7 chỗ `throw`; contract chỉ cho `language` cpp/python/rust và bắt buộc template Velocitas ⇒ cần bump contract | T01 (phân tích) |
 | Spike guest C++/Rust trên Wasmtime + `iwasm`, đo, chốt pin | 0061 | ✔ | 2026-10-24 Claude Code: guest C++/Rust chạy ABI tối thiểu trên Wasmtime v48.0.7 (host C API); số đo + pin ở [báo cáo spike](spikes/M20-wasm-spike.md). Đề xuất `-fwasm-exceptions` cho runtime C++ thay vì bỏ exception (**chờ PO xác nhận**); `iwasm` chưa chạy (dời T04) | T01 |
-| Contract ABI `sv-wasm-abi/1`, capabilities `target`, `Project.target` | 0061 | ☐ | | T02 |
+| Contract ABI `sv-wasm-abi/1`, capabilities `target`, `Project.target` | 0061 | 🔄 | 2026-10-25 Claude Code: ABI nháp + WIT, `backend-capabilities.target`, `generation-manifest.target`, `Project.target` (migration 0005, 422 `BACKEND_UNAVAILABLE` khi chưa có backend wasm); contract/orchestrator/studio test xanh tại máy; chờ CI | T02 |
 | `sv-wasm-host` (Wasmtime, KUKSA v2, MQTT, SVTRACE, allowlist, giới hạn) | 0061 | ☐ | | T03 |
 | Backend `cpp-wasm` (runtime không exception, Strand bơm, adapter, golden) | 0061 | ☐ | | T04 |
 | Backend `rust-wasm` (feature `wasm`, cdylib, golden) | 0061 | ☐ | | T05 |

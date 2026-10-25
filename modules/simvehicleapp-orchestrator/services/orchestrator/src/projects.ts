@@ -11,6 +11,7 @@ export interface CreateProject {
   slug: string;
   name: string;
   language: Project["language"];
+  target?: Project["target"];
   vssRelease: string;
   appName?: string;
   settings?: Partial<Project["settings"]>;
@@ -29,6 +30,7 @@ export async function createProject(repo: Repo, clients: Clients, req: CreatePro
     name: req.name,
     appName: req.appName ?? appNameOf(req.name),
     language: req.language,
+    ...(req.target === "wasm" ? { target: "wasm" as const } : {}),
     vssRelease: req.vssRelease,
     settings: { mqttTopicPrefix: req.settings?.mqttTopicPrefix ?? `simvehicleapp/${req.slug}`, traceLevel: req.settings?.traceLevel ?? "node" },
     status: "creating",

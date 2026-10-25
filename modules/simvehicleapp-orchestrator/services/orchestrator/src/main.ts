@@ -38,10 +38,11 @@ for (let attempt = 1; ; attempt++) {
 const requeued = await repo.requeueRunning();
 if (requeued) log.warn("requeued generations interrupted by a restart", { requeued });
 
+const backends = parseMap(process.env.SV_BACKENDS ?? "cpp=http://codegen-cpp:4110");
 const clients = httpClients({
   compiler: process.env.SV_COMPILER_URL ?? "http://compiler:4020",
   workspace: process.env.SV_WORKSPACE_URL ?? "http://workspace:4040",
-  backends: parseMap(process.env.SV_BACKENDS ?? "cpp=http://codegen-cpp:4110"),
+  backends,
   toolchains: parseMap(process.env.SV_TOOLCHAINS ?? "cpp=http://toolchain-cpp:4210"),
   signalGateway: process.env.SV_SIGNAL_GATEWAY_URL ?? "http://signal-gateway:4050",
   // Deployment routes to deploy targets (ADR-0060).
@@ -161,6 +162,6 @@ setTimeout(() => {
   setInterval(sweepQuietly, sweepEveryMs);
 }, 5 * 60_000);
 
-const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe, sweep: runSweep, secret: process.env.INTERNAL_API_SECRET }));
+const handler = createService({ name: "orchestrator", version: pkg.version, logger: log, metrics, checks: async () => ({ database: (await dbAnswers(2_000)) ? "ok" : "fail" }) }, createOrchestratorHandler({ repo, clients, hub, runs, entitlements, ideUrl, kick, background, limits, probe, sweep: runSweep, secret: process.env.INTERNAL_API_SECRET, backends: Object.keys(backends) }));
 const server = Bun.serve({ port, hostname: "0.0.0.0", fetch: handler, idleTimeout: 0 });
 log.info("listening", { port: server.port });

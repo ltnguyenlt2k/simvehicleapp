@@ -62,6 +62,7 @@ paths:
                 slug: { $ref: "urn:simvehicleapp:contracts:common:1.0.0-alpha.1#/$defs/slug" }
                 name: { type: string, minLength: 1, maxLength: 200 }
                 language: { enum: [cpp, python, rust] }
+                target: { enum: [velocitas, wasm], default: velocitas, description: "What the app runs on (ADR-0061): a native Velocitas app, or a WebAssembly guest run by sv-wasm-host (C++ and Rust)." }
                 vssRelease: { type: string, pattern: "^v[0-9]+\\.[0-9]+(-[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?)?$" }
                 appName: { type: string, pattern: "^[A-Z][A-Za-z0-9]*$", description: "Default: PascalCase of the name." }
                 settings: { $ref: "#/components/schemas/ProjectSettings" }
@@ -74,6 +75,7 @@ paths:
         "403": { description: "Denied by EntitlementService (LICENSE_FEATURE_DENIED)." }
         "409": { description: "The slug exists, or the host app quota is reached (diagnostics `APP_QUOTA_EXCEEDED`, `data.scope` = host; ADR-0053)." }
         "507": { description: "Free disk below the high threshold: no new app (diagnostics `HOST_DISK_LOW`, `data.level`, `data.freeBytes`; ADR-0053)." }
+        "422": { description: "No backend serves this language and target (diagnostics `BACKEND_UNAVAILABLE`, `data.language`, `data.target`; ADR-0061)." }
   /projects/{id}:
     parameters: [{ $ref: "#/components/parameters/ProjectId" }]
     get:
@@ -731,6 +733,7 @@ components:
         name: { type: string }
         appName: { type: string }
         language: { enum: [cpp, python, rust] }
+        target: { enum: [velocitas, wasm], description: "What the app runs on (ADR-0061); older projects are velocitas." }
         vssRelease: { type: string }
         settings: { $ref: "#/components/schemas/ProjectSettings" }
         status: { enum: [creating, ready, failed], description: "creating until the workspace and the toolchain prepared the folder." }

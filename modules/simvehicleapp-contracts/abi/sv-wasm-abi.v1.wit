@@ -1,0 +1,25 @@
+// sv-wasm-abi/1 as WIT, for reference only (M20-T02): the guest is a core wasm32-wasip1 module, not a component, and
+// strings cross as (ptr, len) pairs as described in sv-wasm-abi.v1.md. Kept so a later component-model version can
+// start from the same names.
+package simvehicleapp:sv@1.0.0;
+
+interface host {
+  now-ms: func() -> s64;
+  log: func(level: s32, msg: string);
+  trace: func(json: string);
+  vdb-subscribe: func(path: string, %type: string) -> s32;
+  vdb-current: func(path: string, %type: string) -> option<string>;
+  vdb-get: func(path: string, %type: string) -> s32;
+  vdb-set: func(path: string, %type: string, value-json: string) -> s32;
+  mqtt-subscribe: func(filter: string) -> s32;
+  mqtt-publish: func(topic: string, payload: string) -> s32;
+}
+
+world vehicle-app {
+  import host;
+  export sv-init: func(config: string) -> s32;
+  export sv-on-event: func(event: string);
+  export sv-step: func(now-ms: s64) -> s64;
+  export sv-stop: func();
+  export sv-run-tests: func(cases: string) -> s32;
+}

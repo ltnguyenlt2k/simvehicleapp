@@ -10,11 +10,13 @@
     ".": "./packages/ts/src/index.ts",
     "./schemas/*": "./schemas/*",
     "./fixtures/*": "./fixtures/*",
-    "./openapi/*": "./openapi/*"
+    "./openapi/*": "./openapi/*",
+    "./abi/*": "./abi/*"
   },
   "files": [
     "schemas",
     "openapi",
+    "abi",
     "fixtures",
     "packages/ts/src",
     "!packages/ts/src/**/*.test.ts",

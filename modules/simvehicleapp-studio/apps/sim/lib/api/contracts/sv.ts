@@ -510,6 +510,8 @@ export const svProjectSchema = z.object({
   name: z.string(),
   appName: z.string(),
   language: z.enum(['cpp', 'python', 'rust']),
+  /** What the app runs on (ADR-0061); absent from an orchestrator before M20 = velocitas. */
+  target: z.enum(['velocitas', 'wasm']).optional(),
   vssRelease: z.string(),
   settings: z.object({
     mqttTopicPrefix: z.string(),

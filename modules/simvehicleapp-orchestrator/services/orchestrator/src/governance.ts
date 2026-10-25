@@ -38,7 +38,7 @@ export function limitsFromEnv(env: Record<string, string | undefined> = process.
 export interface Diag {
   code: string;
   severity: "error";
-  stage: "workspace" | "build";
+  stage: "workspace" | "build" | "backend";
   message: string;
   docs: string;
   data?: Record<string, unknown>;
@@ -50,6 +50,10 @@ const gb = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(1)} GB`;
 
 export const quotaExceeded = (scope: "host" | "workspace" | "app", limit: number, what: string) =>
   diag("APP_QUOTA_EXCEEDED", "workspace", `${what}: the limit is ${limit}. Delete or reuse an app (Vehicle apps), or ask the administrator to raise it.`, { scope, limit });
+
+/** No backend for a project's language and target (ADR-0061): a WebAssembly app needs `<language>-wasm` in SV_BACKENDS. */
+export const backendUnavailable = (language: string, target: string) =>
+  diag("BACKEND_UNAVAILABLE", "backend", `No WebAssembly backend for ${language} on this stack: ask the administrator to enable it (SV_BACKENDS ${language}-wasm).`, { language, target });
 
 export const diskLow = (c: WorkspaceCapacity, blocked: "app" | "syncode") =>
   diag(

@@ -56,6 +56,28 @@
         "template": { "type": "string", "minLength": 1 },
         "templateSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
       }
+    },
+    "target": { "$ref": "#/$defs/target" }
+  },
+  "$defs": {
+    "target": {
+      "description": "What the backend's apps run on (ADR-0061). Absent: `velocitas`, a native Velocitas vehicle app. `wasm`: a WebAssembly guest (`triple`) speaking `abi` (contracts `abi/sv-wasm-abi.v1.md`), run by `host`.",
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["velocitas", "wasm"] },
+        "triple": { "type": "string", "pattern": "^[a-z0-9_]+-[a-z0-9_-]+$" },
+        "abi": { "type": "string", "pattern": "^sv-wasm-abi/[0-9]+$" },
+        "host": {
+          "type": "object",
+          "required": ["name", "version"],
+          "additionalProperties": false,
+          "properties": { "name": { "type": "string", "minLength": 1 }, "version": { "type": "string", "minLength": 1 } }
+        }
+      },
+      "if": { "properties": { "kind": { "const": "wasm" } } },
+      "then": { "required": ["kind", "triple", "abi", "host"] }
     }
   }
 }

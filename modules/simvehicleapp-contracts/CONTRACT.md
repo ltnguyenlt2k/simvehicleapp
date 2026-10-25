@@ -24,6 +24,11 @@ fixtures and tests green and be listed in CHANGELOG.md. After lock: breaking ⇒
 | `license` | ADR-0031 §3–4 | orchestrator EntitlementService, export |
 | `service-info` (+ `#/$defs/health`) | ADR-0007 §7 | every service `GET /version`, `GET /healthz` |
 
+## ABI (`abi/`)
+| Document | Source of truth | Consumers |
+|---|---|---|
+| `sv-wasm-abi.v1.md` (+ `.wit`, reference) | ADR-0061, docs/design/M20 §3.1 | compiler-code-cpp/rust `wasm` target (guest), `sv-wasm-host` |
+
 ## OpenAPI 3.1 skeletons (`openapi/*.v1.yaml`)
 One document per service (port in `servers`): `vss-catalog` 4010, `compiler` 4020, `orchestrator` 4030, `workspace` 4040,
 `signal-gateway` 4050, `backend-plugin` (codegen-cpp 4110), `toolchain` 4210, `ai-assistant` 4300 — source: analysis/03 §7 and the

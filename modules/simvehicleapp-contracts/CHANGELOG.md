@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- WebAssembly target (additive, ADR-0061, M20-T02): `abi/sv-wasm-abi.v1.md` (+ reference WIT) — the guest ⇄ `sv-wasm-host` ABI (imports `sv.*`, exports `sv_*`, events, limits, allowlist, error codes); `backend-capabilities.target {kind velocitas|wasm, triple, abi, host}` (absent = velocitas); `generation-manifest.target`; orchestrator `Project.target` and `createProject.target` (default velocitas; 422 `BACKEND_UNAVAILABLE` when no backend serves the language and target).
 - `schemas/trace-event.v1` (description only, ADR-0062 §2, M19-T02): `data.eval {refs, result}` on the `exit` of a decision — emitted by the simulator and the C++/Python/Rust runtimes; golden `expected.trace.json` GW-A/B/G carry it.
 - `schemas/signal-update.v1` (additive, ADR-0062 §3, M19-T05): optional `source` ∈ {inject, playback, mirror, app, vehicle} on each change the signal-gateway streams (not on the current values sent first).
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0060, M18-T10): `POST /projects/{id}/images` — the app's OCI image pushed to a registry. `schemas/toolchain-job.v1.schema.json`: kind `image`, option `image {reference, insecure, username, password}` (C++ and Rust; the last log line is `SVIMAGE {…}`).
