@@ -1,7 +1,7 @@
 import { ContractValidator } from "@simvehicleapp/contracts";
 import { OPCODES, UnsupportedOpcode, type WorkflowIr } from "./emit.ts";
 import { UnsupportedOp } from "./expr.ts";
-import { type FileSet, type GenerateRequest, generateProject } from "./project.ts";
+import { type FileSet, type GenerateRequest, generateProject, type Target } from "./project.ts";
 
 /**
  * `POST /generate` (ADR-0020 §2): validates the request against the contract, checks the IR
@@ -35,7 +35,7 @@ const diag = (code: string, stage: Diagnostic["stage"], message: string, extra: 
   ...extra,
 });
 
-export function generate(body: unknown): GenerateResult {
+export function generate(body: unknown, target: Target = "velocitas"): GenerateResult {
   // An IR major version this backend does not read is a 422 with its code, not a schema mismatch.
   const wfs = (body as { workflows?: { irVersion?: unknown; workflowId?: unknown }[] } | null)?.workflows;
   if (Array.isArray(wfs)) {
@@ -74,7 +74,7 @@ export function generate(body: unknown): GenerateResult {
   }
   if (problems.length) return { ok: false, status: 422, diagnostics: problems };
   try {
-    return { ok: true, fileSet: generateProject(req) };
+    return { ok: true, fileSet: generateProject(req, target) };
   } catch (e) {
     if (e instanceof UnsupportedOpcode) {
       return { ok: false, status: 422, diagnostics: [diag("OPCODE_UNSUPPORTED_BY_BACKEND", "backend", e.message, { nodeId: e.nodeId, blockId: e.blockId, data: { opcode: e.opcode, backend: "cpp" } })] };

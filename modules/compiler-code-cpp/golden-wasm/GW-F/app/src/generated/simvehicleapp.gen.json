@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_f",
+      "revision": 1,
+      "irHash": "sha256:5a1b3deaee0493022195cff3b084acde7c1036d5c98b5dd5adcaf6d05b9a2195"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/MainWasm.cpp",
+      "sha256": "fd58e0c730ae8aac296ad5eb32b389bd5e5875426ea57d76a48ed5aeb9866c5e",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "36919823cbbf066922886d23d31911217e6008f7087857ead27f4902c7fcb28f",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/WelcomeSequence.map.json",
+      "sha256": "1caa06dacb3b2334f64f32a9bbb0c04e0a8ace82b0194714fc842720b70b874d",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "5b847001926def3cb129c044e66ba519b2ceb6d44438fb68dfc9223f29cfb68f",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/WelcomeSequence.cpp",
+      "sha256": "1e583874ae7e6192b86d170733e932aa25394b25b102e0ce71d5e9e2e89c4cba",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/WelcomeSequence.hpp",
+      "sha256": "0eab8cfd6dc190c5c796aa97657508a2c721b009e9fbe178734fb99cdb568930",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "f12996b3cba8dc81003cfc3606afe595b466b8ecd7ead39aaebc3f4ea0d2dcb8",
+      "role": "test"
+    }
+  ]
+}

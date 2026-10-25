@@ -55,16 +55,17 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
 - Bằng chứng T03a: `modules/wasm-host` `cargo test` 4/4 (guest WAT: import + allowlist + cache `vdb_current` + trace `SVTRACE`; quá hạn ⇒ `wasm_limit`; trap ⇒ `wasm_trap`; `memory.grow` quá 64 MiB ⇒ `-1`; `.cwasm` của engine khác bị từ chối; thiếu export ⇒ báo tên); rustfmt + clippy `-D warnings` sạch; job CI `wasm-host` mới.
 
 ### T04 / T05: Backend
-- [ ] Target được chọn qua base URL `/wasm` của service generator; `GET /wasm/capabilities` có `target`.
-- [ ] Cùng emitter: diff `src/generated/**` giữa native và wasm chỉ ở phần adapter/entry đã khai báo.
+- [x] Target được chọn qua base URL `/wasm` của service generator; `GET /wasm/capabilities` có `target` (C++: `backend.wasm.yaml` thay `id`, `toolchain`, thêm `target`).
+- [x] Cùng emitter: diff `src/generated/**` giữa native và wasm chỉ ở phần adapter/entry đã khai báo (C++: test kiểm `workflows/**`, `sourcemap/**` giống hệt; chỉ wasm có `MainWasm.cpp`, `sv-app.json`, `tests/generated/cases.json`).
 - [ ] Runtime: adapter Wasm, Strand bơm (C++), không exception (C++), feature `wasm` (Rust); test runtime native vẫn xanh.
   - **C++ (2026-10-25, phần runtime):** `include/simvehicleapp/rt/Wasm.hpp` + `src/Wasm.cpp` (export `sv_*`, `HostVehicle`/`HostPubSub`/`HostSink` qua import `sv.*`, `sv_run_tests` dùng `testing::runScenario` + `checkExpectations`). Strand dùng đồng hồ ảo do `sv_step` đẩy, thêm `Strand::nextDueMs()`. `Runtime::signals()` để subscribe trước `start`. Exception giữ lại, build bằng `-fwasm-exceptions` (theo spike, chờ PO). Bằng chứng:
     - GW-A (workflow sinh ra + runtime + `MainWasm.cpp` viết tay) biên dịch bằng wasi-sdk-34: 1,07 MB sau strip, `.cwasm` 2,7 MB.
     - `sv-wasm-host --test`: case golden PASS, case sai FAIL với đúng diff, exit 1.
     - Chạy live trên databroker thật: trigger 130 với `previous` 100 (baseline đúng), `stable` + `eval` sau 2 s, write, publish HMI, `app.stopping`.
     - gtest native 19/19, golden generator không đổi.
+  - **C++ generator + template (2026-10-25):** target `wasm` (`/wasm/*`), golden `golden-wasm/GW-A…G` tất định, template `velocitas-stack/templates/wasm-app-cpp` (CMake wasi-sdk, user hooks). Bảy golden wasm biên dịch bằng wasi-sdk-34 và đạt `expected.writes` của golden trong guest (`sv-wasm-host --test`, 7/7 PASS); generator `bun test` 24/24.
   - Host sửa: chờ giá trị đầu xong mới gửi `start` (rút hết event đang xếp hàng); thiếu bước này thì `previous` thành `null`.
-- [ ] Test sinh ra: test case nhúng JSON ⇒ `sv_run_tests`.
+- [x] Test sinh ra: test case nhúng JSON ⇒ `sv_run_tests` (C++: `cases.json` `[{name, workflow, scenario}]`, mỗi case chỉ bind workflow của nó như test native).
 
 ### T06: Toolchain
 - [ ] Image `toolchain-wasm` (pin sha256 tarball wasi-sdk; rustup target), agent plan build/test/run; profile `wasm`.

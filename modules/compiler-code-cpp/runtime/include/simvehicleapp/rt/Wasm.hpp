@@ -7,6 +7,8 @@
 
 #include <functional>
 #include <string>
+#include <utility>
+#include <vector>
 
 /**
  * The runtime as a WebAssembly guest (ADR-0061, contracts `abi/sv-wasm-abi.v1.md`): `src/Wasm.cpp` implements the
@@ -17,8 +19,8 @@ namespace simvehicleapp::rt::wasm {
 struct App {
     std::string name;
     TraceLevel level = TraceLevel::Node;
-    /** Declares the workflows (generated). */
-    std::function<void(Runtime&)> bind;
+    /** The workflows (generated): id and `bind`, in declaration order. Test cases bind only their workflow. */
+    std::vector<std::pair<std::string, std::function<void(Runtime&)>>> workflows;
     /** User hooks (`app/src/user/UserHooks.*`). */
     std::function<void()> onAppStart = [] {};
     std::function<void()> onAppStop = [] {};

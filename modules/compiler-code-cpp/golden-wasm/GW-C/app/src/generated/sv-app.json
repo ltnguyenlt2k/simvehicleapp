@@ -1,0 +1,12 @@
+{
+  "app": "AutoWipersApp",
+  "signals": {
+    "read": [
+      "Vehicle.Body.Raindetection.Intensity"
+    ],
+    "write": [
+      "Vehicle.Body.Windshield.Front.Wiping.Mode"
+    ]
+  },
+  "topics": []
+}

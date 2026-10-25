@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_d",
+      "revision": 1,
+      "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/MainWasm.cpp",
+      "sha256": "c174a6727e396bef1ebd38b7a179e88a5c6653f4f33bc9dacc1146d993addebf",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "dcddfa7aedb24132966e760b0f63339f578d2c9394f54a8edfd2c63e91ac7ab8",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/AutoDoorLock.map.json",
+      "sha256": "a79b7056049240a982f1a724b52cd5c7bd1a1bfad85514dccc7ea6f1b0eb072a",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "03ea50a88c927190126add69e5dfe09009d28797e9cace9583fb52d33ce7a1d6",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/AutoDoorLock.cpp",
+      "sha256": "5770509af47fe1f77677363a07febdcf5162ae5e516df67a98c947ba53c527ed",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/AutoDoorLock.hpp",
+      "sha256": "1c0b9b02f1e124db4ffe96815b4bfbc1d81a537c91a743b5f2c1b3a1398b781e",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "fe1dd53fd7b2103b91256d148ca11cb1f6bb9f2742521dd493c165c3f51004e9",
+      "role": "test"
+    }
+  ]
+}

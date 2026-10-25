@@ -262,8 +262,8 @@ runtime thực thi chúng trên một strand với đúng ngữ nghĩa của sim
 
 - `namespace simvehicleapp::rt::wasm`
   The runtime as a WebAssembly guest (ADR-0061, contracts `abi/sv-wasm-abi.v1.md`): `src/Wasm.cpp` implements the `sv_*` exports over the `sv.*` imports of `sv-wasm-host`; a generated app only registers itself.
-- `std::function<void(Runtime&)> bind`
-  Declares the workflows (generated).
+- `std::vector<std::pair<std::string, std::function<void(Runtime&)>>> workflows`
+  The workflows (generated): id and `bind`, in declaration order. Test cases bind only their workflow.
 - `std::function<void()> onAppStart = []`
   User hooks (`app/src/user/UserHooks.*`).
 - `bool registerApp(App app)`

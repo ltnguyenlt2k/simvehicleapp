@@ -1,0 +1,13 @@
+# The WebAssembly target of the C++ backend (ADR-0061, M20-T04): GET /wasm/capabilities is backend.yaml with these
+# fields replaced. Same emitter and opcodes as the native target; the app is a wasm32-wasip1 guest of sv-wasm-host.
+id: cpp-wasm
+name: compiler-code-cpp
+target:
+  kind: wasm
+  triple: wasm32-wasip1
+  abi: sv-wasm-abi/1
+  host: { name: sv-wasm-host, version: 0.1.0 }
+toolchain:
+  id: toolchain-wasm
+  template: wasm-app-cpp
+  templateSha: c7c9813b45a2d3dc2e453e25cc8bb52ec60a589e  # git tree id of velocitas-stack/templates/wasm-app-cpp

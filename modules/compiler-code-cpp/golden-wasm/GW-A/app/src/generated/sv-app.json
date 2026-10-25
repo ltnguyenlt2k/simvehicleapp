@@ -1,0 +1,14 @@
+{
+  "app": "StableOverspeedWarningApp",
+  "signals": {
+    "read": [
+      "Vehicle.Speed"
+    ],
+    "write": [
+      "Vehicle.Body.Lights.Hazard.IsSignaling"
+    ]
+  },
+  "topics": [
+    "simvehicleapp/stable-overspeed-warning/hmi"
+  ]
+}

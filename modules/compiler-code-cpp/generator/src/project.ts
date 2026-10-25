@@ -15,6 +15,10 @@ export const GENERATED = "app/src/generated/";
 export const TESTS = "app/tests/generated/";
 export const OWNED_ROOTS = [GENERATED, TESTS];
 
+/** What the generated app runs on (ADR-0061): a native Velocitas app, or a WebAssembly guest of sv-wasm-host. */
+export type Target = "velocitas" | "wasm";
+export const WASM_TARGET = { kind: "wasm", triple: "wasm32-wasip1", abi: "sv-wasm-abi/1", host: { name: "sv-wasm-host", version: "0.1.0" } } as const;
+
 export interface GenerateRequest {
   project: { slug: string; appName: string; language: string; mqttTopicPrefix: string; traceLevel: "off" | "trigger" | "node" };
   workflows: WorkflowIr[];
@@ -63,7 +67,7 @@ export function classNames(workflows: WorkflowIr[], appName: string): Map<string
 /** `Vehicle.Body.Lights.Hazard.IsSignaling` ⇒ `v.Body.Lights.Hazard.IsSignaling` (typed model, ADR-0022 §1). */
 const modelMember = (path: string) => `v.${path.split(".").slice(1).join(".")}`;
 
-export function generateProject(req: GenerateRequest): FileSet {
+export function generateProject(req: GenerateRequest, target: Target = "velocitas"): FileSet {
   const appName = req.project.appName;
   const workflows = [...req.workflows].sort((a, b) => (a.workflowId < b.workflowId ? -1 : 1));
   const classes = classNames(workflows, appName);
@@ -84,102 +88,107 @@ export function generateProject(req: GenerateRequest): FileSet {
     files.push(file(`${GENERATED}sourcemap/${cls}.map.json`, json({ file: cpp, workflowId: wf.workflowId, irHash: wf.irHash, ranges: out.ranges }), "config"));
   }
 
-  // App host: one Velocitas vehicle app running every workflow (ADR-0022 §4, ADR-0023 §5).
-  const host = new CodeWriter();
-  host.line(headerComment(projectHash));
-  host.line("#ifndef SIMVEHICLEAPP_GENERATED_SIMVEHICLEAPP_HPP");
-  host.line("#define SIMVEHICLEAPP_GENERATED_SIMVEHICLEAPP_HPP");
-  host.line();
-  host.line('#include "simvehicleapp/rt/Velocitas.hpp"');
-  host.line();
-  host.line("namespace simvehicleapp::generated {");
-  host.line();
-  host.line(`/** The vehicle app ${commentText(appName)}: ${byName.length} workflow(s) on the SimVehicleApp runtime. */`);
-  host.block(`class ${appName} : public rt::AppBase`, () => {
-    host.line("public:");
-    host.line(`${appName}();`);
-    host.line();
-    host.line("protected:");
-    host.line("void bindWorkflows(rt::Runtime& runtime) override;");
-    host.line("void onAppStart() override;");
-    host.line("void onAppStop() override;");
-  }, "};");
-  host.line();
-  host.line("} // namespace simvehicleapp::generated");
-  host.line();
-  host.line("#endif // SIMVEHICLEAPP_GENERATED_SIMVEHICLEAPP_HPP");
-  files.push(file(`${GENERATED}SimVehicleApp.hpp`, host.toString(), "header"));
-
   const signals = new Map<string, string>();
   for (const wf of workflows) for (const s of wf.signals) signals.set(s.path, s.dataType);
   const level = { off: "Off", trigger: "Trigger", node: "Node" }[req.project.traceLevel] ?? "Node";
-  const hostCpp = new CodeWriter();
-  hostCpp.line(headerComment(projectHash));
-  hostCpp.line('#include "SimVehicleApp.hpp"');
-  hostCpp.line();
-  hostCpp.line('#include "user/UserHooks.hpp"');
-  hostCpp.line('#include "vehicle/Vehicle.hpp"');
-  for (const wf of byName) hostCpp.line(`#include ${cppString(`workflows/${classes.get(wf.workflowId)}.hpp`)}`);
-  hostCpp.line();
-  hostCpp.line("#include <type_traits>");
-  hostCpp.line();
-  hostCpp.line("namespace simvehicleapp::generated {");
-  hostCpp.line();
-  hostCpp.line("namespace {");
-  hostCpp.line("/** Every signal exists with the same type in the project's vehicle model (compile-time check). */");
-  hostCpp.block("[[maybe_unused]] void checkVehicleModel(vehicle::Vehicle& v)", () => {
-    for (const path of [...signals.keys()].sort()) {
-      const t = signals.get(path)!;
-      hostCpp.call("static_assert", [`std::is_same_v<std::decay_t<decltype(${modelMember(path)})>::value_type, ${cppType(t)}>`, cppString(`${path} is ${t}`)]);
-    }
-    hostCpp.line("(void)v;");
-  });
-  hostCpp.line("} // namespace");
-  hostCpp.line();
-  hostCpp.line(`${appName}::${appName}()`);
-  hostCpp.line(`    : AppBase(${cppString(appName)}, rt::TraceLevel::${level}) {}`);
-  hostCpp.line();
-  hostCpp.block(`void ${appName}::bindWorkflows(rt::Runtime& runtime)`, () => {
-    for (const wf of byName) hostCpp.line(`${classes.get(wf.workflowId)}::bind(runtime);`);
-  });
-  hostCpp.line();
-  hostCpp.line(`void ${appName}::onAppStart() { user::onAppStart(); }`);
-  hostCpp.line();
-  hostCpp.line(`void ${appName}::onAppStop() { user::onAppStop(); }`);
-  hostCpp.line();
-  hostCpp.line("} // namespace simvehicleapp::generated");
-  files.push(file(`${GENERATED}SimVehicleApp.cpp`, hostCpp.toString(), "source"));
+  if (target === "wasm") {
+    files.push(file(`${GENERATED}MainWasm.cpp`, mainWasm(projectHash, appName, level, byName.map((wf) => [wf.workflowId, classes.get(wf.workflowId)!])), "source"));
+    files.push(file(`${GENERATED}sv-app.json`, json(allowlist(appName, workflows)), "config"));
+  } else {
+    // App host: one Velocitas vehicle app running every workflow (ADR-0022 §4, ADR-0023 §5).
+    const host = new CodeWriter();
+    host.line(headerComment(projectHash));
+    host.line("#ifndef SIMVEHICLEAPP_GENERATED_SIMVEHICLEAPP_HPP");
+    host.line("#define SIMVEHICLEAPP_GENERATED_SIMVEHICLEAPP_HPP");
+    host.line();
+    host.line('#include "simvehicleapp/rt/Velocitas.hpp"');
+    host.line();
+    host.line("namespace simvehicleapp::generated {");
+    host.line();
+    host.line(`/** The vehicle app ${commentText(appName)}: ${byName.length} workflow(s) on the SimVehicleApp runtime. */`);
+    host.block(`class ${appName} : public rt::AppBase`, () => {
+      host.line("public:");
+      host.line(`${appName}();`);
+      host.line();
+      host.line("protected:");
+      host.line("void bindWorkflows(rt::Runtime& runtime) override;");
+      host.line("void onAppStart() override;");
+      host.line("void onAppStop() override;");
+    }, "};");
+    host.line();
+    host.line("} // namespace simvehicleapp::generated");
+    host.line();
+    host.line("#endif // SIMVEHICLEAPP_GENERATED_SIMVEHICLEAPP_HPP");
+    files.push(file(`${GENERATED}SimVehicleApp.hpp`, host.toString(), "header"));
 
-  // Main.cpp: like the template's Launcher (SIGINT/SIGTERM ⇒ stop).
-  const main = new CodeWriter();
-  main.line(headerComment(projectHash));
-  main.line('#include "SimVehicleApp.hpp"');
-  main.line('#include "sdk/Logger.h"');
-  main.line();
-  main.line("#include <csignal>");
-  main.line("#include <memory>");
-  main.line();
-  main.line("namespace {");
-  main.line(`std::unique_ptr<simvehicleapp::generated::${appName}> app;`);
-  main.line();
-  main.block("void onSignal(int sig)", () => {
-    main.line('velocitas::logger().info("App terminated due to: Signal {}", sig);');
-    main.line("app->stop();");
-  });
-  main.line("} // namespace");
-  main.line();
-  main.block("int main(int /*argc*/, char** /*argv*/)", () => {
-    main.line("std::signal(SIGINT, onSignal);");
-    main.line("std::signal(SIGTERM, onSignal);");
-    main.line(`app = std::make_unique<simvehicleapp::generated::${appName}>();`);
-    main.block("try", () => main.line("app->run();"), "} catch (const std::exception& e) {");
-    main.lines_('    velocitas::logger().error("App terminated due to: {}", e.what());');
-    main.line("} catch (...) {");
-    main.lines_('    velocitas::logger().error("App terminated due to an unknown exception.");');
-    main.line("}");
-    main.line("return 0;");
-  });
-  files.push(file(`${GENERATED}Main.cpp`, main.toString(), "source"));
+    const hostCpp = new CodeWriter();
+    hostCpp.line(headerComment(projectHash));
+    hostCpp.line('#include "SimVehicleApp.hpp"');
+    hostCpp.line();
+    hostCpp.line('#include "user/UserHooks.hpp"');
+    hostCpp.line('#include "vehicle/Vehicle.hpp"');
+    for (const wf of byName) hostCpp.line(`#include ${cppString(`workflows/${classes.get(wf.workflowId)}.hpp`)}`);
+    hostCpp.line();
+    hostCpp.line("#include <type_traits>");
+    hostCpp.line();
+    hostCpp.line("namespace simvehicleapp::generated {");
+    hostCpp.line();
+    hostCpp.line("namespace {");
+    hostCpp.line("/** Every signal exists with the same type in the project's vehicle model (compile-time check). */");
+    hostCpp.block("[[maybe_unused]] void checkVehicleModel(vehicle::Vehicle& v)", () => {
+      for (const path of [...signals.keys()].sort()) {
+        const t = signals.get(path)!;
+        hostCpp.call("static_assert", [`std::is_same_v<std::decay_t<decltype(${modelMember(path)})>::value_type, ${cppType(t)}>`, cppString(`${path} is ${t}`)]);
+      }
+      hostCpp.line("(void)v;");
+    });
+    hostCpp.line("} // namespace");
+    hostCpp.line();
+    hostCpp.line(`${appName}::${appName}()`);
+    hostCpp.line(`    : AppBase(${cppString(appName)}, rt::TraceLevel::${level}) {}`);
+    hostCpp.line();
+    hostCpp.block(`void ${appName}::bindWorkflows(rt::Runtime& runtime)`, () => {
+      for (const wf of byName) hostCpp.line(`${classes.get(wf.workflowId)}::bind(runtime);`);
+    });
+    hostCpp.line();
+    hostCpp.line(`void ${appName}::onAppStart() { user::onAppStart(); }`);
+    hostCpp.line();
+    hostCpp.line(`void ${appName}::onAppStop() { user::onAppStop(); }`);
+    hostCpp.line();
+    hostCpp.line("} // namespace simvehicleapp::generated");
+    files.push(file(`${GENERATED}SimVehicleApp.cpp`, hostCpp.toString(), "source"));
+
+    // Main.cpp: like the template's Launcher (SIGINT/SIGTERM ⇒ stop).
+    const main = new CodeWriter();
+    main.line(headerComment(projectHash));
+    main.line('#include "SimVehicleApp.hpp"');
+    main.line('#include "sdk/Logger.h"');
+    main.line();
+    main.line("#include <csignal>");
+    main.line("#include <memory>");
+    main.line();
+    main.line("namespace {");
+    main.line(`std::unique_ptr<simvehicleapp::generated::${appName}> app;`);
+    main.line();
+    main.block("void onSignal(int sig)", () => {
+      main.line('velocitas::logger().info("App terminated due to: Signal {}", sig);');
+      main.line("app->stop();");
+    });
+    main.line("} // namespace");
+    main.line();
+    main.block("int main(int /*argc*/, char** /*argv*/)", () => {
+      main.line("std::signal(SIGINT, onSignal);");
+      main.line("std::signal(SIGTERM, onSignal);");
+      main.line(`app = std::make_unique<simvehicleapp::generated::${appName}>();`);
+      main.block("try", () => main.line("app->run();"), "} catch (const std::exception& e) {");
+      main.lines_('    velocitas::logger().error("App terminated due to: {}", e.what());');
+      main.line("} catch (...) {");
+      main.lines_('    velocitas::logger().error("App terminated due to an unknown exception.");');
+      main.line("}");
+      main.line("return 0;");
+    });
+    files.push(file(`${GENERATED}Main.cpp`, main.toString(), "source"));
+  }
 
   const sources = byName.map((wf) => `    \${SV_GENERATED_DIR}/workflows/${classes.get(wf.workflowId)}.cpp`);
   files.push(
@@ -192,8 +201,7 @@ export function generateProject(req: GenerateRequest): FileSet {
         ...sources,
         ")",
         "set(SV_GENERATED_SOURCES",
-        "    ${SV_GENERATED_DIR}/Main.cpp",
-        "    ${SV_GENERATED_DIR}/SimVehicleApp.cpp",
+        ...(target === "wasm" ? ["    ${SV_GENERATED_DIR}/MainWasm.cpp"] : ["    ${SV_GENERATED_DIR}/Main.cpp", "    ${SV_GENERATED_DIR}/SimVehicleApp.cpp"]),
         "    ${SV_GENERATED_WORKFLOW_SOURCES}",
         ")",
         "",
@@ -205,7 +213,13 @@ export function generateProject(req: GenerateRequest): FileSet {
   files.push(file(`${GENERATED}.clang-format`, "# Generated code: laid out by SimVehicleApp, not by clang-format.\nDisableFormat: true\nSortIncludes: Never\n", "config"));
 
   // Generated tests: each workflow with a scenario runs it on the mock vehicle (ADR-0022 §8).
-  if (req.options?.emitTests) {
+  if (req.options?.emitTests && target === "wasm") {
+    // A WebAssembly app runs its test cases inside the guest: `sv-wasm-host --test app.cwasm cases.json` (sv_run_tests).
+    const cases = (req.scenarios ?? [])
+      .filter((x) => classes.has(x.workflowId))
+      .map((x, i) => ({ name: x.caseName ?? String((x.scenario as { name?: unknown }).name ?? `case ${i + 1}`), workflow: x.workflowId, scenario: x.scenario }));
+    files.push(file(`${TESTS}cases.json`, json(cases), "test"));
+  } else if (req.options?.emitTests) {
     const cases = new Map<string, { scenario: Record<string, unknown>; caseName?: string }[]>();
     for (const s of req.scenarios ?? []) cases.set(s.workflowId, [...(cases.get(s.workflowId) ?? []), { scenario: s.scenario, ...(s.caseName ? { caseName: s.caseName } : {}) }]);
     const tests: string[] = [];
@@ -298,9 +312,11 @@ export function generateProject(req: GenerateRequest): FileSet {
 
   // Generation manifest shipped with the code: deterministic (no generationId/project, ADR-0026).
   const sorted = files.sort((a, b) => (a.path < b.path ? -1 : 1));
+  const backend = `${target === "wasm" ? "cpp-wasm" : "cpp"}@${BACKEND_VERSION}`;
   const genManifest = {
     manifestVersion: "1.0.0",
-    backend: `cpp@${BACKEND_VERSION}`,
+    backend,
+    ...(target === "wasm" ? { target: WASM_TARGET } : {}),
     runtimeVersion: RUNTIME_VERSION,
     contracts: CONTRACTS_VERSION,
     workflows: workflows.map((w) => ({ workflowId: w.workflowId, revision: w.workflowRevision, irHash: w.irHash })),
@@ -311,7 +327,7 @@ export function generateProject(req: GenerateRequest): FileSet {
   sorted.sort((a, b) => (a.path < b.path ? -1 : 1));
 
   return {
-    backend: `cpp@${BACKEND_VERSION}`,
+    backend,
     runtimeVersion: RUNTIME_VERSION,
     files: sorted,
     ownedRoots: OWNED_ROOTS,
@@ -319,6 +335,43 @@ export function generateProject(req: GenerateRequest): FileSet {
     sourceMaps: sourceMaps.sort((a, b) => (a.file < b.file ? -1 : 1)),
     diagnostics: [],
   };
+}
+
+/** `MainWasm.cpp`: registers the app with the runtime's WebAssembly exports (ADR-0061; runtime `Wasm.hpp`). */
+function mainWasm(projectHash: string, appName: string, level: string, workflows: [string, string][]): string {
+  const w = new CodeWriter();
+  w.line(headerComment(projectHash));
+  w.line('#include "simvehicleapp/rt/Wasm.hpp"');
+  w.line();
+  w.line('#include "user/UserHooks.hpp"');
+  for (const [, cls] of workflows) w.line(`#include ${cppString(`workflows/${cls}.hpp`)}`);
+  w.line();
+  w.line("namespace {");
+  w.line(`/** The WebAssembly app ${commentText(appName)}: ${workflows.length} workflow(s), run by sv-wasm-host (sv-wasm-abi/1). */`);
+  w.line("[[maybe_unused]] const bool registered = simvehicleapp::rt::wasm::registerApp({");
+  w.line(`    ${cppString(appName)},`);
+  w.line(`    simvehicleapp::rt::TraceLevel::${level},`);
+  w.line("    {");
+  for (const [id, cls] of workflows) w.line(`        {${cppString(id)}, &simvehicleapp::generated::${cls}::bind},`);
+  w.line("    },");
+  w.line("    [] { simvehicleapp::user::onAppStart(); },");
+  w.line("    [] { simvehicleapp::user::onAppStop(); },");
+  w.line("});");
+  w.line("} // namespace");
+  return w.toString();
+}
+
+/** `sv-app.json` (sv-wasm-abi §5): the signals the app may read and write and its MQTT topics; the host refuses the rest. */
+export function allowlist(appName: string, workflows: WorkflowIr[]): Record<string, unknown> {
+  const read = new Set<string>();
+  const write = new Set<string>();
+  const topics = new Set<string>();
+  for (const wf of workflows) {
+    for (const s of wf.signals) ((s as { access?: string[] }).access?.includes("write") ? write : read).add(s.path);
+    for (const t of wf.topics) topics.add(t.topic);
+  }
+  for (const p of write) read.delete(p);
+  return { app: appName, signals: { read: [...read].sort(), write: [...write].sort() }, topics: [...topics].sort() };
 }
 
 /** AppManifest v3 fragment (ADR-0023 §4): datapoints by path (write wins over read), MQTT topics. */

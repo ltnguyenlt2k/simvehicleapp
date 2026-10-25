@@ -262,7 +262,7 @@ __attribute__((export_name("sv_init"))) int32_t sv_init(const char* config, int3
     g.vehicle = std::make_unique<HostVehicle>(*g.strand);
     g.pubsub = std::make_unique<HostPubSub>(*g.strand);
     g.runtime = std::make_unique<Runtime>(*g.strand, *g.vehicle, *g.pubsub, *g.sink);
-    g.app.bind(*g.runtime);
+    for (const auto& [id, bind] : g.app.workflows) bind(*g.runtime);
     for (const auto& [path, type] : g.runtime->signals()) g.vehicle->prefetch(path, type);
     return 0;
 }
@@ -306,8 +306,9 @@ __attribute__((export_name("sv_stop"))) void sv_stop() {
 }
 
 /**
- * Test cases `[{name, scenario}]` on a mock vehicle and a virtual clock inside the guest (the generated tests of a
- * WASM app, ADR-0058): one log line per case, the number of failed cases returned.
+ * Test cases `[{name, workflow, scenario}]` on a mock vehicle and a virtual clock inside the guest (the generated
+ * tests of a WASM app, ADR-0058): each case runs its workflow only, like the native generated tests; one log line per
+ * case, the number of failed cases returned.
  */
 __attribute__((export_name("sv_run_tests"))) int32_t sv_run_tests(const char* cases, int32_t n) {
     auto& app = registered();
@@ -317,7 +318,20 @@ __attribute__((export_name("sv_run_tests"))) int32_t sv_run_tests(const char* ca
     int32_t failed = 0;
     for (const auto& c : list) {
         const std::string name = c.value("name", "case");
-        const auto result = testing::runScenario(app->bind, c["scenario"], "test");
+        const std::string workflow = c.value("workflow", "");
+        std::function<void(Runtime&)> bind;
+        for (const auto& wf : app->workflows) {
+            if (!workflow.empty() && wf.first != workflow) continue;
+            const auto b = wf.second;
+            bind = bind ? [prev = bind, b](Runtime& r) { prev(r), b(r); } : b;
+        }
+        if (!bind) {
+            const std::string text = "FAIL " + name + "\n  no workflow " + workflow + " in this app";
+            sv_log(3, text.data(), static_cast<int32_t>(text.size()));
+            ++failed;
+            continue;
+        }
+        const auto result = testing::runScenario(bind, c["scenario"], "test");
         const auto mismatches = testing::checkExpectations(result, c["scenario"].value("expect", Value::object()));
         std::string text = (mismatches.empty() ? "PASS " : "FAIL ") + name;
         for (const auto& m : mismatches) text += "\n  " + m;

@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_g",
+      "revision": 1,
+      "irHash": "sha256:0175761c5a77755a56ea7f3cd8aae1b95c7ab5563a527bb3d1e407c9586184ce"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/MainWasm.cpp",
+      "sha256": "6e0f7b14770ca2251ac7abc2e30cce9f120e15c09428e4f8257a3a63f7fc267a",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "b026a9f069e26d85c14a34e73bda4503fd1f4ad5a446990552bf1134e942cb2b",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/WindowCloseOnRain.map.json",
+      "sha256": "0f7dd5b212bb98b04803c53840641b014b0ebbb4094e4c98ba4f6cc55fd21253",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "0bf7e94f296f0d26fcf1105db309c2d3f2806ce980a4f7141a6334cf091f4db5",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/WindowCloseOnRain.cpp",
+      "sha256": "d06c9ad42055544e41ee8e003bf2c297500ca3aa914d604649cb137761daef29",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/WindowCloseOnRain.hpp",
+      "sha256": "53151aa08924be91ebb4d7b6bbc9ffd80adc7c6118b0ca3fdc30250be6da385c",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "e530725b91435f9050fb09c10e47e060e9f9500234668a67489461327482b87c",
+      "role": "test"
+    }
+  ]
+}

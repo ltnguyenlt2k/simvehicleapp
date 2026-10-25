@@ -1,0 +1,42 @@
+{
+  "file": "app/src/generated/workflows/AutoDoorLock.cpp",
+  "workflowId": "gw_d",
+  "irHash": "sha256:6264903a0cab1db4a95d8094c78c9ca61c164f0eef3a7c312189089c08bf93ca",
+  "ranges": [
+    {
+      "startLine": 31,
+      "endLine": 40,
+      "nodeId": "n1",
+      "blockId": "b1",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 42,
+      "endLine": 49,
+      "nodeId": "n2",
+      "blockId": "b2",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 51,
+      "endLine": 58,
+      "nodeId": "n3",
+      "blockId": "b3",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 60,
+      "endLine": 67,
+      "nodeId": "n4",
+      "blockId": "b4",
+      "workflowId": "gw_d"
+    },
+    {
+      "startLine": 69,
+      "endLine": 76,
+      "nodeId": "n5",
+      "blockId": "b5",
+      "workflowId": "gw_d"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_a",
+      "revision": 1,
+      "irHash": "sha256:e1f876d3d871875dc0bf1ad05b88bd481a9be72ef1cb9d80c5fffe5da4cc1be8"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/MainWasm.cpp",
+      "sha256": "27c6be35b88b742401942978cd0d7eeae5bda355a1c39ccba30d2e938b2ab723",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "b5ba769e7557ce8ddde6dc6f757170101060657ddba7186de6949945973bd285",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/StableOverspeedWarning.map.json",
+      "sha256": "07c2e45223d2f1557a411db0c5ff23c7a80db9c4ab46562b8b8b93c221e693b0",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "0ae18fe262f6aeb603cb1becd491ce72254d6974c809f4d34879c312d497848e",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/StableOverspeedWarning.cpp",
+      "sha256": "a089686330dc7c245b95cbedcbfc275ef4f88ebdd03d623521461fcae84848a2",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/StableOverspeedWarning.hpp",
+      "sha256": "b7d612d95e2a3a7bce4f40e3a14c7552f9a28358b4f34f1b64515242417604ab",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "abedb3339710496645e342882e0f0cf8ffae1e833b79cf6fb545f3a0c34582d6",
+      "role": "test"
+    }
+  ]
+}

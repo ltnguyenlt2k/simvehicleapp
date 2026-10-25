@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_b",
+      "revision": 1,
+      "irHash": "sha256:43aae7c7a172cd63c627972d37605f57b41fb82fc94f51b561d6e17255bc328e"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/MainWasm.cpp",
+      "sha256": "e8400865ce669ce25a0449978760f9207edbf18c1a50c94bf575865902ba8d55",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "dc168c082c8492dbf73809ab5484c3f6a12cc490a96c04099d19019e4ce4c928",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/LowBatteryHMIWarning.map.json",
+      "sha256": "a5b78dc954e4d5b025109abe4d6330028f09d70650e34b7cbe1024834a4d0457",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "3ad5222f354a0ae8983f26eaeb0f13539582fa636c70ff027757802a2b000cba",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/LowBatteryHMIWarning.cpp",
+      "sha256": "10a7eef4863af2ac2205e57768263b6678714910c832fb50e8fac0f07552fd9a",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/LowBatteryHMIWarning.hpp",
+      "sha256": "23a60b9bcd1fb059240faf21ece811b6ff0c033378b318fa6ded55ae21792bf8",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "aeadc5c05aaab440fec6b761c88eff0a1e73ca00ca540e29a489061bc05d5bc7",
+      "role": "test"
+    }
+  ]
+}

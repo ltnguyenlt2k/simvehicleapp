@@ -62,6 +62,59 @@ describe("golden C++ GW-A…GW-G (diff = 0)", () => {
   }
 });
 
+const GOLDEN_WASM_DIR = new URL("../../golden-wasm/", import.meta.url).pathname;
+
+describe("golden C++ WebAssembly target GW-A…GW-G (diff = 0, ADR-0061)", () => {
+  for (const id of goldenIds) {
+    test(id, () => {
+      const r = generate(goldenRequest(id), "wasm");
+      if (!r.ok) throw new Error(JSON.stringify(r));
+      const dir = join(GOLDEN_WASM_DIR, id);
+      if (process.env.SV_UPDATE_GOLDEN === "1") {
+        rmSync(dir, { recursive: true, force: true });
+        for (const f of r.fileSet.files) {
+          mkdirSync(dirname(join(dir, f.path)), { recursive: true });
+          writeFileSync(join(dir, f.path), f.content);
+        }
+      }
+      expect(listFiles(dir)).toEqual(r.fileSet.files.map((f) => f.path));
+      for (const f of r.fileSet.files) expect(f.content).toBe(readFileSync(join(dir, f.path), "utf8"));
+    });
+  }
+
+  test("same emitter: the workflow sources are the native ones; the entry, allowlist, tests and manifest differ", () => {
+    for (const id of goldenIds) {
+      const native = generate(goldenRequest(id));
+      const wasm = generate(goldenRequest(id), "wasm");
+      if (!native.ok || !wasm.ok) throw new Error(id);
+      const byPath = (fs: typeof native.fileSet) => new Map(fs.files.map((f) => [f.path, f.content]));
+      const [n, w] = [byPath(native.fileSet), byPath(wasm.fileSet)];
+      for (const [path, content] of w) if (path.includes("/workflows/") || path.includes("/sourcemap/")) expect(content).toBe(n.get(path)!);
+      const onlyWasm = [...w.keys()].filter((p) => !n.has(p)).map((p) => p.replace(/^app\//, ""));
+      expect(onlyWasm).toEqual(["src/generated/MainWasm.cpp", "src/generated/sv-app.json", "tests/generated/cases.json"]);
+      expect(validator.validate("generated-fileset", wasm.fileSet).errors).toEqual([]);
+      const gen = JSON.parse(w.get("app/src/generated/simvehicleapp.gen.json")!);
+      expect(validator.validate("generation-manifest", gen).errors).toEqual([]);
+      expect(gen).toMatchObject({ backend: "cpp-wasm@0.1.0", target: { kind: "wasm", abi: "sv-wasm-abi/1" } });
+    }
+    const allow = JSON.parse(generate(goldenRequest("GW-A"), "wasm").ok ? (generate(goldenRequest("GW-A"), "wasm") as { fileSet: { files: { path: string; content: string }[] } }).fileSet.files.find((f) => f.path.endsWith("sv-app.json"))!.content : "{}");
+    expect(allow).toEqual({ app: "StableOverspeedWarningApp", signals: { read: ["Vehicle.Speed"], write: ["Vehicle.Body.Lights.Hazard.IsSignaling"] }, topics: ["simvehicleapp/stable-overspeed-warning/hmi"] });
+  });
+
+  test("GET /wasm/capabilities carries the target and the wasm toolchain; /capabilities stays native", async () => {
+    const h = createBackendHandler();
+    const ctx = { log: { info() {}, warn() {}, error() {}, debug() {}, child() { return this; } }, requestId: "t" } as never;
+    const wasm = await (await h(new Request("http://b/wasm/capabilities"), ctx)).json();
+    expect(validator.validate("backend-capabilities", wasm).errors).toEqual([]);
+    expect(wasm).toMatchObject({ id: "cpp-wasm", language: "cpp", target: { kind: "wasm", triple: "wasm32-wasip1" }, toolchain: { id: "toolchain-wasm", template: "wasm-app-cpp" } });
+    const native = await (await h(new Request("http://b/capabilities"), ctx)).json();
+    expect(native.target).toBeUndefined();
+    const gen = await h(new Request("http://b/wasm/generate", { method: "POST", body: JSON.stringify(goldenRequest("GW-B")) }), ctx);
+    expect(gen.status).toBe(200);
+    expect((await gen.json()).backend).toBe("cpp-wasm@0.1.0");
+  });
+});
+
 describe("determinism and contract shapes", () => {
   test("the same request gives the same bytes; the file set, source maps and gen.json are consistent", () => {
     for (const id of goldenIds) {

@@ -1,0 +1,68 @@
+{
+  "manifestVersion": "1.0.0",
+  "backend": "cpp-wasm@0.1.0",
+  "target": {
+    "kind": "wasm",
+    "triple": "wasm32-wasip1",
+    "abi": "sv-wasm-abi/1",
+    "host": {
+      "name": "sv-wasm-host",
+      "version": "0.1.0"
+    }
+  },
+  "runtimeVersion": "0.1.0",
+  "contracts": "1.0.0-alpha.1",
+  "workflows": [
+    {
+      "workflowId": "gw_e",
+      "revision": 1,
+      "irHash": "sha256:77be02a978f54386a11eded8c64a0b9fe9e91508d154b7a6641ff7996deb1c03"
+    }
+  ],
+  "ownedRoots": [
+    "app/src/generated/",
+    "app/tests/generated/"
+  ],
+  "files": [
+    {
+      "path": "app/src/generated/.clang-format",
+      "sha256": "a8322bda3e36aba81847db8dfef5acbb0b781c0cb42cb4b18ee731778de66d83",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/MainWasm.cpp",
+      "sha256": "3f7ab9d09c7e81953cde2f85292c3299faf52b38eb5e99d9413bb48fd0a783c8",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/generated.cmake",
+      "sha256": "539c806bdc6029a2c38b21b7f14f50269fc6e436c3abc03e5e0dad3ab55e1455",
+      "role": "build"
+    },
+    {
+      "path": "app/src/generated/sourcemap/PeriodicTelemetry.map.json",
+      "sha256": "50f41381575e078994790243a861316a15b0ac1574173595b5e1d2fc6c9affc6",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/sv-app.json",
+      "sha256": "a7ff75c84cf31fd29daab49228c029386e57fa7dbae307b3a587fd8f7b92ef87",
+      "role": "config"
+    },
+    {
+      "path": "app/src/generated/workflows/PeriodicTelemetry.cpp",
+      "sha256": "1798978bfc15155f24fe599d1d83b2d61fa8b8110134734aa34fc741b4dd7f78",
+      "role": "source"
+    },
+    {
+      "path": "app/src/generated/workflows/PeriodicTelemetry.hpp",
+      "sha256": "db7e4c045084faf663ee75805ee3fbdf33e6885f5d9d8824ca85960ae4bfbd47",
+      "role": "header"
+    },
+    {
+      "path": "app/tests/generated/cases.json",
+      "sha256": "997e46a89107f7f3fdb2fa157e7610dadcb6756b334a7d487cbf77622021f267",
+      "role": "test"
+    }
+  ]
+}

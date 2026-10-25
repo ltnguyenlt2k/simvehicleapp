@@ -348,6 +348,10 @@ jobs:
         run: bun test
       - name: runtime/RUNTIME_API.md matches the headers (M06-T10)
         run: bun conformance/gen-runtime-api.ts --check
+      - name: backend.wasm.yaml templateSha = git tree id of the SimVehicleApp-owned WebAssembly template (ADR-0061)
+        run: |
+          want=$(git rev-parse HEAD:modules/velocitas-stack/templates/wasm-app-cpp)
+          grep -q "templateSha: $want" ../backend.wasm.yaml || { echo "templateSha must be $want (template changed)"; exit 1; }
       - name: Runtime unit tests (gtest)
         run: |
           cmake -S ../runtime -B ../build/rt -DCMAKE_BUILD_TYPE=Debug
