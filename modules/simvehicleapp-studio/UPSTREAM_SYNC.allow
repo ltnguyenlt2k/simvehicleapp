@@ -1076,3 +1076,9 @@ apps/sim/executor/handlers/agent/memory.ts
 apps/sim/executor/handlers/evaluator/evaluator-handler.test.ts
 apps/sim/executor/handlers/router/router-handler.test.ts
 packages/testing/src/mocks/executor.mock.ts
+
+# M21 D3 (wave 3d) — same-major security bumps (ADR-0008 Notes 2026-10-25)
+apps/realtime/package.json
+bunfig.toml
+packages/db/package.json
+packages/realtime-protocol/package.json
