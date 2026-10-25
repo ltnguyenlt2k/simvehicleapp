@@ -215,6 +215,11 @@ export const SV_SUMMARY_RULES: Record<string, (v: Values) => SvBlockSummary> = {
     role: 'state',
     text: `State machine ${str(v.name)} · ${plural(rows(v.transitions), 'transition')}`,
   }),
+  sv_on_call: () => ({ role: 'when', text: 'When another workflow calls this one' }),
+  sv_call_workflow: (v) => ({
+    role: 'flow',
+    text: `Call a workflow · ${plural(rows(v.args), 'argument')}`,
+  }),
 }
 
 /** Summary of a block on the canvas, or `null` for a block that is not a vehicle block. */
