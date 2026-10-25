@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { BLOCK_SPECS } from "@simvehicleapp/blocks";
 import { ContractValidator, fixturesDir, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
 import { parseVssRelease, type VssModel } from "@simvehicleapp/vss";
-import { goldenIr, irFixtureDirs } from "./golden-ir.ts";
+import { fixtureCallees, goldenIr, irFixtureDirs } from "./golden-ir.ts";
 import { type CompileContext, compile, kebab, pascal } from "./index.ts";
 
 const fixture = (rel: string) => `${fixturesDir}${rel}`;
@@ -25,13 +25,14 @@ const validator = new ContractValidator();
 describe("compile: every golden and conformance graph builds a valid IR (M04-T08)", () => {
   for (const [id, graph] of [...corpus("golden"), ...corpus("conformance")]) {
     test(`${id}`, async () => {
-      const r = await compile(graph, ctx);
+      const c = { ...ctx, callees: fixtureCallees(id) };
+      const r = await compile(graph, c);
       expect(r.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
       expect(r.ir).toBeDefined();
       const v = validator.validate("ir", r.ir);
       expect(v.errors).toEqual([]);
       // deterministic: same graph ⇒ same bytes
-      expect(JSON.stringify((await compile(structuredClone(graph), ctx)).ir)).toBe(JSON.stringify(r.ir));
+      expect(JSON.stringify((await compile(structuredClone(graph), c)).ir)).toBe(JSON.stringify(r.ir));
     });
   }
 });

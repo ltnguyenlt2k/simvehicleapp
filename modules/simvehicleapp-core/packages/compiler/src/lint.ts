@@ -5,6 +5,7 @@ import { isArrayType, type VssNode } from "@simvehicleapp/vss";
 import { diag, sortDiagnostics } from "./diagnostics.ts";
 import { MIGRATIONS, migrateGraph, type MigrationRegistry } from "./migrations.ts";
 import { analyzeControlFlow } from "./controlflow.ts";
+import { prepareCalls } from "./subworkflow.ts";
 
 /** analysis/06 §3 S0. */
 export const MAX_BLOCKS = 2000;
@@ -26,6 +27,8 @@ export interface LintContext {
   specs?: readonly BlockSpec[];
   /** Block property migrations (defaults to the built-in registry). */
   migrations?: MigrationRegistry;
+  /** Function workflows the graph may call (`sv_call_workflow`, ADR-0063), inlined before lint. */
+  callees?: readonly unknown[];
 }
 
 const CONTAINERS = new Set(["sv_repeat", "sv_while", "sv_parallel"]);
@@ -62,6 +65,14 @@ function literalOf(value: unknown): { value: unknown } | undefined {
  * injected VSS lookup; diagnostics are deterministic and use only catalog codes (ADR-0016).
  */
 export async function lint(graphInput: unknown, ctx: LintContext): Promise<DiagnosticV1[]> {
+  // Calls of function workflows are inlined first (ADR-0063): the rest lints one flat graph.
+  const prep = prepareCalls(graphInput, ctx.callees, new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s])));
+  if (prep.diagnostics.some((d) => d.severity === "error")) return prep.diagnostics;
+  return [...prep.diagnostics, ...(await lintGraph(prep.graph, ctx)).map(prep.remap)];
+}
+
+/** S0–S3 (+ part of S6) of one graph without calls. */
+export async function lintGraph(graphInput: unknown, ctx: LintContext): Promise<DiagnosticV1[]> {
   const out: DiagnosticV1[] = [];
   const wfId =
     typeof graphInput === "object" && graphInput && typeof (graphInput as { workflowId?: unknown }).workflowId === "string"

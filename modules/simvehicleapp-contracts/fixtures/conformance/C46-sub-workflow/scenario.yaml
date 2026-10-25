@@ -1,0 +1,21 @@
+# C46-sub-workflow — a workflow calls a function workflow (ADR-0063) and writes its result
+# Semantics: sv_call_workflow (inlined before lint): args set the function's variables, the body runs, <call.value> = result.
+# Hand-derived expectation (M21 D13); the simulator and every runtime must reproduce it.
+scenarioVersion: 1.0.0
+name: C46-sub-workflow
+description: "Call workflow: the function's result drives the hazard lights"
+vss:
+  release: v4.0
+until: 4000
+initial:
+  Vehicle.Speed: 0
+  Vehicle.Body.Lights.Hazard.IsSignaling: false
+inputs:
+  - { t: 1000, path: "Vehicle.Speed", value: 100 }
+  - { t: 2000, path: "Vehicle.Speed", value: 130 }
+  - { t: 3000, path: "Vehicle.Speed", value: 90 }
+expect:
+  writes:
+    - { t: 1000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }
+    - { t: 2000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: true }
+    - { t: 3000, path: "Vehicle.Body.Lights.Hazard.IsSignaling", value: false }

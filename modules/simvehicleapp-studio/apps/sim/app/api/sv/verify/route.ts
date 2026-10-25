@@ -6,6 +6,7 @@ import { parseRequest } from '@/lib/api/server'
 import { getSession } from '@/lib/auth'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
 import { callSvService, SvServiceNotConfiguredError } from '@/lib/sv/api-client'
+import { calleesBody } from '@/lib/sv/callees'
 
 const logger = createLogger('SvVerifyAPI')
 
@@ -30,7 +31,11 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
     upstream = await callSvService('compiler', '/compile', {
       method: 'POST',
       retryOnReset: true,
-      body: { graph: parsed.data.body.graph, mode: 'verify' },
+      body: {
+        graph: parsed.data.body.graph,
+        mode: 'verify',
+        ...(await calleesBody(session.user.id, parsed.data.body.graph)),
+      },
       timeoutMs: 10000,
     })
   } catch (error) {

@@ -56,7 +56,7 @@ export function createCompilerHandler(deps: CompilerDeps) {
       } catch {
         return json(400, { error: "invalid_json" });
       }
-      const { graph, mode, target } = (body ?? {}) as { graph?: unknown; mode?: unknown; target?: unknown };
+      const { graph, mode, target, callees } = (body ?? {}) as { graph?: unknown; mode?: unknown; target?: unknown; callees?: unknown };
       if (graph === undefined) return json(400, { error: "invalid_request", message: "body.graph is required" });
       if (pathname === "/compile" && (typeof mode !== "string" || !MODES.has(mode))) {
         return json(400, { error: "invalid_request", message: "body.mode must be lint, verify or build" });
@@ -64,11 +64,16 @@ export function createCompilerHandler(deps: CompilerDeps) {
       if (target !== undefined && (typeof target !== "string" || !/^[a-z][a-z0-9-]*$/.test(target))) {
         return json(400, { error: "invalid_request", message: "body.target must be a backend id" });
       }
+      // Function workflows the graph calls (ADR-0063): each one a workflow graph, at most 16.
+      if (callees !== undefined && (!Array.isArray(callees) || callees.length > 16 || !callees.every((c) => validator.validate("workflow-graph", c).valid))) {
+        return json(400, { error: "invalid_request", message: "body.callees must be up to 16 workflow graphs" });
+      }
+      const fns = callees as unknown[] | undefined;
       try {
-        if (pathname === "/lint" || mode === "lint") return json(200, { diagnostics: await lint(graph, { vehicle: deps.vehicle, modelHash: deps.modelHash }) });
+        if (pathname === "/lint" || mode === "lint") return json(200, { diagnostics: await lint(graph, { vehicle: deps.vehicle, modelHash: deps.modelHash, callees: fns }) });
         const r = await compile(
           graph,
-          { vehicle: deps.vehicle, modelHash: deps.modelHash, ...(target ? { backend: target as string, capabilities: deps.capabilities ?? (async () => null) } : {}) },
+          { vehicle: deps.vehicle, modelHash: deps.modelHash, callees: fns, ...(target ? { backend: target as string, capabilities: deps.capabilities ?? (async () => null) } : {}) },
           mode as "verify" | "build",
         );
         return json(200, r.ir ? { diagnostics: r.diagnostics, ir: r.ir } : { diagnostics: r.diagnostics });

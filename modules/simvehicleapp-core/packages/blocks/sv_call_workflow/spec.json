@@ -1,0 +1,47 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_call_workflow",
+  "version": 1,
+  "category": "flow",
+  "title": "Call workflow",
+  "priority": "P1",
+  "opcode": "control.call",
+  "props": [
+    {
+      "name": "workflowId",
+      "kind": "string",
+      "required": true
+    },
+    {
+      "name": "args",
+      "kind": "list",
+      "required": false,
+      "items": [
+        {
+          "name": "name",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "value",
+          "kind": "expression",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "$inferred"
+    }
+  ],
+  "handles": {
+    "in": [
+      "target"
+    ],
+    "out": [
+      "source"
+    ]
+  }
+}

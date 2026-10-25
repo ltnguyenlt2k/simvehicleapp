@@ -8,7 +8,7 @@
  *   bun packages/compiler/src/golden-ir.ts           # check (exit 1 when a snapshot differs)
  *   bun packages/compiler/src/golden-ir.ts --write   # regenerate the snapshots
  */
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { fixturesDir, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
 import { parseVssRelease, type VssModel } from "@simvehicleapp/vss";
@@ -25,6 +25,12 @@ export function fixtureContext(): CompileContext {
     vehicle: async (release, paths) => new Map(paths.map((p) => [p, models[release]?.nodes.get(p) ?? null])),
     modelHash: async (release) => models[release]?.modelHash ?? null,
   };
+}
+
+/** Function workflows a fixture graph calls (`callees.json`, ADR-0063), or none. */
+export function fixtureCallees(dir: string): unknown[] | undefined {
+  const file = fixture(`${dir}/callees.json`);
+  return existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as unknown[]) : undefined;
 }
 
 export const goldenIds = () =>
@@ -46,7 +52,7 @@ export const irFixtureDirs = () => [...goldenIds().map((id) => `golden/${id}`), 
 export async function goldenIr(id: string, ctx = fixtureContext()): Promise<string> {
   const dir = id.includes("/") ? id : `golden/${id}`;
   const graph = JSON.parse(readFileSync(fixture(`${dir}/graph.json`), "utf8")) as WorkflowGraphV1;
-  const r = await compile(graph, ctx);
+  const r = await compile(graph, { ...ctx, callees: fixtureCallees(dir) });
   if (!r.ir) throw new Error(`${id} does not compile: ${r.diagnostics.map((d) => d.code).join(", ")}`);
   return `${JSON.stringify(r.ir, null, 2)}\n`;
 }

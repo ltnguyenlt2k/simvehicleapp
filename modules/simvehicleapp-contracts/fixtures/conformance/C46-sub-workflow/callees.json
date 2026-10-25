@@ -1,0 +1,105 @@
+[
+  {
+    "graphVersion": "1.0.0",
+    "workflowId": "c46_fn_safety",
+    "revision": 1,
+    "name": "Safety check",
+    "vss": {
+      "release": "v4.0"
+    },
+    "variables": [
+      {
+        "name": "speed",
+        "type": "double",
+        "initial": 0
+      },
+      {
+        "name": "result",
+        "type": "boolean",
+        "initial": false
+      }
+    ],
+    "blocks": [
+      {
+        "id": "f1",
+        "type": "sv_on_call",
+        "name": "called",
+        "props": {},
+        "parentId": null,
+        "blockVersion": 1
+      },
+      {
+        "id": "f2",
+        "type": "sv_var_get",
+        "name": "spd",
+        "props": {
+          "name": "speed"
+        },
+        "parentId": null,
+        "blockVersion": 1
+      },
+      {
+        "id": "f3",
+        "type": "sv_if",
+        "name": "fast",
+        "props": {
+          "condition": "<spd.value> > 120"
+        },
+        "parentId": null,
+        "blockVersion": 1
+      },
+      {
+        "id": "f4",
+        "type": "sv_var_set",
+        "name": "yes",
+        "props": {
+          "name": "result",
+          "value": "true"
+        },
+        "parentId": null,
+        "blockVersion": 1
+      },
+      {
+        "id": "f5",
+        "type": "sv_var_set",
+        "name": "no",
+        "props": {
+          "name": "result",
+          "value": "false"
+        },
+        "parentId": null,
+        "blockVersion": 1
+      }
+    ],
+    "edges": [
+      {
+        "id": "g1",
+        "from": "f1",
+        "fromHandle": "source",
+        "to": "f2",
+        "toHandle": "target"
+      },
+      {
+        "id": "g2",
+        "from": "f2",
+        "fromHandle": "source",
+        "to": "f3",
+        "toHandle": "target"
+      },
+      {
+        "id": "g3",
+        "from": "f3",
+        "fromHandle": "then",
+        "to": "f4",
+        "toHandle": "target"
+      },
+      {
+        "id": "g4",
+        "from": "f3",
+        "fromHandle": "else",
+        "to": "f5",
+        "toHandle": "target"
+      }
+    ]
+  }
+]

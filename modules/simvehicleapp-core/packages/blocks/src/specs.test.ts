@@ -22,6 +22,8 @@ const FLOW_HANDLES: Record<string, string[]> = {
   sv_if: ["then", "else"],
   sv_switch: ["case", "default"],
   sv_wait: ["source"],
+  /** Call workflow (ADR-0063): one exit once the function's body has run. */
+  sv_call_workflow: ["source"],
   sv_wait_until: ["ok", "timeout"],
   sv_stable_for: ["stable", "broken"],
   sv_repeat: ["loop-start-source", "loop-end-source"],

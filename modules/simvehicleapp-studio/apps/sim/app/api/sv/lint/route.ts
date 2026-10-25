@@ -6,6 +6,7 @@ import { parseRequest } from '@/lib/api/server'
 import { getSession } from '@/lib/auth'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
 import { callSvService, SvServiceNotConfiguredError } from '@/lib/sv/api-client'
+import { calleesBody } from '@/lib/sv/callees'
 
 const logger = createLogger('SvLintAPI')
 
@@ -30,7 +31,10 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
     upstream = await callSvService('compiler', '/lint', {
       method: 'POST',
       retryOnReset: true,
-      body: { graph: parsed.data.body.graph },
+      body: {
+        graph: parsed.data.body.graph,
+        ...(await calleesBody(session.user.id, parsed.data.body.graph)),
+      },
       timeoutMs: 5000,
     })
   } catch (error) {

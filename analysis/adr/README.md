@@ -164,6 +164,7 @@ flowchart TB
 | [0060](ADR-0060-deploy-targets-and-vehicle-io-layers.md) | Deploy: target databroker từ xa / image / Kanto (hoãn); read-only + audit; VSS là ranh giới với layer CAN | L0 | M18 |
 | [0061](ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md) | Target `wasm` cho backend C++ và Rust (cùng emitter), ABI `sv-wasm-abi/1` (core module wasip1 reactor, JSON), host chung `sv-wasm-host` (Wasmtime LTS, KUKSA v2, allowlist, giới hạn) | L1 | M20 |
 | [0062](ADR-0062-execution-flow-trace-and-signal-testing.md) | Mô hình Flow chung cho Simulate/Test/Run, `data.eval` (lý do rẽ nhánh), `signal-update.source`, console dạng câu, giải thích case FAIL | L1 | M19 |
+| [0063](ADR-0063-sub-workflow-inline-call.md) | Sub-workflow: `sv_call_workflow` gọi workflow hàm (`sv_on_call`), inline lúc compile (`expandCalls`), cấm đệ quy, ≤ 4 cấp | L1 | M21 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

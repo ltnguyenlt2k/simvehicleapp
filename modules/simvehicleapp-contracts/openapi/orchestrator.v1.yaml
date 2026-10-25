@@ -273,6 +273,7 @@ paths:
               anyOf: [{ required: [graphs] }, { required: [fromGeneration] }]
               properties:
                 graphs: { type: array, minItems: 1, maxItems: 100, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }, description: "Workflow graphs exported by the studio adapter." }
+                callees: { type: array, maxItems: 16, items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }, description: "Function workflows the graphs call (`sv_call_workflow`, ADR-0063), passed to the compiler with each graph." }
                 fromGeneration: { enum: [latest], description: "Without graphs: SynCode again with the graphs (and scenarios) of the project's last SynCode — for callers without the studio (MCP agents)." }
                 scenarios:
                   description: "Test cases of the workflows for the generated tests (M7; several per workflow with caseName, ADR-0058 §2)."

@@ -1,0 +1,15 @@
+{
+  "specVersion": "1.0.0",
+  "type": "sv_on_call",
+  "version": 1,
+  "category": "triggers",
+  "title": "When called",
+  "priority": "P1",
+  "opcode": "event.call",
+  "props": [],
+  "outputs": [],
+  "handles": {
+    "in": [],
+    "out": ["source"]
+  }
+}

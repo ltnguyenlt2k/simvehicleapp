@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { compile } from "@simvehicleapp/compiler";
-import { fixtureContext } from "@simvehicleapp/compiler/src/golden-ir.ts";
+import { fixtureCallees, fixtureContext } from "@simvehicleapp/compiler/src/golden-ir.ts";
 import { fixturesDir } from "@simvehicleapp/contracts";
 import { goldenIds, goldenOutputs } from "./golden-trace.ts";
 import { checkExpectations, simulate } from "./index.ts";
@@ -25,7 +25,7 @@ async function run(id: string) {
     inputs: { t: number; path?: string; topic?: string; value: unknown }[];
     expect?: { writes?: { t: number; path: string; value: unknown }[]; publishes?: { t: number; topic: string; payload: string }[]; trace?: Record<string, unknown>[] };
   };
-  const { ir, diagnostics } = await compile(graph, ctx);
+  const { ir, diagnostics } = await compile(graph, { ...ctx, callees: fixtureCallees(id) });
   if (!ir) throw new Error(`${id}: ${diagnostics.map((d) => d.code).join(", ")}`);
   const result = simulate(ir, { until: scenario.until, initial: scenario.initial, inputs: scenario.inputs });
   return { result, mismatches: checkExpectations(result, scenario.expect) };

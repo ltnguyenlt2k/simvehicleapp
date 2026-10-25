@@ -377,12 +377,17 @@ export function createOrchestratorHandler(d: AppDeps) {
           if (!last?.request?.graphs?.length) return json(409, { error: "no_previous_generation", message: `Project ${project.slug} has no SynCode yet: send graphs` });
           b.graphs = last.request.graphs;
           if (last.request.scenarios && b.scenarios === undefined) b.scenarios = last.request.scenarios;
+          if (last.request.callees && b.callees === undefined) b.callees = last.request.callees;
         }
         const graphs = b.graphs;
         if (!Array.isArray(graphs) || graphs.length === 0 || graphs.length > 100) return json(400, { error: "invalid_request", message: "graphs: 1..100 workflow graphs" });
         const bad = graphs.map((g) => validator.validate("workflow-graph", g)).find((v) => !v.valid);
         if (bad) {
           return json(422, [{ code: "GRAPH_SCHEMA_INVALID", severity: "error", stage: "parse", message: `A workflow graph does not match WorkflowGraph v1: ${bad.errors.slice(0, 2).map((e) => `${e.instancePath} ${e.message}`).join("; ")}`, docs: "diagnostics#GRAPH_SCHEMA_INVALID" }]);
+        }
+        const callees = b.callees;
+        if (callees !== undefined && (!Array.isArray(callees) || callees.length > 16 || !callees.every((c) => validator.validate("workflow-graph", c).valid))) {
+          return json(400, { error: "invalid_request", message: "callees: up to 16 workflow graphs (the function workflows the graphs call)" });
         }
         const scenarios = b.scenarios;
         if (scenarios !== undefined && (!Array.isArray(scenarios) || !scenarios.every((s) => s && typeof s.workflowId === "string" && validator.validate("scenario", s.scenario).valid && (s.caseName === undefined || (typeof s.caseName === "string" && s.caseName.length >= 1 && s.caseName.length <= 80))))) {
@@ -397,7 +402,7 @@ export function createOrchestratorHandler(d: AppDeps) {
           diagnostics: [],
           generatedFiles: [],
           workflows: [],
-          request: { graphs: graphs as Record<string, unknown>[], ...(scenarios ? { scenarios: scenarios as never } : {}), ...(b.overwriteModified === true ? { overwriteModified: true } : {}) },
+          request: { graphs: graphs as Record<string, unknown>[], ...(callees?.length ? { callees: callees as Record<string, unknown>[] } : {}), ...(scenarios ? { scenarios: scenarios as never } : {}), ...(b.overwriteModified === true ? { overwriteModified: true } : {}) },
           createdAt: Date.now(),
         };
         // ADR-0053: one queued SynCode per app (a newer request replaces it), a bounded queue, enough disk.

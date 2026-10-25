@@ -95,6 +95,8 @@ export interface Generation {
 
 export interface GenerationRequest {
   graphs: Record<string, unknown>[];
+  /** Function workflows the graphs call (ADR-0063), compiled with each graph. */
+  callees?: Record<string, unknown>[];
   scenarios?: { workflowId: string; scenario: Record<string, unknown>; caseName?: string }[];
   overwriteModified?: boolean;
 }

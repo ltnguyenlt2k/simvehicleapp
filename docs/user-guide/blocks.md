@@ -3,7 +3,7 @@
 > Sinh tự động từ `modules/simvehicleapp-core/packages/blocks/*/spec.json` và `semantics.md` bởi
 > `scripts/docs/gen_block_reference.py` — không sửa tay. Hướng dẫn bắt đầu: [tutorial.md](tutorial.md).
 
-41 khối. Biểu thức (`expression`) dùng cú pháp SVX: tham chiếu `<tênkhối.output>` hoặc `<Vehicle.Đường.Dẫn>`,
+43 khối. Biểu thức (`expression`) dùng cú pháp SVX: tham chiếu `<tênkhối.output>` hoặc `<Vehicle.Đường.Dẫn>`,
 toán tử ASCII (`== != < <= > >= && || !`), chuỗi trong nháy kép. `template` là văn bản có thể chèn tham chiếu `<…>`.
 
 ## Triggers
@@ -16,6 +16,18 @@ opcode `event.app_start` · phiên bản 1 · vào [—] · ra [source]
 - **Ngữ nghĩa:** bắn **đúng một lần** khi app vehicle khởi động xong (đã kết nối databroker, attribute đã đọc cache). Không có chính sách đồng thời (chỉ một lần).
 - **Thay vai trò block Start của Sim** cho workflow vehicle (ADR-0012 Notes 2026-10-04).
 - **Edge case:** nhiều block `sv_on_app_start` trong một workflow ⇒ mỗi block tạo một run riêng, thứ tự theo `seq` (ADR-0012 §5).
+
+### When called — `sv_on_call`
+
+opcode `event.call` · phiên bản 1 · vào [—] · ra [source]
+
+- **Vai trò:** trigger của một **workflow hàm**. Opcode khai báo `event.call`, nhưng không bao giờ vào IR: khi một workflow khác gọi hàm này (`sv_call_workflow`), compiler thay lời gọi bằng thân hàm (`expandCalls`) trước lint.
+- **Props:** không có. **Outputs:** không có. Tham số và kết quả là **biến workflow** của hàm: biến được gán qua `args` của lời gọi, biến `result` là kết quả.
+- **Handle ra:** `source` — block đầu tiên của thân hàm.
+- **Edge cases:**
+  - Workflow hàm compile riêng (SynCode, Simulate) ⇒ `SUBWORKFLOW_ONLY_CALLED`: nó chỉ chạy khi được gọi.
+  - Hai trigger `sv_on_call` trong một workflow ⇒ lời gọi báo `SUBWORKFLOW_NOT_FOUND`.
+- **Đồng thời:** theo trigger của workflow gọi (thân hàm chạy trong run của người gọi).
 
 ### When condition becomes true — `sv_on_condition`
 
@@ -469,6 +481,36 @@ opcode `expr` · phiên bản 1 · vào [target] · ra [source, error]
 - **Edge case:** `inMin == inMax` ⇒ lỗi cấu hình (compile).
 
 ## Flow
+
+### Call workflow — `sv_call_workflow`
+
+opcode `control.call` · phiên bản 1 · vào [target] · ra [source]
+
+| Thuộc tính | Kiểu | Bắt buộc | Mặc định | Giá trị |
+|---|---|---|---|---|
+| `workflowId` | string | có |  |  |
+| `args` | list |  |  |  |
+
+Đầu ra: `value` ($inferred)
+
+- **Vai trò:** chạy thân một **workflow hàm** (trigger `sv_on_call`) ngay tại chỗ, rồi đi tiếp `source`. Opcode khai báo `control.call`; compiler **inline** lời gọi trước lint (`expandCalls`), nên IR, simulator và mọi backend chỉ thấy block thường.
+- **Props:**
+  - `workflowId`: workflow hàm, cùng workspace;
+  - `args`: danh sách `{name, value}`. `name` là biến của hàm, `value` là biểu thức của người gọi, tính trước khi vào thân hàm.
+- **Output:** `value` — giá trị của biến `result` của hàm sau khi thân hàm chạy xong (kiểu của biến đó). Hàm không có `result` ⇒ không có `value`.
+- **Handles:** vào `target`; ra `source`, khi thân hàm kết thúc ở mọi nhánh, trừ `error`.
+- **Inline:**
+  1. một `state.set` cho mỗi arg, theo thứ tự trong danh sách;
+  2. các block của thân hàm, id `<id gọi>-<id>`, tên `<tên gọi>_<tên>`;
+  3. biến của hàm đổi tên thành `<tên gọi>__<biến>` (trạng thái riêng cho mỗi chỗ gọi);
+  4. một `state.get` mang tên block gọi đọc `result`.
+- **Lỗi** (gắn vào block gọi):
+  - `SUBWORKFLOW_NOT_FOUND`: không có workflow hàm, hoặc không phải hàm;
+  - `SUBWORKFLOW_RECURSIVE`: gọi vòng;
+  - `SUBWORKFLOW_TOO_DEEP`: lồng quá 4 cấp;
+  - `SUBWORKFLOW_ARG_UNKNOWN`: arg không phải biến của hàm;
+  - lỗi bên trong thân hàm được báo kèm tên hàm.
+- **Tất định:** cùng graph và cùng các workflow hàm ⇒ cùng graph phẳng ⇒ cùng IR.
 
 ### If / Else — `sv_if`
 

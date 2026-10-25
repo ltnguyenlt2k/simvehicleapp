@@ -5,6 +5,7 @@ import svArrayContains from "../sv_array_contains/spec.json" with { type: "json"
 import svArrayLength from "../sv_array_length/spec.json" with { type: "json" };
 import svBatteryStatus from "../sv_battery_status/spec.json" with { type: "json" };
 import svBool from "../sv_bool/spec.json" with { type: "json" };
+import svCallWorkflow from "../sv_call_workflow/spec.json" with { type: "json" };
 import svClamp from "../sv_clamp/spec.json" with { type: "json" };
 import svClimateStatus from "../sv_climate_status/spec.json" with { type: "json" };
 import svCompare from "../sv_compare/spec.json" with { type: "json" };
@@ -22,6 +23,7 @@ import svLookup from "../sv_lookup/spec.json" with { type: "json" };
 import svMath from "../sv_math/spec.json" with { type: "json" };
 import svMqttPublish from "../sv_mqtt_publish/spec.json" with { type: "json" };
 import svOnAppStart from "../sv_on_app_start/spec.json" with { type: "json" };
+import svOnCall from "../sv_on_call/spec.json" with { type: "json" };
 import svOnCondition from "../sv_on_condition/spec.json" with { type: "json" };
 import svOnMqtt from "../sv_on_mqtt/spec.json" with { type: "json" };
 import svOnSignalChanged from "../sv_on_signal_changed/spec.json" with { type: "json" };
@@ -50,6 +52,7 @@ const ALL = [
   svArrayLength,
   svBatteryStatus,
   svBool,
+  svCallWorkflow,
   svClamp,
   svClimateStatus,
   svCompare,
@@ -67,6 +70,7 @@ const ALL = [
   svMath,
   svMqttPublish,
   svOnAppStart,
+  svOnCall,
   svOnCondition,
   svOnMqtt,
   svOnSignalChanged,

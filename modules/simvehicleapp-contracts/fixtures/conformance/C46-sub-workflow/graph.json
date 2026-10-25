@@ -1,0 +1,70 @@
+{
+  "graphVersion": "1.0.0",
+  "workflowId": "c46_sub_workflow",
+  "revision": 1,
+  "name": "Call a function workflow and use its result",
+  "vss": {
+    "release": "v4.0"
+  },
+  "variables": [],
+  "blocks": [
+    {
+      "id": "b1",
+      "type": "sv_on_signal_changed",
+      "name": "trig",
+      "props": {
+        "path": "Vehicle.Speed",
+        "mode": "any",
+        "debounceMs": 0,
+        "concurrency": "restart"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b2",
+      "type": "sv_call_workflow",
+      "name": "check",
+      "props": {
+        "workflowId": "c46_fn_safety",
+        "args": [
+          {
+            "name": "speed",
+            "value": "<trig.value>"
+          }
+        ]
+      },
+      "parentId": null,
+      "blockVersion": 1
+    },
+    {
+      "id": "b3",
+      "type": "sv_set_actuator",
+      "name": "set3",
+      "props": {
+        "path": "Vehicle.Body.Lights.Hazard.IsSignaling",
+        "value": "<check.value>",
+        "awaitAck": true,
+        "onError": "continue"
+      },
+      "parentId": null,
+      "blockVersion": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "b1",
+      "fromHandle": "source",
+      "to": "b2",
+      "toHandle": "target"
+    },
+    {
+      "id": "e2",
+      "from": "b2",
+      "fromHandle": "source",
+      "to": "b3",
+      "toHandle": "target"
+    }
+  ]
+}

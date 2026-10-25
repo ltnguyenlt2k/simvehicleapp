@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { type DiagnosticV1, fixturesDir, type WorkflowGraphV1 } from "@simvehicleapp/contracts";
 import { parseVssRelease, type VssModel } from "@simvehicleapp/vss";
 import { BLOCK_SPECS } from "@simvehicleapp/blocks";
+import { fixtureCallees } from "./golden-ir.ts";
 import { lint, migrateGraph, type VehicleLookup } from "./index.ts";
 
 const fixture = (rel: string) => `${fixturesDir}${rel}`;
@@ -19,13 +20,14 @@ const vehicle: VehicleLookup = async (release, paths) => {
 const corpus = (dir: string) =>
   readdirSync(fixture(dir), { withFileTypes: true })
     .filter((d) => d.isDirectory())
-    .map((d) => [d.name, JSON.parse(readFileSync(fixture(`${dir}/${d.name}/graph.json`), "utf8")) as WorkflowGraphV1] as const);
+    .map((d) => [`${dir}/${d.name}`, JSON.parse(readFileSync(fixture(`${dir}/${d.name}/graph.json`), "utf8")) as WorkflowGraphV1] as const);
 
 const errorsOf = (list: DiagnosticV1[]) => list.filter((d) => d.severity === "error");
 
 describe("lint: the shared corpus is clean (M03 gate: golden workflows without lint errors)", () => {
-  test.each([...corpus("golden"), ...corpus("conformance")])("%s has no lint errors", async (_id, graph) => {
-    const diags = await lint(graph, { vehicle });
+  test.each([...corpus("golden"), ...corpus("conformance")])("%s has no lint errors", async (id, graph) => {
+    // A fixture that calls function workflows lints them inlined (ADR-0063).
+    const diags = await lint(graph, { vehicle, callees: fixtureCallees(id) });
     expect(errorsOf(diags)).toEqual([]);
   });
 });

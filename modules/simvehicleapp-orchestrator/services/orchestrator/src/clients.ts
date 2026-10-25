@@ -46,7 +46,8 @@ export interface ToolchainJob {
 }
 
 export interface Clients {
-  compile(graph: unknown, target: string): Promise<CompileResult>;
+  /** `callees`: the function workflows the graph calls (ADR-0063). */
+  compile(graph: unknown, target: string, callees?: unknown[]): Promise<CompileResult>;
   generate(language: string, request: unknown): Promise<Outcome<FileSet>>;
   createProject(body: { slug: string; language: string; target?: "velocitas" | "wasm"; appName: string; vssRelease: string }): Promise<Outcome<unknown>>;
   commit(slug: string, body: { generationId: string; fileset: FileSet; overwriteModified: boolean }): Promise<Outcome<unknown>>;
@@ -166,8 +167,8 @@ export function httpClients(e: Endpoints): Clients {
     return b;
   };
   return {
-    async compile(graph, target) {
-      const res = await call(`${e.compiler}/compile`, { method: "POST", body: JSON.stringify({ graph, mode: "build", target }) }, true);
+    async compile(graph, target, callees) {
+      const res = await call(`${e.compiler}/compile`, { method: "POST", body: JSON.stringify({ graph, mode: "build", target, ...(callees?.length ? { callees } : {}) }) }, true);
       if (!res.ok) throw new ServiceUnavailable(`compiler /compile ⇒ ${res.status}`);
       return (await res.json()) as CompileResult;
     },

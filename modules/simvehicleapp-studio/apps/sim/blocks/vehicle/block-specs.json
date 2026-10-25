@@ -198,6 +198,49 @@
     },
     {
       "specVersion": "1.0.0",
+      "type": "sv_call_workflow",
+      "version": 1,
+      "category": "flow",
+      "title": "Call workflow",
+      "priority": "P1",
+      "opcode": "control.call",
+      "props": [
+        {
+          "name": "workflowId",
+          "kind": "string",
+          "required": true
+        },
+        {
+          "name": "args",
+          "kind": "list",
+          "required": false,
+          "items": [
+            {
+              "name": "name",
+              "kind": "string",
+              "required": true
+            },
+            {
+              "name": "value",
+              "kind": "expression",
+              "required": true
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "$inferred"
+        }
+      ],
+      "handles": {
+        "in": ["target"],
+        "out": ["source"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
       "type": "sv_clamp",
       "version": 1,
       "category": "logic",
@@ -870,6 +913,21 @@
       "title": "When app starts",
       "priority": "P0",
       "opcode": "event.app_start",
+      "props": [],
+      "outputs": [],
+      "handles": {
+        "in": [],
+        "out": ["source"]
+      }
+    },
+    {
+      "specVersion": "1.0.0",
+      "type": "sv_on_call",
+      "version": 1,
+      "category": "triggers",
+      "title": "When called",
+      "priority": "P1",
+      "opcode": "event.call",
       "props": [],
       "outputs": [],
       "handles": {

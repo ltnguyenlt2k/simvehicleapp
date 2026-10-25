@@ -8,8 +8,9 @@ import pkg from "../package.json" with { type: "json" };
 import { type CapabilitiesLookup, checkBackend } from "./capabilities.ts";
 import { analyzeControlFlow } from "./controlflow.ts";
 import { diag, sortDiagnostics } from "./diagnostics.ts";
-import { type LintContext, lint, normalizeName } from "./lint.ts";
+import { type LintContext, lintGraph, normalizeName } from "./lint.ts";
 import { MIGRATIONS, migrateGraph } from "./migrations.ts";
+import { prepareCalls } from "./subworkflow.ts";
 import { type IrExpr, type RefBinding, type Typed, Typer, type TyperDiagnostic } from "./typer.ts";
 
 /**
@@ -47,31 +48,39 @@ const validator = new ContractValidator();
 /** Trigger/node opcodes this compiler emits (`GET /opcodes`): BlockSpec opcodes after lowering. */
 export function knownOpcodes(specs: readonly BlockSpec[] = BLOCK_SPECS): string[] {
   const lowered = (op: string) => (PURE.has(op) ? "logic.eval" : op === "comm.hmi_notify" ? "comm.mqtt_publish" : op);
-  return [...new Set(specs.map((s) => lowered(s.opcode)))].sort();
+  // Calls are inlined before IR (ADR-0063): their declared opcodes never reach a backend.
+  return [...new Set(specs.filter((s) => s.opcode !== "control.call" && s.opcode !== "event.call").map((s) => lowered(s.opcode)))].sort();
 }
 
 /** Placeholders patched once node/signal/state ids are known. */
 const P = { node: "@@n:", signal: "@@s:", state: "@@v:", topic: "@@t:" } as const;
 
-export async function compile(graphInput: unknown, ctx: CompileContext, mode: "verify" | "build" = "build"): Promise<CompileResult> {
-  const lintDiags = await lint(graphInput, ctx);
+export async function compile(source: unknown, ctx: CompileContext, mode: "verify" | "build" = "build"): Promise<CompileResult> {
+  const specs = new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s]));
+  // Calls of function workflows are inlined first (ADR-0063); diagnostics of inlined blocks land on their call.
+  const prep = prepareCalls(source, ctx.callees, specs);
+  if (prep.diagnostics.some((d) => d.severity === "error")) return { diagnostics: prep.diagnostics };
+  const graphInput = prep.graph;
+  const lintDiags = [...prep.diagnostics, ...(await lintGraph(graphInput, ctx)).map(prep.remap)];
   if (lintDiags.some((d) => d.severity === "error")) return { diagnostics: lintDiags };
 
-  const specs = new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s]));
   const { graph } = migrateGraph(graphInput as WorkflowGraphV1, specs, ctx.migrations ?? MIGRATIONS);
   const b = new Builder(graph, specs);
   await b.loadVehicle(ctx);
   b.build();
   const wf = graph.workflowId;
-  const typed = b.diagnostics;
-  let diagnostics = sortDiagnostics([...lintDiags, ...typed], graph.blocks.map((x) => x.id));
+  const typed = b.diagnostics.map(prep.remap);
+  const order = ((source as { blocks?: { id: string }[] }).blocks ?? []).map((x) => x.id);
+  let diagnostics = sortDiagnostics([...lintDiags, ...typed], order);
   if (diagnostics.some((d) => d.severity === "error")) return { diagnostics };
 
   // The IR header pins the catalog model (ADR-0014 §1): a service without the lookup is misconfigured.
   if (!ctx.modelHash) throw new Error("compile: a modelHash lookup is required");
   const modelHash = await ctx.modelHash(graph.vss.release);
   if (!modelHash) throw new Error(`compile: the catalog has no model for VSS ${graph.vss.release}`);
-  const ir = b.ir(modelHash, `sha256:${sha256Hex(canonicalJson(graphInput))}`);
+  // The source hash covers the function workflows a graph calls: a change in one changes the IR's source.
+  const hashed = graphInput === source ? source : { graph: source, callees: ctx.callees ?? [] };
+  const ir = b.ir(modelHash, `sha256:${sha256Hex(canonicalJson(hashed))}`);
   const schema = validator.validate("ir", ir);
   if (!schema.valid) {
     // A compiler bug, never a user error: report it with the catalog code for internal failures.
@@ -83,7 +92,7 @@ export async function compile(graphInput: unknown, ctx: CompileContext, mode: "v
     };
   }
   if (ctx.backend && ctx.capabilities) {
-    diagnostics = sortDiagnostics([...diagnostics, ...(await checkBackend(ir as never, ctx.backend, ctx.capabilities))], graph.blocks.map((x) => x.id));
+    diagnostics = sortDiagnostics([...diagnostics, ...(await checkBackend(ir as never, ctx.backend, ctx.capabilities)).map(prep.remap)], order);
     if (diagnostics.some((d) => d.severity === "error")) return { diagnostics };
   }
   return mode === "build" ? { diagnostics, ir } : { diagnostics };

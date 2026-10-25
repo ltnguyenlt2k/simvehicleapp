@@ -214,6 +214,7 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
   - Cấu hình provider trong `.env` (`SV_AI_PROVIDER`). `fake` = offline, không cần key.
 - **VSS tuỳ biến:** `scripts/sv vss add|use` ([hướng dẫn](docs/user-guide/custom-vss.md)).
 - **App WebAssembly** (profile `wasm`): khi tạo app chọn **Runtime → WebAssembly** cho C++ hoặc Rust; app chạy trong `sv-wasm-host` ([hướng dẫn](docs/user-guide/wasm.md)).
+- **Gọi workflow từ workflow** (sub-workflow): block **Call workflow** chạy một workflow hàm (trigger **When called**) ngay tại chỗ ([hướng dẫn](docs/user-guide/sub-workflows.md)).
 - **Nhiều app nói chuyện qua MQTT** (standalone service): mỗi service là một app; `SV_RUN_SANDBOX=1` để chạy cùng lúc ([hướng dẫn](docs/user-guide/multiple-apps.md)).
 - **UI tập trung:**
   - Studio đã ẩn các module của Sim không dùng cho toolchain xe: Tables, Files, Knowledge base, Logs, Scheduled tasks.
@@ -233,7 +234,7 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
   - trên bảng Signals, giá trị app ghi hiện ở cột **hiện tại**;
   - quay về API cũ: `SV_DATABROKER_API=*=sdv.databroker.v1`.
 
-Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md) · chạy app trên databroker của xe/bench: [deploy](docs/user-guide/deploy.md) · app WebAssembly: [wasm](docs/user-guide/wasm.md) · nhiều app qua MQTT: [multiple-apps](docs/user-guide/multiple-apps.md).
+Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md) · chạy app trên databroker của xe/bench: [deploy](docs/user-guide/deploy.md) · app WebAssembly: [wasm](docs/user-guide/wasm.md) · nhiều app qua MQTT: [multiple-apps](docs/user-guide/multiple-apps.md) · gọi workflow từ workflow: [sub-workflows](docs/user-guide/sub-workflows.md).
 
 ## 7. Đọc tiếp / Where to go next
 

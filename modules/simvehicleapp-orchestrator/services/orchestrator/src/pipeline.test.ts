@@ -106,7 +106,7 @@ describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
     const repo = new MemoryRepo();
     const keys: string[] = [];
     const { clients } = fakeClients({
-      compile: async (_g, target) => (keys.push(`compile:${target}`), { ir, diagnostics: [] }),
+      compile: async (_g, target, callees) => (keys.push(`compile:${target}${callees ? `+${callees.length}` : ""}`), { ir, diagnostics: [] }),
       generate: async (key) => (keys.push(`generate:${key}`), { ok: true, value: fileset }),
       createProject: async (body) => (keys.push(`ws:${body.language}/${body.target ?? "velocitas"}`), { ok: true, value: {} }),
       job: async (key, kind) => (keys.push(`job:${kind}:${key}`), { id: "j", state: "succeeded", exitCode: 0, diagnostics: [] }),
@@ -114,11 +114,12 @@ describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
     const project = await repo.createProject({ id: crypto.randomUUID(), slug: "wasm", name: "W", appName: "WApp", language: "cpp", target: "wasm", vssRelease: "v4.0", settings: { mqttTopicPrefix: "simvehicleapp/wasm", traceLevel: "node" }, status: "creating" });
     await provision(repo, clients, project);
     expect(keys).toEqual(["ws:cpp/wasm", "job:init:cpp-wasm"]);
-    const g: Generation = { id: `g_${crypto.randomUUID()}`, projectId: project.id, state: "running", stages: STAGES.map((name) => ({ name, state: "pending" })), verification: initialVerification(), diagnostics: [], generatedFiles: [], workflows: [], request: { graphs: [graph] }, createdAt: 0 };
+    const g: Generation = { id: `g_${crypto.randomUUID()}`, projectId: project.id, state: "running", stages: STAGES.map((name) => ({ name, state: "pending" })), verification: initialVerification(), diagnostics: [], generatedFiles: [], workflows: [], request: { graphs: [graph], callees: [{ workflowId: "fn" }] }, createdAt: 0 };
     await repo.createGeneration(g);
     await runGeneration(g, { repo, clients, events });
+    // The function workflows the graphs call go to the compiler with each graph (ADR-0063).
     // S7 checks the opcodes against the backend that generates the app (a stack may run cpp-wasm without native cpp).
-    expect(keys).toContain("compile:cpp-wasm");
+    expect(keys).toContain("compile:cpp-wasm+1");
     expect(keys).toContain("generate:cpp-wasm");
     expect(keys.filter((k) => k.startsWith("job:build") || k.startsWith("job:test"))).toEqual(["job:build:cpp-wasm", "job:test:cpp-wasm"]);
     expect(stackKey({ language: "rust", target: "wasm" })).toBe("rust-wasm");

@@ -362,6 +362,46 @@
       "adr": "ADR-0017"
     },
     {
+      "code": "SUBWORKFLOW_ARG_UNKNOWN",
+      "severity": "error",
+      "stage": "structural",
+      "title": "A call sets an argument that is not a variable of the called workflow",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0063"
+    },
+    {
+      "code": "SUBWORKFLOW_NOT_FOUND",
+      "severity": "error",
+      "stage": "structural",
+      "title": "The called workflow is not available or is not a function workflow (it needs one \"When called\" trigger)",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0063"
+    },
+    {
+      "code": "SUBWORKFLOW_ONLY_CALLED",
+      "severity": "error",
+      "stage": "structural",
+      "title": "A function workflow runs only when another workflow calls it: it has no trigger of its own",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0063"
+    },
+    {
+      "code": "SUBWORKFLOW_RECURSIVE",
+      "severity": "error",
+      "stage": "structural",
+      "title": "A workflow call loops back to a workflow already being called",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0063"
+    },
+    {
+      "code": "SUBWORKFLOW_TOO_DEEP",
+      "severity": "error",
+      "stage": "structural",
+      "title": "Workflow calls are nested more than 4 levels deep",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0063"
+    },
+    {
       "code": "SYNCODE_QUEUE_FULL",
       "severity": "error",
       "stage": "build",

@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { svStartGenerationContract } from '@/lib/api/contracts/sv'
 import { parseRequest } from '@/lib/api/server'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
+import { calleesFor } from '@/lib/sv/callees'
 import {
   authorizeProject,
   graphsFor,
@@ -73,10 +74,13 @@ export const POST = withRouteHandler(async (request: NextRequest, context: Route
     return NextResponse.json({ error: issues[0].message, diagnostics: issues }, { status: 422 })
   }
   const scenarios = await scenariosFor(enabled.filter((id) => !missing.includes(id)))
+  // The function workflows these workflows call (ADR-0063): compiled with them.
+  const callees = await calleesFor(auth.userId, graphs)
   const res = await orchestrator(`/projects/${auth.row.id}/generations`, {
     method: 'POST',
     body: {
       graphs,
+      ...(callees.length ? { callees } : {}),
       ...(scenarios.length ? { scenarios } : {}),
       ...(overwriteModified ? { overwriteModified } : {}),
     },

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Sub-workflows (additive, ADR-0063, M21 D13): compiler `/compile` and `/lint` take `callees` (function workflows a graph calls); orchestrator `POST /projects/{id}/generations` takes `callees`; diagnostics `SUBWORKFLOW_NOT_FOUND`, `SUBWORKFLOW_RECURSIVE`, `SUBWORKFLOW_TOO_DEEP`, `SUBWORKFLOW_ARG_UNKNOWN`, `SUBWORKFLOW_ONLY_CALLED` (new); conformance case `C46-sub-workflow` (`callees.json` next to `graph.json`).
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0050 Notes, M21 D14): `POST /projects/{id}/images` answers `kanto` — the Eclipse Kanto container-management descriptor of the pushed image (by digest, host network, unless-stopped, env for the vehicle's databroker and MQTT).
 - `openapi/workspace.v1.yaml` (additive, ADR-0061, M20-T07): `createProject.target` (velocitas default | wasm: sources of the `<language>-wasm` backend and toolchain).
 - WebAssembly target (additive, ADR-0061, M20-T02): `abi/sv-wasm-abi.v1.md` (+ reference WIT) — the guest ⇄ `sv-wasm-host` ABI (imports `sv.*`, exports `sv_*`, events, limits, allowlist, error codes); `backend-capabilities.target {kind velocitas|wasm, triple, abi, host}` (absent = velocitas); `generation-manifest.target`; orchestrator `Project.target` and `createProject.target` (default velocitas; 422 `BACKEND_UNAVAILABLE` when no backend serves the language and target).

@@ -49,6 +49,11 @@ paths:
                 graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
                 mode: { enum: [lint, verify, build] }
                 target: { type: string, pattern: "^[a-z][a-z0-9-]*$", description: "Backend id for S7 (e.g. cpp). Optional: without it S7 is skipped and the IR is backend-neutral (backend checks then run at generation time; ADR-0014 Notes §12)." }
+                callees:
+                  type: array
+                  maxItems: 16
+                  description: "Function workflows the graph calls (`sv_call_workflow`, ADR-0063), directly or through each other: inlined before lint. Missing ⇒ SUBWORKFLOW_NOT_FOUND on the call."
+                  items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
       responses:
         "200":
           description: Compilation result; `ir` present only for mode=build without errors.
@@ -78,6 +83,7 @@ paths:
               required: [graph]
               properties:
                 graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
+                callees: { type: array, maxItems: 16, description: "Function workflows the graph calls (ADR-0063), as in /compile.", items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" } }
       responses:
         "200":
           description: Lint diagnostics.

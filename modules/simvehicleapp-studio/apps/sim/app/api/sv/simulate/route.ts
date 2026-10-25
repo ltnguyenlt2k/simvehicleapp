@@ -11,6 +11,7 @@ import { parseRequest } from '@/lib/api/server'
 import { getSession } from '@/lib/auth'
 import { withRouteHandler } from '@/lib/core/utils/with-route-handler'
 import { callSvService, SvServiceNotConfiguredError } from '@/lib/sv/api-client'
+import { calleesBody } from '@/lib/sv/callees'
 
 const logger = createLogger('SvSimulateAPI')
 
@@ -35,7 +36,7 @@ export const POST = withRouteHandler(async (request: NextRequest) => {
     const compiled = await callSvService('compiler', '/compile', {
       method: 'POST',
       retryOnReset: true,
-      body: { graph, mode: 'build' },
+      body: { graph, mode: 'build', ...(await calleesBody(session.user.id, graph)) },
       timeoutMs: 10000,
     })
     if (compiled.status === 503) {

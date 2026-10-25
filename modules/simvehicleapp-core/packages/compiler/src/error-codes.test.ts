@@ -23,6 +23,10 @@ function graph(blocks: B[], edges: ReturnType<typeof edge>[], over: Partial<Work
   return { graphVersion: "1.0.0", workflowId: "wf", revision: 1, name: "Errors", vss: { release: "v4.0" }, variables: [], blocks, edges, ...over } as WorkflowGraphV1;
 }
 const chain = (...blocks: B[]) => graph([TRIG, ...blocks], blocks.map((b, i) => edge(`e${i}`, i === 0 ? "t" : blocks[i - 1]!.id, "source", b.id)));
+const CALL = (workflowId: string, args: unknown[] = []) => blk("c", "sv_call_workflow", "Call it", { workflowId, args });
+/** A function workflow (trigger "When called") running `body` in sequence. */
+const FN = (workflowId: string, body: B[]) =>
+  graph([blk("on", "sv_on_call", "Called", {}), ...body], body.map((b, i) => edge(`f${i}`, i === 0 ? "on" : body[i - 1]!.id, "source", b.id)), { workflowId, name: workflowId });
 
 const caps = (over: Partial<BackendCapabilitiesV1> = {}): BackendCapabilitiesV1 => ({
   id: "cpp",
@@ -76,6 +80,12 @@ const CASES: [string, unknown, string | undefined, Partial<CompileContext>?][] =
   ["OPCODE_UNSUPPORTED_BY_BACKEND", chain(blk("w", "sv_wait", "Pause", { durationMs: 10 })), "w", { backend: "cpp", capabilities: async () => caps() }],
   ["IR_VERSION_UNSUPPORTED", chain(SET("s", {})), undefined, { backend: "cpp", capabilities: async () => caps({ irVersions: ">=2.0.0" }) }],
   ["BACKEND_UNAVAILABLE", chain(SET("s", {})), undefined, { backend: "cobol", capabilities: async () => null }],
+  // Sub-workflows (ADR-0063): the call block carries the diagnostic.
+  ["SUBWORKFLOW_NOT_FOUND", chain(CALL("fn_none")), "c"],
+  ["SUBWORKFLOW_RECURSIVE", chain(CALL("fn_self")), "c", { callees: [FN("fn_self", [blk("c2", "sv_call_workflow", "Again", { workflowId: "fn_self" })])] }],
+  ["SUBWORKFLOW_TOO_DEEP", chain(CALL("fn_1")), "c", { callees: [1, 2, 3, 4, 5].map((i) => FN(`fn_${i}`, i < 5 ? [blk(`c${i}`, "sv_call_workflow", `Deeper ${i}`, { workflowId: `fn_${i + 1}` })] : [])) }],
+  ["SUBWORKFLOW_ARG_UNKNOWN", chain(CALL("fn_plain", [{ name: "nope", value: "1" }])), "c", { callees: [FN("fn_plain", [])] }],
+  ["SUBWORKFLOW_ONLY_CALLED", FN("wf", []), "on"],
 ];
 // Children of containers sit inside them (the LOOP_GUARD_MISSING child): fix parentId after building.
 (CASES.find((c) => c[0] === "LOOP_GUARD_MISSING")![1] as WorkflowGraphV1).blocks[2]!.parentId = "w";

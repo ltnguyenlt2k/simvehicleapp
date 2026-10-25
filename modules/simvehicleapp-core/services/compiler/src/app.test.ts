@@ -241,3 +241,15 @@ test("POST /simulate rejects bodies off contract and reports the event limit", a
   const body = (await res.json()) as { diagnostics: { code: string; severity: string; data: { events: number } }[] };
   expect(body.diagnostics).toEqual([expect.objectContaining({ code: "SIM_LIMIT_REACHED", severity: "warning", data: expect.objectContaining({ events: 50 }) })]);
 });
+
+test("POST /compile takes the function workflows a graph calls (callees, ADR-0063): C46 gives its ir.json", async () => {
+  const dir = `${fixturesDir}conformance/C46-sub-workflow`;
+  const graph = JSON.parse(readFileSync(`${dir}/graph.json`, "utf8"));
+  const callees = JSON.parse(readFileSync(`${dir}/callees.json`, "utf8"));
+  const built = (await (await post("/compile", { graph, mode: "build", callees })).json()) as { ir?: unknown; diagnostics: { severity: string }[] };
+  expect(built.diagnostics.filter((d) => d.severity === "error")).toEqual([]);
+  expect(built.ir).toEqual(JSON.parse(readFileSync(`${dir}/ir.json`, "utf8")));
+  const missing = (await (await post("/compile", { graph, mode: "build" })).json()) as { diagnostics: { code: string; blockId: string }[] };
+  expect(missing.diagnostics.map((d) => [d.code, d.blockId])).toEqual([["SUBWORKFLOW_NOT_FOUND", "b2"]]);
+  expect((await post("/compile", { graph, mode: "build", callees: [{ not: "a graph" }] })).status).toBe(400);
+});

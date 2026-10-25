@@ -1,5 +1,7 @@
+import { getQueryClient } from '@/app/_shell/providers/get-query-client'
 import type { BlockConfig, OutputFieldDefinition, SubBlockConfig } from '@/blocks/types'
 import specsSnapshot from '@/blocks/vehicle/block-specs.json'
+import { getWorkflowListQueryOptions } from '@/hooks/queries/utils/workflow-list-query'
 import { useVariablesStore } from '@/stores/variables/store'
 import { useWorkflowRegistry } from '@/stores/workflows/registry/store'
 
@@ -37,6 +39,8 @@ export interface PropUi {
   advanced?: boolean
   /** Pick from the workflow variables (Sim Variables panel, M03-T09) instead of free text. */
   variablePicker?: boolean
+  /** Pick another workflow of the workspace (Call workflow, ADR-0063) instead of typing its id. */
+  workflowPicker?: boolean
 }
 
 /**
@@ -51,6 +55,19 @@ export async function workflowVariableOptions(): Promise<Array<{ label: string; 
     .getVariablesByWorkflowId(workflowId)
     .map((v) => ({ id: v.name, label: `${v.name} (${v.type})` }))
     .sort((a, b) => a.id.localeCompare(b.id))
+}
+
+/** The other workflows of the open workspace, as dropdown options (Call workflow, ADR-0063). */
+export async function workspaceWorkflowOptions(): Promise<Array<{ label: string; id: string }>> {
+  const { activeWorkflowId, hydration } = useWorkflowRegistry.getState()
+  if (!hydration.workspaceId) return []
+  const workflows = await getQueryClient().fetchQuery(
+    getWorkflowListQueryOptions(hydration.workspaceId)
+  )
+  return workflows
+    .filter((w) => w.id !== activeWorkflowId)
+    .map((w) => ({ id: w.id, label: w.name }))
+    .sort((a, b) => a.label.localeCompare(b.label))
 }
 
 export interface BlockUi {
@@ -141,6 +158,15 @@ export function subBlockFor(prop: SpecProp, ui: PropUi = {}): SubBlockConfig {
     case 'boolean':
       return { ...base, ...withDefault, type: 'switch' }
     case 'string':
+      if (ui.workflowPicker) {
+        return {
+          ...base,
+          type: 'dropdown',
+          options: [],
+          fetchOptions: workspaceWorkflowOptions,
+          searchable: true,
+        }
+      }
       if (ui.variablePicker) {
         return {
           ...base,
