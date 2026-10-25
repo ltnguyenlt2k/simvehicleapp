@@ -31,11 +31,12 @@
 ## Checklist chi tiết
 
 ### T01: Spike
-- [ ] C++ reactor: `-mexec-model=reactor`, export `sv_init/sv_step`, import `sv.now_ms/log`; build bằng wasi-sdk-34 với `-fno-exceptions`.
-- [ ] Rust cdylib `wasm32-wasip1`: cùng ABI tối thiểu.
-- [ ] Chạy trên Wasmtime v48.x (crate Rust host tối thiểu) và trên `iwasm` 2.4.5 (native symbol stub).
-- [ ] Biên dịch thử runtime C++ hiện tại bằng wasi-sdk: liệt kê lỗi (exception, `condition_variable`, `getenv`, I/O) ⇒ danh sách sửa cho T04.
-- [ ] Đo: kích thước `.wasm` (strip), thời gian nạp, `.cwasm`; ghi pin Wasmtime/WAMR/wasi-sdk/wasm-tools vào `00-research-findings.md` §1.
+- [x] C++ reactor: `-mexec-model=reactor`, export `sv_init/sv_step`, import `sv.now_ms/log`; build bằng wasi-sdk-34 với `-fno-exceptions`.
+- [x] Rust cdylib `wasm32-wasip1`: cùng ABI tối thiểu.
+- [x] Chạy trên Wasmtime v48.0.7 (host tối thiểu bằng **C API**, link tĩnh, thay cho crate Rust để khỏi biên dịch Wasmtime trên máy 11 GB). `iwasm` 2.4.5: **chưa làm**, dời sang quyết định ở T04.
+- [x] Biên dịch thử runtime C++ bằng wasi-sdk: `-fno-exceptions` ⇒ 25 lỗi `try`/`throw` ở `Runtime.cpp`, các file khác sạch; `-fwasm-exceptions` ⇒ sạch, guest bắt exception chạy đúng. Thread của `Strand` cần `Strand::pump` (T04).
+- [x] Đo kích thước/nạp/`.cwasm` (bảng §2 của báo cáo spike); pin ghi vào `00-research-findings.md` §1.
+- Bằng chứng: [docs/spikes/M20-wasm-spike.md](../../docs/spikes/M20-wasm-spike.md), `spikes/m20-wasm/run.sh`.
 
 ### T02: Contract
 - [ ] `contracts/abi/sv-wasm-abi.v1.md` (import/export, mã hoá JSON, bất biến không tái nhập, lỗi) + WIT tham khảo.

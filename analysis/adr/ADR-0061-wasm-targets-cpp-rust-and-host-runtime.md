@@ -146,4 +146,9 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-24 — **Spike T01** ([báo cáo](../../docs/spikes/M20-wasm-spike.md), Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - ABI tối thiểu chạy được với guest C++ (reactor, wasi-sdk-34) và Rust (`wasm32-wasip1`) trên Wasmtime v48.0.7. Pin wasi-sdk-34, Wasmtime v48.0.7, wasm-tools v1.262.0 đã kiểm sha256.
+  - `.cwasm` phải do host biên dịch bằng đúng cấu hình engine lúc chạy: `.cwasm` của CLI bị engine C API từ chối vì khác GC collector.
+  - Runtime C++ chỉ vướng `try`/`throw` (25 lỗi, đều ở `Runtime.cpp`). Với `-fwasm-exceptions` + `-lunwind`, mọi file biên dịch sạch và guest bắt exception đúng trên Wasmtime. Đề xuất đổi quyết định "`SV_RT_NO_EXCEPTIONS`" thành dùng exception-handling của wasm. Hệ quả: host cần bật EH; `iwasm` trên ECU chưa kiểm. **Chờ PO xác nhận** trước T04.
+  - `iwasm` 2.4.5 chưa chạy trong spike (dời sang quyết định ở T04).
 - 2026-10-24: viết ADR từ yêu cầu PO. Các con số ở Context là dữ kiện tra ngày 2026-10-24. Bản pin cuối cùng ghi ở `analysis/00-research-findings.md` §1 sau spike M20-T01.

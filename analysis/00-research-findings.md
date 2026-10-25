@@ -27,11 +27,11 @@
 | code-server | `v4.139.1` | | MIT | extension lấy từ Open VSX |
 | MCP spec | `2026-07-28` (có `2025-11-25`, `2025-06-18`…) | | MIT | TS SDK `v1.31.0` (2026-09-28; **re-verify tại M10**, release rất nhanh — xem [ADR-0030 Notes](adr/ADR-0030-ai-assistant-mcp.md)) |
 | Blockly | v13.3.0 | | Apache-2.0 | chỉ tham khảo khái niệm, không dùng canvas |
-| Wasmtime (host WASM, M20) | **v48.x LTS** (ứng viên v48.0.7, 2026-10-19; mới nhất v50.0.0) | | Apache-2.0 | bản bội số của 12 là LTS, hỗ trợ 24 tháng (`docs/stability-release.md`); chốt ở spike M20-T01 (tra 2026-10-24) |
-| wasi-sdk (C++ → WASM, M20) | `wasi-sdk-34` (2026-08-25) | | Apache-2.0 | target `wasm32-wasip1`; exception C++ tắt mặc định; không spawn thread (tra 2026-10-24) |
+| Wasmtime (host WASM, M20) | **v48.0.7** (LTS, 2026-10-19) | sha256 C API `3d65ab7a…`, CLI `2192e2b5…` | Apache-2.0 | bản bội số của 12 là LTS, hỗ trợ 24 tháng; **chốt ở spike M20-T01** (2026-10-24, [báo cáo](../docs/spikes/M20-wasm-spike.md)) |
+| wasi-sdk (C++ → WASM, M20) | `wasi-sdk-34` (2026-08-25, clang 23.1.0) | sha256 `b761e3a0…` | Apache-2.0 | target `wasm32-wasip1`; exception C++ tắt mặc định; không spawn thread (tra 2026-10-24) |
 | Rust WASM target (M20) | `wasm32-wasip1` (Tier 2) | | MIT/Apache-2.0 | `wasip2`/`wasip3` cũng Tier 2; v1 dùng wasip1 (ADR-0061) |
 | WAMR (ECU, sau v1) | `WAMR-2.4.5` (2026-06-29) | | Apache-2.0 | `iwasm` + AOT `wamrc`; chỉ dùng trong spike M20-T01 |
-| wasm-tools | `v1.262.0` (2026-10-13) | | Apache-2.0 | validate/strip trong toolchain-wasm |
+| wasm-tools | `v1.262.0` (2026-10-13) | sha256 `655b8df6…` | Apache-2.0 | validate/strip trong toolchain-wasm |
 | Scratch (`scratch-vm`, `scratch-editor`) | — | | **AGPL-3.0 từ 2024-11-25** | **CẤM copy code**, chỉ tham khảo khái niệm (clean-room) |
 | Conan | 2.x (mới nhất 2.33.0) | | MIT | dùng version do Velocitas base image cài |
 
