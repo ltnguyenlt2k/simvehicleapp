@@ -22,6 +22,18 @@ export const svHealthContract = defineRouteContract({
   response: { mode: 'json', schema: svHealthResponseSchema },
 })
 
+export const svIdeAuthorizeResponseSchema = z.object({ ok: z.literal(true) })
+
+/**
+ * `GET /api/sv/ide/authorize` — forward-auth of the `remote-ide` reverse proxy (ADR-0050 §2, M21 D15): 200 for a
+ * signed-in studio user, 401 otherwise; the proxy only forwards IDE requests that pass.
+ */
+export const svIdeAuthorizeContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/ide/authorize',
+  response: { mode: 'json', schema: svIdeAuthorizeResponseSchema },
+})
+
 /** One service on the System status page (ADR-0033 §4). */
 export const svSystemServiceSchema = z.object({
   service: z.string(),
@@ -1153,7 +1165,10 @@ export const svPushImageResultSchema = z.object({
     .object({
       container_name: z.string(),
       image: z.object({ name: z.string() }),
-      host_config: z.record(z.string(), z.unknown()),
+      host_config: z.object({
+        network_mode: z.string(),
+        restart_policy: z.object({ type: z.string() }),
+      }),
       config: z.object({ env: z.array(z.string()) }),
     })
     .optional(),

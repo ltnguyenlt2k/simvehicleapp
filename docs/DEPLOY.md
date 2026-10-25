@@ -126,6 +126,29 @@ docker image prune -f         # xoá image cũ không còn dùng
 4. Thêm image mới vào compose thì phải thêm vào `deploy/image-groups.txt`. CI (`scripts/ci/image_groups.py`) sẽ fail
    nếu thiếu.
 
+## Mở studio và IDE từ máy khác (profile `remote-ide`)
+[ADR-0050](../analysis/adr/ADR-0050-kanto-ide-proxy-vss-overlay.md) §2, M21 D15. Mặc định mọi cổng chỉ bind `127.0.0.1`. Để người khác dùng studio và IDE (code-server) qua mạng:
+
+1. Bật profile và đặt địa chỉ công khai trong `.env`. Ví dụ dưới đây phục vụ ở `https://sv.example.lan`:
+   ```bash
+   COMPOSE_PROFILES=…,remote-ide
+   SV_IDE_PROXY_PORT=8443
+   SV_STUDIO_URL=https://sv.example.lan
+   SV_REALTIME_URL=https://sv.example.lan
+   SV_IDE_PUBLIC_URL=cpp=https://sv.example.lan/ide/cpp,python=https://sv.example.lan/ide/python
+   ```
+2. `scripts/sv up`. Service `ide-proxy` (Caddy 2.11.7) nghe ở `127.0.0.1:8443` và phục vụ một origin duy nhất:
+   - `/` → studio;
+   - `/socket.io/` → realtime;
+   - `/ide/cpp/`, `/ide/python/` → code-server.
+3. Đặt một bộ kết thúc TLS của host trỏ vào `127.0.0.1:8443`, ví dụ nginx, Caddy của host, hoặc tunnel SSH `ssh -L 8443:127.0.0.1:8443`. Proxy trong stack không tự lo TLS và không có quyền Docker.
+
+**Cách bảo vệ IDE:**
+- Mỗi request tới `/ide/…` được proxy hỏi studio (`GET /api/sv/ide/authorize`), mang theo cookie phiên. Chỉ người đã đăng nhập studio mới đi tiếp được.
+- code-server vẫn hỏi mật khẩu `SV_IDE_PASSWORD`, thêm một lớp bảo vệ.
+
+**Giới hạn:** quyền kiểm theo phiên đăng nhập, không theo từng app. Trong code-server, người dùng thấy thư mục mọi project của volume workspace. Chỉ mở cho nhóm tin cậy.
+
 ## Khởi động lại sau khi Docker/WSL khởi động lại
 Mọi service chạy lâu của stack (database studio, studio, databroker, MQTT, toolchain, IDE, các service Bun) có `restart: unless-stopped`: Docker hay WSL khởi động lại thì chúng tự chạy lại. Ngày 2026-10-25, `studio-db` chưa có chính sách này nên nằm dừng sau khi daemon khởi động lại, kéo orchestrator ngừng theo. Service chạy một lần (`studio-migrations`) và image chỉ để build (`wasm-host`, `devcontainer-*`) không tự khởi động lại.
 

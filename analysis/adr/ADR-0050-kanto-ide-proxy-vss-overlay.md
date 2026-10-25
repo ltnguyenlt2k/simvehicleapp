@@ -52,3 +52,12 @@ compile + SynCode + parity với signal của overlay.
   - **Contract:** additive (CHANGELOG contracts).
   - **Test:** `kanto.test.ts`, `runs-deploy.test.ts`.
   - **Chưa kiểm** trên một xe chạy Kanto thật: không có thiết bị.
+- **2026-10-25 (M21 D15, PO chấp thuận toàn bộ): #9 IDE proxy + SSO forward-auth — làm theo Decision §2.**
+  - **Proxy:** profile `remote-ide`, service `ide-proxy`:
+    - image `caddy:2.11.7-alpine@sha256:eb4d35b7…`, cấu hình tĩnh `modules/ide-vscode/proxy/Caddyfile`, không docker.sock;
+    - cổng bind `127.0.0.1:${SV_IDE_PROXY_PORT:-8443}`. TLS do bộ kết thúc của host lo (luật cứng 10 giữ nguyên).
+  - **Một origin:** studio `/`, realtime `/socket.io/`, code-server `/ide/cpp/`, `/ide/python/`. Nhờ vậy cookie phiên studio đi cùng request IDE.
+  - **Forward-auth:** `GET /api/sv/ide/authorize` trên studio (contract `svIdeAuthorizeContract`) trả 200 cho người đã đăng nhập, 401 nếu không. SSO (`@better-auth/sso`, ADR-0032) đi qua chính phiên này.
+  - **code-server giữ mật khẩu** (thêm một lớp).
+  - **Giới hạn:** quyền theo phiên, không theo project. Code-server mở volume workspace chung.
+  - **Hướng dẫn:** [DEPLOY](../../docs/DEPLOY.md) mục "Mở studio và IDE từ máy khác".

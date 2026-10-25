@@ -56,6 +56,18 @@ services:
       - sv-velocitas-python:/home/vscode/.velocitas
     networks: [sv-internal, sv-edge]
 
+  # remote-ide (ADR-0050 §2, M21 D15, profile `remote-ide`): reverse proxy with forward-auth to the studio, so the IDE can be
+  # opened from another machine behind the host's TLS terminator. code-server keeps its own password and stays unpublished
+  # through the proxy; the proxy port is bound to 127.0.0.1 like every other port (hard rule 10).
+  ide-proxy:
+    restart: unless-stopped
+    image: caddy:2.11.7-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+    profiles: ["remote-ide"]
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports: ["127.0.0.1:${SV_IDE_PROXY_PORT:-8443}:8080"]
+    networks: [sv-edge]
+
 volumes:
   sv-workspace:
   sv-ccache:

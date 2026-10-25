@@ -1,0 +1,29 @@
+# remote-ide (ADR-0050 §2, M21 D15): one origin for the studio and the IDEs, so the studio session cookie reaches the
+# forward-auth check. Static configuration, no Docker access, no TLS here: put a TLS terminator (or an SSH tunnel) in front
+# of 127.0.0.1:${SV_IDE_PROXY_PORT}; set SV_STUDIO_URL / SV_REALTIME_URL / SV_IDE_PUBLIC_URL to the public origin.
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	# The IDE only for a signed-in studio user: the studio answers 200 or 401 (GET /api/sv/ide/authorize).
+	@ide path /ide/cpp/* /ide/python/*
+	forward_auth @ide studio:3000 {
+		uri /api/sv/ide/authorize
+	}
+
+	handle_path /ide/cpp/* {
+		reverse_proxy ide-cpp:8080
+	}
+	handle_path /ide/python/* {
+		reverse_proxy ide-python:8080
+	}
+	# Collaborative canvas (Socket.IO).
+	handle /socket.io/* {
+		reverse_proxy studio-realtime:3002
+	}
+	handle {
+		reverse_proxy studio:3000
+	}
+}
