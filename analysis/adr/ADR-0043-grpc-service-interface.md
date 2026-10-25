@@ -56,3 +56,17 @@
 `generate-sdk` offline PASS trong CI; conformance gRPC trên simulator + C++/Python; parity P3 với service mẫu.
 
 ## Notes / Deviations
+
+## Notes / Deviations
+- **2026-10-25 (M21 D8, theo uỷ quyền PO "tự quyết định"): không làm trong v1.x — giữ Decision §5 làm điều kiện mở lại.** Phân tích:
+  1. **Chưa có service gRPC để gọi:**
+     - stack dev, bench và xe mục tiêu của sản phẩm nói chuyện qua KUKSA databroker (`kuksa.val.v2`) và MQTT, đường chuẩn của Velocitas;
+     - không có service gRPC nào trong phạm vi để một block gọi tới;
+     - parity P3 cần một service mẫu tự viết, tức là đo chính mình.
+  2. **Giao tiếp app ↔ app đã có:** nhiều app nói chuyện qua MQTT (ADR-0044, gate `two-apps-mqtt.sh` PASS 2026-10-25).
+  3. **Chi phí lớn:**
+     - C++ cần Conan `grpc` build từ nguồn trong image toolchain-cpp: thêm hơn 1 GB và hàng chục phút build CI;
+     - Python cần wheelhouse `grpcio-tools`, requirements `grpc-interface-support`, `generate-sdk` offline;
+     - cả hai cần simulator `services:`, conformance timeout/error/success và service mẫu;
+     - Rust không có template Velocitas.
+  4. **Mở lại khi** có một service gRPC thật cần gọi (OEM, bench), kèm proto của nó. Khi đó làm theo Decision §1–§5. IR vẫn giữ opcode, không backend nào khai báo (S7 `OPCODE_UNSUPPORTED_BY_BACKEND`).
