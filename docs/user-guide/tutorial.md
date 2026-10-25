@@ -48,6 +48,7 @@ Mỗi test case ở đây trở thành một test sinh ra cho app (bước SynCo
 ## 6. Sinh app và build (2 phút)
 1. Bấm **SynCode** trên thanh hành động của canvas. Workflow chưa có vehicle app nên hộp thoại **Create a vehicle app** mở
    ra: đặt tên `Overspeed`, chọn **C++**, bấm **Create and SynCode**. Release VSS lấy theo workflow.
+   Nếu stack bật profile `wasm`, ô **Runtime** cho chọn **WebAssembly (sv-wasm-host)** thay cho app native — xem [wasm.md](wasm.md); tutorial dùng mặc định.
 2. Nút hiện **Preparing app…** trong lúc app được chuẩn bị (lần đầu vài phút), rồi SynCode tự chạy. **Build log** hiển
    thị các bước: IR → codegen → ghi file → dependencies → build → format → test. Kết thúc bằng **SynCode passed**, pill
    trạng thái hiện **Built ✓** và **Run** thành nút chính.
@@ -60,9 +61,10 @@ xoá hẳn app (gõ tên để xác nhận), **Repair** chuẩn bị lại app b
 ## 7. Chạy trên databroker thật (1 phút)
 1. Bấm **Run**. Trạng thái chuyển **running**, Run console có `app.started`.
 2. Tab **Live**: nhập `100` cho `Vehicle.Speed` → **Inject**; rồi `130` → **Inject**, đợi 2 giây.
-3. `Hazard.IsSignaling` đổi thành `true` (target và current). Trên canvas, badge live cho thấy khối nào vừa chạy; Run
-   console có trace `Set IsSignaling 1`.
-4. Bấm **Stop** (app dừng sạch trong < 5 s). **Record** trong tab Live ghi các lần inject; **Save as test case** lưu chúng thành case mới ở tab Test.
+3. Giá trị hiện tại của `Hazard.IsSignaling` đổi thành `true` (app ghi giá trị qua `kuksa.val.v2`; cột target không đổi). Trên canvas, badge live cho thấy khối nào vừa chạy; Run
+   console có câu `→ Set IsSignaling 1`.
+4. Mở **Flow** (trong tab Live): mỗi lần chạy ghi lần inject nào kích hoạt nó (`Vehicle.Speed = 130 (you injected)`), nhánh đã đi, giá trị của điều kiện và lệnh ghi.
+5. Bấm **Stop** (app dừng sạch trong < 5 s). **Record** trong tab Live ghi các lần inject; **Save as test case** lưu chúng thành case mới ở tab Test.
 
 ## Làm tiếp
 - **Assistant** (tab cạnh Toolbar): mô tả hành vi bằng lời ("Cảnh báo HMI khi pin dưới 20% lúc xe đang chạy"), xem đề xuất

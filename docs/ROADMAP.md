@@ -289,7 +289,7 @@ ADR: [0032](../analysis/adr/ADR-0032-auth-and-tenancy.md), [0033](../analysis/ad
 | Security checklist + fuzz + osv-scanner | — | 🔄 | 2026-10-07: osv-scanner (CI, digest ghim) — 6 module của dự án sạch sau nâng ajv/grpc-js; studio (deps fork Sim) còn 19 gói (từ 74, đợt 3b; 1 false positive); container `cap_drop: ALL` + `no-new-privileges`, compiler/catalog/codegen read-only | T06 |
 | Performance benchmark (validate/compile/simulate/SynCode) | — | ✔ | 2026-10-07 `gate/bench-nfr02.sh`: validate 200 khối p95 16 ms (< 300), simulate p95 39 ms (< 1 s), SynCode project mới 13 s, tăng dần p95 5,6 s (< 60 s) — [bằng chứng](reports/evidence/M11-bench-nfr02-local.json) | T07 |
 | Docs đầy đủ (user guide + dev docs) | — | ✔ | 2026-10-07: [tutorial](user-guide/tutorial.md), [tham chiếu khối](user-guide/blocks.md) (sinh từ BlockSpec, CI kiểm), [BLOCK_SDK](dev/BLOCK_SDK.md), [ADD_NEW_BLOCK](dev/ADD_NEW_BLOCK.md), [BACKEND_PLUGIN](dev/BACKEND_PLUGIN.md), [OPERATIONS](dev/OPERATIONS.md); IR_SPEC/DIAGNOSTICS_CATALOG/RUNTIME_API có sẵn — PO chấp thuận 2026-10-25 (M21 D4) | T08 |
-| Usability test 5 người (tutorial < 10') | — | ☐ | Cần 5 người thật — chờ PO tổ chức; kịch bản: [tutorial](user-guide/tutorial.md) (E2E tự động cùng kịch bản: 1,1 phút) | T09 |
+| Usability test 5 người (tutorial < 10') | — | ✔ | 2026-10-25 (M21 D5, theo uỷ quyền PO): **thay bằng cognitive walkthrough** — [báo cáo](reviews/usability-walkthrough-2026-10-25.md); sửa 2 lỗi chặn người mới (tên tiếng Việt dạng NFD bị từ chối ở Sign up; tutorial nói sai cột target với `kuksa.val.v2`) + thêm Flow vào tutorial. **Chưa test với người thật** — đề xuất làm sau release | T09 |
 | Release v1.0.0 (split repo, bootstrap, tag, lock, images, CHANGELOG) | 0002,0009 | 🔄 | 2026-10-07: `bootstrap.sh` (lần 2: 28 s), `modules.sh` (lock tất định), `lock-verify.sh` (PASS; từ chối SHA sai), `release-split.sh` dry-run 10/10 module đúng cây, [CHANGELOG](../CHANGELOG.md) 1.0.0-rc.1. Tách repo/tag/publish image: hành động ra ngoài — chờ PO · **2026-10-13 (Claude Code):** pre-release [baseline-2026-10-13](https://github.com/Blinkthor/sim-vehicle-app/releases/tag/baseline-2026-10-13) tại `7487f17` (CI 38423365394 xanh 16/16); image dựng sẵn qua GitHub Release + `scripts/sv pull` + venv Velocitas dùng chung + `SV_BUILD_JOBS` ([ADR-0051](../analysis/adr/ADR-0051-prebuilt-images-low-spec-deploy.md), [DEPLOY](DEPLOY.md)) — chờ release đầu tiên có image + thử `sv pull` trên máy sạch | T10 |
 
 **Exit checklist v1.0 (đủ cả 6 mới coi MVP xong):**
@@ -450,7 +450,7 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 | D2 | Cleanup Sim đợt 3b | làm theo lô | ☐ |
 | D3 | osv studio | cùng D2 | ☐ |
 | D4 | Docs (M11-T08) | PO chấp thuận | ✔ 2026-10-25 |
-| D5 | Usability 5 người | thay bằng cognitive walkthrough, ghi rõ chưa test người thật | ☐ |
+| D5 | Usability 5 người | thay bằng cognitive walkthrough, ghi rõ chưa test người thật | ✔ 2026-10-25 ([báo cáo](reviews/usability-walkthrough-2026-10-25.md)) |
 | D6 | Release v1.0.0 | từ monorepo: tag + GitHub Release + image; không tách repo (ADR mới) | ☐ |
 | D7 | Eval M18-T06 | thử lại endpoint PO | ☐ |
 | D8 | #2 gRPC | Python rồi C++ | ☐ |

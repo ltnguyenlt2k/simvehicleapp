@@ -47,7 +47,8 @@ const NAME_VALIDATIONS = {
     message: 'Name cannot be empty.',
   },
   validCharacters: {
-    regex: /^[\p{L}\s\-']+$/u,
+    // SV: letters may arrive decomposed (NFD: base letter + combining accents, e.g. Vietnamese "Nguyễn" from some IMEs/macOS) — accept marks
+    regex: /^[\p{L}\p{M}\s\-']+$/u,
     message: 'Name can only contain letters, spaces, hyphens, and apostrophes.',
   },
   noConsecutiveSpaces: {
