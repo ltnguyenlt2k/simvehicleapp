@@ -135,7 +135,7 @@ export async function runGeneration(gen: Generation, deps: PipelineDeps): Promis
           problems.push(diag("PROJECT_VSS_RELEASE_MISMATCH", "codegen", `Workflow ${String(graph.name ?? workflowId)} uses VSS ${release}, the project uses ${project.vssRelease}: switch the workflow to VSS ${project.vssRelease} in its editor (if its signals exist there) or generate it into a ${release} project`, { workflowId, data: { workflow: release, project: project.vssRelease } }));
           continue;
         }
-        const r = await clients.compile(graph, project.language);
+        const r = await clients.compile(graph, stackKey(project));
         const errors = r.diagnostics.filter((d) => d.severity === "error");
         if (!r.ir || errors.length) problems.push(...(errors.length ? errors : r.diagnostics).map((d) => ({ ...d, workflowId: d.workflowId ?? workflowId })));
         else irs.push(r.ir);

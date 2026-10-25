@@ -102,10 +102,11 @@ async function setup(projectPatch: Partial<Project> = {}) {
 const events = { line() {}, end() {} };
 
 describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
-  test("a WebAssembly project (ADR-0061) is generated and built by the <language>-wasm backend and toolchain", async () => {
+  test("a WebAssembly project (ADR-0061) is compiled for, generated and built by the <language>-wasm backend and toolchain", async () => {
     const repo = new MemoryRepo();
     const keys: string[] = [];
     const { clients } = fakeClients({
+      compile: async (_g, target) => (keys.push(`compile:${target}`), { ir, diagnostics: [] }),
       generate: async (key) => (keys.push(`generate:${key}`), { ok: true, value: fileset }),
       createProject: async (body) => (keys.push(`ws:${body.language}/${body.target ?? "velocitas"}`), { ok: true, value: {} }),
       job: async (key, kind) => (keys.push(`job:${kind}:${key}`), { id: "j", state: "succeeded", exitCode: 0, diagnostics: [] }),
@@ -116,6 +117,8 @@ describe("SynCode pipeline (M07-T14, Appendix A/B)", () => {
     const g: Generation = { id: `g_${crypto.randomUUID()}`, projectId: project.id, state: "running", stages: STAGES.map((name) => ({ name, state: "pending" })), verification: initialVerification(), diagnostics: [], generatedFiles: [], workflows: [], request: { graphs: [graph] }, createdAt: 0 };
     await repo.createGeneration(g);
     await runGeneration(g, { repo, clients, events });
+    // S7 checks the opcodes against the backend that generates the app (a stack may run cpp-wasm without native cpp).
+    expect(keys).toContain("compile:cpp-wasm");
     expect(keys).toContain("generate:cpp-wasm");
     expect(keys.filter((k) => k.startsWith("job:build") || k.startsWith("job:test"))).toEqual(["job:build:cpp-wasm", "job:test:cpp-wasm"]);
     expect(stackKey({ language: "rust", target: "wasm" })).toBe("rust-wasm");
