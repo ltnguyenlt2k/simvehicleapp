@@ -15,6 +15,8 @@
 > 4. M20 (WASM, ADR-0061): spike T01 → T09.
 > 5. Việc còn treo chờ PO: duyệt ADR Proposed, ký video, eval model thật (endpoint), M11/M14/M15 các mục chờ PO.
 >
+> **2026-10-25 — PO chấp thuận toàn bộ** ("tôi accept hết… tự quyết định luôn"): mọi ADR Accepted, mọi quyết định "theo uỷ quyền PO — chờ PO xác nhận" được xác nhận. Các ghi chú "chờ PO" có ngày trước 2026-10-25 trong bảng chi tiết là lịch sử. Phần còn mở được giải quyết theo [M21](#m21--hoàn-tất-roadmap).
+>
 > Mỗi bước: test/gate bắt buộc → commit → push lên `origin` và `blinkthor` → CI xanh → `scripts/sv refresh`.
 
 ## 1. Vòng đời cập nhật file này (bắt buộc)
@@ -49,17 +51,17 @@
 | [M6](#m6--c-backend--runtime) | C++ backend | 0020, 0021, 0022 | ✔ | 20/20 — gate PASS ([report](reports/M06.md)) |
 | [M7](#m7--workspacetoolchainsyncode) | SynCode E2E | 0023, 0025, 0026 | ✔ | 19/19 — gate PASS ([M07](reports/M07.md)) |
 | [M8](#m8--live-run--observability) | Live Run | 0024, 0027 | ✔ | 10/10 — gate PASS 2026-10-07 ([report](reports/M08.md); ADR-0027 Notes theo uỷ quyền PO, chờ xác nhận) |
-| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes theo uỷ quyền PO, chờ xác nhận) |
+| [M9](#m9--ide--export--license) | IDE & Export | 0028, 0031 | ✔ | 8/8 — gate PASS 2026-10-07 ([report](reports/M09.md); Notes PO chấp thuận 2026-10-25) |
 | [M10](#m10--ai-assistant--mcp) | AI & MCP | 0030 | ✔ | 10/10 — gate PASS; eval LLM thật đo 2026-10-14: **20/20 = 100 %** (provider openai-compatible của PO; trước đó BYPASS chờ key); MCP + 13 tool 36/36 ([report](reports/M10.md)) |
-| [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 | 🔄 | 3/10 ✔, 2 🔄 — tiếp tục theo uỷ quyền PO dù gate M10 còn chờ eval với provider cloud |
-| [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) theo uỷ quyền PO — chờ PO xác nhận ([report](reports/M12.md)) |
-| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); đề xuất Go experimental — review + Go/No-go chờ PO ([report](reports/M13.md)) |
-| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052 (Accepted 2026-10-25) | 🔄 | 10/10 có ADR; #1, #7, #10 ✔; #5 ADR + spike; #2–#4, #6, #8, #9 hoãn/không làm chờ PO |
+| [M11](#m11--hardening--release-v10) | Hardening → v1.0 | 0032, 0033, 0042 (Accepted 2026-10-25) | 🔄 | 2026-10-25 (M21): docs ✔, usability (walkthrough) ✔; cleanup 3b + osv đang làm (D2/D3); nightly 3 đêm (D1); release v1.0 (D6) |
+| [M12](#m12--python-backend) | Python backend | 0040 | ✔ | 6/6 — gate PASS về chức năng 2026-10-07 (parity P3 Python 7/7 trên KUKSA, lệch ≤ 3 ms); R10 lệch có chủ đích (ADR-0040 Notes §8) PO chấp thuận 2026-10-25 ([report](reports/M12.md)) |
+| [M13](#m13--rust-backend-feasibility) | Rust feasibility | 0041 | ✔ | 6/6 — gate PASS kỹ thuật 2026-10-07 (parity P3 Rust 7/7, lệch ≤ 2 ms); **Go experimental** — PO chấp thuận 2026-10-25 (ADR-0041 Accepted) ([report](reports/M13.md)) |
+| [M14](#m14--mở-rộng-sau-v10-backlog) | Mở rộng (backlog) | 0043–0050, 0052, 0063 (Accepted 2026-10-25) | 🔄 | 2026-10-25 (M21): #1, #3, #4, #5, #7, #8, #10, #11 ✔; #2 gRPC, #6 Quick Run, `sv_rate` không làm (lý do ở ADR); #9 IDE proxy chờ kiểm trên stack |
 | [M15](#m15--e2e-toàn-diện--video-demo-bước-cuối) | E2E toàn diện + video demo (bước cuối) | — | 🔄 | 9/12 ✔ (T02–T08, T11, T12), 3 🔄 (T01, T09, T10); chờ PO: review ma trận, xem + ký video |
-| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Accepted 2026-10-25) | 🔄 | 10/10 task ✔, CI + nightly xanh (parity 7/7, gate M16); acceptance chờ PO duyệt ADR 0053–0055 ([báo cáo](reports/M16.md)) — yêu cầu PO 2026-10-14 |
-| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Accepted 2026-10-25) | 🔄 | 8/8 ✔ (T01–T07; T08 ↷ M18), gate kỹ thuật PASS ([báo cáo](reports/M17.md)); acceptance chờ PO duyệt ADR 0056/0057 — yêu cầu PO 2026-10-15 |
-| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Accepted 2026-10-25) | 🔄 | 10/11 ✔ (T01–T05, T07–T11), T06 🔄 (chỉ còn eval model thật: endpoint PO lỗi); gate kỹ thuật PASS ([báo cáo](reports/M18.md)); chờ PO duyệt ADR 0058–0060 — yêu cầu PO 2026-10-15 |
-| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Accepted 2026-10-25) | 🔄 | 8/8 ✔, gate kỹ thuật PASS ([báo cáo](reports/M19.md)); chờ PO duyệt ADR-0062 — bắt đầu 2026-10-24 sau gate kỹ thuật M18 — yêu cầu PO 2026-10-24 |
+| [M16](#m16--trải-nghiệm--kiểm-soát-tài-nguyên) | Trải nghiệm end-user + kiểm soát tài nguyên host | 0053, 0054, 0055 (Accepted 2026-10-25) | ✔ | 10/10 ✔, gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M16.md)) |
+| [M17](#m17--dọn-bề-mặt-sim-còn-sót--runtime-xe-dùng-chung) | Dọn bề mặt Sim còn sót + runtime xe dùng chung | 0056, 0057 (Accepted 2026-10-25) | ✔ | 8/8 ✔ (T08 ↷ M18), gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M17.md)) |
+| [M18](#m18--bàn-thử-nghiệm-workflow-dễ-đọc-v2-deploy) | Bàn thử nghiệm (test case), workflow dễ đọc v2, Deploy | 0058, 0059, 0060 (Accepted 2026-10-25) | ✔ | 11/11 ✔ (T06: eval model thật chờ server PO sửa, M21 D7), gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M18.md)) |
+| [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Accepted 2026-10-25) | ✔ | 8/8 ✔, gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M19.md)) |
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted | 🔄 | 2026-10-25: PO "accept hết" ⇒ quyết định D1–D16 ([phase M21](../analysis/phases/M21-roadmap-completion.md)); thứ tự: M20-T09 → M11 → M18-T06 → M14 → M15 + release |
 

@@ -5,6 +5,42 @@
 
 ## [Unreleased]
 
+### M21 — Hoàn tất roadmap ([phase](analysis/phases/M21-roadmap-completion.md))
+- **Gọi workflow từ workflow:** block **Call workflow** chạy một workflow hàm (trigger **When called**) tại chỗ; compiler inline lúc compile, cấm gọi vòng, tối đa 4 cấp ([hướng dẫn](docs/user-guide/sub-workflows.md), ADR-0063).
+- **Nhiều app qua MQTT** (standalone service): hướng dẫn và gate hai app chạy cùng lúc, mỗi app một databroker ([multiple-apps](docs/user-guide/multiple-apps.md)).
+- **KUKSA databroker 0.7.1:** bản vá bảo mật provider của 0.6.1; bỏ API cũ `sdv.databroker.v1`. signal-gateway ghi giá trị actuator qua `kuksa.val.v1`.
+- **Deploy lên Eclipse Kanto:** đẩy image xong thì tải được descriptor container-management của kanto-cm.
+- **Mở studio và IDE từ máy khác:** profile `remote-ide`. Reverse proxy Caddy cho studio, realtime và code-server cùng một origin; IDE chỉ cho người đã đăng nhập studio ([DEPLOY](docs/DEPLOY.md)).
+- **Studio:**
+  - gỡ các block LLM của Sim (agent, router, evaluator…);
+  - nâng bảo mật next 16.4.2, dompurify, MCP SDK, undici, vite, zod…;
+  - Sign up nhận tên tiếng Việt gõ ở dạng tách dấu.
+- **Tài liệu:**
+  - tutorial sửa bước Run (giá trị hiện tại, tab Flow);
+  - cognitive walkthrough thay cho usability test, **chưa test với người thật**.
+- **Không làm (có lý do trong ADR):** gRPC (ADR-0043), Quick Run (ADR-0048), `sv_rate` (ADR-0049).
+
+### M20 — App WebAssembly cho C++ và Rust ([báo cáo](docs/reports/M20.md))
+- Khi tạo app, chọn **Runtime → WebAssembly** cho C++ hoặc Rust. App chạy trong `sv-wasm-host` (Wasmtime 48), có giới hạn bộ nhớ và thời gian, và allowlist tín hiệu/topic.
+- SynCode, test trong guest, Run, Flow, Export, image deploy (khoảng 9 MB) đều như app native. Conformance 52/52 và parity 7/7 cho cả hai ([hướng dẫn](docs/user-guide/wasm.md)).
+
+### M19 — Luồng thực thi (Flow) ([báo cáo](docs/reports/M19.md))
+- **Tab Flow** (Simulate, Test, Live), cho mỗi lần chạy:
+  - cái gì kích hoạt và đến từ đâu (inject, playback, app, xe);
+  - nhánh đã rẽ và giá trị điều kiện;
+  - app đã ghi gì.
+- **Run console** viết thành câu (công tắc Raw).
+- **Test:** case không đạt có giải thích; **Make test case from this run**.
+
+### M18 — Bàn thử nghiệm, workflow dễ đọc v2, Deploy ([báo cáo](docs/reports/M18.md))
+- **Tab Test:** test case lưu cùng workflow, Generate tests, độ phủ, Simulate all; trợ lý đề xuất test case.
+- **Canvas:** block gọn, Logic view đọc workflow thành câu, Auto layout theo làn, giá trị sống trên cạnh.
+- **Deploy:** lên databroker của xe hoặc bench (read-only mặc định); đẩy container image không cần Docker.
+
+### M17 — Dọn bề mặt Sim + runtime xe dùng chung ([báo cáo](docs/reports/M17.md))
+- Ẩn bề mặt chạy workflow của Sim.
+- Mỗi run một databroker riêng (`SV_RUN_SANDBOX=1`), quota và thời hạn, My runs, chạy song song, Extend.
+
 ### M16 — Trải nghiệm & kiểm soát tài nguyên ([báo cáo](docs/reports/M16.md))
 - **Vehicle apps:**
   - SynCode tự tạo app cho workflow chưa có app; app sẵn sàng thì SynCode tự chạy.
