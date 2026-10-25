@@ -392,6 +392,10 @@ class Changes(unittest.TestCase):
         self.assertIn("deps", self.ran("modules/compiler-code-rust/runtime/Cargo.toml"))
         self.assertNotIn("deps", self.ran("modules/simvehicleapp-studio/apps/sim/app/page.tsx"))
 
+    def test_wasm_host_runs_its_own_job(self):
+        self.assertEqual(self.ran("modules/wasm-host/src/abi.rs"), {"wasm_host"})
+        self.assertIn("deps", self.ran("modules/wasm-host/Cargo.lock"))
+
     def test_ci_changes_run_everything(self):
         self.assertEqual(self.ran(".github/workflows/ci.yml"), set(changes.JOBS))
 

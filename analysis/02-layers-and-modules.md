@@ -83,6 +83,7 @@ flowchart TB
 | 8 | `compiler-code-rust` | L4 | `codegen-rust` | TS + Rust | Backend Plugin API |
 | 9 | `velocitas-stack` | L5 | `toolchain-cpp`, `toolchain-python`, `databroker`, `mqtt`, `mock-provider` | Dockerfile + Bun agent | Toolchain API |
 | 10 | `ide-vscode` | L6 | `ide-cpp` (/`ide-python`) | Dockerfile + settings | IDE URL contract |
+| 11 | `wasm-host` | L5 | `sv-wasm-host` (binary trong `toolchain-wasm` và image deploy) | Rust (Wasmtime) | ABI `sv-wasm-abi/1` (contracts `abi/`), ADR-0061 — từ M20 |
 
 > Vì sao tách `compiler-code-<lang>` khỏi `velocitas-stack`? — Codegen là **logic thuần** (thay đổi thường xuyên, test nhanh, image nhỏ), còn toolchain là **môi trường nặng** (image vài GB, thay đổi theo version Velocitas). Tách ra để: nâng cấp Velocitas không phải release lại generator và ngược lại; IDE dùng lại toolchain image mà không kéo theo generator.
 
@@ -128,7 +129,8 @@ simvehicleapp/                         # = thư mục hiện tại (vehicle-no-c
 │   ├── compiler-code-python/
 │   ├── compiler-code-rust/
 │   ├── velocitas-stack/
-│   └── ide-vscode/
+│   ├── ide-vscode/
+│   └── wasm-host/                  # M20 (ADR-0061): host của app WebAssembly
 ├── tests/e2e/                      # E2E xuyên module (Playwright + API)
 └── scripts/ (bootstrap.sh, modules.sh sync|status|bump, lock-verify.sh)
 ```

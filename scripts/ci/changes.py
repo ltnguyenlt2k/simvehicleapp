@@ -18,7 +18,7 @@ import sys
 
 JOBS = [
     "studio", "studio_image", "core", "core_image", "contracts", "cpp", "cpp_macos", "python", "rust",
-    "agent", "orchestrator", "ai", "deps",
+    "agent", "orchestrator", "ai", "wasm_host", "deps",
 ]
 
 # (path prefix, jobs it triggers). A file matches every rule whose prefix it starts with.
@@ -28,7 +28,7 @@ RULES: list[tuple[str, set[str]]] = [
     ("scripts/ci/", set(JOBS)),
     # Contracts are the shared dependency of every module and of the golden/conformance fixtures.
     ("modules/simvehicleapp-contracts/", {"contracts", "core", "core_image", "studio", "studio_image", "cpp", "cpp_macos",
-                                          "python", "rust", "agent", "orchestrator", "ai"}),
+                                          "python", "rust", "agent", "orchestrator", "ai", "wasm_host"}),
     ("modules/simvehicleapp-core/", {"core", "core_image", "studio_image"}),
     ("modules/simvehicleapp-studio/", {"studio", "studio_image"}),
     ("modules/compiler-code-cpp/", {"cpp", "cpp_macos", "core_image"}),
@@ -38,6 +38,7 @@ RULES: list[tuple[str, set[str]]] = [
     ("modules/velocitas-stack/", {"agent", "cpp", "python", "rust"}),
     ("modules/simvehicleapp-orchestrator/", {"orchestrator"}),
     ("modules/simvehicleapp-ai/", {"ai"}),
+    ("modules/wasm-host/", {"wasm_host"}),
     ("scripts/license/", {"deps"}),
 ]
 

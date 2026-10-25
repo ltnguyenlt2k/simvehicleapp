@@ -1,0 +1,24 @@
+[package]
+name = "sv-wasm-host"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+license = "Apache-2.0"
+description = "Host of SimVehicleApp WebAssembly vehicle apps (ADR-0061, contracts abi/sv-wasm-abi.v1.md): Wasmtime, databroker, MQTT, trace."
+publish = false
+
+[[bin]]
+name = "sv-wasm-host"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+wasmtime = { version = "=48.0.7", default-features = false, features = ["anyhow", "cranelift", "runtime", "std", "wat", "gc", "gc-drc", "parallel-compilation"] }
+wasmtime-wasi = { version = "=48.0.7", default-features = false, features = ["p1"] }
+
+[dev-dependencies]
+wat = "1"
+
+[profile.release]
+strip = true

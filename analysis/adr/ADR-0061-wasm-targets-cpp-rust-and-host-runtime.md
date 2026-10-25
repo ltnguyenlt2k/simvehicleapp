@@ -146,6 +146,11 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-25 — **T03 chia T03a/T03b** (Claude Code):
+  - T03a là lõi host: Wasmtime, ABI, giới hạn, `--test`, `--precompile`, test bằng guest WAT, không cần toolchain wasm.
+  - T03b là databroker/MQTT/run/image. Dùng `kuksa-rust-sdk =0.2.2` (cùng pin với runtime Rust) cho `kuksa.val.v2`, không vendor proto riêng: ít mã phải giữ hơn, cùng nguồn đã kiểm license.
+  - Module mới `modules/wasm-host` (L5) với job CI riêng (`wasm_host` trong `scripts/ci/changes.py`).
+  - Wasmtime 48 có kiểu lỗi riêng (`wasmtime::Error`). Bật feature `anyhow` để chuyển lỗi; trap được nhận diện trước khi chuyển.
 - 2026-10-25 — **T02: contract** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - ABI chốt dạng nháp ở `contracts/abi/sv-wasm-abi.v1.md`; khoá khi T08 PASS.
   - So với bản phác trong design §3.1, thêm:

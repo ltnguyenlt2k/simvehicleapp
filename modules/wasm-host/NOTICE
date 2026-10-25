@@ -1,0 +1,9 @@
+SimVehicleApp — wasm-host (sv-wasm-host)
+Copyright 2026 the SimVehicleApp authors. Licensed under the Apache License, Version 2.0 (LICENSE).
+
+This module depends on (Cargo, not vendored):
+- wasmtime, wasmtime-wasi 48.0.7 — Bytecode Alliance, Apache-2.0 WITH LLVM-exception
+- serde_json — MIT OR Apache-2.0
+- anyhow — MIT OR Apache-2.0
+- wat (tests) — Apache-2.0 WITH LLVM-exception
+Full dependency tree: Cargo.lock.
