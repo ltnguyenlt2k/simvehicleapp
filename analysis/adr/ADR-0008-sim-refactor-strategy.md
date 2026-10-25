@@ -82,3 +82,19 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
   - gỡ `providers/` cùng Knowledge Base/Tables/wand;
   - gỡ handler `mothership`.
 - Trợ lý AI của SimVehicleApp là module riêng (`simvehicleapp-ai`, ADR-0030), không dùng `providers/` của studio.
+- **2026-10-25 (M21 D3, đợt 3d, bảo mật cùng major):** osv nightly 40194570658 có advisory mới từ sau 2026-10-14.
+  - **Bản đã nâng** (mỗi bản ≥ 7 ngày theo `minimumReleaseAge`, kiểm registry npm 2026-10-25):
+    - `next`/`@next/env` 16.3.8 → 16.4.2 (GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr 9.5);
+    - `dompurify` 3.4.17 (9.2);
+    - `@modelcontextprotocol/sdk` 1.32.1;
+    - `follow-redirects` 1.16.1;
+    - `undici` 7.30.1;
+    - `vite` 8.1.6;
+    - `vitest`/`@vitest/*` 4.1.12;
+    - `zod` 4.6.7 (override, cả bản lồng của better-auth/openai/trigger.dev);
+    - `hono` 4.13.13;
+    - `ip-address` 10.7.4.
+  - **Ngoại lệ tuổi** (`bunfig.toml` `minimumReleaseAgeExcludes`): `fast-uri` 3.1.9. Đã ghim 2026-10-24 vì 4 advisory, nhưng bản phát hành 2026-10-19 chưa đủ 7 ngày nên bun từ chối khi resolve lại.
+  - **Chờ đủ 7 ngày:** `nodemailer` 10.1.4 (2026-10-17+), `body-parser` 2.4.0 (2026-10-22).
+  - **Còn lại cần nâng major:** csv-parse 7, deepmerge-ts 8, file-type 21, image-size 2, katex 0.18, postcss-selector-parser 7, uuid 11, esbuild 0.25 (dev). Đều nằm trong parser file/office, tailwind và công cụ dev của Sim, không ở đường dữ liệu xe.
+  - **Báo nhầm:** `simstudio` (CLI workspace) và `xlsx` 0.20.3 (bản CDN mới hơn bản advisory 0.17).

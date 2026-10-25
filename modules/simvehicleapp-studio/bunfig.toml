@@ -1,6 +1,9 @@
 [install]
 exact = true
 minimumReleaseAge = 604800
+# SV: security fixes adopted before they are 7 days old, one reason each (ADR-0008 Notes):
+# fast-uri 3.1.9 (2026-10-19) fixes GHSA-333x-w4r6-6crp, GHSA-w74x-v6f9-j3xg, GHSA-wjr9-j795-jxcr, GHSA-xhq7-xmqj-769h.
+minimumReleaseAgeExcludes = ["fast-uri"]
 
 [run]
 env = { NEXT_PUBLIC_APP_URL = "http://localhost:3000" }
