@@ -81,7 +81,15 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
 - [x] Orchestrator: `stackKey(project)` = `<language>-wasm` cho project `target: wasm` — dùng cho generate, job init/build/test/image, run/stop/follow, sandbox, toolchain forget/gc. Run của app WASM luôn `kuksa.val.v2`. Test pipeline: project wasm đi qua backend + toolchain `cpp-wasm` (orchestrator 140/140 trong container).
 - [x] Workspace: `createProject.target` ⇒ template/overlay/runtime từ nguồn `<language>-wasm`, `project.json` ghi `target` (workspace 30/30 trong container). Template wasm có `app/AppManifest.json` tối thiểu, nên init/commit/vss-sync của workspace giữ nguyên.
 - [x] Studio: chọn **Runtime** (Velocitas native / WebAssembly) khi tạo app (hộp thoại SynCode và trang Vehicle apps; chỉ hiện khi `codegen-<lang>-wasm` + `toolchain-<lang>-wasm` đang chạy), BFF chuyển `target`, nhãn `· WebAssembly` trên thẻ app. Vitest 36 (`languages`, BFF projects). Health của backend `…/wasm` đo ở service gốc (system test).
-- [ ] Export WASM (zip có `app.wasm`/`app.cwasm`, `sv-app.json`, README chạy bằng `sv-wasm-host`); Deploy image (ADR-0060) chứa host + `.cwasm`; E2E tạo app WASM.
+- [x] **Chạy thật trên stack dev (2026-10-25):** `gate/adas-live.sh <lang> C43-adas-forward-collision wasm` — tạo app WASM qua orchestrator → SynCode (IR, build, format, test sinh ra PASS trong toolchain-wasm) → Run trên databroker thật → Play scenario `observe`: **C++ và Rust PASS**, 4/4 write đúng trong 2–4 ms.
+  - Lỗi tìm ra khi chạy thật và đã sửa:
+    1. agent chặn `lang=cpp-wasm` ở `/templates`;
+    2. bước test cần dòng tổng kết kiểu gtest ⇒ guest in `[ RUN ]/[ OK ]/[ FAILED ]` mỗi case, host `--test` in header/summary, tất cả ra stdout;
+    3. một lời gọi `startJob(` nhiều dòng còn dùng `language` ⇒ run tới toolchain-cpp;
+    4. agent kiểm artifact run theo toolchain (`build/app.cwasm` cho wasm);
+    5. overlay native (main.rs host native) bị áp vào project WASM ⇒ `/wasm/template-overlay/files` chỉ trả user hooks;
+    6. `lib.rs` template Rust chưa theo rustfmt.
+- [ ] Export WASM (zip có `app.wasm`/`app.cwasm`, `sv-app.json`, README chạy bằng `sv-wasm-host`); Deploy image (ADR-0060) chứa host + `.cwasm`; E2E UI tạo app WASM.
 
 ### T07: Studio/orchestrator
 - [ ] Tạo project: "Runtime: Velocitas (native) / WebAssembly"; Vehicle apps hiện target.

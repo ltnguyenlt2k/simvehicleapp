@@ -395,6 +395,22 @@ fn text(p: *const u8, n: i32) -> String {
     String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(p, n as usize) }).into_owned()
 }
 
+/// `<workflow>.<case>` with every non-word character as `_` (a gtest test name: no spaces).
+fn test_id(workflow: &str, name: &str) -> String {
+    let wf = if workflow.is_empty() { "app" } else { workflow };
+    let case: String = name
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    format!("{wf}.{case}")
+}
+
 fn level_of(s: &str) -> u8 {
     match s {
         "off" => 0,
@@ -540,33 +556,30 @@ pub fn run_tests(app: App, cases: *const u8, n: i32) -> i32 {
             .filter(|(id, _)| workflow.is_empty() || *id == workflow)
             .map(|(_, b)| *b)
             .collect();
-        if binds.is_empty() {
-            log(
-                3,
-                &format!("FAIL {name}\n  no workflow {workflow} in this app"),
+        // gtest-style lines (`[ RUN      ]`, `[       OK ]`, `[  FAILED  ]`), like every backend's generated tests.
+        let id = test_id(&workflow, &name);
+        let mismatches = if binds.is_empty() {
+            vec![format!("no workflow {workflow} in this app")]
+        } else {
+            let scenario = c.get("scenario").cloned().unwrap_or(Value::Null);
+            let result = testing::run_scenario(
+                &|rt: &Runtime| binds.iter().for_each(|b| b(rt)),
+                &scenario,
+                "test",
+                &[],
             );
-            failed += 1;
-            continue;
-        }
-        let scenario = c.get("scenario").cloned().unwrap_or(Value::Null);
-        let result = testing::run_scenario(
-            &|rt: &Runtime| binds.iter().for_each(|b| b(rt)),
-            &scenario,
-            "test",
-            &[],
-        );
-        let mismatches = testing::check_expectations(&result, scenario.get("expect"));
-        let mut line = format!(
-            "{} {name}",
-            if mismatches.is_empty() {
-                "PASS"
-            } else {
-                "FAIL"
-            }
-        );
+            testing::check_expectations(&result, scenario.get("expect"))
+        };
+        let mut line = format!("[ RUN      ] {id}");
         for m in &mismatches {
-            line.push_str(&format!("\n  {m}"));
+            line.push_str(&format!("\n{m}"));
         }
+        let verdict = if mismatches.is_empty() {
+            "[       OK ]"
+        } else {
+            "[  FAILED  ]"
+        };
+        line.push_str(&format!("\n{verdict} {id} (0 ms)"));
         log(if mismatches.is_empty() { 1 } else { 3 }, &line);
         failed += i32::from(!mismatches.is_empty());
     }

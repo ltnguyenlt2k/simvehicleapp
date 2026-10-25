@@ -40,15 +40,6 @@ fn allowlist(path: Option<&String>, module: &str) -> Result<Allowlist> {
     }
 }
 
-fn print(lines: Vec<Line>) {
-    for l in lines {
-        match l {
-            Line::Out(t) => println!("{t}"),
-            Line::Err(t) => eprintln!("{t}"),
-        }
-    }
-}
-
 fn run(args: &[String]) -> Result<i32> {
     let (engine, _ticker) = abi::engine()?;
     match args.first().map(String::as_str) {
@@ -82,11 +73,31 @@ fn run(args: &[String]) -> Result<i32> {
                 &limits(),
                 abi::monotonic(),
             )?;
-            let failed = host.run_tests(
-                &std::fs::read_to_string(cases).with_context(|| format!("reading {cases}"))?,
+            let text =
+                std::fs::read_to_string(cases).with_context(|| format!("reading {cases}"))?;
+            // gtest-style summary around the guest's per-case lines, all on stdout (the SynCode test stage reads it).
+            let total = serde_json::from_str::<serde_json::Value>(&text)
+                .ok()
+                .and_then(|v| v.as_array().map(Vec::len))
+                .unwrap_or(0);
+            println!("[==========] Running {total} tests from 1 test suite.");
+            let start = std::time::Instant::now();
+            let failed = host.run_tests(&text);
+            for l in host.take_lines() {
+                match l {
+                    Line::Out(t) | Line::Err(t) => println!("{t}"),
+                }
+            }
+            let failed = failed?.clamp(0, 100);
+            println!(
+                "[==========] {total} tests from 1 test suite ran. ({} ms total)",
+                start.elapsed().as_millis()
             );
-            print(host.take_lines());
-            Ok(failed?.clamp(0, 100))
+            println!("[  PASSED  ] {} tests.", total as i32 - failed);
+            if failed > 0 {
+                println!("[  FAILED  ] {failed} tests.");
+            }
+            Ok(failed)
         }
         Some(module) => {
             let m = abi::load(

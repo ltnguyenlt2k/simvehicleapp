@@ -9,4 +9,4 @@ target:
 toolchain:
   id: toolchain-wasm
   template: wasm-app-rust
-  templateSha: bc22d7647d2da99cf3b4c1cea5b9a4703c028806  # git tree id of velocitas-stack/templates/wasm-app-rust
+  templateSha: 8d7a74742e508ee57c596875ae2b41f6d96ff5b3  # git tree id of velocitas-stack/templates/wasm-app-rust

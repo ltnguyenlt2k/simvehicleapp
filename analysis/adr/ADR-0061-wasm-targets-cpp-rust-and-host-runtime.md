@@ -146,6 +146,9 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-25 — **T07, chạy thật** (Claude Code): app WASM C++ và Rust qua toàn bộ luồng orchestrator (tạo → SynCode → Run → Play) đạt gate ADAS C43 trên stack dev.
+  - Test của app WASM in dòng kiểu gtest (`[ RUN ]`, `[ OK ]`, `[ FAILED ]`, tổng kết), giống test sinh ra của mọi backend, nên bước test của pipeline và `testDiagnostics` dùng chung.
+  - Backend dưới `/wasm` chỉ trả user hooks trong overlay, vì entry của app WASM nằm trong template (`MainWasm.cpp`/`lib.rs` + `wasm_app!`).
 - 2026-10-25 — **T06** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - Một image `toolchain-wasm` phục vụ cả C++ và Rust; agent đọc `.velocitas.json` (`target: wasm`) của project. Template wasm có `.velocitas.json` như template Rust, nên workspace/agent nhận ra project như mọi project khác.
   - Khoá backend/toolchain: `cpp-wasm`, `rust-wasm`, cùng trỏ một agent :4240.

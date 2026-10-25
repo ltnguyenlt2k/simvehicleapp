@@ -5,4 +5,7 @@
 pub mod generated;
 mod user_hooks;
 
-simvehicleapp_runtime::wasm_app!(generated::wasm::app(user_hooks::on_app_start, user_hooks::on_app_stop));
+simvehicleapp_runtime::wasm_app!(generated::wasm::app(
+    user_hooks::on_app_start,
+    user_hooks::on_app_stop
+));

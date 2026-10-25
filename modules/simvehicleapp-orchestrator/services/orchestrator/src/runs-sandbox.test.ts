@@ -16,8 +16,8 @@ function fakeToolchain() {
   const jobs = new Map<string, { say?: (l: LogLine) => void; end?: (j: ToolchainJob) => void; port: number }>();
   let n = 0;
   const clients = {
-    startJob: async (_l: string, kind: string, _p: string, options?: Record<string, unknown>): Promise<Outcome<ToolchainJob>> => {
-      calls.push(`${kind}${options?.sandbox ? " sandbox" : ""}${options?.env ? ` ${JSON.stringify(options.env)}` : ""}${options?.runJobId ? ` ${options.runJobId}` : ""}`);
+    startJob: async (key: string, kind: string, _p: string, options?: Record<string, unknown>): Promise<Outcome<ToolchainJob>> => {
+      calls.push(`${key === "cpp" ? "" : `${key}: `}${kind}${options?.sandbox ? " sandbox" : ""}${options?.env ? ` ${JSON.stringify(options.env)}` : ""}${options?.runJobId ? ` ${options.runJobId}` : ""}`);
       if (kind === "stop") {
         const id = options?.runJobId as string;
         queueMicrotask(() => jobs.get(id)?.end?.({ id, state: "cancelled", exitCode: 130, diagnostics: [] }));
@@ -187,6 +187,14 @@ describe("sandboxed runs (ADR-0057, M17-T04)", () => {
       'run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"kuksa.val.v2","KUKSA_DATABROKER_API":"kuksa.val.v2"}',
       "mirror v4.0 [Vehicle.Body.Lights.Hazard.IsSignaling] on toolchain-cpp:56000 kuksa.val.v2",
     ]);
+  });
+
+  test("a WebAssembly app (ADR-0061) runs on the <language>-wasm toolchain and always over kuksa.val.v2", async () => {
+    const { repo, tc, gen, runs } = await setup();
+    const w = (await repo.createProject({ id: crypto.randomUUID(), slug: "w", name: "w", appName: "W", language: "cpp", target: "wasm", vssRelease: "v4.0", settings: { mqttTopicPrefix: "w", traceLevel: "node" }, status: "ready" }))!;
+    await runs.start(w, (await gen(w)).id, undefined, ann);
+    expect(tc.calls[0]).toBe('cpp-wasm: run sandbox {"SV_TRACE_LEVEL":"node","SV_RUN_ID":"r_1","SV_DATABROKER_API":"kuksa.val.v2","KUKSA_DATABROKER_API":"kuksa.val.v2"}');
+    expect(tc.calls[1]).toContain("kuksa.val.v2");
   });
 
   test("databroker API per backend: its entry, else *, else sdv.databroker.v1", () => {

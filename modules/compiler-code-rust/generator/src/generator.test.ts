@@ -106,6 +106,9 @@ describe("golden Rust WebAssembly target GW-A…GW-G (diff = 0, ADR-0061)", () =
     const wasm = await (await h(new Request("http://b/wasm/capabilities"), ctx)).json();
     expect(validator.validate("backend-capabilities", wasm).errors).toEqual([]);
     expect(wasm).toMatchObject({ id: "rust-wasm", language: "rust", target: { kind: "wasm", triple: "wasm32-wasip1" }, toolchain: { id: "toolchain-wasm", template: "wasm-app-rust" } });
+    const overlay = await (await h(new Request("http://b/wasm/template-overlay/files"), ctx)).json();
+    expect(overlay.files.map((f: { path: string }) => f.path)).toEqual(["app/src/user_hooks.rs"]);
+    expect(overlay.remove).toEqual([]);
     expect((await (await h(new Request("http://b/capabilities"), ctx)).json()).target).toBeUndefined();
     const gen = await h(new Request("http://b/wasm/generate", { method: "POST", body: JSON.stringify(goldenRequest("GW-B")) }), ctx);
     expect(gen.status).toBe(200);

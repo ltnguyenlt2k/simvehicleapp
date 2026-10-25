@@ -76,7 +76,7 @@ export function createAgentHandler(deps: AgentDeps) {
     if (url.pathname === "/templates") {
       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
       const lang = url.searchParams.get("lang") ?? "";
-      if (!["cpp", "python", "rust"].includes(lang)) return json(400, { error: "invalid_request", message: "lang must be cpp, python or rust" });
+      if (!["cpp", "python", "rust", "cpp-wasm", "rust-wasm"].includes(lang)) return json(400, { error: "invalid_request", message: "lang must be cpp, python, rust, cpp-wasm or rust-wasm" });
       const tar = deps.template(lang);
       if (!tar) return json(404, { error: "not_found", message: `this toolchain has no ${lang} template` });
       return new Response(tar, { headers: { "content-type": "application/x-tar" } });

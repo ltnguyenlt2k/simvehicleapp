@@ -29,14 +29,21 @@ export function createBackendHandler(moduleDir = MODULE_DIR) {
     "/runtime/files": runtimeBundle(moduleDir),
     "/template-overlay/files": overlayBundle(moduleDir),
   };
+  // The WebAssembly template has its own entry (wasm_app! / MainWasm.cpp): only the user hooks of the overlay apply.
+  const overlay = bundles["/template-overlay/files"]!;
+  const wasmBundles: Record<string, FileBundle> = {
+    ...bundles,
+    "/template-overlay/files": { ...overlay, files: overlay.files.filter((f) => /\/user\/|user_hooks\.rs$/.test(f.path)), remove: [] },
+  };
   return async (req: Request, ctx: RequestContext): Promise<Response> => {
     const url = new URL(req.url).pathname;
     // The WebAssembly target is the same backend under /wasm (SV_BACKENDS cpp-wasm=http://codegen-cpp:4110/wasm).
     const target: Target = url === "/wasm" || url.startsWith("/wasm/") ? "wasm" : "velocitas";
     const pathname = target === "wasm" ? url.slice("/wasm".length) || "/" : url;
-    if (pathname === "/capabilities" || pathname in bundles) {
+    const served = target === "wasm" ? wasmBundles : bundles;
+    if (pathname === "/capabilities" || pathname in served) {
       if (req.method !== "GET") return json(405, { error: "method_not_allowed" });
-      return pathname === "/capabilities" ? new Response(caps[target], { headers: { "content-type": "application/json" } }) : json(200, bundles[pathname]);
+      return pathname === "/capabilities" ? new Response(caps[target], { headers: { "content-type": "application/json" } }) : json(200, served[pathname]);
     }
     if (pathname === "/generate") {
       if (req.method !== "POST") return json(405, { error: "method_not_allowed" });

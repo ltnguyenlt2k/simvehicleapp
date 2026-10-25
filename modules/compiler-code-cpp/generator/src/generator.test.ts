@@ -107,6 +107,9 @@ describe("golden C++ WebAssembly target GW-A…GW-G (diff = 0, ADR-0061)", () =>
     const wasm = await (await h(new Request("http://b/wasm/capabilities"), ctx)).json();
     expect(validator.validate("backend-capabilities", wasm).errors).toEqual([]);
     expect(wasm).toMatchObject({ id: "cpp-wasm", language: "cpp", target: { kind: "wasm", triple: "wasm32-wasip1" }, toolchain: { id: "toolchain-wasm", template: "wasm-app-cpp" } });
+    const overlay = await (await h(new Request("http://b/wasm/template-overlay/files"), ctx)).json();
+    expect(overlay.files.map((f: { path: string }) => f.path)).toEqual(["app/src/user/UserHooks.cpp", "app/src/user/UserHooks.hpp"]);
+    expect(overlay.remove).toEqual([]);
     const native = await (await h(new Request("http://b/capabilities"), ctx)).json();
     expect(native.target).toBeUndefined();
     const gen = await h(new Request("http://b/wasm/generate", { method: "POST", body: JSON.stringify(goldenRequest("GW-B")) }), ctx);

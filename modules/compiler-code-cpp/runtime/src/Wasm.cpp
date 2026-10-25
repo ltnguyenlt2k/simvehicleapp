@@ -9,6 +9,7 @@
 
 #include "simvehicleapp/rt/Testing.hpp"
 
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
 #include <map>
@@ -213,6 +214,13 @@ Guest& guest() {
     return g;
 }
 
+/** `<workflow>.<case>` with every non-word character as `_` (a gtest test name: no spaces). */
+std::string testId(const std::string& workflow, const std::string& name) {
+    std::string id = (workflow.empty() ? std::string("app") : workflow) + ".";
+    for (const char ch : name) id += std::isalnum(static_cast<unsigned char>(ch)) || ch == '_' ? ch : '_';
+    return id;
+}
+
 TraceLevel levelOf(const std::string& s, TraceLevel fallback) {
     if (s == "off") return TraceLevel::Off;
     if (s == "trigger") return TraceLevel::Trigger;
@@ -325,16 +333,18 @@ __attribute__((export_name("sv_run_tests"))) int32_t sv_run_tests(const char* ca
             const auto b = wf.second;
             bind = bind ? [prev = bind, b](Runtime& r) { prev(r), b(r); } : b;
         }
+        // gtest-style lines (`[ RUN      ]`, `[       OK ]`, `[  FAILED  ]`), like every backend's generated tests.
+        const std::string id = testId(workflow, name);
+        std::string text = "[ RUN      ] " + id;
+        std::vector<std::string> mismatches;
         if (!bind) {
-            const std::string text = "FAIL " + name + "\n  no workflow " + workflow + " in this app";
-            sv_log(3, text.data(), static_cast<int32_t>(text.size()));
-            ++failed;
-            continue;
+            mismatches.push_back("no workflow " + workflow + " in this app");
+        } else {
+            const auto result = testing::runScenario(bind, c["scenario"], "test");
+            mismatches = testing::checkExpectations(result, c["scenario"].value("expect", Value::object()));
         }
-        const auto result = testing::runScenario(bind, c["scenario"], "test");
-        const auto mismatches = testing::checkExpectations(result, c["scenario"].value("expect", Value::object()));
-        std::string text = (mismatches.empty() ? "PASS " : "FAIL ") + name;
-        for (const auto& m : mismatches) text += "\n  " + m;
+        for (const auto& m : mismatches) text += "\n" + m;
+        text += (mismatches.empty() ? "\n[       OK ] " : "\n[  FAILED  ] ") + id + " (0 ms)";
         sv_log(mismatches.empty() ? 1 : 3, text.data(), static_cast<int32_t>(text.size()));
         failed += mismatches.empty() ? 0 : 1;
     }

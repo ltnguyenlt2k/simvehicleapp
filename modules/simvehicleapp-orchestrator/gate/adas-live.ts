@@ -10,6 +10,8 @@ const G = process.env.SV_SIGNAL_GATEWAY_URL ?? "http://signal-gateway:4050";
 const h = { "x-sv-internal": process.env.INTERNAL_API_SECRET ?? "", "content-type": "application/json" };
 const slug = process.env.SLUG ?? "";
 const language = process.env.LANG_ID ?? "cpp";
+// `wasm`: the app is a WebAssembly guest of sv-wasm-host (ADR-0061, M20).
+const target = process.env.TARGET === "wasm" ? "wasm" : undefined;
 const dir = `/repo/modules/simvehicleapp-contracts/fixtures/conformance/${process.env.CASE ?? "C43-adas-forward-collision"}`;
 const WITHIN_MS = 300;
 
@@ -30,7 +32,7 @@ const release = (graph.vssRelease as string | undefined) ?? "v4.0";
 const expected = scenario.expect.writes;
 const paths = [...new Set(expected.map((w) => w.path))];
 
-let p = await (await post(`${O}/projects`, { slug: `${slug}-${language}`, name: `Gate ADAS ${language}`, language, vssRelease: release })).json();
+let p = await (await post(`${O}/projects`, { slug: `${slug}-${language}`, name: `Gate ADAS ${language}`, language, ...(target ? { target } : {}), vssRelease: release })).json();
 const t0 = Date.now();
 while (p.status === "creating" && Date.now() - t0 < 600_000) {
   await Bun.sleep(2000);
@@ -47,6 +49,13 @@ let r = run;
 for (let i = 0; i < 300 && r.state === "starting"; i++) {
   await Bun.sleep(100);
   r = await get(`${O}/runs/${run.id}`);
+}
+if (r.state !== "running") {
+  console.log(`  diagnostics: ${JSON.stringify(r.diagnostics ?? [])}`);
+  // Why it did not start: the run's log (the stream ends once the run has stopped).
+  const res = await fetch(`${O}/events?runId=${run.id}`, { headers: h, signal: AbortSignal.timeout(15_000) }).catch(() => null);
+  const text = res ? await res.text().catch(() => "") : "";
+  for (const line of text.split("\n").filter((l) => l.startsWith("data: ")).slice(-40)) console.log(`  ${line.slice(6, 300)}`);
 }
 must(r.state === "running", `${language}: app running (${r.state})`);
 const sandbox = r.sandbox as string | undefined;

@@ -183,7 +183,7 @@ export class RunManager {
     }
 
     const job = await this.d.clients.startJob(
-      project.language,
+      stackKey(project),
       "run",
       project.slug,
       sandbox

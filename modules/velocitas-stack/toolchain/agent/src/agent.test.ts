@@ -153,6 +153,9 @@ describe("HTTP API (openapi/toolchain.v1.yaml)", () => {
     expect((await handler(new Request("http://x/templates?lang=go"), ctx)).status).toBe(400);
     expect((await handler(new Request("http://x/templates?lang=rust"), ctx)).status).toBe(404); // a language this toolchain does not seed
     expect((await handler(new Request("http://x/templates?lang=python"), ctx)).status).toBe(404);
+    // WebAssembly seeds (ADR-0061): a known lang; toolchain-wasm serves them, others answer 404
+    expect((await handler(new Request("http://x/templates?lang=cpp-wasm"), ctx)).status).toBe(404);
+    expect((await handler(new Request("http://x/templates?lang=go"), ctx)).status).toBe(400);
   });
 });
 
@@ -303,6 +306,7 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     expect(plan("format-check", "wasm-rs", {}).steps[0]!.label).toBe("cargo fmt --check");
     // test and run need the precompiled module
     expect(() => plan("test", "wasm-cpp", {})).toThrow("build/app.cwasm is missing");
+    expect(() => validateJob(wa, "run", "wasm-cpp", {})).toThrow("build/app.cwasm is missing");
     mkdirSync(join(cpp, "build"), { recursive: true });
     writeFileSync(join(cpp, "build/app.cwasm"), "x");
     writeFileSync(join(cpp, "app/tests/generated/cases.json"), "[]");

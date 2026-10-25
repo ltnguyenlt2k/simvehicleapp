@@ -28,6 +28,7 @@ const RUN_ARTIFACT: Record<string, { file: string; missing: string }> = {
   cpp: { file: "build/bin/app", missing: "build/bin/app is missing: build the project first" },
   python: { file: "app/src/generated/app.py", missing: "app/src/generated/app.py is missing: SynCode the project first" },
   rust: { file: "build/bin/app", missing: "build/bin/app is missing: build the project first" },
+  wasm: { file: "build/app.cwasm", missing: "build/app.cwasm is missing: build the project first" },
 };
 const runArtifact = (cfg: AgentConfig) => RUN_ARTIFACT[cfg.toolchain ?? "cpp"] ?? RUN_ARTIFACT.cpp!;
 
