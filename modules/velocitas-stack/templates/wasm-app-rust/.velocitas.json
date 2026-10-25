@@ -1,0 +1,10 @@
+{
+    "packages": {},
+    "components": [],
+    "variables": {
+        "language": "rust",
+        "target": "wasm",
+        "repoType": "app",
+        "appManifestPath": "app/src/generated/sv-app.json"
+    }
+}

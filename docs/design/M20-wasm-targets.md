@@ -94,7 +94,7 @@ Bất biến:
 - Biến môi trường giống app native: `SV_DATABROKER_ADDRESS`, `SV_DATABROKER_API`, `SV_MQTT_*`, `SV_TRACE_LEVEL`. Như vậy orchestrator và sandbox (ADR-0057) không phân biệt app native hay app WASM.
 
 ### 3.3 Guest C++
-- Toolchain: `cmake -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk.cmake`, target `wasm32-wasip1`, `-mexec-model=reactor`, `-fno-exceptions -O2`.
+- Toolchain: `cmake -DCMAKE_TOOLCHAIN_FILE=$WASI_SDK/share/cmake/wasi-sdk-p1.cmake`, target `wasm32-wasip1`, `-mexec-model=reactor`, `-fno-exceptions -O2`.
 - Runtime:
   - `SV_RT_NO_EXCEPTIONS` thay `throw` bằng trả lỗi + trace `error`;
   - `Strand::pump(now)` cho guest (giữ `run()` cho native);

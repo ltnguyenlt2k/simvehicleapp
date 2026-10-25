@@ -48,7 +48,7 @@ jobs:
         group: ${{ fromJSON(needs.plan.outputs.groups) }}
     env:
       # Dummy secrets only satisfy compose interpolation; no build argument reads them.
-      DC: docker compose --env-file scripts/ci/ci.env --profile python --profile rust
+      DC: docker compose --env-file scripts/ci/ci.env --profile python --profile rust --profile wasm
       SV_CONAN_JOBS: "4"
       GROUP: ${{ matrix.group }}
       GH_TOKEN: ${{ github.token }}
@@ -79,6 +79,8 @@ jobs:
             python) $DC build contracts && $DC build devcontainer-python toolchain-python && $DC build ide-python ;;
             # toolchain-rust FROMs the codegen-rust image (docker-image:// context): build it first, not in parallel
             rust)   $DC build contracts && $DC build codegen-rust && $DC build toolchain-rust ;;
+            # toolchain-wasm FROMs the codegen-cpp, codegen-rust and wasm-host images (docker-image:// contexts)
+            wasm)   $DC build contracts && $DC build codegen-cpp codegen-rust wasm-host && $DC build toolchain-wasm ;;
             *) echo "unknown group $GROUP"; exit 1 ;;
           esac
       - name: Save, compress, checksum

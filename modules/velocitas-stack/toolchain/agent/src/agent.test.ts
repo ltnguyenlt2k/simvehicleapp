@@ -7,7 +7,7 @@ import { ContractValidator } from "@simvehicleapp/contracts";
 import { createAgentHandler } from "./app.ts";
 import { createPlanner, PlanError, projectDir, SHARE_SEED_VENV, validateJob, vssFile } from "./commands.ts";
 import { type JobKind, JobManager, type Plan } from "./jobs.ts";
-import { templateTar } from "./templates.ts";
+import { defaultSeeds, templateTar } from "./templates.ts";
 
 const validator = new ContractValidator();
 // A scratch dir inside the module (a confined bun cannot always use /tmp).
@@ -284,6 +284,36 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     expect(plan("run", "comfort-app", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]).toMatchObject({ argv: ["build/bin/app"], env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } });
   });
 
+  test("WebAssembly projects (ADR-0061): wasi-sdk or cargo wasm32 ⇒ app.wasm ⇒ app.cwasm; tests and runs on sv-wasm-host", () => {
+    const wa = { ...cfg, toolchain: "wasm" };
+    const plan = createPlanner(wa);
+    const mk = (slug: string, language: string) => {
+      const d = join(cfg.projectsDir, slug);
+      mkdirSync(join(d, "app/tests/generated"), { recursive: true });
+      writeFileSync(join(d, ".velocitas.json"), JSON.stringify({ variables: { language, target: "wasm" } }));
+      return d;
+    };
+    const cpp = mk("wasm-cpp", "cpp");
+    mk("wasm-rs", "rust");
+    const b = plan("build", "wasm-cpp", {});
+    expect(b.steps[0]!.argv.join(" ")).toContain("wasi-sdk-p1.cmake");
+    expect(b.steps[0]!.argv.join(" ")).toContain("sv-wasm-host --precompile build/app.wasm build/app.cwasm");
+    expect(b.steps[0]!.check!([])).toBe("build/app.cwasm was not produced (see the build log)");
+    expect(plan("build", "wasm-rs", {}).steps[0]!.argv.join(" ")).toContain("--target wasm32-wasip1");
+    expect(plan("format-check", "wasm-rs", {}).steps[0]!.label).toBe("cargo fmt --check");
+    // test and run need the precompiled module
+    expect(() => plan("test", "wasm-cpp", {})).toThrow("build/app.cwasm is missing");
+    mkdirSync(join(cpp, "build"), { recursive: true });
+    writeFileSync(join(cpp, "build/app.cwasm"), "x");
+    writeFileSync(join(cpp, "app/tests/generated/cases.json"), "[]");
+    expect(plan("test", "wasm-cpp", {}).steps[0]!.argv).toEqual(["sv-wasm-host", "--test", "build/app.cwasm", "app/tests/generated/cases.json"]);
+    expect(plan("run", "wasm-cpp", { env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } }).steps[0]).toMatchObject({ argv: ["sv-wasm-host", "build/app.cwasm", "app/src/generated/sv-app.json"], env: { SDV_MQTT_ADDRESS: "mqtt://mqtt:1883" } });
+    // a Velocitas project is not a WebAssembly one; another language has no wasm toolchain
+    expect(() => plan("build", "comfort-app", {})).toThrow("not a WebAssembly project");
+    mk("wasm-py", "python");
+    expect(() => plan("build", "wasm-py", {})).toThrow("no WebAssembly toolchain for python");
+  });
+
   test("template tar: deterministic, no build outputs", async () => {
     const seed = join(SCRATCH, "seed");
     mkdirSync(join(seed, "app"), { recursive: true });
@@ -298,5 +328,7 @@ describe("plans of a real project (ADR-0025 §3, M07-T05)", () => {
     expect(names).toContain("./app/AppManifest.json");
     expect(names).not.toContain("./build/x");
     expect(templateTar("cpp", { cpp: join(SCRATCH, "nope") })).toBeNull();
+    expect(defaultSeeds({ SV_TOOLCHAIN: "wasm", SV_SEED_DIR_CPP: "/c", SV_SEED_DIR_RUST: "/r" })).toEqual({ "cpp-wasm": "/c", "rust-wasm": "/r" });
+    expect(defaultSeeds({ SV_TOOLCHAIN: "rust", SV_SEED_DIR: "/s" })).toEqual({ rust: "/s" });
   });
 });

@@ -50,7 +50,7 @@ def problems(groups: dict[str, list[str]], compose_images: set[str]) -> list[str
 
 
 def compose_images() -> set[str]:
-    cmd = ["docker", "compose", "--env-file", "scripts/ci/ci.env", "--profile", "python", "--profile", "rust",
+    cmd = ["docker", "compose", "--env-file", "scripts/ci/ci.env", "--profile", "python", "--profile", "rust", "--profile", "wasm",
            "--profile", "mock", "config", "--images"]
     return set(subprocess.run(cmd, cwd=ROOT, check=True, capture_output=True, text=True).stdout.split())
 

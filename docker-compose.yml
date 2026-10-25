@@ -15,4 +15,5 @@ include:
   - modules/velocitas-stack/compose.yaml
   - modules/ide-vscode/compose.yaml
   - modules/simvehicleapp-ai/compose.yaml
+  - modules/wasm-host/compose.yaml
   - modules/simvehicleapp-studio/compose.simvehicleapp.yaml

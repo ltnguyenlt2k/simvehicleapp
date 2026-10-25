@@ -136,7 +136,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
   return (kind: JobKind, project: string, options: JobOptions): Plan => {
     const dir = projectDir(cfg, project);
     if (!existsSync(join(dir, ".velocitas.json"))) throw new PlanError(`project ${project} does not exist or is not a Velocitas project`);
-    if (kind === "image") {
+    if (kind === "image" && cfg.toolchain !== "wasm") {
       const lang = cfg.toolchain ?? "cpp";
       if (lang === "python") throw new PlanError("image: Python apps need PyInstaller and staticx to be packed (template Dockerfile); not available in this toolchain yet");
       const steps: Step[] =
@@ -145,6 +145,7 @@ export function createPlanner(cfg: AgentConfig = defaultConfig()) {
           : [];
       return { steps: [...steps, imageStep(dir, options)], failCode: "BUILD_FAILED", failStage: "build" };
     }
+    if (cfg.toolchain === "wasm") return wasmPlan(dir, kind, options);
     if ((cfg.toolchain ?? "cpp") === "python") return pythonPlan(cfg, dir, kind, options);
     if (cfg.toolchain === "rust") return rustPlan(dir, kind, options);
     const artifact = (rel: string) => () => (existsSync(join(dir, rel)) ? null : `${rel} was not produced (see the build log)`);
@@ -314,6 +315,63 @@ function pythonPlan(cfg: AgentConfig, dir: string, kind: JobKind, options: JobOp
     }
     default:
       throw new PlanError(`job kind ${kind} has no plan`);
+  }
+}
+
+/** Language of a WebAssembly project (`.velocitas.json` variables `target: wasm`, `language`, ADR-0061). */
+function wasmLanguage(dir: string): "cpp" | "rust" {
+  const v = (JSON.parse(readFileSync(join(dir, ".velocitas.json"), "utf8")) as { variables?: { language?: string; target?: string } }).variables ?? {};
+  if (v.target !== "wasm") throw new PlanError("not a WebAssembly project (.velocitas.json variables.target is not wasm)");
+  if (v.language !== "cpp" && v.language !== "rust") throw new PlanError(`no WebAssembly toolchain for ${v.language ?? "an unknown language"}`);
+  return v.language;
+}
+
+/** After the language's build: validate and strip `build/app.wasm`, then precompile it with this host (ABI §5). */
+const WASM_FINISH = "wasm-tools validate build/app.wasm && wasm-tools strip build/app.wasm -o build/app.wasm && sv-wasm-host --precompile build/app.wasm build/app.cwasm";
+
+/**
+ * WebAssembly projects (ADR-0061, M20-T06): C++ with wasi-sdk through CMake, Rust with cargo for wasm32-wasip1
+ * (offline, vendored sources, shared target dir); both end in `build/app.wasm` + `build/app.cwasm`. Tests are the
+ * generated cases run inside the guest by `sv-wasm-host --test` (exit code = failed cases); a run is the host on
+ * the precompiled module with the app's allowlist.
+ */
+function wasmPlan(dir: string, kind: JobKind, options: JobOptions): Plan {
+  const lang = wasmLanguage(dir);
+  const jobs = "-j ${SV_CARGO_JOBS:-2}";
+  const build =
+    lang === "cpp"
+      ? 'cmake -S app -B build/cmake -DCMAKE_TOOLCHAIN_FILE="$WASI_SDK_PATH/share/cmake/wasi-sdk-p1.cmake" -DCMAKE_BUILD_TYPE=Release >/dev/null && cmake --build build/cmake && mkdir -p build && cp build/cmake/app.wasm build/app.wasm'
+      : `cargo build --manifest-path app/Cargo.toml --release --offline --target wasm32-wasip1 ${jobs} --message-format short && mkdir -p build && cp "$CARGO_TARGET_DIR/wasm32-wasip1/release/app.wasm" build/app.wasm`;
+  switch (kind) {
+    case "init":
+      return { steps: [{ label: `WebAssembly ${lang} project`, argv: bash(lang === "cpp" ? "test -f app/CMakeLists.txt" : "cargo metadata --manifest-path app/Cargo.toml --offline --format-version 1 --no-deps > /dev/null"), cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "generate-model":
+    case "deps":
+      return { steps: [{ label: "nothing to prepare (signals by VSS path, dependencies in the image)", argv: ["true"], cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "build":
+      return {
+        steps: [{ label: lang === "cpp" ? "cmake (wasi-sdk) ⇒ app.wasm ⇒ app.cwasm" : "cargo build (wasm32-wasip1) ⇒ app.wasm ⇒ app.cwasm", argv: bash(`${build} && ${WASM_FINISH}`), cwd: dir, check: () => (existsSync(join(dir, "build/app.cwasm")) ? null : "build/app.cwasm was not produced (see the build log)") }],
+        failCode: "BUILD_FAILED",
+        failStage: "build",
+      };
+    case "test": {
+      if (!existsSync(join(dir, "build/app.cwasm"))) throw new PlanError("build/app.cwasm is missing: build the project first");
+      const cases = existsSync(join(dir, "app/tests/generated/cases.json")) ? "app/tests/generated/cases.json" : null;
+      return {
+        steps: [{ label: "sv-wasm-host --test", argv: cases ? ["sv-wasm-host", "--test", "build/app.cwasm", cases] : bash("echo 'no test cases yet'"), cwd: dir }],
+        failCode: "GENERATED_TEST_FAILED",
+        failStage: "test",
+      };
+    }
+    case "format-check":
+      return { steps: [{ label: lang === "rust" ? "cargo fmt --check" : "no formatter for generated C++ (laid out by SimVehicleApp)", argv: lang === "rust" ? bash("cargo fmt --manifest-path app/Cargo.toml --check") : ["true"], cwd: dir }], failCode: "BUILD_FAILED", failStage: "build" };
+    case "run": {
+      const env = runEnv(options);
+      if (!existsSync(join(dir, "build/app.cwasm"))) throw new PlanError("build/app.cwasm is missing: build the project first");
+      return { steps: [{ label: "sv-wasm-host build/app.cwasm", argv: ["sv-wasm-host", "build/app.cwasm", "app/src/generated/sv-app.json"], cwd: dir, env }], failCode: "RUN_CRASHED", failStage: "run" };
+    }
+    default:
+      throw new PlanError(`job kind ${kind} has no plan for a WebAssembly project yet`);
   }
 }
 

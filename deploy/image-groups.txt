@@ -7,3 +7,4 @@ studio    simvehicleapp/studio:dev simvehicleapp/studio-migrations:dev simvehicl
 cpp       simvehicleapp/devcontainer-cpp:dev simvehicleapp/toolchain-cpp:dev simvehicleapp/ide-cpp:dev
 python    simvehicleapp/devcontainer-python:dev simvehicleapp/toolchain-python:dev simvehicleapp/ide-python:dev
 rust      simvehicleapp/toolchain-rust:dev
+wasm      simvehicleapp/wasm-host:dev simvehicleapp/toolchain-wasm:dev

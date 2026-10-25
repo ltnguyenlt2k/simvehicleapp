@@ -120,6 +120,37 @@ services:
     networks: [sv-internal, sv-edge]
     depends_on: [databroker, mqtt]
 
+  toolchain-wasm:
+    # WebAssembly apps in C++ and Rust (ADR-0061): wasi-sdk, rust wasm32-wasip1, wasm-tools and sv-wasm-host.
+    init: true
+    image: simvehicleapp/toolchain-wasm:dev
+    profiles: ["wasm"]
+    build:
+      context: .
+      dockerfile: toolchain/wasm/Dockerfile
+      additional_contexts:
+        codegencpp: docker-image://${SV_CODEGEN_CPP_IMAGE:-simvehicleapp/codegen-cpp:dev}
+        codegenrust: docker-image://${SV_CODEGEN_RUST_IMAGE:-simvehicleapp/codegen-rust:dev}
+        wasmhost: docker-image://${SV_WASM_HOST_IMAGE:-simvehicleapp/wasm-host:dev}
+        contracts: docker-image://${SV_CONTRACTS_IMAGE:-simvehicleapp/contracts:dev}
+      args:
+        CARGO_JOBS: ${SV_CARGO_JOBS:-2}
+    environment:
+      SV_COMMIT: ${SV_COMMIT:-unknown}
+      # Toolchain agent on :4240 (internal only).
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?set in .env}
+      SV_MAX_RUNS: ${SV_MAX_RUNS_TOTAL:-20}
+      SV_LOG_LEVEL: ${SV_LOG_LEVEL:-info}
+      SV_CARGO_JOBS: ${SV_CARGO_JOBS:-2}
+      SDV_VEHICLEDATABROKER_ADDRESS: grpc://databroker:55555
+      SDV_MQTT_ADDRESS: mqtt://mqtt:1883
+      SV_WASM_MAX_MEMORY_MB: ${SV_WASM_MAX_MEMORY_MB:-64}
+    volumes:
+      - sv-workspace:/workspace
+      - sv-wasm-target:/home/vscode/.sv-target
+    networks: [sv-internal, sv-edge]
+    depends_on: [databroker, mqtt]
+
   databroker:
     image: ghcr.io/eclipse-kuksa/kuksa-databroker:0.5.0
     # VSS 4.0 metadata: the image default is identical, we mount our pinned copy explicitly.
@@ -170,6 +201,7 @@ services:
     depends_on: [databroker]
 
 volumes:
+  sv-wasm-target:
   sv-workspace:
   sv-ccache:
   sv-vss-custom:

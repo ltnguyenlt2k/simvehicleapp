@@ -40,6 +40,8 @@ case "${1:-}" in
     if $DC config --services | grep -qx toolchain-python; then $DC build devcontainer-python toolchain-python; fi
     # Rust (profile `rust`, ADR-0041): the toolchain seeds its runtime crate from the codegen-rust image.
     if $DC config --services | grep -qx toolchain-rust; then $DC build codegen-rust && $DC build toolchain-rust; fi  # toolchain-rust FROMs the codegen-rust image
+    # WebAssembly (profile `wasm`, ADR-0061): the toolchain copies the runtimes from the codegen images and the host.
+    if $DC config --services | grep -qx toolchain-wasm; then $DC build codegen-cpp codegen-rust wasm-host && $DC build toolchain-wasm; fi
     $DC build ;;
   up)    ensure_env
          # Images loaded by `sv pull` (SV_PREBUILT=<tag>): never build on this host — compose would otherwise

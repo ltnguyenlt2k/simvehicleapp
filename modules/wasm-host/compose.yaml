@@ -1,0 +1,17 @@
+# wasm-host — self-contained compose fragment (profile `wasm`, ADR-0061): builds the sv-wasm-host image that
+# toolchain-wasm copies the host from. Nothing runs from it: the service only prints its version and exits.
+services:
+  wasm-host:
+    image: simvehicleapp/wasm-host:dev
+    profiles: ["wasm"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CARGO_BUILD_JOBS: ${SV_CARGO_JOBS:-2}
+    command: ["--version"]
+    restart: "no"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    network_mode: none

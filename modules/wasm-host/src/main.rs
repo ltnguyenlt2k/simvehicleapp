@@ -52,6 +52,10 @@ fn print(lines: Vec<Line>) {
 fn run(args: &[String]) -> Result<i32> {
     let (engine, _ticker) = abi::engine()?;
     match args.first().map(String::as_str) {
+        Some("--version") => {
+            println!("sv-wasm-host {} ({})", env!("CARGO_PKG_VERSION"), abi::ABI);
+            Ok(0)
+        }
         Some("--precompile") => {
             let [_, input, output] = args else {
                 bail!("usage: sv-wasm-host --precompile app.wasm app.cwasm")

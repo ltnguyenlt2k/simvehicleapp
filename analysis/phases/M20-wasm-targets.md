@@ -72,8 +72,9 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
 - [x] Test sinh ra: test case nhúng JSON ⇒ `sv_run_tests` (C++: `cases.json` `[{name, workflow, scenario}]`, mỗi case chỉ bind workflow của nó như test native).
 
 ### T06: Toolchain
-- [ ] Image `toolchain-wasm` (pin sha256 tarball wasi-sdk; rustup target), agent plan build/test/run; profile `wasm`.
-- [ ] RAM/đĩa đo và ghi (máy dev 11 GB; build image trên CI theo ADR-0051).
+- [x] Image `toolchain-wasm` (`velocitas-stack/toolchain/wasm/Dockerfile`): wasi-sdk-34 + wasm-tools 1.262.0 pin sha256, rust `wasm32-wasip1`, header nlohmann riêng (`SV_JSON_INCLUDE=/opt/sv/include`), `sv-wasm-host` copy từ image `wasm-host`, hai seed `cpp-wasm`/`rust-wasm` (template + runtime từ image codegen), crate vendored ⇒ cargo offline. Lúc build image, mỗi seed được biên dịch thử thành `.wasm` (C++ còn precompile). Agent: `SV_TOOLCHAIN=wasm`, ngôn ngữ đọc từ `.velocitas.json` (`target: wasm`), plan build/test/run/format-check (`wasmPlan`), `GET /templates?lang=cpp-wasm|rust-wasm`. Compose profile `wasm` (`toolchain-wasm` :4240, `wasm-host` chỉ để build); nhóm image `wasm`; `scripts/sv build` và release-images build đúng thứ tự.
+- [x] RAM/đĩa (2026-10-25, máy dev): image 2,03 GB, build tại máy với `-j2`, không vượt RAM. Trong image: GW-A C++ (1,06 MB wasm, 2,7 MB cwasm) và Rust (347 KB, 1,08 MB) build + `--test` PASS.
+- Lưu ý: wasi-sdk 34 đổi tên toolchain file thành `share/cmake/wasi-sdk-p1.cmake` (không còn `wasi-sdk.cmake`).
 
 ### T07: Studio/orchestrator
 - [ ] Tạo project: "Runtime: Velocitas (native) / WebAssembly"; Vehicle apps hiện target.

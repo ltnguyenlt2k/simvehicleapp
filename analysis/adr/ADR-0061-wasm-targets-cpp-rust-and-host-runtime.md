@@ -146,6 +146,11 @@ flowchart LR
   - E2E `@live`: tạo project target WASM → SynCode → Run → inject → hazard bật; Flow view (ADR-0062) hiện đủ luồng.
 
 ## Notes / Deviations
+- 2026-10-25 — **T06** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
+  - Một image `toolchain-wasm` phục vụ cả C++ và Rust; agent đọc `.velocitas.json` (`target: wasm`) của project. Template wasm có `.velocitas.json` như template Rust, nên workspace/agent nhận ra project như mọi project khác.
+  - Khoá backend/toolchain: `cpp-wasm`, `rust-wasm`, cùng trỏ một agent :4240.
+  - Header nlohmann/json nằm ở thư mục riêng (`/opt/sv/include`), để header của host không lẫn vào bản build wasm.
+  - wasi-sdk 34 đổi tên toolchain file thành `wasi-sdk-p1.cmake`.
 - 2026-10-25 — **T05, Rust** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận): Rust không có static initializer nên app không tự đăng ký như C++. Macro `simvehicleapp_runtime::wasm_app!` sinh các export `sv_*` ngay trong crate app (template `lib.rs` gọi nó với `generated::wasm::app(hooks)`), tránh phụ thuộc vào việc cdylib có export `#[no_mangle]` của crate phụ thuộc hay không. App Rust nhỏ hơn C++ khoảng 3 lần (345 KB so với 1 MB sau strip).
 - 2026-10-25 — **T04, runtime C++ dạng guest** (Claude Code, theo uỷ quyền PO — chờ PO xác nhận):
   - ABI thêm event `start`. `sv_init` chỉ bind workflow và subscribe tín hiệu; host chờ giá trị đầu rồi gửi `start`; guest đọc baseline bằng `vdb_current` rồi mới `Runtime::start()`. Thứ tự giống prefetch ⇒ start của app native, nên `previous` của trigger đúng.
