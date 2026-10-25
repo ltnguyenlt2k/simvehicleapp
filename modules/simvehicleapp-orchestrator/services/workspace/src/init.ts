@@ -49,10 +49,18 @@ const RUNTIME_PREFIX = "app/src/simvehicleapp-runtime/";
 
 async function untar(stream: ReadableStream<Uint8Array>, dir: string) {
   mkdirSync(dir, { recursive: true });
-  // GNU/busybox tar refuse absolute names and `..` members by default.
-  const proc = Bun.spawn(["tar", "-xf", "-", "-C", dir], { stdin: stream, stdout: "ignore", stderr: "pipe" });
-  const code = await proc.exited;
-  if (code !== 0) throw new InitFailed(`template extraction failed: ${(await new Response(proc.stderr).text()).slice(0, 500)}`);
+  // Through a file, not tar's stdin: if tar exits before the stream ends (end-of-archive marker, an
+  // error), the write into its closed pipe is an uncaught EPIPE that takes the whole service down.
+  const archive = `${dir}.tar`;
+  try {
+    writeFileSync(archive, new Uint8Array(await new Response(stream).arrayBuffer()));
+    // GNU/busybox tar refuse absolute names and `..` members by default.
+    const proc = Bun.spawn(["tar", "-xf", archive, "-C", dir], { stdout: "ignore", stderr: "pipe" });
+    const code = await proc.exited;
+    if (code !== 0) throw new InitFailed(`template extraction failed: ${(await new Response(proc.stderr).text()).slice(0, 500)}`);
+  } finally {
+    rmSync(archive, { force: true });
+  }
 }
 
 function writeIn(dir: string, rel: string, content: string) {

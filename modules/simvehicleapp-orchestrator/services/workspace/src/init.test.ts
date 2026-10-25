@@ -51,6 +51,32 @@ describe("project creation (ADR-0026 §2, M07-T07)", () => {
     await expect(initProject(store, { slug: "wasm-rs", language: "rust", target: "wasm", appName: "WasmRs", vssRelease: "v4.0" }, src)).rejects.toThrow("no rust-wasm backend");
   });
 
+  test("a template stream that goes on past the end-of-archive marker (record padding) neither fails nor breaks the service", async () => {
+    // Guard for the template extraction: the service crashed on an uncaught EPIPE while creating a project (nightly 40186816665).
+    const archive = new Uint8Array(await new Response(Bun.spawn(["tar", "-cf", "-", "-C", seed, "."], { stdout: "pipe" }).stdout).arrayBuffer());
+    const tail = new Uint8Array(4 * 1024 * 1024);
+    const padded = () =>
+      new ReadableStream<Uint8Array>({
+        async start(c) {
+          c.enqueue(archive);
+          for (let i = 0; i < 64; i++) {
+            await Bun.sleep(1);
+            c.enqueue(tail.subarray(i * 65536, (i + 1) * 65536));
+          }
+          c.close();
+        },
+      });
+    // Served over HTTP like the toolchain's /templates: the agent's body reaches tar's stdin.
+    const server = Bun.serve({ port: 0, fetch: () => new Response(padded()) });
+    const store = new Store(join(SCRATCH, "ws-padded"));
+    try {
+      await initProject(store, { slug: "padded-app", language: "cpp", appName: "PaddedApp", vssRelease: "v4.0" }, sources({ template: async () => (await fetch(`http://127.0.0.1:${server.port}/`)).body! }));
+    } finally {
+      server.stop(true);
+    }
+    expect(existsSync(join(store.projectDir("padded-app"), "build.sh"))).toBe(true);
+    expect(readdirSync(join(store.metaDir, "staging")).filter((f) => f.endsWith(".tar"))).toEqual([]);
+  });
 
   test("template + overlay − sample + runtime + VSS of the release, renamed into place; the sample entries are gone", async () => {
     const store = new Store(join(SCRATCH, "ws1"));
