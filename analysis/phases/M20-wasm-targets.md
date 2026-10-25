@@ -91,7 +91,7 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
     6. `lib.rs` template Rust chưa theo rustfmt.
 - [x] Export WASM: README/NOTICE/THIRD-PARTY của project `target: wasm` hướng dẫn build bằng wasi-sdk hoặc cargo `wasm32-wasip1` và chạy bằng `sv-wasm-host` (v2, allowlist), không nhắc Dockerfile Velocitas (test export).
 - [x] Deploy image (ADR-0060): job `image` của toolchain-wasm build module rồi đóng image `FROM scratch` gồm `sv-wasm-host` (cùng các thư viện `ldd`), `app.cwasm`, `sv-app.json`; lệnh chạy `/app /app.cwasm /sv-app.json`. Gate `m18-image.sh <lang> wasm` trên stack dev: **C++ và Rust PASS** (push không cần Docker, khoảng 9 MB nén / 25 MB giải nén, pull theo digest, chạy ⇒ `app.started`).
-- [ ] E2E UI: chọn Runtime WebAssembly trong hộp thoại tạo app (studio image, CI) — làm ở T09 cùng full luồng.
+- [x] E2E UI: chọn Runtime WebAssembly (`m7-syncode`, CI xanh `85b34040`) + `m20-wasm-live @live`.
 
 ### T08: Conformance, parity, tái lập, an toàn, hiệu năng (2026-10-25, stack dev)
 - [x] Conformance: `gate/m20-wasm-conformance.sh cpp|rust` — mọi case golden + conformance sinh bằng `/wasm/generate`, build trong toolchain-wasm, chạy trong guest bằng `sv-wasm-host --test`; golden so `expected.writes` và cả `expected.trace` theo thứ tự (bỏ `runId`/`seq` của lần chạy simulator). **cpp-wasm 52/52, rust-wasm 52/52.**
@@ -109,9 +109,9 @@ Chia **T03a** (lõi) và **T03b** (databroker, MQTT, chế độ run, image); c�
 - Nightly: job `wasm` trong `.github/workflows/nightly.yml` build `wasm-host` + `toolchain-wasm` và chạy conformance, parity P3, ADAS live cho C++ và Rust (2026-10-25; chờ lần chạy đầu).
 
 ### T09: Đóng milestone
-- [ ] Gate M20; full luồng `@live` cho project WASM C++ và Rust; quay lại video.
+- [x] Gate M20; full luồng `@live` cho project WASM C++ và Rust (`m20-wasm-live` 2/2); quay lại video (2026-10-25).
 - [x] README chính + `docs/user-guide/wasm.md`; báo cáo nháp `docs/reports/M20.md`; ROADMAP.
-- [ ] Nightly `wasm` xanh; `sv refresh`; báo cáo chốt.
+- [x] Nightly `wasm` xanh (40194570658); `sv refresh`; báo cáo chốt.
 
 ## Acceptance gate
 1. Cùng một workflow ⇒ SynCode ra app C++→WASM và Rust→WASM; Run trên stack bằng `sv-wasm-host`; inject ⇒ actuator đổi; Flow hiện đủ luồng.
