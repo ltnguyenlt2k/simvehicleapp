@@ -42,3 +42,9 @@
 Khi làm: E2E hai project, app A publish ⇒ app B nhận và ghi actuator (live).
 
 ## Notes / Deviations
+- **2026-10-25 (M21 D9, PO chấp thuận toàn bộ):** hiện thực §1 bằng tài liệu + gate, không thêm cơ chế:
+  - [hướng dẫn](../../docs/user-guide/multiple-apps.md) (producer/consumer qua MQTT);
+  - gate `modules/simvehicleapp-orchestrator/gate/two-apps-mqtt.sh` PASS trên stack dev (C++): hai app chạy cùng lúc, mỗi app một databroker sandbox; hazard của consumer theo tốc độ inject vào producer, chỉ qua topic MQTT.
+  - Đã xác nhận trong code: topic của `sv_mqtt_publish`/`sv_on_mqtt` dùng nguyên văn; `mqttTopicPrefix` chỉ lọc tab Messages.
+  - "Project group" (§2) không làm: không có nhu cầu đo được.
+  - gRPC giữa app (§3) theo ADR-0043 (M21 D8).

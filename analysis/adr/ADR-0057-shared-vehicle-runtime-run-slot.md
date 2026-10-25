@@ -175,3 +175,9 @@ flowchart LR
 - 2026-10-15 — bản đầu của ADR này (cùng ngày) chọn "một run mỗi databroker dùng chung + thời hạn". Lý do loại phương án databroker riêng mỗi run lúc đó là "tốn RAM/CPU", **chưa đo**.
 - 2026-10-15 (đối chiếu sau): ADR-0046 đã có trước, chọn "pool stack tĩnh" khi cần multi-user (hoãn chờ PO). Bản đầu của ADR này chưa nhắc tới 0046; nay ghi rõ: ADR-0057 đề xuất **thay quyết định 2 của ADR-0046** bằng sandbox dạng tiến trình (cùng nguyên tắc không docker.sock), và ADR-0046 có Notes trỏ sang đây. Khi PO duyệt, 0046 chuyển "Superseded (một phần) by ADR-0057".
 - Sau câu hỏi của PO về multi-user, đã đo lại: databroker 3,8–5,9 MB, app ~14 MB. Lý do loại đó sai, và phương án cũ không cho nhiều người dùng chạy (mỗi release một người). Decision đổi sang sandbox mỗi run; phương án cũ chuyển xuống Alternatives.
+- **2026-10-25 (M21, lệch có chủ đích so với §1 "mặc định"):** `SV_RUN_SANDBOX` **giữ mặc định `0`** trên stack dev; host nhiều người đặt `1` ([DEPLOY](../../docs/DEPLOY.md)). Lý do (đã kiểm source):
+  - parity P3 (`gate/parity-p3.ts`) đặt giá trị đầu lên databroker dùng chung **trước** khi app khởi động. Sandbox chỉ có khi run bắt đầu ⇒ đổi mặc định sẽ đổi chính thứ parity đo.
+  - `m8-gate` kiểm 409 của chế độ một run.
+  - Máy một người không cần thêm một databroker mỗi run.
+  - Gate cần nhiều run cùng lúc (`m17-runtime.sh`, `two-apps-mqtt.sh`) tự bật sandbox cho orchestrator trong lúc chạy.
+  - Hệ quả cho M14 #4 (M21 D10): nhiều người/nhiều app cùng lúc được đáp ứng **khi bật** `SV_RUN_SANDBOX=1`.
