@@ -221,6 +221,7 @@ test.describe('M7 SynCode', () => {
             (service) => ({
               service,
               status: 'ok',
+              via: 'orchestrator',
             })
           ),
         },
