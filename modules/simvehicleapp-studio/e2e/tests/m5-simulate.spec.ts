@@ -103,6 +103,8 @@ test.describe('M5 Simulate', () => {
     ).toBeVisible()
     // Make test case from this run (M19-T06): a new case that locks the run's inputs and write; then back to the first.
     const cases = page.locator('[data-sv="test-case"]')
+    // the saved scenario is the first case: wait for the list before counting
+    await expect(cases.first()).toBeVisible()
     const before = await cases.count()
     await flowRun.locator('[data-sv="flow-make-case"]').click()
     await expect(cases).toHaveCount(before + 1)
