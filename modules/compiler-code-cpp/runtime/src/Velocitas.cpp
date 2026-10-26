@@ -239,8 +239,15 @@ void VelocitasPubSub::subscribe(const std::string& filter) {
 }
 
 void VelocitasPubSub::publish(const std::string& topic, const std::string& payload) {
-    if (m_client) {
+    if (!m_client) {
+        return;
+    }
+    // Fire and forget (ADR-0012 §3), as the Python and Rust runtimes: a broker that is gone (the app is stopping, the
+    // connection dropped) is logged, never an exception out of the run — paho throws mqtt::exception when disconnected.
+    try {
         m_client->publishOnTopic(topic, payload);
+    } catch (const std::exception& e) {
+        velocitas::logger().warn("simvehicleapp: MQTT publish to {} failed: {}", topic, e.what());
     }
 }
 
