@@ -2,6 +2,8 @@
 # M15-T09/T10: records the full-flow demo video on the running stack and writes docs/media/full-flow.{mp4,gif}.
 #   scripts/sv demo-video                 record + encode the full flow ⇒ docs/media/full-flow.{mp4,gif}
 #   scripts/sv demo-video --tutorial      record + encode the tutorial "Overspeed warning" ⇒ docs/media/demo.{mp4,gif}
+#   scripts/sv demo-video --showcase      record + encode every feature on two workflows (M21) ⇒ docs/media/showcase.{mp4,gif}
+#                                         (starts a throwaway registry `sv-demo-registry` on sv-internal for the image push)
 #   scripts/sv demo-video --encode-only   encode the last full-flow recordings again
 # 1. Playwright (official image, as the current user) runs `@live full flow` with SV_DEMO=1 (captions, pauses, 1920×1080);
 # 2. the studio, realtime, orchestrator, workspace and assistant restart, `@live-restart` checks everything is still there (also recorded);
@@ -19,6 +21,7 @@ STUDIO_URL=$(env_of SV_STUDIO_URL); STUDIO_URL=${STUDIO_URL:-http://localhost:30
 MODE=${1:-}
 NAME=full-flow; CLIPS=2
 [[ "$MODE" == --tutorial ]] && { NAME=demo; CLIPS=1; }
+[[ "$MODE" == --showcase ]] && { NAME=showcase; CLIPS=1; }
 if [[ "$MODE" != --encode-only ]]; then
   [[ "$(env_of SV_AI_PROVIDER)" == fake ]] || { echo "demo-video: set SV_AI_PROVIDER=fake in .env (offline, deterministic assistant)"; exit 1; }
   curl -fsS -o /dev/null "$STUDIO_URL" || { echo "demo-video: studio not reachable at $STUDIO_URL — scripts/sv up"; exit 1; }
@@ -32,6 +35,11 @@ if [[ "$MODE" != --encode-only ]]; then
   }
   if [[ "$MODE" == --tutorial ]]; then
     playwright '@live tutorial' 1-tutorial tutorial-live.spec.ts
+  elif [[ "$MODE" == --showcase ]]; then
+    docker rm -f sv-demo-registry >/dev/null 2>&1 || true
+    docker run -d --rm --name sv-demo-registry --network simvehicleapp_sv-internal registry:2 >/dev/null
+    trap 'docker rm -f sv-demo-registry >/dev/null 2>&1 || true' EXIT
+    playwright '@live showcase' 1-showcase m21-showcase.spec.ts
   else
   playwright '@live full flow' 1-flow m15-full-flow.spec.ts
   echo "demo-video: restarting the studio, realtime, orchestrator, workspace and assistant services"
