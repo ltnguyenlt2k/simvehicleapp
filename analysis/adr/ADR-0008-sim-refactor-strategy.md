@@ -95,6 +95,6 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
     - `hono` 4.13.13;
     - `ip-address` 10.7.4.
   - **Ngoại lệ tuổi** (`bunfig.toml` `minimumReleaseAgeExcludes`): `fast-uri` 3.1.9. Đã ghim 2026-10-24 vì 4 advisory, nhưng bản phát hành 2026-10-19 chưa đủ 7 ngày nên bun từ chối khi resolve lại.
-  - **Chờ đủ 7 ngày:** `nodemailer` 10.1.4 (2026-10-17+), `body-parser` 2.4.0 (2026-10-22).
+  - **Chờ đủ 7 ngày:** `nodemailer` ⇒ **10.1.7** (nâng 2026-10-26, messaging 79 test PASS); `body-parser` 2.4.0 (2026-10-22, đủ tuổi 2026-10-29).
   - **Còn lại cần nâng major:** csv-parse 7, deepmerge-ts 8, file-type 21, image-size 2, katex 0.18, postcss-selector-parser 7, uuid 11, esbuild 0.25 (dev). Đều nằm trong parser file/office, tailwind và công cụ dev của Sim, không ở đường dữ liệu xe.
   - **Báo nhầm:** `simstudio` (CLI workspace) và `xlsx` 0.20.3 (bản CDN mới hơn bản advisory 0.17).
