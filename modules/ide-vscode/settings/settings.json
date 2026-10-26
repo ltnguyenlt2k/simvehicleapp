@@ -16,6 +16,9 @@
   },
   "terminal.integrated.defaultProfile.linux": "zsh",
   "telemetry.telemetryLevel": "off",
+  "chat.disableAIFeatures": true,
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "workbench.startupEditor": "none",
   "launch": {
     "version": "0.2.0",
     "configurations": [
