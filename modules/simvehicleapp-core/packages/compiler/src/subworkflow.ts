@@ -47,18 +47,25 @@ export const MAX_CALL_DEPTH = 4;
 const VARIABLE_BLOCKS = new Set(["sv_var_get", "sv_var_set", "sv_counter", "sv_state_machine"]);
 const REF = /<([A-Za-z_][A-Za-z0-9_]*)((?:\.[A-Za-z0-9_]+)+)>/g;
 
+/** Where an inlined block comes from: the call of the compiled graph, its name, and the function chain. */
+interface Origin {
+  call: string;
+  callName: string;
+  workflow: string;
+}
+
 export interface Expanded {
   graph: FlowGraph;
   diagnostics: DiagnosticV1[];
   /** Inlined block id ⇒ the call block of the graph that was compiled, and the function's name (diagnostics). */
-  origin: Map<string, { call: string; workflow: string }>;
+  origin: Map<string, Origin>;
 }
 
 
 /** Expands every call of `graph`; `callees` are the function workflows it may call (directly or not). */
 export function expandCalls(graph: FlowGraph, callees: readonly FlowGraph[], specs: Map<string, BlockSpec>): Expanded {
   const diagnostics: DiagnosticV1[] = [];
-  const origin = new Map<string, { call: string; workflow: string }>();
+  const origin = new Map<string, Origin>();
   const byId = new Map(callees.map((w) => [w.workflowId, w]));
   const diag = (code: string, blockId: string, message: string, data: Record<string, unknown> = {}, field = "workflowId") =>
     catalogDiag(code, graph.workflowId, { blockId, field, message, data });
@@ -73,7 +80,7 @@ function expand(
   callees: Map<string, FlowGraph>,
   specs: Map<string, BlockSpec>,
   diagnostics: DiagnosticV1[],
-  origin: Map<string, { call: string; workflow: string }>,
+  origin: Map<string, Origin>,
   diag: (code: string, blockId: string, message: string, data?: Record<string, unknown>, field?: string) => DiagnosticV1,
 ): FlowGraph {
   if (!g.blocks.some((b) => b.type === CALL)) return g;
@@ -97,7 +104,7 @@ function expand(
       continue;
     }
     const nested: DiagnosticV1[] = [];
-    const nestedOrigin = new Map<string, { call: string; workflow: string }>();
+    const nestedOrigin = new Map<string, Origin>();
     const body = expand(fn, [...stack, fid], depth + 1, callees, specs, nested, nestedOrigin, diag);
     // A problem inside the function is reported on the call that brought it in.
     for (const d of nested) diagnostics.push({ ...d, blockId: call.id, message: `In ${fn.name}: ${d.message}` });
@@ -128,7 +135,9 @@ function expand(
       const props = rename(b.props) as Props;
       if (VARIABLE_BLOCKS.has(b.type) && typeof props.name === "string" && fnVars.has(props.name)) props.name = varName(props.name);
       const c: Block = { ...b, id: newId(b.id), name: `${call.name}_${b.name}`, props, parentId: b.parentId ? newId(b.parentId) : (b.parentId ?? null) };
-      origin.set(c.id, nestedOrigin.get(b.id) ?? { call: call.id, workflow: fn.name });
+      // Blocks of a nested call belong to this call too (the nested call is not a block of the compiled graph).
+      const inner = nestedOrigin.get(b.id);
+      origin.set(c.id, { call: call.id, callName: call.name, workflow: inner ? `${fn.name} › ${inner.workflow}` : fn.name });
       return c;
     });
     for (const v of body.variables ?? []) variables.push({ ...v, name: varName(v.name) });
@@ -136,7 +145,7 @@ function expand(
     // Arguments, in the order the call lists them; then the body; then the result.
     const argBlocks: Block[] = Object.keys(args).map((a) => ({ id: newId(`arg-${a}`), type: "sv_var_set", name: `${call.name}_arg_${a}`, props: { name: varName(a), value: args[a] }, parentId: call.parentId ?? null, blockVersion: 1 }));
     const result: Block | null = fnVars.has("result") ? { id: newId("result"), type: "sv_var_get", name: call.name, props: { name: varName("result") }, parentId: call.parentId ?? null, blockVersion: 1 } : null;
-    for (const b of [...argBlocks, ...(result ? [result] : [])]) origin.set(b.id, { call: call.id, workflow: fn.name });
+    for (const b of [...argBlocks, ...(result ? [result] : [])]) origin.set(b.id, { call: call.id, callName: call.name, workflow: fn.name });
 
     let n = 0;
     const edge = (from: string, fromHandle: string, to: string, toHandle = "target"): Edge => ({ id: newId(`e${n++}`), from, fromHandle, to, toHandle });
@@ -184,14 +193,14 @@ export interface PreparedCalls {
   graph: unknown;
   /** Problems of the calls themselves; any error means no IR. */
   diagnostics: DiagnosticV1[];
-  /** Reports a diagnostic of an inlined block on the call that brought it in. */
-  remap(d: DiagnosticV1): DiagnosticV1;
+  /** Reports the diagnostics of inlined blocks on the call that brought them in, once each. */
+  adopt(list: DiagnosticV1[]): DiagnosticV1[];
 }
 
 /** ADR-0063 before lint: inline the calls of `input`, or refuse a function workflow compiled on its own. */
 export function prepareCalls(input: unknown, callees: readonly unknown[] | undefined, specs: Map<string, BlockSpec>): PreparedCalls {
   const g = input as FlowGraph | null;
-  const none: PreparedCalls = { graph: input, diagnostics: [], remap: (d) => d };
+  const none: PreparedCalls = { graph: input, diagnostics: [], adopt: (list) => list };
   if (!g || typeof g !== "object" || !Array.isArray(g.blocks) || !Array.isArray(g.edges)) return none;
   const entry = g.blocks.find((b) => b?.type === ON_CALL);
   if (entry) {
@@ -203,9 +212,23 @@ export function prepareCalls(input: unknown, callees: readonly unknown[] | undef
   return {
     graph: ex.graph,
     diagnostics: ex.diagnostics,
-    remap: (d) => {
-      const o = d.blockId ? ex.origin.get(d.blockId) : undefined;
-      return o ? { ...d, blockId: o.call, message: `In ${o.workflow}: ${d.message}` } : d;
+    adopt: (list) => {
+      const seen = new Set<string>();
+      const out: DiagnosticV1[] = [];
+      for (const d of list) {
+        const o = d.blockId ? ex.origin.get(d.blockId) : undefined;
+        // An unconnected call leaves every inlined block unreachable: one warning, on the call, says it.
+        const r = !o
+          ? d
+          : d.code === "BLOCK_UNREACHABLE"
+            ? { ...d, blockId: o.call, message: `${o.callName} never runs — it is not connected to a trigger` }
+            : { ...d, blockId: o.call, message: `In ${o.workflow}: ${d.message}` };
+        const key = `${r.code}|${r.blockId ?? ""}|${r.field ?? ""}|${r.message}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(r);
+      }
+      return out;
     },
   };
 }

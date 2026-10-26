@@ -68,7 +68,7 @@ export async function lint(graphInput: unknown, ctx: LintContext): Promise<Diagn
   // Calls of function workflows are inlined first (ADR-0063): the rest lints one flat graph.
   const prep = prepareCalls(graphInput, ctx.callees, new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s])));
   if (prep.diagnostics.some((d) => d.severity === "error")) return prep.diagnostics;
-  return [...prep.diagnostics, ...(await lintGraph(prep.graph, ctx)).map(prep.remap)];
+  return [...prep.diagnostics, ...prep.adopt(await lintGraph(prep.graph, ctx))];
 }
 
 /** S0–S3 (+ part of S6) of one graph without calls. */

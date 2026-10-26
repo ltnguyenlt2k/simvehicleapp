@@ -50,6 +50,14 @@ export function duration(ms: unknown): string {
 }
 
 const rows = (v: unknown): number => (Array.isArray(v) ? v.length : 0)
+/** Table rows with a non-empty `name` cell (the editor keeps an empty row to type into). */
+const named = (v: unknown): number =>
+  Array.isArray(v)
+    ? v.filter((row) => {
+        const name = (row as { cells?: Record<string, unknown> })?.cells?.name
+        return typeof name === 'string' && name.trim().length > 0
+      }).length
+    : 0
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Cells of a table subBlock (`[{ cells: { value } }]`). */
@@ -218,7 +226,7 @@ export const SV_SUMMARY_RULES: Record<string, (v: Values) => SvBlockSummary> = {
   sv_on_call: () => ({ role: 'when', text: 'When another workflow calls this one' }),
   sv_call_workflow: (v) => ({
     role: 'flow',
-    text: `Call a workflow · ${plural(rows(v.args), 'argument')}`,
+    text: `Call a workflow · ${plural(named(v.args), 'argument')}`,
   }),
 }
 

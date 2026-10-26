@@ -102,3 +102,8 @@ flowchart LR
 - E2E: tạo workflow hàm, gọi nó, Simulate, SynCode.
 
 ## Notes / Deviations
+- **2026-10-26 — sửa sau khi chạy thử trên UI (kịch bản demo M21):**
+  - Khối trong hàm lồng được gắn với lời gọi **trong** hàm, nên chẩn đoán trỏ vào một id không có trên canvas. Nay mọi khối inline gắn với lời gọi của graph đang compile; tên workflow ghi theo chuỗi `A › B`.
+  - Lời gọi chưa nối trigger sinh một `BLOCK_UNREACHABLE` cho mỗi khối inline, mang tên nội bộ (`check_arg_speed`…). Nay chỉ còn **một** cảnh báo trên khối gọi, mang tên khối gọi; chẩn đoán trùng bị bỏ.
+  - Câu tóm tắt khối chỉ đếm tham số có tên (bảng luôn giữ một dòng trống).
+  - Test: `subworkflow.test.ts` (2 test mới), `block-summary.test.ts`.

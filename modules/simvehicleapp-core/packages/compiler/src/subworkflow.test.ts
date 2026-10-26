@@ -112,3 +112,32 @@ describe("sub-workflows (ADR-0063)", () => {
     }
   });
 });
+
+describe("sub-workflow diagnostics land on the call the user sees (ADR-0063)", () => {
+  test("a call not connected to a trigger: one BLOCK_UNREACHABLE, on the call, by its name", async () => {
+    const g = caller({});
+    g.edges = (g.edges as { id: string }[]).filter((e) => e.id !== "e1");
+    const r = await compile(g, { ...ctx, callees: [safety] });
+    const unreachable = r.diagnostics.filter((d) => d.code === "BLOCK_UNREACHABLE");
+    expect(unreachable.filter((d) => d.blockId === "b2").map((d) => d.message)).toEqual(["check never runs — it is not connected to a trigger"]);
+    expect(unreachable.every((d) => ["b2", "b3"].includes(d.blockId ?? ""))).toBe(true);
+  });
+
+  test("a mistake two calls deep is reported on the outer call, with the chain of functions", async () => {
+    const inner = structuredClone(safety);
+    inner.workflowId = "fn_inner";
+    inner.name = "Inner check";
+    (inner.blocks[2] as { props: Record<string, unknown> }).props.condition = "<nothere.value> > 120";
+    const outer = graph("fn_safety", "Safety check", [block("o1", "sv_on_call", "called", {}), block("o2", "sv_call_workflow", "deeper", { workflowId: "fn_inner", args: [] })], [edge("p1", "o1", "source", "o2")], [
+      { name: "speed", type: "double", initial: 0 },
+      { name: "result", type: "boolean", initial: false },
+    ]);
+    const r = await compile(caller({}), { ...ctx, callees: [outer, inner] });
+    const errors = r.diagnostics.filter((d) => d.severity === "error");
+    expect(errors.length).toBeGreaterThan(0);
+    for (const d of errors) {
+      expect(d.blockId).toBe("b2");
+      expect(d.message).toContain("Inner check");
+    }
+  });
+});

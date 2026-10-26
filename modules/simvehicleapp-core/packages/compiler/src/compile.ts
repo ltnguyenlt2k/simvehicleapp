@@ -61,7 +61,7 @@ export async function compile(source: unknown, ctx: CompileContext, mode: "verif
   const prep = prepareCalls(source, ctx.callees, specs);
   if (prep.diagnostics.some((d) => d.severity === "error")) return { diagnostics: prep.diagnostics };
   const graphInput = prep.graph;
-  const lintDiags = [...prep.diagnostics, ...(await lintGraph(graphInput, ctx)).map(prep.remap)];
+  const lintDiags = [...prep.diagnostics, ...prep.adopt(await lintGraph(graphInput, ctx))];
   if (lintDiags.some((d) => d.severity === "error")) return { diagnostics: lintDiags };
 
   const { graph } = migrateGraph(graphInput as WorkflowGraphV1, specs, ctx.migrations ?? MIGRATIONS);
@@ -69,7 +69,7 @@ export async function compile(source: unknown, ctx: CompileContext, mode: "verif
   await b.loadVehicle(ctx);
   b.build();
   const wf = graph.workflowId;
-  const typed = b.diagnostics.map(prep.remap);
+  const typed = prep.adopt(b.diagnostics);
   const order = ((source as { blocks?: { id: string }[] }).blocks ?? []).map((x) => x.id);
   let diagnostics = sortDiagnostics([...lintDiags, ...typed], order);
   if (diagnostics.some((d) => d.severity === "error")) return { diagnostics };
@@ -92,7 +92,7 @@ export async function compile(source: unknown, ctx: CompileContext, mode: "verif
     };
   }
   if (ctx.backend && ctx.capabilities) {
-    diagnostics = sortDiagnostics([...diagnostics, ...(await checkBackend(ir as never, ctx.backend, ctx.capabilities)).map(prep.remap)], order);
+    diagnostics = sortDiagnostics([...diagnostics, ...prep.adopt(await checkBackend(ir as never, ctx.backend, ctx.capabilities))], order);
     if (diagnostics.some((d) => d.severity === "error")) return { diagnostics };
   }
   return mode === "build" ? { diagnostics, ir } : { diagnostics };

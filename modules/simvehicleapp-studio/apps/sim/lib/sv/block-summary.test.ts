@@ -116,4 +116,12 @@ describe('block summary (ADR-0055)', () => {
     expect(duration('2000')).toBe('2 s')
     expect(duration(undefined)).toBe('…')
   })
+
+  it('Call workflow counts the arguments that have a name (the editor keeps an empty row)', () => {
+    const args = [
+      { cells: { name: 'speed', value: '<trig.value>' } },
+      { cells: { name: '', value: '' } },
+    ]
+    expect(blockSummary('sv_call_workflow', { args })?.text).toBe('Call a workflow · 1 argument')
+  })
 })
