@@ -96,5 +96,14 @@ Bằng chứng: [docs/reports/M01.md](../../docs/reports/M01.md); mọi thay đ�
     - `ip-address` 10.7.4.
   - **Ngoại lệ tuổi** (`bunfig.toml` `minimumReleaseAgeExcludes`): `fast-uri` 3.1.9. Đã ghim 2026-10-24 vì 4 advisory, nhưng bản phát hành 2026-10-19 chưa đủ 7 ngày nên bun từ chối khi resolve lại.
   - **Chờ đủ 7 ngày:** `nodemailer` ⇒ **10.1.7** (nâng 2026-10-26, messaging 79 test PASS); `body-parser` 2.4.0 (2026-10-22, đủ tuổi 2026-10-29).
-  - **Còn lại cần nâng major:** csv-parse 7, deepmerge-ts 8, file-type 21, image-size 2, katex 0.18, postcss-selector-parser 7, uuid 11, esbuild 0.25 (dev). Đều nằm trong parser file/office, tailwind và công cụ dev của Sim, không ở đường dữ liệu xe.
+  - **Major đã nâng (2026-10-26):**
+    - `csv-parse` 7.0.3 (phụ thuộc trực tiếp; ESM-only, cùng API `parse`/`Options`/`Parser`; test table/file-parsers 371 PASS, tsc hẹp sạch);
+    - override `uuid` 11.1.1 (Azure email, svix: API `v4` giữ nguyên, vẫn có CommonJS).
+  - **Major không nâng, có lý do** (nâng sẽ làm vỡ gói cha, hoặc chỉ ở thời điểm build):
+    - `image-size` 2: pptxgenjs gọi API v1 (default export bị bỏ). Chỉ dùng khi Sim xuất PPTX (đã ẩn).
+    - `file-type` 21: officeparser dùng `require` v16, v21 chỉ có ESM. Chỉ dùng khi Sim đọc file Office cho Knowledge Base (đã ẩn).
+    - `katex` 0.18: mermaid ghim ^0.16. Advisory 2.1.
+    - `deepmerge-ts` 8: @prisma/config ghim 7.1.5, chỉ chạy lúc build/migration.
+    - `postcss-selector-parser` 7: tailwindcss ghim ^6, chỉ chạy lúc build CSS.
+    - `esbuild` 0.25: drizzle-kit/tsx, công cụ dev.
   - **Báo nhầm:** `simstudio` (CLI workspace) và `xlsx` 0.20.3 (bản CDN mới hơn bản advisory 0.17).
