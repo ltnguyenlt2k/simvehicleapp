@@ -476,6 +476,21 @@ describe("tools without the editor (MCP callers, M10 review)", () => {
   }
   const mcpCtx = { userId: "mcp:auto", conversationId: "mcp" };
 
+  test("the function workflows the open workflow calls go to the compiler with every check (ADR-0063)", async () => {
+    const bodies: unknown[] = [];
+    const s = services([]);
+    const post = s.post;
+    s.post = (async (service: Parameters<Services["post"]>[0], path: string, body: unknown, t?: unknown) => {
+      if (service === "compiler" && path === "/compile") bodies.push(body);
+      return post(service, path, body, t as never);
+    }) as Services["post"];
+    const validate = createTools(s, new BlockCatalog(fakeServices())).find((t) => t.name === "workflow_validate")!;
+    const fn = { ...graph0(), workflowId: "fn", name: "Safety check" };
+    await runTool(validate, {}, { ...mcpCtx, workflow: { workflowId: "wf1", vssRelease: "v4.0", graph: graph0(), callees: [fn] } });
+    await runTool(validate, {}, { ...mcpCtx, workflow: { workflowId: "wf1", vssRelease: "v4.0", graph: graph0() } });
+    expect(bodies.map((b) => (b as { callees?: { workflowId: string }[] }).callees?.map((c) => c.workflowId))).toEqual([["fn"], undefined]);
+  });
+
   test("workflow_get by projectId (+ workflowId) reads the graphs of the last SynCode", async () => {
     const tools = createTools(services([]), new BlockCatalog(fakeServices()));
     const get = tools.find((t) => t.name === "workflow_get")!;

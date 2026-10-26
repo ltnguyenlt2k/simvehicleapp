@@ -107,3 +107,8 @@ flowchart LR
   - Lời gọi chưa nối trigger sinh một `BLOCK_UNREACHABLE` cho mỗi khối inline, mang tên nội bộ (`check_arg_speed`…). Nay chỉ còn **một** cảnh báo trên khối gọi, mang tên khối gọi; chẩn đoán trùng bị bỏ.
   - Câu tóm tắt khối chỉ đếm tham số có tên (bảng luôn giữ một dòng trống).
   - Test: `subworkflow.test.ts` (2 test mới), `block-summary.test.ts`.
+- **2026-10-26 — trợ lý AI (thấy khi quay video showcase):** trợ lý kiểm mỗi đề xuất bằng `/compile` nhưng không gửi `callees`, nên mọi đề xuất trên một workflow có Call workflow đều báo `SUBWORKFLOW_NOT_FOUND`, kể cả khi thay đổi đúng.
+  - **Sửa:** BFF đưa `callees` vào `ChatContext.workflow` (contract ai-assistant, additive); dịch vụ AI gửi chúng ở mọi lần compile (`workflow_propose_patch`, `workflow_validate`, mô phỏng test case).
+  - **Test:** `ai.test.ts`.
+- **2026-10-26 — runtime C++:** publish MQTT lỗi khi app đang dừng làm app chết (exception paho). Nay ghi log rồi đi tiếp, như Python/Rust (semantics `sv_mqtt_publish`).
+

@@ -44,7 +44,8 @@ function summarizeCase(sc: Record<string, unknown>): string {
 export interface ToolContext {
   userId: string;
   conversationId: string;
-  workflow?: { workflowId: string; name?: string; vssRelease: string; graph?: WorkflowGraph; testCases?: { name: string; scenario: Record<string, unknown> }[] };
+  /** `callees`: the function workflows the open workflow calls (ADR-0063), compiled with it. */
+  workflow?: { workflowId: string; name?: string; vssRelease: string; graph?: WorkflowGraph; callees?: WorkflowGraph[]; testCases?: { name: string; scenario: Record<string, unknown> }[] };
   project?: { id: string; vssRelease: string; graphs?: WorkflowGraph[]; scenarios?: { workflowId: string; scenario: unknown }[] };
   /** Ops of the turn's previous proposal (models often send only the change since it). */
   lastOps?: PatchOp[];
@@ -187,11 +188,13 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
   /** The draft the chat works on: the editor's graph, else an empty one. */
   const draft = (ctx: ToolContext): WorkflowGraph | null =>
     ctx.workflow ? (ctx.workflow.graph ?? emptyGraph(ctx.workflow.workflowId, ctx.workflow.name ?? "Workflow", ctx.workflow.vssRelease)) : null;
-  const verify = async (graph: WorkflowGraph): Promise<Diagnostic[]> => ((await services.post("compiler", "/compile", { graph, mode: "verify" })) as { diagnostics: Diagnostic[] }).diagnostics;
+  /** A compile request about `graph`, with the function workflows the open workflow calls (ADR-0063). */
+  const compileBody = (ctx: ToolContext, graph: WorkflowGraph, mode: "verify" | "build") => ({ graph, mode, ...(ctx.workflow?.callees?.length ? { callees: ctx.workflow.callees } : {}) });
+  const verify = async (ctx: ToolContext, graph: WorkflowGraph): Promise<Diagnostic[]> => ((await services.post("compiler", "/compile", compileBody(ctx, graph, "verify"))) as { diagnostics: Diagnostic[] }).diagnostics;
   const projectId = (ctx: ToolContext, input: Record<string, unknown>) => str(input.projectId) ?? ctx.project?.id;
   /** Compiles the graph and simulates a test case: does the workflow meet its expectations? null when it does not compile. */
-  const simulateCase = async (graph: WorkflowGraph, scenario: Record<string, unknown>) => {
-    const built = (await services.post("compiler", "/compile", { graph, mode: "build" })) as { ir?: unknown };
+  const simulateCase = async (ctx: ToolContext, graph: WorkflowGraph, scenario: Record<string, unknown>) => {
+    const built = (await services.post("compiler", "/compile", compileBody(ctx, graph, "build"))) as { ir?: unknown };
     if (!built.ir) return null;
     const sim = (await services.post("compiler", "/simulate", { ir: built.ir, scenario })) as { writes: { t: number; path: string; value: unknown }[]; expectations?: { passed: boolean; mismatches: string[] } };
     return { passed: sim.expectations ? sim.expectations.passed : true, problems: sim.expectations?.mismatches ?? [], writes: sim.writes };
@@ -284,7 +287,7 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         const ops = referencesByName(base, repaired.ops, title);
         const { graph, problems } = applyPatch(base, ops, title);
         if (problems.length) return err(`The patch cannot be applied:\n${problems.join("\n")}`);
-        const compiled = await verify(graph);
+        const compiled = await verify(ctx, graph);
         // The assistant's bar is higher than "compiles": every block it adds runs, and only real props are set.
         const touched = new Set(ops.flatMap((o) => (o.op === "add_block" ? [o.ref] : o.op === "set_props" ? [o.block] : [])));
         const extra: Diagnostic[] = [];
@@ -346,7 +349,7 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         if (input.draftGraph !== undefined && !isGraph(input.draftGraph)) return err("draftGraph must be a WorkflowGraph v1 (graphVersion, workflowId, blocks, edges).");
         const g = (input.draftGraph as WorkflowGraph | undefined) ?? draft(ctx);
         if (!g) return err("No workflow to validate: pass draftGraph or open a workflow.");
-        const diagnostics = await verify(g);
+        const diagnostics = await verify(ctx, g);
         return { text: diagnostics.length ? diagnostics.map((d) => `- ${d.severity} ${d.code}${d.blockId ? ` on ${d.blockId}` : ""}: ${d.message}`).join("\n") : "No problems.", structured: { diagnostics } };
       },
     },
@@ -358,7 +361,7 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         if (input.draftGraph !== undefined && !isGraph(input.draftGraph)) return err("draftGraph must be a WorkflowGraph v1 (graphVersion, workflowId, blocks, edges).");
         const g = (input.draftGraph as WorkflowGraph | undefined) ?? draft(ctx);
         if (!g) return err("No workflow to simulate: pass draftGraph or open a workflow.");
-        const built = (await services.post("compiler", "/compile", { graph: g, mode: "build" })) as { ir?: unknown; diagnostics: Diagnostic[] };
+        const built = (await services.post("compiler", "/compile", compileBody(ctx, g, "build"))) as { ir?: unknown; diagnostics: Diagnostic[] };
         if (!built.ir) return err(`The workflow does not compile:\n${built.diagnostics.filter((d) => d.severity === "error").map((d) => `- ${d.code}: ${d.message}`).join("\n")}`);
         const sim = (await services.post("compiler", "/simulate", { ir: built.ir, scenario: input.scenario })) as { trace: unknown[]; writes: { t: number; path: string; value: unknown }[]; diagnostics: Diagnostic[] };
         return {
@@ -403,7 +406,7 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
             results.push({ name: name || "(no name)", valid: false, problems: name ? v.errors.slice(0, 3).map((e) => `${e.instancePath || "/"} ${e.message}`) : ["name is required"] });
             continue;
           }
-          const run = g ? await simulateCase(g, sc) : null;
+          const run = g ? await simulateCase(ctx, g, sc) : null;
           results.push({ name, valid: true, ...(run ? { passed: run.passed } : {}), problems: run?.problems ?? [] });
           accepted.push({ name, scenario: sc });
         }
@@ -424,7 +427,7 @@ export function createTools(services: Services, blocks: BlockCatalog): Tool[] {
         if (!sc) return err(str(input.name) ? `No test case named ${input.name} (scenario_list).` : "Give the name of a test case or a scenario.");
         const v = scenarioValidator.validate("scenario", sc);
         if (!v.valid) return err(`Invalid scenario: ${v.errors.slice(0, 3).map((e) => `${e.instancePath || "/"} ${e.message}`).join("; ")}`);
-        const run = await simulateCase(g, sc);
+        const run = await simulateCase(ctx, g, sc);
         if (!run) return err("The workflow does not compile: fix the errors first (workflow_validate).");
         return {
           text: run.passed ? "The workflow meets every expectation of this case." : `The workflow does not meet the case:\n${run.problems.map((p) => `- ${p}`).join("\n")}`,

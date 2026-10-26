@@ -223,6 +223,7 @@ components:
             name: { type: string }
             vssRelease: { type: string }
             graph: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" }
+            callees: { type: array, maxItems: 16, description: "Function workflows the open workflow calls (ADR-0063): sent with every compile the assistant makes.", items: { $ref: "urn:simvehicleapp:contracts:workflow-graph:1.0.0-alpha.1" } }
         project:
           type: object
           required: [id, vssRelease]

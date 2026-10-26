@@ -3,6 +3,7 @@ import { type AgentDeps, type AgentEvent, cancelAction, confirmAction, NUDGE_PRE
 import { connectExternal, type ExternalServer } from "./mcp.ts";
 import { systemPrompt } from "./prompt.ts";
 import type { LlmProvider } from "./providers/types.ts";
+import type { WorkflowGraph } from "./patch.ts";
 import type { Store } from "./store.ts";
 import { type BlockCatalog, SENSITIVE_TOOL_NAMES, type Tool, type ToolContext } from "./tools.ts";
 
@@ -70,7 +71,9 @@ function contextOf(userId: string, conversationId: string, raw: unknown): ToolCo
   const wf = c.workflow;
   if (wf && typeof wf.workflowId === "string" && typeof wf.vssRelease === "string") {
     const cases = Array.isArray(wf.testCases) ? (wf.testCases as unknown[]).filter((x): x is { name: string; scenario: Record<string, unknown> } => !!x && typeof (x as { name?: unknown }).name === "string" && typeof (x as { scenario?: unknown }).scenario === "object").slice(0, 50) : undefined;
-    ctx.workflow = { workflowId: wf.workflowId, vssRelease: wf.vssRelease, ...(typeof wf.name === "string" ? { name: wf.name } : {}), ...(wf.graph && Array.isArray(wf.graph.blocks) ? { graph: wf.graph } : {}), ...(cases ? { testCases: cases } : {}) };
+    // The function workflows the open workflow calls (ADR-0063): the compiler needs them to check a proposal.
+    const callees = Array.isArray(wf.callees) ? (wf.callees as unknown[]).filter((g): g is WorkflowGraph => !!g && Array.isArray((g as { blocks?: unknown }).blocks)).slice(0, 16) : undefined;
+    ctx.workflow = { workflowId: wf.workflowId, vssRelease: wf.vssRelease, ...(typeof wf.name === "string" ? { name: wf.name } : {}), ...(wf.graph && Array.isArray(wf.graph.blocks) ? { graph: wf.graph } : {}), ...(callees?.length ? { callees } : {}), ...(cases ? { testCases: cases } : {}) };
   }
   const p = c.project;
   if (p && typeof p.id === "string" && typeof p.vssRelease === "string") {

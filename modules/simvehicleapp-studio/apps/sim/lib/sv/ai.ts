@@ -5,6 +5,7 @@ import { authorizeWorkflowByWorkspacePermission } from '@sim/platform-authz/work
 import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
+import { calleesFor } from '@/lib/sv/callees'
 import { graphsFor, projectOf, scenariosFor } from '@/lib/sv/projects'
 import { listTestCases } from '@/lib/sv/server/test-cases'
 
@@ -20,6 +21,8 @@ export interface AiTurnContext {
     name?: string
     vssRelease: string
     graph: Record<string, unknown>
+    /** Function workflows the open workflow calls (ADR-0063): the assistant's compiler checks need them. */
+    callees?: Record<string, unknown>[]
     testCases?: { name: string; scenario: unknown }[]
   }
   project?: {
@@ -75,12 +78,14 @@ export async function aiTurnContext(
     name: c.name,
     scenario: c.scenario,
   }))
+  const callees = await calleesFor(userId, [input.graph])
   const context: AiTurnContext = {
     workflow: {
       workflowId: input.workflowId,
       ...(typeof graph.name === 'string' ? { name: graph.name } : {}),
       vssRelease,
       graph: input.graph,
+      ...(callees.length ? { callees } : {}),
       ...(testCases.length ? { testCases } : {}),
     },
   }
