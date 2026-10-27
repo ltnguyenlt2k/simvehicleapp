@@ -382,6 +382,7 @@ test('@live showcase: two workflows, Test, SynCode, Run, Flow, image + Kanto, We
   await pause(page, 2000)
   // The function workflow keeps its own canvas.
   await page.goto(fnUrl)
+  await expect(nodeByName(page, 'When called 1')).toBeVisible({ timeout: 30_000 })
   await caption(page, '23 · The function workflow, reused by any workflow that calls it')
   await pause(page, 2500)
 })
