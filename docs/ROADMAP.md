@@ -448,7 +448,7 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 
 | # | Mục | Quyết định | Trạng thái |
 |---|---|---|---|
-| D1 | Nightly xanh 3 đêm (M11 parity + E2E) | giữ tiêu chí, đếm nightly theo lịch từ `5d5f4413` | 🔄 **1/3**: theo lịch 40288535842 (2026-10-26, `aeb447cb`) xanh; nightly tay 40194570658, 40208287299 cũng xanh. Còn 2 đêm |
+| D1 | Nightly xanh 3 đêm (M11 parity + E2E) | giữ tiêu chí, đếm nightly theo lịch từ `5d5f4413` | 🔄 **2/3**: theo lịch 40288535842 (2026-10-26) và 40470413107 (2026-10-27) xanh. Còn 1 đêm |
 | D2 | Cleanup Sim đợt 3b | làm theo lô | ✔ 2026-10-25 lô 1: gỡ 12 block LLM của Sim + handler agent/evaluator/router (blocks/executor 1313 test PASS, upstream tree PASS); giữ `providers/` (Knowledge Base/Tables/wand của Sim dùng, đã ẩn) — lý do ở ADR-0008 Notes 2026-10-25. CI xanh `f7d8ec01` |
 | D3 | osv studio | cùng D2 | ✔ 2026-10-26: đợt 3d cùng major (next 16.4.2, dompurify, MCP SDK, undici, vite, vitest, zod, hono, ip-address, follow-redirects, nodemailer 10.1.7) + major csv-parse 7, uuid 11; còn body-parser 2.4.0 (đủ 7 ngày 2026-10-29) và 6 major không nâng có lý do (gói cha ghim hoặc chỉ lúc build) — ADR-0008 Notes |
 | D4 | Docs (M11-T08) | PO chấp thuận | ✔ 2026-10-25 |

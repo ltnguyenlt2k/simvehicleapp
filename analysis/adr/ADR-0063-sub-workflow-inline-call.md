@@ -115,4 +115,5 @@ flowchart LR
   - **Workflow hàm mở trong editor ⇒ cảnh báo mới `SUBWORKFLOW_FUNCTION`**, và thân hàm được lint như workflow thường; trước đó nó hiện lỗi đỏ vĩnh viễn. Compile hoặc build riêng ⇒ `SUBWORKFLOW_ONLY_CALLED` vẫn là **lỗi**, không sinh IR. Không đổi mức độ của mã cũ: `diagnostics-guard` chặn việc đó (luật cứng 8); mã mới chỉ thêm vào.
   - **Chọn workflow bằng `workflow-selector` của Sim** (thay dropdown tự lấy danh sách): canvas hiện tên workflow thay vì id, loại workflow đang mở, đánh dấu workflow đã xoá.
   - **SynCode bỏ qua workflow hàm được tick vào app:** chúng vào app qua các lời gọi. App chỉ có workflow hàm ⇒ 400 có lời giải thích.
+  - Lịch sử catalog: `SUBWORKFLOW_ONLY_CALLED` lần lượt là error (`0d35eefe`), warning (`a6c59e82`), rồi error (`4549a103`). Cả ba commit đều chưa phát hành. Trạng thái chốt là error, và từ đây không đổi nữa. `diagnostics-guard` báo đỏ CI ở hai lần đổi (40494067429, 40496619059), đúng như luật cứng 8.
 
