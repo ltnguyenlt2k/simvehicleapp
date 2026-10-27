@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+### Kế hoạch Robotics (M22–M26, chưa code)
+- Phân tích + thiết kế mở rộng sang robot: RSS (Robotic Signal Specification), Protobus (RSS ↔ ROS 2), target `python-robot`, block robot, mẫu kịch bản ([design](docs/design/M22-robotics-extension.md); ADR 0064–0068 **Proposed, chờ PO**).
+
 ## [baseline-2026-10-27] — 2026-10-27 (baseline, tag local)
 
 Tag annotated `baseline-2026-10-27`, gắn ở máy dev theo yêu cầu PO: commit để baseline, **chưa push nên chưa có CI** cho commit này.

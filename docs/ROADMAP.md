@@ -64,6 +64,11 @@
 | [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Accepted 2026-10-25) | ✔ | 8/8 ✔, gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M19.md)) |
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
+| [M22](#m22--rss-v01--catalog-đa-spec) | RSS v0.1 + catalog đa spec (Robotics) | 0064, 0065 (Proposed — chờ PO) | ☐ | 0/10 — kế hoạch 2026-10-27 ([design](design/M22-robotics-extension.md)) |
+| [M23](#m23--protobus-broker-rss--provider-ros-2--adapter-dog) | Protobus: broker RSS + provider ROS 2 + adapter dog | 0066 (Proposed — chờ PO) | ☐ | 0/9 |
+| [M24](#m24--compiler-block-simulator-miền-robot) | Compiler, block, simulator miền robot | 0064, 0068 (Proposed — chờ PO) | ☐ | 0/7 |
+| [M25](#m25--target-python-robot--runtime-svrobot--run) | Target `python-robot` + runtime `svrobot` + Run | 0067 (Proposed — chờ PO) | ☐ | 0/8 |
+| [M26](#m26--studio-miền-robot--e2e--video) | Studio miền Robot + E2E + video | 0064, 0068 (Proposed — chờ PO) | ☐ | 0/8 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -465,6 +470,79 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 | D15 | #9 IDE proxy + SSO | profile `remote-ide` (Caddy + forward-auth) | ✔ 2026-10-25: kiểm trên stack — không phiên 401, có phiên tới code-server (vẫn hỏi mật khẩu); [DEPLOY](DEPLOY.md) |
 | D16 | M15 T01/T09/T10 | PO chấp thuận; ✔ sau lần quay video cuối | ✔ 2026-10-25: full flow `@live` + `@live-restart` + tutorial PASS, video quay lại trên `f7d8ec01`; **2026-10-26: video tất cả chức năng** `docs/media/showcase.{mp4,gif}` (138 s, 23 chặng, hai workflow, `scripts/sv demo-video --showcase`). Lỗi thật tìm ra khi chạy và đã sửa: chẩn đoán của hàm lồng trỏ sai khối; trợ lý AI không gửi `callees` nên mọi đề xuất báo `SUBWORKFLOW_NOT_FOUND`; app C++ chết khi Stop lúc đang publish MQTT; IDE hiện khung Chat AI của VS Code · **2026-10-27: quay lại video tất cả chức năng** trên stack `8fd332d8` (148 s, 23 chặng; trial `m21-showcase` PASS 4.0 m trước khi quay). Đã kiểm từng khung: tên workflow hiện trên thẻ Call workflow, workflow hàm chỉ còn cảnh báo `SUBWORKFLOW_FUNCTION`, Messages liệt kê telemetry, thanh công cụ Run console không chồng, 2/10 app, System status đủ 18 service cùng commit, IDE mở `OverspeedAssistant.cpp`, chặng 23 chờ canvas hàm tải xong (trước đó dừng ở spinner) · **2026-10-27 (PO: "chậm lại như thao tác người dùng"): quay lại theo nhịp người dùng** (`e2e/lib/human.ts`: con trỏ hiển thị, gõ từng phím; chỉ cắt đoạn chờ > 8 s), 516 s, `@live showcase` PASS 8.7 m trên `f0e50695`; phân tích ở [M21 §6](../analysis/phases/M21-roadmap-completion.md) · **2026-10-27: cả ba video quay lại với trợ lý LLM thật** (endpoint OpenAI-compatible của PO, không còn provider giả) và nhịp người dùng: showcase 574 s (`@live` PASS 9.7 m), full-flow 394 s (`@live` 6.2 m + `@live-restart` 31 s PASS), demo 251 s (`tutorial-live` PASS 4.2 m). Baseline: tag local `baseline-2026-10-27` (chưa push, chưa CI) |
 
+
+## M22 — RSS v0.1 + catalog đa spec
+Yêu cầu PO 2026-10-27 (mở rộng Robotics) · Thiết kế: [M22 robotics](design/M22-robotics-extension.md) · Chi tiết: [phases/M22](../analysis/phases/M22-rss-spec-and-catalog.md) · ADR [0064](../analysis/adr/ADR-0064-robotics-domain-signal-spec.md), [0065](../analysis/adr/ADR-0065-rss-robotic-signal-specification.md) — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Phân tích + nghiên cứu upstream + thiết kế + ADR + kế hoạch M22–M26 | 0064–0068 | ✔ | 2026-10-27 Claude Code, tra nguồn thật (không code):<br>• repo dog @ `9adea9be`: Go2/MuJoCo, ROS 2 Humble (digest ghim), CycloneDDS unicast peer, 48 topic, envelope `control/request` schema-1 qua Brain;<br>• KUKSA 0.7.1 `vss.rs` nạp gốc tuỳ ý;<br>• runtime Python tách được khỏi Velocitas;<br>• REP-2000: Humble EOL 05/2027;<br>• vss-tools v4.1.1 MPL-2.0. | — |
+| Spike S-R2 vss-tools gốc `Robot` + overlay `ros2` | 0065 | ☐ | | T01 |
+| vspec RSS v0.1 + build `rss_v0.1.json` tất định | 0065 | ☐ | | T02 |
+| Đơn vị `rad`, `rad/s` | 0065 | ☐ | | T03 |
+| Catalog đa spec `/{spec}/{release}` | 0064 | ☐ | | T04 |
+| Contracts `signalSpec` (additive) | 0064 | ☐ | | T05 |
+| Spike S-R1 KUKSA nạp RSS | 0066 | ☐ | | T06 |
+| Overlay mapping dog (nháp) + truy vết topic 100 % | 0065, 0066 | ☐ | | T07 |
+| Cây RSS chỉ đọc trong studio (cờ `SV_ROBOTICS`) | 0064 | ☐ | | T08 |
+| Tài liệu RSS + gate + báo cáo | 0065 | ☐ | | T09, T10 |
+
+## M23 — Protobus: broker RSS + provider ROS 2 + adapter dog
+Chi tiết: [phases/M23](../analysis/phases/M23-protobus.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Proposed, chờ PO**.
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Spike S-R3 DDS giữa hai compose project | 0066 | ☐ | | T01 |
+| Spike S-R5 provider `kuksa.val.v2` Python + đo trễ + lease | 0066 | ☐ | | T02 |
+| Spike S-R6 `dog_interfaces` trong image Humble | 0066 | ☐ | | T03 |
+| Engine mapping + transform đóng | 0066 | ☐ | | T04 |
+| Adapter `dog-control/1` (S-R4) | 0066 | ☐ | | T05 |
+| Luật an toàn + fault test | 0066 | ☐ | | T06 |
+| Compose profile `robot` | 0066 | ☐ | | T07 |
+| Quan sát + signal-gateway trỏ protobus | 0066 | ☐ | | T08 |
+| Gate live trên dog sim + báo cáo + BASELINE | 0066 | ☐ | | T09 |
+
+## M24 — Compiler, block, simulator miền robot
+Chi tiết: [phases/M24](../analysis/phases/M24-robot-compiler-blocks-simulator.md) · ADR [0064](../analysis/adr/ADR-0064-robotics-domain-signal-spec.md), [0068](../analysis/adr/ADR-0068-robot-blocks-commands-and-scenarios.md) — **Proposed, chờ PO**.
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| `SignalLookup`, template theo gốc, `SIGNAL_SPEC_MISMATCH` | 0064 | ☐ | | T01 |
+| 5 block robot (semantics + spec) | 0068 | ☐ | | T02 |
+| Lowering + golden IR RW-A..RW-D | 0068 | ☐ | | T03 |
+| Simulator vòng đời lệnh + conformance robot | 0068 | ☐ | | T04 |
+| Diagnostics mới | 0068 | ☐ | | T05 |
+| Test tab cho robot | 0068 | ☐ | | T06 |
+| Gate + báo cáo | 0068 | ☐ | | T07 |
+
+## M25 — Target `python-robot` + runtime `svrobot` + Run
+Chi tiết: [phases/M25](../analysis/phases/M25-python-robot-target.md) · ADR [0067](../analysis/adr/ADR-0067-robot-app-target-python-first.md) — **Proposed, chờ PO**.
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Ghim image Python, quyết toolchain | 0067 | ☐ | | T01 |
+| Adapter `KuksaV2SignalAccess` không Velocitas | 0067 | ☐ | | T02 |
+| Target `python-robot` + template + golden | 0067 | ☐ | | T03 |
+| Orchestrator: backend, `signalSpec`, `ROBOT_SIGNAL_UNMAPPED` | 0067, 0068 | ☐ | | T04 |
+| Run robot + lease + STOP | 0066 | ☐ | | T05 |
+| Parity simulator ↔ app 4/4 | 0067 | ☐ | | T06 |
+| (Phụ) WASM trên protobus | 0067 | ☐ | | T07 |
+| `@live` RW-A..RW-D + báo cáo | 0067 | ☐ | | T08 |
+
+## M26 — Studio miền Robot + E2E + video
+Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio-ux-e2e.md) · ADR 0064, 0068 — **Proposed, chờ PO**.
+
+| Feature | ADR | Trạng thái | Ghi chú | Task |
+|---|---|---|---|---|
+| Chọn miền + robot đích khi tạo app | 0064 | ☐ | | T01 |
+| Toolbar miền Robot + BlockConfig | 0068 | ☐ | | T02 |
+| Mẫu workflow RW-A..RW-D | 0068 | ☐ | | T03 |
+| Run robot UI: STOP, lease, link Robot Zoo | 0066 | ☐ | | T04 |
+| Trợ lý AI biết RSS + eval | 0064 | ☐ | | T05 |
+| E2E `@live` full luồng robot ×3 | 0068 | ☐ | | T06 |
+| Video + README + user guide robotics | — | ☐ | | T07 |
+| Gate + báo cáo | — | ☐ | | T08 |
+
 ---
 
-*Cập nhật lần cuối: 2026-10-24 (bảng tổng quan M17–M18 theo tiến độ thật; thêm M19, M20 theo yêu cầu PO). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính đúng của bằng chứng ghi trong cột Ghi chú — không tick `✔` khi chưa chạy test thật (xem skill `simvehicleapp-phase-execution`).*
+*Cập nhật lần cuối: 2026-10-27 (thêm M22–M26 mở rộng Robotics theo yêu cầu PO; ADR 0064–0068 Proposed). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính chính xác của trạng thái.*

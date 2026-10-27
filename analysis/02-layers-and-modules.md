@@ -84,6 +84,8 @@ flowchart TB
 | 9 | `velocitas-stack` | L5 | `toolchain-cpp`, `toolchain-python`, `databroker`, `mqtt`, `mock-provider` | Dockerfile + Bun agent | Toolchain API |
 | 10 | `ide-vscode` | L6 | `ide-cpp` (/`ide-python`) | Dockerfile + settings | IDE URL contract |
 | 11 | `wasm-host` | L5 | `sv-wasm-host` (binary trong `toolchain-wasm` và image deploy) | Rust (Wasmtime) | ABI `sv-wasm-abi/1` (contracts `abi/`), ADR-0061 — từ M20 |
+| 12 | `rss-spec` (dự kiến M22, ADR-0065) | shared/L3 data | — (build ra `rss_vX.Y.json`) | vspec + script build | Đặc tả RSS + overlay mapping robot |
+| 13 | `protobus` (dự kiến M23, ADR-0066) | L5 robot runtime | `protobus-broker` (KUKSA ghim), `protobus-ros2` (rclpy) | Python + compose | API `kuksa.val.v2` cho app robot; mapping RSS↔ROS 2 |
 
 > Vì sao tách `compiler-code-<lang>` khỏi `velocitas-stack`? — Codegen là **logic thuần** (thay đổi thường xuyên, test nhanh, image nhỏ), còn toolchain là **môi trường nặng** (image vài GB, thay đổi theo version Velocitas). Tách ra để: nâng cấp Velocitas không phải release lại generator và ngược lại; IDE dùng lại toolchain image mà không kéo theo generator.
 

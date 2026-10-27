@@ -70,6 +70,13 @@ flowchart LR
 | [M15](phases/M15-final-e2e-demo-video.md) | E2E toàn diện + video demo | Playwright: mọi kéo thả, 7 golden bằng UI, full luồng signup→run→export, cộng tác, lỗi service; 3 run xanh liên tiếp; video full luồng trong README | — | (mới) | 2–3 |
 | [M19](phases/M19-execution-flow-and-signal-testing.md) | Luồng thực thi + thử tín hiệu | Mô hình Flow chung (Simulate/Test/Live), `data.eval`, nguồn tín hiệu, console dạng câu, giải thích case FAIL | 0062 | (mới, PO 2026-10-24) | 3 |
 | [M20](phases/M20-wasm-targets.md) | Target WASM C++/Rust | target `cpp-wasm`/`rust-wasm` (cùng emitter), ABI `sv-wasm-abi/1`, `sv-wasm-host` (Wasmtime LTS), `toolchain-wasm`, conformance + parity | 0061 | (mới, PO 2026-10-24) | 6 |
+| [M22](phases/M22-rss-spec-and-catalog.md) | RSS + catalog đa spec | vspec RSS v0.1 gốc `Robot`, `rss_v0.1.json` tất định, catalog `/{spec}/{release}`, đơn vị rad, `signalSpec` additive | 0064, 0065 | (mới, PO 2026-10-27) | 3 |
+| [M23](phases/M23-protobus.md) | Protobus | `protobus-broker` (KUKSA ghim + RSS), `protobus-ros2` (rclpy Humble), mapping overlay, adapter `dog-control/1`, luật an toàn, profile compose `robot` | 0066 | (mới) | 4 |
+| [M24](phases/M24-robot-compiler-blocks-simulator.md) | Compiler/block/simulator robot | `SignalLookup`, 5 block robot, lowering, vòng đời lệnh giả lập, diagnostics, golden RW-A..D | 0064, 0068 | (mới) | 3 |
+| [M25](phases/M25-python-robot-target.md) | Target `python-robot` | runtime `svrobot`, template Python thuần, run trên protobus, lease, parity 4/4 | 0067 | (mới) | 3 |
+| [M26](phases/M26-robot-studio-ux-e2e.md) | Studio robot + E2E + video | chọn miền, toolbar RSS, mẫu kịch bản, STOP/lease UI, AI biết RSS, `@live` + video | 0064, 0068 | (mới) | 3 |
+
+**Robotics (M22–M26)** chạy sau M21: M22 → (M23 ∥ M24) → M25 → M26; chi tiết [design](../docs/design/M22-robotics-extension.md).
 
 **MVP (v1.0) = M0 → M11** ≈ 48 người-tuần; với đội 4 dev (1 FE, 2 BE/TS, 1 C++/Velocitas) ≈ 4–5 tháng lịch có song song. Đây là ước lượng kế hoạch, cần cập nhật theo throughput và thời gian build thực tế; Python/Rust và M14 nằm sau v1.0.
 

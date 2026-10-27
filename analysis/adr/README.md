@@ -165,6 +165,11 @@ flowchart TB
 | [0061](ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md) | Target `wasm` cho backend C++ và Rust (cùng emitter), ABI `sv-wasm-abi/1` (core module wasip1 reactor, JSON), host chung `sv-wasm-host` (Wasmtime LTS, KUKSA v2, allowlist, giới hạn) | L1 | M20 |
 | [0062](ADR-0062-execution-flow-trace-and-signal-testing.md) | Mô hình Flow chung cho Simulate/Test/Run, `data.eval` (lý do rẽ nhánh), `signal-update.source`, console dạng câu, giải thích case FAIL | L1 | M19 |
 | [0063](ADR-0063-sub-workflow-inline-call.md) | Sub-workflow: `sv_call_workflow` gọi workflow hàm (`sv_on_call`), inline lúc compile (`expandCalls`), cấm đệ quy, ≤ 4 cấp | L1 | M21 |
+| [0064](ADR-0064-robotics-domain-signal-spec.md) | Robot là miền thứ hai (`signalSpec: RSS`) trong cùng studio/compiler/IR; opcode `vehicle.*` giữ tên, trung lập spec; trộn spec ⇒ `SIGNAL_SPEC_MISMATCH` — **Proposed, chờ PO** | L0 | M22–M26 |
+| [0065](ADR-0065-rss-robotic-signal-specification.md) | RSS v0.1: vspec gốc `Robot`, SI REP-103 (rad), mapping hãng tách khỏi spec, quy ước lệnh Request/Phase/LastResult — **Proposed, chờ PO** | L1 | M22 |
+| [0066](ADR-0066-protobus-rss-ros2-bridge.md) | Protobus: KUKSA databroker ghim (không fork) nạp RSS + provider ROS 2 (rclpy) theo overlay mapping + adapter robot; luật an toàn (không lệnh motor, TTL, STOP, lease) — **Proposed, chờ PO** | L0 | M23 |
+| [0067](ADR-0067-robot-app-target-python-first.md) | Target robot đầu tiên `python-robot` (runtime `svrobot` không Velocitas); C++/Rust qua WASM rồi native — **Proposed, chờ PO** | L1 | M25 |
+| [0068](ADR-0068-robot-blocks-commands-and-scenarios.md) | 5 block robot lowering về opcode có sẵn, simulator giả lập vòng đời lệnh, diagnostics mới, mẫu RW-A..RW-D — **Proposed, chờ PO** | L1 | M24, M26 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

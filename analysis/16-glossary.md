@@ -36,3 +36,9 @@
 | **MCP** | Model Context Protocol — giao thức tool cho LLM |
 | **Entitlement** | Quyền theo license (export source, ngôn ngữ…) |
 | **Golden workflow** | Workflow chuẩn GW-A..G dùng làm test hồi quy |
+| **RSS** | Robotic Signal Specification — đặc tả tín hiệu robot dạng vspec, gốc `Robot` ([ADR-0065](adr/ADR-0065-rss-robotic-signal-specification.md)) |
+| **Miền (signalSpec)** | `VSS` (xe) hoặc `RSS` (robot); mỗi app thuộc một miền ([ADR-0064](adr/ADR-0064-robotics-domain-signal-spec.md)) |
+| **Protobus** | Stack nối RSS ↔ ROS 2: `protobus-broker` (KUKSA nạp RSS) + `protobus-ros2` (provider) ([ADR-0066](adr/ADR-0066-protobus-rss-ros2-bridge.md)) |
+| **Overlay mapping** | File vspec overlay gắn thuộc tính `ros2` (topic/field/transform/adapter) cho từng leaf RSS của một robot |
+| **Command pattern (RSS)** | Lệnh có vòng đời: `Request` (actuator) → `LastResult` → `Phase`/`State` kết thúc |
+| **Lease điều khiển** | Quyền điều khiển một robot, cấp cho đúng một run tại một thời điểm |

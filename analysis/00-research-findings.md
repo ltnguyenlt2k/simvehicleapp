@@ -206,6 +206,19 @@ Cờ: `--vss <file>` / `KUKSA_DATABROKER_METADATA_FILE`, `--insecure`, `--disabl
 
 ---
 
+## 6b. Robotics (2026-10-27, tra trực tiếp, cho M22–M26)
+| Dữ kiện | Giá trị | Nguồn |
+|---|---|---|
+| Repo robot | `ltnguyenlt2k/dog-ros2-simulation` @ `9adea9be8622dade41fc3238ed3dcb26132b22c9`, Apache-2.0, private | GitHub API |
+| Runtime robot | ROS 2 Humble `ros:humble-ros-base-jammy@sha256:566b87e6dfc48392189a9c32e594e84060fa9948de93b04e536f39475a1f6963`, CycloneDDS, domain 42, multicast tắt, peer theo tên service | `deploy/images/base/Dockerfile`, `config/common/cyclonedds.xml` |
+| Đường lệnh | `/dog1/control/request` JSON schema-1 (`config_hash`, `issued_at_ns` sim time, `request_id`), Brain là trọng tài; `manual` tuổi ≤ 0,25 s | `dog_core/common.py`, `brain.py`, `gateway.py` |
+| Động tác đã kiểm | `crouch`, `bow`, `tilt`, `lift_fl`, `jump` (+ `stairs_round_trip` sau cờ) | `dog_core/capabilities.py`, `docs/r1/motions-and-scenarios.md` |
+| KUKSA 0.7.1 nạp gốc tuỳ ý | `RootEntry(HashMap<String, Entry>)` | `databroker/src/vss.rs` @ tag `0.7.1` (`a79e2420b3`) |
+| Vòng đời ROS 2 | Humble 05/2022–05/2027; Jazzy 05/2024–05/2029; Kilted 05/2025–11/2026 | REP-2000 |
+| vss-tools | tag `v4.1.1` (`cfbead206a17`), MPL-2.0 (chỉ dùng như tool build) | GitHub tags API |
+
+Chi tiết và hệ quả thiết kế: [design M22 robotics §2](../docs/design/M22-robotics-extension.md#2-dữ-kiện-đã-kiểm-2026-10-27-github-apiraw-không-đoán).
+
 ## 7. Nguồn
 - https://github.com/simstudioai/sim (tag v0.7.13, v0.9.6; `apps/sim/ee/LICENSE`)
 - https://github.com/eclipse-velocitas/vehicle-app-cpp-template · https://github.com/eclipse-velocitas/vehicle-app-python-template

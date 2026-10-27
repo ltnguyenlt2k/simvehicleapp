@@ -27,3 +27,10 @@
 - [M18 — Bàn thử nghiệm, workflow dễ đọc v2, Deploy](M18-test-workbench-readability-deploy.md) (PO 2026-10-15)
 - [M19 — Luồng thực thi (Flow) và thử tín hiệu chỉn chu](M19-execution-flow-and-signal-testing.md) (PO 2026-10-24)
 - [M20 — Target WebAssembly cho C++ và Rust + host runtime](M20-wasm-targets.md) (PO 2026-10-24)
+- [M21 — Hoàn tất roadmap](M21-roadmap-completion.md) (PO 2026-10-25)
+- **Mở rộng Robotics** (PO 2026-10-27, [design](../../docs/design/M22-robotics-extension.md); ADR 0064–0068 chờ PO):
+  - [M22 — RSS v0.1 + catalog đa spec](M22-rss-spec-and-catalog.md)
+  - [M23 — Protobus (broker RSS + provider ROS 2 + adapter dog)](M23-protobus.md)
+  - [M24 — Compiler, block, simulator miền robot](M24-robot-compiler-blocks-simulator.md)
+  - [M25 — Target `python-robot` + runtime `svrobot` + Run](M25-python-robot-target.md)
+  - [M26 — Studio miền Robot + E2E + video](M26-robot-studio-ux-e2e.md)
