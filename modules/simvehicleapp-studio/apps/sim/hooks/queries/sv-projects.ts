@@ -77,8 +77,11 @@ export function useCreateSvProject() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body: SvCreateProjectBody) => requestJson(svCreateProjectContract, { body }),
-    onSettled: (_data, _error, body) =>
-      queryClient.invalidateQueries({ queryKey: svProjectKeys.list(body.workspaceId) }),
+    onSettled: (_data, _error, body) => {
+      queryClient.invalidateQueries({ queryKey: svProjectKeys.list(body.workspaceId) })
+      // The app counts against the workspace and host quotas shown above the list.
+      queryClient.invalidateQueries({ queryKey: svProjectKeys.capacity(body.workspaceId) })
+    },
   })
 }
 

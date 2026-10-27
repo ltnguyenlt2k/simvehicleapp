@@ -142,7 +142,7 @@ export function RunConsole({ run, blockName }: RunConsoleProps) {
 
   return (
     <div data-sv='run-console' className='flex min-h-0 flex-1 flex-col'>
-      <div className='flex shrink-0 items-center gap-2 border-[var(--border)] border-b px-2 py-1'>
+      <div className='flex shrink-0 flex-wrap items-center gap-2 border-[var(--border)] border-b px-2 py-1'>
         {run ? (
           <Badge
             size='sm'
@@ -157,12 +157,14 @@ export function RunConsole({ run, blockName }: RunConsoleProps) {
         )}
         <ChipSelect
           aria-label='Log level'
+          className='shrink-0'
           value={level}
           onChange={(v) => setLevel(v as typeof level)}
           options={LEVELS.map((l) => ({ label: l.label, value: l.value }))}
         />
         <ChipSwitch
           aria-label='Entries'
+          className='shrink-0'
           value={showTrace ? 'all' : 'logs'}
           onChange={(v) => setShowTrace(v === 'all')}
           options={[
@@ -172,6 +174,7 @@ export function RunConsole({ run, blockName }: RunConsoleProps) {
         />
         <ChipSwitch
           aria-label='Trace as'
+          className='shrink-0'
           value={raw ? 'raw' : 'sentences'}
           onChange={(v) => setRaw(v === 'raw')}
           options={[

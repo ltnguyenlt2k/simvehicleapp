@@ -162,6 +162,40 @@ describe('POST /api/sv/projects/[id]/generations (M07-T18)', () => {
     expect(mockAdapt).toHaveBeenCalledTimes(1)
   })
 
+  it('a function workflow ticked into the app is not generated on its own (ADR-0063); only functions ⇒ 400', async () => {
+    const fn = {
+      ...openGraph,
+      blocks: [{ id: 'f1', type: 'sv_on_call', name: 'called', props: {} }],
+    }
+    mockCall
+      .mockResolvedValueOnce(
+        reply(
+          200,
+          project([
+            { simWorkflowId: 'wf-a', enabled: true },
+            { simWorkflowId: 'wf-b', enabled: true },
+          ])
+        )
+      )
+      .mockResolvedValueOnce(reply(202, generation))
+    const res = await POST(
+      createMockRequest('POST', { open: { workflowId: 'wf-a', graph: fn } }, {}, url),
+      ctx
+    )
+    expect(res.status).toBe(202)
+    const [, , init] = mockCall.mock.calls[1]
+    expect(init.body.graphs.map((g: { workflowId: string }) => g.workflowId)).toEqual(['wf-b'])
+
+    mockCall.mockReset()
+    mockCall.mockResolvedValueOnce(reply(200, project([{ simWorkflowId: 'wf-a', enabled: true }])))
+    const only = await POST(
+      createMockRequest('POST', { open: { workflowId: 'wf-a', graph: fn } }, {}, url),
+      ctx
+    )
+    expect(only.status).toBe(400)
+    expect((await only.json()).error).toContain('function workflows')
+  })
+
   it('skips a deleted workflow (ADR-0053); an app whose workflows were all deleted says so', async () => {
     dbState.tables.workflow = [{ id: 'wf-b', name: 'B', variables: {} }]
     const both = project([

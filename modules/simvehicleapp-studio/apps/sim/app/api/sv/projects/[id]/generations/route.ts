@@ -73,13 +73,31 @@ export const POST = withRouteHandler(async (request: NextRequest, context: Route
   if (issues.length > 0) {
     return NextResponse.json({ error: issues[0].message, diagnostics: issues }, { status: 422 })
   }
-  const scenarios = await scenariosFor(enabled.filter((id) => !missing.includes(id)))
+  // A function workflow ticked into the app has no trigger of its own (ADR-0063): it is built through the
+  // workflows that call it, not on its own.
+  const isFunction = (g: Record<string, unknown>) =>
+    Array.isArray(g.blocks) &&
+    (g.blocks as { type?: unknown }[]).some((b) => b?.type === 'sv_on_call')
+  const runnable = graphs.filter((g) => !isFunction(g))
+  if (runnable.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          'Only function workflows ("When called") are ticked in this app: tick a workflow that calls them',
+      },
+      { status: 400 }
+    )
+  }
+  const runnableIds = new Set(runnable.map((g) => String(g.workflowId)))
+  const scenarios = await scenariosFor(
+    enabled.filter((id) => !missing.includes(id) && runnableIds.has(id))
+  )
   // The function workflows these workflows call (ADR-0063): compiled with them.
-  const callees = await calleesFor(auth.userId, graphs)
+  const callees = await calleesFor(auth.userId, runnable)
   const res = await orchestrator(`/projects/${auth.row.id}/generations`, {
     method: 'POST',
     body: {
-      graphs,
+      graphs: runnable,
       ...(callees.length ? { callees } : {}),
       ...(scenarios.length ? { scenarios } : {}),
       ...(overwriteModified ? { overwriteModified } : {}),

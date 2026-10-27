@@ -87,9 +87,11 @@ export function VehicleProjects({ workspaceId }: VehicleProjectsProps) {
         <div className='flex flex-col gap-1'>
           <h1 className='font-medium text-[18px] text-[var(--text-primary)]'>Vehicle apps</h1>
           <p className='text-[13px] text-[var(--text-secondary)]'>
-            A vehicle app is the C++ or Python program your workflows become. SynCode generates the
-            workflows you tick into it, builds it and runs its tests; Run starts it against the
-            vehicle simulator. Clean or delete apps you no longer need to free disk space.
+            A vehicle app is the C++, Python or Rust program your workflows become — native, or a
+            WebAssembly module for C++ and Rust. SynCode generates the workflows you tick into it
+            (with the function workflows they call), builds it and runs its tests; Run starts it
+            against the vehicle simulator. Clean or delete apps you no longer need to free disk
+            space.
           </p>
         </div>
 
