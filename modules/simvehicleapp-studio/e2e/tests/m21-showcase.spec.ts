@@ -346,12 +346,19 @@ test('@live showcase: two workflows, Test, SynCode, Run, Flow, image + Kanto, We
   await page.goto(ideUrl)
   await caption(page, '20 · Open IDE: the generated C++ of both workflows, readable and buildable')
   const explorer = page.locator('.explorer-folders-view')
-  for (const folder of ['app', 'src', 'generated']) {
+  for (const folder of ['app', 'src', 'generated', 'workflows']) {
     const item = explorer.getByRole('treeitem', { name: folder, exact: true })
     await expect(item).toBeVisible({ timeout: 120_000 })
     if ((await item.getAttribute('aria-expanded')) !== 'true') await item.click()
   }
-  await pause(page, 2500)
+  // The generated C++ of the main workflow: the function workflow's blocks are inlined into it.
+  const source = explorer.getByRole('treeitem', { name: /^OverspeedAssistant\.cpp$/ })
+  await expect(source).toBeVisible({ timeout: 30_000 })
+  await source.dblclick()
+  await expect(page.locator('.monaco-editor .view-lines').first()).toContainText('OverspeedAssistant', {
+    timeout: 30_000,
+  })
+  await pause(page, 3500)
 
   await page.goto(editorUrl)
   await caption(page, '21 · Assistant (offline fake provider): proposes a change as a patch you review')
