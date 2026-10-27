@@ -46,6 +46,8 @@ test.use({
 
 /** A person looks at the result before the next step: demo pauses are 1.5× the time the spec names. */
 const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms * 1.5) : Promise.resolve())
+/** Which assistant answers in the recording (`scripts/sv demo-video` passes the provider of `.env`). */
+const AI = process.env.SV_DEMO_AI ?? 'offline fake provider'
 
 /** Demo caption at the bottom of the page (video only; a navigation clears it, so steps set it again). */
 async function caption(page: Page, text: string) {
@@ -369,7 +371,7 @@ test('@live showcase: two workflows, Test, SynCode, Run, Flow, image + Kanto, We
   await pause(page, 3500)
 
   await page.goto(editorUrl)
-  await caption(page, '21 · Assistant (offline fake provider): proposes a change as a patch you review')
+  await caption(page, `21 · Assistant (${AI}): proposes a change as a patch you review`)
   await page.locator('[data-tab-button="copilot"]').click()
   const panel = page.locator('[data-sv-assistant="panel"]')
   const input = panel.getByRole('textbox', { name: 'Message the assistant' })

@@ -98,3 +98,22 @@ Trạng thái từng dòng ở [docs/ROADMAP.md §M21](../../docs/ROADMAP.md#m21
 **Phương án đã cân nhắc:**
 - Chỉ tăng `slowMo`: mọi thao tác chậm đều nhau, gồm cả lệnh nội bộ (`evaluate`, chờ), nhưng vẫn không có con trỏ và vẫn dán chữ ⇒ loại.
 - Làm chậm video lúc encode (`setpts`): chuyển động giật và chậm không tự nhiên ⇒ loại.
+
+**Bổ sung 2026-10-27 (PO hỏi: "sao trợ lý AI chạy bằng provider giả, tôi đã cung cấp endpoint rồi mà"):**
+- **Nguyên nhân:** từ M15, `scripts/demo-video.sh` bắt buộc `SV_AI_PROVIDER=fake` để video tất định và không gửi gì ra ngoài máy. Script quay vì thế tạm chuyển `.env` sang `fake` rồi trả lại sau. Lý do đó không còn đúng: endpoint OpenAI-compatible của PO đã cấu hình trong `.env` và đã đo (M10: gate 3/3, eval 20/20), và PO muốn video cho thấy trợ lý thật.
+- **Quyết định:**
+  - `demo-video.sh` dùng provider đang cấu hình trong `.env`; chú thích chặng trợ lý ghi rõ provider (`SV_DEMO_AI`).
+  - Spec chỉ kiểm rằng có một đề xuất hợp lệ, được xem trước và được Accept, không kiểm nội dung, nên vẫn đúng với LLM thật.
+  - Lúc chờ LLM trả lời được cắt như lúc chờ build (> 8 s giữ 3 s).
+  - `fake` vẫn dùng được cho máy không có endpoint.
+- **Cả ba video** (`showcase`, `full-flow`, `demo`) giờ quay theo nhịp người dùng (`humanize` trong `beforeEach` của `m15-full-flow`/`tutorial-live`), GIF xem trước tua 8×.
+
+**Sự cố khi quay `full-flow` (2026-10-27) và cách sửa:**
+- Lần đầu, `m15-full-flow` hết giờ ở 28,8 phút (giới hạn 20 phút), khi mới tới thanh trượt "Replay time".
+- **Nguyên nhân:** bản đầu của `humanize` click vào ô trước khi gõ, dùng thời gian chờ mặc định 30 s. Ô nào bị lớp phủ che thì mất 30 s rồi mới quay về `fill`, và có nhiều ô như vậy. Ngoài ra nó còn gõ phím vào cả `input type=range`.
+- **Sửa:**
+  - chỉ gõ từng phím vào ô chữ (text/search/email/password/tel/url, textarea, contenteditable);
+  - click trước khi gõ chỉ chờ 3 s, tìm vị trí phần tử chỉ chờ 1,5 s;
+  - log `human: slow …` cho thao tác trên 15 s;
+  - giới hạn thời gian test gấp 3 khi quay demo.
+- **Kết quả:** lần quay lại qua trong 6,2 phút, không có thao tác nào bị log là chậm.

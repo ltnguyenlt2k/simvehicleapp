@@ -14,6 +14,7 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+import { humanize } from '../lib/human'
 
 /**
  * Live runs create real vehicle apps: delete them (ADR-0053). A passing `@live` keeps its app for `@live-restart`,
@@ -29,7 +30,7 @@ test.afterEach(async ({ page }, testInfo) => {
  * sign-up ⇒ a branching "overspeed warning" built by drag and drop (If/Else, Stable for, two actuators, HMI) ⇒
  * block summaries and branch labels ⇒ lint clean ⇒ Simulate ⇒ SynCode creates the vehicle app and builds it ⇒
  * Run on KUKSA ⇒ inject ⇒ hazard on + HMI, then off on the else branch ⇒ Vehicle apps and System status ⇒ Export
- * zip ⇒ Open IDE ⇒ assistant proposal accepted (fake provider) ⇒ after the stack restarts, `@live-restart` finds it
+ * zip ⇒ Open IDE ⇒ assistant proposal accepted (the provider of `.env`) ⇒ after the stack restarts, `@live-restart` finds it
  * all again.
  *
  * `SV_DEMO=1` records the demo video (1920×1080) with captions and pauses (`scripts/sv demo-video`).
@@ -48,7 +49,14 @@ test.use({
 })
 
 /** A pause the demo video needs to be followed (none in the test run). */
-const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms) : Promise.resolve())
+/** A person looks at the result before the next step: demo pauses are 1.5× the time the spec names. */
+const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms * 1.5) : Promise.resolve())
+/** Which assistant answers in the recording (`scripts/sv demo-video` passes the provider of `.env`). */
+const AI = process.env.SV_DEMO_AI ?? 'offline fake provider'
+/** Demo recordings run at a person's pace (`lib/human.ts`). */
+test.beforeEach(async ({ page }) => {
+  if (DEMO) await humanize(page)
+})
 
 /** Demo caption at the bottom of the page (video only; a navigation clears it, so steps set it again). */
 async function caption(page: Page, text: string) {
@@ -77,7 +85,7 @@ async function caption(page: Page, text: string) {
     }
     el.textContent = t
   }, text)
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(2500)
 }
 
 async function inject(page: Page, path: string, value: string) {
@@ -96,7 +104,7 @@ interface FlowState {
 test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE ⇒ Export ⇒ assistant', async ({
   page,
 }) => {
-  test.setTimeout(1_200_000)
+  test.setTimeout(DEMO ? 3_600_000 : 1_200_000)
   const user = newUser('fullflow', 'Demo Driver')
   await page.goto('/signup')
   await caption(page, '1 · Sign up — SimVehicleApp runs entirely in Docker Compose on localhost')
@@ -384,7 +392,7 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
   await page.goto(editorUrl)
   await caption(
     page,
-    '17 · Assistant (offline fake provider): proposes a second behaviour as a patch'
+    `17 · Assistant (${AI}): proposes a second behaviour as a patch`
   )
   await page.locator('[data-tab-button="copilot"]').click()
   const panel = page.locator('[data-sv-assistant="panel"]')
@@ -410,7 +418,7 @@ test('@live full flow: build ⇒ lint ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ IDE �
 test('@live-restart full flow: after the stack restarts the workflow, project and run history are intact', async ({
   page,
 }) => {
-  test.setTimeout(300_000)
+  test.setTimeout(DEMO ? 900_000 : 300_000)
   const state = JSON.parse(readFileSync(STATE, 'utf8')) as FlowState
   await logIn(page, state)
   await page.goto(state.editorUrl)

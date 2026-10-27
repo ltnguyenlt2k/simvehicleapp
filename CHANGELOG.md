@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+## [baseline-2026-10-27] — 2026-10-27 (baseline, tag local)
+
+Tag annotated `baseline-2026-10-27`, gắn ở máy dev theo yêu cầu PO: commit để baseline, **chưa push nên chưa có CI** cho commit này.
+- **Bằng chứng thay cho CI:**
+  - `scripts/sv precheck` PASS (các bước repo checks của CI, `diagnostics-guard`, cây fork Sim);
+  - ba E2E `@live` PASS trên stack thật lúc quay video: `m21-showcase`, `m15-full-flow` + `@live-restart`, `tutorial-live`;
+  - trợ lý dùng LLM thật qua endpoint OpenAI-compatible.
+- **Commit gần nhất có CI xanh:** `8c42fd26`.
+- **Không có GitHub Release, không có image dựng sẵn mới.**
+- **Video:** ba video `docs/media/{showcase,full-flow,demo}.mp4` quay theo nhịp người dùng (con trỏ hiển thị, gõ từng phím), dùng LLM thật.
+
 ### M21 — Hoàn tất roadmap ([phase](analysis/phases/M21-roadmap-completion.md))
 - **Gọi workflow từ workflow:** block **Call workflow** chạy một workflow hàm (trigger **When called**) tại chỗ; compiler inline lúc compile, cấm gọi vòng, tối đa 4 cấp ([hướng dẫn](docs/user-guide/sub-workflows.md), ADR-0063).
 - **Nhiều app qua MQTT** (standalone service): hướng dẫn và gate hai app chạy cùng lúc, mỗi app một databroker ([multiple-apps](docs/user-guide/multiple-apps.md)).

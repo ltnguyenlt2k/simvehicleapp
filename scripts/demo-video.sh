@@ -7,8 +7,10 @@
 #   scripts/sv demo-video --encode-only   encode the last full-flow recordings again
 # 1. Playwright (official image, as the current user) runs `@live full flow` with SV_DEMO=1 (captions, pauses, 1920×1080);
 # 2. the studio, realtime, orchestrator, workspace and assistant restart, `@live-restart` checks everything is still there (also recorded);
-# 3. ffmpeg (container) joins both recordings, shortens frozen waits (freezedetect) and encodes H.264 720p + a 4× GIF preview (8× for the showcase).
-# Needs the dev stack up (`scripts/sv up`) with the offline AI provider (SV_AI_PROVIDER=fake) — nothing leaves the host.
+# 3. ffmpeg (container) joins both recordings, shortens frozen waits (freezedetect) and encodes H.264 720p + an 8× GIF preview.
+# Needs the dev stack up (`scripts/sv up`). The assistant chapter uses the provider of .env (SV_AI_PROVIDER): a real LLM
+# endpoint shows real answers (the spec only checks that a valid proposal arrives); `fake` keeps everything on the host.
+# Every recording runs at a person's pace (e2e/lib/human.ts): visible pointer, typed text, captions held to be read.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DC="docker compose"
@@ -21,18 +23,23 @@ STUDIO_URL=$(env_of SV_STUDIO_URL); STUDIO_URL=${STUDIO_URL:-http://localhost:30
 MODE=${1:-}
 NAME=full-flow; CLIPS=2
 [[ "$MODE" == --tutorial ]] && { NAME=demo; CLIPS=1; }
-# Frozen stretches longer than FREEZE_MIN s keep only their first FREEZE_KEEP s. The showcase is recorded at a person's
-# pace, so it only shortens real waits (project creation, build, push) and keeps the pauses for reading.
-FREEZE_MIN=2.5; FREEZE_KEEP=1.5; GIF_PTS=0.25
-[[ "$MODE" == --showcase ]] && { NAME=showcase; CLIPS=1; FREEZE_MIN=8; FREEZE_KEEP=3; GIF_PTS=0.125; }
+# Frozen stretches longer than FREEZE_MIN s keep only their first FREEZE_KEEP s: only real waits (project creation, build,
+# push, the LLM answering) are shortened, the pauses for reading stay. The GIF preview plays at 1/GIF_PTS speed.
+FREEZE_MIN=8; FREEZE_KEEP=3; GIF_PTS=0.125
+[[ "$MODE" == --showcase ]] && { NAME=showcase; CLIPS=1; }
 if [[ "$MODE" != --encode-only ]]; then
-  [[ "$(env_of SV_AI_PROVIDER)" == fake ]] || { echo "demo-video: set SV_AI_PROVIDER=fake in .env (offline, deterministic assistant)"; exit 1; }
+  AI_PROVIDER=$(env_of SV_AI_PROVIDER)
+  case "$AI_PROVIDER" in
+    fake|'') AI_LABEL='offline fake provider' ;;
+    openai-compatible) AI_LABEL='real LLM, OpenAI-compatible endpoint' ;;
+    *) AI_LABEL="real LLM, $AI_PROVIDER" ;;
+  esac
   curl -fsS -o /dev/null "$STUDIO_URL" || { echo "demo-video: studio not reachable at $STUDIO_URL — scripts/sv up"; exit 1; }
 
   rm -rf "$E2E/test-results" "$E2E/.state/full-flow.json"
   playwright() {
     docker run --rm --network host --user "$(id -u):$(id -g)" -e HOME=/tmp -e CI= \
-      -e SV_STUDIO_URL="$STUDIO_URL" -e SV_IDE_PASSWORD="$(env_of SV_IDE_PASSWORD)" -e SV_DEMO=1 -e SV_REPO=/repo \
+      -e SV_STUDIO_URL="$STUDIO_URL" -e SV_IDE_PASSWORD="$(env_of SV_IDE_PASSWORD)" -e SV_DEMO=1 -e SV_DEMO_AI="$AI_LABEL" -e SV_REPO=/repo \
       -v "$PWD":/repo -w /repo/$E2E "$PW_IMAGE" \
       bash -c "npm install --no-audit --no-fund --silent && npx playwright test tests/$3 --grep '$1' --output test-results/$2"
   }

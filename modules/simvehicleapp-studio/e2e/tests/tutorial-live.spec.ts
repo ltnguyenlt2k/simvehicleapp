@@ -11,6 +11,7 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+import { humanize } from '../lib/human'
 
 /** Live runs create real vehicle apps: delete them, pass or fail (ADR-0053). */
 test.afterEach(async ({ page }) => deleteVehicleApps(page))
@@ -33,7 +34,12 @@ test.use({
 })
 
 /** A pause the demo video needs to be followed (none in the test run). */
-const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms) : Promise.resolve())
+/** A person looks at the result before the next step: demo pauses are 1.5× the time the spec names. */
+const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms * 1.5) : Promise.resolve())
+/** Demo recordings run at a person's pace (`lib/human.ts`). */
+test.beforeEach(async ({ page }) => {
+  if (DEMO) await humanize(page)
+})
 
 async function inject(page: Page, path: string, value: string) {
   const row = page.locator(`[data-sv-signal="${path}"]`)
@@ -44,7 +50,7 @@ async function inject(page: Page, path: string, value: string) {
 test('@live tutorial "Overspeed warning": canvas ⇒ Simulate ⇒ SynCode ⇒ Run ⇒ inject ⇒ assistant', async ({
   page,
 }) => {
-  test.setTimeout(900_000)
+  test.setTimeout(DEMO ? 2_700_000 : 900_000)
   // 1. account + workflow
   await signUp(page, newUser('tutorial', 'Tutorial Driver'))
   await setAutoConnect(page, false)

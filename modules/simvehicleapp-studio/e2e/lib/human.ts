@@ -43,8 +43,8 @@ const KEY_DELAY_MS = 55
 /** Moves the mouse smoothly to the centre of `target` (scrolling it into view first) and lingers a moment. */
 async function glide(target: Locator) {
   const page = target.page()
-  await target.scrollIntoViewIfNeeded({ timeout: 5_000 })
-  const box = await target.boundingBox({ timeout: 5_000 })
+  await target.scrollIntoViewIfNeeded({ timeout: 1_500 })
+  const box = await target.boundingBox({ timeout: 1_500 })
   if (!box) return
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: MOVE_STEPS })
   await page.waitForTimeout(SETTLE_MS)
@@ -56,6 +56,30 @@ async function glide(target: Locator) {
  */
 const typeable = (value: string) => value.length > 0 && value.length <= 80 && !/[<{\n]/.test(value)
 
+/** Only text fields are typed into: a range slider or a number spinner takes its value at once, as with a person. */
+const TEXT_INPUTS = ['', 'text', 'search', 'email', 'password', 'tel', 'url']
+const isTextField = (target: Locator) =>
+  target.evaluate(
+    (el, types) =>
+      el instanceof HTMLTextAreaElement ||
+      (el instanceof HTMLInputElement && types.includes(el.type)) ||
+      (el as HTMLElement).isContentEditable,
+    TEXT_INPUTS,
+    { timeout: 1_500 }
+  )
+
+/** A paced action that takes this long points at a problem: it is logged so a slow recording can be explained. */
+const SLOW_MS = 15_000
+async function timed<T>(what: string, target: Locator, run: () => Promise<T>): Promise<T> {
+  const start = Date.now()
+  try {
+    return await run()
+  } finally {
+    const ms = Date.now() - start
+    if (ms > SLOW_MS) console.log(`human: slow ${what} (${Math.round(ms / 1000)} s) on ${target}`)
+  }
+}
+
 export async function humanize(page: Page) {
   await page.context().addInitScript(POINTER_SCRIPT)
   const proto = Object.getPrototypeOf(page.locator('body')) as Locator
@@ -64,22 +88,27 @@ export async function humanize(page: Page) {
   const { click, fill, dragTo } = proto
 
   proto.click = async function (this: Locator, ...args: Parameters<Locator['click']>) {
-    await glide(this).catch(() => {})
-    return click.apply(this, args)
+    return timed('click', this, async () => {
+      await glide(this).catch(() => {})
+      return click.apply(this, args)
+    })
   }
 
   proto.fill = async function (this: Locator, ...args: Parameters<Locator['fill']>) {
     const [value, options] = args
-    if (!typeable(value)) return fill.apply(this, args)
-    try {
-      await glide(this)
-      await click.call(this, { timeout: options?.timeout })
-      await fill.call(this, '', options)
-      await this.pressSequentially(value, { delay: KEY_DELAY_MS, timeout: options?.timeout })
-      await this.page().waitForTimeout(SETTLE_MS)
-    } catch {
-      await fill.apply(this, args)
-    }
+    if (!typeable(value) || !(await isTextField(this).catch(() => false))) return fill.apply(this, args)
+    return timed('fill', this, async () => {
+      try {
+        await glide(this)
+        // A field a person cannot click (an overlay above it) is filled at once rather than waiting the action timeout.
+        await click.call(this, { timeout: 3_000 })
+        await fill.call(this, '', options)
+        await this.pressSequentially(value, { delay: KEY_DELAY_MS, timeout: options?.timeout })
+        await this.page().waitForTimeout(SETTLE_MS)
+      } catch {
+        await fill.apply(this, args)
+      }
+    })
   }
 
   proto.dragTo = async function (this: Locator, ...args: Parameters<Locator['dragTo']>) {
