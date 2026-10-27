@@ -85,10 +85,11 @@ describe("sub-workflows (ADR-0063)", () => {
     const r = await compile(caller({ workflowId: "fn_loop", args: [] }), { ...ctx, callees: [loop] });
     expect(r.diagnostics.map((d) => [d.code, d.blockId])).toEqual([["SUBWORKFLOW_RECURSIVE", "b2"]]);
     expect(r.diagnostics[0]!.message).toContain("In Loop:");
-    // A function workflow on its own: a warning, its body linted like any workflow, no IR.
+    // A function workflow on its own: built ⇒ an error and no IR; in the editor ⇒ a warning and its body linted.
     const alone = await compile(safety, ctx);
-    expect(alone.diagnostics.map((d) => [d.code, d.severity, d.blockId])).toEqual([["SUBWORKFLOW_ONLY_CALLED", "warning", "f1"]]);
+    expect(alone.diagnostics.map((d) => [d.code, d.severity, d.blockId])).toEqual([["SUBWORKFLOW_ONLY_CALLED", "error", "f1"]]);
     expect(alone.ir).toBeUndefined();
+    expect((await lint(safety, ctx)).map((d) => [d.code, d.severity])).toEqual([["SUBWORKFLOW_FUNCTION", "warning"]]);
     const broken = structuredClone(safety);
     (broken.blocks[2] as { props: Record<string, unknown> }).props.condition = "<nothere.value> > 120";
     const linted = await lint(broken, ctx);

@@ -112,7 +112,7 @@ flowchart LR
   - **Test:** `ai.test.ts`.
 - **2026-10-26 — runtime C++:** publish MQTT lỗi khi app đang dừng làm app chết (exception paho). Nay ghi log rồi đi tiếp, như Python/Rust (semantics `sv_mqtt_publish`).
 - **2026-10-27 — sau khi xem kỹ video showcase:**
-  - **`SUBWORKFLOW_ONLY_CALLED` là cảnh báo, không phải lỗi:** một workflow hàm mở trong editor từng hiện lỗi đỏ vĩnh viễn. Nay là cảnh báo, và thân hàm được lint như workflow thường để người dùng thấy lỗi thật bên trong. Compile riêng vẫn không sinh IR (`compile` dừng khi `functionOnly`). Mã mới trong đợt này, chưa phát hành, nên đổi mức độ không phá API công khai.
+  - **Workflow hàm mở trong editor ⇒ cảnh báo mới `SUBWORKFLOW_FUNCTION`**, và thân hàm được lint như workflow thường; trước đó nó hiện lỗi đỏ vĩnh viễn. Compile hoặc build riêng ⇒ `SUBWORKFLOW_ONLY_CALLED` vẫn là **lỗi**, không sinh IR. Không đổi mức độ của mã cũ: `diagnostics-guard` chặn việc đó (luật cứng 8); mã mới chỉ thêm vào.
   - **Chọn workflow bằng `workflow-selector` của Sim** (thay dropdown tự lấy danh sách): canvas hiện tên workflow thay vì id, loại workflow đang mở, đánh dấu workflow đã xoá.
   - **SynCode bỏ qua workflow hàm được tick vào app:** chúng vào app qua các lời gọi. App chỉ có workflow hàm ⇒ 400 có lời giải thích.
 

@@ -370,6 +370,14 @@
       "adr": "ADR-0063"
     },
     {
+      "code": "SUBWORKFLOW_FUNCTION",
+      "severity": "warning",
+      "stage": "structural",
+      "title": "This is a function workflow: it runs only when another workflow calls it (\"Call workflow\"); its blocks are checked here",
+      "since": "1.0.0-alpha.1",
+      "adr": "ADR-0063"
+    },
+    {
       "code": "SUBWORKFLOW_NOT_FOUND",
       "severity": "error",
       "stage": "structural",
@@ -379,9 +387,9 @@
     },
     {
       "code": "SUBWORKFLOW_ONLY_CALLED",
-      "severity": "warning",
+      "severity": "error",
       "stage": "structural",
-      "title": "A function workflow runs only when another workflow calls it: it is checked here, built only through a Call workflow",
+      "title": "A function workflow runs only when another workflow calls it: it has no trigger of its own",
       "since": "1.0.0-alpha.1",
       "adr": "ADR-0063"
     },

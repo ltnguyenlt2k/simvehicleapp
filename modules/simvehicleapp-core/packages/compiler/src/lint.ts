@@ -66,7 +66,7 @@ function literalOf(value: unknown): { value: unknown } | undefined {
  */
 export async function lint(graphInput: unknown, ctx: LintContext): Promise<DiagnosticV1[]> {
   // Calls of function workflows are inlined first (ADR-0063): the rest lints one flat graph.
-  const prep = prepareCalls(graphInput, ctx.callees, new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s])));
+  const prep = prepareCalls(graphInput, ctx.callees, new Map((ctx.specs ?? BLOCK_SPECS).map((s) => [s.type, s])), "lint");
   if (prep.diagnostics.some((d) => d.severity === "error")) return prep.diagnostics;
   return [...prep.diagnostics, ...prep.adopt(await lintGraph(prep.graph, ctx))];
 }

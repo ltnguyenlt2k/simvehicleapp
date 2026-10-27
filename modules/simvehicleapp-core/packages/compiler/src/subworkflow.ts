@@ -200,14 +200,17 @@ export interface PreparedCalls {
 }
 
 /** ADR-0063 before lint: inline the calls of `input`, or refuse a function workflow compiled on its own. */
-export function prepareCalls(input: unknown, callees: readonly unknown[] | undefined, specs: Map<string, BlockSpec>): PreparedCalls {
+export function prepareCalls(input: unknown, callees: readonly unknown[] | undefined, specs: Map<string, BlockSpec>, mode: "lint" | "compile" = "compile"): PreparedCalls {
   const g = input as FlowGraph | null;
   const none: PreparedCalls = { graph: input, diagnostics: [], adopt: (list) => list };
   if (!g || typeof g !== "object" || !Array.isArray(g.blocks) || !Array.isArray(g.edges)) return none;
   const entry = g.blocks.find((b) => b?.type === ON_CALL);
   if (entry) {
     const message = `${g.name ?? "This workflow"} is a function workflow: it runs only when another workflow calls it ("Call workflow")`;
-    return { ...none, functionOnly: true, diagnostics: [catalogDiag("SUBWORKFLOW_ONLY_CALLED", String(g.workflowId ?? ""), { blockId: entry.id, message })] };
+    // In the editor its blocks are checked like any workflow's (a warning says what it is); built on its own it has
+    // no trigger, so no app (an error).
+    const code = mode === "lint" ? "SUBWORKFLOW_FUNCTION" : "SUBWORKFLOW_ONLY_CALLED";
+    return { ...none, functionOnly: true, diagnostics: [catalogDiag(code, String(g.workflowId ?? ""), { blockId: entry.id, message })] };
   }
   if (!g.blocks.some((b) => b?.type === CALL)) return none;
   const ex = expandCalls(g, (callees ?? []) as FlowGraph[], specs);
