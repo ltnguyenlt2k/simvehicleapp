@@ -195,6 +195,8 @@ export interface PreparedCalls {
   diagnostics: DiagnosticV1[];
   /** Reports the diagnostics of inlined blocks on the call that brought them in, once each. */
   adopt(list: DiagnosticV1[]): DiagnosticV1[];
+  /** A function workflow compiled on its own: linted like any workflow, but it builds no IR (no trigger of its own). */
+  functionOnly?: boolean;
 }
 
 /** ADR-0063 before lint: inline the calls of `input`, or refuse a function workflow compiled on its own. */
@@ -205,7 +207,7 @@ export function prepareCalls(input: unknown, callees: readonly unknown[] | undef
   const entry = g.blocks.find((b) => b?.type === ON_CALL);
   if (entry) {
     const message = `${g.name ?? "This workflow"} is a function workflow: it runs only when another workflow calls it ("Call workflow")`;
-    return { ...none, diagnostics: [catalogDiag("SUBWORKFLOW_ONLY_CALLED", String(g.workflowId ?? ""), { blockId: entry.id, message })] };
+    return { ...none, functionOnly: true, diagnostics: [catalogDiag("SUBWORKFLOW_ONLY_CALLED", String(g.workflowId ?? ""), { blockId: entry.id, message })] };
   }
   if (!g.blocks.some((b) => b?.type === CALL)) return none;
   const ex = expandCalls(g, (callees ?? []) as FlowGraph[], specs);

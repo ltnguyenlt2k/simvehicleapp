@@ -379,9 +379,9 @@
     },
     {
       "code": "SUBWORKFLOW_ONLY_CALLED",
-      "severity": "error",
+      "severity": "warning",
       "stage": "structural",
-      "title": "A function workflow runs only when another workflow calls it: it has no trigger of its own",
+      "title": "A function workflow runs only when another workflow calls it: it is checked here, built only through a Call workflow",
       "since": "1.0.0-alpha.1",
       "adr": "ADR-0063"
     },

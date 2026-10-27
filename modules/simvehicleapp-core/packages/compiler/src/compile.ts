@@ -62,7 +62,7 @@ export async function compile(source: unknown, ctx: CompileContext, mode: "verif
   if (prep.diagnostics.some((d) => d.severity === "error")) return { diagnostics: prep.diagnostics };
   const graphInput = prep.graph;
   const lintDiags = [...prep.diagnostics, ...prep.adopt(await lintGraph(graphInput, ctx))];
-  if (lintDiags.some((d) => d.severity === "error")) return { diagnostics: lintDiags };
+  if (lintDiags.some((d) => d.severity === "error") || prep.functionOnly) return { diagnostics: lintDiags };
 
   const { graph } = migrateGraph(graphInput as WorkflowGraphV1, specs, ctx.migrations ?? MIGRATIONS);
   const b = new Builder(graph, specs);

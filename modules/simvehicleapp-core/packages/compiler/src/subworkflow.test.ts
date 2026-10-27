@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { ContractValidator, fixturesDir } from "@simvehicleapp/contracts";
 import { parseVssRelease } from "@simvehicleapp/vss";
-import { type CompileContext, compile } from "./index.ts";
+import { type CompileContext, compile, lint } from "./index.ts";
 
 const v40 = parseVssRelease(JSON.parse(readFileSync(`${fixturesDir}vss/vss_rel_4.0.json`, "utf8")), "v4.0");
 const ctx: CompileContext = {
@@ -85,9 +85,14 @@ describe("sub-workflows (ADR-0063)", () => {
     const r = await compile(caller({ workflowId: "fn_loop", args: [] }), { ...ctx, callees: [loop] });
     expect(r.diagnostics.map((d) => [d.code, d.blockId])).toEqual([["SUBWORKFLOW_RECURSIVE", "b2"]]);
     expect(r.diagnostics[0]!.message).toContain("In Loop:");
+    // A function workflow on its own: a warning, its body linted like any workflow, no IR.
     const alone = await compile(safety, ctx);
-    expect(alone.diagnostics.map((d) => [d.code, d.blockId])).toEqual([["SUBWORKFLOW_ONLY_CALLED", "f1"]]);
+    expect(alone.diagnostics.map((d) => [d.code, d.severity, d.blockId])).toEqual([["SUBWORKFLOW_ONLY_CALLED", "warning", "f1"]]);
     expect(alone.ir).toBeUndefined();
+    const broken = structuredClone(safety);
+    (broken.blocks[2] as { props: Record<string, unknown> }).props.condition = "<nothere.value> > 120";
+    const linted = await lint(broken, ctx);
+    expect(linted.filter((d) => d.severity === "error").map((d) => [d.code, d.blockId])).toEqual([["EXPR_UNKNOWN_REF", "f3"]]);
   });
 
   test("calls nest up to 4 levels", async () => {

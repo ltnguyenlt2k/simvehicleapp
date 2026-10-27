@@ -22,7 +22,7 @@ Catalog 1.0.0-alpha.1 · 65 codes. Codes are public API (ADR-0016 §2): never re
 | `HANDLE_UNKNOWN` | error | Edge uses a handle the block does not have | 1.0.0-alpha.1 | ADR-0016 |
 | `SUBWORKFLOW_ARG_UNKNOWN` | error | A call sets an argument that is not a variable of the called workflow | 1.0.0-alpha.1 | ADR-0063 |
 | `SUBWORKFLOW_NOT_FOUND` | error | The called workflow is not available or is not a function workflow (it needs one "When called" trigger) | 1.0.0-alpha.1 | ADR-0063 |
-| `SUBWORKFLOW_ONLY_CALLED` | error | A function workflow runs only when another workflow calls it: it has no trigger of its own | 1.0.0-alpha.1 | ADR-0063 |
+| `SUBWORKFLOW_ONLY_CALLED` | warning | A function workflow runs only when another workflow calls it: it is checked here, built only through a Call workflow | 1.0.0-alpha.1 | ADR-0063 |
 | `SUBWORKFLOW_RECURSIVE` | error | A workflow call loops back to a workflow already being called | 1.0.0-alpha.1 | ADR-0063 |
 | `SUBWORKFLOW_TOO_DEEP` | error | Workflow calls are nested more than 4 levels deep | 1.0.0-alpha.1 | ADR-0063 |
 

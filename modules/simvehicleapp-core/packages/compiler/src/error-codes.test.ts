@@ -85,7 +85,6 @@ const CASES: [string, unknown, string | undefined, Partial<CompileContext>?][] =
   ["SUBWORKFLOW_RECURSIVE", chain(CALL("fn_self")), "c", { callees: [FN("fn_self", [blk("c2", "sv_call_workflow", "Again", { workflowId: "fn_self" })])] }],
   ["SUBWORKFLOW_TOO_DEEP", chain(CALL("fn_1")), "c", { callees: [1, 2, 3, 4, 5].map((i) => FN(`fn_${i}`, i < 5 ? [blk(`c${i}`, "sv_call_workflow", `Deeper ${i}`, { workflowId: `fn_${i + 1}` })] : [])) }],
   ["SUBWORKFLOW_ARG_UNKNOWN", chain(CALL("fn_plain", [{ name: "nope", value: "1" }])), "c", { callees: [FN("fn_plain", [])] }],
-  ["SUBWORKFLOW_ONLY_CALLED", FN("wf", []), "on"],
 ];
 // Children of containers sit inside them (the LOOP_GUARD_MISSING child): fix parentId after building.
 (CASES.find((c) => c[0] === "LOOP_GUARD_MISSING")![1] as WorkflowGraphV1).blocks[2]!.parentId = "w";
