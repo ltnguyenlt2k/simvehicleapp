@@ -170,7 +170,7 @@ test('@live showcase: two workflows, Test, SynCode, Run, Flow, image + Kanto, We
   await selector.click()
   await selector.fill('Safety')
   await page.getByRole('option', { name: /Safety check/ }).or(page.getByText('Safety check', { exact: true }).last()).first().click()
-  await expect(subBlock(page, 'workflowId')).toContainText('Safety check')
+  await expect(selector).toHaveValue('Safety check')
   const args = subBlock(page, 'args')
   await args.getByPlaceholder('name').first().fill('speed')
   await args.getByPlaceholder('value').first().fill('<whenspeedchanges1.value>')
