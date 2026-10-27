@@ -111,4 +111,8 @@ flowchart LR
   - **Sửa:** BFF đưa `callees` vào `ChatContext.workflow` (contract ai-assistant, additive); dịch vụ AI gửi chúng ở mọi lần compile (`workflow_propose_patch`, `workflow_validate`, mô phỏng test case).
   - **Test:** `ai.test.ts`.
 - **2026-10-26 — runtime C++:** publish MQTT lỗi khi app đang dừng làm app chết (exception paho). Nay ghi log rồi đi tiếp, như Python/Rust (semantics `sv_mqtt_publish`).
+- **2026-10-27 — sau khi xem kỹ video showcase:**
+  - **`SUBWORKFLOW_ONLY_CALLED` là cảnh báo, không phải lỗi:** một workflow hàm mở trong editor từng hiện lỗi đỏ vĩnh viễn. Nay là cảnh báo, và thân hàm được lint như workflow thường để người dùng thấy lỗi thật bên trong. Compile riêng vẫn không sinh IR (`compile` dừng khi `functionOnly`). Mã mới trong đợt này, chưa phát hành, nên đổi mức độ không phá API công khai.
+  - **Chọn workflow bằng `workflow-selector` của Sim** (thay dropdown tự lấy danh sách): canvas hiện tên workflow thay vì id, loại workflow đang mở, đánh dấu workflow đã xoá.
+  - **SynCode bỏ qua workflow hàm được tick vào app:** chúng vào app qua các lời gọi. App chỉ có workflow hàm ⇒ 400 có lời giải thích.
 

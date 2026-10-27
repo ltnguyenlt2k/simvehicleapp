@@ -155,3 +155,10 @@ flowchart LR
   - Giới hạn 50 case mỗi workflow (409).
 - 2026-10-16: đọc `checkExpectations` (`simulator/src/scenario.ts`): so đúng `t`. Không đủ cho Play trên app thật ⇒ thêm quyết định 9 (`within`, `never`, tập con, scenario 1.1) và 10 (thuật toán Generate tests).
 - M17-T08 (Signals thiếu tín hiệu trong biểu thức, Messages) được gộp vào quyết định 6 của ADR này (2026-10-15).
+- **2026-10-27 (M21, thấy trong video showcase) — Messages:**
+  - **Vấn đề:** khung chỉ nghe `<prefix>/#`, nên topic chính app publish ngoài tiền tố (ví dụ `fleet/telemetry`) không bao giờ hiện. Nó cũng chỉ bắt đầu nghe khi mở khung, nên mất tin gửi trước đó.
+  - **Sửa:**
+    - BFF đọc đồ thị đã lưu của các workflow bật trong app (và workflow hàm chúng gọi), lấy topic chính xác của `sv_mqtt_publish`/`sv_on_mqtt` (bỏ wildcard, tối đa 20), gửi `topics=` cho signal-gateway. Contract additive.
+    - Danh sách tính phía server, nên người dùng không đọc được topic của app khác.
+    - Khung Messages nghe suốt khi tab Live mở, ẩn khi chọn khung khác.
+
