@@ -114,6 +114,7 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/RequestId" }
         - { name: prefix, in: query, required: true, schema: { type: string, pattern: "^[A-Za-z0-9_\\-]+(/[A-Za-z0-9_\\-]+)*/?$" } }
+        - { name: topics, in: query, required: false, description: "Comma-separated exact topics the app uses outside its prefix (M21): at most 20, no wildcard; each one subscribed next to `<prefix>/#`.", schema: { type: string } }
       responses:
         "200": { description: Event stream., content: { text/event-stream: {} } }
         "400": { $ref: "#/components/responses/Rejected" }

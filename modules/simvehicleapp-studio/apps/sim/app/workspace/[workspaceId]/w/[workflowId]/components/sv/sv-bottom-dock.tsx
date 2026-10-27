@@ -268,13 +268,11 @@ function LiveTab({ pane, onPane }: { pane: LivePane; onPane: (p: LivePane) => vo
             </Button>
           ))}
         </div>
-        {pane === 'run-console' ? (
-          <RunConsoleTab />
-        ) : pane === 'flow' ? (
-          <LiveFlowTab />
-        ) : (
+        {pane === 'run-console' ? <RunConsoleTab /> : pane === 'flow' ? <LiveFlowTab /> : null}
+        {/* Messages listens for the whole Live tab: what the app published before the pane opened is there too. */}
+        <div className={cn('min-h-0 flex-1 flex-col', pane === 'messages' ? 'flex' : 'hidden')}>
           <MessagesPanel />
-        )}
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `openapi/signal-gateway.v1.yaml` (additive, M21): `GET /messages?topics=` — exact topics the app uses outside its prefix, streamed with `<prefix>/#`.
 - `openapi/ai-assistant.v1.yaml` (additive, ADR-0063): `ChatContext.workflow.callees` — the function workflows the open workflow calls; the assistant compiles proposals with them.
 - Sub-workflows (additive, ADR-0063, M21 D13): compiler `/compile` and `/lint` take `callees` (function workflows a graph calls); orchestrator `POST /projects/{id}/generations` takes `callees`; diagnostics `SUBWORKFLOW_NOT_FOUND`, `SUBWORKFLOW_RECURSIVE`, `SUBWORKFLOW_TOO_DEEP`, `SUBWORKFLOW_ARG_UNKNOWN`, `SUBWORKFLOW_ONLY_CALLED` (new); conformance case `C46-sub-workflow` (`callees.json` next to `graph.json`).
 - `openapi/orchestrator.v1.yaml` (additive, ADR-0050 Notes, M21 D14): `POST /projects/{id}/images` answers `kanto` — the Eclipse Kanto container-management descriptor of the pushed image (by digest, host network, unless-stopped, env for the vehicle's databroker and MQTT).

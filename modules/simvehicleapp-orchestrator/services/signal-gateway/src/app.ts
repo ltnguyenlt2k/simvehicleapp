@@ -299,6 +299,9 @@ export function createGatewayHandler(d: GatewayDeps) {
       // The MQTT messages of an app (its topic prefix): HMI notifications and other publishes, as SSE (ADR-0058 §6).
       const prefix = q.get("prefix") ?? "";
       if (!TOPIC_PREFIX.test(prefix)) return rejected(400, "invalid_request", "prefix: a topic prefix (letters, digits, - _ /)");
+      // Topics the app publishes outside its prefix (M21): exact topics only, no wildcard, at most 20.
+      const topics = [...new Set((q.get("topics") ?? "").split(",").map((t) => t.trim()).filter(Boolean))];
+      if (topics.length > 20 || topics.some((t) => !TOPIC_PREFIX.test(t))) return rejected(400, "invalid_request", "topics: up to 20 topics (letters, digits, - _ /), no wildcard");
       if (!d.subscribe) return rejected(503, "mqtt_unavailable", "MQTT is not configured");
       const subscribe = d.subscribe;
       const enc = new TextEncoder();
@@ -315,14 +318,20 @@ export function createGatewayHandler(d: GatewayDeps) {
             stop();
             controller.close();
           };
-          const cancel = subscribe(
-            `${prefix.replace(/\/$/, "")}/#`,
-            (topic, payload) => send("message", { topic, payload, ts: now() }),
-            (e) => {
-              send("error", { error: "mqtt_unavailable", message: e.message });
-              close();
-            },
+          const filters = [`${prefix.replace(/\/$/, "")}/#`, ...topics.filter((t) => !t.startsWith(`${prefix.replace(/\/$/, "")}/`))];
+          const cancels = filters.map((filter) =>
+            subscribe(
+              filter,
+              (topic, payload) => send("message", { topic, payload, ts: now() }),
+              (e) => {
+                send("error", { error: "mqtt_unavailable", message: e.message });
+                close();
+              },
+            ),
           );
+          const cancel = () => {
+            for (const c of cancels) c();
+          };
           const beat = setInterval(() => !closed && controller.enqueue(enc.encode(": keep-alive\n\n")), d.heartbeatMs ?? HEARTBEAT_MS);
           stop = () => {
             clearInterval(beat);

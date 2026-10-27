@@ -389,6 +389,35 @@ describe("Messages (ADR-0058 §6, M18-T05)", () => {
   });
 });
 
+describe("Messages of topics outside the prefix (M21)", () => {
+  test("topics adds the app's own topics (exact, no wildcard, at most 20); every subscription stops with the stream", async () => {
+    const filters: string[] = [];
+    let stopped = 0;
+    const catalog = new Catalog(async () => vss40);
+    const { io } = fakeIo();
+    const handler = createGatewayHandler({
+      broker: () => undefined,
+      subscribe: (f) => (filters.push(f), () => void stopped++),
+      catalog,
+      player: new Player({ ...io, set: async () => {} }),
+      newId: () => "p",
+      now: () => 9,
+      heartbeatMs: 10,
+    });
+    expect((await handler(new Request("http://g/messages?prefix=simvehicleapp/lka&topics=fleet/%23"), ctx)).status).toBe(400);
+    const many = Array.from({ length: 21 }, (_, i) => `t/${i}`).join(",");
+    expect((await handler(new Request(`http://g/messages?prefix=simvehicleapp/lka&topics=${many}`), ctx)).status).toBe(400);
+    const abort = new AbortController();
+    const res = await handler(new Request("http://g/messages?prefix=simvehicleapp/lka&topics=fleet/telemetry,simvehicleapp/lka/x,fleet/telemetry", { signal: abort.signal }), ctx);
+    expect(res.status).toBe(200);
+    // Topics under the prefix are already covered by prefix/#; duplicates count once.
+    expect(filters).toEqual(["simvehicleapp/lka/#", "fleet/telemetry"]);
+    abort.abort();
+    await Bun.sleep(5);
+    expect(stopped).toBe(2);
+  });
+});
+
 describe("sandboxes of runs (ADR-0057, M17-T05)", () => {
   test("inject, snapshot, mirror and play go to the run's own databroker; another run and the shared one see nothing", async () => {
     const g = sandboxed();
