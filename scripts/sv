@@ -5,6 +5,7 @@
 #   scripts/sv up               start everything (runtime + toolchain + ide + studio)
 #   scripts/sv down [-v]        stop (−v also removes volumes)
 #   scripts/sv refresh [--latest]  update the running stack to the pushed HEAD (studio image from CI, keeps data)
+#   scripts/sv precheck            the CI repo checks + diagnostics guard, locally, before a push
 #   scripts/sv pull [<tag>]     load the prebuilt images of a release instead of building (low-spec hosts, ADR-0051)
 #   scripts/sv vss list|add|use|remove   custom VSS models vX.Y-<name> (own signals or an overlay, ADR-0052)
 #   scripts/sv apps list|prune [--apply] [--e2e] [--failed]   vehicle apps on the host; prune unused ones (ADR-0053)
@@ -59,6 +60,7 @@ case "${1:-}" in
   reset-caches) $DC down; docker volume rm -f simvehicleapp_sv-conan2 simvehicleapp_sv-velocitas simvehicleapp_sv-ccache simvehicleapp_sv-velocitas-python ;;
   smoke) if [[ "${2:-}" == live ]]; then exec scripts/smoke.sh; else exec spikes/smoke.sh; fi ;;
   refresh) exec scripts/sv-refresh.sh "${@:2}" ;;
+  precheck) exec scripts/precheck.sh "${@:2}" ;;
   demo-video) exec scripts/demo-video.sh "${@:2}" ;;
   *) sed -n '2,15p' "$0"; exit 1 ;;
 esac

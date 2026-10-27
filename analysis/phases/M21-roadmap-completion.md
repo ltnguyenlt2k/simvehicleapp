@@ -48,3 +48,34 @@
 
 ## 4. Theo dõi
 Trạng thái từng dòng ở [docs/ROADMAP.md §M21](../../docs/ROADMAP.md#m21--hoàn-tất-roadmap).
+
+## 5. Bài học quy trình (2026-10-27, câu hỏi của PO: "sao sửa lắt nhắt nhiều thế, không verify à?")
+**Phân tích trung thực.** Các lần sửa liên tiếp có bốn nguồn:
+1. **Lỗi thật của sub-workflow, lẽ ra phải bắt trước khi đánh ✔ D13.** D13 được verify bằng unit test, compiler, conformance và E2E CI (chỉ thả block lên toolbar), chưa từng chạy **trọn luồng qua UI** với workflow hàm thật. Vì thế lọt các lỗi:
+   - chẩn đoán của hàm lồng trỏ sai khối;
+   - một lời gọi chưa nối trigger sinh hàng loạt cảnh báo;
+   - trợ lý AI không gửi `callees`;
+   - thẻ khối hiện id thay vì tên;
+   - workflow hàm luôn báo lỗi đỏ.
+
+   Đây là vi phạm AGENTS.md §4 bước 7 (full luồng `@live` với workflow phức tạp **có dùng tính năng mới**). Tôi đã coi `m15-full-flow` cũ là đủ, dù nó không đụng tới tính năng mới.
+2. **Lỗi sẵn có chỉ lộ khi chạy kịch bản phức tạp hơn:**
+   - app C++ chết khi Stop lúc đang publish MQTT;
+   - Messages không hiện topic ngoài tiền tố;
+   - IDE hiện khung Chat AI;
+   - thanh Run console đè chữ;
+   - bộ đếm app không cập nhật.
+
+   Đây là giá trị thật của việc quay video có workflow phức tạp. Lẽ ra phải có kịch bản đó từ lâu.
+3. **Kịch bản demo mới viết "mò" selector:** không được chạy `next dev` ở local, mỗi vòng thử mất 5–10 phút, và tôi đoán selector thay vì đọc component hoặc snapshot DOM trước. Đây là churn của test, không phải lỗi sản phẩm, nhưng tốn thời gian.
+4. **CI đỏ vì check chạy được trong vài giây ở local:**
+   - quên sinh lại `blocks.md`;
+   - đổi mức độ một mã chẩn đoán công khai (luật cứng 8, `diagnostics-guard`), rồi đổi lại.
+
+   Đó là sơ suất của tôi.
+
+**Thay đổi quy trình (áp dụng ngay):**
+- **Trước khi đánh ✔ một tính năng người dùng thấy:** chạy một kịch bản `@live` trên stack thật đi qua **chính tính năng đó** cùng các tính năng nó chạm tới (trợ lý, Messages, IDE, SynCode). Kịch bản chung: `m21-showcase.spec.ts`. Mỗi tính năng mới phải có chặng trong đó.
+- **Trước mỗi lần push:** chạy `scripts/sv precheck`. Lệnh này gộp đúng các bước "repo checks" của CI, cộng `diagnostics-guard` so với `origin/main` và cây fork Sim.
+- **Viết E2E:** đọc component hoặc snapshot DOM trước khi viết selector. Đặt `actionTimeout` để lỗi hiện ngay thay vì treo.
+- **Mã chẩn đoán mới:** chọn mức độ một lần, trước khi push. Sau khi push không đổi nữa.
