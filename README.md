@@ -9,7 +9,7 @@
 
 ![Mọi chức năng trên hai workflow: workflow hàm "Safety check" + workflow gọi nó → Auto layout, Logic → Test (Generate tests, Simulate all) → SynCode → Run trên KUKSA, Flow, Messages → image + Kanto → app WebAssembly → System status → Export → IDE → trợ lý AI](docs/media/showcase.gif)
 
-**Video tất cả chức năng** (720p, 148 s, 23 chặng có chú thích; quay 2026-10-27 trên bản mới nhất `8fd332d8`): [docs/media/showcase.mp4](docs/media/showcase.mp4).
+**Video tất cả chức năng** (720p, 8 phút 36 s, 23 chặng có chú thích, **nhịp thao tác của người dùng**: con trỏ chuột hiển thị di chuyển tới từng nút, chữ gõ từng phím, chỉ rút ngắn lúc chờ build/push; quay 2026-10-27 trên `f0e50695`; GIF phía trên tua nhanh 8×): [docs/media/showcase.mp4](docs/media/showcase.mp4).
 - **Workflow:** hai workflow phức tạp.
   - "Safety check" là workflow hàm: When called ⇒ Get variable ⇒ If ⇒ Set variable `result`.
   - "Overspeed assistant" có hai trigger. Trigger tốc độ ⇒ Call workflow ⇒ If ⇒ Stable for 2 s ⇒ hazard + HMI, hoặc tắt đèn. Trigger thứ hai mỗi giây gửi telemetry MQTT.

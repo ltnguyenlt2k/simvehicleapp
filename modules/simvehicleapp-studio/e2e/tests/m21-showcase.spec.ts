@@ -12,6 +12,7 @@ import {
   signUp,
   subBlock,
 } from '../lib/studio'
+import { humanize } from '../lib/human'
 
 /** Live runs create real vehicle apps: delete them, pass or fail (ADR-0053). */
 test.afterEach(async ({ page }) => deleteVehicleApps(page))
@@ -26,7 +27,8 @@ test.afterEach(async ({ page }) => deleteVehicleApps(page))
  * WebAssembly runtime ⇒ System status ⇒ Export ⇒ IDE ⇒ assistant.
  *
  * Needs a registry on sv-internal named `sv-demo-registry` (`scripts/sv demo-video --showcase` starts one).
- * `SV_DEMO=1` records the video with captions and pauses.
+ * `SV_DEMO=1` records the video at a person's pace: captions held long enough to read, a visible pointer that
+ * glides to each control, text typed key by key (`lib/human.ts`).
  */
 
 const SPEED = 'Vehicle.Speed'
@@ -42,7 +44,8 @@ test.use({
   actionTimeout: 30_000,
 })
 
-const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms) : Promise.resolve())
+/** A person looks at the result before the next step: demo pauses are 1.5× the time the spec names. */
+const pause = (page: Page, ms: number) => (DEMO ? page.waitForTimeout(ms * 1.5) : Promise.resolve())
 
 /** Demo caption at the bottom of the page (video only; a navigation clears it, so steps set it again). */
 async function caption(page: Page, text: string) {
@@ -71,7 +74,7 @@ async function caption(page: Page, text: string) {
     }
     el.textContent = t
   }, text)
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(2500)
 }
 
 async function inject(page: Page, path: string, value: string) {
@@ -117,6 +120,7 @@ test('@live showcase: two workflows, Test, SynCode, Run, Flow, image + Kanto, We
   page,
 }) => {
   test.setTimeout(1_800_000)
+  if (DEMO) await humanize(page)
   const user = newUser('showcase', 'Demo Engineer')
   await page.goto('/signup')
   await caption(page, '1 · Sign up — the whole product runs in Docker Compose on this machine')

@@ -79,3 +79,22 @@ Trạng thái từng dòng ở [docs/ROADMAP.md §M21](../../docs/ROADMAP.md#m21
 - **Trước mỗi lần push:** chạy `scripts/sv precheck`. Lệnh này gộp đúng các bước "repo checks" của CI, cộng `diagnostics-guard` so với `origin/main` và cây fork Sim.
 - **Viết E2E:** đọc component hoặc snapshot DOM trước khi viết selector. Đặt `actionTimeout` để lỗi hiện ngay thay vì treo.
 - **Mã chẩn đoán mới:** chọn mức độ một lần, trước khi push. Sau khi push không đổi nữa.
+
+## 6. Video theo nhịp người dùng (2026-10-27, yêu cầu PO: "video chậm lại như thao tác người dùng")
+**Vì sao video showcase 148 s trông quá nhanh** (đọc từ `m21-showcase.spec.ts` và `scripts/demo-video.sh`, không phải do UI):
+1. `fill()` dán cả chuỗi trong một lần, không gõ từng phím.
+2. Chuột nhảy thẳng tới đích, và video không có con trỏ: người xem không biết vừa bấm vào đâu.
+3. `slowMo` chỉ 40 ms, còn chú thích chỉ đứng 1,2 s.
+4. Lúc encode, mọi đoạn đứng hình quá 2,5 s chỉ giữ 1,5 s. Bước này cắt cả các khoảng dừng để đọc kết quả, chứ không riêng lúc chờ build.
+
+**Quyết định** (tự quyết theo uỷ quyền 2026-10-25, chỉ áp dụng cho lúc quay `SV_DEMO=1`; test CI không đổi):
+- Thêm `e2e/lib/human.ts` (`humanize(page)`): một con trỏ hiển thị, di chuyển mượt tới từng đích (28 bước, dừng 350 ms) và loé vòng tròn khi click.
+  - Chữ được gõ từng phím, 55 ms một phím.
+  - Chuỗi mà Sim phản ứng ngay khi gõ (`<` mở menu tham chiếu, `{`, xuống dòng) và chuỗi dài hơn 80 ký tự vẫn dùng `fill`, để video đi đúng đường test kiểm.
+  - Helper bọc `click`/`fill`/`dragTo` trên prototype chung của `Locator`, nên phủ được cả helper dùng chung. Nếu bản thân bước tạo nhịp lỗi thì quay về thao tác thường.
+- Chú thích đứng 2,5 s; mọi `pause` gấp 1,5 lần.
+- `demo-video.sh` có thêm `FREEZE_MIN`/`FREEZE_KEEP`. Riêng showcase chỉ rút đoạn đứng hình quá 8 s xuống còn 3 s, tức chỉ cắt lúc chờ tạo project, build, push. Các video khác giữ 2,5/1,5 như cũ.
+
+**Phương án đã cân nhắc:**
+- Chỉ tăng `slowMo`: mọi thao tác chậm đều nhau, gồm cả lệnh nội bộ (`evaluate`, chờ), nhưng vẫn không có con trỏ và vẫn dán chữ ⇒ loại.
+- Làm chậm video lúc encode (`setpts`): chuyển động giật và chậm không tự nhiên ⇒ loại.
