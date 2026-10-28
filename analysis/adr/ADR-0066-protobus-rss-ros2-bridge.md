@@ -1,111 +1,160 @@
-# ADR-0066: Protobus: stack độc lập gồm broker KUKSA (nạp RSS, không sửa) + provider ROS 2 theo overlay mapping khai báo + adapter từng robot, có luật an toàn bắt buộc
+# ADR-0066: Protobus là bus tín hiệu tự viết theo RSS (giao thức `protobus.v1`), gồm broker, bridge ROS 2 theo mapping profile + adapter robot, và provider mock; luật an toàn bắt buộc
 
 - **Status:** Proposed — chờ PO xác nhận
-- **Date:** 2026-10-27
+- **Date:** 2026-10-27, viết lại 2026-10-28
 - **Level:** L0 System
 - **Deciders:** PO; Claude Code (đề xuất)
-- **Related:** ADR-0047 (`kuksa.val.v2`), ADR-0057 (sandbox/run slot), ADR-0060 (deploy, IO layers), ADR-0064, ADR-0065, ADR-0067; [design §5](../../docs/design/M22-robotics-extension.md#5-protobus-chi-tiết-adr-0066)
+- **Related:** ADR-0064, ADR-0065, ADR-0067; [design §5](../../docs/design/M22-robotics-extension.md#5-protobus-adr-0066)
 
 ## Context
-- **Yêu cầu PO.** Có một "protobus độc lập giống KUKSA của Velocitas", ánh xạ tín hiệu RSS sang ROS 2 để giao tiếp với robot.
-- **Kiến trúc Velocitas.** App ↔ KUKSA databroker ↔ **provider** (CAN feeder, mock…). Provider claim actuator và publish giá trị sensor (`kuksa.val.v2` `OpenProviderStream`).
-- **Robot dog (design §2.1):**
-  - ROS 2 Humble, CycloneDDS unicast peer theo tên service, domain 42;
-  - lệnh chỉ qua envelope JSON schema-1 `/dog1/control/request`: `config_hash`, `issued_at_ns` theo sim time, `request_id`, ack riêng;
-  - Brain là trọng tài an toàn duy nhất; `manual` cần làm mới (tuổi ≤ 0,25 s, watchdog 0,2 s).
-- **KUKSA 0.7.1** nạp được cây gốc `Robot` (`vss.rs`); đã ghim digest trong BASELINE. signal-gateway và runtime Python/C++/Rust/WASM đều đã nói `kuksa.val.v2`.
+- **Yêu cầu PO.** Một "protobus độc lập tương tự như KUKSA" ánh xạ tín hiệu RSS sang ROS 2.
+- **Đính chính 2026-10-28.** Không được dùng KUKSA, chỉ tham khảo vai trò. Bản đầu dùng KUKSA databroker 0.7.1 và `kuksa.val.v2`; bản này thay toàn bộ.
+- **Robot dog** (design §2.1, `9adea9be`):
+  - lệnh chỉ đi qua `/dog1/control/request` (JSON schema-1, `config_hash`, `issued_at_ns` sim time, `request_id`), Brain là trọng tài;
+  - `manual` cần làm mới ≤ 0,25 s;
+  - ACK chỉ là đã nhận, kết quả ở `motion/state`;
+  - DDS: CycloneDDS, multicast tắt, peer cố định theo tên service, network compose `robot`.
+- **Robot cần thứ mà bus kiểu "kho giá trị" không có sẵn:**
+  - **setpoint hết hạn:** mất làm mới ⇒ dừng;
+  - **lệnh có vòng đời và timeout;**
+  - **một người điều khiển tại một lúc** (lease);
+  - **STOP ưu tiên tuyệt đối.**
+
+  Tự viết thì đặt được các bất biến này ngay trong broker, không phụ thuộc app tự giác.
 
 ## Decision
-1. **Thành phần** (module mới `modules/protobus`, tầng L5, compose profile `robot`):
-   - **`protobus-broker`:**
-     - image KUKSA databroker **đúng digest đã ghim trong BASELINE, không fork, không patch**, chạy `--vss /rss/rss_vX.Y.json`;
-     - API cho app và signal-gateway: `kuksa.val.v2`;
-     - port chỉ bind `127.0.0.1`.
-   - **`protobus-ros2`:**
-     - provider viết bằng Python (rclpy), image `FROM` **cùng digest ROS 2 của robot đích** (dog: `ros:humble-ros-base-jammy@sha256:566b87e6…`);
-     - build kèm message tuỳ biến của robot (dog: `dog_interfaces` từ repo dog đúng SHA, Apache-2.0).
-2. **Overlay mapping** (`modules/protobus/profiles/<robot>/mapping.vspec`): overlay vspec lên RSS với thuộc tính mở rộng `ros2`.
-   - **Sensor:**
-     - `topic`, `type`, `field` (đường dẫn trường), `qos` (`sensor_data` | `reliable` | `transient_local`), `maxRateHz`;
-     - `transform` thuộc **danh sách đóng**: `identity`, `scale`, `offset`, `quaternion_to_roll|pitch|yaw`, `min_finite`, `sector_min`, `array_index`, `select`, `json`, `enum`, `count`, `bool_from`. Không có code tuỳ ý, không `eval`.
-   - **Actuator:** `adapter` + `command` + `field` (+ `enum`, `refreshHz`, `ttlMs`).
-   - **Không mapping:** leaf RSS không có mapping là **unmapped**. Provider công bố danh sách leaf được hỗ trợ (`capabilities.json`) để compiler/orchestrator kiểm trước khi build/run (ADR-0068).
-3. **Adapter từng robot** là plugin Python có version (`dog-control/1`), đóng gói theo profile. Adapter dog **PHẢI**:
-   - học `config_hash` từ telemetry JSON của robot, và đặt `Robot.Connection.IsHandshakeComplete=true` chỉ sau khi đã học;
-   - đóng dấu `issued_at_ns` theo `/clock` của robot (`use_sim_time`);
-   - sinh `request_id` UUID mỗi lệnh, chờ `control/ack` (timeout 1 s), rồi publish `LastResult.IsAccepted/Reason`;
-   - ánh xạ giá trị `Request` qua bảng `enum` của mapping, từ chối giá trị không có trong bảng.
-4. **Luật an toàn (PHẢI / KHÔNG ĐƯỢC).** Đề xuất đưa vào AGENTS §2 thành luật cứng 11 — chờ PO.
-   1. Protobus **chỉ** dùng giao diện điều khiển cấp cao robot cho phép (dog: `control/request` qua Brain). **KHÔNG ĐƯỢC** publish `cmd_vel*`, LowCmd/torque, `motion/request`, `sim/request` hay gọi API motor.
-   2. **Vận tốc có TTL.**
-      - Target `Robot.Motion.Velocity.*` chỉ có hiệu lực `ttlMs` (mặc định 300 ms) kể từ lần Actuate cuối.
-      - Còn hạn: adapter làm mới `manual` ở `refreshHz` (20 Hz).
-      - Hết hạn hoặc app ngắt: gửi vận tốc 0 **một lần** rồi ngừng, để deadman của Brain dừng robot.
-   3. **STOP** (`Robot.Safety.Command.Request=STOP`) luôn chuyển ngay, bỏ qua hàng đợi và TTL. STOP được phép kể cả khi app không giữ lease.
-   4. **ARM** từ workflow chỉ khi profile `allowRemoteArm: true`. Mặc định SIM `true`, REAL `false`.
-   5. **Lease:** mỗi robot một lease điều khiển, do orchestrator cấp cho đúng một run (giống run slot ADR-0057).
-      - Actuate (trừ STOP) từ app không giữ lease bị từ chối. Ngoại lệ cần thêm: KUKSA không biết lease, nên lease áp ở provider qua token trong metadata của app — **kiểm ở spike S-R5**. Nếu không khả thi thì lease áp ở orchestrator: chỉ một run robot chạy trên một broker.
-      - Lease hết hạn khi run dừng.
-   6. Backend REAL **ngoài phạm vi** cho tới khi repo dog commissioning phần cứng (Phase 2 của repo dog) và có ADR riêng.
-5. **Mạng và triển khai.**
-   - `protobus-ros2` tham gia **external network** của stack robot (`SV_ROBOT_NETWORK`), dùng `ROS_DOMAIN_ID` và file CycloneDDS riêng có peer tới các service robot.
-   - Không mount docker.sock. Không mở port DDS ra host.
-   - Nếu robot cần biết peer `protobus-ros2` (multicast tắt) ⇒ thay đổi đó thuộc repo robot, ghi thành yêu cầu, không sửa repo robot từ đây.
-6. **Quan sát:**
-   - provider in log `SVTRACE`-tương thích cho mỗi lệnh (path, giá trị, request_id, accepted, reason, latency);
-   - metrics: tần số publish thực, tuổi dữ liệu, số lệnh bị từ chối;
-   - `Robot.Connection.IsOnline=false` khi telemetry quá `sensor_timeout` (dog 0,6 s).
+1. **Giao thức `protobus.v1`** (gRPC + protobuf, `robotics/contracts/protobus/v1/protobus.proto`):
+   - `service Bus`:
+     - `Describe`, `Get`, `Subscribe` (on-change, `minIntervalMs`);
+     - `AcquireLease` / `RenewLease` / `ReleaseLease`;
+     - `SetTarget`, `Invoke` (stream `CommandUpdate`), `Cancel`;
+     - `Stop` (không cần lease).
+   - `service Provider`: `Attach` stream hai chiều.
+     - Provider gửi `Hello{providerId, profileId, catalogHash, claims}`, `Samples` theo lô, `CommandUpdate`.
+     - Broker gửi `SetTargetDispatch`, `InvokeDispatch`, `CancelDispatch`, `StopDispatch`, `SafeValueDispatch`.
+   - **Giá trị và thời gian:**
+     - giá trị kiểu `oneof` theo kiểu RSS; struct cho setpoint;
+     - mỗi sample có `sourceTimeNs`, `brokerTimeNs`, `quality` (OK/STALE/NONE).
+   - **Lỗi:** mã `PB_*` công khai, chỉ thêm, trong `diagnostics.v1.json`.
+2. **Broker** (`robotics/protobus/broker`, Python 3.12 asyncio + `grpcio`), mỗi broker phục vụ **một robot**. Broker **PHẢI**:
+   1. nạp `rss-catalog.json`; kiểm path/kind/kiểu/khoảng/enum của mọi ghi;
+   2. từ chối provider hoặc app có `catalogHash` khác (`PB_CATALOG_MISMATCH`);
+   3. đánh dấu `STALE` khi sensor quá `maxAgeMs`;
+   4. setpoint hết `ttlMs` mà không làm mới ⇒ gửi `SafeValueDispatch` một lần;
+   5. giữ state machine vòng đời lệnh (ADR-0065 §2) và timeout: `TIMED_OUT` ⇒ `CancelDispatch`;
+   6. **một lease** mỗi robot. Lease hết hạn hoặc client mất kết nối ⇒ safeValue mọi setpoint + Cancel mọi lệnh của lease;
+   7. `Stop` đi thẳng tới provider trước mọi hàng đợi, kể cả khi không có lease;
+   8. provider offline ⇒ lệnh mới `REJECTED(PROVIDER_OFFLINE)`, `Robot.Connection.IsOnline=false`;
+   9. ghi audit JSONL mọi SetTarget/Invoke/Cancel/Stop/lease;
+   10. không lưu trạng thái ra đĩa: khởi động lại ⇒ trạng thái rỗng, mọi lease mất.
+3. **Hiệu năng:**
+   - mục tiêu ≥ 5 000 sample/s vào, 4 subscriber, p95 trễ trong broker < 5 ms, 30 phút ổn định (spike S-R4);
+   - không đạt ⇒ ADR mới viết lại broker bằng Rust **cùng `.proto`**.
+4. **Bridge ROS 2** (`robotics/protobus/bridge-ros2`):
+   - rclpy, image `FROM ros:humble-ros-base-jammy@sha256:566b87e6…` (cùng digest robot), build `dog_interfaces` từ repo dog đúng SHA (Apache-2.0, NOTICE);
+   - kết nối broker live làm provider.
+   - **Mapping profile** `robotics/protobus/profiles/<id>/mapping.yaml`, schema `mapping.v1`:
+     - `sensors`: topic, type, field/json, transform, qos, `maxRateHz`;
+     - `setpoints`: command, ánh xạ field;
+     - `commands`: command, ánh xạ args, nguồn kết quả;
+     - khối `ros` (domainId, namespace, useSimTime).
+   - **Transform** là danh sách đóng, tất định, không chạy code tuỳ ý: `identity`, `scale`, `offset`, `quaternion_to_roll|pitch|yaw`, `min_finite`, `sector_min`, `array_index`, `select`, `json`, `enum`, `count`, `compare`.
+   - **Adapter có version** cho phần riêng robot. `dog-control/1`:
+     - học `config_hash` từ `brain/state`;
+     - `issued_at_ns` theo `/clock`;
+     - `request_id` UUID, đối chiếu `control/ack`;
+     - làm mới `manual` 20 Hz trong hạn TTL;
+     - ánh xạ phase `motion/state`/`mission` về vòng đời chuẩn.
+   - Mạng: vào external network `robot` của dog (`SR_ROBOT_NETWORK`), CycloneDDS cấu hình theo kết luận spike S-R1.
+5. **Provider mock** (`robotics/protobus/mock`), Python thuần:
+   - cùng giao thức Provider;
+   - động học unicycle + pin;
+   - profile vòng đời lệnh khai báo (điều kiện nhận, thời lượng phase lấy từ số đo dog thật S-R3);
+   - API kịch bản (đặt sensor theo mốc thời gian, ép REJECTED/FAILED);
+   - `timeScale`.
+
+   Simulate/Test/CI dùng mock trên **broker sim riêng**, không bao giờ nối robot.
+6. **Luật an toàn (PHẢI):**
+   1. Bridge chỉ được publish `control/request` (allowlist). **KHÔNG ĐƯỢC** publish `cmd_vel*`, LowCmd, `motion/request`, `sim/request`. Có test tĩnh.
+   2. Hết TTL ⇒ safeValue (vận tốc 0).
+   3. `Stop` ưu tiên tuyệt đối.
+   4. `Arm` từ app chỉ khi profile `allowRemoteArm: true`. SIM mặc định true (**chờ PO**), REAL luôn false.
+   5. Một lease mỗi robot.
+   6. Backend REAL ngoài phạm vi v0.1.
+7. **CLI `pbctl`** để thao tác tay: get/subscribe/stop/invoke/lease. Dùng cho spike, debug, fault test.
+8. **Triển khai:**
+   - service `protobus-sim` + `protobus-mock`, và `protobus-live` + `protobus-ros2` (compose profile `live`) trong compose `sr`;
+   - port chỉ bind 127.0.0.1, không docker.sock, healthcheck mỗi service.
 
 ## Diagram
 ```mermaid
 flowchart LR
-  APP["App robot"] -- "kuksa.val.v2" --> BRK["protobus-broker<br/>KUKSA 0.7.1 (digest ghim)<br/>rss_v0.1.json"]
-  BRK <-- "OpenProviderStream<br/>BatchActuate / PublishValues" --> PRV["protobus-ros2 (rclpy)"]
-  PRV --> MAP["mapping.vspec (ros2: topic/field/transform)"]
-  PRV --> AD["adapter dog-control/1<br/>config_hash · sim time · request_id · TTL"]
-  AD -- "/dog1/control/request" --> BR["Brain (trọng tài)"]
-  BR -- "/dog1/control/ack" --> AD
-  ROS["/dog1/imu, odom, joints, contacts, scan, motion/state…"] --> PRV
+  APP["app / studio-api"] -- "Bus: Get/Subscribe/Lease/SetTarget/Invoke/Stop" --> BR["broker<br/>catalog, TTL, lifecycle, lease, audit"]
+  BR <-- "Provider.Attach" --> MK["mock<br/>(broker sim)"]
+  BR <-- "Provider.Attach" --> R2["bridge-ros2<br/>mapping + adapter dog-control/1<br/>(broker live)"]
+  R2 -- "chỉ /dog1/control/request" --> BRAIN["dog brain"]
+  BRAIN -- "/dog1/cmd_vel/safe…" --> SIM["dog sim"]
+  SIM -- "topics" --> R2
 ```
 
 ## Alternatives considered
 | Phương án | Ưu | Nhược | Vì sao loại |
 |---|---|---|---|
-| Viết broker riêng hoàn toàn (Rust/TS, proto riêng) | Lệnh có vòng đời "thật", lease/auth theo ý | Làm lại subscribe, actuator, auth, hiệu năng của KUKSA; mọi runtime phải có client mới | Tốn nhiều, rủi ro cao, không thêm giá trị cho v0.1. Giữ làm phương án nếu S-R1/S-R5 FAIL. |
-| rosbridge (WebSocket JSON) làm protobus | Có sẵn | Không có RSS/kiểu/đơn vị; app phải biết topic ROS; an toàn khó kiểm | Không đạt mục tiêu chuẩn hoá |
-| App gọi rclpy trực tiếp | Ít hop | App phụ thuộc distro/DDS; bỏ qua RSS; không parity | Trái ADR-0064 |
-| Mapping bằng code Python tuỳ ý | Linh hoạt | Không kiểm được, có thể vượt luật an toàn | Danh sách transform đóng + adapter có review |
-| Fork KUKSA thêm lease/RPC | Một tiến trình | Lệch upstream, phải tự vá bảo mật | Trái chính sách không sửa upstream (ADR-0003 tinh thần) |
+| KUKSA databroker + provider (bản 2026-10-27) | Có sẵn, đã ghim | PO yêu cầu độc lập; không có lease/TTL/lifecycle trong broker | PO bác |
+| Zenoh / MQTT làm bus | Nhanh, phổ biến | Không có kiểu RSS, TTL, lease, lifecycle; vẫn phải viết hết logic | Chỉ còn là transport, không giảm việc chính |
+| rosbridge (WebSocket JSON) cho app | Có sẵn | App phụ thuộc topic/ROS; mất RSS; an toàn kém | Trái mục tiêu RSS path |
+| App gọi rclpy trực tiếp | Không cần bus | Bỏ qua lớp an toàn, app gắn chặt robot | Loại |
+| Broker viết bằng Rust ngay | Nhanh | Chậm ra bản đầu; PO muốn dễ trước | Chỉ làm nếu S-R4 FAIL |
 
 ## Consequences
 - **Tích cực:**
-  - mọi runtime hiện có (Python, C++/Rust WASM) nói được với robot;
-  - Signals panel/Live/Flow dùng lại;
-  - thêm robot mới = thêm profile mapping + adapter, không đổi app.
+  - an toàn nằm ở broker, không phụ thuộc app;
+  - Simulate và Run dùng cùng app, chỉ khác provider;
+  - thêm robot = mapping profile + adapter.
 - **Tiêu cực:**
-  - hai hop (app → broker → provider) thêm độ trễ, cần đo ở S-R5, mục tiêu p95 < 20 ms trong máy;
-  - lease phải giải bằng cơ chế ngoài KUKSA;
-  - phụ thuộc phiên bản ROS 2 của robot.
-- **Ảnh hưởng module:** `protobus` (mới), velocitas-stack (không đổi), orchestrator (lease, run robot), contracts (schema `capabilities.json`, mapping overlay).
+  - tự duy trì broker, proto, bridge;
+  - Python có thể giới hạn tần số (RR4);
+  - mock không mô phỏng vật lý.
+- **Module:** `robotics/protobus`, `robotics/contracts`.
 
 ## Implementation
 | Task | Module | Milestone |
 |---|---|---|
-| S-R1 broker nạp RSS; S-R3 DDS; S-R5 provider Python; S-R6 `dog_interfaces` | protobus | M22-T06, M23-T01..T03 |
-| Engine mapping + transform đóng + test fixture JSON thật | protobus | M23-T04 |
-| Adapter `dog-control/1` + S-R4 | protobus | M23-T05 |
-| Luật an toàn (TTL, STOP, allowRemoteArm, lease) + fault test | protobus, orchestrator | M23-T06, M25-T05 |
-| Compose profile `robot`, network ngoài, healthcheck | protobus, meta | M23-T07 |
+| Spike S-R1 DDS, S-R2 `dog_interfaces`, S-R3 envelope | protobus (spike) | M22-T07 |
+| `protobus.v1.proto`, `mapping.v1`, mã `PB_*` | contracts | M23-T01 |
+| Spike S-R4 hiệu năng | protobus | M23-T02 |
+| Broker: store/subscribe/validate/stale | protobus | M23-T03 |
+| Lease + TTL + safeValue | protobus | M23-T04 |
+| Lifecycle + Stop + audit | protobus | M23-T05 |
+| Provider mock + API kịch bản | protobus | M23-T06 |
+| `pbctl` + compose `protobus-sim` + fault test | protobus | M23-T07, T08 |
+| Image Humble + `dog_interfaces` | protobus | M24-T01 |
+| Engine mapping + transform | protobus | M24-T02 |
+| Adapter `dog-control/1` | protobus | M24-T03 |
+| Luật an toàn + allowlist | protobus | M24-T04 |
+| Compose `live` + external network | protobus | M24-T05 |
+| Gate live dog sim | all | M24-T06 |
 
 ## Verification
-- **Live trên dog sim:**
-  - đọc ≥ 20 leaf RSS khớp topic gốc (sai số theo transform);
-  - `ARM` ⇒ Mode MANUAL;
-  - Velocity 0,3 m/s ⇒ robot đi; ngừng Actuate ⇒ robot dừng ≤ 0,5 s;
-  - `Named.Request=BOW` ⇒ Phase SUCCEEDED;
-  - STOP giữa động tác ⇒ Mode SAFE_STOP.
-- **Fault test:** robot tắt, `config_hash` sai, ack timeout, broker restart, provider restart ⇒ không có lệnh "ma", `IsOnline=false`.
-- **Kiểm tĩnh:** test khẳng định provider không tạo publisher nào ngoài allowlist (`control/request` + topic đọc).
+- **Unit/fault test** cho từng bất biến §2:
+  - sai kiểu;
+  - `catalogHash` lệch;
+  - stale;
+  - TTL;
+  - timeout;
+  - mất lease;
+  - Stop khi hàng đợi đầy;
+  - provider offline;
+  - broker restart.
+- **Perf S-R4** đạt ngưỡng §3.
+- **Live trên dog sim** (M24 gate):
+  - ≥ 20 sensor khớp topic gốc theo sai số transform;
+  - Arm ⇒ Mode MANUAL;
+  - Velocity 0,3 m/s ⇒ robot đi; ngừng làm mới ⇒ dừng ≤ 0,5 s (đo ở `/dog1/cmd_vel/safe`);
+  - Perform BOW / LIFT_FRONT_LEFT / JUMP ⇒ SUCCEEDED;
+  - Stop giữa động tác ⇒ dừng;
+  - 30 phút không rò bộ nhớ.
+- Test tĩnh: bridge không tạo publisher nào ngoài allowlist.
 
 ## Notes / Deviations
-—
+- 2026-10-28: viết lại. Bản 2026-10-27 dùng KUKSA databroker 0.7.1 (`kuksa.val.v2`, overlay vspec thuộc tính `ros2`); đã bỏ theo ADR-0064. Dữ kiện KUKSA trong `00-research-findings.md` §6b đánh dấu "không dùng".

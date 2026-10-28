@@ -1,12 +1,13 @@
-# Mở rộng Robotics: RSS, Protobus, target robot (M22–M26)
+# Robotics: stack độc lập — RSS, Protobus, RobotFlow, Robot Studio (M22–M27)
 
-> **Trạng thái:** kế hoạch, **chưa code**. Các ADR 0064–0068 ở trạng thái **Proposed — chờ PO xác nhận**.
-> **Ngày:** 2026-10-27 · **Tác giả:** Claude Code (đề xuất), PO duyệt.
+> **Trạng thái:** kế hoạch, **chưa code**. ADR 0064–0068 ở trạng thái **Proposed — chờ PO xác nhận**.
+> **Ngày:** 2026-10-27, viết lại 2026-10-28 · **Tác giả:** Claude Code (đề xuất), PO duyệt.
 
-## 0. Yêu cầu PO (2026-10-27, nguyên văn rút gọn)
-1. Tạo một **trình biên dịch riêng** (ngôn ngữ nào cũng được, ngôn ngữ dễ trước) để có thêm **runtime kết nối robot**, không chỉ xe. Robot cũng có workflow kéo thả, có log và kịch bản.
-2. Tương tự VSS path, tạo **RSS path (Robotic Signal Specification)**: định nghĩa tín hiệu robot chuẩn chỉnh, đủ dùng. Trước mắt cho **dog robot**, tham khảo repo [`ltnguyenlt2k/dog-ros2-simulation`](https://github.com/ltnguyenlt2k/dog-ros2-simulation).
-3. Tạo một **protobus độc lập**, giống vai trò KUKSA trong Velocitas. Nhiệm vụ: ánh xạ tín hiệu RSS sang **ROS 2**, để giao tiếp với robot qua ROS 2.
+## 0. Yêu cầu PO
+**2026-10-27 (rút gọn):**
+1. Tạo một **trình biên dịch riêng** (ngôn ngữ nào cũng được, ngôn ngữ dễ làm trước) để có thêm **runtime kết nối robot**, không chỉ xe. Có workflow kéo thả, có log và kịch bản.
+2. Tương tự VSS path, tạo **RSS path (Robotic Signal Specification)**: định nghĩa tín hiệu robot chuẩn chỉnh, đủ dùng. Trước mắt cho **dog robot** (repo [`ltnguyenlt2k/dog-ros2-simulation`](https://github.com/ltnguyenlt2k/dog-ros2-simulation)).
+3. Tạo một **protobus độc lập**, vai trò như KUKSA trong Velocitas: ánh xạ tín hiệu RSS sang **ROS 2** để giao tiếp với robot.
 4. **Mục tiêu cuối:** kéo thả workflow thành kịch bản, ví dụ:
    - nhận một tín hiệu rồi cho robot di chuyển;
    - workflow "pilot" cho robot;
@@ -14,26 +15,47 @@
 
    Tín hiệu đi đúng path RSS, qua protobus đổi sang ROS 2, tới đúng chỗ nhận/điều khiển như thiết kế trong workflow.
 
-## 1. Tóm tắt quyết định đề xuất
-| # | Câu hỏi | Đề xuất | ADR |
-|---|---|---|---|
-| 1 | Robot là sản phẩm riêng hay một miền trong SimVehicleApp? | **Một miền thứ hai** (`signalSpec: RSS`) trong cùng studio/compiler/IR. Mỗi app thuộc đúng một miền. | [0064](../../analysis/adr/ADR-0064-robotics-domain-signal-spec.md) |
-| 2 | "Trình biên dịch riêng" là gì? | Compiler graph→IR **dùng lại** (đã trung lập ngôn ngữ). Phần riêng là **target robot**: sinh app + **runtime robot** mới. | 0064, [0067](../../analysis/adr/ADR-0067-robot-app-target-python-first.md) |
-| 3 | Ngôn ngữ nào trước? | **Python** (`python-robot`), sau đó C++/Rust (qua target WASM sẵn có rồi native). | 0067 |
-| 4 | RSS viết bằng định dạng nào? | **Định dạng vspec của VSS**, gốc `Robot`. Đơn vị SI theo ROS REP-103 (m, rad, s). Thêm quy ước **lệnh** (Request/Phase/Result). | [0065](../../analysis/adr/ADR-0065-rss-robotic-signal-specification.md) |
-| 5 | Protobus là gì? | Một stack **độc lập** gồm: **broker** = KUKSA databroker ghim bản, không sửa, nạp cây RSS; **provider ROS 2** mới (`protobus-ros2`, rclpy) ánh xạ RSS↔ROS 2 theo **overlay mapping** khai báo; **adapter** riêng từng robot. API cho app: `kuksa.val.v2`. | [0066](../../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) |
-| 6 | An toàn? | Protobus **chỉ** gọi giao diện điều khiển cấp cao robot cho phép (dog: envelope `control/request` qua Brain). **Không bao giờ** phát lệnh motor/`cmd_vel/safe`. Lệnh vận tốc có TTL, mất làm mới ⇒ dừng. STOP luôn được ưu tiên. Mỗi robot chỉ một app điều khiển tại một thời điểm. | 0066 |
-| 7 | Block/kịch bản robot? | Block cấp cao (Di chuyển, Đi tới điểm, Thực hiện động tác, Dừng, Arm…), **lowering về opcode IR có sẵn**. Simulator giả lập vòng đời lệnh. Có mẫu workflow "pilot tuần tra", "chào khi thấy marker", "nhảy theo tín hiệu". | [0068](../../analysis/adr/ADR-0068-robot-blocks-commands-and-scenarios.md) |
+**2026-10-28 (đính chính, nguyên văn ý):** "luồng mới này là **độc lập, không dùng lại cái gì hiện có cả**… trước đó tôi bảo là **tham khảo thôi**… luồng này sẽ thực hiện **từ đầu và riêng biệt**."
 
-## 2. Dữ kiện đã kiểm (2026-10-27, GitHub API/raw, không đoán)
-### 2.1 Repo dog robot — `ltnguyenlt2k/dog-ros2-simulation` @ `9adea9be8622dade41fc3238ed3dcb26132b22c9` (2026-10-27, Apache-2.0, private)
+⇒ Bản 2026-10-27 **sai ở gốc**: nó gắn robot vào studio, compiler, IR, simulator, runtime Python hiện có và dùng KUKSA làm broker. Bản này thay toàn bộ. §13 liệt kê từng điểm đã bỏ.
+
+## 1. Nguyên tắc độc lập (ADR-0064)
+| Được | Không được |
+|---|---|
+| Đọc tài liệu, ADR, code hiện có để **tham khảo ý tưởng** và bài học | `import`, copy, vendor, symlink code từ `modules/**` (studio fork Sim, core compiler/IR/simulator/blocks/units, orchestrator, workspace, signal-gateway, wasm-host, AI, compiler-code-*, contracts) |
+| Dùng chung **git repo, GitHub Actions, quy trình** (ADR, ROADMAP, phase, gate, report) | Dùng KUKSA databroker, Velocitas, VSS hay vss-tools, image/toolchain hiện có, `scripts/sv`, helper E2E hiện có |
+| Dùng **thư viện bên thứ ba** có license phù hợp (§11.3) | Dùng chung contract, schema, mã diagnostic, compose project, network, volume, port với stack xe |
+| Áp các luật kỹ thuật chung: tất định, không LLM trong đường sinh code, Compose là mode chạy duy nhất, không docker.sock, port 127.0.0.1, ADR cho mọi đổi kiến trúc, mã diagnostic là API công khai | Để stack xe phụ thuộc vào stack robot hoặc ngược lại |
+
+**Vị trí:** thư mục gốc **`robotics/`** trong repo này. Mỗi thư mục con là một module, chỉ phụ thuộc `robotics/contracts`. Có `AGENTS.md`, compose project, CI workflow và CLI riêng. Tách thành repo riêng chỉ cần `git subtree split`, không phải sửa code. **Chờ PO:** giữ chung repo (đề xuất) hay tách repo ngay.
+
+**Tên tạm** (chờ PO):
+
+| Tên | Thành phần |
+|---|---|
+| **Robot Studio** | sản phẩm |
+| `sr` | CLI và compose project |
+| **RSS** | đặc tả tín hiệu |
+| **Protobus** | bus tín hiệu + cầu ROS 2 |
+| **RobotFlow** | ngôn ngữ workflow; compiler `rflowc`, IR `rfir`, runtime `rfrt` |
+
+## 2. Dữ kiện đã kiểm
+Ngày kiểm: 2026-10-27/28, qua GitHub API/raw, không đoán.
+
+### 2.1 Repo dog robot
+`ltnguyenlt2k/dog-ros2-simulation` @ `9adea9be8622dade41fc3238ed3dcb26132b22c9` (Apache-2.0, private).
 - **Robot và runtime:**
-  - robot tham khảo **Unitree Go2**, 12 khớp;
+  - **Unitree Go2** mô phỏng, 12 khớp;
   - vật lý **MuJoCo 500 Hz**, policy ONNX/PD 50 Hz;
   - **ROS 2 Humble**, image `ros:humble-ros-base-jammy@sha256:566b87e6dfc48392189a9c32e594e84060fa9948de93b04e536f39475a1f6963`;
-  - RMW **CycloneDDS**, `ROS_DOMAIN_ID=42`.
-- **Tiến trình:** Compose với các service `sim`, `brain`, `render`, `slam`, `perception`, `nav2`, `gateway` (HTTP `127.0.0.1:8090`), `recorder`.
-- **DDS:** `config/common/cyclonedds.xml` có `AllowMulticast=false`, peer **unicast theo tên service** (sim, brain, render, perception, slam, nav2, gateway). Một bridge bên ngoài phải vào cùng docker network và được peer thấy (spike S-R3).
+  - RMW **CycloneDDS**, `ROS_DOMAIN_ID=${DOG_ROS_DOMAIN_ID:-42}`.
+- **Compose** (`deploy/compose/compose.yaml`):
+  - service `sim`, `brain`, `render`, `slam`, `perception`, `nav2`, `gateway`, `recorder`, cùng network `robot`;
+  - `gateway` (GUI "Robot Zoo") bind `127.0.0.1:${DOG_HTTP_PORT:-8090}`.
+- **DDS** (`config/common/cyclonedds.xml`):
+  - `AllowMulticast=false`, interface `eth0`;
+  - `Peers` cố định theo tên service: sim, brain, render, perception, slam, nav2, gateway; `MaxAutoParticipantIndex=64`.
+  - ⇒ Cầu ROS 2 của ta phải vào network `robot` và được các node dog phát hiện. Đây là spike S-R1.
 - **Topic** (48 topic, nguồn `contracts/ros2/topics.json`, prefix `/dog1`). Các topic RSS v0.1 dùng:
 
 | Topic | Type | Hz |
@@ -49,249 +71,465 @@
 | `control/request` → `control/ack` | String JSON schema-1 | event |
 
 - **Đường điều khiển:**
-  - Mọi lệnh từ ngoài đi qua `/dog1/control/request` dạng **JSON schema-1** (`std_msgs/String`). Ack trả về ở `/dog1/control/ack`.
-  - Node **Brain** là trọng tài lệnh an toàn duy nhất, phát `/dog1/cmd_vel/safe`.
+  - Mọi lệnh từ ngoài đi qua `/dog1/control/request` (JSON schema-1). Ack ở `/dog1/control/ack`.
+  - **Brain** là trọng tài an toàn duy nhất, phát `/dog1/cmd_vel/safe`.
   - Action được phép: `stop`, `disarm`, `reset_stop`, `arm`, `manual` (linear ≤ 0,5 m/s, angular ≤ 0,65 rad/s), `goal`, `route`, `cancel`, `motion` (`crouch`, `bow`, `tilt`, `lift_fl`, `jump`; `stairs_round_trip` sau cờ), `motion_cancel`.
 - **Envelope schema-1:**
-  - Có `schema`, `config_hash` (sha256 của `runtime.json` + `courtyard.json`), `issued_at_ns` theo **đồng hồ ROS dùng sim time**, và `request_id` (UUID).
-  - Brain bỏ request có `config_hash` sai. `manual` quá **0,25 s** tuổi bị từ chối, các action khác quá 1 s.
-  - `manual` cần **làm mới liên tục** (deadman; command watchdog 0,2 s).
+  - Trường: `schema`, `config_hash` (sha256 `runtime.json` + `courtyard.json`), `issued_at_ns` theo **đồng hồ ROS dùng sim time**, `request_id` (UUID).
+  - Brain bỏ request sai `config_hash`. `manual` quá **0,25 s** tuổi bị từ chối, các action khác quá 1 s.
+  - `manual` phải **làm mới liên tục** (command watchdog 0,2 s).
 - **Mode Brain:** `DISARMED`, `MANUAL`, `AUTO`, `MOTION`, `SAFE_STOP`.
-  - Động tác cần `MANUAL`, sensor khoẻ, đứng yên 4 chân, trong vùng thử courtyard ≤ 0,6 m từ spawn, scan trống ≥ 1 m.
-  - Kết quả thật đến từ `/dog1/motion/state`, phase `DISPATCHED/RUNNING/RECOVERING/SUCCEEDED/CANCELLED/FAILED/REJECTED`. **ACK chỉ là được nhận vào hàng đợi, không phải thành công.**
-- **Phạm vi:** robot thật/Jetson là Phase 2 của repo dog, **chưa commissioning**. Web STOP không thay E-stop vật lý.
+  - Động tác cần `MANUAL`, sensor khoẻ, đứng yên 4 chân, ≤ 0,6 m từ spawn, scan trống ≥ 1 m.
+  - Kết quả thật ở `/dog1/motion/state`, phase `DISPATCHED/RUNNING/RECOVERING/SUCCEEDED/CANCELLED/FAILED/REJECTED`. **ACK chỉ là đã vào hàng đợi.**
+- **Phạm vi:** robot thật/Jetson là Phase 2 của repo dog, **chưa commissioning**. STOP trên web không thay E-stop vật lý.
 
-### 2.2 Phía SimVehicleApp
-- **KUKSA databroker 0.7.1** (`databroker/src/vss.rs`, tag `0.7.1` = `a79e2420b3`): gốc cây là `RootEntry(HashMap<String, Entry>)`, tên gốc tuỳ ý; "Vehicle" chỉ có trong fixture test. ⇒ **nạp được cây gốc `Robot`**. Vẫn phải xác nhận bằng spike S-R1.
-- **IR v1:**
-  - `signals[].path` theo pattern chung `^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$`;
-  - opcode `vehicle.read/write/...` không phụ thuộc gốc;
-  - riêng compiler có regex template `<(Vehicle(?:\.…)+)>` (`compile.ts:169,172`) và kiểu `VehicleLookup` ⇒ phải tổng quát hoá.
-- **Mã model:** `^v[0-9]+\.[0-9]+(-name)?$` (ADR-0052) ⇒ RSS cần một trường **spec** đi kèm release, không nhồi vào tên release.
-- **Bảng đơn vị** (`core/packages/units`): **chưa có `rad`, `rad/s`**; đã có m, m/s, m/s^2, N, Nm, percent, V, A. ⇒ thêm đơn vị (additive).
-- **Runtime Python** (`compiler-code-python/runtime/simvehicleapp_runtime`): lõi `runtime.py`/`strand.py`/`values.py` **không phụ thuộc Velocitas**, giao tiếp qua port `VehicleAccess`/`PubSub`; đã có client `kuksa_v2`. ⇒ target robot Python chỉ cần adapter + template mới.
-- **Target WASM** (ADR-0061): `sv-wasm-host` nói thẳng `kuksa.val.v2`, không Velocitas ⇒ C++/Rust chạy với protobus gần như không cần code mới (kiểm ở M25).
+### 2.2 Upstream bên thứ ba
+| Thành phần | Bản / license | Nguồn | Dùng ở |
+|---|---|---|---|
+| ROS 2 Humble | EOL **05/2027** (Jazzy 05/2029) | REP-2000 | cầu ROS 2, theo distro của robot |
+| CycloneDDS | EPL-2.0 OR EDL-1.0 | `eclipse-cyclonedds/cyclonedds` LICENSE | RMW trong image Humble (không vendor) |
+| gRPC / protobuf (Python `grpcio`) | Apache-2.0 | `grpc/grpc` | giao thức Protobus |
+| FastAPI | MIT | `fastapi/fastapi` | API studio, service compiler |
+| pydantic | MIT | `pydantic/pydantic` | schema/validate Python |
+| React Flow (`@xyflow/react`) | MIT | `xyflow/xyflow` | canvas kéo thả |
+| Vite | MIT | `vitejs/vite` | build web |
 
-### 2.3 Upstream khác
-| Thành phần | Bản / license | Nguồn |
-|---|---|---|
-| ROS 2 Humble | EOL **05/2027**; Jazzy EOL 05/2029; Kilted EOL 11/2026; nhánh `lyrical` đã có trong `ros2/ros2` | REP-2000 (`ros-infrastructure/rep`), `ros2/ros2` branches |
-| COVESA vss-tools | tag mới nhất `v4.1.1` (`cfbead206a17`), **MPL-2.0** | GitHub tags API |
-| KUKSA databroker | 0.7.1, Apache-2.0, đã ghim trong BASELINE | `docs/BASELINE.md` |
+Bản cụ thể của từng thư viện được ghim ở task đầu của milestone dùng nó (skill `upstream-verify`), không ghi từ trí nhớ.
 
-## 3. Kiến trúc
+## 3. Kiến trúc tổng thể
 ```mermaid
 flowchart LR
-  subgraph Studio["Studio (L1)"]
-    WF["Workflow kéo thả<br/>(miền Robot)"]
+  subgraph RS["Robot Studio (robotics/studio)"]
+    WEB["studio-web<br/>React + React Flow"]
+    API["studio-api<br/>FastAPI: project, run, live"]
   end
-  subgraph Core["Core (L3)"]
-    CAT["signal-catalog<br/>VSS + RSS"]
-    COMP["compiler graph→IR<br/>signalSpec=RSS"]
-    SIM["simulator<br/>(giả lập vòng đời lệnh)"]
+  subgraph RF["RobotFlow (robotics/robotflow)"]
+    BLK["block registry<br/>*.block.yaml"]
+    C["rflowc<br/>graph → rfir → Python"]
   end
-  subgraph Back["Backend (L4)"]
-    PYR["compiler-code-python<br/>target python-robot"]
+  RSSm["RSS (robotics/rss)<br/>*.rss.yaml → rss-catalog.json<br/>tool rssc"]
+  RUN["runner<br/>chạy app sandbox"]
+  APP["App robot (Python)<br/>runtime rfrt"]
+  subgraph PB["Protobus (robotics/protobus)"]
+    BS["broker sim"]
+    BL["broker live"]
+    MK["provider mock<br/>(dog động học + vòng đời)"]
+    R2["bridge ROS 2<br/>rclpy Humble<br/>mapping + adapter dog"]
   end
-  subgraph PB["Protobus (L5, stack độc lập)"]
-    BRK["protobus-broker<br/>KUKSA databroker 0.7.1 + rss.json"]
-    R2["protobus-ros2<br/>provider rclpy (Humble)<br/>mapping overlay + adapter dog"]
+  subgraph DOG["Dog robot (repo riêng, network robot, DDS 42)"]
+    BRAIN["brain"]
+    SIMR["sim MuJoCo"]
   end
-  subgraph Robot["Dog robot (repo riêng, ROS 2 Humble, DDS domain 42)"]
-    BRAIN["brain (trọng tài an toàn)"]
-    SIMR["sim MuJoCo / robot thật (Phase 2)"]
-  end
-  APP["App robot (Python)<br/>runtime svrobot"]
-  WF --> COMP --> PYR --> APP
-  CAT --> COMP
-  APP -- "kuksa.val.v2<br/>Robot.* paths" --> BRK
-  BRK <-- "provider stream<br/>(actuate / publish)" --> R2
-  R2 -- "/dog1/control/request (JSON schema-1)" --> BRAIN
-  BRAIN -- "/dog1/cmd_vel/safe, motion/request" --> SIMR
-  SIMR -- "imu, odom, joints, contacts, motion/state…" --> R2
+  WEB <--> API
+  API -- "HTTP: lint/build" --> C
+  BLK --> C
+  RSSm --> C
+  RSSm --> BS
+  RSSm --> BL
+  API -- "file set" --> RUN --> APP
+  APP -- "protobus.v1 (gRPC)<br/>Robot.* paths" --> BS
+  APP -- "protobus.v1" --> BL
+  BS <-- "Provider stream" --> MK
+  BL <-- "Provider stream" --> R2
+  R2 -- "/dog1/control/request" --> BRAIN --> SIMR
+  SIMR -- "imu, odom, joints, motion/state…" --> R2
+  API -. "subscribe live / trace" .-> BS
+  API -. "subscribe live / trace" .-> BL
 ```
 
-**Luồng mẫu: "thấy marker đỏ ⇒ chào bằng chân".**
+**Hai broker tách biệt:**
+- **Simulate/Test** chạy trên broker sim + provider mock, không bao giờ chạm robot.
+- **Run** chạy trên broker live + bridge ROS 2.
+
+App sinh ra **giống hệt** ở cả hai, chỉ khác địa chỉ bus. Đây là cách đạt "parity" mà không cần viết một simulator thứ hai.
+
+**Luồng mẫu "thấy marker ⇒ giơ chân chào":**
 ```mermaid
 sequenceDiagram
-  participant App as App robot (workflow)
-  participant B as protobus-broker
-  participant P as protobus-ros2
+  participant App as App (rfrt)
+  participant B as protobus broker live
+  participant P as bridge ROS 2
   participant Br as dog brain
   participant S as dog sim
   S->>P: /dog1/perception/detections (5 Hz)
-  P->>B: publish Robot.Perception.Marker.Count = 1
-  B-->>App: subscribe: Count đổi 0→1
-  App->>B: Actuate Robot.Motion.Named.Request = LIFT_FRONT_LEFT
-  B->>P: BatchActuate (provider)
+  P->>B: Samples [Robot.Perception.Marker.Count=1]
+  B-->>App: Subscribe: Count 0→1
+  App->>B: Invoke Robot.Motion.Perform {Name: LIFT_FRONT_LEFT} (lease, timeout 15 s)
+  B->>P: InvokeDispatch exec=e1
   P->>Br: control/request {action: motion, motion_name: lift_fl, request_id, issued_at_ns(sim), config_hash}
   Br-->>P: control/ack {accepted: true}
-  P->>B: publish Robot.Motion.Named.LastResult.IsAccepted = true
-  S->>P: /dog1/motion/state phase RUNNING … SUCCEEDED
-  P->>B: publish Robot.Motion.Named.Phase
-  B-->>App: Phase = SUCCEEDED ⇒ nhánh "xong" của block
+  P->>B: CommandUpdate e1 ACCEPTED
+  S->>P: /dog1/motion/state RUNNING … SUCCEEDED
+  P->>B: CommandUpdate e1 RUNNING … SUCCEEDED
+  B-->>App: stream e1: SUCCEEDED ⇒ cổng "Xong" của block
 ```
 
-## 4. RSS v0.1 (chi tiết: ADR-0065)
-**Nguyên tắc:**
-- Định dạng **vspec của VSS**, gốc `Robot`, biên dịch ra JSON bằng **vss-tools ghim bản**, cùng định dạng KUKSA nạp được.
-- Path tổng quát cho mọi robot 4 chân. Tên riêng của robot (topic, joint name, action) **không** nằm trong spec mà nằm trong **overlay mapping** của protobus.
-- Đơn vị SI theo REP-103: m, rad, s, N, Nm, V, A, percent. Trục `x` tiến, `y` trái, `z` lên. Góc Euler roll/pitch/yaw.
-- Không chứa luồng dữ liệu lớn (ảnh, point cloud). RSS chỉ mang giá trị rút gọn (khoảng cách nhỏ nhất, số marker…).
-- **Lệnh (command pattern):**
-  - `…Request` là actuator: ghi = ra lệnh;
-  - `…Phase`/`…State` là sensor vòng đời;
-  - `…LastResult.IsAccepted/Reason` là kết quả nhận lệnh;
-  - `…ExecutionId` để đối chiếu.
+## 4. RSS v0.1 (ADR-0065)
+**Định dạng riêng** `*.rss.yaml`, không phải vspec. Tool `rssc` (Python) validate rồi biên dịch ra `rss-catalog.json` chuẩn hoá, kèm `catalogHash = sha256(canonical JSON)`.
 
-**Cây v0.1** (≈ 75 leaf; bản đầy đủ có datatype/min/max/allowed sẽ là file vspec ở M22-T02):
+Có định dạng riêng thì lệnh và setpoint thành **kiểu node hạng nhất**, không phải mô phỏng bằng nhiều leaf như VSS.
 
-| Nhánh | Leaf (kiểu, đơn vị, access) | Dog (ROS 2) |
-|---|---|---|
-| `Robot.Identity` | `Id`, `Model`, `Backend` (SIM/REAL), `ContractVersion` — attribute string | `sim/state`, `runtime.json` |
-| `Robot.Connection` | `IsOnline` (bool), `IsHandshakeComplete` (bool) — sensor, **do protobus tạo** | telemetry còn tươi, đã học `config_hash` |
-| `Robot.Safety` | `Mode` (string: DISARMED/MANUAL/AUTO/MOTION/SAFE_STOP), `Reason`, `IsArmed`, `IsStopLatched` — sensor | `brain/state` JSON |
-| `Robot.Safety.Command` | `Request` actuator (ARM/DISARM/STOP/RESET_STOP); `LastResult.IsAccepted`, `LastResult.Reason` | `control/request` → `control/ack` |
-| `Robot.Pose` | `Position.X/Y/Z` (m), `Orientation.Roll/Pitch/Yaw` (rad) — sensor, frame `odom` | `odom` (quaternion → RPY) |
-| `Robot.Velocity` | `Linear.X/Y` (m/s), `Angular.Z` (rad/s) — sensor đo được | `odom.twist` |
-| `Robot.Motion.Velocity` | `Linear.X` (±0,5 m/s), `Linear.Y`, `Angular.Z` (±0,65 rad/s) — **actuator**, có TTL | `manual` (Linear.Y: dog chưa hỗ trợ ⇒ unmapped) |
-| `Robot.Motion.Named` | `Request` actuator (CROUCH/BOW/TILT/LIFT_FRONT_LEFT/JUMP/STAIRS_ROUND_TRIP); `Cancel` actuator bool; `Phase`, `Active`, `ExecutionId`, `Reason` sensor; `LastResult.*` | `motion`/`motion_cancel`, `motion/state` |
-| `Robot.Navigation` | `Goal.X/Y` (m, frame map) actuator; `Command.Request` (GO_TO_GOAL/FOLLOW_SCENE_ROUTE/CANCEL); `State` (IDLE/ACTIVE/SUCCEEDED/FAILED/CANCELLED); `LastResult.*` | `goal`/`route`/`cancel`, `brain/state.mission` |
-| `Robot.Imu` | `AngularVelocity.X/Y/Z` (rad/s), `LinearAcceleration.X/Y/Z` (m/s^2), `Orientation.Roll/Pitch/Yaw` (rad) | `imu/data` |
-| `Robot.Leg.{FrontLeft,FrontRight,RearLeft,RearRight}` | `Foot.IsInContact` (bool), `Foot.ContactForce` (N); `Joint.{Hip,Thigh,Calf}.Position` (rad), `.Velocity` (rad/s), `.Effort` (Nm) | `foot_contacts` (theo `feet`), `joint_states` (theo `name`) |
-| `Robot.PowerSystem.Battery` | `StateOfCharge` (percent), `Voltage` (V), `Current` (A), `IsCharging` (bool) | `battery_state` (`percentage`×100) |
-| `Robot.Perception` | `Obstacle.MinDistance`, `Obstacle.FrontMinDistance` (m); `Marker.Count` (uint8), `Marker.IsDetected` (bool) | `scan` (min/sector ±30°), `perception/detections` |
-| `Robot.Simulation` | `SceneId` (string), `IsPaused` (bool) — chỉ khi Backend=SIM | `sim/state` |
+| Kind | Hướng | Ý nghĩa | Ví dụ |
+|---|---|---|---|
+| `branch` | — | Nhóm | `Robot.Leg` |
+| `attribute` | robot→app | Giá trị tĩnh của phiên | `Robot.Identity.Model` |
+| `sensor` | robot→app | Đo được. Có `maxAgeMs`: quá hạn ⇒ broker đánh dấu `STALE` | `Robot.Imu.AngularVelocity.Z` |
+| `setpoint` | app→robot | Giá trị liên tục, **struct nguyên tử**, có `ttlMs`, `refreshHz`, `safeValue`. Hết TTL ⇒ broker tự áp `safeValue` | `Robot.Motion.Velocity {LinearX, AngularZ}` |
+| `command` | app→robot | Lệnh rời rạc có **vòng đời chuẩn**, `args`, `timeoutMs` mặc định, `preconditions` tài liệu hoá | `Robot.Motion.Perform {Name}` |
 
-## 5. Protobus (chi tiết: ADR-0066)
-- **`protobus-broker`:** image KUKSA databroker **đúng digest đã ghim** (không fork), `--vss /rss/rss_v0.1.json`. Port `127.0.0.1:${SV_PROTOBUS_PORT}`. API cho app là `kuksa.val.v2`.
-- **`protobus-ros2`:** provider Python (rclpy, ROS 2 Humble), image dựng `FROM` **cùng digest Humble của robot**. Nó:
-  1. đăng ký (claim) mọi actuator RSS có mapping qua `OpenProviderStream`;
-  2. subscribe các topic ROS 2 theo overlay, áp transform, `PublishValues` lên broker (giới hạn `maxRateHz`);
-  3. nhận `BatchActuate` ⇒ gọi adapter của robot;
-  4. tự sinh `Robot.Connection.*`.
-- **Overlay mapping** = file vspec overlay có thuộc tính mở rộng `ros2`. Tiền lệ: provider CAN của KUKSA dùng overlay VSS với thuộc tính `dbc`. Ví dụ (profile `dog-go2-sim`):
+**Vòng đời lệnh chuẩn** (broker quản lý, áp cho mọi robot): `PENDING → ACCEPTED | REJECTED → RUNNING → SUCCEEDED | FAILED | CANCELLED | TIMED_OUT`.
+
+Mỗi lệnh sinh tự động các sensor `…Status.Phase`, `…Status.ExecutionId`, `…Status.Reason` để workflow đọc như tín hiệu thường.
+
+**Quy ước:**
+- Gốc `Robot`. Path chấm, PascalCase.
+- `instances` cho phần lặp, ví dụ `Leg[FrontLeft, FrontRight, RearLeft, RearRight]`.
+- Kiểu: `bool`, `int32`, `int64`, `uint8`, `uint32`, `float32`, `float64`, `string`, `enum`. `int64` mã hoá chuỗi thập phân trong JSON.
+- Đơn vị SI theo **REP-103** (m, rad, s, m/s, rad/s, m/s², N, N·m, V, A, %). Bảng `units.yaml` riêng.
+- Khung toạ độ: `x` tiến, `y` trái, `z` lên; `frame` ghi trên từng node (`base_link`, `odom`, `map`).
+- Spec **tổng quát cho robot 4 chân**. Topic, tên khớp, tên action của từng robot nằm trong **mapping profile** của Protobus, không nằm trong spec.
+- Không mang luồng lớn (ảnh, point cloud). Chỉ mang giá trị rút gọn.
+
+Ví dụ:
 ```yaml
-Robot.Imu.AngularVelocity.X:
-  ros2: { topic: /dog1/imu/data, type: sensor_msgs/msg/Imu, field: angular_velocity.x, qos: sensor_data, maxRateHz: 20 }
-Robot.Pose.Orientation.Yaw:
-  ros2: { topic: /dog1/odom, type: nav_msgs/msg/Odometry, field: pose.pose.orientation, transform: quaternion_to_yaw }
-Robot.Leg.FrontLeft.Foot.IsInContact:
-  ros2: { topic: /dog1/foot_contacts, type: dog_interfaces/msg/FootContacts, field: contact, select: { by: feet, equals: FL } }
-Robot.Perception.Obstacle.MinDistance:
-  ros2: { topic: /dog1/scan, type: sensor_msgs/msg/LaserScan, field: ranges, transform: min_finite }
-Robot.Safety.Mode:
-  ros2: { topic: /dog1/brain/state, type: std_msgs/msg/String, json: $.mode }
-Robot.Motion.Velocity.Linear.X:
-  ros2: { adapter: dog-control/1, command: manual, field: linear, refreshHz: 20, ttlMs: 300 }
-Robot.Motion.Named.Request:
-  ros2: { adapter: dog-control/1, command: motion, field: motion_name,
-          enum: { CROUCH: crouch, BOW: bow, TILT: tilt, LIFT_FRONT_LEFT: lift_fl, JUMP: jump } }
-Robot.Motion.Named.Phase:
-  ros2: { topic: /dog1/motion/state, type: std_msgs/msg/String, json: $.phase }
+rss: "0.1"
+root: Robot
+nodes:
+  Robot.Pose.Position.X: { kind: sensor, type: float64, unit: m, frame: odom, maxAgeMs: 200 }
+  Robot.Motion.Velocity:
+    kind: setpoint
+    fields:
+      LinearX:  { type: float64, unit: m/s,   min: -0.5,  max: 0.5 }
+      AngularZ: { type: float64, unit: rad/s, min: -0.65, max: 0.65 }
+    ttlMs: 300
+    refreshHz: 20
+    safeValue: { LinearX: 0, AngularZ: 0 }
+  Robot.Motion.Perform:
+    kind: command
+    args: { Name: { type: enum, values: [CROUCH, BOW, TILT, LIFT_FRONT_LEFT, JUMP] } }
+    timeoutMs: 15000
+    preconditions: "Robot.Safety.Mode == MANUAL; robot đứng yên"
+  Robot.Leg[FrontLeft,FrontRight,RearLeft,RearRight].Foot.IsInContact: { kind: sensor, type: bool, maxAgeMs: 200 }
 ```
-- **Transform cố định, tất định, không có code tuỳ ý:** `identity`, `scale(k)`, `offset(c)`, `quaternion_to_roll|pitch|yaw`, `min_finite`, `sector_min(deg)`, `array_index(i)`, `select(by, equals)`, `json(path)`, `enum(map)`, `count`, `bool_from(expr cố định: eq/ne/in)`.
-- **Adapter `dog-control/1`** (riêng repo dog):
-  - học `config_hash` từ telemetry JSON của robot (`brain/state`);
-  - `issued_at_ns` lấy theo `/clock` (`use_sim_time`);
-  - `request_id` UUID; đối chiếu ack ở `control/ack`;
-  - làm mới `manual` 20 Hz khi target còn hạn TTL;
-  - `motion` chỉ khi `Mode=MANUAL`, nếu không trả `LastResult.IsAccepted=false` kèm lý do của Brain.
-- **Luật an toàn** (PHẢI, xem ADR-0066 §4):
-  - không phát `cmd_vel*`, LowCmd, `motion/request` hay `sim/request` trực tiếp;
-  - mất làm mới ⇒ gửi vận tốc 0 một lần rồi ngừng;
-  - STOP luôn đi ngay, bỏ qua hàng đợi;
-  - ARM từ workflow chỉ khi profile `allowRemoteArm` (SIM: true; REAL: false);
-  - một **lease điều khiển** mỗi robot.
-- **Triển khai:**
-  - compose profile `robot`, fragment `modules/protobus/compose.yaml`;
-  - `protobus-ros2` vào **external network** của stack dog (`SV_ROBOT_NETWORK`), dùng `ROS_DOMAIN_ID` và CycloneDDS peer tới các service dog;
-  - không mount docker.sock, port chỉ bind 127.0.0.1.
 
-## 6. Compiler, IR và target (ADR-0064, 0067)
-- **Thêm, không phá:**
-  - `signalSpec: "VSS" | "RSS"` (mặc định VSS) trong WorkflowGraph, Scenario, Project, IR (`irVersion` 1.x minor), catalog API;
-  - catalog phục vụ `/{spec}/{release}`, route cũ là alias VSS;
-  - `VehicleLookup` ⇒ `SignalLookup(spec, release, paths)`; regex template theo gốc của spec.
-- **Opcode giữ nguyên.** `vehicle.read/write/...` được tài liệu hoá là "thao tác kho tín hiệu", trung lập spec. Mã diagnostic cũ giữ nguyên; mã mới chỉ thêm (ADR-0068 §5).
-- **Target `python-robot`** (module `compiler-code-python`, service `codegen-python-robot`):
-  - cùng emitter IR→Python;
-  - template project Python thuần (không Velocitas);
-  - runtime `svrobot` = lõi `simvehicleapp_runtime` + adapter `KuksaV2SignalAccess` không Velocitas + `MqttPubSub` tuỳ chọn;
-  - Dockerfile `python:3.12-slim` ghim digest.
-- **Sau Python:** C++/Rust chạy trên robot qua target WASM sẵn có (`sv-wasm-host` trỏ protobus, allowlist path `Robot.*`), rồi mới tới native.
+**Cây v0.1** (≈ 80 sensor/attribute, 1 setpoint, 7 command; bản đủ ở M22-T05):
 
-## 7. Block, kịch bản và mẫu workflow (ADR-0068)
-**Block robot** (nhóm "Robot" trong toolbar khi project là miền RSS):
+| Nhánh | Node chính | Dog (ROS 2) |
+|---|---|---|
+| `Robot.Identity` | `Id`, `Model`, `Backend` (SIM/REAL), `ProfileId` — attribute | `sim/state`, profile |
+| `Robot.Connection` | `IsOnline`, `IsHandshakeComplete`, `LastSampleAgeMs` — sensor **do Protobus tạo** | telemetry còn tươi, đã học `config_hash` |
+| `Robot.Safety` | `Mode` (enum DISARMED/MANUAL/AUTO/MOTION/SAFE_STOP), `Reason`, `IsArmed`, `IsStopLatched` | `brain/state` |
+| `Robot.Safety.Arm`, `.Disarm`, `.ResetStop` | command | `control/request` arm/disarm/reset_stop |
+| `Robot.Safety.Stop` | command **ưu tiên khẩn**, không cần lease | `control/request` stop |
+| `Robot.Pose` | `Position.X/Y/Z` (m), `Orientation.Roll/Pitch/Yaw` (rad), frame `odom` | `odom` (quaternion → RPY) |
+| `Robot.Velocity` | `Linear.X/Y` (m/s), `Angular.Z` (rad/s) — đo được | `odom.twist` |
+| `Robot.Motion.Velocity` | **setpoint** `{LinearX, AngularZ}` | `manual` (làm mới 20 Hz) |
+| `Robot.Motion.Perform` | command `{Name}` | `motion` / `motion_cancel`, `motion/state` |
+| `Robot.Navigation.GoTo` | command `{X, Y}` (m, frame map) | `goal`, `brain/state.mission` |
+| `Robot.Navigation.FollowRoute` | command `{RouteId}` | `route` |
+| `Robot.Imu` | `AngularVelocity.X/Y/Z`, `LinearAcceleration.X/Y/Z`, `Orientation.Roll/Pitch/Yaw` | `imu/data` |
+| `Robot.Leg[4]` | `Foot.IsInContact`, `Foot.ContactForce` (N); `Joint[Hip,Thigh,Calf].Position/Velocity/Effort` | `foot_contacts`, `joint_states` |
+| `Robot.PowerSystem.Battery` | `StateOfCharge` (%), `Voltage`, `Current`, `IsCharging` | `battery_state` |
+| `Robot.Perception` | `Obstacle.MinDistance`, `Obstacle.FrontMinDistance` (m); `Marker.Count`, `Marker.IsDetected` | `scan`, `perception/detections` |
+| `Robot.Simulation` | `SceneId`, `IsPaused`, `TimeNs` — chỉ khi Backend=SIM | `sim/state`, `/clock` |
 
-| Block | Lowering (opcode có sẵn) |
+## 5. Protobus (ADR-0066)
+Bus tín hiệu **tự viết** theo RSS. Giao thức riêng **`protobus.v1`** (gRPC + protobuf), file `.proto` ở `robotics/contracts`.
+
+### 5.1 Giao thức
+**`service Bus`** (cho app và studio):
+
+| RPC | Ý nghĩa |
 |---|---|
-| **Khi tín hiệu robot đổi / khi điều kiện** | dùng lại `sv_on_signal_changed` / `sv_on_condition` với path `Robot.*` |
-| **Arm / Disarm / Dừng khẩn / Reset dừng** | `vehicle.write Robot.Safety.Command.Request` |
-| **Di chuyển** (tiến/lùi/quay, tốc độ, thời gian) | `control.repeat` mỗi 100 ms × `vehicle.write_many(Linear.X, Angular.Z)` hết thời gian ⇒ ghi 0. Ra handle `done`/`error`. |
-| **Đi tới điểm (x, y)** | `vehicle.write_many(Goal.X, Goal.Y)` ⇒ `vehicle.write Navigation.Command.Request=GO_TO_GOAL` ⇒ `control.wait_until(State ∈ terminal, timeout)` ⇒ `control.branch` succeeded/failed/timeout |
-| **Thực hiện động tác** (Ngồi/Cúi chào/Nghiêng/Giơ chân trước trái/Nhảy) | `vehicle.write Named.Request` ⇒ chờ `LastResult` ⇒ `wait_until(Phase terminal, timeout)` ⇒ nhánh |
-| **Đọc trạng thái robot** (pin, tư thế, khoảng cách vật cản…) | `vehicle.read` |
-| **Tuần tra** (danh sách waypoint) | `control.repeat` lồng block "Đi tới điểm" (sub-workflow ADR-0063) |
+| `Describe` | `robotId`, `profileId`, `rssVersion`, `catalogHash`, trạng thái provider |
+| `Get(paths)` | Giá trị hiện tại, kèm `sourceTimeNs`, `brokerTimeNs`, `quality` (OK/STALE/NONE) |
+| `Subscribe(paths, minIntervalMs)` → stream | Chỉ gửi khi giá trị đổi, giới hạn tần số |
+| `AcquireLease(client, ttlMs)` / `RenewLease` / `ReleaseLease` | **Một lease điều khiển** mỗi robot |
+| `SetTarget(lease, path, struct)` | Ghi setpoint. Broker gắn hạn = now + `ttlMs` |
+| `Invoke(lease, path, args, timeoutMs)` → stream `CommandUpdate` | Lệnh có vòng đời |
+| `Cancel(lease, executionId)` | Huỷ lệnh |
+| `Stop(reason)` | **Không cần lease**, đi trước mọi thứ |
 
-**Simulator:** profile mô phỏng vòng đời lệnh có khai báo. Ví dụ `Named.Request` ⇒ Phase DISPATCHED (+50 ms) ⇒ RUNNING ⇒ SUCCEEDED (+thời lượng theo động tác); điều kiện REJECTED khi Mode≠MANUAL. Dùng cho Simulate và Test **không cần robot**. Không mô phỏng vật lý.
+**`service Provider`** (cho bridge/mock), `Attach` stream hai chiều:
+- provider gửi: `Hello{providerId, profileId, catalogHash, claims}`, `Samples` (theo lô), `CommandUpdate`;
+- broker gửi: `SetTargetDispatch`, `InvokeDispatch`, `CancelDispatch`, `StopDispatch`, `SafeValueDispatch`.
 
-**Mẫu workflow kịch bản** (template trong studio, đồng thời là golden robot RW-A..RW-D):
-- **RW-A "Chào khi thấy marker":** `Marker.Count > 0` ⇒ Giơ chân trước trái ⇒ Cúi chào.
-- **RW-B "Pilot tuần tra":** Arm ⇒ lặp qua 3 waypoint, mỗi điểm "Đi tới điểm". Nếu `Obstacle.FrontMinDistance < 0,5 m` ⇒ Dừng khẩn ⇒ log.
-- **RW-C "Nhảy theo tín hiệu":** MQTT `robot/cmd = jump` ⇒ Thực hiện động tác Nhảy ⇒ publish kết quả MQTT.
-- **RW-D "Pin yếu":** `Battery.StateOfCharge < 20` liên tục 5 s ⇒ Dừng ⇒ Ngồi ⇒ log cảnh báo.
+### 5.2 Broker (Python 3.12, asyncio, `grpcio`)
+Broker giữ các bất biến sau, có test cho từng điều.
 
-## 8. Studio
-- Tạo app chọn **Miền: Xe (VSS) | Robot (RSS)**.
-  - Miền Robot: toolbar hiện cây RSS và nhóm block Robot, ẩn block riêng xe (HMI, door…).
-  - Signals panel/Live/Flow chạy qua signal-gateway trỏ `protobus-broker`.
-- Run: chọn **robot đích** (profile protobus). Lease điều khiển hiện rõ ai đang giữ robot. Nút **STOP robot** luôn hiện ở thanh Run.
-- Link "Mở Robot Zoo" tới GUI 3D của repo dog (`127.0.0.1:8090`) để xem robot chuyển động. Studio không dựng 3D.
-- Trợ lý AI: MCP tool catalog trả cây RSS; WorkflowPatch dùng block Robot. Luật cũ giữ nguyên: AI không nằm trong đường sinh code.
+| Bất biến | Cách thực hiện |
+|---|---|
+| Kiểu dữ liệu | Path, kind, kiểu, min/max, enum được kiểm theo catalog. Sai ⇒ lỗi `PB_*` (mã công khai, chỉ thêm) |
+| Khớp spec | `catalogHash` của provider và app phải khớp broker, nếu không ⇒ từ chối `PB_CATALOG_MISMATCH` |
+| TTL setpoint | Hết `ttlMs` mà không làm mới ⇒ áp `safeValue` một lần |
+| Vòng đời lệnh | Broker giữ state machine và timeout (`TIMED_OUT` ⇒ gửi Cancel xuống provider) |
+| Lease | Mất lease (hết hạn/app chết) ⇒ `safeValue` mọi setpoint + Cancel mọi lệnh của lease đó |
+| Stop | Đi thẳng tới provider, bỏ qua hàng đợi. Kết quả chốt (latch) phản ánh ở `Robot.Safety.IsStopLatched` |
+| Provider offline | Lệnh mới ⇒ `REJECTED(PROVIDER_OFFLINE)`; `Robot.Connection.IsOnline=false` |
+| Audit | Mọi lệnh/setpoint/stop ghi JSONL (thời gian, client, path, kết quả) |
+
+Mục tiêu hiệu năng (đo ở spike S-R4): ≥ 5 000 sample/s vào, 4 subscriber, p95 trễ trong broker < 5 ms, ổn định 30 phút. Không đạt ⇒ viết lại broker bằng Rust **sau cùng `.proto`** (ADR mới), app không đổi.
+
+### 5.3 Bridge ROS 2 (`protobus-ros2`)
+rclpy, image `FROM` **đúng digest Humble của robot**. Bridge kết nối broker live làm provider.
+- **Mapping profile** `profiles/dog-go2-sim/mapping.yaml`, schema riêng `mapping.v1`:
+```yaml
+profile: dog-go2-sim
+rss: "0.1"
+adapter: dog-control/1
+ros: { domainId: 42, namespace: /dog1, useSimTime: true }
+sensors:
+  Robot.Imu.AngularVelocity.X: { topic: imu/data, type: sensor_msgs/msg/Imu, field: angular_velocity.x, qos: sensor_data, maxRateHz: 20 }
+  Robot.Pose.Orientation.Yaw:  { topic: odom, type: nav_msgs/msg/Odometry, field: pose.pose.orientation, transform: quaternion_to_yaw }
+  Robot.Leg.FrontLeft.Foot.IsInContact: { topic: foot_contacts, type: dog_interfaces/msg/FootContacts, field: contact, select: { by: feet, equals: FL } }
+  Robot.Perception.Obstacle.FrontMinDistance: { topic: scan, type: sensor_msgs/msg/LaserScan, field: ranges, transform: { sector_min: 30 } }
+  Robot.Safety.Mode: { topic: brain/state, type: std_msgs/msg/String, json: $.mode }
+setpoints:
+  Robot.Motion.Velocity: { command: manual, fields: { LinearX: linear, AngularZ: angular } }
+commands:
+  Robot.Motion.Perform: { command: motion, args: { Name: { field: motion_name, enum: { CROUCH: crouch, BOW: bow, TILT: tilt, LIFT_FRONT_LEFT: lift_fl, JUMP: jump } } },
+                          result: { topic: motion/state, json: $.phase } }
+  Robot.Safety.Stop: { command: stop, priority: emergency }
+```
+- **Transform là danh sách đóng, tất định, không chạy code tuỳ ý:** `identity`, `scale(k)`, `offset(c)`, `quaternion_to_roll|pitch|yaw`, `min_finite`, `sector_min(deg)`, `array_index(i)`, `select(by, equals)`, `json(path)`, `enum(map)`, `count`, `compare(eq|ne|lt|gt, c)`.
+- **Adapter `dog-control/1`:**
+  - học `config_hash` từ `brain/state`;
+  - `issued_at_ns` theo `/clock`;
+  - `request_id` UUID; đối chiếu `control/ack`;
+  - setpoint `manual` làm mới 20 Hz khi broker còn hạn TTL;
+  - ánh xạ phase `motion/state` và `brain/state.mission` về vòng đời chuẩn.
+
+### 5.4 Provider mock (`protobus-mock`)
+Python thuần, không ROS. Dùng cho Simulate, Test và CI.
+- Mô hình động học unicycle (vận tốc → pose) và pin giảm tuyến tính.
+- **Profile vòng đời lệnh** khai báo: điều kiện nhận (ví dụ `Mode == MANUAL`), thời lượng từng phase lấy từ số đo dog thật ở M24.
+- **API kịch bản:** đặt/nhảy giá trị sensor theo mốc thời gian, ép lệnh `REJECTED`/`FAILED`. Tab Test dùng API này.
+- `timeScale` để chạy nhanh hơn thời gian thực trong Test.
+- Có cùng mapping profile ID ⇒ app không biết mình đang chạy trên mock.
+
+### 5.5 Luật an toàn (PHẢI)
+1. Bridge **không bao giờ** phát `cmd_vel*`, LowCmd, `motion/request`, `sim/request`. Chỉ được publish `control/request`. Có test tĩnh allowlist publisher.
+2. Setpoint hết TTL ⇒ `safeValue` (vận tốc 0) một lần rồi ngừng. Brain dog còn watchdog 0,2 s riêng.
+3. `Stop` luôn đi ngay, không cần lease, bỏ qua hàng đợi.
+4. `Arm` từ workflow chỉ khi profile có `allowRemoteArm: true`. SIM mặc định true (chờ PO), REAL luôn false.
+5. Một lease điều khiển mỗi robot.
+6. Backend REAL **ngoài phạm vi** tới khi repo dog commissioning.
+
+## 6. RobotFlow: ngôn ngữ, compiler, runtime (ADR-0067)
+### 6.1 Chọn ngôn ngữ "dễ trước": Python cho cả toolchain và app đầu tiên
+| Tiêu chí | Python | TypeScript | C++ | Rust |
+|---|---|---|---|---|
+| Viết compiler (parse, type check, sinh code) | Dễ, nhanh | Dễ | Khó | Trung bình |
+| App sự kiện/bất đồng bộ (chờ, timeout, song song) | `asyncio` có sẵn | có sẵn | thủ công | `tokio`, khó hơn |
+| Hệ sinh thái ROS 2 | `rclpy` (cùng ngôn ngữ với bridge) | không chính thức | `rclcpp` | không chính thức |
+| Không cần bước build ⇒ chạy/sửa nhanh | Có | Cần bundler | Cần CMake | Cần cargo |
+| Hiệu năng cho lệnh cấp cao 20–50 Hz | Đủ | Đủ | Thừa | Thừa |
+
+⇒ Compiler `rflowc`, runtime `rfrt`, broker, mock, API studio đều **Python 3.12**. Riêng bridge dùng Python 3.10 của Humble. Web dùng TypeScript.
+
+Sau v0.1, backend thứ hai (C++ hoặc Rust) chỉ cần thêm một emitter và một runtime nói `protobus.v1`. IR và block giữ nguyên.
+
+### 6.2 Định dạng workflow `robotflow.v1`
+```json
+{ "schema": "robotflow.v1", "rss": { "version": "0.1", "catalogHash": "sha256:…" }, "profile": "dog-go2-sim",
+  "nodes": [ { "id": "n1", "block": "rf.on_condition", "v": 1, "props": { "when": "Robot.Perception.Marker.Count > 0", "forMs": 0 }, "ui": { "x": 80, "y": 40 } } ],
+  "edges": [ { "from": ["n1", "next"], "to": ["n2", "in"] } ] }
+```
+Trường `ui` chỉ cho canvas: compiler bỏ qua, không tính vào hash.
+
+### 6.3 Block registry (nguồn duy nhất cho compiler và palette)
+Mỗi block là `robotflow/blocks/<id>.block.yaml`. File chứa:
+- `id`, `version`, `category`;
+- tiêu đề vi/en;
+- cổng vào/ra (`in`, `next`, `done`, `failed`, `timeout`, `rejected`);
+- props có kiểu: `rss-path` lọc theo kind, `number+unit`, `enum`, `duration`, `expression`, `waypoints`;
+- `semantics` (văn bản);
+- tên quy tắc lowering.
+
+Studio lấy registry qua `GET /blocks` của service compiler, không có bản sao thứ hai.
+
+| Nhóm | Block v0.1 |
+|---|---|
+| Khởi động | Khi bắt đầu · Khi tín hiệu đổi · Khi điều kiện đúng (giữ `forMs`) · Định kỳ · Khi có sự kiện (nút trong studio hoặc HTTP cục bộ) |
+| Robot | Arm · Disarm · **Dừng khẩn** · Reset dừng · **Di chuyển** (tiến/lùi/quay, tốc độ, thời gian) · **Đi tới điểm** (x, y) · **Tuần tra** (danh sách waypoint, số vòng) · **Thực hiện động tác** (Ngồi/Cúi chào/Nghiêng/Giơ chân trước trái/Nhảy) · Huỷ lệnh |
+| Luồng | Nếu/Không thì · Chờ · Chờ đến khi (có timeout) · Lặp (n lần / mãi mãi) · Song song · Gán biến · Đọc tín hiệu |
+| Nhật ký | Ghi log (mức info/warn/error, có nội suy giá trị) |
+
+Mọi block ra lệnh robot đều có timeout và đủ cổng kết quả. Compiler từ chối workflow có cổng kết quả bỏ trống ở chỗ bắt buộc.
+
+### 6.4 Biểu thức
+Ngữ pháp riêng, nhỏ, an toàn:
+- literal có đơn vị (`0.5 m/s`, `20 %`, `2 s`);
+- path RSS, biến;
+- `+ - * /`, so sánh, `and/or/not`;
+- hàm `abs`, `min`, `max`, `clamp`.
+
+Parser Pratt viết tay. Kiểm kiểu và chiều đơn vị. Không có `eval`, không gọi hàm tuỳ ý.
+
+### 6.5 Compiler `rflowc` và IR `rfir.v1`
+| Stage | Kiểm |
+|---|---|
+| S0 | Schema, giới hạn kích thước |
+| S1 | Cấu trúc: cổng hợp lệ, cạnh treo, vòng chỉ được tạo qua block Lặp |
+| S2 | Props theo registry, migration version block |
+| S3 | RSS: path tồn tại, kind đúng block, `catalogHash` khớp |
+| S4 | Kiểu và đơn vị biểu thức |
+| S5 | Luồng: reachability, lệnh có timeout, "Lặp mãi" phải có chờ |
+| S6 | An toàn: tốc độ trong min/max, thời gian Di chuyển ≤ giới hạn profile, Arm cần `allowRemoteArm`, cảnh báo nếu workflow điều khiển chuyển động mà không có nhánh Dừng |
+
+Sau S6:
+1. Sinh **IR** `rfir.v1`, gồm các behavior (trigger + chính sách đồng thời `queue|drop|restart`) và câu lệnh `log`, `wait`, `wait_until`, `set_target`/`hold`, `invoke`, `cancel`, `stop`, `if`, `loop`, `parallel`, `assign`, `read`. Mỗi câu lệnh mang `src.nodeId` để trace.
+2. Chuẩn hoá, tính `irHash`.
+3. **Codegen Python** tất định: `app/flow.py`, `app/main.py`, `rflow.lock.json` (catalogHash, irHash, bản rfrt).
+
+Không LLM, không timestamp, cùng input ⇒ cùng bytes.
+
+**Diagnostics:** catalog riêng `robotics/contracts/diagnostics.v1.json`, mã công khai, chỉ thêm:
+
+| Dải mã | Nhóm |
+|---|---|
+| `RF1xxx` | cấu trúc |
+| `RF2xxx` | props |
+| `RF3xxx` | RSS |
+| `RF4xxx` | kiểu/đơn vị |
+| `RF5xxx` | luồng |
+| `RF6xxx` | an toàn |
+
+### 6.6 Runtime `rfrt` (Python 3.12)
+| Thành phần | Việc |
+|---|---|
+| `BusClient` | protobus.v1: Get/Subscribe/SetTarget/Invoke/Stop, tự kết nối lại |
+| Behavior engine | Trigger, chính sách đồng thời, huỷ cây tác vụ |
+| `Hold` setpoint | Làm mới theo `refreshHz` của catalog. Ra khỏi block hoặc lỗi ⇒ ghi `safeValue` |
+| Lệnh | Invoke + chờ phase + timeout ⇒ Cancel, rẽ nhánh theo kết quả |
+| Lease | Xin lúc khởi động nếu có block điều khiển; tự gia hạn; mất lease ⇒ dừng mọi behavior điều khiển |
+| Trace | JSON lines `{t, nodeId, event, data}` ra stdout ⇒ Flow/log trong studio |
+| Sự kiện | Nhận `on_event` từ runner qua stdin JSON lines |
+| Tắt máy | SIGTERM ⇒ safeValue ⇒ trả lease ⇒ thoát |
+
+## 7. Robot Studio (ADR-0068)
+**Web app mới viết từ đầu** (`robotics/studio`). Không dùng studio fork Sim.
+- **studio-web** (React + TypeScript + Vite + React Flow), các màn hình:
+  1. **Projects:** tạo từ trống hoặc từ mẫu RW-A..RW-D.
+  2. **Editor:**
+     - palette từ registry;
+     - cây RSS lọc theo kind;
+     - canvas kéo thả;
+     - panel props có trình nhập theo kiểu (chọn path RSS, số có đơn vị, waypoint);
+     - diagnostics cập nhật khi sửa (lint có debounce).
+  3. **Simulate:**
+     - chạy trên broker sim + mock;
+     - bảng tín hiệu live;
+     - Flow trace tô sáng node đang chạy;
+     - nút sự kiện;
+     - bản đồ 2D vị trí robot (SVG);
+     - log.
+  4. **Test:**
+     - kịch bản có timeline: đặt giá trị sensor, ép kết quả lệnh;
+     - kỳ vọng: lệnh X được gọi trước t, phase Y, không gọi Z;
+     - chạy nhanh bằng `timeScale`.
+  5. **Run:**
+     - chọn robot đích (profile live);
+     - **nút STOP robot luôn hiện**;
+     - trạng thái lease, tín hiệu live, Flow, log;
+     - link mở **Robot Zoo** `127.0.0.1:8090` để xem 3D.
+  6. **Export:** zip project sinh ra kèm `rflow.lock.json`.
+- **studio-api** (FastAPI):
+  - lưu project dạng file trên volume (`project.json`, `flow.json`, `scenarios/*.json`);
+  - gọi service compiler;
+  - điều phối runner;
+  - WebSocket cho tín hiệu live, trace, log.
+- **rflowc service:** `POST /lint`, `POST /build` (trả **file set**, không ghi đĩa), `GET /blocks`, `GET /rss/catalog`.
+- **runner:**
+  - chạy app của file set trong process con: uid không phải root, giới hạn CPU/RAM bằng rlimit, chỉ thấy network bus;
+  - image có sẵn `rfrt` nên **không pip install lúc chạy**;
+  - **mỗi robot một run**;
+  - không mount docker.sock.
+- **Ngoài phạm vi v0.1:** trợ lý AI, đa người dùng, đăng nhập (chạy cục bộ 127.0.0.1). Chờ PO nếu muốn AI ở v0.2.
+
+**Mẫu workflow** (template trong studio, đồng thời là golden RW-A..RW-D):
+- **RW-A "Chào khi thấy marker":** Khi `Marker.Count > 0` ⇒ Giơ chân trước trái ⇒ Cúi chào ⇒ log.
+- **RW-B "Pilot tuần tra":** Khi bắt đầu ⇒ Arm ⇒ Tuần tra 3 waypoint ×2 vòng. Song song: Khi `Obstacle.FrontMinDistance < 0.5 m` ⇒ Dừng khẩn ⇒ log error.
+- **RW-C "Nhảy theo lệnh":** Khi có sự kiện `jump` ⇒ Nhảy ⇒ rẽ nhánh theo kết quả ⇒ log.
+- **RW-D "Pin yếu":** Khi `Battery.StateOfCharge < 20 %` giữ 5 s ⇒ Huỷ nhiệm vụ ⇒ Ngồi ⇒ log warn.
+
+## 8. Triển khai (Compose riêng)
+| Service | Image | Port (127.0.0.1) | Network |
+|---|---|---|---|
+| `studio-web` | build riêng (nginx tĩnh) | `${SR_WEB_PORT:-3300}` | `sr-front` |
+| `studio-api` | Python 3.12 | `${SR_API_PORT:-3301}` | `sr-front`, `sr-bus` |
+| `rflowc` | Python 3.12 | — | `sr-front` |
+| `runner` | Python 3.12 + rfrt | — | `sr-bus` (internal) |
+| `protobus-sim` + `protobus-mock` | Python 3.12 | `${SR_BUS_SIM_PORT:-55600}` (debug) | `sr-bus` |
+| `protobus-live` + `protobus-ros2` (profile `live`) | Python 3.12 / Humble digest | `${SR_BUS_LIVE_PORT:-55610}` | `sr-bus` + external `${SR_ROBOT_NETWORK}` (network `robot` của dog) |
+
+- Compose project `sr`, file `robotics/compose.yaml`. Không dính tới compose root của stack xe.
+- CLI `robotics/scripts/sr`: `build`, `up`, `down` (**không bao giờ `-v`**), `smoke`, `precheck`, `demo-video`.
+- CI: workflow riêng `.github/workflows/robotics.yml`, lọc theo `robotics/**`. Test live trên dog chạy local (repo dog private, xem RR6).
 
 ## 9. Spike phải làm trước khi code thật
-| Spike | Câu hỏi | Tiêu chí PASS |
-|---|---|---|
-| S-R1 | KUKSA 0.7.1 nạp `rss.json` gốc `Robot`, actuator string có `allowed` | Get/Subscribe/Actuate `Robot.*` qua `kuksa.val.v2` |
-| S-R2 | vss-tools (MPL-2.0, chỉ dùng như tool build) biên dịch vspec gốc `Robot` với `instances` và overlay `ros2` | JSON tất định, 2 lần build cùng bytes |
-| S-R3 | DDS: container ngoài compose dog thấy topic khi `AllowMulticast=false` + peer theo tên | `ros2 topic echo /dog1/imu/data` từ container `protobus-ros2`. Nếu cần sửa `cyclonedds.xml` của repo dog ⇒ ghi yêu cầu cho repo dog. |
-| S-R4 | Envelope dog: học `config_hash`, `issued_at_ns` sim time, ack | `arm` ⇒ Mode MANUAL; `motion bow` ⇒ Phase SUCCEEDED; `manual` 20 Hz ⇒ robot đi; ngừng làm mới ⇒ dừng ≤ 0,5 s |
-| S-R5 | Provider `kuksa.val.v2` bằng Python (grpcio) | Claim actuator, nhận BatchActuate, PublishValues 50 Hz ổn định 10 phút |
-| S-R6 | Message tuỳ biến `dog_interfaces` trong image bridge | Build `dog_interfaces` từ repo dog đúng SHA (Apache-2.0) và import được trong rclpy |
-
-## 10. Lộ trình (chi tiết ở `analysis/phases/M22…M26`)
-| M | Tên | Kết quả | Gate |
+| Spike | Câu hỏi | Tiêu chí PASS | Milestone |
 |---|---|---|---|
-| [M22](../../analysis/phases/M22-rss-spec-and-catalog.md) | RSS v0.1 + catalog đa spec | vspec RSS, `rss_v0.1.json`, overlay dog, catalog `/{spec}/{release}`, đơn vị rad, cây RSS trong studio (chỉ đọc), S-R1, S-R2 | KUKSA nạp RSS; catalog test; 100 % topic dog trong §2.1 được ánh xạ hoặc ghi "ngoài phạm vi" có lý do |
-| [M23](../../analysis/phases/M23-protobus.md) | Protobus | `protobus-broker` + `protobus-ros2` + adapter `dog-control/1` + luật an toàn + compose `robot`, S-R3..S-R6 | Live trên dog sim: đọc ≥ 20 tín hiệu; arm/manual/motion/stop qua RSS; test mất làm mới ⇒ dừng; fault test |
-| [M24](../../analysis/phases/M24-robot-compiler-blocks-simulator.md) | Compiler + block + simulator miền robot | `signalSpec`, block Robot, lowering, mock vòng đời lệnh, diagnostics mới, golden RW-A..RW-D | Golden IR tất định ×2; conformance robot; không đổi golden GW-A..G |
-| [M25](../../analysis/phases/M25-python-robot-target.md) | Target `python-robot` + runtime `svrobot` + Run | Codegen, toolchain, run trên protobus, trace/Flow, lease | Parity simulator ↔ app (protobus + provider mock); `@live` RW-A..RW-D trên dog sim |
-| [M26](../../analysis/phases/M26-robot-studio-ux-e2e.md) | Studio miền Robot + E2E + video | Chọn miền, toolbar RSS, mẫu kịch bản, STOP/lease UI, AI biết RSS, tài liệu, video | `@live` robot full luồng + video nhịp người dùng + README/user guide |
+| S-R1 | DDS: container ngoài compose dog có thấy topic khi multicast tắt và peer cố định theo tên không | `ros2 topic echo /dog1/imu/data` từ container bridge. Nếu cần thêm peer vào `cyclonedds.xml` của dog ⇒ ghi yêu cầu cho repo dog | M22 |
+| S-R2 | Build `dog_interfaces` (repo dog đúng SHA) trong image `FROM ros:humble…@sha256:566b87e6…` | `from dog_interfaces.msg import FootContacts` chạy được; có NOTICE Apache-2.0 | M22 |
+| S-R3 | Envelope dog: học `config_hash`, `issued_at_ns` sim time, ack | arm ⇒ Mode MANUAL; motion bow ⇒ SUCCEEDED; manual 20 Hz ⇒ robot đi; ngừng làm mới ⇒ dừng ≤ 0,5 s; đo thời lượng 5 động tác | M22 |
+| S-R4 | Broker Python asyncio gRPC có đủ nhanh không | ≥ 5 000 sample/s, 4 subscriber, p95 < 5 ms, 30 phút không rò bộ nhớ | M23 |
+| S-R5 | React Flow: 200 node, node tuỳ biến có cổng định kiểu, bàn phím, build trong container | FPS kéo ≥ 30; build tĩnh < 2 phút; RAM build < 2 GB | M26 |
+| S-R6 | Runner sandbox không docker.sock: process con, đổi uid, rlimit, chỉ thấy network bus | App không mở được socket ra ngoài `sr-bus`; vượt RAM ⇒ bị giết sạch, robot nhận safeValue | M26 |
 
-Thứ tự bắt buộc: M22 → M23 → M24 → M25 → M26. M24 có thể chạy song song M23 sau khi M22 xong.
+## 10. Lộ trình (chi tiết ở `analysis/phases/M22…M27`)
+| M | Tên | Kết quả chính | Gate |
+|---|---|---|---|
+| [M22](../../analysis/phases/M22-robotics-foundation-and-rss.md) | Nền móng `robotics/` + RSS v0.1 | khung thư mục, AGENTS, compose, CI, CLI `sr`; schema RSS; `rssc`; RSS v0.1 Go2; truy vết topic; spike S-R1..S-R3 | `rssc` tất định ×2; 100 % topic §2.1 được ánh xạ hoặc ghi "ngoài phạm vi"; 3 spike có kết luận |
+| [M23](../../analysis/phases/M23-protobus-core.md) | Protobus core | `protobus.v1`, broker, provider mock, `pbctl`, S-R4 | Unit + fault test bất biến §5.2; perf S-R4 PASS |
+| [M24](../../analysis/phases/M24-protobus-ros2-bridge.md) | Bridge ROS 2 + adapter dog | image Humble, engine mapping, `dog-control/1`, luật an toàn, compose `live` | Live dog sim: ≥ 20 tín hiệu; arm/manual/motion/stop; dừng ≤ 0,5 s; fault test; 30 phút |
+| [M25](../../analysis/phases/M25-robotflow-compiler-runtime.md) | RobotFlow compiler + runtime | schema, block registry, biểu thức, `rflowc`, codegen Python, `rfrt`, CLI build/run headless | Golden RW-A..D ×2 tất định; conformance C-R01..C-R12 trên broker sim + mock; RW-A..D headless trên dog sim |
+| [M26](../../analysis/phases/M26-robot-studio.md) | Robot Studio | API, service compiler, runner, web (Editor/Simulate/Test/Run/Export), mẫu, S-R5, S-R6 | Vitest + E2E mock; STOP/lease có test |
+| [M27](../../analysis/phases/M27-robotics-e2e-video-docs.md) | E2E live + video + tài liệu | Playwright `@live` full luồng trên dog, video nhịp người dùng, README + user guide, soak 30 phút | `@live` PASS ×3; video mới; tài liệu khớp UI |
+
+Thứ tự: M22 → M23 → (M24 ∥ M25) → M26 → M27. M25 chỉ cần broker sim + mock (M23), nên chạy song song với M24.
 
 ## 11. Rủi ro và câu hỏi mở
 | # | Rủi ro / câu hỏi | Mức | Hướng xử lý |
 |---|---|---|---|
-| RR1 | DDS discovery giữa hai compose project (multicast tắt) | Cao | S-R3. Phương án: thêm peer `protobus-ros2` vào `cyclonedds.xml` của repo dog (PR bên repo dog), hoặc chạy bridge trong compose dog. |
-| RR2 | Envelope schema-1 của dog còn "v1, typed v2 draft". Đổi sang message typed thì adapter đổi. | TB | Adapter có version (`dog-control/1`), contract test với fixture JSON thật của repo dog |
-| RR3 | Humble hết hỗ trợ 05/2027 | TB | Bridge theo đúng distro của robot. ADR nâng distro khi repo dog nâng. |
-| RR4 | Tốc độ cao (IMU 100 Hz, 12 khớp × 3 × 50 Hz) làm broker quá tải | TB | `maxRateHz` theo mapping (mặc định khớp 10 Hz), đo ở S-R5 |
-| RR5 | An toàn: workflow ra lệnh robot ngoài ý muốn | Cao | Chỉ giao diện cấp cao qua Brain, TTL, STOP ưu tiên, lease, `allowRemoteArm`. REAL backend **ngoài phạm vi** tới khi repo dog commissioning. |
-| RR6 | Repo dog là private: CI SimVehicleApp không clone được | TB | Contract test bằng fixture topic/JSON chép có ghi nguồn (Apache-2.0). Live test chạy local/self-hosted. **Chờ PO:** cấp quyền đọc cho CI hoặc public repo. |
-| RR7 | Nhầm lẫn miền (path Vehicle trong app robot) | Thấp | Diagnostic `SIGNAL_SPEC_MISMATCH` (error) |
+| RR1 | DDS discovery khi multicast tắt, peer theo tên | Cao | S-R1. Phương án: PR bên repo dog thêm peer `protobus-ros2`, hoặc repo dog include service bridge. |
+| RR2 | Envelope schema-1 của dog còn "v1, typed v2 draft" | TB | Adapter có version (`dog-control/1`); contract test bằng fixture JSON thật |
+| RR3 | Humble EOL 05/2027 | TB | Bridge theo distro robot; ADR nâng khi repo dog nâng. Broker/app không dính ROS nên không ảnh hưởng. |
+| RR4 | Broker Python không đủ nhanh | TB | S-R4; `maxRateHz` theo mapping; phương án Rust cùng `.proto` |
+| RR5 | Workflow ra lệnh robot ngoài ý muốn | Cao | §5.5 + lint S6 + STOP luôn hiện; REAL ngoài phạm vi |
+| RR6 | Repo dog private ⇒ CI không clone được | TB | CI dùng mock + fixture có nguồn; live chạy local. **Chờ PO:** cấp quyền đọc cho CI? |
+| RR7 | **Khối lượng lớn vì làm lại từ đầu:** studio, compiler, runtime, broker đều mới | Cao | Phạm vi v0.1 hẹp: 1 robot, 1 ngôn ngữ, ~25 block, không AI/đa người dùng; mỗi milestone có gate riêng |
+| RR8 | Máy 11 GB RAM: dog (MuJoCo, nav2, slam) + stack `sr` cùng lúc | TB | Dog profile tối thiểu (không RViz); đo RAM ở M24; build image trên CI |
+| RR9 | Hai sản phẩm có trải nghiệm khác nhau (studio xe và Robot Studio) | Thấp | Chấp nhận theo yêu cầu PO; ghi rõ trong README |
 
 **Chờ PO xác nhận:**
-1. Tên gọi "Protobus" cho stack bridge.
-2. Python là ngôn ngữ đầu.
-3. Danh sách động tác v0.1 = đúng 5 động tác đã kiểm của dog (+ `stairs_round_trip` sau cờ).
-4. Cách xử lý RR6.
-5. Có cho ARM từ workflow trên SIM theo mặc định không.
+1. Giữ `robotics/` trong repo này (đề xuất) hay tách repo ngay.
+2. Tên tạm: Robot Studio, `sr`, RobotFlow, Protobus.
+3. Python là ngôn ngữ đầu, cho cả toolchain và app.
+4. Danh sách động tác v0.1 = đúng 5 động tác đã kiểm của dog (`stairs_round_trip` để sau).
+5. Cách xử lý RR6.
+6. Cho `Arm` từ workflow trên SIM theo mặc định.
+7. Thêm luật cứng cho stack robot vào AGENTS §2:
+   - "robotics/ và modules/ không phụ thuộc nhau";
+   - "bridge chỉ publish `control/request`".
+8. Trợ lý AI cho Robot Studio: ngoài v0.1 hay cần ngay.
 
 ## 12. Ngoài phạm vi v0.1
-- Robot thật (Go2 hardware), Jetson.
-- Raw camera/point cloud qua RSS.
-- Mô phỏng vật lý robot trong simulator SimVehicleApp: vật lý là việc của repo dog.
-- Nhiều robot cùng lúc: kiến trúc cho phép (prefix `/dogN`, profile riêng) nhưng gate chỉ 1 robot.
-- Phát lệnh trực tiếp ROS 2 từ app (bỏ qua protobus).
+- Robot thật, Jetson, backend REAL.
+- Ảnh/point cloud qua RSS.
+- Mô phỏng vật lý trong Robot Studio: vật lý là việc của repo dog; mock chỉ là động học + vòng đời.
+- Nhiều robot cùng lúc: kiến trúc cho phép (một broker live mỗi robot, profile riêng) nhưng gate chỉ 1 robot.
+- App gọi ROS 2 trực tiếp, bỏ qua Protobus.
+- Backend ngôn ngữ thứ hai (C++/Rust), trợ lý AI, đa người dùng.
+
+## 13. Bản 2026-10-27 đã bỏ những gì
+| Bản cũ (sai) | Bản mới |
+|---|---|
+| Robot là "miền thứ hai" `signalSpec: RSS` trong studio/compiler/IR hiện có | Stack `robotics/` riêng, không chung code/contract |
+| Broker = KUKSA databroker 0.7.1, API `kuksa.val.v2` | Broker tự viết, giao thức `protobus.v1` |
+| RSS viết bằng vspec, build bằng vss-tools | Định dạng `*.rss.yaml` riêng, tool `rssc`, có kind `setpoint`/`command` |
+| Thêm `rad` vào bảng đơn vị core, `SignalLookup`, `SIGNAL_SPEC_MISMATCH` | Bảng đơn vị và catalog diagnostics `RF*`/`PB*` riêng |
+| Block robot lowering về opcode `vehicle.*` có sẵn, simulator core giả lập vòng đời | Block registry + IR `rfir.v1` riêng; Simulate = app thật trên broker sim + provider mock |
+| Target `python-robot` trong `compiler-code-python`, runtime `svrobot` dựa trên `simvehicleapp_runtime` | Compiler `rflowc` + runtime `rfrt` mới |
+| C++/Rust qua `sv-wasm-host` | Backend thứ hai sau v0.1, emitter + runtime mới nói `protobus.v1` |
+| Toolbar miền Robot trong studio fork Sim, orchestrator/workspace/signal-gateway, trợ lý AI | Robot Studio web mới + studio-api + runner; AI ngoài v0.1 |

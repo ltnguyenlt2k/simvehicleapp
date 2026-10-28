@@ -206,18 +206,19 @@ Cờ: `--vss <file>` / `KUKSA_DATABROKER_METADATA_FILE`, `--insecure`, `--disabl
 
 ---
 
-## 6b. Robotics (2026-10-27, tra trực tiếp, cho M22–M26)
+## 6b. Robotics (tra trực tiếp 2026-10-27/28, cho M22–M27, stack độc lập `robotics/`)
 | Dữ kiện | Giá trị | Nguồn |
 |---|---|---|
 | Repo robot | `ltnguyenlt2k/dog-ros2-simulation` @ `9adea9be8622dade41fc3238ed3dcb26132b22c9`, Apache-2.0, private | GitHub API |
-| Runtime robot | ROS 2 Humble `ros:humble-ros-base-jammy@sha256:566b87e6dfc48392189a9c32e594e84060fa9948de93b04e536f39475a1f6963`, CycloneDDS, domain 42, multicast tắt, peer theo tên service | `deploy/images/base/Dockerfile`, `config/common/cyclonedds.xml` |
+| Runtime robot | ROS 2 Humble `ros:humble-ros-base-jammy@sha256:566b87e6dfc48392189a9c32e594e84060fa9948de93b04e536f39475a1f6963`, CycloneDDS, `ROS_DOMAIN_ID=${DOG_ROS_DOMAIN_ID:-42}` | `deploy/images/base/Dockerfile`, `deploy/compose/compose.yaml` |
+| Mạng DDS | `AllowMulticast=false`, interface `eth0`, `Peers` cố định: sim, brain, render, perception, slam, nav2, gateway; mọi service trên network compose `robot`; gateway bind `127.0.0.1:${DOG_HTTP_PORT:-8090}` | `config/common/cyclonedds.xml`, `deploy/compose/compose.yaml` |
 | Đường lệnh | `/dog1/control/request` JSON schema-1 (`config_hash`, `issued_at_ns` sim time, `request_id`), Brain là trọng tài; `manual` tuổi ≤ 0,25 s | `dog_core/common.py`, `brain.py`, `gateway.py` |
 | Động tác đã kiểm | `crouch`, `bow`, `tilt`, `lift_fl`, `jump` (+ `stairs_round_trip` sau cờ) | `dog_core/capabilities.py`, `docs/r1/motions-and-scenarios.md` |
-| KUKSA 0.7.1 nạp gốc tuỳ ý | `RootEntry(HashMap<String, Entry>)` | `databroker/src/vss.rs` @ tag `0.7.1` (`a79e2420b3`) |
 | Vòng đời ROS 2 | Humble 05/2022–05/2027; Jazzy 05/2024–05/2029; Kilted 05/2025–11/2026 | REP-2000 |
-| vss-tools | tag `v4.1.1` (`cfbead206a17`), MPL-2.0 (chỉ dùng như tool build) | GitHub tags API |
+| License thư viện stack robot | `@xyflow/react` MIT; FastAPI MIT; pydantic MIT; Vite MIT; gRPC Apache-2.0; CycloneDDS EPL-2.0 OR EDL-1.0 (đi kèm image ROS, không vendor) | GitHub API `repos/<r>` `.license`, LICENSE CycloneDDS |
+| **Không dùng** (PO 2026-10-28, ADR-0064) | KUKSA 0.7.1 (từng kiểm: `RootEntry` nạp được gốc tuỳ ý), vss-tools v4.1.1, runtime/compiler/studio stack xe — chỉ còn giá trị tham khảo | — |
 
-Chi tiết và hệ quả thiết kế: [design M22 robotics §2](../docs/design/M22-robotics-extension.md#2-dữ-kiện-đã-kiểm-2026-10-27-github-apiraw-không-đoán).
+Bản cụ thể của thư viện robot được ghim ở task đầu milestone dùng nó. Chi tiết và hệ quả thiết kế: [design robotics §2](../docs/design/M22-robotics-extension.md#2-dữ-kiện-đã-kiểm).
 
 ## 7. Nguồn
 - https://github.com/simstudioai/sim (tag v0.7.13, v0.9.6; `apps/sim/ee/LICENSE`)

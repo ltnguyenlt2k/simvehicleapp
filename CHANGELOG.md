@@ -5,8 +5,8 @@
 
 ## [Unreleased]
 
-### Kế hoạch Robotics (M22–M26, chưa code)
-- Phân tích + thiết kế mở rộng sang robot: RSS (Robotic Signal Specification), Protobus (RSS ↔ ROS 2), target `python-robot`, block robot, mẫu kịch bản ([design](docs/design/M22-robotics-extension.md); ADR 0064–0068 **Proposed, chờ PO**).
+### Kế hoạch Robotics (M22–M27, chưa code)
+- Phân tích + thiết kế stack robot **độc lập** trong `robotics/` (PO 2026-10-28: viết từ đầu, chỉ tham khảo stack xe): RSS `*.rss.yaml` + `rssc`, Protobus tự viết (`protobus.v1`, broker, bridge ROS 2, provider mock), RobotFlow (`rflowc`, `rfrt`, Python trước), Robot Studio web mới, mẫu kịch bản RW-A..RW-D ([design](docs/design/M22-robotics-extension.md); ADR 0064–0068 **Proposed, chờ PO**). Bản 2026-10-27 (KUKSA, vspec, miền thứ hai trong studio xe) đã bỏ.
 
 ## [baseline-2026-10-27] — 2026-10-27 (baseline, tag local)
 

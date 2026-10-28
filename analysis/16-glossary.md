@@ -36,9 +36,12 @@
 | **MCP** | Model Context Protocol — giao thức tool cho LLM |
 | **Entitlement** | Quyền theo license (export source, ngôn ngữ…) |
 | **Golden workflow** | Workflow chuẩn GW-A..G dùng làm test hồi quy |
-| **RSS** | Robotic Signal Specification — đặc tả tín hiệu robot dạng vspec, gốc `Robot` ([ADR-0065](adr/ADR-0065-rss-robotic-signal-specification.md)) |
-| **Miền (signalSpec)** | `VSS` (xe) hoặc `RSS` (robot); mỗi app thuộc một miền ([ADR-0064](adr/ADR-0064-robotics-domain-signal-spec.md)) |
-| **Protobus** | Stack nối RSS ↔ ROS 2: `protobus-broker` (KUKSA nạp RSS) + `protobus-ros2` (provider) ([ADR-0066](adr/ADR-0066-protobus-rss-ros2-bridge.md)) |
-| **Overlay mapping** | File vspec overlay gắn thuộc tính `ros2` (topic/field/transform/adapter) cho từng leaf RSS của một robot |
-| **Command pattern (RSS)** | Lệnh có vòng đời: `Request` (actuator) → `LastResult` → `Phase`/`State` kết thúc |
-| **Lease điều khiển** | Quyền điều khiển một robot, cấp cho đúng một run tại một thời điểm |
+| **RSS** | Robotic Signal Specification — đặc tả tín hiệu robot định dạng `*.rss.yaml` riêng, gốc `Robot`, kind sensor/attribute/setpoint/command ([ADR-0065](adr/ADR-0065-rss-robotic-signal-specification.md)) |
+| **Stack robotics** | Sản phẩm robot độc lập trong `robotics/`, không dùng chung code/contract/hạ tầng với stack xe ([ADR-0064](adr/ADR-0064-robotics-independent-stack.md)) |
+| **Protobus** | Bus tín hiệu RSS tự viết: giao thức `protobus.v1`, broker, bridge ROS 2, provider mock ([ADR-0066](adr/ADR-0066-protobus-rss-ros2-bridge.md)) |
+| **Mapping profile** | File `mapping.yaml` của một robot: ánh xạ node RSS ↔ topic/field/transform/lệnh ROS 2, kèm adapter |
+| **Setpoint (RSS)** | Giá trị điều khiển liên tục, struct nguyên tử, có TTL; hết hạn ⇒ broker áp `safeValue` |
+| **Command (RSS)** | Lệnh rời rạc có vòng đời chuẩn `PENDING → ACCEPTED/REJECTED → RUNNING → SUCCEEDED/FAILED/CANCELLED/TIMED_OUT` |
+| **Lease điều khiển** | Quyền điều khiển một robot, broker cấp cho đúng một client tại một thời điểm |
+| **RobotFlow** | Ngôn ngữ workflow robot: `robotflow.v1`, IR `rfir.v1`, compiler `rflowc`, runtime `rfrt` ([ADR-0067](adr/ADR-0067-robotflow-language-compiler-runtime.md)) |
+| **Robot Studio** | Web app kéo thả cho robot (tên tạm), tách khỏi studio xe ([ADR-0068](adr/ADR-0068-robot-studio-run-and-scenarios.md)) |

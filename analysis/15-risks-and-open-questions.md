@@ -26,10 +26,12 @@
 | **R19** | Rust không có SDK Velocitas | Chắc chắn | TB | kuksa-rust-sdk + template riêng; feasibility trước | M13 |
 | **R20** | LLM sinh patch sai / hallucinate path | Cao | Thấp | Tool bắt buộc tra catalog + validate trước khi hiển thị; user duyệt | M10 |
 | **R21** | Một databroker dùng chung → run chồng nhau | TB | TB | 1 run/stack MVP; per-run stack M14 | M8 |
-| **R22** | DDS discovery giữa compose robot và protobus (multicast tắt, peer theo tên) | Cao | TB | Spike S-R3; yêu cầu peer phía repo robot ([ADR-0066](adr/ADR-0066-protobus-rss-ros2-bridge.md)) | M23 |
-| **R23** | Workflow ra lệnh robot ngoài ý muốn | TB | **Rất cao (an toàn)** | Chỉ giao diện cấp cao qua Brain, TTL vận tốc, STOP ưu tiên, lease, `allowRemoteArm`; REAL ngoài phạm vi (ADR-0066 §4) | M23/M25 |
-| **R24** | ROS 2 Humble EOL 05/2027 (REP-2000) | Chắc chắn | TB | Bridge theo distro robot; ADR nâng distro khi repo robot nâng | M23 |
-| **R25** | Repo robot private ⇒ CI không clone được | Cao | TB | Fixture có nguồn + live local; chờ PO cấp quyền CI | M23 |
+| **R22** | DDS discovery giữa compose robot và bridge Protobus (multicast tắt, peer cố định theo tên) | Cao | TB | Spike S-R1 (M22); yêu cầu peer phía repo robot ([ADR-0066](adr/ADR-0066-protobus-rss-ros2-bridge.md)) | M22/M24 |
+| **R23** | Workflow ra lệnh robot ngoài ý muốn | TB | **Rất cao (an toàn)** | Broker giữ TTL/lease/Stop, bridge chỉ publish `control/request`, lint an toàn S6, STOP luôn hiện; REAL ngoài phạm vi (ADR-0066 §6) | M23/M24/M26 |
+| **R24** | ROS 2 Humble EOL 05/2027 (REP-2000) | Chắc chắn | TB | Chỉ bridge dính ROS; theo distro robot; ADR nâng khi repo robot nâng | M24 |
+| **R25** | Repo robot private ⇒ CI không clone được | Cao | TB | CI dùng provider mock + fixture có nguồn; live chạy local; chờ PO cấp quyền CI | M24/M27 |
+| **R26** | Stack robot viết từ đầu (studio, compiler, runtime, broker) ⇒ khối lượng lớn | Chắc chắn | Cao | Phạm vi v0.1 hẹp (1 robot, Python, ~25 block, không AI/đa người dùng); gate từng milestone ([ADR-0064](adr/ADR-0064-robotics-independent-stack.md)) | M22–M27 |
+| **R27** | Broker Protobus Python không đủ nhanh | TB | TB | Spike S-R4 trước khi viết broker thật; phương án Rust cùng `.proto` | M23 |
 
 ## 2. Open questions (cần PO/lead trả lời — mặc định đề xuất trong ngoặc)
 | # | Câu hỏi | Mặc định đề xuất |
