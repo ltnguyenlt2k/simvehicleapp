@@ -65,8 +65,8 @@
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
-| [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069, 0070 Accepted | 🔄 | T01–T07 locally PASS; 30-minute S-R4 PASS; T08 process faults in progress, overall gate OPEN |
-| [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069 Accepted | ☐ | 0/7; awaits broker safety gate |
+| [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069–0074 Accepted | ✔ | T01–T09 scoped gate PASS at 62529137; Robotics CI 40896228193; [report](reports/M23.md); general CI queued |
+| [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069 Accepted | 🔄 | T01 image build begins after M23 scoped gate PASS; actual ROS acceptance OPEN |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069 Accepted | ☐ | 0/9; awaits M23 |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
 | [M27](#m27--robotics-e2e-live-video-tài-liệu) | Complex live E2E, full video, docs, baseline | 0064–0070 Accepted | ☐ | 0/6; RW-E journey fixed in acceptance design |
@@ -499,15 +499,15 @@ Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](
 | Vòng đời lệnh, Stop ưu tiên, audit | 0066, 0072 | ✔ | 2026-10-29: 57 local tests PASS; actual RPC lifecycle/receipt, terminal quarantine, 1000 unread dispatches, real audit write fault; M23-progress.md | T05 |
 | Provider mock + API kịch bản + `timeScale` | 0066, 0073 | ✔ | 2026-10-29: 74 capped-container tests PASS; synthetic physics, provider fencing/local watchdog, scenario API; M23-progress.md | T06 |
 | CLI `pbctl` | 0066 | ✔ | 2026-10-29: five subprocess/socket tests PASS; private lease, typed control, invoke/cancel/STOP; M23-progress.md | T07 |
-| Compose `protobus-sim` + fault test tích hợp | 0066 | 🔄 | 2026-10-29: starting independent process/network faults after T06/T07 | T08 |
-| Gate + báo cáo | 0066 | ☐ | | T09 |
+| Compose `protobus-sim` + fault test tích hợp | 0066, 0074 | ✔ | 2026-10-29: 81 unit + 3 process faults; Robotics CI 40896228193 SUCCESS at 62529137 | T08 |
+| Gate + báo cáo | 0066 | ✔ | Scoped Robotics CI 40896228193 SUCCESS at 62529137; reports/M23.md; general CI queued | T09 |
 
 ## M24 — Protobus bridge ROS 2 + adapter dog
 Chi tiết: [phases/M24](../analysis/phases/M24-protobus-ros2-bridge.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Image Humble digest + `dog_interfaces` | 0066 | ☐ | | T01 |
+| Image Humble digest + `dog_interfaces` | 0066 | 🔄 | 2026-10-29: starting after M23 scoped gate PASS | T01 |
 | Engine mapping + transform đóng | 0066 | ☐ | | T02 |
 | Adapter `dog-control/1` | 0066 | ☐ | | T03 |
 | Luật an toàn + allowlist publisher + fault test | 0066 | ☐ | | T04 |
@@ -573,8 +573,8 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 |---|---|---|
 | Planning correction R01–R08 | Implemented in ADR-0069; validation pending | Separate networks/runners, monotonic safety, ownership, stale/reconnect, timeScale=1, CI and gate ordering |
 | M22 foundations/RSS/spikes | PASS | Scoped Robotics CI + actual DDS/interface/motion evidence; M22 report |
-| M23 broker | IN_PROGRESS | T01–T03 locally PASS; full S-R4 PASS; T04 lease/TTL next; safety gate OPEN |
-| M24 ROS bridge | NOT STARTED | Requires M23 and live spikes |
+| M23 broker | PASS (scoped) | T01–T09; Robotics CI 40896228193 SUCCESS at 62529137; general CI queued |
+| M24 ROS bridge | IN_PROGRESS | T01 image; actual ROS acceptance remains OPEN |
 | M25 RobotFlow | NOT STARTED | Requires M23; live acceptance additionally M24 |
 | M26 Studio/deploy/Zoo launch | NOT STARTED | Requires compiler/mock and adapter gates |
 | M27 complex live E2E/video/soak | OPEN | Three live passes + restart/fault cases + 30-min soak + recorded full flow |

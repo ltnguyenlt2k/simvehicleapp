@@ -167,3 +167,4 @@ states under runtime/m23/process-faults. precheck/config/diff checks PASS.
 Container CLI Describe/Get verifies online SIM 1.3, expected catalog, audit OK,
 and SAFE_STOP after fault tests. One idle sample: broker 25.91 MiB, mock 19.46 MiB
 inside 256 MiB caps each; not a soak measurement. GitHub T08 gate still pending.
+M23 scoped acceptance PASS: Robotics CI 40896228193 SUCCESS at 62529137, including process faults, ROS interface import and dependency scans. T08/T09 closed; M24 may begin. General CI 40896227931 is queued, not claimed PASS.
