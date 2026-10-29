@@ -543,3 +543,7 @@ Xem [review M22–M27](../reports/robotics-plan-review-2026-10-28.md). Các đ�
 ## 15. Authorized cross-repository integration 2026-10-29
 
 [ADR-0069](../../analysis/adr/ADR-0069-robotics-deployment-and-dog-runtime-interface.md) resolves R01–R08 and overrides conflicting details in this design. User authorizes both repositories. Separate sim/live networks and runners; monotonic safety time; no replay after reconnect; timeScale=1; explicit Deploy then Start in Robot Zoo. Full complex-workflow acceptance and video remain OPEN.
+
+The [complex end-to-end acceptance](robotics-complex-e2e-acceptance.md) specifies
+RW-E and the exact canvas/build/deploy/Robot Zoo/Start/Stop video journey. It is a
+planned acceptance contract and does not count as runtime evidence.

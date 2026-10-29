@@ -196,3 +196,4 @@ flowchart TB
 
 
 - [ADR-0069](ADR-0069-robotics-deployment-and-dog-runtime-interface.md): Accepted 2026-10-29 by direct implementation instruction. ADR-0064–0068 architecture authorized; runtime gates OPEN.
+- [ADR-0070](ADR-0070-protobus-independent-safety-lane.md): Accepted under PO delegation 2026-10-29; independent Safety channel, additive protocol v1.1, requires actual saturation/STOP fault evidence before acceptance.

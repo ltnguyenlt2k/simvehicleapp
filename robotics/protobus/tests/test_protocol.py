@@ -9,9 +9,10 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(set(services['Bus'].methods_by_name), {
             'Describe', 'Get', 'Subscribe', 'AcquireLease', 'RenewLease',
             'ReleaseLease', 'SetTarget', 'Invoke', 'Cancel', 'Stop'})
-        self.assertEqual(set(services['Provider'].methods_by_name), {'Attach', 'Control'})
+        self.assertEqual(set(services['Provider'].methods_by_name), {'Attach', 'Control', 'Safety'})
         self.assertTrue(services['Provider'].methods_by_name['Attach'].client_streaming)
         self.assertTrue(services['Provider'].methods_by_name['Control'].server_streaming)
+        self.assertTrue(services['Provider'].methods_by_name['Safety'].server_streaming)
 
     def test_int64_json_is_decimal_string_and_roundtrips(self):
         original = pb.Sample(path='Robot.Simulation.TimeNs',

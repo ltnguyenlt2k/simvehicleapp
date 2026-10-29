@@ -19,7 +19,11 @@ timestamps are labelled with clock and source epoch, never used for lease expiry
 REAL/distributed-clock support requires a new design and hardware commissioning.
 
 Provider.Attach carries inbound telemetry and results. Provider.Control is a
-separate outbound control stream with bounded priority scheduling. No arbitrary
+separate outbound ordinary-control stream with bounded scheduling. Provider.Safety
+is an additional stream opened on a separate gRPC channel/TCP connection for STOP
+and safeValue, so already-buffered ordinary control cannot block its connection
+flow-control window. Protocol version 1.1 (ADR-0070) requires both streams before
+a provider is control-ready. No arbitrary
 code, ROS topic name or endpoint is supplied by workflow input. A provider session
 must handshake its catalog, profile, SIM backend and clock ID before control.
 Provider reconnect invalidates old state/authority and cannot replay motion.

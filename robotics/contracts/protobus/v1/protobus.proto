@@ -20,6 +20,8 @@ service Provider {
   // Bulk telemetry cannot queue in front of safety/control dispatches.
   rpc Attach(stream ProviderPacket) returns (stream Reply);
   rpc Control(ProviderHello) returns (stream Dispatch);
+  // Providers open this on a separate gRPC channel/TCP connection.
+  rpc Safety(ProviderHello) returns (stream Dispatch);
 }
 
 message Empty {}
@@ -65,6 +67,7 @@ message Descriptor {
   bool provider_online = 5;
   string backend = 6;
   string host_clock_id = 7;
+  string protocol_version = 8;
 }
 message Query {
   repeated string paths = 1;
@@ -131,6 +134,7 @@ message ProviderHello {
   repeated string claims = 5;
   string backend = 6;
   string host_clock_id = 7;
+  string protocol_version = 8;
 }
 message ProviderPacket {
   oneof packet {
