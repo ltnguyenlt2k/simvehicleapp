@@ -473,7 +473,7 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 
 
 ## M22 — Nền móng robotics + RSS v0.1 + spike robot
-Yêu cầu PO 2026-10-27 (mở rộng Robotics), **đính chính 2026-10-28: stack độc lập, viết từ đầu, chỉ tham khảo stack xe** · Thiết kế: [robotics](design/M22-robotics-extension.md) · Chi tiết: [phases/M22](../analysis/phases/M22-robotics-foundation-and-rss.md) · ADR [0064](../analysis/adr/ADR-0064-robotics-independent-stack.md), [0065](../analysis/adr/ADR-0065-rss-robotic-signal-specification.md) — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+Yêu cầu PO 2026-10-27 (mở rộng Robotics), **đính chính 2026-10-28: stack độc lập, viết từ đầu, chỉ tham khảo stack xe** · Thiết kế: [robotics](design/M22-robotics-extension.md) · Chi tiết: [phases/M22](../analysis/phases/M22-robotics-foundation-and-rss.md) · ADR [0064](../analysis/adr/ADR-0064-robotics-independent-stack.md), [0065](../analysis/adr/ADR-0065-rss-robotic-signal-specification.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
@@ -488,7 +488,7 @@ Yêu cầu PO 2026-10-27 (mở rộng Robotics), **đính chính 2026-10-28: sta
 | Tài liệu RSS + gate + báo cáo | 0065 | ☐ | | T08 |
 
 ## M23 — Protobus core
-Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
@@ -503,7 +503,7 @@ Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](
 | Gate + báo cáo | 0066 | ☐ | | T09 |
 
 ## M24 — Protobus bridge ROS 2 + adapter dog
-Chi tiết: [phases/M24](../analysis/phases/M24-protobus-ros2-bridge.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+Chi tiết: [phases/M24](../analysis/phases/M24-protobus-ros2-bridge.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
@@ -516,7 +516,7 @@ Chi tiết: [phases/M24](../analysis/phases/M24-protobus-ros2-bridge.md) · ADR 
 | Báo cáo | 0066 | ☐ | | T07 |
 
 ## M25 — RobotFlow compiler + runtime
-Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) · ADR [0067](../analysis/adr/ADR-0067-robotflow-language-compiler-runtime.md) — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) · ADR [0067](../analysis/adr/ADR-0067-robotflow-language-compiler-runtime.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
@@ -531,7 +531,7 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 | Gate + báo cáo | 0067 | ☐ | | T09 |
 
 ## M26 — Robot Studio
-Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio.md) · ADR [0068](../analysis/adr/ADR-0068-robot-studio-run-and-scenarios.md) — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio.md) · ADR [0068](../analysis/adr/ADR-0068-robot-studio-run-and-scenarios.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
@@ -547,7 +547,7 @@ Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio.md) · ADR [0068](.
 | Gate + báo cáo | 0068 | ☐ | | T10 |
 
 ## M27 — Robotics: E2E live, video, tài liệu
-Chi tiết: [phases/M27](../analysis/phases/M27-robotics-e2e-video-docs.md) · ADR 0064–0068 — **Proposed, chờ PO**. Chưa implement khi ADR chưa Accepted (luật cứng 7, 9).
+Chi tiết: [phases/M27](../analysis/phases/M27-robotics-e2e-video-docs.md) · ADR 0064–0068 — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
@@ -561,3 +561,23 @@ Chi tiết: [phases/M27](../analysis/phases/M27-robotics-e2e-video-docs.md) · A
 ---
 
 *Cập nhật lần cuối: 2026-10-28 (viết lại kế hoạch Robotics M22–M27 thành stack độc lập `robotics/` theo PO; ADR 0064–0068 Proposed). Người/agent cập nhật file này phải tự chịu trách nhiệm về tính chính xác của trạng thái.*
+
+
+> Review 2026-10-28: [Đánh giá kế hoạch Robotics M22–M27](reports/robotics-plan-review-2026-10-28.md). Có các điểm cần sửa về cách ly sim/live, STOP, lease/reconnect, thời gian và gate; đề xuất chờ PO xác nhận. ADR 0064–0068 vẫn Proposed, chưa triển khai, không có hardware acceptance.
+
+## Robotics integration execution — authorized 2026-10-29
+
+PO requests end-to-end implementation in both repos, independent layers, complex workflow, deploy, explicit launch from Robot Zoo and complete live-test video. ADR-0064–0068 accepted for implementation with ADR-0069 corrections. Prior Proposed notes remain historical until individual rows are synchronized.
+
+| Gate | Actual status | Evidence / next action |
+|---|---|---|
+| Planning correction R01–R08 | Implemented in ADR-0069; validation pending | Separate networks/runners, monotonic safety, ownership, stale/reconnect, timeScale=1, CI and gate ordering |
+| M22 foundations/RSS/spikes | IN_PROGRESS | Begin T01; then schema/tool/catalog/traceability; S-R1–3 actual dog runtime |
+| M23 broker | NOT STARTED | Requires M22 gate |
+| M24 ROS bridge | NOT STARTED | Requires M23 and live spikes |
+| M25 RobotFlow | NOT STARTED | Requires M23; live acceptance additionally M24 |
+| M26 Studio/deploy/Zoo launch | NOT STARTED | Requires compiler/mock and adapter gates |
+| M27 complex live E2E/video/soak | OPEN | Three live passes + restart/fault cases + 30-min soak + recorded full flow |
+| Hardware/Jetson | OPEN / OUT OF SCOPE | No hardware evidence |
+
+M22 checkpoint 2026-10-29: 15 containerized RSS tests PASS, 113-node deterministic catalog, complete 48-topic disposition matrix; S-R1/S-R2/S-R3 actual DDS/build/motion PASS. CI workflow prepared but NOT executed on GitHub; M22 overall gate OPEN and M23 not started. Evidence: docs/reports/M22.md. Robot cleanup DISARMED.

@@ -2,7 +2,7 @@
 
 > **Yêu cầu:** PO 2026-10-27/28. Protobus độc lập, tự viết, không KUKSA.
 > **Thiết kế:** [design](../../docs/design/M22-robotics-extension.md) §5.
-> **ADR:** [0066](../adr/ADR-0066-protobus-rss-ros2-bridge.md) — Proposed, chờ PO xác nhận.
+> **ADR:** [0066](../adr/ADR-0066-protobus-rss-ros2-bridge.md) — Accepted for implementation 2026-10-29; gates OPEN.
 >
 > **Phụ thuộc:** gate M22 PASS (cần `rss-catalog.json` và số đo S-R3 cho profile vòng đời của mock).
 >
@@ -35,3 +35,8 @@
 |---|---|
 | Python chậm (RR4) | S-R4 trước khi viết broker thật; gộp sample theo lô |
 | Mock lệch robot thật | Thời lượng lấy từ số đo S-R3; UI ghi "mô phỏng" |
+
+
+## Amendment 2026-10-29
+
+ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.

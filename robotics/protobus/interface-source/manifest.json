@@ -1,0 +1,16 @@
+{
+  "source": "dog-ros2-simulation",
+  "commit": "25b4bfada838b25ab93cf73c658c356a8ab90ef9",
+  "license": "Apache-2.0",
+  "adaptations": [
+    "CMake: compile messages only; omit dog_core runtime"
+  ],
+  "files": {
+    "dog_interfaces/CMakeLists.txt": "0daa286b428ebabbf036743b1a0d7ecb50a7b1ec18c74f785e1d028c6a857578",
+    "dog_interfaces/package.xml": "ba95c52cd620c614c50dfbc86a0b7bb354652f4c4b6aa3c5bf3c2101b9fe92ad",
+    "dog_interfaces/msg/ControlRequest.msg": "8171096add7ad7c940e643769ecab2230d7516483a6c964ceac9ab307642bca0",
+    "dog_interfaces/msg/SourceStatus.msg": "44d6d9f5abe9efd7ca91062afd4ca9d306d6c44535de1f8a0a67e69aa83e6fb3",
+    "dog_interfaces/msg/FootContacts.msg": "24123f58ba33610324ae240a5b66ea868a9c4c8874fbae6612427a83864331aa",
+    "dog_interfaces/msg/ControlAck.msg": "15c63e620f4db525d7b74c4e16440dd9a0066dca3cc4370d890c3bd2b44b1ceb"
+  }
+}

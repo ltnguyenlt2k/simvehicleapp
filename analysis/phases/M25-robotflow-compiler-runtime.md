@@ -2,7 +2,7 @@
 
 > **Yêu cầu:** PO 2026-10-27. "Trình biên dịch riêng… ngôn ngữ dễ trước… runtime kết nối robotic… workflow kéo thả có log, có kịch bản."
 > **Thiết kế:** [design](../../docs/design/M22-robotics-extension.md) §6, §7 (mẫu RW-A..D).
-> **ADR:** [0067](../adr/ADR-0067-robotflow-language-compiler-runtime.md) — Proposed, chờ PO xác nhận.
+> **ADR:** [0067](../adr/ADR-0067-robotflow-language-compiler-runtime.md) — Accepted for implementation 2026-10-29; gates OPEN.
 >
 > **Phụ thuộc:** gate M23 PASS (broker sim + mock). Không cần M24, nên chạy song song.
 >
@@ -38,3 +38,8 @@
 | Test thời gian thực bị flaky | So theo thứ tự sự kiện + cửa sổ có dung sai; chạy ×2 trong gate |
 | Song song + lệnh dài làm huỷ tác vụ phức tạp | Semantics ghi rõ thứ tự huỷ; conformance cho parallel any/all |
 | Lint chậm khi canvas lớn | Perf gate 200 node |
+
+
+## Amendment 2026-10-29
+
+ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.

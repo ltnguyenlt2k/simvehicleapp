@@ -1,6 +1,6 @@
 # ADR-0068: Robot Studio là web app mới (React + React Flow, FastAPI, runner sandbox); Simulate/Test chạy app thật trên broker sim + mock, Run trên broker live; mẫu kịch bản RW-A..RW-D
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -122,3 +122,8 @@ flowchart LR
 
 ## Notes / Deviations
 - 2026-10-28: viết lại; đổi tên file từ `ADR-0068-robot-blocks-commands-and-scenarios.md`. Bản 2026-10-27: 5 block lowering về opcode `vehicle.*`, simulator core giả lập vòng đời, toolbar trong studio fork Sim, AI biết RSS; đã bỏ theo ADR-0064.
+
+
+## Integration authorization 2026-10-29
+
+The user authorized implementation across simvehicleapp and dog-ros2-simulation, sequential gates, complex workflow deployment, launch from Robot Zoo, actual ROS/simulation evidence and final E2E video. ADR-0069 defines the required review corrections and takes precedence over conflicting details above. This is architecture authorization, not runtime acceptance.

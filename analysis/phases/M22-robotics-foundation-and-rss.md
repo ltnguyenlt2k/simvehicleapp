@@ -5,13 +5,13 @@
 > - PO 2026-10-28: stack robot **độc lập, viết từ đầu**.
 >
 > **Thiết kế:** [design](../../docs/design/M22-robotics-extension.md) §1, §2, §4, §9.
-> **ADR:** [0064](../adr/ADR-0064-robotics-independent-stack.md), [0065](../adr/ADR-0065-rss-robotic-signal-specification.md), [0066](../adr/ADR-0066-protobus-rss-ros2-bridge.md) (spike) — Proposed, chờ PO xác nhận.
+> **ADR:** [0064](../adr/ADR-0064-robotics-independent-stack.md), [0065](../adr/ADR-0065-rss-robotic-signal-specification.md), [0066](../adr/ADR-0066-protobus-rss-ros2-bridge.md) (spike) — Accepted for implementation 2026-10-29; gates OPEN.
 >
 > **Phụ thuộc:** PO Accepted ADR-0064, 0065. Spike T07 cần stack dog chạy được local (`tools/dev start` của repo dog).
 >
 > **Nguyên tắc:**
 > - không file nào trong `robotics/**` tham chiếu `modules/**`, `scripts/sv`, KUKSA, Velocitas, VSS;
-> - không sửa repo dog từ đây: thay đổi cần phía dog ghi thành yêu cầu.
+> - được sửa repo dog theo ủy quyền 2026-10-29, qua interface và gate riêng; không import source chéo.
 
 ## Tasks
 
@@ -38,3 +38,13 @@
 | DDS không thấy nhau (RR1) | S-R1 sớm; phương án peer phía dog |
 | Spec quá rộng, chậm | Chỉ topic có trong design §2.1; còn lại "ngoài phạm vi" |
 | Máy thiếu RAM khi chạy dog | Dog profile tối thiểu (không RViz), không chạy stack xe cùng lúc |
+
+
+## Amendment 2026-10-29
+
+ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.
+
+
+## Actual checkpoint 2026-10-29
+
+T01 local foundation/build/precheck PASS, GitHub CI pending; T02–T06 local validation PASS (15 tests, 113 nodes, complete 48 topics); T07 S-R1–S-R3 actual PASS. T08 report exists but overall gate OPEN until CI. See ../../docs/reports/M22.md. M23 NOT STARTED.

@@ -2,7 +2,7 @@
 
 > **Yêu cầu:** PO 2026-10-27. Tín hiệu RSS qua Protobus đổi sang ROS 2 tới đúng chỗ nhận/điều khiển.
 > **Thiết kế:** [design](../../docs/design/M22-robotics-extension.md) §2.1, §5.3, §5.5.
-> **ADR:** [0066](../adr/ADR-0066-protobus-rss-ros2-bridge.md) — Proposed, chờ PO xác nhận.
+> **ADR:** [0066](../adr/ADR-0066-protobus-rss-ros2-bridge.md) — Accepted for implementation 2026-10-29; gates OPEN.
 >
 > **Phụ thuộc:** gate M23 PASS; kết luận S-R1, S-R2, S-R3 (M22). Chạy song song được với M25.
 >
@@ -36,3 +36,8 @@
 | DDS giữa hai compose project (RR1) | Theo kết luận S-R1; phương án repo dog include service bridge |
 | Envelope dog đổi (RR2) | Adapter có version; contract test fixture |
 | Thiếu RAM (RR8) | Dog không RViz; đo ở T06 |
+
+
+## Amendment 2026-10-29
+
+ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.

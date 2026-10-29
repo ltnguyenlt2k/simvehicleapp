@@ -1,0 +1,198 @@
+{
+  "schema": "m22-probe.v1",
+  "source": "actual DDS + MuJoCo SIM",
+  "motions": {
+    "crouch": {
+      "elapsed_s": 7.024,
+      "request_id": "47350073-b4a1-4a26-b773-d01130012b1e",
+      "phase": "SUCCEEDED",
+      "evidence": {
+        "schema": 1,
+        "source": "SIM",
+        "phase": "SUCCEEDED",
+        "name": "crouch",
+        "request_id": "47350073-b4a1-4a26-b773-d01130012b1e",
+        "elapsed_s": 7.001999999983681,
+        "max_airborne_s": 0.0,
+        "height_gain_m": 0.039943008865725826,
+        "min_upright": 0.9886030267282575,
+        "max_roll_rad": 0.019551894074653717,
+        "max_fl_clearance_m": 0.011102812339487726,
+        "minimum_height_m": 0.23607580616642398,
+        "maximum_pitch_rad": 0.15078430562217707,
+        "three_foot_s": 0.08000000000000006,
+        "motion_id": "47350073-b4a1-4a26-b773-d01130012b1e",
+        "active": false,
+        "scene_epoch": "6339a35d-5be9-46e6-8a1b-41e4e9c1e326",
+        "supported": [
+          "crouch",
+          "bow",
+          "tilt",
+          "lift_fl",
+          "jump",
+          "stairs_round_trip"
+        ],
+        "scope": "SIM_COURTYARD_TRIAL_ONLY",
+        "config_hash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc",
+        "issued_at_ns": 103919999999
+      }
+    },
+    "bow": {
+      "elapsed_s": 7.179,
+      "request_id": "e537cebc-fb16-42ff-b2a6-325e0edf8698",
+      "phase": "SUCCEEDED",
+      "evidence": {
+        "schema": 1,
+        "source": "SIM",
+        "phase": "SUCCEEDED",
+        "name": "bow",
+        "request_id": "e537cebc-fb16-42ff-b2a6-325e0edf8698",
+        "elapsed_s": 7.001999999983681,
+        "max_airborne_s": 0.0,
+        "height_gain_m": 0.03360512204990368,
+        "min_upright": 0.9842215570917235,
+        "max_roll_rad": 0.03341087131636265,
+        "max_fl_clearance_m": 0.0,
+        "minimum_height_m": 0.2739666299258331,
+        "maximum_pitch_rad": 0.1778768137352127,
+        "three_foot_s": 0.0,
+        "motion_id": "e537cebc-fb16-42ff-b2a6-325e0edf8698",
+        "active": false,
+        "scene_epoch": "6339a35d-5be9-46e6-8a1b-41e4e9c1e326",
+        "supported": [
+          "crouch",
+          "bow",
+          "tilt",
+          "lift_fl",
+          "jump",
+          "stairs_round_trip"
+        ],
+        "scope": "SIM_COURTYARD_TRIAL_ONLY",
+        "config_hash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc",
+        "issued_at_ns": 111019999999
+      }
+    },
+    "tilt": {
+      "elapsed_s": 7.146,
+      "request_id": "9317be14-6e07-4ad8-a5e3-c452c1475f91",
+      "phase": "SUCCEEDED",
+      "evidence": {
+        "schema": 1,
+        "source": "SIM",
+        "phase": "SUCCEEDED",
+        "name": "tilt",
+        "request_id": "9317be14-6e07-4ad8-a5e3-c452c1475f91",
+        "elapsed_s": 7.001999999983681,
+        "max_airborne_s": 0.0,
+        "height_gain_m": 0.04802013472981831,
+        "min_upright": 0.9688427401955172,
+        "max_roll_rad": 0.24981099941917645,
+        "max_fl_clearance_m": 0.03374178829498494,
+        "minimum_height_m": 0.27214893230017706,
+        "maximum_pitch_rad": 0.1719439225253191,
+        "three_foot_s": 0.0,
+        "motion_id": "9317be14-6e07-4ad8-a5e3-c452c1475f91",
+        "active": false,
+        "scene_epoch": "6339a35d-5be9-46e6-8a1b-41e4e9c1e326",
+        "supported": [
+          "crouch",
+          "bow",
+          "tilt",
+          "lift_fl",
+          "jump",
+          "stairs_round_trip"
+        ],
+        "scope": "SIM_COURTYARD_TRIAL_ONLY",
+        "config_hash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc",
+        "issued_at_ns": 118119999999
+      }
+    },
+    "lift_fl": {
+      "elapsed_s": 7.156,
+      "request_id": "0a801924-ae73-421e-a8ba-00a644a8d2f0",
+      "phase": "SUCCEEDED",
+      "evidence": {
+        "schema": 1,
+        "source": "SIM",
+        "phase": "SUCCEEDED",
+        "name": "lift_fl",
+        "request_id": "0a801924-ae73-421e-a8ba-00a644a8d2f0",
+        "elapsed_s": 7.001999999983681,
+        "max_airborne_s": 0.0,
+        "height_gain_m": 0.02698187989020273,
+        "min_upright": 0.9967735360982146,
+        "max_roll_rad": 0.051781422433787354,
+        "max_fl_clearance_m": 0.1368393506500225,
+        "minimum_height_m": 0.2850836642497247,
+        "maximum_pitch_rad": 0.07916796736897888,
+        "three_foot_s": 2.2359999999999753,
+        "motion_id": "0a801924-ae73-421e-a8ba-00a644a8d2f0",
+        "active": false,
+        "scene_epoch": "6339a35d-5be9-46e6-8a1b-41e4e9c1e326",
+        "supported": [
+          "crouch",
+          "bow",
+          "tilt",
+          "lift_fl",
+          "jump",
+          "stairs_round_trip"
+        ],
+        "scope": "SIM_COURTYARD_TRIAL_ONLY",
+        "config_hash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc",
+        "issued_at_ns": 125219999999
+      }
+    },
+    "jump": {
+      "elapsed_s": 7.145,
+      "request_id": "1c37d035-9bf1-4c6a-a1ab-5fdbaddf940e",
+      "phase": "SUCCEEDED",
+      "evidence": {
+        "schema": 1,
+        "source": "SIM",
+        "phase": "SUCCEEDED",
+        "name": "jump",
+        "request_id": "1c37d035-9bf1-4c6a-a1ab-5fdbaddf940e",
+        "elapsed_s": 7.000000000014083,
+        "max_airborne_s": 0.23600000000000018,
+        "height_gain_m": 0.1609574663160086,
+        "min_upright": 0.901543797376331,
+        "max_roll_rad": 0.005927706608830377,
+        "max_fl_clearance_m": 0.19015625942850692,
+        "minimum_height_m": 0.2728464969996256,
+        "maximum_pitch_rad": 0.44747175845430287,
+        "three_foot_s": 0.0,
+        "motion_id": "1c37d035-9bf1-4c6a-a1ab-5fdbaddf940e",
+        "active": false,
+        "scene_epoch": "6339a35d-5be9-46e6-8a1b-41e4e9c1e326",
+        "supported": [
+          "crouch",
+          "bow",
+          "tilt",
+          "lift_fl",
+          "jump",
+          "stairs_round_trip"
+        ],
+        "scope": "SIM_COURTYARD_TRIAL_ONLY",
+        "config_hash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc",
+        "issued_at_ns": 132319999999
+      }
+    }
+  },
+  "discovery": {
+    "samples": {
+      "imu": 20,
+      "feet": 10,
+      "safe": 4
+    },
+    "boot_id": "f3ca014d-6594-4123-b107-81abecbb54d4",
+    "scene_epoch": "6339a35d-5be9-46e6-8a1b-41e4e9c1e326",
+    "config_hash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc"
+  },
+  "watchdog_stop_s": 0.1655,
+  "samples": {
+    "imu": 3613,
+    "feet": 1806,
+    "safe": 731
+  },
+  "status": "PASS"
+}

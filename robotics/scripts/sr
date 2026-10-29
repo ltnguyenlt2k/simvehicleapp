@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dc=(docker compose -f "$root/compose.yaml")
+case "${1:-help}" in
+ build) "${dc[@]}" --profile build build contracts; "${dc[@]}" --profile tools build rss ;;
+ test) "${dc[@]}" --profile tools run --rm --no-deps rss ;;
+ precheck) python3 "$root/scripts/precheck.py"; "${dc[@]}" --profile tools config -q ;;
+ up) "${dc[@]}" up -d ;;
+ down) [[ $# == 1 ]] || { echo 'down accepts no extra arguments' >&2; exit 2; }; "${dc[@]}" down ;;
+ rss) shift; "${dc[@]}" --profile tools run --rm --no-deps rss python rssc.py "$@" ;;
+ smoke) "${dc[@]}" --profile tools run --rm --no-deps rss python rssc.py validate spec/go2.rss.yaml ;;
+ *) echo 'Usage: sr build|test|precheck|up|down|rss|smoke'; exit 2 ;;
+esac

@@ -1,6 +1,6 @@
 # ADR-0064: Robotics là một stack độc lập trong `robotics/`, viết từ đầu, không dùng lại code, contract hay hạ tầng của stack xe
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28 theo đính chính của PO
 - **Level:** L0 System
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -102,3 +102,8 @@ flowchart TB
 
 ## Notes / Deviations
 - 2026-10-28: viết lại toàn bộ theo đính chính PO (bản 2026-10-27: "Robot là miền thứ hai `signalSpec: RSS`"). Đổi tên file từ `ADR-0064-robotics-domain-signal-spec.md`.
+
+
+## Integration authorization 2026-10-29
+
+The user authorized implementation across simvehicleapp and dog-ros2-simulation, sequential gates, complex workflow deployment, launch from Robot Zoo, actual ROS/simulation evidence and final E2E video. ADR-0069 defines the required review corrections and takes precedence over conflicting details above. This is architecture authorization, not runtime acceptance.

@@ -2,7 +2,7 @@
 
 > **Yêu cầu:** PO 2026-10-27, mục tiêu cuối: kéo thả kịch bản ⇒ tín hiệu RSS ⇒ Protobus ⇒ ROS 2 ⇒ robot làm đúng.
 > **Thiết kế:** [design](../../docs/design/M22-robotics-extension.md) §7, §10.
-> **ADR:** 0064–0068 — Proposed, chờ PO xác nhận.
+> **ADR:** 0064–0068 — Accepted for implementation 2026-10-29; gates OPEN.
 >
 > **Phụ thuộc:** gate M24 và M26 PASS.
 >
@@ -34,3 +34,8 @@
 |---|---|
 | Quay video cần dog + sr trên máy 11 GB | Dog không RViz; một stack; đo trước ở M24-T06 |
 | `@live` không chạy được trên CI (repo dog private) | Chạy local, ghi bằng chứng; chờ PO quyết RR6 |
+
+
+## Amendment 2026-10-29
+
+ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.

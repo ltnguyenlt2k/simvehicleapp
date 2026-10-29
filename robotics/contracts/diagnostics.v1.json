@@ -1,0 +1,13 @@
+{
+  "schema": "diagnostics.v1",
+  "codes": {
+    "RSS1001": "Schema violation",
+    "RSS1002": "Duplicate path/key",
+    "RSS1003": "Invalid path/instances",
+    "RSS2001": "Unknown unit",
+    "RSS2002": "Incompatible dimensions",
+    "RSS2003": "Invalid typed value",
+    "RSS2004": "Invalid range",
+    "RSS2005": "Refresh period exceeds TTL"
+  }
+}

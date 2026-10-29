@@ -1,0 +1,425 @@
+{
+  "schema": "topic-traceability.v1",
+  "dogCommit": "25b4bfada838b25ab93cf73c658c356a8ab90ef9",
+  "sourceFile": "contracts/ros2/topics.json",
+  "sourceSha256": "d2f608e946cb02e1d4c8262f692b56c64a33f4e58581c49f0c353037cd45e583",
+  "topicCount": 48,
+  "topics": [
+    {
+      "topic": "/clock",
+      "type": "rosgraph_msgs/msg/Clock",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Simulation.TimeNs"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/cmd_vel_nav",
+      "type": "geometry_msgs/msg/Twist",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/navstack.py"
+    },
+    {
+      "topic": "/dog1/battery_state",
+      "type": "sensor_msgs/msg/BatteryState",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.PowerSystem.Battery.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/brain/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Safety.*",
+        "Robot.Connection.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/dog1/camera/camera_info",
+      "type": "sensor_msgs/msg/CameraInfo",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/render.py"
+    },
+    {
+      "topic": "/dog1/camera/image/compressed",
+      "type": "sensor_msgs/msg/CompressedImage",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/render.py"
+    },
+    {
+      "topic": "/dog1/camera/image_raw",
+      "type": "sensor_msgs/msg/Image",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/render.py"
+    },
+    {
+      "topic": "/dog1/cmd_vel/safe",
+      "type": "geometry_msgs/msg/TwistStamped",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/dog1/control/ack",
+      "type": "std_msgs/msg/String",
+      "disposition": "mapped",
+      "rss": [
+        "Command execution acceptance"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/dog1/control/request",
+      "type": "std_msgs/msg/String",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Safety.*",
+        "Robot.Motion.Velocity",
+        "Robot.Motion.Perform",
+        "Robot.Navigation.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_gateway/dog_gateway/gateway.py"
+    },
+    {
+      "topic": "/dog1/foot_contacts",
+      "type": "dog_interfaces/msg/FootContacts",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Leg.*.Foot.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/imu/data",
+      "type": "sensor_msgs/msg/Imu",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Imu.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/joint_states",
+      "type": "sensor_msgs/msg/JointState",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Leg.*.Joint.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/lidar/points",
+      "type": "sensor_msgs/msg/PointCloud2",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/lidar/points_3d",
+      "type": "sensor_msgs/msg/PointCloud2",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/map",
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/dog1/motion/request",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/dog1/motion/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Motion.Perform.Status.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/nav2/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/supervisor.py"
+    },
+    {
+      "topic": "/dog1/odom",
+      "type": "nav_msgs/msg/Odometry",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Pose.*",
+        "Robot.Velocity.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/perception/detections",
+      "type": "vision_msgs/msg/Detection2DArray",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Perception.Marker.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/perception.py"
+    },
+    {
+      "topic": "/dog1/perception/image/compressed",
+      "type": "sensor_msgs/msg/CompressedImage",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/perception.py"
+    },
+    {
+      "topic": "/dog1/perception/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/perception.py"
+    },
+    {
+      "topic": "/dog1/render/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/render.py"
+    },
+    {
+      "topic": "/dog1/robot_description",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_description/dog_description/viewer.py"
+    },
+    {
+      "topic": "/dog1/scan",
+      "type": "sensor_msgs/msg/LaserScan",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Perception.Obstacle.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/sensors/camera_status",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/render.py"
+    },
+    {
+      "topic": "/dog1/sensors/scan",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/sensors/status",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/sim/ack",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/sim/request",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_gateway/dog_gateway/gateway.py"
+    },
+    {
+      "topic": "/dog1/sim/scene",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/sim/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "mapped",
+      "rss": [
+        "Robot.Identity.*",
+        "Robot.Simulation.*"
+      ],
+      "reason": "High-level scalar telemetry/control interface",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/slam/state",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/supervisor.py"
+    },
+    {
+      "topic": "/dog1/unitree/availability",
+      "type": "std_msgs/msg/String",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/unitree/lowstate",
+      "type": "unitree_go/msg/LowState",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/unitree/sportmodestate",
+      "type": "unitree_go/msg/SportModeState",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/sim.py"
+    },
+    {
+      "topic": "/dog1/viewport/image/compressed",
+      "type": "sensor_msgs/msg/CompressedImage",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_simulation/dog_simulation/render.py"
+    },
+    {
+      "topic": "/dog1/world/markers",
+      "type": "visualization_msgs/msg/MarkerArray",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_description/dog_description/viewer.py"
+    },
+    {
+      "topic": "/global_costmap/costmap",
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/navstack.py"
+    },
+    {
+      "topic": "/keepout_filter_info",
+      "type": "nav2_msgs/msg/CostmapFilterInfo",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/keepout_mask",
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/brain.py"
+    },
+    {
+      "topic": "/local_costmap/costmap",
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/navstack.py"
+    },
+    {
+      "topic": "/map",
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/navstack.py"
+    },
+    {
+      "topic": "/plan",
+      "type": "nav_msgs/msg/Path",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_autonomy/dog_autonomy/navstack.py"
+    },
+    {
+      "topic": "/rosout",
+      "type": "rcl_interfaces/msg/Log",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "ros2_ws/src/dog_gateway/dog_gateway/observability.py"
+    },
+    {
+      "topic": "/tf",
+      "type": "tf2_msgs/msg/TFMessage",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "tools/tf_probe/main.cpp"
+    },
+    {
+      "topic": "/tf_static",
+      "type": "tf2_msgs/msg/TFMessage",
+      "disposition": "outside_scope",
+      "rss": [],
+      "reason": "Internal control, visual/bulk data, map/TF, native telemetry or derived topic; not exposed as RSS v0.1 signal",
+      "source": "tools/tf_probe/main.cpp"
+    }
+  ]
+}

@@ -1,0 +1,362 @@
+{
+  "rss": "0.1",
+  "root": "Robot",
+  "nodes": {
+    "Robot.Identity.Id": {
+      "kind": "attribute",
+      "type": "string"
+    },
+    "Robot.Identity.Model": {
+      "kind": "attribute",
+      "type": "string"
+    },
+    "Robot.Identity.Backend": {
+      "kind": "attribute",
+      "type": "enum",
+      "values": [
+        "SIM",
+        "REAL"
+      ]
+    },
+    "Robot.Identity.ProfileId": {
+      "kind": "attribute",
+      "type": "string"
+    },
+    "Robot.Connection.IsOnline": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 1000
+    },
+    "Robot.Connection.IsHandshakeComplete": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 1000
+    },
+    "Robot.Connection.LastSampleAgeMs": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 1000,
+      "unit": "ms"
+    },
+    "Robot.Safety.Mode": {
+      "kind": "sensor",
+      "type": "enum",
+      "maxAgeMs": 300,
+      "values": [
+        "DISARMED",
+        "MANUAL",
+        "AUTO",
+        "MOTION",
+        "SAFE_STOP"
+      ]
+    },
+    "Robot.Safety.Reason": {
+      "kind": "sensor",
+      "type": "string",
+      "maxAgeMs": 300
+    },
+    "Robot.Safety.IsArmed": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 300
+    },
+    "Robot.Safety.IsStopLatched": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 300
+    },
+    "Robot.Pose.Position.X": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m",
+      "frame": "odom"
+    },
+    "Robot.Imu.AngularVelocity.X": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad/s"
+    },
+    "Robot.Imu.LinearAcceleration.X": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m/s²"
+    },
+    "Robot.Pose.Position.Y": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m",
+      "frame": "odom"
+    },
+    "Robot.Imu.AngularVelocity.Y": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad/s"
+    },
+    "Robot.Imu.LinearAcceleration.Y": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m/s²"
+    },
+    "Robot.Pose.Position.Z": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m",
+      "frame": "odom"
+    },
+    "Robot.Imu.AngularVelocity.Z": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad/s"
+    },
+    "Robot.Imu.LinearAcceleration.Z": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m/s²"
+    },
+    "Robot.Pose.Orientation.Roll": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad",
+      "frame": "odom"
+    },
+    "Robot.Imu.Orientation.Roll": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad"
+    },
+    "Robot.Pose.Orientation.Pitch": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad",
+      "frame": "odom"
+    },
+    "Robot.Imu.Orientation.Pitch": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad"
+    },
+    "Robot.Pose.Orientation.Yaw": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad",
+      "frame": "odom"
+    },
+    "Robot.Imu.Orientation.Yaw": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad"
+    },
+    "Robot.Velocity.Linear.X": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m/s"
+    },
+    "Robot.Velocity.Linear.Y": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "m/s"
+    },
+    "Robot.Velocity.Angular.Z": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad/s"
+    },
+    "Robot.Leg[FrontLeft,FrontRight,RearLeft,RearRight].Foot.IsInContact": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 200
+    },
+    "Robot.Leg[FrontLeft,FrontRight,RearLeft,RearRight].Foot.ContactForce": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "N"
+    },
+    "Robot.Leg[FrontLeft,FrontRight,RearLeft,RearRight].Joint[Hip,Thigh,Calf].Position": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad"
+    },
+    "Robot.Leg[FrontLeft,FrontRight,RearLeft,RearRight].Joint[Hip,Thigh,Calf].Velocity": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "rad/s"
+    },
+    "Robot.Leg[FrontLeft,FrontRight,RearLeft,RearRight].Joint[Hip,Thigh,Calf].Effort": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 200,
+      "unit": "N·m"
+    },
+    "Robot.PowerSystem.Battery.StateOfCharge": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 2500,
+      "unit": "%"
+    },
+    "Robot.PowerSystem.Battery.Voltage": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 2500,
+      "unit": "V"
+    },
+    "Robot.PowerSystem.Battery.Current": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 2500,
+      "unit": "A"
+    },
+    "Robot.PowerSystem.Battery.IsCharging": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 2500
+    },
+    "Robot.Perception.Obstacle.MinDistance": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 500,
+      "unit": "m"
+    },
+    "Robot.Perception.Obstacle.FrontMinDistance": {
+      "kind": "sensor",
+      "type": "float64",
+      "maxAgeMs": 500,
+      "unit": "m"
+    },
+    "Robot.Perception.Marker.Count": {
+      "kind": "sensor",
+      "type": "uint32",
+      "maxAgeMs": 1000
+    },
+    "Robot.Perception.Marker.IsDetected": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 1000
+    },
+    "Robot.Simulation.SceneId": {
+      "kind": "sensor",
+      "type": "string",
+      "maxAgeMs": 500
+    },
+    "Robot.Simulation.IsPaused": {
+      "kind": "sensor",
+      "type": "bool",
+      "maxAgeMs": 500
+    },
+    "Robot.Simulation.TimeNs": {
+      "kind": "sensor",
+      "type": "int64",
+      "maxAgeMs": 500
+    },
+    "Robot.Motion.Velocity": {
+      "kind": "setpoint",
+      "fields": {
+        "LinearX": {
+          "type": "float64",
+          "unit": "m/s",
+          "min": -0.5,
+          "max": 0.5
+        },
+        "AngularZ": {
+          "type": "float64",
+          "unit": "rad/s",
+          "min": -0.65,
+          "max": 0.65
+        }
+      },
+      "ttlMs": 300,
+      "refreshHz": 20,
+      "safeValue": {
+        "LinearX": 0,
+        "AngularZ": 0
+      }
+    },
+    "Robot.Safety.Arm": {
+      "kind": "command",
+      "args": {},
+      "timeoutMs": 3000,
+      "preconditions": "SIM; DISARMED; healthy sensors; explicit run authorization"
+    },
+    "Robot.Safety.Disarm": {
+      "kind": "command",
+      "args": {},
+      "timeoutMs": 3000,
+      "preconditions": "Robot state permits action"
+    },
+    "Robot.Safety.ResetStop": {
+      "kind": "command",
+      "args": {},
+      "timeoutMs": 3000,
+      "preconditions": "Robot state permits action"
+    },
+    "Robot.Safety.Stop": {
+      "kind": "command",
+      "args": {},
+      "timeoutMs": 3000,
+      "preconditions": "Robot state permits action",
+      "priority": "emergency"
+    },
+    "Robot.Motion.Perform": {
+      "kind": "command",
+      "args": {
+        "Name": {
+          "type": "enum",
+          "values": [
+            "CROUCH",
+            "BOW",
+            "TILT",
+            "LIFT_FRONT_LEFT",
+            "JUMP"
+          ]
+        }
+      },
+      "timeoutMs": 15000,
+      "preconditions": "MANUAL; standing; healthy; motion capability and scene guards"
+    },
+    "Robot.Navigation.GoTo": {
+      "kind": "command",
+      "args": {
+        "X": {
+          "type": "float64",
+          "unit": "m"
+        },
+        "Y": {
+          "type": "float64",
+          "unit": "m"
+        }
+      },
+      "timeoutMs": 60000,
+      "preconditions": "MANUAL; scene and map frame ready"
+    },
+    "Robot.Navigation.FollowRoute": {
+      "kind": "command",
+      "args": {
+        "RouteId": {
+          "type": "string"
+        }
+      },
+      "timeoutMs": 120000,
+      "preconditions": "MANUAL; versioned route exists; map ready"
+    }
+  }
+}

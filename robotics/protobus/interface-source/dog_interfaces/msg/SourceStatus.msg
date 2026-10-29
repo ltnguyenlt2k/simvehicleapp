@@ -1,0 +1,9 @@
+std_msgs/Header header
+string robot_id
+string source
+string profile
+string scene_id
+string backend
+string contract_version
+string config_hash
+string boot_id

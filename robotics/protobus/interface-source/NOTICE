@@ -1,0 +1,2 @@
+dog_interfaces message definitions exported from dog-ros2-simulation, Apache-2.0.
+Source commit 25b4bfada838b25ab93cf73c658c356a8ab90ef9. The build CMakeLists.txt is adapted to compile messages only; no dog_core runtime code is included. See manifest.json checksums.

@@ -2,7 +2,7 @@
 
 > **Yêu cầu:** PO 2026-10-27 — "mục tiêu cuối cùng là tôi có thể kéo thả workflow tạo một kịch bản…"; PO 2026-10-28 — viết mới, không dùng studio hiện có.
 > **Thiết kế:** [design](../../docs/design/M22-robotics-extension.md) §7, §8.
-> **ADR:** [0068](../adr/ADR-0068-robot-studio-run-and-scenarios.md) — Proposed, chờ PO xác nhận.
+> **ADR:** [0068](../adr/ADR-0068-robot-studio-run-and-scenarios.md) — Accepted for implementation 2026-10-29; gates OPEN.
 >
 > **Phụ thuộc:** gate M25 PASS. Task Run live cần gate M24 PASS.
 >
@@ -37,3 +37,8 @@
 | Khối lượng UI lớn (RR7) | Phạm vi v0.1 cố định; không làm AI/đa người dùng |
 | Người dùng nhầm Simulate với robot thật | Nhãn chế độ rõ, broker tách biệt |
 | Cách ly runner yếu hơn container | Chỉ chạy cục bộ 1 người dùng; network internal; ghi rủi ro |
+
+
+## Amendment 2026-10-29
+
+ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.

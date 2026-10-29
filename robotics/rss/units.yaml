@@ -1,0 +1,67 @@
+{
+  "1": {
+    "dimension": "scalar",
+    "scale": 1
+  },
+  "%": {
+    "dimension": "scalar",
+    "scale": 0.01
+  },
+  "m": {
+    "dimension": "length",
+    "scale": 1
+  },
+  "cm": {
+    "dimension": "length",
+    "scale": 0.01
+  },
+  "rad": {
+    "dimension": "angle",
+    "scale": 1
+  },
+  "s": {
+    "dimension": "time",
+    "scale": 1
+  },
+  "ms": {
+    "dimension": "time",
+    "scale": 0.001
+  },
+  "m/s": {
+    "dimension": "velocity",
+    "scale": 1
+  },
+  "rad/s": {
+    "dimension": "angular_velocity",
+    "scale": 1
+  },
+  "m/s²": {
+    "dimension": "acceleration",
+    "scale": 1
+  },
+  "N": {
+    "dimension": "force",
+    "scale": 1
+  },
+  "N·m": {
+    "dimension": "torque",
+    "scale": 1
+  },
+  "V": {
+    "dimension": "voltage",
+    "scale": 1
+  },
+  "A": {
+    "dimension": "current",
+    "scale": 1
+  },
+  "°C": {
+    "dimension": "temperature",
+    "scale": 1,
+    "offset": 273.15
+  },
+  "K": {
+    "dimension": "temperature",
+    "scale": 1
+  }
+}

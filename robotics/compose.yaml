@@ -1,0 +1,22 @@
+name: sr
+services:
+  contracts:
+    image: sr-contracts:dev
+    build: {context: ./contracts}
+    profiles: [build]
+    network_mode: none
+  rss:
+    image: sr-rss:dev
+    build: {context: ./rss}
+    profiles: [tools]
+    network_mode: none
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    user: "10001:10001"
+    environment: {RSS_CONTRACTS: /contracts}
+    command: [python, -m, unittest, discover, -s, tests, -v]
+networks:
+  sim-bus: {internal: true}
+  live-bus: {internal: true}

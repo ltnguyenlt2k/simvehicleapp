@@ -1,6 +1,6 @@
 # ADR-0065: RSS (Robotic Signal Specification) v0.1: định dạng `*.rss.yaml` riêng, gốc `Robot`, kind `setpoint`/`command` hạng nhất, đơn vị SI REP-103, tool `rssc`
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -117,3 +117,8 @@ flowchart LR
 
 ## Notes / Deviations
 - 2026-10-28: viết lại. Bản 2026-10-27 dùng vspec + vss-tools, quy ước `Request/LastResult/Phase`; đã bỏ theo ADR-0064.
+
+
+## Integration authorization 2026-10-29
+
+The user authorized implementation across simvehicleapp and dog-ros2-simulation, sequential gates, complex workflow deployment, launch from Robot Zoo, actual ROS/simulation evidence and final E2E video. ADR-0069 defines the required review corrections and takes precedence over conflicting details above. This is architecture authorization, not runtime acceptance.

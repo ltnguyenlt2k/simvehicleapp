@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "rss",
+    "root",
+    "nodes",
+    "schema",
+    "catalogHash"
+  ],
+  "properties": {
+    "rss": {
+      "const": "0.1"
+    },
+    "root": {
+      "const": "Robot"
+    },
+    "nodes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "schema": {
+      "const": "rss-catalog.v1"
+    },
+    "catalogHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "field": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "bool",
+            "int32",
+            "int64",
+            "uint8",
+            "uint32",
+            "float32",
+            "float64",
+            "string",
+            "enum"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "bool",
+            "int32",
+            "int64",
+            "uint8",
+            "uint32",
+            "float32",
+            "float64",
+            "string",
+            "enum"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "kind": {
+          "enum": [
+            "branch",
+            "attribute",
+            "sensor",
+            "setpoint",
+            "command"
+          ]
+        },
+        "frame": {
+          "enum": [
+            "base_link",
+            "odom",
+            "map"
+          ]
+        },
+        "maxAgeMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "fields": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "ttlMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "refreshHz": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "safeValue": {
+          "type": "object"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "preconditions": {
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "normal",
+            "emergency"
+          ]
+        },
+        "generated": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "sensor",
+                  "attribute"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "type"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "sensor"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "maxAgeMs"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "setpoint"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "fields",
+              "ttlMs",
+              "refreshHz",
+              "safeValue"
+            ],
+            "properties": {
+              "fields": {
+                "additionalProperties": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/field"
+                    },
+                    {
+                      "required": [
+                        "min",
+                        "max"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "command"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "args",
+              "timeoutMs",
+              "preconditions"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

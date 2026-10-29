@@ -1,0 +1,13 @@
+{
+  "schema": "fixture-provenance.v1",
+  "dogSourceCommit": "25b4bfada838b25ab93cf73c658c356a8ab90ef9",
+  "runtimeImage": "sha256:e72a2f4a63cfca0fdddf2ee62cc99b1abfa36e2482502b975c33937c5e2179c5",
+  "rosDomainId": 52,
+  "network": "dog-ros2-r1_robot",
+  "capture": "spikes/capture_contract_fixtures.py",
+  "source": "Actual ROS DDS samples, not generated/mock",
+  "nonfiniteEncoding": {
+    "rosNonFinite": "nan / inf / -inf"
+  },
+  "sha256": "aaaea7797f8510d7272b2a830322285685250db836c56fa654ade543f00f0b90"
+}

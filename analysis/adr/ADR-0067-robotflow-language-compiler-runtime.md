@@ -1,6 +1,6 @@
 # ADR-0067: RobotFlow: workflow `robotflow.v1`, block registry, IR `rfir.v1`, compiler `rflowc` và runtime `rfrt` viết mới bằng Python; app đầu tiên sinh ra Python
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -116,3 +116,8 @@ flowchart LR
 
 ## Notes / Deviations
 - 2026-10-28: viết lại; đổi tên file từ `ADR-0067-robot-app-target-python-first.md`. Bản 2026-10-27: target `python-robot` trong `compiler-code-python`, runtime `svrobot`, C++/Rust qua `sv-wasm-host`; đã bỏ theo ADR-0064.
+
+
+## Integration authorization 2026-10-29
+
+The user authorized implementation across simvehicleapp and dog-ros2-simulation, sequential gates, complex workflow deployment, launch from Robot Zoo, actual ROS/simulation evidence and final E2E video. ADR-0069 defines the required review corrections and takes precedence over conflicting details above. This is architecture authorization, not runtime acceptance.

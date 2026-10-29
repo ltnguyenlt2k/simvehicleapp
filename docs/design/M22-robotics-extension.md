@@ -1,6 +1,6 @@
 # Robotics: stack độc lập — RSS, Protobus, RobotFlow, Robot Studio (M22–M27)
 
-> **Trạng thái:** kế hoạch, **chưa code**. ADR 0064–0068 ở trạng thái **Proposed — chờ PO xác nhận**.
+> **Trạng thái:** kế hoạch, **chưa code**. ADR 0064–0068 ở trạng thái **Accepted for implementation 2026-10-29; gates OPEN**.
 > **Ngày:** 2026-10-27, viết lại 2026-10-28 · **Tác giả:** Claude Code (đề xuất), PO duyệt.
 
 ## 0. Yêu cầu PO
@@ -533,3 +533,13 @@ Thứ tự: M22 → M23 → (M24 ∥ M25) → M26 → M27. M25 chỉ cần broke
 | Target `python-robot` trong `compiler-code-python`, runtime `svrobot` dựa trên `simvehicleapp_runtime` | Compiler `rflowc` + runtime `rfrt` mới |
 | C++/Rust qua `sv-wasm-host` | Backend thứ hai sau v0.1, emitter + runtime mới nói `protobus.v1` |
 | Toolbar miền Robot trong studio fork Sim, orchestrator/workspace/signal-gateway, trợ lý AI | Robot Studio web mới + studio-api + runner; AI ngoài v0.1 |
+
+
+## 14. Review thiết kế 2026-10-28
+
+Xem [review M22–M27](../reports/robotics-plan-review-2026-10-28.md). Các đề xuất chưa thay thế Decision của ADR, chưa được PO xác nhận. Next: xử lý R01–R05 trước khi đóng băng contracts; đồng bộ R06–R08 vào phase và gate.
+
+
+## 15. Authorized cross-repository integration 2026-10-29
+
+[ADR-0069](../../analysis/adr/ADR-0069-robotics-deployment-and-dog-runtime-interface.md) resolves R01–R08 and overrides conflicting details in this design. User authorizes both repositories. Separate sim/live networks and runners; monotonic safety time; no replay after reconnect; timeScale=1; explicit Deploy then Start in Robot Zoo. Full complex-workflow acceptance and video remain OPEN.

@@ -1,0 +1,14 @@
+{
+  "schema": "mapping-profile.v1-draft",
+  "id": "dog-go2-sim",
+  "adapter": "dog-control/1",
+  "backend": "SIM",
+  "allowRemoteArm": false,
+  "requiresExplicitRunAuthorization": true,
+  "dogCommit": "25b4bfada838b25ab93cf73c658c356a8ab90ef9",
+  "domainId": 52,
+  "namespace": "/dog1",
+  "useSimTime": true,
+  "mappingImplementation": "M24 pending",
+  "routes": {}
+}

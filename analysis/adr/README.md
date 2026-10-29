@@ -193,3 +193,6 @@ flowchart TB
 | 0004 | "Danh sách tên opcode Scratch phổ biến" chỉ là câu nói suông, không thể implement CI | Tạo [scratch-opcode-denylist.md](scratch-opcode-denylist.md) (nguồn Scratch Wiki, không phải source code) |
 | 0031 | Chưa chọn thư viện ký Ed25519 | Xác nhận `node:crypto` core hỗ trợ Ed25519 sẵn (Node ≥ 12), không cần dependency |
 | 0001/0003/0005 | Status "Proposed" dù đã được thực thi/verify thật trong M0 | Bump **Accepted** kèm bằng chứng cụ thể (baseline SHA dùng thật, M0 spike report) |
+
+
+- [ADR-0069](ADR-0069-robotics-deployment-and-dog-runtime-interface.md): Accepted 2026-10-29 by direct implementation instruction. ADR-0064–0068 architecture authorized; runtime gates OPEN.

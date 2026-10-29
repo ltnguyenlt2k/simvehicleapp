@@ -1,0 +1,10 @@
+std_msgs/Header header
+string request_id
+string action
+float32 linear
+float32 angular
+float64[2] goal
+bool has_goal
+uint64 sequence
+string config_hash
+builtin_interfaces/Time expires_at
