@@ -55,7 +55,47 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(guard.fence, 5)
 
 
+class DelayedDeliveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_fresh_queued_refresh_cannot_hide_an_expired_previous_target(self):
+        catalog = load_catalog('/contracts/fixtures/rss-go2-catalog.v1.json')
+        backend = MockBackend(catalog)
+        client = ProviderClient('unused:1', catalog, backend)
+        client.guard = AuthorityGuard('epoch', 'session')
+        guard = client.guard
+        now = time.monotonic_ns()
+        common = dict(broker_epoch='epoch', provider_session='session', fence=1)
+        guard.grant(pb.Dispatch(kind=pb.LEASE_UPDATE,
+            deadline_monotonic_ns=now+2_000_000_000, **common), now)
+        value = pb.Object(fields={'LinearX': pb.Value(float64_value=.2),
+                                 'AngularZ': pb.Value(float64_value=0)})
+        previous = pb.Dispatch(kind=pb.SET_TARGET, path='Robot.Motion.Velocity',
+            sequence=1, value=value, deadline_monotonic_ns=now+100_000_000, **common)
+        self.assertTrue(guard.target(previous, now))
+        backend.mode = 'MANUAL'
+        backend.target(previous.path, value, previous.deadline_monotonic_ns)
+        guard.targets[previous.path].deadline_monotonic_ns = now-1
+        async def queued():
+            yield pb.Dispatch(kind=pb.SET_TARGET, path=previous.path, value=value,
+                sequence=2, deadline_monotonic_ns=now+300_000_000, **common)
+        await client.control_loop(queued())
+        self.assertEqual(backend.v, 0)
+        self.assertTrue(backend.stop_latched)
+        self.assertTrue(client.restart.is_set())
+        self.assertEqual(guard.lease_deadline, 0)
+        self.assertGreaterEqual(guard.invalid_through, 1)
+
+
 class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_state_observer_labels_synthetic_model_and_has_no_write_authority(self):
+        state = await self.api.State(pb.Empty())
+        self.assertEqual(state.model, 'synthetic-unicycle')
+        self.assertEqual(state.mode, 'DISARMED')
+        self.assertTrue(state.connected)
+        self.assertEqual(state.session, self.client.guard.session)
+        self.assertEqual(state.linear_x, 0)
+        self.assertEqual(state.angular_z, 0)
+        self.assertIsNone(self.broker.lease)
+
     async def asyncSetUp(self):
         self.catalog = load_catalog('/contracts/fixtures/rss-go2-catalog.v1.json')
         self.broker = Broker(self.catalog, provider_timeout_ms=800)
@@ -282,16 +322,18 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.broker.sweeper.cancel()
         await asyncio.gather(self.broker.sweeper, return_exceptions=True)
         self.broker.sweeper = None
+        old_guard = self.client.guard
         # Do not call Get here: Get itself sweeps broker state. Observe the
         # actual model to isolate provider-local watchdog behavior.
         await self.until(lambda: self.backend.v == 0, timeout=.4)
-        self.assertIn('Robot.Motion.Velocity', self.broker.targets)
         await self.until(lambda: self.backend.stop_latched, timeout=.4)
-        self.assertIsNotNone(self.broker.lease)
-        self.assertEqual(self.client.guard.lease_deadline, 0)
+        self.assertEqual(old_guard.lease_deadline, 0)
+        self.assertGreaterEqual(old_guard.invalid_through, self.lease.fence)
+        await self.until(lambda: self.broker.lease is None)
+        await self.until(lambda: self.client.guard.session != old_guard.session and self.client.connected.is_set())
         old = self.lease.fence
         self.broker.provider.control_queue.put_nowait(pb.Dispatch(kind=pb.LEASE_UPDATE,
-            fence=old, broker_epoch=self.broker.epoch, provider_session=self.client.guard.session,
+            fence=old, broker_epoch=self.broker.epoch, provider_session=old_guard.session,
             deadline_monotonic_ns=time.monotonic_ns()+1_000_000_000))
         await asyncio.sleep(.05)
         self.assertEqual(self.client.guard.lease_deadline, 0, 'late renewal cannot resurrect revoked authority')

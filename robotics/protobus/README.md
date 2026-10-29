@@ -2,7 +2,7 @@
 
 Use `python -m pbctl --help` inside the Protobus image. The bus defaults to
 `127.0.0.1:55600`; set `--bus protobus-sim:55600` from the isolated Compose network.
-Reads: `describe`, `get Robot.State.Mode`, and `subscribe Robot.State.Mode --count 3`.
+Reads: `describe`, `get Robot.Safety.Mode`, and `subscribe Robot.Safety.Mode --count 3`.
 
 Control requires a private local file: `--lease-file /tmp/operator-lease.json lease
 acquire`. Reuse that option for `lease renew`, `lease release`,

@@ -201,3 +201,5 @@ flowchart TB
 - [ADR-0072](ADR-0072-protobus-confirmed-command-results-and-audit.md): Accepted under PO delegation 2026-10-29; protocol v1.3 explicitly confirms physical terminal results, independent STOP receipt/result and nonblocking bounded audit failure behavior.
 
 - [ADR-0073](ADR-0073-mock-provider-and-scenario-contract.md): Accepted under PO delegation; ROS-free provider enforcement and separate typed mock scenario service, no live robot state injection.
+
+- [ADR-0074](ADR-0074-provider-local-target-expiry-revokes-session.md): Accepted under PO delegation; actual network-flap failure requires local target expiry to revoke authority and restart provider session before explicit recovery.

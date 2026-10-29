@@ -4,6 +4,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=sr-contracts:dev /contracts /contracts
 COPY . .
+RUN mkdir -p /catalog && chown 10001:10001 /catalog
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 RSS_CONTRACTS=/contracts
 USER 10001:10001
 CMD ["python", "-m", "unittest", "discover", "-s", "tests", "-v"]

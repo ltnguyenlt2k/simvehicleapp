@@ -6,6 +6,21 @@ import "protobus/v1/protobus.proto";
 service MockControl {
   rpc Reset(ResetRequest) returns (ResetReply);
   rpc Schedule(ScenarioRequest) returns (ScenarioReply);
+  rpc State(protobus.v1.Empty) returns (StateReply);
+}
+// Read-only observation for independent-process fault probes. Synthetic only.
+message StateReply {
+  string model = 1;
+  string mode = 2;
+  double linear_x = 3;
+  double angular_z = 4;
+  double x = 5;
+  double y = 6;
+  bool stop_latched = 7;
+  bool motion_active = 8;
+  bool connected = 9;
+  uint64 revision = 10;
+  string session = 11;
 }
 message ResetRequest { double time_scale = 1; }
 message ResetReply { uint64 revision = 1; }

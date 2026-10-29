@@ -41,7 +41,7 @@ def read_private(path):
 
 
 def typed_object(values, fields):
-    if set(values) != set(fields):
+    if not isinstance(values, dict) or set(values) != set(fields):
         raise ValueError('complete exact fields required: '+', '.join(fields))
     result = pb.Object()
     for name, spec in fields.items():

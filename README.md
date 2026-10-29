@@ -267,3 +267,10 @@ Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm
 ## 8. License
 
 SimVehicleApp's own code is licensed **Apache-2.0** unless a module states otherwise. It builds on Apache-2.0 upstream software from Sim Studio, Inc. (`simstudioai/sim`), the Eclipse Velocitas and Eclipse KUKSA projects, and MPL-2.0 data from COVESA VSS. See each module's `NOTICE` file for full attribution; see [ADR-0004](analysis/adr/ADR-0004-license-compliance.md) for the license-compliance policy (no Sim Enterprise code, no AGPL/Scratch code, Open VSX-only editor extensions).
+
+## Robotics development preview
+
+The independent robotics stack currently provides RSS, Protobus and a synthetic
+mock provider. Workflow Studio and live ROS/MuJoCo deployment are still being
+implemented. See the [robotics guide](docs/user-guide/robotics.md),
+[stack commands](robotics/README.md) and [current evidence](docs/reports/M23-progress.md).

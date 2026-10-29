@@ -279,6 +279,8 @@ class ProviderClient:
             now = time.monotonic_ns()
             if not self.guard.envelope(message):
                 continue
+            if message.kind not in (pb.STOP, pb.LEASE_REVOKED) and self.expire_targets(now):
+                return
             if message.kind == pb.LEASE_UPDATE and not safety:
                 previous = self.guard.fence
                 previous_targets = tuple(self.guard.targets)
@@ -329,6 +331,23 @@ class ProviderClient:
                 # their logical terminal state.
         raise ConnectionError('provider lane ended')
 
+    def expire_targets(self, now):
+        # Check before accepting a newly arrived refresh as well as on the timer:
+        # a delayed event-loop wake must not hide a gap beyond the previous TTL.
+        for path, message in tuple(self.guard.targets.items()):
+            if now >= message.deadline_monotonic_ns:
+                self.guard.invalid_through = max(self.guard.invalid_through, self.guard.fence)
+                self.guard.lease_deadline = 0
+                self.guard.targets.clear()
+                node = self.catalog['nodes'][path]
+                self.backend.target(path, pb.Object(fields={name: scalar_value(value, node['fields'][name])
+                    for name, value in node['safeValue'].items()}), 0)
+                self.cancel_all()
+                self.backend.lost('LOCAL_TARGET_EXPIRED')
+                self.restart.set()
+                return True
+        return False
+
     async def watchdog(self):
         while True:
             now = time.monotonic_ns()
@@ -338,12 +357,7 @@ class ProviderClient:
                 self.guard.targets.clear()
                 self.cancel_all()
                 self.backend.lost('LOCAL_LEASE_EXPIRED')
-            for path, message in list(self.guard.targets.items()):
-                if now >= message.deadline_monotonic_ns:
-                    self.guard.targets.pop(path)
-                    node = self.catalog['nodes'][path]
-                    self.backend.target(path, pb.Object(fields={name: scalar_value(value, node['fields'][name])
-                        for name, value in node['safeValue'].items()}), 0)
+            self.expire_targets(now)
             for message in tuple(self.command_messages.values()):
                 if now >= message.deadline_monotonic_ns:
                     self.cancel_command(message.execution_id)

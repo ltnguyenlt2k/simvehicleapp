@@ -23,7 +23,10 @@ V0.1 timeScale remains exactly 1. Configured routes are versioned profile data;
 unknown route IDs are rejected instead of inventing a path.
 
 An additive, separate protobus.mock.v1.MockControl service exposes Reset and
-Schedule only on the isolated mock network. It uses typed sensor/result steps,
+Schedule only on the isolated mock network. T08 adds a read-only State RPC on
+that same mock-only service to observe its actual synthetic state independently
+of broker availability; it labels its model and exposes no lease token. This is
+never a live adapter API. It uses typed sensor/result steps,
 bounded horizon/count and closed result kinds. No safety/connection state forgery
 or safety-command result override is allowed. Schedule atomically replaces the
 previous input schedule and clears its overrides/result queues. Reset requires

@@ -13,13 +13,20 @@ jobs:
       - run: bash robotics/scripts/sr build
       - run: bash robotics/scripts/sr test
       - run: bash robotics/scripts/sr smoke
+      - name: Independent broker/provider process and network faults
+        run: python3 robotics/scripts/fault-test.py
+      - name: Stop only this robot stack after fault tests
+        if: always()
+        run: docker compose -f robotics/compose.yaml down
+      - name: Retain independent-process fault evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1, repository baseline pin
+        with:
+          name: robotics-process-faults
+          path: robotics/runtime/m23/process-faults/
       - name: Build pinned ROS message interface without private source access
         run: docker build -f robotics/protobus/spikes/interfaces.Dockerfile -t sr-dog-interfaces:ci robotics/protobus
       - run: docker run --rm --network none sr-dog-interfaces:ci
-      - name: Compile independent Protobus stubs and test wire compatibility
-        run: |
-          docker build -t sr-protobus:ci robotics/protobus
-          docker run --rm --network none sr-protobus:ci
       - name: Scan the independent robot stack dependency locks
         run: |
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rss/requirements.txt

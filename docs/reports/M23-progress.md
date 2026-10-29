@@ -133,3 +133,37 @@ for 2000 ms against a catalog limit of 1000 ms and was correctly rejected; fixed
 the fixture to the catalog limit, preserving the failed log cli-failed-fixture-timeout.log.
 The preceding full suite passed 77 tests / 26.928 s; the expanded final suite is
 required before the next integration gate. M23 overall acceptance remains OPEN.
+## T08 independent process gate — failure retained, correction in progress
+
+T06/T07 final expanded suite: 79 PASS / 28.198 s. Both main CI 40893849074 and
+Robotics CI 40893849268 SUCCESS at 33975d42. T08 adds isolated Compose services,
+fresh RSS catalog generation, owned persistent audit volume, bounded socket
+health checks and a host Docker orchestrator (no Docker socket in containers).
+
+Initial observer harness used Docker cp on /tmp tmpfs; this daemon cannot copy
+that live mount even though exec can read it. Retained process-fault-failed-tmpfs-copy.log;
+changed evidence collection to exec while the read-only probe stays alive.
+Actual broker restart and provider restart passed. The network-flap test FAILED:
+velocity reached zero, but the old lease survived reconnect. Evidence retained at
+runtime/m23/network-flap-failed-old-lease.json and process-fault-failed-old-lease.log.
+ADR-0074 now requires provider-local target expiry to invalidate the fence, latch
+loss/STOP and replace the provider session; reconnect revokes the broker lease.
+The test is unchanged: old lease must fail and motion must not resume. M23 gate
+remains OPEN until corrected unit/process tests and GitHub CI pass.
+ADR-0074 corrected candidate passed all three independent-process faults:
+broker restart observation 0.417 s, provider unavailability observation 0.664 s,
+network-flap zero/SAFE_STOP observation 0.607 s. All old leases were rejected
+and no motion resumed after restore. These are observation upper bounds including
+Docker/polling, not physical stop latency. Frozen source adds the receive-side
+late-refresh race guard; 81 tests PASS / 28.788 s plus RSS 20 tests PASS.
+Final process suite and GitHub source gate are still pending below.
+T08 frozen local gate PASS: RSS 20/20 / 0.478 s; Protobus 81/81 / 28.788 s;
+process suite broker restart 0.412 s, provider restart 0.698 s, network flap
+0.478 s observation upper bounds. All three reject old leases and remain stopped
+through the post-restore observation. Final candidate image:
+sha256:504f6cf1bc965e22d3d7fc9efc20601c9bb68f179727b7b0b5b206e8a3ecd64f.
+Logs: process-final-tests.log and process-final-fault-tests.log; detailed actual
+states under runtime/m23/process-faults. precheck/config/diff checks PASS.
+Container CLI Describe/Get verifies online SIM 1.3, expected catalog, audit OK,
+and SAFE_STOP after fault tests. One idle sample: broker 25.91 MiB, mock 19.46 MiB
+inside 256 MiB caps each; not a soak measurement. GitHub T08 gate still pending.

@@ -198,6 +198,16 @@ class MockControl(mrpc.MockControlServicer):
     def __init__(self, backend):
         self.backend = backend
 
+    async def State(self, request, context):
+        backend = self.backend
+        backend.tick()
+        client = backend.client
+        return mpb.StateReply(model='synthetic-unicycle', mode=backend.mode,
+            linear_x=backend.v, angular_z=backend.w, x=backend.x, y=backend.y,
+            stop_latched=backend.stop_latched, motion_active=backend.motion_active,
+            connected=bool(client and client.connected.is_set()), revision=backend.revision,
+            session=client.guard.session if client and client.guard else '')
+
     async def Reset(self, request, context):
         backend = self.backend
         guard = backend.client.guard
