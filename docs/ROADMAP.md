@@ -65,7 +65,7 @@
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
-| [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069, 0070 Accepted | 🔄 | T01–T03 verified locally; 30-minute S-R4 PASS; T04 lease/TTL in progress, overall gate OPEN |
+| [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069, 0070 Accepted | 🔄 | T01–T07 locally PASS; 30-minute S-R4 PASS; T08 process faults in progress, overall gate OPEN |
 | [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069 Accepted | ☐ | 0/7; awaits broker safety gate |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069 Accepted | ☐ | 0/9; awaits M23 |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
@@ -497,9 +497,9 @@ Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](
 | Broker: catalog, validate, Get/Subscribe, STALE | 0066 | ✔ | 2026-10-29: local 24 tests PASS, actual gRPC and bounded quality/sequence/epoch handling; M23-progress.md | T03 |
 | Lease + SetTarget TTL ⇒ safeValue | 0066, 0071 | ✔ | 2026-10-29: 38 local RPC/transport tests PASS; Hold ownership, typed release, lease/TTL/lane-loss; provider-side enforcement remains T06 | T04 |
 | Vòng đời lệnh, Stop ưu tiên, audit | 0066, 0072 | ✔ | 2026-10-29: 57 local tests PASS; actual RPC lifecycle/receipt, terminal quarantine, 1000 unread dispatches, real audit write fault; M23-progress.md | T05 |
-| Provider mock + API kịch bản + `timeScale` | 0066 | 🔄 | 2026-10-29: starting after T05; provider fencing/deadline and physical mock behavior not accepted yet | T06 |
-| CLI `pbctl` | 0066 | ☐ | | T07 |
-| Compose `protobus-sim` + fault test tích hợp | 0066 | ☐ | | T08 |
+| Provider mock + API kịch bản + `timeScale` | 0066, 0073 | ✔ | 2026-10-29: 74 capped-container tests PASS; synthetic physics, provider fencing/local watchdog, scenario API; M23-progress.md | T06 |
+| CLI `pbctl` | 0066 | ✔ | 2026-10-29: five subprocess/socket tests PASS; private lease, typed control, invoke/cancel/STOP; M23-progress.md | T07 |
+| Compose `protobus-sim` + fault test tích hợp | 0066 | 🔄 | 2026-10-29: starting independent process/network faults after T06/T07 | T08 |
 | Gate + báo cáo | 0066 | ☐ | | T09 |
 
 ## M24 — Protobus bridge ROS 2 + adapter dog

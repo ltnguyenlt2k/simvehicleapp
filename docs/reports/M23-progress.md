@@ -107,3 +107,29 @@ physics/Brain safety M24. T06 may start; complete M23 gate remains OPEN.
 
 GitHub checkpoint at 6820cc1a: main CI run 40884262378 SUCCESS and Robotics run
 40884262671 SUCCESS. T05 source follows that checkpoint and requires its own CI.
+
+## T06 mock provider — local PASS, 2026-10-29
+
+74 capped-container tests PASS / 25.181 s (runtime/m23/mock-final-tests.log).
+The ROS-free shared ProviderClient enforces session/fence, absolute deadlines,
+sequence/owner and cancellation on receipt, with an independent local watchdog.
+MockBackend is explicitly synthetic unicycle physics, initially DISARMED; five
+motion profiles include the measured default BOW duration, cancellable recovery,
+mode guards and typed scheduled sensor/result injection. Reset requires idle and
+creates a new source epoch/session. Reordered stale safety frames cannot stop a
+new owner; delayed lease updates cannot resurrect expired authority. Broker-side
+command feedback now also checks the deadline before accepting a late result.
+No ROS/physical safety claim is made by these mock tests. ADR-0073 records the
+shared provider and isolated scenario interface. T08 independent process faults
+and the complete M23 gate remain OPEN.
+
+## T07 pbctl — local PASS, 2026-10-29
+
+Five CLI subprocess tests PASS / 3.418 s against actual broker/provider gRPC
+sockets: help, describe/get/subscribe, private lease-file permissions, no token
+on stdout, acquire/renew/release, typed set/release, invoke success/failure exit
+codes, cancel and STOP with confirmed provider feedback. A prior fixture asked
+for 2000 ms against a catalog limit of 1000 ms and was correctly rejected; fixed
+the fixture to the catalog limit, preserving the failed log cli-failed-fixture-timeout.log.
+The preceding full suite passed 77 tests / 26.928 s; the expanded final suite is
+required before the next integration gate. M23 overall acceptance remains OPEN.

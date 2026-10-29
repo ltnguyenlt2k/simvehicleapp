@@ -1,0 +1,30 @@
+syntax = "proto3";
+package protobus.mock.v1;
+import "protobus/v1/protobus.proto";
+
+// Available only on the isolated mock network. Never registered by a live bridge.
+service MockControl {
+  rpc Reset(ResetRequest) returns (ResetReply);
+  rpc Schedule(ScenarioRequest) returns (ScenarioReply);
+}
+message ResetRequest { double time_scale = 1; }
+message ResetReply { uint64 revision = 1; }
+message SensorOverride {
+  string path = 1;
+  protobus.v1.Value value = 2;
+  protobus.v1.Quality quality = 3;
+}
+message ForcedResult {
+  string path = 1;
+  protobus.v1.Phase phase = 2;
+  uint32 count = 3;
+}
+message ScenarioStep {
+  uint32 at_ms = 1;
+  oneof action {
+    SensorOverride sensor = 2;
+    ForcedResult command_result = 3;
+  }
+}
+message ScenarioRequest { repeated ScenarioStep steps = 1; }
+message ScenarioReply { uint32 scheduled_steps = 1; }

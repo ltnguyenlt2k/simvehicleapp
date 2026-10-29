@@ -199,3 +199,5 @@ flowchart TB
 - [ADR-0070](ADR-0070-protobus-independent-safety-lane.md): Accepted under PO delegation 2026-10-29; independent Safety channel, additive protocol v1.1, requires actual saturation/STOP fault evidence before acceptance.
 - [ADR-0071](ADR-0071-protobus-behavior-target-ownership.md): Accepted under PO delegation 2026-10-29; protocol v1.2 adds Hold owner/safe release, bounded lease updates/revocation and absolute target deadlines. Provider fencing and actual robot safety remain separate gates.
 - [ADR-0072](ADR-0072-protobus-confirmed-command-results-and-audit.md): Accepted under PO delegation 2026-10-29; protocol v1.3 explicitly confirms physical terminal results, independent STOP receipt/result and nonblocking bounded audit failure behavior.
+
+- [ADR-0073](ADR-0073-mock-provider-and-scenario-contract.md): Accepted under PO delegation; ROS-free provider enforcement and separate typed mock scenario service, no live robot state injection.

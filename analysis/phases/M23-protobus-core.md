@@ -65,3 +65,5 @@ T05 local closure: 57 capped-container tests PASS, including actual command RPC
 state/cancel/late feedback, STOP receipt vs physical result, unread-dispatch stress
 and real JSONL/write-failure behavior. Two failed runs and their fixes retained in
 M23-progress.md. T06 IN_PROGRESS; full safety gate and ROS evidence remain OPEN.
+
+T06 local closure: 74 tests PASS / 25.181 s, shared provider guard and synthetic mock scenario API; actual ROS is M24. T07 local closure: five CLI socket/subprocess tests PASS / 3.418 s. T08 IN_PROGRESS; M23 gate OPEN. See M23-progress.md for retained failures and evidence.

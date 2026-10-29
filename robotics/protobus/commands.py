@@ -365,6 +365,8 @@ class CommandPlane:
         execution = self.executions.get(update.execution_id)
         if execution is None or execution.session != update.provider_session or execution.path != update.path:
             raise self.reject('PB_PROVIDER_MISMATCH', 'execution identity')
+        if execution.phase not in TERMINAL and time.monotonic_ns() >= execution.deadline_ns:
+            self.cancel_execution(execution, 'PB_TIMEOUT', terminal=pb.TIMED_OUT)
         if execution.phase in TERMINAL:
             if execution.released:
                 if (update.phase == execution.phase

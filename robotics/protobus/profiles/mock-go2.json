@@ -1,0 +1,9 @@
+{
+  "kind": "kinematic-mock",
+  "timeScale": 1,
+  "motionDurationSeconds": {"CROUCH": 7.024, "BOW": 7.179, "TILT": 7.146, "LIFT_FRONT_LEFT": 7.156, "JUMP": 7.145},
+  "durationSource": "M22 actual DDS probe; dog source 25b4bfad, image e72a2f4a; measured wall durations, not mock physics parity",
+  "recoverySeconds": 0.25,
+  "recoveryModel": "synthetic bounded recovery; not evidence of physical recovery time",
+  "routes": {}
+}
