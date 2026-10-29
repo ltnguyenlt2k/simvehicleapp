@@ -23,3 +23,7 @@ Authenticated CI log retrieval was rejected by automatic approval review. No
 credentials were retrieved; diagnosis used public status and the local scanner.
 An initial shell-loop scan failed due to argument expansion and was not treated
 as vulnerability evidence; seven explicit-path scans replaced it.
+
+GitHub check confirmation: at 093fa4be, the dependency vulnerabilities job and
+AI module job both SUCCESS through the public check-runs API. Remaining unrelated
+jobs were still running at observation, so overall CI was not claimed complete.

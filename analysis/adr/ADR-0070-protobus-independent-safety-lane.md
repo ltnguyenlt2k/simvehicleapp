@@ -38,3 +38,14 @@ One priority queue cannot affect already-written messages. A second stream on th
 same channel retains connection-level backpressure. A dedicated connection is
 chosen for local SIM v1.1. Software STOP remains distinct from a physical E-stop;
 hardware commissioning stays open.
+
+## Initial wire evidence (not production safety acceptance)
+
+2026-10-29: grpcio 1.85.0, actual loopback sockets, separate server-streaming
+Control and Safety. Python safety channel uses grpc.use_local_subchannel_pool=1;
+server peers are asserted different, since Channel objects may otherwise share
+the global subchannel pool. With 969 ordinary writes still pending after actual
+backpressure, a STOP was received on Safety in 2.868 ms in the measured trial.
+Six protocol/transport tests passed in the capped 2-CPU/256-MiB image. The test
+service is deliberately not the production broker and does not confirm a robot
+stop. Production saturation/authority/replay tests and actual ROS remain required.

@@ -28,6 +28,12 @@ code, ROS topic name or endpoint is supplied by workflow input. A provider sessi
 must handshake its catalog, profile, SIM backend and clock ID before control.
 Provider reconnect invalidates old state/authority and cannot replay motion.
 
+Python providers set `grpc.use_local_subchannel_pool=1` on the safety channel;
+separate Python Channel objects alone may share a global subchannel/connection.
+Wire feasibility tests assert distinct TCP peers and stalled ordinary writes.
+Official channel argument: https://grpc.github.io/grpc/core/channel__arg__names_8h.html.
+This wire-only test does not substitute for production broker/ROS STOP faults.
+
 Lease requests use catalog hash and client ID. Token + broker epoch + fence are
 required for each write; monotonically increasing target sequence rejects replay.
 Client loss is bounded by lease expiration, not inferred from unrelated unary RPC
