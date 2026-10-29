@@ -8,6 +8,24 @@
     "RSS2002": "Incompatible dimensions",
     "RSS2003": "Invalid typed value",
     "RSS2004": "Invalid range",
-    "RSS2005": "Refresh period exceeds TTL"
+    "RSS2005": "Refresh period exceeds TTL",
+    "PB_CATALOG_MISMATCH": "Client/provider catalog differs from broker",
+    "PB_INVALID_PATH": "Path is not declared in catalog",
+    "PB_INVALID_KIND": "Operation is not valid for node kind",
+    "PB_INVALID_VALUE": "Value violates type, range or enum",
+    "PB_LEASE_REQUIRED": "Valid control lease required",
+    "PB_LEASE_BUSY": "Another client holds the control lease",
+    "PB_LEASE_EXPIRED": "Lease expired or belongs to another broker epoch",
+    "PB_REPLAY": "Duplicate or out-of-order control/sample sequence",
+    "PB_PROVIDER_OFFLINE": "Provider is not connected and fresh",
+    "PB_PROVIDER_MISMATCH": "Provider session, profile or claims mismatch",
+    "PB_CLOCK_MISMATCH": "Provider does not share the host safety clock",
+    "PB_RESOURCE_BUSY": "Conflicting motion owns body/navigation",
+    "PB_TIMEOUT": "Command exceeded its execution deadline",
+    "PB_CANCELLED": "Command cancelled by owner",
+    "PB_STOPPED": "Safety stop revoked control authority",
+    "PB_QUEUE_FULL": "Bounded queue is full",
+    "PB_BAD_TRANSITION": "Invalid command state transition",
+    "PB_BACKEND_FORBIDDEN": "Backend is outside commissioned scope"
   }
 }

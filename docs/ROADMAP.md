@@ -478,22 +478,22 @@ Yêu cầu PO 2026-10-27 (mở rộng Robotics), **đính chính 2026-10-28: sta
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Phân tích + nghiên cứu upstream + thiết kế + ADR + kế hoạch | 0064–0068 | ✔ | 2026-10-27 Claude Code, tra nguồn thật (không code): repo dog @ `9adea9be` (Go2/MuJoCo, ROS 2 Humble digest ghim, CycloneDDS unicast peer, network `robot`, 48 topic, envelope `control/request` qua Brain), REP-2000 (Humble EOL 05/2027).<br>**2026-10-28 viết lại** theo PO "luồng mới độc lập, không dùng lại cái gì hiện có": bỏ KUKSA, vspec/vss-tools, compiler/IR/simulator/runtime/studio xe; thay bằng `robotics/` riêng (RSS `*.rss.yaml` + `rssc`, Protobus tự viết `protobus.v1`, RobotFlow `rflowc`/`rfrt`, Robot Studio mới). Bảng đã bỏ: design §13. License bên thứ ba kiểm qua GitHub API (React Flow, FastAPI, pydantic, Vite MIT; gRPC Apache-2.0; CycloneDDS EPL-2.0/EDL-1.0). | — |
-| Khung `robotics/` (AGENTS, compose `sr`, CLI `sr`, CI, guard độc lập) | 0064 | ☐ | | T01 |
-| Schema `rss-spec.v1`, `rss-catalog.v1` | 0065 | ☐ | | T02 |
-| Tool `rssc` (validate/build/docs/diff, tất định) | 0065 | ☐ | | T03 |
-| `units.yaml` SI REP-103 | 0065 | ☐ | | T04 |
-| RSS v0.1 Go2 | 0065 | ☐ | | T05 |
-| Truy vết 48 topic dog ↔ RSS + nháp mapping | 0065, 0066 | ☐ | | T06 |
-| Spike S-R1 DDS, S-R2 `dog_interfaces`, S-R3 envelope | 0066 | ☐ | | T07 |
-| Tài liệu RSS + gate + báo cáo | 0065 | ☐ | | T08 |
+| Khung `robotics/` (AGENTS, compose `sr`, CLI `sr`, CI, guard độc lập) | 0064 | ✔ | 2026-10-29: Robotics CI 40874429999 PASS at 0abd1585 | T01 |
+| Schema `rss-spec.v1`, `rss-catalog.v1` | 0065 | ✔ | 15 tests, including invalid fixtures; M22 report | T02 |
+| Tool `rssc` (validate/build/docs/diff, tất định) | 0065 | ✔ | Offline containers produce identical bytes/hash | T03 |
+| `units.yaml` SI REP-103 | 0065 | ✔ | Dimension/scale/offset and invalid-unit tests PASS | T04 |
+| RSS v0.1 Go2 | 0065 | ✔ | 113 expanded nodes including command statuses | T05 |
+| Truy vết 48 topic dog ↔ RSS + nháp mapping | 0065, 0066 | ✔ | Complete matrix; actual DDS fixtures and provenance | T06 |
+| Spike S-R1 DDS, S-R2 `dog_interfaces`, S-R3 envelope | 0066 | ✔ | External DDS, isolated interface build, 5 motions and watchdog PASS | T07 |
+| Tài liệu RSS + gate + báo cáo | 0065 | ✔ | Scoped M22 PASS; [report](reports/M22.md); hardware OPEN | T08 |
 
 ## M23 — Protobus core
 Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| `protobus.v1.proto`, mã `PB_*`, schema `mapping.v1` | 0066 | ☐ | | T01 |
-| Spike S-R4 hiệu năng broker Python | 0066 | ☐ | | T02 |
+| `protobus.v1.proto`, mã `PB_*`, schema `mapping.v1` | 0066 | 🔄 | 2026-10-29: protocol tests PASS; final schema validation pending | T01 |
+| Spike S-R4 hiệu năng broker Python | 0066 | 🔄 | 2026-10-29: capped 10 s smoke PASS; full 1800 s run active, not accepted yet | T02 |
 | Broker: catalog, validate, Get/Subscribe, STALE | 0066 | ☐ | | T03 |
 | Lease + SetTarget TTL ⇒ safeValue | 0066 | ☐ | | T04 |
 | Vòng đời lệnh, Stop ưu tiên, audit | 0066 | ☐ | | T05 |
@@ -580,4 +580,4 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 | M27 complex live E2E/video/soak | OPEN | Three live passes + restart/fault cases + 30-min soak + recorded full flow |
 | Hardware/Jetson | OPEN / OUT OF SCOPE | No hardware evidence |
 
-M22 checkpoint 2026-10-29: 15 containerized RSS tests PASS, 113-node deterministic catalog, complete 48-topic disposition matrix; S-R1/S-R2/S-R3 actual DDS/build/motion PASS. CI workflow prepared but NOT executed on GitHub; M22 overall gate OPEN and M23 not started. Evidence: docs/reports/M22.md. Robot cleanup DISARMED.
+M22 gate PASS 2026-10-29: 15 containerized RSS tests, 113-node deterministic catalog, complete 48-topic disposition matrix; S-R1/S-R2/S-R3 actual DDS/build/motion PASS. Robotics CI run 40874429999 SUCCESS at 0abd1585. M23 IN_PROGRESS: protocol then performance spike before broker. General vehicle CI osv scan failed separately; overall CI not claimed green. Evidence: docs/reports/M22.md. Robot cleanup DISARMED. Commit/push authorization persists for this feature.

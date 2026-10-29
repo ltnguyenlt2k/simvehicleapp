@@ -48,3 +48,5 @@ ADR-0069 is authoritative for integration and review R01–R08. Implementation a
 ## Actual checkpoint 2026-10-29
 
 T01 local foundation/build/precheck PASS, GitHub CI pending; T02–T06 local validation PASS (15 tests, 113 nodes, complete 48 topics); T07 S-R1–S-R3 actual PASS. T08 report exists but overall gate OPEN until CI. See ../../docs/reports/M22.md. M23 NOT STARTED.
+
+2026-10-29 closure: scoped Robotics CI run 40874429999 succeeded at 0abd1585. M22 gate PASS; the checkpoint above is historical. General vehicle CI dependency failure is addressed separately in the AI security report.

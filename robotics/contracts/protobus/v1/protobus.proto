@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package protobus.v1;
+
+// v1 is a local SIM interface. No REAL backend authorization is implied.
+service Bus {
+  rpc Describe(Empty) returns (Descriptor);
+  rpc Get(Query) returns (Samples);
+  rpc Subscribe(Query) returns (stream Samples);
+  rpc AcquireLease(LeaseRequest) returns (Lease);
+  rpc RenewLease(Lease) returns (Lease);
+  rpc ReleaseLease(Lease) returns (Reply);
+  rpc SetTarget(Target) returns (Reply);
+  rpc Invoke(Invocation) returns (stream CommandUpdate);
+  rpc Cancel(CancelRequest) returns (Reply);
+  rpc Stop(StopRequest) returns (StopReply);
+}
+
+service Provider {
+  // Bulk telemetry cannot queue in front of safety/control dispatches.
+  rpc Attach(stream ProviderPacket) returns (stream Reply);
+  rpc Control(ProviderHello) returns (stream Dispatch);
+}
+
+message Empty {}
+message Value {
+  oneof kind {
+    bool bool_value = 1;
+    sint32 int32_value = 2;
+    sint64 int64_value = 3;
+    uint32 uint32_value = 4;
+    float float32_value = 5;
+    double float64_value = 6;
+    string string_value = 7;
+    Object object_value = 8;
+  }
+}
+message Object { map<string, Value> fields = 1; }
+enum Quality {
+  QUALITY_UNSPECIFIED = 0;
+  OK = 1;
+  STALE = 2;
+  NONE = 3;
+}
+message Sample {
+  string path = 1;
+  Value value = 2;
+  int64 source_time_ns = 3;
+  int64 broker_time_ns = 4;
+  Quality quality = 5;
+  uint64 sequence = 6;
+  string source_clock = 7;
+  string source_epoch = 8;
+}
+message Samples {
+  repeated Sample samples = 1;
+  string provider_session = 2;
+  string broker_epoch = 3;
+}
+message Descriptor {
+  string robot_id = 1;
+  string profile_id = 2;
+  string catalog_hash = 3;
+  string broker_epoch = 4;
+  bool provider_online = 5;
+  string backend = 6;
+  string host_clock_id = 7;
+}
+message Query {
+  repeated string paths = 1;
+  string catalog_hash = 2;
+  uint32 min_interval_ms = 3;
+}
+message LeaseRequest {
+  string client_id = 1;
+  string catalog_hash = 2;
+  uint32 ttl_ms = 3;
+}
+message Lease {
+  string token = 1;
+  uint64 fence = 2;
+  string broker_epoch = 3;
+  uint32 remaining_ms = 4;
+  string client_id = 5;
+}
+message Target {
+  Lease lease = 1;
+  string path = 2;
+  Object value = 3;
+  uint64 sequence = 4;
+}
+message Invocation {
+  Lease lease = 1;
+  string path = 2;
+  Object args = 3;
+  uint32 timeout_ms = 4;
+  string idempotency_key = 5;
+}
+enum Phase {
+  PHASE_UNSPECIFIED = 0;
+  PENDING = 1;
+  ACCEPTED = 2;
+  RUNNING = 3;
+  SUCCEEDED = 4;
+  FAILED = 5;
+  REJECTED = 6;
+  CANCELLED = 7;
+  TIMED_OUT = 8;
+}
+message CommandUpdate {
+  string execution_id = 1;
+  Phase phase = 2;
+  string reason = 3;
+  string provider_session = 4;
+  string path = 5;
+}
+message CancelRequest { Lease lease = 1; string execution_id = 2; }
+message StopRequest { string reason = 1; }
+message StopReply {
+  bool requested = 1;
+  bool dispatched = 2;
+  bool robot_confirmed = 3;
+  string reason = 4;
+}
+message Reply { bool ok = 1; string code = 2; string detail = 3; }
+message ProviderHello {
+  string provider_id = 1;
+  string profile_id = 2;
+  string catalog_hash = 3;
+  string session = 4;
+  repeated string claims = 5;
+  string backend = 6;
+  string host_clock_id = 7;
+}
+message ProviderPacket {
+  oneof packet {
+    ProviderHello hello = 1;
+    Samples samples = 2;
+    CommandUpdate command = 3;
+    string heartbeat_session = 4;
+  }
+}
+enum DispatchKind {
+  DISPATCH_UNSPECIFIED = 0;
+  SET_TARGET = 1;
+  INVOKE = 2;
+  CANCEL = 3;
+  STOP = 4;
+  SAFE_VALUE = 5;
+}
+message Dispatch {
+  DispatchKind kind = 1;
+  string path = 2;
+  Object value = 3;
+  string execution_id = 4;
+  uint32 valid_for_ms = 5;
+  uint64 fence = 6;
+  string broker_epoch = 7;
+  string provider_session = 8;
+  string reason = 9;
+  uint64 sequence = 10;
+  // v1 SIM providers must share the Linux host monotonic clock domain.
+  // A relative TTL received after a network delay must not extend authority.
+  int64 deadline_monotonic_ns = 11;
+}

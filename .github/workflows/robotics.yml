@@ -8,7 +8,7 @@ jobs:
   foundations:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, repository baseline pin
       - run: bash robotics/scripts/sr precheck
       - run: bash robotics/scripts/sr build
       - run: bash robotics/scripts/sr test
@@ -16,3 +16,7 @@ jobs:
       - name: Build pinned ROS message interface without private source access
         run: docker build -f robotics/protobus/spikes/interfaces.Dockerfile -t sr-dog-interfaces:ci robotics/protobus
       - run: docker run --rm --network none sr-dog-interfaces:ci
+      - name: Compile independent Protobus stubs and test wire compatibility
+        run: |
+          docker build -t sr-protobus:ci robotics/protobus
+          docker run --rm --network none sr-protobus:ci

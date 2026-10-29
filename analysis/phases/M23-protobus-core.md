@@ -40,3 +40,9 @@
 ## Amendment 2026-10-29
 
 ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.
+
+## Actual execution 2026-10-29
+
+M22 scoped gate PASS (GitHub run 40874429999). T01: protoc build and 5 wire compatibility tests PASS; mapping schema and 5 negative/positive groups PASS in RSS image (20 total RSS/mapping tests). SIM safety-clock domain is explicitly local-host-only in PROTOBUS.md. No REAL/distributed-clock support implied.
+
+T02: capped 10 s transport smoke PASS (approximately 5,049 samples/s, four subscribers, p95 0.71 ms). Full 1800 s measurement running as container sr-m23-s-r4; T03 must wait for full result. Initial smoke output permission failure retained; corrected non-root evidence uid and early writable-directory preflight. No performance threshold relaxed.

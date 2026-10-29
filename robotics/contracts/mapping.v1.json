@@ -1,0 +1,478 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mapping.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "profile",
+    "adapter",
+    "catalogHash",
+    "backend",
+    "ros",
+    "sensors",
+    "setpoints",
+    "commands"
+  ],
+  "properties": {
+    "schema": {
+      "const": "mapping.v1"
+    },
+    "profile": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "adapter": {
+      "type": "string"
+    },
+    "catalogHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "backend": {
+      "const": "SIM"
+    },
+    "allowRemoteArm": {
+      "type": "boolean",
+      "default": false
+    },
+    "ros": {
+      "type": "object",
+      "required": [
+        "domainId",
+        "namespace",
+        "useSimTime"
+      ],
+      "properties": {
+        "domainId": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 232
+        },
+        "namespace": {
+          "type": "string",
+          "pattern": "^/[A-Za-z][A-Za-z0-9_/]*$"
+        },
+        "useSimTime": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "sensors": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^Robot\\."
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/sensor"
+      }
+    },
+    "setpoints": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^Robot\\."
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/control"
+      }
+    },
+    "commands": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^Robot\\."
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/control"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sensor": {
+      "type": "object",
+      "required": [
+        "topic",
+        "type",
+        "field",
+        "qos",
+        "maxRateHz"
+      ],
+      "properties": {
+        "topic": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_/]*$"
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+/msg/[A-Za-z0-9]+$"
+        },
+        "field": {
+          "type": "string"
+        },
+        "qos": {
+          "enum": [
+            "sensor_data",
+            "reliable",
+            "latched"
+          ]
+        },
+        "maxRateHz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000
+        },
+        "transforms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/transform"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "control": {
+      "type": "object",
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "action": {
+          "enum": [
+            "manual",
+            "arm",
+            "disarm",
+            "stop",
+            "reset_stop",
+            "goal",
+            "route",
+            "motion",
+            "cancel",
+            "motion_cancel"
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "enumMap": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "resultTopic": {
+          "type": "string"
+        },
+        "priority": {
+          "enum": [
+            "normal",
+            "emergency"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "transform": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "identity"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "quaternion_to_roll"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "quaternion_to_pitch"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "quaternion_to_yaw"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "min_finite"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op"
+          ],
+          "properties": {
+            "op": {
+              "const": "count"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "scale"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "k"
+              ],
+              "properties": {
+                "k": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "offset"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "c"
+              ],
+              "properties": {
+                "c": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "sector_min"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "degrees"
+              ],
+              "properties": {
+                "degrees": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 360
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "array_index"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "index"
+              ],
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "select"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "by",
+                "equals"
+              ],
+              "properties": {
+                "by": {
+                  "type": "string"
+                },
+                "equals": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "json"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "pattern": "^\\$?(\\.[A-Za-z_][A-Za-z0-9_]*)+$"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "enum"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "map"
+              ],
+              "properties": {
+                "map": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "op",
+            "args"
+          ],
+          "properties": {
+            "op": {
+              "const": "compare"
+            },
+            "args": {
+              "type": "object",
+              "required": [
+                "operator",
+                "constant"
+              ],
+              "properties": {
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "lt",
+                    "gt"
+                  ]
+                },
+                "constant": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
