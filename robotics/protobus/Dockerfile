@@ -5,6 +5,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --from=sr-contracts:dev /contracts /contracts
 RUN python -m grpc_tools.protoc -I/contracts --python_out=. --grpc_python_out=. /contracts/protobus/v1/protobus.proto
 COPY . .
+RUN mkdir -p /data && chown 10001:10001 /data
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/opt/protobus
 USER 10001:10001
 CMD ["python", "-m", "unittest", "discover", "-s", "tests", "-v"]

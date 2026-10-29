@@ -23,7 +23,7 @@ separate outbound ordinary-control stream with bounded scheduling. Provider.Safe
 is an additional stream opened on a separate gRPC channel/TCP connection for STOP
 and safeValue, so already-buffered ordinary control cannot block its connection
 flow-control window. Safety was introduced in v1.1 (ADR-0070); current protocol
-v1.2 (ADR-0071) requires both streams before
+v1.3 (ADR-0072, preserving v1.2 ownership) requires both streams before
 a provider is control-ready. No arbitrary
 code, ROS topic name or endpoint is supplied by workflow input. A provider session
 must handshake its catalog, profile, SIM backend and clock ID before control.
@@ -86,6 +86,15 @@ PB_LEASE_REQUIRED, PB_LEASE_BUSY, PB_LEASE_EXPIRED, PB_REPLAY,
 PB_PROVIDER_OFFLINE, PB_PROVIDER_MISMATCH, PB_CLOCK_MISMATCH,
 PB_RESOURCE_BUSY, PB_TIMEOUT, PB_CANCELLED, PB_STOPPED,
 PB_QUEUE_FULL, PB_BAD_TRANSITION, PB_BACKEND_FORBIDDEN.
+
+V1.3 CommandUpdate.physical_confirmed distinguishes a provider's actual terminal
+result from logical timeout/revocation. Success requires confirmation. A logical
+terminal phase is immutable even if physical recovery is confirmed later; its
+resource stays quarantined until then or explicit recovered ResetStop. STOP
+receipt/result use a unique execution ID: ACCEPTED proves provider receipt,
+SUCCEEDED with physical_confirmed proves its result. StopReply never infers
+confirmation from enqueue or offline state. Descriptor.audit_ok reports bounded
+asynchronous journal health; PB_AUDIT_FAILED revokes motion but does not block STOP.
 
 M23 production code and fault tests must exercise every invariant. Passing the
 transport benchmark does not accept broker safety.

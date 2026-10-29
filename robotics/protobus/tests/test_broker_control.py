@@ -31,8 +31,7 @@ class ControlFixture(BrokerFixture):
         try:
             while True:
                 await asyncio.sleep(.1)
-                await self.provider.write(pb.ProviderPacket(heartbeat_session=self.hello.session))
-                await self.provider.read()
+                await self.packet(pb.ProviderPacket(heartbeat_session=self.hello.session))
         except (grpc.aio.AioRpcError, asyncio.InvalidStateError):
             return
 

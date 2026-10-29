@@ -68,6 +68,7 @@ message Descriptor {
   string backend = 6;
   string host_clock_id = 7;
   string protocol_version = 8;
+  bool audit_ok = 9;
 }
 message Query {
   repeated string paths = 1;
@@ -118,6 +119,7 @@ message CommandUpdate {
   string reason = 3;
   string provider_session = 4;
   string path = 5;
+  bool physical_confirmed = 6;
 }
 message CancelRequest { Lease lease = 1; string execution_id = 2; }
 message StopRequest { string reason = 1; }

@@ -60,3 +60,8 @@ T04 local closure: protocol v1.2 and 38 capped-container RPC/transport tests PAS
 including loss/expiry/replay, independent Hold ownership and explicit safe release.
 T05 IN_PROGRESS. Provider-side fencing, process kill/restart and overall M23 gate
 remain OPEN; do not infer robot safety from this broker-wire checkpoint.
+
+T05 local closure: 57 capped-container tests PASS, including actual command RPC
+state/cancel/late feedback, STOP receipt vs physical result, unread-dispatch stress
+and real JSONL/write-failure behavior. Two failed runs and their fixes retained in
+M23-progress.md. T06 IN_PROGRESS; full safety gate and ROS evidence remain OPEN.

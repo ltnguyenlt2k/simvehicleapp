@@ -33,6 +33,14 @@ def catalog_fixture():
                                              'values': ['NONE', 'RUNNING', 'SUCCEEDED'], 'maxAgeMs': 100},
     }
     catalog = {'schema': 'rss-catalog.v1', 'rss': '0.1', 'root': 'Robot', 'nodes': nodes}
+    for name in ('Arm', 'Disarm', 'ResetStop', 'Stop'):
+        nodes['Robot.Safety.'+name] = {'kind': 'command', 'args': {}, 'timeoutMs': 1000, 'preconditions': 'SIM'}
+    for path, node in list(nodes.items()):
+        if node['kind'] == 'command':
+            for suffix, values in [('Phase', ['NONE', 'PENDING', 'ACCEPTED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'REJECTED', 'CANCELLED', 'TIMED_OUT']),
+                                   ('ExecutionId', None), ('Reason', None)]:
+                nodes[path+'.Status.'+suffix] = {'kind': 'sensor', 'type': 'enum' if values else 'string',
+                    'generated': True, 'maxAgeMs': 100, **({'values': values} if values else {})}
     catalog['catalogHash'] = 'sha256:' + hashlib.sha256(canonical(catalog)).hexdigest()
     return catalog
 
@@ -55,6 +63,7 @@ class BrokerFixture(unittest.IsolatedAsyncioTestCase):
         self.extra_channels = []
         self.provider = None
         self.hello = None
+        self.provider_lock = asyncio.Lock()
 
     async def asyncTearDown(self):
         for call in self.calls:
@@ -95,9 +104,13 @@ class BrokerFixture(unittest.IsolatedAsyncioTestCase):
         return result
 
     async def send(self, *samples):
-        await self.provider.write(pb.ProviderPacket(samples=pb.Samples(
+        return await self.packet(pb.ProviderPacket(samples=pb.Samples(
             samples=samples, provider_session=self.hello.session)))
-        return await self.provider.read()
+
+    async def packet(self, packet):
+        async with self.provider_lock:
+            await self.provider.write(packet)
+            return await self.provider.read()
 
     async def subscribe(self, *paths, interval=0):
         call = self.bus.Subscribe(self.query(*paths, interval=interval))
@@ -110,7 +123,7 @@ class BrokerDataTests(BrokerFixture):
     async def test_descriptor_and_missing_value_snapshot(self):
         descriptor = await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.backend, 'SIM')
-        self.assertEqual(descriptor.protocol_version, '1.2')
+        self.assertEqual(descriptor.protocol_version, '1.3')
         self.assertEqual(descriptor.host_clock_id, 'test-host')
         self.assertFalse(descriptor.provider_online)
         snapshot = await self.bus.Get(self.query('Robot.Signal.Speed', 'Robot.Connection.IsOnline'))

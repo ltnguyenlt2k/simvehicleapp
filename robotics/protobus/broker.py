@@ -12,13 +12,15 @@ import math
 from pathlib import Path
 import time
 import uuid
+from google.protobuf.json_format import MessageToDict
 
 import grpc
 from jsonschema import Draft202012Validator
+from commands import CommandPlane
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
-PROTOCOL_VERSION = '1.2'
+PROTOCOL_VERSION = '1.3'
 CONNECTION_PATHS = {
     'Robot.Connection.IsOnline', 'Robot.Connection.IsHandshakeComplete',
     'Robot.Connection.LastSampleAgeMs',
@@ -162,9 +164,12 @@ class ActiveTarget:
     deadline_ns: int
 
 
-class Broker(rpc.BusServicer, rpc.ProviderServicer):
+class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
+    error_type = BusError
+    validate_wire_value = staticmethod(validate_value)
+
     def __init__(self, catalog, robot_id='dog1', profile_id='dog-go2-sim',
-                 host_clock_id=None, provider_timeout_ms=1000):
+                 host_clock_id=None, provider_timeout_ms=1000, audit_path=None, stop_wait_ms=200):
         self.catalog = catalog
         self.nodes = catalog['nodes']
         self.catalog_hash = catalog['catalogHash']
@@ -194,8 +199,10 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         }
         self.sweeper = None
         self.update_connection()
+        self.init_commands(audit_path, stop_wait_ms)
 
     async def start(self):
+        await self.audit.start()
         if self.sweeper is None:
             self.sweeper = asyncio.create_task(self.sweep())
 
@@ -205,6 +212,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
             self.sweeper.cancel()
             await asyncio.gather(self.sweeper, return_exceptions=True)
             self.sweeper = None
+        await self.audit.close()
 
     def publish_record(self, sample, received_ns):
         previous = self.records[sample.path].sample
@@ -244,7 +252,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         self.provider = None
         now = time.monotonic_ns()
         for path, record in list(self.records.items()):
-            if path in CONNECTION_PATHS or record.sample.quality != pb.OK:
+            if path in CONNECTION_PATHS or self.nodes[path].get('generated') or record.sample.quality != pb.OK:
                 continue
             sample = clone(record.sample)
             sample.quality = pb.STALE
@@ -257,9 +265,11 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         if self.provider and now - self.provider.last_seen_ns >= self.provider_timeout_ns:
             await self.provider_lost(self.provider)
         self.expire_control(now)
+        self.expire_commands(now)
         for path, record in list(self.records.items()):
             age_ms = self.nodes[path].get('maxAgeMs')
-            if (path not in CONNECTION_PATHS and age_ms and record.sample.quality == pb.OK
+            if (path not in CONNECTION_PATHS and not self.nodes[path].get('generated')
+                    and age_ms and record.sample.quality == pb.OK
                     and now - record.received_ns >= age_ms * 1_000_000):
                 sample = clone(record.sample)
                 sample.quality = pb.STALE
@@ -286,14 +296,18 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         return paths
 
     async def abort(self, context, error):
+        self.audit_event('rpc_rejected', client_id=context.peer(), reason=error.code)
         status = grpc.StatusCode.INVALID_ARGUMENT
         if error.code in ('PB_CATALOG_MISMATCH', 'PB_PROVIDER_MISMATCH', 'PB_CLOCK_MISMATCH',
                           'PB_PROVIDER_OFFLINE', 'PB_BACKEND_FORBIDDEN', 'PB_RESOURCE_BUSY',
-                          'PB_LEASE_REQUIRED', 'PB_LEASE_BUSY', 'PB_LEASE_EXPIRED'):
+                          'PB_LEASE_REQUIRED', 'PB_LEASE_BUSY', 'PB_LEASE_EXPIRED',
+                          'PB_AUDIT_FAILED', 'PB_STOPPED'):
             status = grpc.StatusCode.FAILED_PRECONDITION
         await context.abort(status, str(error))
 
     def require_provider(self):
+        if self.audit.failed:
+            raise BusError('PB_AUDIT_FAILED')
         provider = self.provider
         if (provider is None or not provider.control_ready or not provider.safety_ready
                 or time.monotonic_ns() - provider.last_seen_ns >= self.provider_timeout_ns):
@@ -348,6 +362,9 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
             return
         self.lease = None
         self.fence += 1
+        self.cancel_lease_commands(lease.fence, reason)
+        self.invocation_keys = {key: value for key, value in self.invocation_keys.items() if key[0] != lease.fence}
+        self.audit_event('lease_revoked', client_id=lease.client_id, fence=lease.fence, reason=reason)
         provider = self.provider
         if provider:
             retained = []
@@ -391,6 +408,8 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
             self.lease = LeaseState(str(uuid.uuid4()), self.fence, request.client_id,
                                     ttl_ms*1_000_000, time.monotonic_ns()+ttl_ms*1_000_000)
             self.queue_lease_update(provider)
+            if not self.audit_event('lease_acquired', client_id=request.client_id, fence=self.lease.fence, ttl_ms=ttl_ms):
+                raise BusError('PB_AUDIT_FAILED')
             return self.lease_message()
         except BusError as error:
             await self.abort(context, error)
@@ -403,6 +422,8 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
                 raise BusError('PB_QUEUE_FULL')
             lease.deadline_ns = time.monotonic_ns() + lease.ttl_ns
             self.queue_lease_update(provider)
+            if not self.audit_event('lease_renewed', client_id=lease.client_id, fence=lease.fence):
+                raise BusError('PB_AUDIT_FAILED')
             return self.lease_message()
         except BusError as error:
             await self.abort(context, error)
@@ -425,6 +446,10 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
     async def SetTarget(self, request, context):
         try:
             lease = self.require_lease(request.lease)
+            if self.stop_latched:
+                raise BusError('PB_STOPPED')
+            if self.active_execution or self.draining:
+                raise BusError('PB_RESOURCE_BUSY', 'body/navigation awaits command completion')
             node = self.nodes.get(request.path)
             if node is None:
                 raise BusError('PB_INVALID_PATH', request.path)
@@ -462,6 +487,12 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
                 provider.control_queue.put_nowait(dispatch)
                 self.targets[request.path] = target
             lease.last_sequence = request.sequence
+            audit_ok = self.audit_event('target_released' if request.release else 'target_set',
+                             client_id=lease.client_id, path=request.path, fence=lease.fence,
+                             sequence=str(request.sequence), owner_id=request.owner_id,
+                             value=MessageToDict(request.value))
+            if not audit_ok:
+                raise BusError('PB_AUDIT_FAILED')
             return pb.Reply(ok=True)
         except BusError as error:
             await self.abort(context, error)
@@ -470,7 +501,8 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         return pb.Descriptor(robot_id=self.robot_id, profile_id=self.profile_id,
                              catalog_hash=self.catalog_hash, broker_epoch=self.epoch,
                              provider_online=self.provider is not None, backend='SIM',
-                             host_clock_id=self.host_clock_id, protocol_version=PROTOCOL_VERSION)
+                             host_clock_id=self.host_clock_id, protocol_version=PROTOCOL_VERSION,
+                             audit_ok=not self.audit.failed)
 
     async def Get(self, request, context):
         try:
@@ -603,7 +635,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
                         await self.abort(context, error)
                     # A new session cannot inherit old sequence/quality history.
                     for path, record in self.records.items():
-                        if path not in CONNECTION_PATHS:
+                        if path not in CONNECTION_PATHS and not self.nodes[path].get('generated'):
                             record.received_ns = 0
                     provider = ProviderState(clone(packet.hello), time.monotonic_ns(), attach_peer=context.peer())
                     self.provider = provider
@@ -615,6 +647,9 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
                 try:
                     if kind == 'samples':
                         self.ingest(packet.samples, provider)
+                    elif kind == 'command':
+                        self.process_command_update(packet.command, provider)
+                        provider.last_seen_ns = time.monotonic_ns()
                     elif kind == 'heartbeat_session' and packet.heartbeat_session == provider.hello.session:
                         provider.last_seen_ns = time.monotonic_ns()
                     else:
@@ -675,7 +710,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
 
 
 async def serve(args):
-    broker = Broker(load_catalog(args.catalog), robot_id=args.robot, profile_id=args.profile)
+    broker = Broker(load_catalog(args.catalog), robot_id=args.robot, profile_id=args.profile, audit_path=args.audit)
     server = grpc.aio.server(options=[('grpc.max_receive_message_length', 1024*1024),
                                       ('grpc.max_send_message_length', 1024*1024)])
     rpc.add_BusServicer_to_server(broker, server)
@@ -697,6 +732,7 @@ def main():
     parser.add_argument('--listen', default='0.0.0.0:55600')
     parser.add_argument('--robot', default='dog1')
     parser.add_argument('--profile', default='dog-go2-sim')
+    parser.add_argument('--audit', default='/data/protobus-audit.jsonl')
     asyncio.run(serve(parser.parse_args()))
 
 

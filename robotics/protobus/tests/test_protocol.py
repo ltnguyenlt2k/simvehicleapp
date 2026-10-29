@@ -37,7 +37,7 @@ class ProtocolTests(unittest.TestCase):
         expected = {
             'Lease': {'token': 1, 'fence': 2, 'broker_epoch': 3, 'remaining_ms': 4, 'client_id': 5},
             'Samples': {'samples': 1, 'provider_session': 2, 'broker_epoch': 3},
-            'CommandUpdate': {'execution_id': 1, 'phase': 2, 'reason': 3, 'provider_session': 4, 'path': 5},
+            'CommandUpdate': {'execution_id': 1, 'phase': 2, 'reason': 3, 'provider_session': 4, 'path': 5, 'physical_confirmed': 6},
             'Target': {'lease': 1, 'path': 2, 'value': 3, 'sequence': 4, 'owner_id': 5, 'release': 6},
         }
         for message, fields in expected.items():

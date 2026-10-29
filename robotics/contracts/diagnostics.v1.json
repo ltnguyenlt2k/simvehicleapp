@@ -26,6 +26,7 @@
     "PB_STOPPED": "Safety stop revoked control authority",
     "PB_QUEUE_FULL": "Bounded queue is full",
     "PB_BAD_TRANSITION": "Invalid command state transition",
-    "PB_BACKEND_FORBIDDEN": "Backend is outside commissioned scope"
+    "PB_BACKEND_FORBIDDEN": "Backend is outside commissioned scope",
+    "PB_AUDIT_FAILED": "Audit unavailable; motion authority revoked"
   }
 }

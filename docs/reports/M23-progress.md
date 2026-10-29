@@ -72,3 +72,38 @@ This is broker-to-provider-wire evidence, not actual physics/ROS stop evidence.
 T06 must enforce deadlines/fences on provider receipt under reordered connection
 delivery. T08 adds actual independent-process kill/restart faults. T05 begins only
 after the local T04 checks above. M23 overall acceptance is still OPEN.
+
+## T05 lifecycle/STOP/audit — local PASS, 2026-10-29
+
+Protocol v1.3 / ADR-0072 explicitly marks provider-confirmed physical results.
+Implemented command identity/arguments/timeouts, bounded idempotency/history,
+resource exclusion, cancellation, immutable terminal phases and quarantine until
+physical release/recovery. Stop revokes authority through Safety without a lease;
+receipt and confirmed result are distinct, and offline is never confirmed.
+JSONL audit uses a bounded worker queue, separate file thread and bounded rotation;
+write/overflow failure revokes motion while Stop remains available. Typed target
+values, command args, client/fence/phase identity are recorded without lease tokens.
+
+Final local capped-container suite: **57 tests PASS / 6.286 s**. Includes actual
+gRPC command feedback/state, cancel/late result, stream disconnect, dedup/resource
+rejection, offline/stop latch/reset, 1000 valid ordinary Control dispatches unread
+by the application, actual JSONL reads and actual readonly-file write failure.
+Separate deterministic audit queue overflow injection verifies no motion is
+enqueued after synchronous revocation. The earlier separate transport fixture
+also leaves 969 large ordinary writes actually backpressured while Safety works.
+The production queue is bounded and conflicting body commands are rejected, so
+the 1000-dispatch stress uses valid lease notices, not 1000 admitted body motions.
+
+Retained failures: first run exposed Invoke cancellation while grpc context flag
+was not yet set; explicit CancelledError handling fixed it. A later synchronous
+audit-fault guard initially blocked explicit ResetStop; the existing recovery test
+failed and the guard was corrected. No assertion or timeout was loosened. Logs:
+robotics/runtime/m23/command-tests-failed-stream-cancel.log,
+commands-failed-recovery-guard.log and commands-verified-tests.log.
+
+These are provider-wire fixtures, not physical ROS evidence. Provider-side
+deadline/fence/cancel enforcement is T06, process restart faults T08, actual dog
+physics/Brain safety M24. T06 may start; complete M23 gate remains OPEN.
+
+GitHub checkpoint at 6820cc1a: main CI run 40884262378 SUCCESS and Robotics run
+40884262671 SUCCESS. T05 source follows that checkpoint and requires its own CI.
