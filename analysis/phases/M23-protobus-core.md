@@ -46,3 +46,12 @@ ADR-0069 is authoritative for integration and review R01–R08. Implementation a
 M22 scoped gate PASS (GitHub run 40874429999). T01: protoc build and 5 wire compatibility tests PASS; mapping schema and 5 negative/positive groups PASS in RSS image (20 total RSS/mapping tests). SIM safety-clock domain is explicitly local-host-only in PROTOBUS.md. No REAL/distributed-clock support implied.
 
 T02: capped 10 s transport smoke PASS (approximately 5,049 samples/s, four subscribers, p95 0.71 ms). Full 1800 s measurement running as container sr-m23-s-r4; T03 must wait for full result. Initial smoke output permission failure retained; corrected non-root evidence uid and early writable-directory preflight. No performance threshold relaxed.
+
+T02 closure: full 1800.010964588 s run exited 0. 9,090,950 samples delivered to
+each of four subscribers, 5050.497/s measured input, whole-run p95 0.74 ms,
+broker RSS comparison -164 KiB. S-R4 PASS; T03 IN_PROGRESS. This does not accept
+production broker safety or any later integration gate. Summary: docs/reports/M23-S-R4-evidence.json.
+
+T03 closure: 24 capped-container tests PASS, including actual gRPC data streams,
+freshness/quality/epoch validation and independent safety peer enforcement. See
+docs/reports/M23-progress.md. T04 IN_PROGRESS. M23 overall safety gate remains OPEN.

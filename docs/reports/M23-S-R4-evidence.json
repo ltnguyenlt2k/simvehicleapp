@@ -1,0 +1,33 @@
+{
+  "schema": "s-r4-result.v1",
+  "durationSeconds": 1800.0109645880002,
+  "inputSamples": 9090950,
+  "sampleRate": 5050.4970129894755,
+  "subscribers": 4,
+  "subscriberCounts": [
+    9090950,
+    9090950,
+    9090950,
+    9090950
+  ],
+  "acknowledgedBatches": 181820,
+  "latencyP50Ms": 0.43081,
+  "latencyP95Ms": 0.74,
+  "endToEndP95Ms": 1.5,
+  "latencyWindow": "entire run; upper bound of 0.01 ms histogram bucket",
+  "rollingLatencyP95Ms": 0.693945,
+  "latencyObservations": 727276,
+  "brokerMemoryGrowthKiB": -164.0,
+  "limits": {
+    "p95Ms": 5,
+    "rateSamplesPerSecond": 5000,
+    "memoryGrowthKiB": 8192
+  },
+  "pass": true,
+  "qualification": "FULL_30_MINUTE_SPIKE",
+  "rawResultSha256": "974a360151c1078e8c5a22e765fc4d004e021f5bd74f39092fd5a5eab39c3325",
+  "benchmarkSourceSha256": "f2dafb5c73ef68dc596e25029d8b197078fe7d3978f013348a6e0dbdf8aafae3",
+  "image": "sha256:3100c062b3b5844d02680ada9ad24f0ae84820d36f2f3455481a80f2bf04712d",
+  "scope": "Minimal transport feasibility; no production broker safety acceptance",
+  "p50Scope": "Rolling final 100000 observations; p95 covers entire run"
+}

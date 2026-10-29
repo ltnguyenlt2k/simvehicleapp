@@ -20,3 +20,7 @@ jobs:
         run: |
           docker build -t sr-protobus:ci robotics/protobus
           docker run --rm --network none sr-protobus:ci
+      - name: Scan the independent robot stack dependency locks
+        run: |
+          docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rss/requirements.txt
+          docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/protobus/requirements.txt
