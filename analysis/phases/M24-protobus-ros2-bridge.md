@@ -41,3 +41,5 @@
 ## Amendment 2026-10-29
 
 ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.
+
+T01 local image checkpoint 2026-10-29: image 0c28200aca2c, Python3.10/CycloneDDS/custom message type support and provenance checks PASS; pip check PASS; 8 runtime + 5 build lock entries OSV clean. Three build/environment failures retained in docs/reports/M24-progress.md. Image CI pending; T02 and live ROS gate remain OPEN.
