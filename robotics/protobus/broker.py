@@ -18,7 +18,7 @@ from jsonschema import Draft202012Validator
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
-PROTOCOL_VERSION = '1.1'
+PROTOCOL_VERSION = '1.2'
 CONNECTION_PATHS = {
     'Robot.Connection.IsOnline', 'Robot.Connection.IsHandshakeComplete',
     'Robot.Connection.LastSampleAgeMs',
@@ -80,6 +80,27 @@ def validate_value(value, node, path):
         raise BusError('PB_INVALID_VALUE', path + ': enum')
 
 
+def encode_value(scalar, node):
+    kind = {'bool': 'bool_value', 'int32': 'int32_value', 'int64': 'int64_value',
+            'uint8': 'uint32_value', 'uint32': 'uint32_value', 'float32': 'float32_value',
+            'float64': 'float64_value', 'string': 'string_value', 'enum': 'string_value'}[node['type']]
+    if type(scalar) is bool and node['type'] != 'bool':
+        raise BusError('PB_INVALID_VALUE', 'bool is not a numeric safeValue')
+    try:
+        value = pb.Value(**{kind: scalar})
+    except (TypeError, ValueError, OverflowError) as error:
+        raise BusError('PB_INVALID_VALUE', 'invalid typed safeValue') from error
+    validate_value(value, node, 'catalog safeValue')
+    return value
+
+
+def safe_object(node):
+    if set(node['safeValue']) != set(node['fields']):
+        raise BusError('PB_INVALID_VALUE', 'safeValue must include every field exactly')
+    return pb.Object(fields={name: encode_value(node['safeValue'][name], spec)
+                             for name, spec in node['fields'].items()})
+
+
 @dataclass
 class Record:
     sample: pb.Sample
@@ -119,7 +140,26 @@ class ProviderState:
     control_ready: bool = False
     safety_ready: bool = False
     control_queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=128))
-    safety_queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=8))
+    safety_queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=16))
+
+
+@dataclass
+class LeaseState:
+    token: str
+    fence: int
+    client_id: str
+    ttl_ns: int
+    deadline_ns: int
+    last_sequence: int = 0
+
+
+@dataclass
+class ActiveTarget:
+    path: str
+    owner_id: str
+    fence: int
+    sequence: int
+    deadline_ns: int
 
 
 class Broker(rpc.BusServicer, rpc.ProviderServicer):
@@ -133,6 +173,19 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         self.epoch = str(uuid.uuid4())
         self.provider_timeout_ns = provider_timeout_ms * 1_000_000
         self.provider = None
+        self.lease = None
+        self.fence = 0
+        self.targets = {}
+        setpoints = [n for n in self.nodes.values() if n['kind'] == 'setpoint']
+        if len(setpoints) > 8:
+            raise BusError('PB_INVALID_VALUE', 'v1.2 supports at most eight setpoint nodes')
+        for path, node in self.nodes.items():
+            if node['kind'] == 'setpoint':
+                safe_object(node)
+                if 1000 / node['refreshHz'] >= node['ttlMs']:
+                    raise BusError('PB_INVALID_VALUE', 'refresh period must be shorter than TTL')
+                if path == 'Robot.Motion.Velocity' and any(value != 0 for value in node['safeValue'].values()):
+                    raise BusError('PB_INVALID_VALUE', 'velocity safeValue must be zero')
         self.subscribers = set()
         self.internal_sequence = 0
         self.records = {
@@ -147,6 +200,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
             self.sweeper = asyncio.create_task(self.sweep())
 
     async def close(self):
+        self.revoke_lease('BROKER_SHUTDOWN')
         if self.sweeper is not None:
             self.sweeper.cancel()
             await asyncio.gather(self.sweeper, return_exceptions=True)
@@ -186,6 +240,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
     async def provider_lost(self, provider):
         if self.provider is not provider:
             return
+        self.revoke_lease('PROVIDER_LOST')
         self.provider = None
         now = time.monotonic_ns()
         for path, record in list(self.records.items()):
@@ -201,6 +256,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         now = time.monotonic_ns()
         if self.provider and now - self.provider.last_seen_ns >= self.provider_timeout_ns:
             await self.provider_lost(self.provider)
+        self.expire_control(now)
         for path, record in list(self.records.items()):
             age_ms = self.nodes[path].get('maxAgeMs')
             if (path not in CONNECTION_PATHS and age_ms and record.sample.quality == pb.OK
@@ -232,9 +288,183 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
     async def abort(self, context, error):
         status = grpc.StatusCode.INVALID_ARGUMENT
         if error.code in ('PB_CATALOG_MISMATCH', 'PB_PROVIDER_MISMATCH', 'PB_CLOCK_MISMATCH',
-                          'PB_PROVIDER_OFFLINE', 'PB_BACKEND_FORBIDDEN', 'PB_RESOURCE_BUSY'):
+                          'PB_PROVIDER_OFFLINE', 'PB_BACKEND_FORBIDDEN', 'PB_RESOURCE_BUSY',
+                          'PB_LEASE_REQUIRED', 'PB_LEASE_BUSY', 'PB_LEASE_EXPIRED'):
             status = grpc.StatusCode.FAILED_PRECONDITION
         await context.abort(status, str(error))
+
+    def require_provider(self):
+        provider = self.provider
+        if (provider is None or not provider.control_ready or not provider.safety_ready
+                or time.monotonic_ns() - provider.last_seen_ns >= self.provider_timeout_ns):
+            raise BusError('PB_PROVIDER_OFFLINE', 'fresh data and independent control/safety lanes required')
+        return provider
+
+    def lease_message(self):
+        lease = self.lease
+        return pb.Lease(token=lease.token, fence=lease.fence, broker_epoch=self.epoch,
+                        remaining_ms=max(0, (lease.deadline_ns-time.monotonic_ns()+999999)//1000000),
+                        client_id=lease.client_id)
+
+    def require_lease(self, request):
+        self.expire_control(time.monotonic_ns())
+        lease = self.lease
+        if not request.token:
+            raise BusError('PB_LEASE_REQUIRED')
+        if (lease is None or request.token != lease.token or request.fence != lease.fence
+                or request.broker_epoch != self.epoch or request.client_id != lease.client_id):
+            raise BusError('PB_LEASE_EXPIRED')
+        self.require_provider()
+        return lease
+
+    def emit_safety(self, message):
+        provider = self.provider
+        if provider is None:
+            return
+        queue = provider.safety_queue
+        retained = []
+        while not queue.empty():
+            old = queue.get_nowait()
+            if old.kind == pb.STOP and message.kind != pb.STOP:
+                retained.append(old)
+            elif message.kind != pb.STOP and old.path != message.path:
+                retained.append(old)
+        # At most eight distinct setpoints plus a STOP can be pending.
+        for old in retained:
+            queue.put_nowait(old)
+        queue.put_nowait(message)
+
+    def safe_target(self, target, reason):
+        provider = self.provider
+        self.emit_safety(pb.Dispatch(kind=pb.SAFE_VALUE, path=target.path,
+                         value=safe_object(self.nodes[target.path]), fence=target.fence,
+                         sequence=target.sequence, broker_epoch=self.epoch,
+                         provider_session=provider.hello.session if provider else '',
+                         owner_id=target.owner_id, reason=reason))
+
+    def revoke_lease(self, reason):
+        lease = self.lease
+        if lease is None:
+            return
+        self.lease = None
+        self.fence += 1
+        provider = self.provider
+        if provider:
+            retained = []
+            while not provider.control_queue.empty():
+                item = provider.control_queue.get_nowait()
+                if item.fence != lease.fence:
+                    retained.append(item)
+            for item in retained:
+                provider.control_queue.put_nowait(item)
+        targets = list(self.targets.values())
+        self.targets.clear()
+        for target in targets:
+            self.safe_target(target, reason)
+        if provider:
+            self.emit_safety(pb.Dispatch(kind=pb.LEASE_REVOKED, fence=lease.fence,
+                             broker_epoch=self.epoch, provider_session=provider.hello.session,
+                             reason=reason))
+
+    def expire_control(self, now):
+        if self.lease and now >= self.lease.deadline_ns:
+            self.revoke_lease('LEASE_EXPIRED')
+        for path, target in list(self.targets.items()):
+            if now >= target.deadline_ns:
+                self.targets.pop(path)
+                self.safe_target(target, 'TARGET_EXPIRED')
+
+    async def AcquireLease(self, request, context):
+        try:
+            if request.catalog_hash != self.catalog_hash:
+                raise BusError('PB_CATALOG_MISMATCH')
+            self.expire_control(time.monotonic_ns())
+            provider = self.require_provider()
+            if self.lease is not None:
+                raise BusError('PB_LEASE_BUSY')
+            ttl_ms = request.ttl_ms or 1000
+            if not 100 <= ttl_ms <= 5000 or not 1 <= len(request.client_id) <= 128:
+                raise BusError('PB_INVALID_VALUE', 'lease duration/client limits')
+            if provider.control_queue.full():
+                raise BusError('PB_QUEUE_FULL')
+            self.fence += 1
+            self.lease = LeaseState(str(uuid.uuid4()), self.fence, request.client_id,
+                                    ttl_ms*1_000_000, time.monotonic_ns()+ttl_ms*1_000_000)
+            self.queue_lease_update(provider)
+            return self.lease_message()
+        except BusError as error:
+            await self.abort(context, error)
+
+    async def RenewLease(self, request, context):
+        try:
+            lease = self.require_lease(request)
+            provider = self.require_provider()
+            if provider.control_queue.full():
+                raise BusError('PB_QUEUE_FULL')
+            lease.deadline_ns = time.monotonic_ns() + lease.ttl_ns
+            self.queue_lease_update(provider)
+            return self.lease_message()
+        except BusError as error:
+            await self.abort(context, error)
+
+    async def ReleaseLease(self, request, context):
+        try:
+            self.require_lease(request)
+            self.revoke_lease('LEASE_RELEASED')
+            return pb.Reply(ok=True)
+        except BusError as error:
+            await self.abort(context, error)
+
+    def queue_lease_update(self, provider):
+        lease = self.lease
+        provider.control_queue.put_nowait(pb.Dispatch(kind=pb.LEASE_UPDATE,
+            fence=lease.fence, broker_epoch=self.epoch, provider_session=provider.hello.session,
+            deadline_monotonic_ns=lease.deadline_ns,
+            valid_for_ms=max(0, (lease.deadline_ns-time.monotonic_ns())//1_000_000)))
+
+    async def SetTarget(self, request, context):
+        try:
+            lease = self.require_lease(request.lease)
+            node = self.nodes.get(request.path)
+            if node is None:
+                raise BusError('PB_INVALID_PATH', request.path)
+            if node['kind'] != 'setpoint':
+                raise BusError('PB_INVALID_KIND', request.path)
+            if request.sequence <= lease.last_sequence:
+                raise BusError('PB_REPLAY')
+            if not 1 <= len(request.owner_id) <= 128:
+                raise BusError('PB_INVALID_VALUE', 'Hold owner ID required')
+            if set(request.value.fields) != set(node['fields']):
+                raise BusError('PB_INVALID_VALUE', 'atomic setpoint requires complete exact struct')
+            for name, spec in node['fields'].items():
+                validate_value(request.value.fields[name], spec, request.path+'.'+name)
+            active = self.targets.get(request.path)
+            if active and active.owner_id != request.owner_id:
+                raise BusError('PB_RESOURCE_BUSY', 'another Hold owns this setpoint')
+            if request.release and request.value != safe_object(node):
+                raise BusError('PB_INVALID_VALUE', 'release must carry catalog safeValue')
+            provider = self.require_provider()
+            deadline = min(lease.deadline_ns, time.monotonic_ns()+node['ttlMs']*1_000_000)
+            if request.path not in provider.hello.claims:
+                raise BusError('PB_PROVIDER_MISMATCH', 'provider does not claim this setpoint')
+            target = ActiveTarget(request.path, request.owner_id, lease.fence, request.sequence, deadline)
+            if request.release:
+                self.targets.pop(request.path, None)
+                self.safe_target(target, 'TARGET_RELEASED')
+            else:
+                dispatch = pb.Dispatch(kind=pb.SET_TARGET, path=request.path, value=request.value,
+                                      fence=lease.fence, sequence=request.sequence, broker_epoch=self.epoch,
+                                      provider_session=provider.hello.session, owner_id=request.owner_id,
+                                      valid_for_ms=max(0, (deadline-time.monotonic_ns())//1_000_000),
+                                      deadline_monotonic_ns=deadline)
+                if provider.control_queue.full():
+                    raise BusError('PB_QUEUE_FULL')
+                provider.control_queue.put_nowait(dispatch)
+                self.targets[request.path] = target
+            lease.last_sequence = request.sequence
+            return pb.Reply(ok=True)
+        except BusError as error:
+            await self.abort(context, error)
 
     async def Describe(self, request, context):
         return pb.Descriptor(robot_id=self.robot_id, profile_id=self.profile_id,
@@ -421,7 +651,7 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         await context.send_initial_metadata(())
         queue = provider.safety_queue if safety else provider.control_queue
         try:
-            while self.provider is provider:
+            while self.provider is provider or (safety and not queue.empty()):
                 try:
                     message = await asyncio.wait_for(queue.get(), .1)
                     yield message
@@ -431,6 +661,8 @@ class Broker(rpc.BusServicer, rpc.ProviderServicer):
         finally:
             setattr(provider, flag, False)
             setattr(provider, peer_field, '')
+            if self.provider is provider:
+                self.revoke_lease('SAFETY_LANE_LOST' if safety else 'CONTROL_LANE_LOST')
             self.update_connection()
 
     async def Control(self, request, context):
@@ -455,8 +687,8 @@ async def serve(args):
     try:
         await server.wait_for_termination()
     finally:
-        await server.stop(1)
         await broker.close()
+        await server.stop(1)
 
 
 def main():

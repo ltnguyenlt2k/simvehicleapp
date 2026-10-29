@@ -22,7 +22,8 @@ Provider.Attach carries inbound telemetry and results. Provider.Control is a
 separate outbound ordinary-control stream with bounded scheduling. Provider.Safety
 is an additional stream opened on a separate gRPC channel/TCP connection for STOP
 and safeValue, so already-buffered ordinary control cannot block its connection
-flow-control window. Protocol version 1.1 (ADR-0070) requires both streams before
+flow-control window. Safety was introduced in v1.1 (ADR-0070); current protocol
+v1.2 (ADR-0071) requires both streams before
 a provider is control-ready. No arbitrary
 code, ROS topic name or endpoint is supplied by workflow input. A provider session
 must handshake its catalog, profile, SIM backend and clock ID before control.
@@ -68,6 +69,15 @@ execution snapshot for that command; execution-specific truth is its Invoke stre
 and audit trace. Body/navigation commands share a resource: a second conflicting
 behavior gets an explicit rejection until previous physical cancellation/recovery
 is confirmed. Brain remains final authority and must also arbitrate against its GUI.
+
+V1.2 Target requires a Hold owner ID. A distinct owner cannot overwrite an active
+target under the same app lease. Explicit target release must carry the exact
+safeValue and dispatches on Safety. LEASE_UPDATE propagates the absolute lease
+deadline on Control; LEASE_REVOKED invalidates the old fence on Safety, even when
+no setpoint is active. Renewing a lease never renews a target. Providers ignore
+old-fence/old-sequence dispatches after revocation or a newer grant. Current local
+catalogs permit at most eight setpoint nodes; bounded safety coalescing by path
+preserves STOP and leaves room for every setpoint and lease revocation.
 
 ## Diagnostics (public, append only)
 

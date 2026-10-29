@@ -9,7 +9,7 @@ import unittest
 import uuid
 
 import grpc
-from broker import Broker, BusError, Subscriber, canonical, load_catalog
+from broker import Broker, BusError, PROTOCOL_VERSION, Subscriber, canonical, load_catalog
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
@@ -37,7 +37,7 @@ def catalog_fixture():
     return catalog
 
 
-class BrokerDataTests(unittest.IsolatedAsyncioTestCase):
+class BrokerFixture(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.catalog = catalog_fixture()
         self.broker = Broker(self.catalog, host_clock_id='test-host', provider_timeout_ms=600)
@@ -71,7 +71,7 @@ class BrokerDataTests(unittest.IsolatedAsyncioTestCase):
     def make_hello(self, **changes):
         data = dict(provider_id='fixture', profile_id='dog-go2-sim', backend='SIM',
                     catalog_hash=self.catalog['catalogHash'], host_clock_id='test-host',
-                    protocol_version='1.1', session=str(uuid.uuid4()),
+                    protocol_version=PROTOCOL_VERSION, session=str(uuid.uuid4()),
                     claims=[p for p, n in self.catalog['nodes'].items()
                             if not p.startswith('Robot.Connection.') and not n.get('generated')])
         data.update(changes)
@@ -105,10 +105,12 @@ class BrokerDataTests(unittest.IsolatedAsyncioTestCase):
         initial = await asyncio.wait_for(call.read(), 2)
         return call, initial
 
+
+class BrokerDataTests(BrokerFixture):
     async def test_descriptor_and_missing_value_snapshot(self):
         descriptor = await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.backend, 'SIM')
-        self.assertEqual(descriptor.protocol_version, '1.1')
+        self.assertEqual(descriptor.protocol_version, '1.2')
         self.assertEqual(descriptor.host_clock_id, 'test-host')
         self.assertFalse(descriptor.provider_online)
         snapshot = await self.bus.Get(self.query('Robot.Signal.Speed', 'Robot.Connection.IsOnline'))

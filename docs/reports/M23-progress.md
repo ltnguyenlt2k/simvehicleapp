@@ -49,3 +49,26 @@ Absolute same-host monotonic deadlines, fencing and sequences must survive delay
 cross-connection delivery; stale safe-value dispatches must not override a newer
 lease/target. Lease release/expiry must purge queued authority and apply safeValue
 once. Later STOP must revoke authority globally and cannot depend on audit I/O.
+
+## T04 lease/targets — local PASS, 2026-10-29
+
+Protocol v1.2 (ADR-0071) adds Hold owner and explicit safe release, plus provider
+LEASE_UPDATE/LEASE_REVOKED notices. Implemented one bounded lease with random
+token/broker epoch/fence, original-duration renewal, global target replay sequence,
+exact typed atomic fields, declared safeValue checks, target/lease minimum absolute
+deadline, distinct behavior owner rejection, safe release and monotonic expiry.
+Provider/data/control/safety lane loss revokes old authority. Catalog supports at
+most eight setpoints; a bounded coalescing safety queue preserves STOP.
+
+Actual capped-container run: **38 tests PASS / 3.186 s**, comprising the existing
+24 plus 14 lease/target/config cases. RPCs and actual Control/Safety stream receipt
+exercise expiry, renew, release, wrong epoch/token, competing owner, replay,
+invalid/partial/nonfinite fields, fresh-target extension, no active target lease
+expiry and lost lanes. TTL safe dispatch is asserted <=300 ms +50 ms with exactly
+one safeValue message. Raw log: robotics/runtime/m23/lease-final-tests.log.
+Dependency scan of all ten pinned Protobus requirements: No issues found.
+
+This is broker-to-provider-wire evidence, not actual physics/ROS stop evidence.
+T06 must enforce deadlines/fences on provider receipt under reordered connection
+delivery. T08 adds actual independent-process kill/restart faults. T05 begins only
+after the local T04 checks above. M23 overall acceptance is still OPEN.

@@ -91,6 +91,8 @@ message Target {
   string path = 2;
   Object value = 3;
   uint64 sequence = 4;
+  string owner_id = 5;
+  bool release = 6;
 }
 message Invocation {
   Lease lease = 1;
@@ -151,6 +153,8 @@ enum DispatchKind {
   CANCEL = 3;
   STOP = 4;
   SAFE_VALUE = 5;
+  LEASE_UPDATE = 6;
+  LEASE_REVOKED = 7;
 }
 message Dispatch {
   DispatchKind kind = 1;
@@ -166,4 +170,5 @@ message Dispatch {
   // v1 SIM providers must share the Linux host monotonic clock domain.
   // A relative TTL received after a network delay must not extend authority.
   int64 deadline_monotonic_ns = 11;
+  string owner_id = 12;
 }

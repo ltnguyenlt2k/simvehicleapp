@@ -495,8 +495,8 @@ Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](
 | `protobus.v1.proto`, mã `PB_*`, schema `mapping.v1` | 0066, 0070 | ✔ | 2026-10-29: protoc + 5 wire tests + 5 mapping-schema groups PASS; independent safety lane specified | T01 |
 | Spike S-R4 hiệu năng broker Python | 0066 | ✔ | 2026-10-29: full 1800.01 s PASS; 5050.50 samples/s, 4 complete subscribers, p95 0.74 ms; M23-S-R4-evidence.json | T02 |
 | Broker: catalog, validate, Get/Subscribe, STALE | 0066 | ✔ | 2026-10-29: local 24 tests PASS, actual gRPC and bounded quality/sequence/epoch handling; M23-progress.md | T03 |
-| Lease + SetTarget TTL ⇒ safeValue | 0066 | 🔄 | 2026-10-29: beginning after T03 verification; full safety acceptance OPEN | T04 |
-| Vòng đời lệnh, Stop ưu tiên, audit | 0066 | ☐ | | T05 |
+| Lease + SetTarget TTL ⇒ safeValue | 0066, 0071 | ✔ | 2026-10-29: 38 local RPC/transport tests PASS; Hold ownership, typed release, lease/TTL/lane-loss; provider-side enforcement remains T06 | T04 |
+| Vòng đời lệnh, Stop ưu tiên, audit | 0066 | 🔄 | 2026-10-29: starting after T04; full M23 safety gate remains OPEN | T05 |
 | Provider mock + API kịch bản + `timeScale` | 0066 | ☐ | | T06 |
 | CLI `pbctl` | 0066 | ☐ | | T07 |
 | Compose `protobus-sim` + fault test tích hợp | 0066 | ☐ | | T08 |

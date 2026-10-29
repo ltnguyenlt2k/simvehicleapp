@@ -55,3 +55,8 @@ production broker safety or any later integration gate. Summary: docs/reports/M2
 T03 closure: 24 capped-container tests PASS, including actual gRPC data streams,
 freshness/quality/epoch validation and independent safety peer enforcement. See
 docs/reports/M23-progress.md. T04 IN_PROGRESS. M23 overall safety gate remains OPEN.
+
+T04 local closure: protocol v1.2 and 38 capped-container RPC/transport tests PASS,
+including loss/expiry/replay, independent Hold ownership and explicit safe release.
+T05 IN_PROGRESS. Provider-side fencing, process kill/restart and overall M23 gate
+remain OPEN; do not infer robot safety from this broker-wire checkpoint.
