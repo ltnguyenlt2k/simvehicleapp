@@ -65,7 +65,7 @@
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
-| [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069, 0070 Accepted | 🔄 | Protocol/schema locally verified; full S-R4 running; production broker not started |
+| [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069, 0070 Accepted | 🔄 | T01–T03 verified locally; 30-minute S-R4 PASS; T04 lease/TTL in progress, overall gate OPEN |
 | [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069 Accepted | ☐ | 0/7; awaits broker safety gate |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069 Accepted | ☐ | 0/9; awaits M23 |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
@@ -573,7 +573,7 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 |---|---|---|
 | Planning correction R01–R08 | Implemented in ADR-0069; validation pending | Separate networks/runners, monotonic safety, ownership, stale/reconnect, timeScale=1, CI and gate ordering |
 | M22 foundations/RSS/spikes | PASS | Scoped Robotics CI + actual DDS/interface/motion evidence; M22 report |
-| M23 broker | IN_PROGRESS | T01 locally PASS; full S-R4 running before T03 implementation |
+| M23 broker | IN_PROGRESS | T01–T03 locally PASS; full S-R4 PASS; T04 lease/TTL next; safety gate OPEN |
 | M24 ROS bridge | NOT STARTED | Requires M23 and live spikes |
 | M25 RobotFlow | NOT STARTED | Requires M23; live acceptance additionally M24 |
 | M26 Studio/deploy/Zoo launch | NOT STARTED | Requires compiler/mock and adapter gates |
