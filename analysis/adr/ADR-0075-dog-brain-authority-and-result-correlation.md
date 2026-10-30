@@ -28,3 +28,12 @@ Producer Brain increment cbd1a48: fresh image 923b0cb7, complete local regressio
 producer increment only. M24 requires the external adapter and complete broker/
 bridge/robot fault/equality/soak gate before combined acceptance. Hardware is out
 of scope; cooperative ROS ownership is not malicious-writer authentication.
+
+Consumer implementation notes: a claim pins scene/map generation. A later map
+change loses the grant and rejects new navigation rather than reinterpreting
+the same coordinates. Named motion preflight observes finite joint velocities
+and a stable upright four-foot stance after locomotion; it does not replace the
+producer's physical admission. A Brain ACK followed by physics REJECTED becomes
+FAILED, since ACCEPTED->REJECTED is not a legal bus transition. STOP logical
+cancellation remains immediate/unconfirmed; actual recovery is reported later on
+the independent STOP status. Do not label the early cancellation physical.

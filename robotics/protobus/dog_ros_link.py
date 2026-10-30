@@ -51,6 +51,8 @@ class DogRosLink:
         self.error = None
         self.motion = None
         self.motion_received_ns = 0
+        self.sim = None
+        self.sim_received_ns = 0
         self.clock_received_ns = 0
         self.namespace = engine.profile['ros']['namespace'].rstrip('/')
         self.node = Node('protobus_ros_link_'+uuid.uuid4().hex[:8])
@@ -64,6 +66,8 @@ class DogRosLink:
                 lambda message: self.receive('brain', message), 1),
             self.node.create_subscription(String, self.namespace+'/motion/state',
                 lambda message: self.receive('motion', message), 1),
+            self.node.create_subscription(String, self.namespace+'/sim/state',
+                lambda message: self.receive('sim', message), 1),
             self.node.create_subscription(String, self.namespace+'/control/ack',
                 lambda message: self.receive('ack', message), 10),
             self.node.create_subscription(Clock, '/clock', lambda _: self.clock_seen(), qos_profile_sensor_data)]
@@ -127,9 +131,11 @@ class DogRosLink:
                     self.error = None
                 elif kind == 'motion':
                     self.motion, self.motion_received_ns = payload, received
+                elif kind == 'sim':
+                    self.sim, self.sim_received_ns = payload, received
                 elif kind == 'ack':
                     with self.lock:
-                        request = self.pending.get(payload['request_id'])
+                        request = self.pending.pop(payload['request_id'], None)
                     if request and not request.future.done():
                         if (request.source_epoch != self.protocol.source_epoch
                                 or payload.get('schema') != 1 or payload.get('source') != 'SIM'

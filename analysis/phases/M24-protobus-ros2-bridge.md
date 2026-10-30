@@ -45,3 +45,12 @@ ADR-0069 is authoritative for integration and review R01–R08. Implementation a
 T01 local image checkpoint 2026-10-29: image 0c28200aca2c, Python3.10/CycloneDDS/custom message type support and provenance checks PASS; pip check PASS; 8 runtime + 5 build lock entries OSV clean. Three build/environment failures retained in docs/reports/M24-progress.md. Image CI pending; T02 and live ROS gate remain OPEN.
 
 2026-10-30: T01 CI 40897932686 and general CI 40897932762 SUCCESS at f4f6a382. T02 92 local tests plus Humble mapping and isolated DDS tests PASS; scoped Robotics CI 41052808838 SUCCESS at 68a9a7f0. General CI failed a Studio E2E step; reproduced sidebar/assistant assertion collision corrected in ee7d75c2, current CI pending. T03 producer Brain cbd1a48 qualified by complete 173-pass regression, separate fault and 3 actual DDS tests. Consumer wire/identity kernel is in progress; no combined ROS adapter acceptance yet.
+
+T03 local positive adapter gate PASS: independent broker/provider/actual ROS/physics
+Arm, velocity (0.220141416 m odom), BOW/LIFT_FRONT_LEFT/JUMP/GoTo all confirmed
+SUCCEEDED. T04 independent safety STOP during RUNNING BOW PASS: logical cancel
+unconfirmed first, actual recovery then STOP status SUCCEEDED. See M24-progress.
+Current Robotics CI 41060689277 fails sr test; local RSS20/Protobus110 PASS.
+Added preserved test output/check annotations; exact CI cause remains unresolved.
+T04 remaining faults, T05 production live Compose, T06 30-minute/equality/resources
+and T07 closure remain OPEN. Final workflow/video milestones are not accepted.

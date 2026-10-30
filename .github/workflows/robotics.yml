@@ -12,6 +12,23 @@ jobs:
       - run: bash robotics/scripts/sr precheck
       - run: bash robotics/scripts/sr build
       - run: bash robotics/scripts/sr test
+      - name: Expose foundation failure details in check annotations
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in Path('robotics/runtime/ci-tests').glob('*.log'):
+              content=path.read_text(errors='replace')
+              if 'FAILED' in content or 'Traceback' in content:
+                  detail=content[-12000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+                  print(f'::error file={path},title=Robotics foundation failure::{detail}')
+          PY
+      - name: Retain foundation test output including failed assertions
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: robotics-foundation-tests
+          path: robotics/runtime/ci-tests/
       - run: bash robotics/scripts/sr smoke
       - name: Independent broker/provider process and network faults
         run: python3 robotics/scripts/fault-test.py
@@ -33,6 +50,7 @@ jobs:
           docker run --rm --network none --cpus 1 --memory 256m --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true sr-protobus-ros2:ci
           docker run --rm --network none sr-protobus-ros2:ci python3 -m pip check
           docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s tests -p test_mapping.py -v
+          docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s tests -p 'test_dog_*.py' -v
           docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s bridge_tests -v
       - name: Scan the independent robot stack dependency locks
         run: |

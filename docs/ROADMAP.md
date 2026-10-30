@@ -66,7 +66,7 @@
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
 | [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069–0074 Accepted | ✔ | T01–T09 scoped gate PASS at 62529137; Robotics CI 40896228193; [report](reports/M23.md); general CI queued |
-| [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069 Accepted | 🔄 | T01/T02 Robotics CI PASS; T03 Brain authority qualified, consumer adapter in progress; combined live gate OPEN |
+| [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069, 0075 Accepted | 🔄 | T03 actual broker/ROS/physics Arm/Velocity/BOW/LIFT/JUMP/GoTo PASS; T04 STOP during BOW PASS, remaining faults OPEN; current Robotics CI failure under investigation; soak/video OPEN |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069 Accepted | ☐ | 0/9; awaits M23 |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
 | [M27](#m27--robotics-e2e-live-video-tài-liệu) | Complex live E2E, full video, docs, baseline | 0064–0070 Accepted | ☐ | 0/6; RW-E journey fixed in acceptance design |

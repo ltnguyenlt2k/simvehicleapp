@@ -142,3 +142,68 @@ Logs: dog-link-live-final.log and dog-link-build.log. This is actual DDS/physics
 link evidence only, not broker-provider command completion or workflow acceptance.
 The backend lifecycle/lease integration, complete faults and 30-minute live gate
 remain OPEN. No video is claimed for this increment.
+
+T03 broker/backend increment: independent Python 3.12 broker -> Humble provider ->
+actual Brain -> MuJoCo passed ResetStop/Arm, velocity with measured odom
+displacement **0.208710416 m**, BOW PENDING/ACCEPTED/RUNNING/SUCCEEDED and confirmed
+STOP (`backend-live-probe-final.log`). This is an increment, not M24 acceptance.
+Test-only dual-network Compose is not production T05. Runtime logs stay ignored.
+
+Failures retained: root-owned audit tmpfs caused fail-closed STOP (fixed explicit
+uid/gid, audit still enabled); a downstream physics rejection after Brain ACK
+exposed an illegal ACCEPTED->REJECTED transition (now FAILED with actual reason);
+accumulated movement correctly hit the courtyard spawn guard; reset before sensor
+readiness correctly rejected ResetStop. A host-only fixture now resets SIM and
+waits for actual ready/nav-ready/new-scene state without arming or retrying rejected
+control. Repeated BOW after locomotion exposed that low base speed alone does not
+prove stationary joints. Provider preflight now observes joint/base/gyro/contact/
+height/upright stability before dispatch; physical admission remains authoritative.
+Expanded BOW/LIFT/JUMP live requalification is IN_PROGRESS; failed logs retained.
+
+Backend unit fixtures cover stale capture age, unavailable STOP dispatch, rejected
+physical admission after ACK, exact configured route binding, disabled Arm and map
+generation changes (6 PASS). Full broker/unit suite **110 PASS /29.794 s** before
+the subsequent stricter physical stance preflight. Fixtures are not ROS acceptance.
+Authority claim pins scene/map generation; renewal loses authority and navigation
+rejects reinterpretation if the map changes. No automatic reclaim or arm. T04–T07,
+30-minute live gate and final workflow video remain OPEN.
+
+Expanded positive gate PASS on actual broker/ROS/physics:
+`backend-live-navigation.log`, **0.220141416 m** measured odom displacement,
+Arm, BOW, LIFT_FRONT_LEFT, JUMP and fixed courtyard map-frame GoTo all SUCCEEDED;
+motion/navigation each observed ACCEPTED/RUNNING before confirmed completion.
+Standing preflight now requires finite 12-joint velocities, base/gyro/contact/
+height/upright stability, allowing up to 5 s within the existing 15 s motion
+deadline for the qualified 2 s zero-input/standing-blend controller transition.
+No producer admission thresholds or timeouts were changed.
+
+Actual STOP during RUNNING BOW PASS (`backend-stop-motion-final.log`): immediate
+logical CANCELLED remains physical_confirmed=false; independent safety status
+later reaches SUCCEEDED only after actual recovery/no active motion. Original
+test wrongly required the early logical terminal to be physical; that failed
+test is retained and corrected to verify both boundaries separately. Full `sr
+test` PASS: RSS 20, Protobus 110 /29.635 s before the additional moving-joint
+regression. T03 local positive requirements met; T04 still IN_PROGRESS.
+
+Current committed-source CI 86fdc758: general 41060689292 SUCCESS, Robotics
+41060689277 FAILED in `sr test`, without detailed public annotations. The same
+local selection passes; exact CI cause is unresolved, not presumed transient.
+Foundation logs now retained and failed traceback surfaced as check annotations;
+the next candidate must requalify before M24 closure.
+
+Process-fault increment: bridge SIGKILL while actual safe velocity was 0.3 m/s
+PASS. Independent read-only DDS observer measured safe output zero after
+**0.284843220 s**, then 1.5 s no automatic motion, SAFE_STOP and no Brain owner;
+sole safe-command writer remained one (`fault-bridge-kill-final.log`). Initial
+host fixture used Compose kill by service and also killed its one-off observer;
+retained as invalid evidence, fixed to a verified exact long-running container
+(project/service/oneoff labels checked). No runtime socket mount or broad kill.
+Broker kill is still running. Fresh Python 3.10 backend policy suite 7 PASS;
+Python 3.12 full suite 111 PASS /30.523 s. Hardware remains unvalidated.
+
+Broker SIGKILL increment also PASS (`fault-broker-kill.log`): independent actual
+DDS safe output zero **0.081096874 s**, 1.5 s no automatic motion, SAFE_STOP/no
+owner, sole writer one. These are bounded observations from cutoff before the
+host kill request; they are not hard realtime or stopping-distance claims.
+Both services restored after each fault. Wrong-hash/ACK-loss/source/epoch cases,
+post-reconnect explicit recovery and the sustained live gate remain required.
