@@ -75,6 +75,18 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.backend.quality(path),pb.STALE)
         self.assertEqual(self.backend.sample_metadata(path)['source_time_ns'],123)
 
+    async def test_target_context_preserves_actual_string_map_and_effective_authorization(self):
+        context=self.backend.target_context('transport-session')
+        self.assertEqual(context.kind,pb.ROS_SIM)
+        self.assertEqual(context.mapping_hash,self.engine.profile_hash)
+        self.assertEqual(context.map_generation,'map-1')
+        self.assertEqual(context.source_epoch,'epoch')
+        self.assertFalse(context.remote_arm_authorized)
+        self.link.frame['map_generation']='scene/new-map'
+        self.assertNotEqual(self.backend.target_context('transport-session'),context)
+        self.link.frame['map_generation']=1
+        with self.assertRaises(ValueError):self.backend.target_context('transport-session')
+
     async def test_unavailable_stop_dispatch_is_never_confirmed(self):
         self.link.fail_send=True
         self.backend.request_stop()

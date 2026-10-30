@@ -72,6 +72,25 @@ message Descriptor {
   string protocol_version = 8;
   bool audit_ok = 9;
   string provider_session = 10;
+  TargetContext target_context = 11;
+}
+enum ProviderKind {
+  PROVIDER_KIND_UNSPECIFIED = 0;
+  KINEMATIC_MOCK = 1;
+  ROS_SIM = 2;
+}
+// v1.5: actual adapter/profile/source identities, not a profile-name assertion.
+message TargetContext {
+  ProviderKind kind = 1;
+  string mapping_hash = 2;
+  string adapter_source_hash = 3;
+  string source_epoch = 4;
+  string brain_boot_id = 5;
+  string scene_epoch = 6;
+  string config_hash = 7;
+  string scene_id = 8;
+  string map_generation = 9;
+  bool remote_arm_authorized = 10;
 }
 message Query {
   repeated string paths = 1;
@@ -160,6 +179,7 @@ message ProviderHello {
   string backend = 6;
   string host_clock_id = 7;
   string protocol_version = 8;
+  TargetContext target_context = 9;
 }
 message ProviderPacket {
   oneof packet {

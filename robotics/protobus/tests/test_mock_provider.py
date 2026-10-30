@@ -193,6 +193,38 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updates[-1].phase, pb.SUCCEEDED, updates)
         await self.wait_value('Robot.Safety.Mode', lambda sample: sample.value.string_value == 'MANUAL')
 
+    async def reconnect_after_profile_fixture_change(self):
+        # These tests deliberately replace model configuration before Arm. The
+        # immutable target context must change sessions; perform explicit wire
+        # recovery in this test fixture instead of bypassing the context guard.
+        self.assertIsNone(self.broker.lease)
+        previous=self.client.guard.session;self.client.restart.set()
+        await self.until(lambda:self.client.connected.is_set() and self.client.guard.session!=previous
+            and self.broker.provider is not None and self.broker.provider.safety_ready and self.broker.provider.control_ready)
+        await self.acquire()
+        result=await self.invoke('Robot.Safety.ResetStop')
+        self.assertEqual(result[-1].phase,pb.SUCCEEDED,result)
+        self.renew_task.cancel();await asyncio.gather(self.renew_task,return_exceptions=True);self.renew_task=None
+        await self.bus.ReleaseLease(self.lease);self.lease=None
+
+    async def test_actual_profile_context_change_revokes_old_authority_without_motion_replay(self):
+        await self.arm()
+        await self.bus.SetTarget(self.target(1))
+        await self.until(lambda:self.backend.v>0)
+        previous=self.client.guard.session
+        self.backend.profile['recoverySeconds']+=.001
+        await self.until(lambda:self.client.connected.is_set() and self.client.guard.session!=previous
+            and self.broker.provider is not None and self.broker.provider.control_ready and self.broker.provider.safety_ready)
+        self.assertIsNone(self.broker.lease)
+        self.assertEqual(self.backend.v,0)
+        self.assertEqual(self.backend.mode,'SAFE_STOP')
+        descriptor=await self.bus.Describe(pb.Empty())
+        self.assertEqual(descriptor.target_context,self.backend.target_context(self.client.guard.session))
+        self.assertNotEqual(descriptor.provider_session,previous)
+        with self.assertRaises(grpc.aio.AioRpcError):await self.bus.SetTarget(self.target(2))
+        await asyncio.sleep(.05)
+        self.assertEqual(self.backend.v,0)
+
     def target(self, sequence, linear=.2, release=False):
         return pb.Target(lease=self.lease, path='Robot.Motion.Velocity', owner_id='integration-hold',
             sequence=sequence, release=release, value=pb.Object(fields={
@@ -234,6 +266,7 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_default_measured_profile_duration_is_used_without_time_scaling(self):
         self.backend.profile = json.loads((Path(__file__).resolve().parents[1]/'profiles/mock-go2.json').read_text())
+        await self.reconnect_after_profile_fixture_change()
         await self.arm()
         start = time.monotonic()
         result = await self.invoke('Robot.Motion.Perform', {'Name': pb.Value(string_value='BOW')})
@@ -365,6 +398,7 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_configured_route_runs_through_model_and_returns_to_manual(self):
         self.backend.profile['routes']['unit-route'] = [[.1, 0], [0, 0]]
+        await self.reconnect_after_profile_fixture_change()
         await self.arm()
         result = await self.invoke('Robot.Navigation.FollowRoute', {'RouteId': pb.Value(string_value='unit-route')})
         self.assertEqual(result[-1].phase, pb.SUCCEEDED)
@@ -374,6 +408,7 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_stop_during_motion_waits_for_recovery_before_confirming_model_stop(self):
         self.backend.profile['motionDurationSeconds']['BOW'] = .5
+        await self.reconnect_after_profile_fixture_change()
         await self.arm()
         call = self.bus.Invoke(self.invocation('Robot.Motion.Perform', {'Name': pb.Value(string_value='BOW')}))
         self.calls.append(call)
@@ -388,6 +423,7 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_long_recovery_is_not_falsely_confirmed_by_initial_stop_reply(self):
         self.backend.profile['motionDurationSeconds']['BOW'] = .7
         self.backend.profile['recoverySeconds'] = .3
+        await self.reconnect_after_profile_fixture_change()
         await self.arm()
         call = self.bus.Invoke(self.invocation('Robot.Motion.Perform', {'Name': pb.Value(string_value='BOW')}))
         self.calls.append(call)

@@ -81,6 +81,8 @@ class BrokerFixture(unittest.IsolatedAsyncioTestCase):
         data = dict(provider_id='fixture', profile_id='dog-go2-sim', backend='SIM',
                     catalog_hash=self.catalog['catalogHash'], host_clock_id='test-host',
                     protocol_version=PROTOCOL_VERSION, session=str(uuid.uuid4()),
+                    target_context=pb.TargetContext(kind=pb.KINEMATIC_MOCK,mapping_hash='sha256:'+'a'*64,
+                        adapter_source_hash='sha256:'+'b'*64,source_epoch='unit-fixture',remote_arm_authorized=True),
                     claims=[p for p, n in self.catalog['nodes'].items()
                             if not p.startswith('Robot.Connection.') and not n.get('generated')])
         data.update(changes)
@@ -123,7 +125,7 @@ class BrokerDataTests(BrokerFixture):
     async def test_descriptor_and_missing_value_snapshot(self):
         descriptor = await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.backend, 'SIM')
-        self.assertEqual(descriptor.protocol_version, '1.4')
+        self.assertEqual(descriptor.protocol_version, '1.5')
         self.assertEqual(descriptor.host_clock_id, 'test-host')
         self.assertFalse(descriptor.provider_online)
         snapshot = await self.bus.Get(self.query('Robot.Signal.Speed', 'Robot.Connection.IsOnline'))

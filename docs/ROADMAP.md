@@ -589,3 +589,5 @@ M25-T05 CI green (2fee1031); T06 IN_PROGRESS: artifact integrity/typed AST found
 M25-T06 ongoing: correlated release inspection prerequisite passed RSS22/broker118 tests and actual CLI/protocol checks. Candidate wire1.4 is not yet live-qualified; running live remains qualified1.3. Runtime/metadata/Cancel/freshness/GUI/video gates remain OPEN.
 
 M25-T06 internal native execution/scheduling checkpoint: 30 runtime groups PASS /4.052 s. Complex generated patrol success/timeout cleanup, structured cancellation and reactive policies covered with explicit fake bus. Actual BusClient/Hold/wheel/conformance/live/UI/video still OPEN.
+
+M25-T06 target-context prerequisite local PASS: candidate wire1.5, RSS22/Protobus123, Humble backend8/bridge4 and actual read-only DDS metadata9frames. No command/lease sent; production1.3 unchanged. See M25-target-context-checkpoint.json. Runtime/control/freshness/conformance/GUI/video remain OPEN.

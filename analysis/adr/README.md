@@ -217,3 +217,5 @@ flowchart TB
 - [ADR-0080](ADR-0080-robotflow-runtime-integrity-and-values.md): M25-T06 independent artifact integrity and typed value boundary; unknown is non-coercible, no live/runtime acceptance from unit fixtures.
 
 - [ADR-0081](ADR-0081-protobus-correlated-release-inspection.md): protocol candidate1.4 read-only correlated physical release and STOP identities; live requalification mandatory.
+
+- [ADR-0082](ADR-0082-protobus-actual-target-context.md): candidate1.5 actual provider/mapping/source and ROS scene/map identity; actual metadata probe passed, candidate live control qualification still OPEN.

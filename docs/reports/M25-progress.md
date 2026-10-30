@@ -153,3 +153,28 @@ unit tests and native source execution, not actual Protobus/ROS conformance.
 Remaining T06 BusClient/Hold/lease/transport/real-wheel/entrypoint/shutdown and
 T07–T09 remain OPEN. Event identity storage is bounded at1024; exhaustion rejects
 further events until a new explicit run, rather than evicting replay history.
+
+T06 target-identity prerequisite local PASS (protocol candidate1.5, ADR-0082):
+Descriptor carries actual provider kind/mapping/source-lock hashes plus observed
+ROS Brain/scene/string-map-generation and effective Arm permission. Mock cannot
+claim Brain/map identity. Get/Subscribe identify the current provider session.
+Context changes fail safe and replace the session; actual socket test proves an
+old moving mock lease cannot replay after a profile change. Four old model tests
+mutated their profile during a live session; failure retained. They now explicitly
+reconnect and recover through RPC before their unchanged motion/timing assertions.
+Actual producer map generation is a string (brain.py824), preserved without a
+numeric substitute. Source identity covers own code, dependency locks, interface
+manifest and wire/data contract bytes; no runtime source label is trusted.
+
+Final RSS22 + Protobus123 PASS /32.847 s; appended ABI baseline5 PASS. Humble
+image/import/RMW PASS; backend8 /0.694 s and isolated bridge4 /2.253 s PASS.
+Actual DDS read-only observer received9 Brain frames with advancing source stamps,
+matching stable courtyard map/scene context,0 command publishers/requests/leases.
+ROS parameter-events publisher is reported separately; initial overbroad zero-all-
+publishers assertion retained. M25-target-context-checkpoint.json pins candidate
+images/source and unchanged production1.3 images. This is metadata evidence only;
+new candidate control, freshness/clock and normal Cancel remain unqualified.
+Runtime/GUI/video completion remains OPEN.
+Prior checkpoint CI: 34cc8dd8 Robotics41110639049 SUCCESS; 2cc096c1
+Robotics41111172694 SUCCESS; their general jobs were superseded/cancelled, not
+claimed PASS. 200bbfdf Robotics41112001341 SUCCESS; general41112001407 pending.

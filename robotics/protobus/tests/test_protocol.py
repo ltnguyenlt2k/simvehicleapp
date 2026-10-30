@@ -41,6 +41,11 @@ class ProtocolTests(unittest.TestCase):
             'Target': {'lease': 1, 'path': 2, 'value': 3, 'sequence': 4, 'owner_id': 5, 'release': 6},
             'StopReply': {'requested':1,'dispatched':2,'robot_confirmed':3,'reason':4,
                           'execution_id':5,'broker_epoch':6,'provider_session':7},
+            'Descriptor': {'robot_id':1,'profile_id':2,'catalog_hash':3,'broker_epoch':4,
+                           'provider_online':5,'backend':6,'host_clock_id':7,'protocol_version':8,
+                           'audit_ok':9,'provider_session':10,'target_context':11},
+            'ProviderHello': {'provider_id':1,'profile_id':2,'catalog_hash':3,'session':4,
+                              'claims':5,'backend':6,'host_clock_id':7,'protocol_version':8,'target_context':9},
         }
         for message, fields in expected.items():
             self.assertEqual({f.name: f.number for f in pb.DESCRIPTOR.message_types_by_name[message].fields}, fields)

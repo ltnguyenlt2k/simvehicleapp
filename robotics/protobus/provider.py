@@ -13,6 +13,7 @@ import time
 import uuid
 
 import grpc
+from identity import validate_context
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
@@ -349,8 +350,13 @@ class ProviderClient:
         return False
 
     async def watchdog(self):
+        context_check=0
         while True:
             now = time.monotonic_ns()
+            if now>=context_check:
+                context_check=now+100_000_000
+                if self.backend.target_context(self.guard.session)!=self.target_context:
+                    self.cancel_all();self.backend.lost('TARGET_CONTEXT_CHANGED');self.restart.set();return
             if self.guard.lease_deadline and now >= self.guard.lease_deadline:
                 self.guard.invalid_through = max(self.guard.invalid_through, self.guard.fence)
                 self.guard.lease_deadline = 0
@@ -375,15 +381,17 @@ class ProviderClient:
             descriptor = await rpc.BusStub(normal).Describe(pb.Empty(), timeout=2)
             clock = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
             if (descriptor.backend != 'SIM' or descriptor.catalog_hash != self.catalog['catalogHash']
-                    or descriptor.protocol_version != '1.4' or descriptor.host_clock_id != clock):
+                    or descriptor.protocol_version != '1.5' or descriptor.host_clock_id != clock):
                 raise ConnectionError('provider descriptor/catalog/clock mismatch')
             self.guard = AuthorityGuard(descriptor.broker_epoch, str(uuid.uuid4()))
+            self.target_context=validate_context(self.backend.target_context(self.guard.session))
             self.sequence = 0
             claims = [path for path, node in self.catalog['nodes'].items()
                       if not path.startswith('Robot.Connection.') and not node.get('generated')]
             hello = pb.ProviderHello(provider_id=self.provider_id, profile_id=self.profile_id,
                 catalog_hash=self.catalog['catalogHash'], session=self.guard.session,
-                claims=claims, backend='SIM', host_clock_id=clock, protocol_version='1.4')
+                claims=claims, backend='SIM', host_clock_id=clock, protocol_version='1.5',
+                target_context=self.target_context)
             provider = rpc.ProviderStub(normal)
             call = provider.Attach()
             await call.write(pb.ProviderPacket(hello=hello))

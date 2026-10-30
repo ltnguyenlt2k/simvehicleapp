@@ -9,12 +9,17 @@ import time
 
 import grpc
 from provider import ProviderClient, RejectedBeforeStart, scalar_from_wire
+from identity import data_hash,source_hash
 from protobus.v1 import protobus_pb2 as pb
 from protobus.mock.v1 import mock_pb2 as mpb
 from protobus.mock.v1 import mock_pb2_grpc as mrpc
 
 
 class MockBackend:
+    def target_context(self,session):
+        return pb.TargetContext(kind=pb.KINEMATIC_MOCK,mapping_hash=data_hash(self.profile),
+            adapter_source_hash=source_hash(),source_epoch=session,remote_arm_authorized=True)
+
     def __init__(self, catalog, profile=None):
         self.catalog = catalog
         self.profile = profile or json.loads((Path(__file__).parent/'profiles/mock-go2.json').read_text())

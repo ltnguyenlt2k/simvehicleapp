@@ -5,6 +5,7 @@ import time
 
 from dog_protocol import motion_result, mission_result
 from provider import ProviderClient, RejectedBeforeStart, scalar_from_wire
+from identity import source_hash
 from protobus.v1 import protobus_pb2 as pb
 
 
@@ -15,6 +16,16 @@ class DogProvider(ProviderClient):
 
 
 class DogBackend:
+    def target_context(self,session):
+        frame=self.link.protocol.require_frame(time.monotonic_ns())
+        if not isinstance(frame.get('map_generation'),str) or not 1<=len(frame['map_generation'])<=256:
+            raise ValueError('current map generation required')
+        return pb.TargetContext(kind=pb.ROS_SIM,mapping_hash=self.engine.profile_hash,
+            adapter_source_hash=source_hash(),source_epoch=self.link.protocol.source_epoch,
+            brain_boot_id=frame['boot_id'],scene_epoch=frame['scene_epoch'],config_hash=frame['config_hash'],
+            scene_id=frame['scene_id'],map_generation=frame['map_generation'],
+            remote_arm_authorized=self.link.authorize_sim_arm)
+
     def __init__(self, catalog, engine, link, routes=None):
         self.catalog, self.engine, self.link = catalog, engine, link
         self.client = None

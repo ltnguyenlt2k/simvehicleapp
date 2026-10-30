@@ -1,0 +1,66 @@
+{
+  "scope": "M25-T06 target-context prerequisite; actual DDS metadata only; no candidate live control acceptance",
+  "protocolCandidate": "1.5",
+  "foundation": {
+    "rss": 22,
+    "protobus": 123,
+    "seconds": 32.847,
+    "result": "PASS"
+  },
+  "humble": {
+    "imageImportRMW": "PASS",
+    "backendUnitTests": 8,
+    "backendSeconds": 0.694,
+    "bridgeTests": 4,
+    "bridgeSeconds": 2.253
+  },
+  "candidateImages": {
+    "sr-protobus:dev": "sha256:5f6793c5f4fa6900aa2b47141b8ae7d1d369bc9baa266bda5232ddd72357b683",
+    "sr-protobus-ros2:candidate-v15": "sha256:91c0069b5a15692cd8fbf34e85d35975385d6c21a17087a9b988f37d85b0d5ff"
+  },
+  "unchangedProductionImages": {
+    "sr-protobus-live-1": "sha256:55b801980e17d1002aefeb8bd371f1581b327e2f698504f57ecc96372462743e",
+    "sr-protobus-ros2-1": "sha256:786e50304501a341fe2e5c009a6e0b89d3a8f63f0290bbd422c0b99cd7cbca0c"
+  },
+  "actualDdsObserver": {
+    "brainFrames": 9,
+    "commandPublishers": 0,
+    "context": {
+      "adapterSourceHash": "sha256:b6ab1a795fdb83d59094dc86a114ab76db4c757a602b540b18b447767e0beab8",
+      "brainBootId": "7e20ddb7-7426-4137-8cab-f45ca135f51a",
+      "configHash": "b9da153959ad8084470b66a67477ae653d094b687367d6f1b27ea0e20c52f3fc",
+      "kind": "ROS_SIM",
+      "mapGeneration": "b36213df-c0fa-4eeb-be29-55060e76e336/cf5a97b8-b9a8-4177-9483-1ac5dd7783cc/18",
+      "mappingHash": "sha256:0e66ccb3c93593a6d046efceefaf5a8b9dd20615f7cc1a17f97a437cdd6198fc",
+      "sceneEpoch": "b36213df-c0fa-4eeb-be29-55060e76e336",
+      "sceneId": "courtyard",
+      "sourceEpoch": "dog:340c0d9c6e9b51df4c21ed8e5cac87c917f925517d6d381b09aa3f4e69b41855"
+    },
+    "infrastructurePublishers": [
+      "/parameter_events"
+    ],
+    "leasesAcquired": 0,
+    "passed": true,
+    "requestsSent": 0,
+    "scope": "actual DDS metadata only; no motion/freshness acceptance",
+    "sourceStampFirstNs": "24197540004012",
+    "sourceStampLastNs": "24197890004012"
+  },
+  "sources": {
+    "robotics/contracts/protobus/v1/protobus.proto": "sha256:004c969e292a26b508409106e3df4d987d4fe983f8876e62ec4e62f0a0609832",
+    "robotics/protobus/identity.py": "sha256:733511d40625229765109cb92c7a45ee75a5e3c2d249d1524e2d39851e681e24",
+    "robotics/protobus/provider.py": "sha256:b3d973fad23baf72fd0376ae123baa913358b00293fd470fa263266c73a87243",
+    "robotics/protobus/broker.py": "sha256:505f017b5ecc1a876fb920c13f8eaa1e5200f88861c31841324eca5f3bf3f9ba",
+    "robotics/protobus/dog_backend.py": "sha256:f7d3ae1db956fd6618280deccd983860d9c3438e3655f5d9427ffeb879d8e448",
+    "robotics/protobus/mock.py": "sha256:ed954f3490d8f379494ae830ee4e1c62ca7d395b7feba1df40b3bb436e004323"
+  },
+  "unresolved": [
+    "runtime BusClient/Hold/wheel/entrypoint",
+    "normal Dog Cancel physical handover",
+    "capture age/clock freeze/epoch cutoff",
+    "candidate actual control requalification",
+    "M25 conformance/live templates",
+    "M26 GUI",
+    "M27 full continuous video"
+  ]
+}

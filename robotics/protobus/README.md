@@ -13,12 +13,19 @@ the robot must already be armed in MANUAL. `cancel <execution-id>` requests
 cancellation; only provider feedback confirms completion. `stop` needs no lease.
 STOP receipt and robot confirmation are distinct fields. This is a software STOP.
 
-Writes support the local SIM v1.4 protocol and require the matching catalog.
+Writes support the local SIM v1.5 protocol and require the matching catalog.
 `pbctl inspect <execution-id> --epoch <broker-epoch>` reads the correlated logical
 and physical release state without acquiring a lease. STOP replies identify their
 own execution so delayed confirmation can be inspected. Missing/evicted IDs and
-wrong epochs fail; latest status is never substituted. Protocol v1.4 live
+wrong epochs fail; latest status is never substituted. Protocol v1.5 live
 requalification is required before replacing an already running v1.3 stack.
+`describe` includes the actual provider kind, mapping/profile hash, measured
+adapter source/lock identity and provider session. ROS also advertises observed
+Brain, scene and string map-generation identities plus effective Arm permission.
+Mock explicitly identifies its synthetic model and cannot claim physical-map
+context. A mapping/map/context change ends the old session and authority;
+running applications must stop and require a new explicit launch with a matching
+deployment binding. These metadata checks do not prove sensor or motion accuracy.
 Tokens stay in a mode-0600 file and are omitted from normal output. Lease renewal
 runs only during an active set/invoke command. A single `set` expires at catalog
 TTL unless refreshed; `--hold-ms` refreshes then explicitly releases the target.

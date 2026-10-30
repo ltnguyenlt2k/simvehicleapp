@@ -98,3 +98,20 @@ asynchronous journal health; PB_AUDIT_FAILED revokes motion but does not block S
 
 M23 production code and fault tests must exercise every invariant. Passing the
 transport benchmark does not accept broker safety.
+
+## v1.4/v1.5 runtime integration additions
+
+v1.4 adds read-only InspectExecution(catalog_hash,broker_epoch,execution_id),
+separating immutable logical phase from correlated physical release/phase.
+STOP replies carry their own execution/broker/provider identities. ResetStop
+resource clearance alone cannot fabricate an older physical terminal.
+
+v1.5 adds typed TargetContext to provider hello/descriptor: actual provider kind,
+canonical mapping/profile hash, measured source/lock/wire identity, source epoch
+and effective Arm permission. ROS additionally carries actual Brain boot/config,
+scene and string map generation; mock cannot claim those fields. Get/Subscribe
+batches identify their current provider session. All old field numbers remain.
+Context changes invalidate current authority/session. Bind immutable deployment
+to actual target context, record transient sessions/clock in each run and require
+a new explicit launch after any loss; never auto-reacquire/replay. Candidate1.5
+metadata tests do not substitute for actual ROS control/freshness acceptance.

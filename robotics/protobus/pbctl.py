@@ -82,8 +82,8 @@ async def run(args):
             output(await bus.InspectExecution(pb.ExecutionQuery(catalog_hash=descriptor.catalog_hash,
                 broker_epoch=args.epoch, execution_id=args.execution), timeout=2))
             return 0
-        if descriptor.backend != 'SIM' or descriptor.protocol_version != '1.4':
-            raise ValueError('writes require the supported local SIM protocol 1.4')
+        if descriptor.backend != 'SIM' or descriptor.protocol_version != '1.5':
+            raise ValueError('writes require the supported local SIM protocol 1.5')
         if not args.lease_file:
             raise ValueError('--lease-file is required for control operations')
         path = Path(args.lease_file)

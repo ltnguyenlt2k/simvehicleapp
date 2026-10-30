@@ -20,7 +20,7 @@ from commands import CommandPlane
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
-PROTOCOL_VERSION = '1.4'
+PROTOCOL_VERSION = '1.5'
 CONNECTION_PATHS = {
     'Robot.Connection.IsOnline', 'Robot.Connection.IsHandshakeComplete',
     'Robot.Connection.LastSampleAgeMs',
@@ -503,7 +503,8 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
                              provider_online=self.provider is not None, backend='SIM',
                              host_clock_id=self.host_clock_id, protocol_version=PROTOCOL_VERSION,
                              audit_ok=not self.audit.failed,
-                             provider_session=self.provider.hello.session if self.provider else '')
+                             provider_session=self.provider.hello.session if self.provider else '',
+                             target_context=self.provider.hello.target_context if self.provider else None)
 
     async def Get(self, request, context):
         try:
@@ -511,7 +512,8 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
         except BusError as error:
             await self.abort(context, error)
         await self.sweep_once()
-        return pb.Samples(samples=[clone(self.records[path].sample) for path in paths], broker_epoch=self.epoch)
+        return pb.Samples(samples=[clone(self.records[path].sample) for path in paths], broker_epoch=self.epoch,
+            provider_session=self.provider.hello.session if self.provider else '')
 
     async def Subscribe(self, request, context):
         try:
@@ -524,7 +526,8 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
         self.subscribers.add(subscriber)
         last_sent = time.monotonic()
         try:
-            yield pb.Samples(samples=[clone(self.records[path].sample) for path in paths], broker_epoch=self.epoch)
+            yield pb.Samples(samples=[clone(self.records[path].sample) for path in paths], broker_epoch=self.epoch,
+                provider_session=self.provider.hello.session if self.provider else '')
             while True:
                 await subscriber.event.wait()
                 subscriber.event.clear()
@@ -544,11 +547,15 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
                 subscriber.values.clear()
                 if changed:
                     last_sent = time.monotonic()
-                    yield pb.Samples(samples=changed, broker_epoch=self.epoch)
+                    yield pb.Samples(samples=changed, broker_epoch=self.epoch,
+                        provider_session=self.provider.hello.session if self.provider else '')
         finally:
             self.subscribers.discard(subscriber)
 
     def check_hello(self, hello):
+        from identity import validate_context
+        try:validate_context(hello.target_context)
+        except ValueError as error:raise BusError('PB_PROVIDER_MISMATCH',str(error)) from error
         if hello.catalog_hash != self.catalog_hash:
             raise BusError('PB_CATALOG_MISMATCH')
         if hello.backend != 'SIM':
