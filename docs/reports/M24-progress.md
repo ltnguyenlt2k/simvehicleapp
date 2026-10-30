@@ -43,3 +43,33 @@ build entries, No issues found (application locks only, not an OS-wide CVE scan)
 The loopback multicast notice is expected with network none; no robot transport
 or actuation is claimed. Image build/import/pip-check and both locks are added
 to Robotics CI. T01 CI still pending; T02 has not started.
+T01 closed: Robotics CI 40897932686 SUCCESS and general CI 40897932762 SUCCESS at f4f6a382; nightly 41028473645 SUCCESS. T02 mapping starts 2026-10-30. No actual dog command transport accepted yet.
+
+## T02 mapping — local PASS, 2026-10-30; CI pending
+
+Closed transform engine, canonical immutable profile hash, catalog/path/control
+field validation, per-signal rate limits and capture/epoch-preserving samples.
+ROS subscriptions select declared QoS/types and use one bounded latest-message
+mailbox per topic; all mapping/store mutation runs on the provider asyncio loop.
+No publisher is created. The dog profile declares 31 sensor mappings. Replay of
+actual recorded DDS fixtures produces 30 OK and one NONE (unknown charging
+status), with SOC converted fraction-to-percent and pose taken from odometry.
+Joint/foot named arrays and marker signals remain for validated adapter work;
+no values are fabricated for unmapped paths. Remote Arm remains disabled.
+
+Final local checks: **92 broker/provider/mapping tests PASS / 26.552 s** on Python
+3.12; **11 mapping tests PASS / 0.109 s** on Humble Python 3.10; **2 actual rclpy /
+CycloneDDS fixture tests PASS / 0.342 s**, network isolated from the dog. The latter
+verify actual discovery/receipt and capture freeze behavior, plus a separately
+labelled 1000-callback bounded-mailbox injection (not 1000 DDS deliveries).
+Precheck/diff checks PASS. Logs: mapping-final-tests.log,
+mapping-python310-final-tests.log, mapping-ros-final-tests.log under runtime/m24.
+
+Actual ROS test exposed NumPy scalars in fixed covariance arrays after adding
+ROS unavailable-component checks. Normalize trusted ROS array containers to
+native scalars; unknown covariance still yields NONE. Original failure retained
+at mapping-failed-ros-covariance-scalar.log. A later test edit grouped a NaN case
+with unrelated negative cases; fixed test grouping, retained mapping-failed-test-grouping.log.
+No assertion, safety threshold or availability rule was loosened. CI now runs
+both mapping suites in the Humble image. Live dog equality/authority/motion and
+M24 overall acceptance remain OPEN; T03 is next.

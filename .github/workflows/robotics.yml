@@ -32,6 +32,8 @@ jobs:
           docker build -f robotics/protobus/bridge-ros2.Dockerfile -t sr-protobus-ros2:ci robotics/protobus
           docker run --rm --network none --cpus 1 --memory 256m --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true sr-protobus-ros2:ci
           docker run --rm --network none sr-protobus-ros2:ci python3 -m pip check
+          docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s tests -p test_mapping.py -v
+          docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s bridge_tests -v
       - name: Scan the independent robot stack dependency locks
         run: |
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rss/requirements.txt

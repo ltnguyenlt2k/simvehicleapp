@@ -1,0 +1,442 @@
+{
+  "adapter": "dog-control/1",
+  "allowRemoteArm": false,
+  "backend": "SIM",
+  "catalogHash": "sha256:f382fce1b998fb60633fb73f0c4aa5eedb0ac7103734c48253e1be2440cd00a2",
+  "commands": {
+    "Robot.Motion.Perform": {
+      "action": "motion",
+      "enumMap": {
+        "BOW": "bow",
+        "CROUCH": "crouch",
+        "JUMP": "jump",
+        "LIFT_FRONT_LEFT": "lift_fl",
+        "TILT": "tilt"
+      },
+      "fields": {
+        "Name": "motion_name"
+      },
+      "resultTopic": "motion/state"
+    },
+    "Robot.Navigation.FollowRoute": {
+      "action": "route",
+      "fields": {
+        "RouteId": "route_id"
+      },
+      "resultTopic": "brain/state"
+    },
+    "Robot.Navigation.GoTo": {
+      "action": "goal",
+      "fields": {
+        "X": "goal.x",
+        "Y": "goal.y"
+      },
+      "resultTopic": "brain/state"
+    },
+    "Robot.Safety.Arm": {
+      "action": "arm",
+      "resultTopic": "brain/state"
+    },
+    "Robot.Safety.Disarm": {
+      "action": "disarm",
+      "resultTopic": "brain/state"
+    },
+    "Robot.Safety.ResetStop": {
+      "action": "reset_stop",
+      "resultTopic": "brain/state"
+    },
+    "Robot.Safety.Stop": {
+      "action": "stop",
+      "priority": "emergency",
+      "resultTopic": "brain/state"
+    }
+  },
+  "profile": "dog-go2-sim",
+  "ros": {
+    "domainId": 52,
+    "namespace": "/dog1",
+    "useSimTime": true
+  },
+  "schema": "mapping.v1",
+  "sensors": {
+    "Robot.Imu.AngularVelocity.X": {
+      "field": "angular_velocity.x",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.AngularVelocity.Y": {
+      "field": "angular_velocity.y",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.AngularVelocity.Z": {
+      "field": "angular_velocity.z",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.LinearAcceleration.X": {
+      "field": "linear_acceleration.x",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.LinearAcceleration.Y": {
+      "field": "linear_acceleration.y",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.LinearAcceleration.Z": {
+      "field": "linear_acceleration.z",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.Orientation.Pitch": {
+      "field": "orientation",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "transforms": [
+        {
+          "op": "quaternion_to_pitch"
+        }
+      ],
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.Orientation.Roll": {
+      "field": "orientation",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "transforms": [
+        {
+          "op": "quaternion_to_roll"
+        }
+      ],
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Imu.Orientation.Yaw": {
+      "field": "orientation",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "imu/data",
+      "transforms": [
+        {
+          "op": "quaternion_to_yaw"
+        }
+      ],
+      "type": "sensor_msgs/msg/Imu"
+    },
+    "Robot.Perception.Obstacle.FrontMinDistance": {
+      "field": "ranges",
+      "maxRateHz": 10,
+      "qos": "sensor_data",
+      "topic": "scan",
+      "transforms": [
+        {
+          "args": {
+            "degrees": 30
+          },
+          "op": "sector_min"
+        }
+      ],
+      "type": "sensor_msgs/msg/LaserScan"
+    },
+    "Robot.Perception.Obstacle.MinDistance": {
+      "field": "ranges",
+      "maxRateHz": 10,
+      "qos": "sensor_data",
+      "topic": "scan",
+      "transforms": [
+        {
+          "op": "min_finite"
+        }
+      ],
+      "type": "sensor_msgs/msg/LaserScan"
+    },
+    "Robot.Pose.Orientation.Pitch": {
+      "field": "pose.pose.orientation",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "transforms": [
+        {
+          "op": "quaternion_to_pitch"
+        }
+      ],
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Pose.Orientation.Roll": {
+      "field": "pose.pose.orientation",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "transforms": [
+        {
+          "op": "quaternion_to_roll"
+        }
+      ],
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Pose.Orientation.Yaw": {
+      "field": "pose.pose.orientation",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "transforms": [
+        {
+          "op": "quaternion_to_yaw"
+        }
+      ],
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Pose.Position.X": {
+      "field": "pose.pose.position.x",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Pose.Position.Y": {
+      "field": "pose.pose.position.y",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Pose.Position.Z": {
+      "field": "pose.pose.position.z",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.PowerSystem.Battery.Current": {
+      "field": "current",
+      "maxRateHz": 2,
+      "qos": "sensor_data",
+      "topic": "battery_state",
+      "type": "sensor_msgs/msg/BatteryState"
+    },
+    "Robot.PowerSystem.Battery.IsCharging": {
+      "field": "power_supply_status",
+      "maxRateHz": 2,
+      "qos": "sensor_data",
+      "topic": "battery_state",
+      "transforms": [
+        {
+          "args": {
+            "map": {
+              "1": "CHARGING",
+              "2": "NOT_CHARGING",
+              "3": "NOT_CHARGING",
+              "4": "NOT_CHARGING"
+            }
+          },
+          "op": "enum"
+        },
+        {
+          "args": {
+            "constant": "CHARGING",
+            "operator": "eq"
+          },
+          "op": "compare"
+        }
+      ],
+      "type": "sensor_msgs/msg/BatteryState"
+    },
+    "Robot.PowerSystem.Battery.StateOfCharge": {
+      "field": "percentage",
+      "maxRateHz": 2,
+      "qos": "sensor_data",
+      "topic": "battery_state",
+      "transforms": [
+        {
+          "args": {
+            "k": 100
+          },
+          "op": "scale"
+        }
+      ],
+      "type": "sensor_msgs/msg/BatteryState"
+    },
+    "Robot.PowerSystem.Battery.Voltage": {
+      "field": "voltage",
+      "maxRateHz": 2,
+      "qos": "sensor_data",
+      "topic": "battery_state",
+      "type": "sensor_msgs/msg/BatteryState"
+    },
+    "Robot.Safety.IsArmed": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "brain/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.mode"
+          },
+          "op": "json"
+        },
+        {
+          "args": {
+            "map": {
+              "AUTO": "true",
+              "DISARMED": "false",
+              "MANUAL": "true",
+              "MOTION": "true",
+              "SAFE_STOP": "false"
+            }
+          },
+          "op": "enum"
+        },
+        {
+          "args": {
+            "constant": "true",
+            "operator": "eq"
+          },
+          "op": "compare"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Safety.IsStopLatched": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "brain/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.mode"
+          },
+          "op": "json"
+        },
+        {
+          "args": {
+            "constant": "SAFE_STOP",
+            "operator": "eq"
+          },
+          "op": "compare"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Safety.Mode": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "brain/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.mode"
+          },
+          "op": "json"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Safety.Reason": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "brain/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.reason"
+          },
+          "op": "json"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Simulation.IsPaused": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "sim/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.paused"
+          },
+          "op": "json"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Simulation.SceneId": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "sim/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.scene_id"
+          },
+          "op": "json"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Simulation.TimeNs": {
+      "field": "data",
+      "maxRateHz": 20,
+      "qos": "reliable",
+      "topic": "sim/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.issued_at_ns"
+          },
+          "op": "json"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
+    "Robot.Velocity.Angular.Z": {
+      "field": "twist.twist.angular.z",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Velocity.Linear.X": {
+      "field": "twist.twist.linear.x",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "type": "nav_msgs/msg/Odometry"
+    },
+    "Robot.Velocity.Linear.Y": {
+      "field": "twist.twist.linear.y",
+      "maxRateHz": 20,
+      "qos": "sensor_data",
+      "topic": "odom",
+      "type": "nav_msgs/msg/Odometry"
+    }
+  },
+  "setpoints": {
+    "Robot.Motion.Velocity": {
+      "action": "manual",
+      "fields": {
+        "AngularZ": "angular",
+        "LinearX": "linear"
+      }
+    }
+  }
+}
