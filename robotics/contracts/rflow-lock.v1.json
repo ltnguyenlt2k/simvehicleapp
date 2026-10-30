@@ -1,0 +1,125 @@
+{
+  "$id": "urn:robotflow:rflow-lock.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifactHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "catalogHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "compilerVersion": {
+      "const": "0.1.0"
+    },
+    "files": {
+      "additionalProperties": false,
+      "properties": {
+        "app/__init__.py": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "app/flow.py": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "app/main.py": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "profile.json": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "registry.json": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "rfir.json": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "rss-catalog.json": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "units.v1.json": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "workflow.json": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "app/__init__.py",
+        "app/flow.py",
+        "app/main.py",
+        "rfir.json",
+        "rss-catalog.json",
+        "profile.json",
+        "units.v1.json",
+        "registry.json",
+        "workflow.json"
+      ],
+      "type": "object"
+    },
+    "irHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "profileHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "profileId": {
+      "pattern": "^[a-z][a-z0-9-]{0,95}$",
+      "type": "string"
+    },
+    "registryHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "runtimePackageHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "runtimeVersion": {
+      "const": "0.1.0"
+    },
+    "schema": {
+      "const": "rflow-lock.v1"
+    },
+    "sourceHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "unitsHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "workflowHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema",
+    "compilerVersion",
+    "runtimeVersion",
+    "profileId",
+    "profileHash",
+    "workflowHash",
+    "irHash",
+    "catalogHash",
+    "registryHash",
+    "unitsHash",
+    "sourceHash",
+    "artifactHash",
+    "files"
+  ],
+  "type": "object"
+}

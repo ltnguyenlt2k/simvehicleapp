@@ -30,7 +30,11 @@
     "when": {
       "type": "expression",
       "required": true,
-      "default": "abs(Robot.Velocity.Linear.X) < 0.05 m/s"
+      "default": "abs(Robot.Velocity.Linear.X) < 0.05 m/s",
+      "title": {
+        "vi": "Điều kiện",
+        "en": "Condition"
+      }
     },
     "timeoutMs": {
       "type": "duration",
@@ -38,7 +42,11 @@
       "default": 3000,
       "unit": "ms",
       "minimum": 1,
-      "maximum": 86400000
+      "maximum": 86400000,
+      "title": {
+        "vi": "Thời hạn (ms)",
+        "en": "Timeout (ms)"
+      }
     }
   },
   "semantics": {

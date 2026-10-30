@@ -26,12 +26,20 @@
     "path": {
       "type": "rss-path",
       "required": true,
-      "default": "Robot.PowerSystem.Battery.StateOfCharge"
+      "default": "Robot.PowerSystem.Battery.StateOfCharge",
+      "title": {
+        "vi": "Tín hiệu",
+        "en": "Signal"
+      }
     },
     "name": {
       "type": "string",
       "required": true,
-      "default": "battery"
+      "default": "battery",
+      "title": {
+        "vi": "Tên",
+        "en": "Name"
+      }
     }
   },
   "semantics": {

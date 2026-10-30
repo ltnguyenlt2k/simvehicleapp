@@ -43,13 +43,21 @@
       "type": "expression",
       "required": true,
       "default": "0.8 m",
-      "unit": "m"
+      "unit": "m",
+      "title": {
+        "vi": "Tọa độ X trên bản đồ",
+        "en": "Map X"
+      }
     },
     "y": {
       "type": "expression",
       "required": true,
       "default": "0 m",
-      "unit": "m"
+      "unit": "m",
+      "title": {
+        "vi": "Tọa độ Y trên bản đồ",
+        "en": "Map Y"
+      }
     },
     "timeoutMs": {
       "type": "duration",
@@ -57,7 +65,11 @@
       "default": 60000,
       "unit": "ms",
       "minimum": 1,
-      "maximum": 60000
+      "maximum": 60000,
+      "title": {
+        "vi": "Thời hạn (ms)",
+        "en": "Timeout (ms)"
+      }
     }
   },
   "semantics": {

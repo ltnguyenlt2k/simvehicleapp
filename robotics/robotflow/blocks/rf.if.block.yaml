@@ -30,7 +30,11 @@
     "when": {
       "type": "expression",
       "required": true,
-      "default": "Robot.PowerSystem.Battery.StateOfCharge >= 20 %"
+      "default": "Robot.PowerSystem.Battery.StateOfCharge >= 20 %",
+      "title": {
+        "vi": "Điều kiện",
+        "en": "Condition"
+      }
     }
   },
   "semantics": {

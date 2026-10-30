@@ -32,12 +32,20 @@
       "required": true,
       "default": 2,
       "minimum": 1,
-      "maximum": 1000
+      "maximum": 1000,
+      "title": {
+        "vi": "Số vòng",
+        "en": "Repetitions"
+      }
     },
     "forever": {
       "type": "boolean",
       "required": true,
-      "default": false
+      "default": false,
+      "title": {
+        "vi": "Lặp đến khi dừng",
+        "en": "Repeat until stopped"
+      }
     }
   },
   "semantics": {

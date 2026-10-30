@@ -527,464 +527,657 @@
       "type": "object"
     },
     "statement": {
-      "oneOf": [
+      "allOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "op": {
-              "const": "noop"
+          "if": {
+            "properties": {
+              "op": {
+                "const": "noop"
+              }
             },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
+            "required": [
+              "op"
+            ]
           },
-          "required": [
-            "op",
-            "src"
-          ],
-          "type": "object"
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "noop"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              }
+            },
+            "required": [
+              "op",
+              "src"
+            ],
+            "type": "object"
+          }
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "level": {
-              "enum": [
-                "info",
-                "warn",
-                "error"
-              ]
+          "if": {
+            "properties": {
+              "op": {
+                "const": "log"
+              }
             },
-            "op": {
-              "const": "log"
-            },
-            "parts": {
-              "items": {
-                "oneOf": [
-                  {
-                    "maxLength": 16384,
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/expr"
-                  }
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "level": {
+                "enum": [
+                  "info",
+                  "warn",
+                  "error"
                 ]
               },
-              "maxItems": 256,
-              "minItems": 1,
-              "type": "array"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "level",
-            "parts"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "ms": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
-            },
-            "op": {
-              "const": "wait"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "ms"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "condition": {
-              "$ref": "#/$defs/expr"
-            },
-            "on": {
-              "additionalProperties": false,
-              "properties": {
-                "succeeded": {
-                  "$ref": "#/$defs/body"
+              "op": {
+                "const": "log"
+              },
+              "parts": {
+                "items": {
+                  "oneOf": [
+                    {
+                      "maxLength": 16384,
+                      "type": "string"
+                    },
+                    {
+                      "$ref": "#/$defs/expr"
+                    }
+                  ]
                 },
-                "timed_out": {
-                  "$ref": "#/$defs/body"
-                }
+                "maxItems": 256,
+                "minItems": 1,
+                "type": "array"
               },
-              "required": [
-                "succeeded",
-                "timed_out"
-              ],
-              "type": "object"
+              "src": {
+                "$ref": "#/$defs/src"
+              }
             },
-            "op": {
-              "const": "wait_until"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            },
-            "timeoutMs": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "condition",
-            "timeoutMs",
-            "on"
-          ],
-          "type": "object"
+            "required": [
+              "op",
+              "src",
+              "level",
+              "parts"
+            ],
+            "type": "object"
+          }
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "op": {
-              "const": "set_target"
+          "if": {
+            "properties": {
+              "op": {
+                "const": "wait"
+              }
             },
-            "path": {
-              "maxLength": 256,
-              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
-              "type": "string"
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "ms": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "op": {
+                "const": "wait"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              }
             },
-            "src": {
-              "$ref": "#/$defs/src"
+            "required": [
+              "op",
+              "src",
+              "ms"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "wait_until"
+              }
             },
-            "value": {
-              "additionalProperties": {
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "condition": {
                 "$ref": "#/$defs/expr"
               },
-              "maxProperties": 32,
-              "type": "object"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "path",
-            "value"
-          ],
-          "type": "object"
+              "on": {
+                "additionalProperties": false,
+                "properties": {
+                  "succeeded": {
+                    "$ref": "#/$defs/body"
+                  },
+                  "timed_out": {
+                    "$ref": "#/$defs/body"
+                  }
+                },
+                "required": [
+                  "succeeded",
+                  "timed_out"
+                ],
+                "type": "object"
+              },
+              "op": {
+                "const": "wait_until"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "timeoutMs": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "condition",
+              "timeoutMs",
+              "on"
+            ],
+            "type": "object"
+          }
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "ms": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
+          "if": {
+            "properties": {
+              "op": {
+                "const": "set_target"
+              }
             },
-            "on": {
-              "$ref": "#/$defs/results"
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "set_target"
+              },
+              "path": {
+                "maxLength": 256,
+                "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+                "type": "string"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "value": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                },
+                "maxProperties": 32,
+                "type": "object"
+              }
             },
-            "op": {
-              "const": "hold"
+            "required": [
+              "op",
+              "src",
+              "path",
+              "value"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "hold"
+              }
             },
-            "path": {
-              "maxLength": 256,
-              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
-              "type": "string"
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "ms": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "on": {
+                "$ref": "#/$defs/results"
+              },
+              "op": {
+                "const": "hold"
+              },
+              "path": {
+                "maxLength": 256,
+                "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+                "type": "string"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "timeoutMs": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "value": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                },
+                "maxProperties": 32,
+                "type": "object"
+              }
             },
-            "src": {
-              "$ref": "#/$defs/src"
+            "required": [
+              "op",
+              "src",
+              "path",
+              "value",
+              "ms",
+              "timeoutMs",
+              "on"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "invoke"
+              }
             },
-            "timeoutMs": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "args": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                },
+                "maxProperties": 32,
+                "type": "object"
+              },
+              "on": {
+                "$ref": "#/$defs/results"
+              },
+              "op": {
+                "const": "invoke"
+              },
+              "path": {
+                "maxLength": 256,
+                "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+                "type": "string"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "timeoutMs": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              }
             },
-            "value": {
-              "additionalProperties": {
+            "required": [
+              "op",
+              "src",
+              "path",
+              "args",
+              "timeoutMs",
+              "on"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "cancel"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "on": {
+                "$ref": "#/$defs/results"
+              },
+              "op": {
+                "const": "cancel"
+              },
+              "scope": {
+                "const": "body"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "timeoutMs": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "scope",
+              "timeoutMs",
+              "on"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "stop"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "on": {
+                "$ref": "#/$defs/results"
+              },
+              "op": {
+                "const": "stop"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "timeoutMs": {
+                "maximum": 86400000,
+                "minimum": 1,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "timeoutMs",
+              "on"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "if"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "condition": {
                 "$ref": "#/$defs/expr"
               },
-              "maxProperties": 32,
-              "type": "object"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "path",
-            "value",
-            "ms",
-            "timeoutMs",
-            "on"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "args": {
-              "additionalProperties": {
-                "$ref": "#/$defs/expr"
-              },
-              "maxProperties": 32,
-              "type": "object"
-            },
-            "on": {
-              "$ref": "#/$defs/results"
-            },
-            "op": {
-              "const": "invoke"
-            },
-            "path": {
-              "maxLength": 256,
-              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
-              "type": "string"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            },
-            "timeoutMs": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "path",
-            "args",
-            "timeoutMs",
-            "on"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "on": {
-              "$ref": "#/$defs/results"
-            },
-            "op": {
-              "const": "cancel"
-            },
-            "scope": {
-              "const": "body"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            },
-            "timeoutMs": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "scope",
-            "timeoutMs",
-            "on"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "on": {
-              "$ref": "#/$defs/results"
-            },
-            "op": {
-              "const": "stop"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            },
-            "timeoutMs": {
-              "maximum": 86400000,
-              "minimum": 1,
-              "type": "integer"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "timeoutMs",
-            "on"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "condition": {
-              "$ref": "#/$defs/expr"
-            },
-            "else": {
-              "$ref": "#/$defs/body"
-            },
-            "op": {
-              "const": "if"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            },
-            "then": {
-              "$ref": "#/$defs/body"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "condition",
-            "then",
-            "else"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "body": {
-              "$ref": "#/$defs/body"
-            },
-            "count": {
-              "maximum": 1000,
-              "minimum": 1,
-              "type": "integer"
-            },
-            "op": {
-              "const": "loop"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "count",
-            "body"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "body": {
-              "$ref": "#/$defs/body"
-            },
-            "forever": {
-              "const": true
-            },
-            "op": {
-              "const": "loop"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "forever",
-            "body"
-          ],
-          "type": "object"
-        },
-        {
-          "additionalProperties": false,
-          "properties": {
-            "children": {
-              "items": {
+              "else": {
                 "$ref": "#/$defs/body"
               },
-              "maxItems": 8,
-              "minItems": 2,
-              "type": "array"
+              "op": {
+                "const": "if"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "then": {
+                "$ref": "#/$defs/body"
+              }
             },
-            "mode": {
-              "enum": [
-                "all",
-                "any"
-              ]
-            },
-            "op": {
-              "const": "parallel"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
-          },
-          "required": [
-            "op",
-            "src",
-            "mode",
-            "children"
-          ],
-          "type": "object"
+            "required": [
+              "op",
+              "src",
+              "condition",
+              "then",
+              "else"
+            ],
+            "type": "object"
+          }
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "name": {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
-              "type": "string"
+          "if": {
+            "properties": {
+              "op": {
+                "const": "loop"
+              }
             },
-            "op": {
-              "const": "assign"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            },
-            "value": {
-              "$ref": "#/$defs/expr"
-            }
+            "required": [
+              "op"
+            ]
           },
-          "required": [
-            "op",
-            "src",
-            "name",
-            "value"
-          ],
-          "type": "object"
+          "then": {
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "not": {
+                  "required": [
+                    "forever"
+                  ]
+                },
+                "required": [
+                  "count"
+                ]
+              },
+              {
+                "not": {
+                  "required": [
+                    "count"
+                  ]
+                },
+                "required": [
+                  "forever"
+                ]
+              }
+            ],
+            "properties": {
+              "body": {
+                "$ref": "#/$defs/body"
+              },
+              "count": {
+                "maximum": 1000,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "forever": {
+                "const": true
+              },
+              "op": {
+                "const": "loop"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "body"
+            ],
+            "type": "object"
+          }
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "name": {
-              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
-              "type": "string"
+          "if": {
+            "properties": {
+              "op": {
+                "const": "parallel"
+              }
             },
-            "op": {
-              "const": "read"
-            },
-            "path": {
-              "maxLength": 256,
-              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
-              "type": "string"
-            },
-            "src": {
-              "$ref": "#/$defs/src"
-            }
+            "required": [
+              "op"
+            ]
           },
-          "required": [
-            "op",
-            "src",
-            "path",
-            "name"
-          ],
-          "type": "object"
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "#/$defs/body"
+                },
+                "maxItems": 8,
+                "minItems": 2,
+                "type": "array"
+              },
+              "mode": {
+                "enum": [
+                  "all",
+                  "any"
+                ]
+              },
+              "op": {
+                "const": "parallel"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "mode",
+              "children"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "assign"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              },
+              "op": {
+                "const": "assign"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "name",
+              "value"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "read"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              },
+              "op": {
+                "const": "read"
+              },
+              "path": {
+                "maxLength": 256,
+                "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+                "type": "string"
+              },
+              "src": {
+                "$ref": "#/$defs/src"
+              }
+            },
+            "required": [
+              "op",
+              "src",
+              "path",
+              "name"
+            ],
+            "type": "object"
+          }
         }
-      ]
+      ],
+      "properties": {
+        "op": {
+          "enum": [
+            "noop",
+            "log",
+            "wait",
+            "wait_until",
+            "set_target",
+            "hold",
+            "invoke",
+            "cancel",
+            "stop",
+            "if",
+            "loop",
+            "parallel",
+            "assign",
+            "read"
+          ]
+        }
+      },
+      "required": [
+        "op",
+        "src"
+      ],
+      "type": "object"
     },
     "trigger": {
       "oneOf": [

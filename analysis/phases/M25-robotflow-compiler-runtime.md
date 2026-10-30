@@ -79,3 +79,23 @@ structured-region/yield/resource checks. 30 groups /8.869 s PASS; warm 200-node
 lint44.816 ms on 2 CPUs/256MiB; RSS22/Protobus112 regressions PASS. ADR-0078 and
 checkpoint JSON record boundaries/limits. T04 candidate CI pending; T05 source
 codegen/goldens next, no runtime or live workflow acceptance yet.
+
+T05 local PASS (2026-10-31): deterministic native async Python emitter, fixed
+10-file application set, immutable normalized source/IR/catalog/profile/units/
+registry identities and exact UTF-8 file/source/artifact hashes (ADR-0079).
+RW-A..D reviewed golden IR/source files compile twice to identical bytes, including
+UI/node/edge order invariance. Generated Python uses native async/if/for/while;
+module import does not run the application. Hostile log strings remain data.
+Runtime wheel hash is omitted until an actual T06 package exists; live deployment
+must reject an absent pin. This is codegen evidence, not runtime execution.
+
+The first complex template run exposed exponential recursive JSON Schema checking:
+wrong-opcode alternatives recursively rechecked result branches. Failure log kept
+in runtime/m25/codegen-failed-recursive-schema-performance.log. Discriminated
+opcode validation now visits only the selected closed variant; loop count/forever
+remain exclusive. Negative nested/open-field fixtures plus bounded four-template
+regression cover the fix. Final 38 groups PASS /14.726 s in Compose; precheck and
+diff whitespace checks PASS. Localized property/enum labels added to single-source
+block descriptors for the upcoming UI. T05 candidate CI pending. T06 next;
+conformance/live/UI/video remain OPEN.
+T04 e6920f58 CI qualified: Robotics41105342036 and general41105342105 SUCCESS.

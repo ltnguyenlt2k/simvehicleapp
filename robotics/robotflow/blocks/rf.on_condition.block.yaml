@@ -25,19 +25,45 @@
         "queue",
         "drop",
         "restart"
-      ]
+      ],
+      "title": {
+        "vi": "Khi kích hoạt lại",
+        "en": "On repeated activation"
+      },
+      "labels": {
+        "queue": {
+          "vi": "Xếp hàng",
+          "en": "Queue"
+        },
+        "drop": {
+          "vi": "Bỏ qua lượt mới",
+          "en": "Ignore new activation"
+        },
+        "restart": {
+          "vi": "Khởi động lại nhánh",
+          "en": "Restart behavior"
+        }
+      }
     },
     "queueMax": {
       "type": "integer",
       "required": true,
       "default": 1,
       "minimum": 1,
-      "maximum": 16
+      "maximum": 16,
+      "title": {
+        "vi": "Số lượt chờ tối đa",
+        "en": "Maximum queued activations"
+      }
     },
     "when": {
       "type": "expression",
       "required": true,
-      "default": "Robot.PowerSystem.Battery.StateOfCharge < 20 %"
+      "default": "Robot.PowerSystem.Battery.StateOfCharge < 20 %",
+      "title": {
+        "vi": "Điều kiện",
+        "en": "Condition"
+      }
     },
     "forMs": {
       "type": "duration",
@@ -45,7 +71,11 @@
       "default": 0,
       "unit": "ms",
       "minimum": 0,
-      "maximum": 86400000
+      "maximum": 86400000,
+      "title": {
+        "vi": "Giữ điều kiện (ms)",
+        "en": "Condition hold (ms)"
+      }
     }
   },
   "semantics": {

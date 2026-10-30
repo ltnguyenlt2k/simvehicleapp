@@ -38,7 +38,21 @@
       "values": [
         "all",
         "any"
-      ]
+      ],
+      "title": {
+        "vi": "Cách chờ các nhánh",
+        "en": "Child completion mode"
+      },
+      "labels": {
+        "all": {
+          "vi": "Chờ tất cả",
+          "en": "Wait for all"
+        },
+        "any": {
+          "vi": "Chờ một nhánh",
+          "en": "Wait for one"
+        }
+      }
     }
   },
   "semantics": {

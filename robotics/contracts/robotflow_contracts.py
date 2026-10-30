@@ -61,7 +61,7 @@ def block_schema():
     definitions['prop']=obj({'type':enum('rss-path','expression','duration','number','integer','string','boolean','enum','waypoints'),
         'required':{'type':'boolean'},'default':ref('json'),'unit':TEXT,'minimum':{'type':'number'},
         'maximum':{'type':'number'},'values':arr(ref('json'),1,256),'kind':enum('sensor','attribute','setpoint','command'),
-        'title':localized},['type','required'])
+        'title':localized,'labels':record(localized,256)},['type','required'])
     port=obj({'required':{'type':'boolean'},'role':enum('in','next','body','branch','result','join'),
               'fanIn':{'type':'boolean'}},['required','role'])
     ports=lambda maximum:dict(record(port,maximum),propertyNames=IDENT)
@@ -114,11 +114,19 @@ def ir_schema():
         statement('cancel',{'scope':const('body'),'timeoutMs':MS,'on':ref('results')}),
         statement('stop',{'timeoutMs':MS,'on':ref('results')}),
         statement('if',{'condition':ref('expr'),'then':ref('body'),'else':ref('body')}),
-        statement('loop',{'count':{'type':'integer','minimum':1,'maximum':1000},'body':ref('body')}),
-        statement('loop',{'forever':const(True),'body':ref('body')}),
+        obj({'op':const('loop'),'src':ref('src'),'body':ref('body'),
+             'count':{'type':'integer','minimum':1,'maximum':1000},'forever':const(True)},['op','src','body'],
+            oneOf=[{'required':['count'],'not':{'required':['forever']}},
+                   {'required':['forever'],'not':{'required':['count']}}]),
         statement('parallel',{'mode':enum('all','any'),'children':arr(ref('body'),2,8)}),
         statement('assign',{'name':IDENT,'value':ref('expr')}),statement('read',{'path':PATH,'name':IDENT})]
-    definitions['statement']={'oneOf':statements}
+    # Shared recursive fields such as `on` must only be visited for the matching
+    # opcode. A oneOf over all full statement schemas recursively revalidates
+    # every continuation under several wrong opcodes, causing exponential work.
+    definitions['statement']={'type':'object','required':['op','src'],
+        'properties':{'op':enum(*(item['properties']['op']['const'] for item in statements))},
+        'allOf':[{'if':{'properties':{'op':item['properties']['op']},'required':['op']},'then':item}
+                 for item in statements]}
     behavior=obj({'id':IDENT,'src':ref('src'),'trigger':ref('trigger'),
         'concurrency':enum('queue','drop','restart'),'queueMax':{'type':'integer','minimum':1,'maximum':16},'body':ref('body')})
     return dict(HEADER,**{'$id':'urn:robotflow:rfir.v1','$defs':definitions},**obj({
@@ -139,9 +147,20 @@ def profile_schema():
             'maxAbsCoordinateM':{'type':'number','minimum':.1,'maximum':1000}})}))
 
 
+def lock_schema():
+    paths=['app/__init__.py','app/flow.py','app/main.py','rfir.json','rss-catalog.json',
+           'profile.json','units.v1.json','registry.json','workflow.json']
+    properties={'schema':const('rflow-lock.v1'),'compilerVersion':const('0.1.0'),'runtimeVersion':const('0.1.0'),
+        'profileId':PROFILE,'profileHash':HASH,'workflowHash':HASH,'irHash':HASH,'catalogHash':HASH,
+        'registryHash':HASH,'unitsHash':HASH,'sourceHash':HASH,'artifactHash':HASH,
+        'files':obj({path:HASH for path in paths}),'runtimePackageHash':HASH}
+    return dict(HEADER,**{'$id':'urn:robotflow:rflow-lock.v1'},**obj(properties,
+        [key for key in properties if key!='runtimePackageHash']))
+
+
 def schemas():
     return {'robotflow.v1':workflow_schema(),'block.v1':block_schema(),'rfir.v1':ir_schema(),
-            'robotflow-profile.v1':profile_schema()}
+            'robotflow-profile.v1':profile_schema(),'rflow-lock.v1':lock_schema()}
 
 
 if __name__=='__main__':

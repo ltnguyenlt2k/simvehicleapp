@@ -87,6 +87,18 @@ class ContractTests(unittest.TestCase):
             'else':[{'op':'parallel','src':{'nodeId':'parallel'},'mode':'any','children':[[terminal],[terminal]]}]}]
         self.validators['rfir.v1'].validate(value)
 
+    def test_discriminated_statement_remains_closed_and_loop_mode_exclusive(self):
+        for statement in (
+            {'op':'wait','ms':20,'body':[]},
+            {'op':'loop','body':[]},
+            {'op':'loop','body':[],'count':1,'forever':True},
+            {'op':'loop','body':[],'forever':False},
+            {'op':'loop','body':[{'op':'noop','src':{'nodeId':'nested'},'shell':'bad'}],'count':1},
+        ):
+            value=ir();value['behaviors'][0]['body']=[dict(statement,src={'nodeId':'step'})]
+            with self.subTest(statement=statement):
+                self.assertFalse(self.validators['rfir.v1'].is_valid(value))
+
     def test_expression_wire_rejects_type_confusion_overflow_and_arbitrary_call(self):
         expressions=[{'kind':'literal','type':'bool','value':1},
             {'kind':'literal','type':'uint8','value':256},

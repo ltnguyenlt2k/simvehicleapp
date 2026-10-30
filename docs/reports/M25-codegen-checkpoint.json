@@ -1,0 +1,21 @@
+{
+  "scope": "M25-T05 codegen only; runtime/live/video OPEN",
+  "tests": {
+    "groups": 38,
+    "seconds": 14.726,
+    "result": "PASS"
+  },
+  "image": "sha256:b675a71a058a6d84e3034aadadeea4644ee9862d3ecaeeff8668479af2fb5dff",
+  "sources": {
+    "robotics/robotflow/codegen.py": "sha256:5f83f43c84d18e74d96ab61cd699d216b22b2e563f6aa9baabd8851a5ec18d0c",
+    "robotics/robotflow/templates.py": "sha256:ff8917918a017d1198ca28efbaa5aa0162b6e47fda41486b3f1a0501494f3af6",
+    "robotics/contracts/rfir.v1.json": "sha256:eb0fdbd6b1adf4e7897ea4246a563f6a225959801cad6ac8e952a78db9670761",
+    "robotics/contracts/rflow-lock.v1.json": "sha256:4866de82eb7b1e7f8f836a7d1c5acd3e98f78bafac4d76707643de6ecee3f811"
+  },
+  "goldens": {
+    "RW-A": "sha256:746f35121d6a2838917388ecdbb0cc2b35273e5d25d4cd65829f44036b596d68",
+    "RW-C": "sha256:a6dc3f13f1c433168a3eebbce854cbd2b4887b2e1b8c869fabd8c56a3957f2f3",
+    "RW-B": "sha256:eb0ae99672185415735641e0f410d6e4b83d9ccbecafc3723f06cb5272e99dfb",
+    "RW-D": "sha256:22d3b8b764e94057b72b042b3ee739f5a9eef44d87f57c9b02448f88ef945388"
+  }
+}

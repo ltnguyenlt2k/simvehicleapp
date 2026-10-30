@@ -31,12 +31,34 @@
         "info",
         "warn",
         "error"
-      ]
+      ],
+      "title": {
+        "vi": "Mức bản tin",
+        "en": "Message level"
+      },
+      "labels": {
+        "info": {
+          "vi": "Thông tin",
+          "en": "Information"
+        },
+        "warn": {
+          "vi": "Lưu ý",
+          "en": "Notice"
+        },
+        "error": {
+          "vi": "Lỗi",
+          "en": "Error"
+        }
+      }
     },
     "message": {
       "type": "string",
       "required": true,
-      "default": "Robot workflow"
+      "default": "Robot workflow",
+      "title": {
+        "vi": "Nội dung bản tin",
+        "en": "Message"
+      }
     }
   },
   "semantics": {

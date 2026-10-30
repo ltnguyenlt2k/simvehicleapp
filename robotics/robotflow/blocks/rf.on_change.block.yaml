@@ -25,20 +25,46 @@
         "queue",
         "drop",
         "restart"
-      ]
+      ],
+      "title": {
+        "vi": "Khi kích hoạt lại",
+        "en": "On repeated activation"
+      },
+      "labels": {
+        "queue": {
+          "vi": "Xếp hàng",
+          "en": "Queue"
+        },
+        "drop": {
+          "vi": "Bỏ qua lượt mới",
+          "en": "Ignore new activation"
+        },
+        "restart": {
+          "vi": "Khởi động lại nhánh",
+          "en": "Restart behavior"
+        }
+      }
     },
     "queueMax": {
       "type": "integer",
       "required": true,
       "default": 1,
       "minimum": 1,
-      "maximum": 16
+      "maximum": 16,
+      "title": {
+        "vi": "Số lượt chờ tối đa",
+        "en": "Maximum queued activations"
+      }
     },
     "path": {
       "type": "rss-path",
       "required": true,
       "default": "Robot.Perception.Marker.Count",
-      "kind": "sensor"
+      "kind": "sensor",
+      "title": {
+        "vi": "Tín hiệu",
+        "en": "Signal"
+      }
     }
   },
   "semantics": {

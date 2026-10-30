@@ -49,7 +49,33 @@
         "TILT",
         "LIFT_FRONT_LEFT",
         "JUMP"
-      ]
+      ],
+      "title": {
+        "vi": "Tên",
+        "en": "Name"
+      },
+      "labels": {
+        "CROUCH": {
+          "vi": "Hạ thân",
+          "en": "Crouch"
+        },
+        "BOW": {
+          "vi": "Cúi chào",
+          "en": "Bow"
+        },
+        "TILT": {
+          "vi": "Nghiêng thân",
+          "en": "Tilt"
+        },
+        "LIFT_FRONT_LEFT": {
+          "vi": "Nhấc chân trước trái",
+          "en": "Lift front-left foot"
+        },
+        "JUMP": {
+          "vi": "Nhảy",
+          "en": "Jump"
+        }
+      }
     },
     "timeoutMs": {
       "type": "duration",
@@ -57,7 +83,11 @@
       "default": 15000,
       "unit": "ms",
       "minimum": 1,
-      "maximum": 15000
+      "maximum": 15000,
+      "title": {
+        "vi": "Thời hạn (ms)",
+        "en": "Timeout (ms)"
+      }
     }
   },
   "semantics": {

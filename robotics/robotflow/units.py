@@ -38,7 +38,10 @@ class UnitRegistry:
             self._units[symbol]=(dimension,item['scale'],item.get('offset',0))
             if item['scale']==1 and item.get('offset',0)==0: self._canonical.setdefault(dimension,symbol)
         self.symbols=tuple(sorted((symbol for symbol in self._units if symbol!='1'),key=lambda value:(-len(value),value)))
-        self.hash='sha256:'+hashlib.sha256(json.dumps(data,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()).hexdigest()
+        self._artifact=json.dumps(data,sort_keys=True,separators=(',',':'),ensure_ascii=False).encode()
+        self.hash='sha256:'+hashlib.sha256(self._artifact).hexdigest()
+
+    def artifact(self):return json.loads(self._artifact)
 
     def info(self,symbol):
         try:return self._units[symbol or '1']

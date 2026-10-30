@@ -26,12 +26,20 @@
     "name": {
       "type": "string",
       "required": true,
-      "default": "count"
+      "default": "count",
+      "title": {
+        "vi": "Tên",
+        "en": "Name"
+      }
     },
     "value": {
       "type": "expression",
       "required": true,
-      "default": "1"
+      "default": "1",
+      "title": {
+        "vi": "Giá trị",
+        "en": "Value"
+      }
     }
   },
   "semantics": {

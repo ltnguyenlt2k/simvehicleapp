@@ -43,13 +43,21 @@
       "type": "expression",
       "required": true,
       "default": "0.2 m/s",
-      "unit": "m/s"
+      "unit": "m/s",
+      "title": {
+        "vi": "Tốc độ tiến/lùi",
+        "en": "Forward/reverse speed"
+      }
     },
     "angular": {
       "type": "expression",
       "required": true,
       "default": "0 rad/s",
-      "unit": "rad/s"
+      "unit": "rad/s",
+      "title": {
+        "vi": "Tốc độ quay",
+        "en": "Turn speed"
+      }
     },
     "durationMs": {
       "type": "duration",
@@ -57,7 +65,11 @@
       "default": 500,
       "unit": "ms",
       "minimum": 1,
-      "maximum": 10000
+      "maximum": 10000,
+      "title": {
+        "vi": "Thời gian (ms)",
+        "en": "Duration (ms)"
+      }
     },
     "timeoutMs": {
       "type": "duration",
@@ -65,7 +77,11 @@
       "default": 12000,
       "unit": "ms",
       "minimum": 1,
-      "maximum": 15000
+      "maximum": 15000,
+      "title": {
+        "vi": "Thời hạn (ms)",
+        "en": "Timeout (ms)"
+      }
     }
   },
   "semantics": {

@@ -128,6 +128,8 @@ def load_registry(directory=None,schema_path='/contracts/block.v1.json'):
                     values=descriptor.get('values',[])
                     if not values or len({canonical(value) for value in values})!=len(values):
                         raise RegistryError('empty/duplicate property enum')
+                    if 'labels' in descriptor and set(descriptor['labels'])!={str(value) for value in values}:
+                        raise RegistryError('enum labels must cover exactly the declared values')
                 if 'default' in descriptor: property_value(descriptor,descriptor['default'])
             if block['category']=='robot':
                 outputs=block['ports']['outputs']

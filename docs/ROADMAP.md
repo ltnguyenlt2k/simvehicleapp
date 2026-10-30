@@ -581,3 +581,5 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 | Hardware/Jetson | OPEN / OUT OF SCOPE | No hardware evidence |
 
 M22 gate PASS 2026-10-29: 15 containerized RSS tests, 113-node deterministic catalog, complete 48-topic disposition matrix; S-R1/S-R2/S-R3 actual DDS/build/motion PASS. Robotics CI run 40874429999 SUCCESS at 0abd1585. M23 IN_PROGRESS: protocol then performance spike before broker. General vehicle CI osv scan failed separately; overall CI not claimed green. Evidence: docs/reports/M22.md. Robot cleanup DISARMED. Commit/push authorization persists for this feature.
+
+M25-T05 local PASS: RW-A..D native Python/IR goldens ×2, exact artifact identities, 38 groups /14.726 s; recursive schema performance failure fixed and retained. T04 CI green (41105342036/41105342105). T06 runtime next; full workflow UI/video not yet delivered. See M25-progress.md.
