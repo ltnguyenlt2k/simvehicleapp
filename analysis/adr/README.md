@@ -207,3 +207,5 @@ flowchart TB
 - [ADR-0075](ADR-0075-dog-brain-authority-and-result-correlation.md): Accepted under user delegation 2026-10-30; pinned Brain controller wire contract, challenge/fence identity, stable mission correlation and map generation. Combined adapter/live acceptance remains OPEN.
 
 - [ADR-0076](ADR-0076-robotflow-closed-artifact-contracts.md): Accepted for M25 implementation under delegation; closed graph/block/typed IR schemas, deterministic schema source and additive localized RF diagnostics. Compiler/runtime/live gates remain OPEN.
+
+- [ADR-0077](ADR-0077-robotflow-expression-units.md): Accepted for M25-T03 implementation; bounded typed Pratt expressions and canonical unit data, decimal unit normalization, no eval. Compiler/runtime conformance still required.

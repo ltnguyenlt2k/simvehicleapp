@@ -1,5 +1,6 @@
 """RSS compiler: pure catalog generation, no robot middleware dependencies."""
 import argparse, copy, hashlib, json, math, os, re, sys
+from decimal import Decimal, InvalidOperation, localcontext
 from pathlib import Path
 import yaml
 from jsonschema import Draft202012Validator
@@ -22,6 +23,12 @@ def load(path):
     with Path(path).open() as f: return yaml.load(f,Loader=UniqueLoader)
 def canonical(value):
     return json.dumps(value,sort_keys=True,separators=(",",":"),ensure_ascii=False,allow_nan=False).encode()
+
+def default_units():
+    artifact=json.loads((CONTRACTS/"units.v1.json").read_text())
+    if artifact.get("schema")!="robot-units.v1" or not isinstance(artifact.get("units"),dict):
+        raise RSSFailure("RSS1001","invalid unit contract")
+    return artifact["units"]
 def expand(path):
     match=re.search(r"\[([^\[\]]+)\]",path)
     if not match: return [path]
@@ -30,11 +37,22 @@ def expand(path):
         raise RSSFailure("RSS1003",path)
     return [p for v in values for p in expand(path[:match.start()]+"."+v+path[match.end():])]
 def convert(value,source,target,units=None):
-    units=units or load(HERE/"units.yaml")
+    units=units or default_units()
     if source not in units or target not in units: raise RSSFailure("RSS2001","unknown unit")
     a,b=units[source],units[target]
     if a["dimension"]!=b["dimension"]: raise RSSFailure("RSS2002","incompatible dimensions")
-    return (value*a["scale"]+a.get("offset",0)-b.get("offset",0))/b["scale"]
+    try: valid=type(value) in (int,float) and math.isfinite(value)
+    except OverflowError: valid=False
+    if not valid: raise RSSFailure("RSS2003","finite numeric conversion value required")
+    with localcontext() as context:
+        context.prec=50
+        try:
+            result=float((Decimal(str(value))*Decimal(str(a["scale"]))+Decimal(str(a.get("offset",0)))
+                -Decimal(str(b.get("offset",0))))/Decimal(str(b["scale"])))
+        except (InvalidOperation,ZeroDivisionError,OverflowError) as error:
+            raise RSSFailure("RSS2003","invalid numeric conversion") from error
+        if not math.isfinite(result): raise RSSFailure("RSS2003","conversion overflow")
+        return result
 def check_value(value,field,context):
     typ=field["type"]
     limits={"int32":(-2**31,2**31-1),"int64":(-2**63,2**63-1),"uint8":(0,255),"uint32":(0,2**32-1)}
@@ -47,7 +65,7 @@ def check_value(value,field,context):
     if not valid or ("values" in field and value not in field["values"]): raise RSSFailure("RSS2003",context)
     if ("min" in field and value<field["min"]) or ("max" in field and value>field["max"]): raise RSSFailure("RSS2004",context)
 def build(spec,units=None):
-    units=units or load(HERE/"units.yaml")
+    units=units or default_units()
     schema=json.loads((CONTRACTS/"rss-spec.v1.json").read_text())
     errors=sorted(Draft202012Validator(schema).iter_errors(spec),key=lambda e:str(list(e.path)))
     if errors: raise RSSFailure("RSS1001",errors[0].message)

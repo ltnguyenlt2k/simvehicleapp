@@ -65,3 +65,10 @@ All robot outputs/timeouts required. Combined 14 tests PASS /0.870 s, precheck
 PASS. Hold explicit overall timeout amendment in ADR-0076; no released artifacts
 exist. T02 candidate CI pending. T03 parser/units next; no runtime/UI/video claim.
 M24 scoped live technical gate closed with 350f2ca8 CI green and 1800-second soak.
+
+T03 local PASS: 163 expression cases, 19 combined groups /1.055 s, every valid
+constant AST schema-validated; 22 RSS regressions /0.481 s and frozen catalog
+bytes/hash unchanged. Canonical data-only units.v1 (ADR-0077), checked source
+snapshot, signed affine conversion and numeric/grammar/depth boundaries.
+Failure retained before decimal normalization fix. Candidate CI pending; T04
+compiler diagnostic/flow/safety/performance gates next. Runtime/GUI/video OPEN.

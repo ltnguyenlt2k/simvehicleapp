@@ -1,0 +1,176 @@
+{
+  "bases": [
+    "length",
+    "mass",
+    "time",
+    "current",
+    "temperature",
+    "angle"
+  ],
+  "dimensions": {
+    "acceleration": [
+      1,
+      0,
+      -2,
+      0,
+      0,
+      0
+    ],
+    "angle": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "angular_velocity": [
+      0,
+      0,
+      -1,
+      0,
+      0,
+      1
+    ],
+    "current": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    "force": [
+      1,
+      1,
+      -2,
+      0,
+      0,
+      0
+    ],
+    "length": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "scalar": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "temperature": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ],
+    "time": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "torque": [
+      2,
+      1,
+      -2,
+      0,
+      0,
+      0
+    ],
+    "velocity": [
+      1,
+      0,
+      -1,
+      0,
+      0,
+      0
+    ],
+    "voltage": [
+      2,
+      1,
+      -3,
+      -1,
+      0,
+      0
+    ]
+  },
+  "schema": "robot-units.v1",
+  "units": {
+    "%": {
+      "dimension": "scalar",
+      "scale": 0.01
+    },
+    "1": {
+      "dimension": "scalar",
+      "scale": 1
+    },
+    "A": {
+      "dimension": "current",
+      "scale": 1
+    },
+    "K": {
+      "dimension": "temperature",
+      "scale": 1
+    },
+    "N": {
+      "dimension": "force",
+      "scale": 1
+    },
+    "N·m": {
+      "dimension": "torque",
+      "scale": 1
+    },
+    "V": {
+      "dimension": "voltage",
+      "scale": 1
+    },
+    "cm": {
+      "dimension": "length",
+      "scale": 0.01
+    },
+    "m": {
+      "dimension": "length",
+      "scale": 1
+    },
+    "m/s": {
+      "dimension": "velocity",
+      "scale": 1
+    },
+    "m/s²": {
+      "dimension": "acceleration",
+      "scale": 1
+    },
+    "ms": {
+      "dimension": "time",
+      "scale": 0.001
+    },
+    "rad": {
+      "dimension": "angle",
+      "scale": 1
+    },
+    "rad/s": {
+      "dimension": "angular_velocity",
+      "scale": 1
+    },
+    "s": {
+      "dimension": "time",
+      "scale": 1
+    },
+    "°C": {
+      "dimension": "temperature",
+      "offset": 273.15,
+      "scale": 1
+    }
+  }
+}

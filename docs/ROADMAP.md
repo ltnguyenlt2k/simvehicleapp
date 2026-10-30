@@ -67,7 +67,7 @@
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
 | [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069–0074 Accepted | ✔ | T01–T09 scoped gate PASS at 62529137; Robotics CI 40896228193; [report](reports/M23.md); general CI queued |
 | [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069, 0075 Accepted | ✔ | Scoped technical PASS: actual ROS commands/faults, 21-path equality, 1800 s/four-client soak, refresh expiry 0.294 s; 350f2ca8 CI green; workflow/UI/final video remain M25–M27 |
-| [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069, 0076 Accepted | 🔄 | T01 Robotics CI PASS; T02 local 24 blocks/14 test groups PASS, CI pending; T03–T09 OPEN; no workflow runtime yet |
+| [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069, 0076, 0077 Accepted | 🔄 | T01 Robotics CI PASS; T02 24 blocks PASS; T03 local 163 expression cases/19 groups + RSS22 PASS, CI pending; T04–T09 OPEN; no workflow runtime yet |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
 | [M27](#m27--robotics-e2e-live-video-tài-liệu) | Complex live E2E, full video, docs, baseline | 0064–0070 Accepted | ☐ | 0/6; RW-E journey fixed in acceptance design |
 
@@ -522,7 +522,7 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 |---|---|---|---|---|
 | Schema `robotflow.v1`, `rfir.v1`, `block.v1`, mã `RF*` | 0067,0076 | ✔ | Local 9 contract groups /0.142 s PASS, malformed/typed/recursive/schema-sync/all-opcode coverage; RSS20 PASS; CI pending, no compiler/runtime acceptance | T01 |
 | Block registry v0.1 | 0067,0076 | ✔ | 24 canonical single-source blocks; all robot result ports/timeouts; 14 tests /0.870 s local PASS; candidate CI pending | T02 |
-| Biểu thức + kiểu/đơn vị | 0067 | ☐ | | T03 |
+| Biểu thức + kiểu/đơn vị | 0067,0077 | ✔ | 163 explicit valid/error cases, 19 combined groups /1.055 s PASS; RSS22/frozen catalog PASS; candidate CI pending | T03 |
 | Compiler S0–S6 + IR + hash | 0067 | ☐ | | T04 |
 | Codegen Python + golden RW-A..D | 0067 | ☐ | | T05 |
 | Runtime `rfrt` | 0067 | ☐ | | T06 |

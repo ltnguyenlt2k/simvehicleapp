@@ -32,3 +32,8 @@ license_file = root / 'contracts/licenses/dog-ros2-simulation-LICENSE'
 if hashlib.sha256(license_file.read_bytes()).hexdigest() != provenance['licenseSha256']:
     raise SystemExit('Pinned dog authority license checksum mismatch')
 print('Pinned dog authority wire contract PASS')
+unit_contract=json.loads((root/'contracts/units.v1.json').read_text())
+if (unit_contract.get('schema')!='robot-units.v1'
+        or unit_contract['units']!=json.loads((root/'rss/units.yaml').read_text())):
+    raise SystemExit('RSS unit compatibility snapshot differs from canonical contract')
+print('Canonical robotics unit data/snapshot PASS')

@@ -105,10 +105,22 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(convert(1000, 'ms', 's'), 1)
         self.assertEqual(convert(20, '%', '1'), .2)
         self.assertAlmostEqual(convert(0, '°C', 'K'), 273.15)
+        self.assertEqual(convert(-20,'°C','K'),253.15)
+        self.assertEqual(convert(253.15,'K','°C'),-20.)
         with self.assertRaisesRegex(RSSFailure, 'RSS2002'):
             convert(1, 'm', 's')
         with self.assertRaisesRegex(RSSFailure, 'RSS2001'):
             convert(1, 'unknown', 's')
+
+    def test_unit_conversion_rejects_bool_nonfinite_and_overflow(self):
+        for value in (True,float('nan'),float('inf'),2**2000):
+            with self.subTest(value=value),self.assertRaisesRegex(RSSFailure,'RSS2003'):
+                convert(value,'m','cm')
+        with self.assertRaisesRegex(RSSFailure,'RSS2003'): convert(1e308,'m','cm')
+
+    def test_unit_contract_change_preserves_frozen_catalog_bytes(self):
+        expected=json.loads(Path('/contracts/fixtures/rss-go2-catalog.v1.json').read_text())
+        self.assertEqual(canonical(build(self.spec)),canonical(expected))
 
     def test_scalar_bounds_and_bool_are_not_integers(self):
         for value, field in [(True, {'type': 'int32'}), (256, {'type': 'uint8'}),
