@@ -1,0 +1,399 @@
+{
+  "$defs": {
+    "json": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/json"
+          },
+          "maxItems": 2000,
+          "minItems": 0,
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/json"
+          },
+          "maxProperties": 64,
+          "type": "object"
+        }
+      ]
+    },
+    "prop": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/json"
+        },
+        "kind": {
+          "enum": [
+            "sensor",
+            "attribute",
+            "setpoint",
+            "command"
+          ]
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "title": {
+          "additionalProperties": false,
+          "properties": {
+            "en": {
+              "maxLength": 16384,
+              "minLength": 1,
+              "type": "string"
+            },
+            "vi": {
+              "maxLength": 16384,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "vi",
+            "en"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "enum": [
+            "rss-path",
+            "expression",
+            "duration",
+            "number",
+            "integer",
+            "string",
+            "boolean",
+            "enum",
+            "waypoints"
+          ]
+        },
+        "unit": {
+          "maxLength": 16384,
+          "type": "string"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/$defs/json"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "required"
+      ],
+      "type": "object"
+    },
+    "variable": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "type": "boolean"
+            },
+            "type": {
+              "const": "bool"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "type": {
+              "const": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "maximum": 2147483647,
+              "minimum": -2147483648,
+              "type": "integer"
+            },
+            "type": {
+              "const": "int32"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "type": "number"
+            },
+            "type": {
+              "const": "float64"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "urn:robotflow:block.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "enum": [
+        "trigger",
+        "robot",
+        "flow",
+        "log"
+      ]
+    },
+    "id": {
+      "pattern": "^rf\\.[a-z][a-z0-9_]*$",
+      "type": "string"
+    },
+    "lowering": {
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "type": "string"
+    },
+    "migrations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "renameProps": {
+            "additionalProperties": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "maxProperties": 64,
+            "type": "object"
+          },
+          "setDefaults": {
+            "additionalProperties": {
+              "$ref": "#/$defs/json"
+            },
+            "maxProperties": 64,
+            "type": "object"
+          },
+          "to": {
+            "minimum": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "renameProps",
+          "setDefaults"
+        ],
+        "type": "object"
+      },
+      "maxItems": 16,
+      "minItems": 0,
+      "type": "array"
+    },
+    "ports": {
+      "additionalProperties": false,
+      "properties": {
+        "inputs": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "fanIn": {
+                "type": "boolean"
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "role": {
+                "enum": [
+                  "in",
+                  "next",
+                  "body",
+                  "branch",
+                  "result",
+                  "join"
+                ]
+              }
+            },
+            "required": [
+              "required",
+              "role"
+            ],
+            "type": "object"
+          },
+          "maxProperties": 1,
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "outputs": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "fanIn": {
+                "type": "boolean"
+              },
+              "required": {
+                "type": "boolean"
+              },
+              "role": {
+                "enum": [
+                  "in",
+                  "next",
+                  "body",
+                  "branch",
+                  "result",
+                  "join"
+                ]
+              }
+            },
+            "required": [
+              "required",
+              "role"
+            ],
+            "type": "object"
+          },
+          "maxProperties": 16,
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+            "type": "string"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "inputs",
+        "outputs"
+      ],
+      "type": "object"
+    },
+    "props": {
+      "additionalProperties": {
+        "$ref": "#/$defs/prop"
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema": {
+      "const": "block.v1"
+    },
+    "semantics": {
+      "additionalProperties": false,
+      "properties": {
+        "en": {
+          "maxLength": 16384,
+          "minLength": 1,
+          "type": "string"
+        },
+        "vi": {
+          "maxLength": 16384,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "vi",
+        "en"
+      ],
+      "type": "object"
+    },
+    "title": {
+      "additionalProperties": false,
+      "properties": {
+        "en": {
+          "maxLength": 16384,
+          "minLength": 1,
+          "type": "string"
+        },
+        "vi": {
+          "maxLength": 16384,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "vi",
+        "en"
+      ],
+      "type": "object"
+    },
+    "version": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "category",
+    "title",
+    "ports",
+    "props",
+    "semantics",
+    "lowering",
+    "migrations"
+  ],
+  "type": "object"
+}

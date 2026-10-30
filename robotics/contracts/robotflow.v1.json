@@ -1,0 +1,266 @@
+{
+  "$defs": {
+    "json": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/json"
+          },
+          "maxItems": 2000,
+          "minItems": 0,
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/json"
+          },
+          "maxProperties": 64,
+          "type": "object"
+        }
+      ]
+    },
+    "node": {
+      "additionalProperties": false,
+      "properties": {
+        "block": {
+          "pattern": "^rf\\.[a-z][a-z0-9_]*$",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+          "type": "string"
+        },
+        "props": {
+          "additionalProperties": {
+            "$ref": "#/$defs/json"
+          },
+          "maxProperties": 64,
+          "type": "object"
+        },
+        "ui": {
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "type": "object"
+        },
+        "v": {
+          "maximum": 999,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "block",
+        "v",
+        "props"
+      ],
+      "type": "object"
+    },
+    "variable": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "type": "boolean"
+            },
+            "type": {
+              "const": "bool"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "type": {
+              "const": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "maximum": 2147483647,
+              "minimum": -2147483648,
+              "type": "integer"
+            },
+            "type": {
+              "const": "int32"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "type": "number"
+            },
+            "type": {
+              "const": "float64"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "urn:robotflow:robotflow.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "edges": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "items": false,
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              },
+              {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "to": {
+            "items": false,
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              },
+              {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "maxItems": 5000,
+      "minItems": 0,
+      "type": "array"
+    },
+    "nodes": {
+      "items": {
+        "$ref": "#/$defs/node"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "type": "array"
+    },
+    "profile": {
+      "pattern": "^[a-z][a-z0-9-]{0,95}$",
+      "type": "string"
+    },
+    "rss": {
+      "additionalProperties": false,
+      "properties": {
+        "catalogHash": {
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "version": {
+          "const": "0.1"
+        }
+      },
+      "required": [
+        "version",
+        "catalogHash"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "robotflow.v1"
+    },
+    "vars": {
+      "additionalProperties": {
+        "$ref": "#/$defs/variable"
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+        "type": "string"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "rss",
+    "profile",
+    "vars",
+    "nodes",
+    "edges"
+  ],
+  "type": "object"
+}

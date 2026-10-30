@@ -49,3 +49,11 @@ change event arrived. Cover this explicitly in T06/C-R conformance.
 ## Amendment 2026-10-29
 
 ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.
+
+T01 local PASS: ADR-0076 closes graph/block/typed IR wire shapes; additive
+RF1001–RF6006 catalog retains all RSS/PB codes. Eight contract groups PASS /0.133 s
+in independent pinned Python 3.12 image, offline/read-only/nonroot. Initial red
+fixture and final logs retained; deterministic schema source/JSON equality tested.
+CI contract/image/lock scan pending. T02–T09 remain OPEN; no runtime or live
+workflow acceptance. M23 prerequisite PASS; M24 live local gate complete while
+the fresh-zero test-fix candidate CI is pending. See docs/reports/M25-progress.md.

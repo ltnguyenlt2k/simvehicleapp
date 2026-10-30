@@ -23,5 +23,31 @@
         "ros_bridge.py": "8019413a4468fa216d5182adaa9119758f197c99aa68ce90680ab7c0c25f4b9c"
       }
     }
+  },
+  "restoredDefaultOff": {
+    "sr-protobus-live-1": {
+      "image": "sha256:55b801980e17d1002aefeb8bd371f1581b327e2f698504f57ecc96372462743e",
+      "sameCoreSourceAsSoak": true,
+      "matchingSourceSha256": {
+        "broker.py": "f4e0192c23e57e781406230e1d3277306daf5cf1252a93f734e9f6a9698bd0be",
+        "commands.py": "18eb7a47335129622fb56f9fc13bc7cb78a0ba23c40d456b56101734e5185924",
+        "provider.py": "bd18d6099844388ff876ececeb79b65193f1ca0c7000f4ffc31500fef516db2a"
+      }
+    },
+    "sr-protobus-ros2-1": {
+      "image": "sha256:786e50304501a341fe2e5c009a6e0b89d3a8f63f0290bbd422c0b99cd7cbca0c",
+      "sameCoreSourceAsSoak": true,
+      "matchingSourceSha256": {
+        "broker.py": "f4e0192c23e57e781406230e1d3277306daf5cf1252a93f734e9f6a9698bd0be",
+        "commands.py": "18eb7a47335129622fb56f9fc13bc7cb78a0ba23c40d456b56101734e5185924",
+        "provider.py": "bd18d6099844388ff876ececeb79b65193f1ca0c7000f4ffc31500fef516db2a",
+        "mapping.py": "1ed50c86657a2c5019f54a199cc307af621e72e8f62af4c37845f688fc0fe5f6",
+        "dog_backend.py": "7d0fb13f56bdc91da9ba4ec5514beed5fd60b965636227316ef65541ca6d2a76",
+        "dog_protocol.py": "3fefdd35c6e551d489dc1a51ead4c0b58acaf62c10390ddf3b0133ab4d8ca84d",
+        "dog_ros_link.py": "51f5a7fbd823dc26332a0fe0ac089d3ee438f5f874e7d97f81bfa699e4e64dbe",
+        "ros_telemetry.py": "9896399b85eadd7b56ed304571fdf2ef1b81802919f54d2f2781a7f12e5dca86",
+        "ros_bridge.py": "8019413a4468fa216d5182adaa9119758f197c99aa68ce90680ab7c0c25f4b9c"
+      }
+    }
   }
 }

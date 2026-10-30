@@ -14,7 +14,7 @@ case "${1:-help}" in
    "${dc[@]}" --profile tools run --rm --no-deps rss 2>&1 | tee "$root/runtime/ci-tests/rss.log"
    docker run --rm --network none --cpus 2 --memory 256m sr-protobus:dev 2>&1 | tee "$root/runtime/ci-tests/protobus.log"
    ;;
- precheck) python3 "$root/scripts/precheck.py"; "${dc[@]}" --profile tools --profile live --profile live-tools config -q ;;
+ precheck) python3 "$root/scripts/precheck.py"; "${dc[@]}" --profile tools --profile live --profile live-tools --profile compiler-tools config -q ;;
  up)
    case "${2:-}" in
      '') [[ $# == 1 ]] || exit 2; "${dc[@]}" up -d ;;

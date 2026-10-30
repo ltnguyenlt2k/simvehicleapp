@@ -32,6 +32,10 @@ jobs:
           name: robotics-foundation-tests
           path: robotics/runtime/ci-tests/
       - run: bash robotics/scripts/sr smoke
+      - name: RobotFlow closed artifact contracts
+        run: |
+          docker compose -f robotics/compose.yaml --profile compiler-tools build robotflow
+          docker compose -f robotics/compose.yaml --profile compiler-tools run --rm --no-deps robotflow
       - name: Independent broker/provider process and network faults
         run: python3 robotics/scripts/fault-test.py
       - name: Stop only this robot stack after fault tests
@@ -60,3 +64,4 @@ jobs:
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/protobus/requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/protobus/bridge-requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/protobus/bridge-build-requirements.txt
+          docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/robotflow/requirements.txt

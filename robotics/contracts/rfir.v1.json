@@ -1,0 +1,1247 @@
+{
+  "$defs": {
+    "body": {
+      "items": {
+        "$ref": "#/$defs/statement"
+      },
+      "maxItems": 2000,
+      "minItems": 0,
+      "type": "array"
+    },
+    "expr": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "bool"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "string"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "enum"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "int32"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "maximum": 2147483647,
+              "minimum": -2147483648,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "uint8"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "uint32"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "maximum": 4294967295,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "int64"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "maximum": 9223372036854775807,
+              "minimum": -9223372036854775808,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "float32"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "type": {
+              "const": "float64"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "type",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "signal"
+            },
+            "path": {
+              "maxLength": 256,
+              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "bool",
+                "uint8",
+                "int32",
+                "uint32",
+                "int64",
+                "float32",
+                "float64",
+                "string",
+                "enum"
+              ]
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "var"
+            },
+            "name": {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "bool",
+                "uint8",
+                "int32",
+                "uint32",
+                "int64",
+                "float32",
+                "float64",
+                "string",
+                "enum"
+              ]
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "unary"
+            },
+            "operand": {
+              "$ref": "#/$defs/expr"
+            },
+            "operator": {
+              "enum": [
+                "not",
+                "-",
+                "+"
+              ]
+            },
+            "type": {
+              "enum": [
+                "bool",
+                "uint8",
+                "int32",
+                "uint32",
+                "int64",
+                "float32",
+                "float64",
+                "string",
+                "enum"
+              ]
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "operator",
+            "operand",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "binary"
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "operator": {
+              "enum": [
+                "+",
+                "-",
+                "*",
+                "/",
+                "==",
+                "!=",
+                "<",
+                "<=",
+                ">",
+                ">=",
+                "and",
+                "or"
+              ]
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            },
+            "type": {
+              "enum": [
+                "bool",
+                "uint8",
+                "int32",
+                "uint32",
+                "int64",
+                "float32",
+                "float64",
+                "string",
+                "enum"
+              ]
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "operator",
+            "left",
+            "right",
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "args": {
+              "items": {
+                "$ref": "#/$defs/expr"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "type": "array"
+            },
+            "kind": {
+              "const": "call"
+            },
+            "name": {
+              "enum": [
+                "abs",
+                "min",
+                "max",
+                "clamp"
+              ]
+            },
+            "type": {
+              "enum": [
+                "bool",
+                "uint8",
+                "int32",
+                "uint32",
+                "int64",
+                "float32",
+                "float64",
+                "string",
+                "enum"
+              ]
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "args",
+            "type"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "json": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/json"
+          },
+          "maxItems": 2000,
+          "minItems": 0,
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/json"
+          },
+          "maxProperties": 64,
+          "type": "object"
+        }
+      ]
+    },
+    "results": {
+      "additionalProperties": false,
+      "properties": {
+        "cancelled": {
+          "$ref": "#/$defs/body"
+        },
+        "failed": {
+          "$ref": "#/$defs/body"
+        },
+        "rejected": {
+          "$ref": "#/$defs/body"
+        },
+        "succeeded": {
+          "$ref": "#/$defs/body"
+        },
+        "timed_out": {
+          "$ref": "#/$defs/body"
+        }
+      },
+      "required": [
+        "succeeded",
+        "failed",
+        "rejected",
+        "cancelled",
+        "timed_out"
+      ],
+      "type": "object"
+    },
+    "src": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeId": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodeId"
+      ],
+      "type": "object"
+    },
+    "statement": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "noop"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "enum": [
+                "info",
+                "warn",
+                "error"
+              ]
+            },
+            "op": {
+              "const": "log"
+            },
+            "parts": {
+              "items": {
+                "oneOf": [
+                  {
+                    "maxLength": 16384,
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/expr"
+                  }
+                ]
+              },
+              "maxItems": 256,
+              "minItems": 1,
+              "type": "array"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "level",
+            "parts"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ms": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "op": {
+              "const": "wait"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "ms"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "condition": {
+              "$ref": "#/$defs/expr"
+            },
+            "on": {
+              "additionalProperties": false,
+              "properties": {
+                "succeeded": {
+                  "$ref": "#/$defs/body"
+                },
+                "timed_out": {
+                  "$ref": "#/$defs/body"
+                }
+              },
+              "required": [
+                "succeeded",
+                "timed_out"
+              ],
+              "type": "object"
+            },
+            "op": {
+              "const": "wait_until"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "timeoutMs": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "condition",
+            "timeoutMs",
+            "on"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "set_target"
+            },
+            "path": {
+              "maxLength": 256,
+              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+              "type": "string"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "value": {
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              },
+              "maxProperties": 32,
+              "type": "object"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "path",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "ms": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "on": {
+              "$ref": "#/$defs/results"
+            },
+            "op": {
+              "const": "hold"
+            },
+            "path": {
+              "maxLength": 256,
+              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+              "type": "string"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "value": {
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              },
+              "maxProperties": 32,
+              "type": "object"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "path",
+            "value",
+            "ms",
+            "on"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "args": {
+              "additionalProperties": {
+                "$ref": "#/$defs/expr"
+              },
+              "maxProperties": 32,
+              "type": "object"
+            },
+            "on": {
+              "$ref": "#/$defs/results"
+            },
+            "op": {
+              "const": "invoke"
+            },
+            "path": {
+              "maxLength": 256,
+              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+              "type": "string"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "timeoutMs": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "path",
+            "args",
+            "timeoutMs",
+            "on"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "on": {
+              "$ref": "#/$defs/results"
+            },
+            "op": {
+              "const": "cancel"
+            },
+            "scope": {
+              "const": "body"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "timeoutMs": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "scope",
+            "timeoutMs",
+            "on"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "on": {
+              "$ref": "#/$defs/results"
+            },
+            "op": {
+              "const": "stop"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "timeoutMs": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "timeoutMs",
+            "on"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "condition": {
+              "$ref": "#/$defs/expr"
+            },
+            "else": {
+              "$ref": "#/$defs/body"
+            },
+            "op": {
+              "const": "if"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "then": {
+              "$ref": "#/$defs/body"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "condition",
+            "then",
+            "else"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "body": {
+              "$ref": "#/$defs/body"
+            },
+            "count": {
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "op": {
+              "const": "loop"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "count",
+            "body"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "body": {
+              "$ref": "#/$defs/body"
+            },
+            "forever": {
+              "const": true
+            },
+            "op": {
+              "const": "loop"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "forever",
+            "body"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "children": {
+              "items": {
+                "$ref": "#/$defs/body"
+              },
+              "maxItems": 8,
+              "minItems": 2,
+              "type": "array"
+            },
+            "mode": {
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "op": {
+              "const": "parallel"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "mode",
+            "children"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+              "type": "string"
+            },
+            "op": {
+              "const": "assign"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            },
+            "value": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "name",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+              "type": "string"
+            },
+            "op": {
+              "const": "read"
+            },
+            "path": {
+              "maxLength": 256,
+              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+              "type": "string"
+            },
+            "src": {
+              "$ref": "#/$defs/src"
+            }
+          },
+          "required": [
+            "op",
+            "src",
+            "path",
+            "name"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "trigger": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "start"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "change"
+            },
+            "path": {
+              "maxLength": 256,
+              "pattern": "^Robot(?:\\.[A-Za-z][A-Za-z0-9]*)+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "condition": {
+              "$ref": "#/$defs/expr"
+            },
+            "forMs": {
+              "maximum": 86400000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "kind": {
+              "const": "condition"
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "forMs"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "every"
+            },
+            "ms": {
+              "maximum": 86400000,
+              "minimum": 10,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "ms"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "event"
+            },
+            "name": {
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "variable": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "type": "boolean"
+            },
+            "type": {
+              "const": "bool"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "maxLength": 16384,
+              "type": "string"
+            },
+            "type": {
+              "const": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "maximum": 2147483647,
+              "minimum": -2147483648,
+              "type": "integer"
+            },
+            "type": {
+              "const": "int32"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "initial": {
+              "type": "number"
+            },
+            "type": {
+              "const": "float64"
+            },
+            "unit": {
+              "maxLength": 16384,
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "initial"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "$id": "urn:robotflow:rfir.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "behaviors": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "$ref": "#/$defs/body"
+          },
+          "concurrency": {
+            "enum": [
+              "queue",
+              "drop",
+              "restart"
+            ]
+          },
+          "id": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+            "type": "string"
+          },
+          "queueMax": {
+            "maximum": 16,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "src": {
+            "$ref": "#/$defs/src"
+          },
+          "trigger": {
+            "$ref": "#/$defs/trigger"
+          }
+        },
+        "required": [
+          "id",
+          "src",
+          "trigger",
+          "concurrency",
+          "queueMax",
+          "body"
+        ],
+        "type": "object"
+      },
+      "maxItems": 64,
+      "minItems": 1,
+      "type": "array"
+    },
+    "catalogHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "irHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "profile": {
+      "pattern": "^[a-z][a-z0-9-]{0,95}$",
+      "type": "string"
+    },
+    "profileHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "runtimeVersion": {
+      "const": "0.1.0"
+    },
+    "schema": {
+      "const": "rfir.v1"
+    },
+    "vars": {
+      "additionalProperties": {
+        "$ref": "#/$defs/variable"
+      },
+      "maxProperties": 64,
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+        "type": "string"
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema",
+    "catalogHash",
+    "profile",
+    "profileHash",
+    "runtimeVersion",
+    "vars",
+    "behaviors",
+    "irHash"
+  ],
+  "type": "object"
+}

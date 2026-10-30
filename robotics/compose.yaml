@@ -28,6 +28,18 @@ services:
     user: "10001:10001"
     environment: {RSS_CONTRACTS: /contracts}
     command: [python, -m, unittest, discover, -s, tests, -v]
+  robotflow:
+    image: sr-robotflow:dev
+    build: {context: ./robotflow}
+    profiles: [compiler-tools]
+    network_mode: none
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    user: "10001:10001"
+    mem_limit: 256m
+    cpus: 2
   catalog-init:
     image: sr-rss:dev
     network_mode: none

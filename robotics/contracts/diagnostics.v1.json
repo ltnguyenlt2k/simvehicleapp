@@ -27,6 +27,260 @@
     "PB_QUEUE_FULL": "Bounded queue is full",
     "PB_BAD_TRANSITION": "Invalid command state transition",
     "PB_BACKEND_FORBIDDEN": "Backend is outside commissioned scope",
-    "PB_AUDIT_FAILED": "Audit unavailable; motion authority revoked"
+    "PB_AUDIT_FAILED": "Audit unavailable; motion authority revoked",
+    "RF1001": "Invalid workflow schema",
+    "RF1002": "Workflow exceeds structural limits",
+    "RF1003": "Duplicate node identity",
+    "RF1004": "Dangling edge endpoint",
+    "RF1005": "Unknown or incompatible port",
+    "RF1006": "Output fanout is forbidden",
+    "RF1007": "Unstructured graph cycle",
+    "RF2001": "Unknown block",
+    "RF2002": "Unsupported block version",
+    "RF2003": "Invalid block properties",
+    "RF3001": "Catalog hash mismatch",
+    "RF3002": "Unknown RSS path",
+    "RF3003": "RSS kind is incompatible",
+    "RF4001": "Invalid expression syntax",
+    "RF4002": "Expression type mismatch",
+    "RF4003": "Expression unit mismatch",
+    "RF4004": "Unknown variable or function",
+    "RF4005": "Invalid constant arithmetic",
+    "RF5001": "Unreachable node",
+    "RF5002": "Required result branch is missing",
+    "RF5003": "Invalid structured region",
+    "RF5004": "Forever loop must yield on every path",
+    "RF6001": "Motion speed exceeds profile bounds",
+    "RF6002": "Move duration exceeds profile bounds",
+    "RF6003": "Remote Arm is not authorized",
+    "RF6004": "Motion workflow has no priority Stop path",
+    "RF6005": "Command timeout exceeds allowed bounds",
+    "RF6006": "Concurrent body resource conflict"
+  },
+  "details": {
+    "RF1001": {
+      "stage": "S0",
+      "severity": "error",
+      "message": {
+        "en": "Invalid workflow schema",
+        "vi": "Workflow sai schema"
+      }
+    },
+    "RF1002": {
+      "stage": "S0",
+      "severity": "error",
+      "message": {
+        "en": "Workflow exceeds structural limits",
+        "vi": "Workflow vượt giới hạn cấu trúc"
+      }
+    },
+    "RF1003": {
+      "stage": "S1",
+      "severity": "error",
+      "message": {
+        "en": "Duplicate node identity",
+        "vi": "Mã node trùng lặp"
+      }
+    },
+    "RF1004": {
+      "stage": "S1",
+      "severity": "error",
+      "message": {
+        "en": "Dangling edge endpoint",
+        "vi": "Đầu nối cạnh không tồn tại"
+      }
+    },
+    "RF1005": {
+      "stage": "S1",
+      "severity": "error",
+      "message": {
+        "en": "Unknown or incompatible port",
+        "vi": "Cổng không tồn tại hoặc không tương thích"
+      }
+    },
+    "RF1006": {
+      "stage": "S1",
+      "severity": "error",
+      "message": {
+        "en": "Output fanout is forbidden",
+        "vi": "Cổng ra không cho phép chia nhiều cạnh"
+      }
+    },
+    "RF1007": {
+      "stage": "S1",
+      "severity": "error",
+      "message": {
+        "en": "Unstructured graph cycle",
+        "vi": "Chu trình ngoài block lặp"
+      }
+    },
+    "RF2001": {
+      "stage": "S2",
+      "severity": "error",
+      "message": {
+        "en": "Unknown block",
+        "vi": "Block không tồn tại"
+      }
+    },
+    "RF2002": {
+      "stage": "S2",
+      "severity": "error",
+      "message": {
+        "en": "Unsupported block version",
+        "vi": "Phiên bản block không được hỗ trợ"
+      }
+    },
+    "RF2003": {
+      "stage": "S2",
+      "severity": "error",
+      "message": {
+        "en": "Invalid block properties",
+        "vi": "Thuộc tính block không hợp lệ"
+      }
+    },
+    "RF3001": {
+      "stage": "S3",
+      "severity": "error",
+      "message": {
+        "en": "Catalog hash mismatch",
+        "vi": "Hash catalog không khớp"
+      }
+    },
+    "RF3002": {
+      "stage": "S3",
+      "severity": "error",
+      "message": {
+        "en": "Unknown RSS path",
+        "vi": "Đường dẫn RSS không tồn tại"
+      }
+    },
+    "RF3003": {
+      "stage": "S3",
+      "severity": "error",
+      "message": {
+        "en": "RSS kind is incompatible",
+        "vi": "Loại RSS không tương thích"
+      }
+    },
+    "RF4001": {
+      "stage": "S4",
+      "severity": "error",
+      "message": {
+        "en": "Invalid expression syntax",
+        "vi": "Cú pháp biểu thức không hợp lệ"
+      }
+    },
+    "RF4002": {
+      "stage": "S4",
+      "severity": "error",
+      "message": {
+        "en": "Expression type mismatch",
+        "vi": "Kiểu biểu thức không khớp"
+      }
+    },
+    "RF4003": {
+      "stage": "S4",
+      "severity": "error",
+      "message": {
+        "en": "Expression unit mismatch",
+        "vi": "Đơn vị biểu thức không khớp"
+      }
+    },
+    "RF4004": {
+      "stage": "S4",
+      "severity": "error",
+      "message": {
+        "en": "Unknown variable or function",
+        "vi": "Biến hoặc hàm không tồn tại"
+      }
+    },
+    "RF4005": {
+      "stage": "S4",
+      "severity": "error",
+      "message": {
+        "en": "Invalid constant arithmetic",
+        "vi": "Phép tính hằng không hợp lệ"
+      }
+    },
+    "RF5001": {
+      "stage": "S5",
+      "severity": "error",
+      "message": {
+        "en": "Unreachable node",
+        "vi": "Node không thể chạy từ trigger"
+      }
+    },
+    "RF5002": {
+      "stage": "S5",
+      "severity": "error",
+      "message": {
+        "en": "Required result branch is missing",
+        "vi": "Thiếu nhánh kết quả bắt buộc"
+      }
+    },
+    "RF5003": {
+      "stage": "S5",
+      "severity": "error",
+      "message": {
+        "en": "Invalid structured region",
+        "vi": "Vùng điều khiển có cấu trúc không hợp lệ"
+      }
+    },
+    "RF5004": {
+      "stage": "S5",
+      "severity": "error",
+      "message": {
+        "en": "Forever loop must yield on every path",
+        "vi": "Vòng lặp mãi phải nhường trên mọi nhánh"
+      }
+    },
+    "RF6001": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Motion speed exceeds profile bounds",
+        "vi": "Tốc độ vượt giới hạn profile"
+      }
+    },
+    "RF6002": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Move duration exceeds profile bounds",
+        "vi": "Thời gian di chuyển vượt giới hạn profile"
+      }
+    },
+    "RF6003": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Remote Arm is not authorized",
+        "vi": "Chưa cho phép Arm từ xa"
+      }
+    },
+    "RF6004": {
+      "stage": "S6",
+      "severity": "warning",
+      "message": {
+        "en": "Motion workflow has no priority Stop path",
+        "vi": "Workflow chuyển động thiếu nhánh Stop ưu tiên"
+      }
+    },
+    "RF6005": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Command timeout exceeds allowed bounds",
+        "vi": "Thời hạn lệnh vượt giới hạn cho phép"
+      }
+    },
+    "RF6006": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Concurrent body resource conflict",
+        "vi": "Các nhánh đồng thời tranh chấp quyền chuyển động"
+      }
+    }
   }
 }
