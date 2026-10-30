@@ -12,7 +12,7 @@ export default defineConfig({
   workers: 1,
   // No retries: a flaky test must be fixed at its root cause, never masked (M15-T08).
   retries: 0,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env.CI ? [['list'], ['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: process.env.SV_STUDIO_URL ?? 'http://localhost:3000',
     trace: 'retain-on-failure',

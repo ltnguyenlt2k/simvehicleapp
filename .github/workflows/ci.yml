@@ -208,7 +208,7 @@ jobs:
             up -d --no-build --wait --wait-timeout 240 studio-db studio-migrations studio-realtime studio vss-catalog compiler
       - name: E2E — M1/M2/M3 acceptance gates incl. 7 goldens built on the canvas (Playwright 1.63.0)
         run: |
-          docker run --rm --network host -e CI=1 -e SV_STUDIO_URL=http://localhost:3000 \
+          docker run --rm --network host -e CI=1 -e GITHUB_WORKSPACE=/repo -e SV_STUDIO_URL=http://localhost:3000 \
             -e SV_REPO=/repo -e SV_GOLDEN_EXPORT=1 -v "$PWD":/repo -w /repo/modules/simvehicleapp-studio/e2e \
             mcr.microsoft.com/playwright:v1.63.0-noble \
             bash -c "npm install --no-audit --no-fund --silent && npx playwright test --grep-invert '@after-restart|@live'"
@@ -216,7 +216,7 @@ jobs:
         run: |
           $STACK --env-file "$RUNNER_TEMP/studio.env" restart studio
           $STACK --env-file "$RUNNER_TEMP/studio.env" up -d --no-build --wait --wait-timeout 120 studio
-          docker run --rm --network host -e CI=1 -e SV_STUDIO_URL=http://localhost:3000 \
+          docker run --rm --network host -e CI=1 -e GITHUB_WORKSPACE=/repo -e SV_STUDIO_URL=http://localhost:3000 \
             -e SV_REPO=/repo -v "$PWD":/repo -w /repo/modules/simvehicleapp-studio/e2e \
             mcr.microsoft.com/playwright:v1.63.0-noble \
             bash -c "npm install --no-audit --no-fund --silent && npx playwright test --grep @after-restart"
