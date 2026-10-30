@@ -219,3 +219,5 @@ flowchart TB
 - [ADR-0081](ADR-0081-protobus-correlated-release-inspection.md): protocol candidate1.4 read-only correlated physical release and STOP identities; live requalification mandatory.
 
 - [ADR-0082](ADR-0082-protobus-actual-target-context.md): candidate1.5 actual provider/mapping/source and ROS scene/map identity; actual metadata probe passed, candidate live control qualification still OPEN.
+
+- [ADR-0083](ADR-0083-hold-admission-and-safe-release.md): accepted next-implementation design; current target receipt lacks actual admission/release proof. Transport/backend implementation and tests remain OPEN.

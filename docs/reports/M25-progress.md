@@ -178,3 +178,13 @@ Runtime/GUI/video completion remains OPEN.
 Prior checkpoint CI: 34cc8dd8 Robotics41110639049 SUCCESS; 2cc096c1
 Robotics41111172694 SUCCESS; their general jobs were superseded/cancelled, not
 claimed PASS. 200bbfdf Robotics41112001341 SUCCESS; general41112001407 pending.
+
+T06 implementation audit: SetTarget receipt lacks actual first-admission and
+correlated safe-release feedback. Do not implement Hold success from Reply.ok,
+elapsed duration or unrelated velocity zero. ADR-0083 specifies bounded Hold
+execution identity/sequence feedback, duration after actual admission, resource
+quarantine through physical release, immutable timeout and independent safety.
+Next action is this transport/backend prerequisite, then complete BusClient/Hold/
+wheel. Normal Cancel cause/recovery and ROS freshness gates remain mandatory.
+This finding is not accepted from the already-passing metadata tests; full
+runtime/GUI/video remain unfinished.
