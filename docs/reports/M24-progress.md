@@ -73,3 +73,72 @@ with unrelated negative cases; fixed test grouping, retained mapping-failed-test
 No assertion, safety threshold or availability rule was loosened. CI now runs
 both mapping suites in the Humble image. Live dog equality/authority/motion and
 M24 overall acceptance remain OPEN; T03 is next.
+T02 CI checkpoint: Robotics run 41052808838 SUCCESS at 68a9a7f0, including all
+mapping and actual isolated DDS suites. General CI 41052808854 FAILED only the
+studio image/E2E job 124052869502, at its M1/M2/M3 Playwright step. Public job
+annotations expose only exit code 1; the browser requires sign-in for detailed
+logs. No credentials were extracted. Local reproduction of the identical test
+selection is running against the existing vehicle Studio, with output under
+runtime/m24/general-ci-e2e. This failure is not marked resolved or silently retried.
+T03 Brain authority is being implemented independently in the dog repo under
+ADR-0020; its initial 8 model + 2 actual DDS checks passed, complete affected
+ROS/physics regression is running. M24 overall/live gate remains OPEN.
+Producer checkpoint: dog cbd1a48 / image 923b0cb7 qualified Brain authority core
+with 173 PASS / 1 profile-only skip, separate fault 1 PASS and targeted actual DDS
+3 PASS including physical BOW cancellation. Source equivalence hashes recorded in
+the dog repo. Import only its unchanged public controller schema with exact
+commit/SHA256, Apache license and NOTICE; no runtime source. ADR-0075 governs the
+consumer implementation. T03 adapter now starts; combined live gate remains OPEN.
+
+General-CI investigation: first local diagnostic used localhost:3000, which this
+host assigns to OTA rather than Studio; its missing signup field is invalid
+Studio evidence, retained under general-ci-e2e/run.log. Corrected to actual
+Studio origin localhost:3100 after checking container port/auth URL. The same
+non-live/non-restart selection then passed **45/45 / 8.3 min** on the existing
+local Studio. This does not identify the original CI failure's cause. Public
+artifact download returns 401, and browser logs require sign-in; no credentials
+were read. Added Playwright's built-in github reporter, verified against the
+installed pinned 1.63.0 implementation; GITHUB_WORKSPACE=/repo makes annotation
+paths match repo files. No retry, assertion or timeout change. The next CI must
+requalify; any failure will expose its actual test/error in check annotations.
+T03 wire/identity kernel increment: consumer imports only the exact producer
+schema (3 integrity/negative wire tests PASS), no Brain implementation. Pure
+request builder enforces source/epoch/host/deadline/grant/sequence identity and
+prohibits provider access to the legacy operator path except STOP/Disarm.
+Correlators require request/motion or stable mission IDs, source scene/config,
+fresh capture and map generation for success. No physical confirmation is implied
+by a parser error or pure terminal match; the actual backend must observe release.
+Nine synthetic protocol boundary tests PASS on Python 3.12 and Humble Python 3.10;
+full local suite 104 PASS / 29.276 s before the final error-class clarification
+(no behavior change). No ROS command publisher/backend is implemented in this
+consumer increment yet. T03 and the M24 live gate remain OPEN.
+
+Studio investigation update: the focused reporter run reproduced M1's global
+New chat assertion matching the legitimate M10 assistant button after async
+status load. Corrected to the Workspace sidebar, explicitly opened the assistant
+and retained its own New chat button. Focused PASS and all 4 M1 gates PASS /17.2 s;
+previous full selection 45/45 PASS. ee7d75c2 pushed with github annotations and
+correct Docker workspace paths; current general CI must requalify. Original CI
+artifact unavailable, so no claim that its exact failure was identical. Detailed
+report: 2026-10-30-studio-ci-gate.md. No retries/timeouts changed.
+General CI 41057143537 SUCCESS at ee7d75c2 after the sidebar gate/annotation fix.
+The earlier 68a9a7f0 failure and local traces remain retained. No retries enabled.
+
+T03 actual independent ROS link increment: the consumer image connects through
+its own Docker/DDS participant to dog-ros2-r1_robot/domain 52, using only the
+pinned public wire schema. It imports no dog implementation. A bounded mailbox
+hands metadata/ACKs to the asyncio owner loop; the only publisher is
+/dog1/control/request. ACK identity/epoch checks do not fabricate physical results.
+The tracked profile and default Arm flag remain disabled; the explicit SIM probe
+uses an in-memory authorized profile plus a separate runtime flag.
+
+Actual live link probe PASS: 31 mapped observations, 30 available, unknown battery
+charging stays NONE; explicit Brain claim and Arm, 0.3 m/s manual requests,
+**0.182524813 m measured odom displacement**, renewal without manual refresh ->
+safe output zero within the 0.5 s observation bound, STOP -> SAFE_STOP, sole safe
+command writer observed, finally Disarm. Test profile hash
+fa73ae5167c98893af0326a4f43feacef2c8e19196506ac92dc83c0273de355d.
+Logs: dog-link-live-final.log and dog-link-build.log. This is actual DDS/physics
+link evidence only, not broker-provider command completion or workflow acceptance.
+The backend lifecycle/lease integration, complete faults and 30-minute live gate
+remain OPEN. No video is claimed for this increment.

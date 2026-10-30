@@ -43,3 +43,5 @@
 ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.
 
 T01 local image checkpoint 2026-10-29: image 0c28200aca2c, Python3.10/CycloneDDS/custom message type support and provenance checks PASS; pip check PASS; 8 runtime + 5 build lock entries OSV clean. Three build/environment failures retained in docs/reports/M24-progress.md. Image CI pending; T02 and live ROS gate remain OPEN.
+
+2026-10-30: T01 CI 40897932686 and general CI 40897932762 SUCCESS at f4f6a382. T02 92 local tests plus Humble mapping and isolated DDS tests PASS; scoped Robotics CI 41052808838 SUCCESS at 68a9a7f0. General CI failed a Studio E2E step; reproduced sidebar/assistant assertion collision corrected in ee7d75c2, current CI pending. T03 producer Brain cbd1a48 qualified by complete 173-pass regression, separate fault and 3 actual DDS tests. Consumer wire/identity kernel is in progress; no combined ROS adapter acceptance yet.

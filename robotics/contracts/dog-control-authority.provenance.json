@@ -1,0 +1,11 @@
+{
+  "sha256": "a860ecf64ed26ef86b8359cc5de42cf3fac799a9e8a984d45f259b46b8de87e7",
+  "schema": "wire-contract-provenance.v1",
+  "path": "contracts/ros2/control-authority.schema.json",
+  "source": "https://github.com/ltnguyenlt2k/dog-ros2-simulation",
+  "commit": "cbd1a48c65cfa9c860c362cb70edbe4d433689ec",
+  "license": "Apache-2.0",
+  "adaptations": [],
+  "licensePath": "LICENSE",
+  "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+}

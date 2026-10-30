@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "dog-control-authority.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "session", "brain_boot_id", "scene_epoch", "host_clock_id", "challenge", "grant_id", "sequence", "valid_until_monotonic_ns"],
+  "properties": {
+    "schema": {"const": "dog-control-authority.v1"},
+    "source": {"const": "protobus"},
+    "session": {"type": "string", "minLength": 1, "maxLength": 128},
+    "brain_boot_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "scene_epoch": {"type": "string", "minLength": 1, "maxLength": 128},
+    "host_clock_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "challenge": {"type": "string", "minLength": 1, "maxLength": 128},
+    "grant_id": {"type": "string", "maxLength": 128},
+    "sequence": {"type": "integer", "minimum": 1, "maximum": 18446744073709551615},
+    "valid_until_monotonic_ns": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+  }
+}

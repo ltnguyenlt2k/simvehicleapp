@@ -1,0 +1,4 @@
+dog-control-authority.v1.json is an unmodified versioned wire schema exported
+from dog-ros2-simulation, licensed Apache-2.0. Exact commit, source path and SHA256
+are in dog-control-authority.provenance.json. No robot runtime source is imported.
+The original license is retained in licenses/dog-ros2-simulation-LICENSE.

@@ -22,3 +22,13 @@ for name, expected in manifest['files'].items():
     if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
         raise SystemExit('Pinned interface checksum mismatch: ' + name)
 print("Independent executable dependency guard PASS")
+wire = root / 'contracts/dog-control-authority.v1.json'
+provenance = json.loads((root / 'contracts/dog-control-authority.provenance.json').read_text())
+if hashlib.sha256(wire.read_bytes()).hexdigest() != provenance['sha256']:
+    raise SystemExit('Pinned dog authority wire schema checksum mismatch')
+if not re.fullmatch(r'[a-f0-9]{40}', provenance['commit']):
+    raise SystemExit('Dog authority wire schema must pin an exact source commit')
+license_file = root / 'contracts/licenses/dog-ros2-simulation-LICENSE'
+if hashlib.sha256(license_file.read_bytes()).hexdigest() != provenance['licenseSha256']:
+    raise SystemExit('Pinned dog authority license checksum mismatch')
+print('Pinned dog authority wire contract PASS')

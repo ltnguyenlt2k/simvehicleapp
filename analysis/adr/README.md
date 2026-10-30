@@ -203,3 +203,5 @@ flowchart TB
 - [ADR-0073](ADR-0073-mock-provider-and-scenario-contract.md): Accepted under PO delegation; ROS-free provider enforcement and separate typed mock scenario service, no live robot state injection.
 
 - [ADR-0074](ADR-0074-provider-local-target-expiry-revokes-session.md): Accepted under PO delegation; actual network-flap failure requires local target expiry to revoke authority and restart provider session before explicit recovery.
+
+- [ADR-0075](ADR-0075-dog-brain-authority-and-result-correlation.md): Accepted under user delegation 2026-10-30; pinned Brain controller wire contract, challenge/fence identity, stable mission correlation and map generation. Combined adapter/live acceptance remains OPEN.
