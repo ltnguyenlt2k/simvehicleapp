@@ -702,6 +702,11 @@
             "src": {
               "$ref": "#/$defs/src"
             },
+            "timeoutMs": {
+              "maximum": 86400000,
+              "minimum": 1,
+              "type": "integer"
+            },
             "value": {
               "additionalProperties": {
                 "$ref": "#/$defs/expr"
@@ -716,6 +721,7 @@
             "path",
             "value",
             "ms",
+            "timeoutMs",
             "on"
           ],
           "type": "object"

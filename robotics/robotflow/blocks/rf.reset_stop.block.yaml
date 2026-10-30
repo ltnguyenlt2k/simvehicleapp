@@ -1,0 +1,57 @@
+{
+  "schema": "block.v1",
+  "id": "rf.reset_stop",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Xóa chốt dừng",
+    "en": "Reset Stop"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 3000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 3000
+    }
+  },
+  "semantics": {
+    "vi": "Chỉ xóa chốt khi đã dừng và cảm biến khỏe; không tự Arm hay phát lại lệnh.",
+    "en": "Explicit healthy stopped-state recovery only; never Arms or replays prior body command."
+  },
+  "lowering": "reset_stop",
+  "migrations": []
+}

@@ -1,0 +1,77 @@
+{
+  "schema": "block.v1",
+  "id": "rf.move",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Di chuyển có giới hạn",
+    "en": "Bounded move"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "linear": {
+      "type": "expression",
+      "required": true,
+      "default": "0.2 m/s",
+      "unit": "m/s"
+    },
+    "angular": {
+      "type": "expression",
+      "required": true,
+      "default": "0 rad/s",
+      "unit": "rad/s"
+    },
+    "durationMs": {
+      "type": "duration",
+      "required": true,
+      "default": 500,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 12000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 15000
+    }
+  },
+  "semantics": {
+    "vi": "Làm mới đủ vận tốc trong thời gian giới hạn; mọi đường thoát trả về giá trị an toàn, chưa rõ kết quả thì yêu cầu dừng.",
+    "en": "Refresh complete velocity at catalog cadence for bounded duration. Every exit releases safeValue; unknown release escalates Stop. Never implicitly Arm."
+  },
+  "lowering": "move",
+  "migrations": []
+}

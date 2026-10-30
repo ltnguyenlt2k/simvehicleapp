@@ -104,7 +104,7 @@ class ContractTests(unittest.TestCase):
         statements=[{'op':'noop'},{'op':'wait','ms':20},
             {'op':'wait_until','condition':condition,'timeoutMs':100,'on':{'succeeded':[],'timed_out':[]}},
             {'op':'set_target','path':'Robot.Motion.Velocity','value':{'LinearX':literal}},
-            {'op':'hold','path':'Robot.Motion.Velocity','value':{'LinearX':literal},'ms':100,'on':outcomes},
+            {'op':'hold','path':'Robot.Motion.Velocity','value':{'LinearX':literal},'ms':100,'timeoutMs':1000,'on':outcomes},
             {'op':'cancel','scope':'body','timeoutMs':1000,'on':outcomes},
             {'op':'stop','timeoutMs':1000,'on':outcomes},
             {'op':'assign','name':'speed','value':literal},

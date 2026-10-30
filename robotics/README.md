@@ -2,7 +2,8 @@
 Independent stack under implementation, ADR-0069–0075. Current increment: RSS,
 Protobus broker, synthetic mock provider, diagnostic CLI and development live
 ROS/MuJoCo adapter. Workflow deployment and Studio remain later gates. The M24
-live fault/equality checks passed locally; sustained acceptance is in progress.
+live fault/equality/1800-second gates passed and CI qualified M24. RobotFlow
+schemas/registry are in progress; no workflow runtime is available yet.
 Hardware is unsupported. See M23/M24 reports for exact scope and evidence.
 
 From the repository root, run `bash robotics/scripts/sr build`, `precheck`, `test`

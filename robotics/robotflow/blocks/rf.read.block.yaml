@@ -1,0 +1,43 @@
+{
+  "schema": "block.v1",
+  "id": "rf.read",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Đọc tín hiệu",
+    "en": "Read signal"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "path": {
+      "type": "rss-path",
+      "required": true,
+      "default": "Robot.PowerSystem.Battery.StateOfCharge"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "battery"
+    }
+  },
+  "semantics": {
+    "vi": "Đọc tín hiệu mới vào biến tương thích; không ghi RSS hoặc thay dữ liệu thiếu bằng số 0.",
+    "en": "Read fresh sensor/attribute into compatible declared variable; never write RSS or invent zero."
+  },
+  "lowering": "read",
+  "migrations": []
+}

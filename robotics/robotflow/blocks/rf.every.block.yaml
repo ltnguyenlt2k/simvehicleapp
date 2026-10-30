@@ -1,0 +1,52 @@
+{
+  "schema": "block.v1",
+  "id": "rf.every",
+  "version": 1,
+  "category": "trigger",
+  "title": {
+    "vi": "Định kỳ",
+    "en": "Every"
+  },
+  "ports": {
+    "inputs": {},
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "concurrency": {
+      "type": "enum",
+      "required": true,
+      "default": "drop",
+      "values": [
+        "queue",
+        "drop",
+        "restart"
+      ]
+    },
+    "queueMax": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "minimum": 1,
+      "maximum": 16
+    },
+    "intervalMs": {
+      "type": "duration",
+      "required": true,
+      "default": 1000,
+      "unit": "ms",
+      "minimum": 20,
+      "maximum": 86400000
+    }
+  },
+  "semantics": {
+    "vi": "Chạy theo nhịp có giới hạn; không chạy bù dồn những nhịp đã bỏ lỡ.",
+    "en": "Bounded monotonic ticks; missed ticks are not replayed in a burst."
+  },
+  "lowering": "every",
+  "migrations": []
+}

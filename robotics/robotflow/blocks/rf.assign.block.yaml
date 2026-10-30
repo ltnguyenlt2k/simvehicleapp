@@ -1,0 +1,43 @@
+{
+  "schema": "block.v1",
+  "id": "rf.assign",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Gán biến",
+    "en": "Assign"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "count"
+    },
+    "value": {
+      "type": "expression",
+      "required": true,
+      "default": "1"
+    }
+  },
+  "semantics": {
+    "vi": "Gán vào biến đã khai báo đúng kiểu; không thực thi mã tùy ý.",
+    "en": "Assign declared typed variable; bounded expression evaluation never eval."
+  },
+  "lowering": "assign",
+  "migrations": []
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "block.v1",
+  "id": "rf.join",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Gộp nhánh",
+    "en": "Join"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": true
+      }
+    },
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {},
+  "semantics": {
+    "vi": "Gộp các đường điều khiển loại trừ nhau; không thay bước chờ các nhánh song song.",
+    "en": "Merge mutually exclusive control paths; not a concurrency barrier, use Parallel for child cleanup."
+  },
+  "lowering": "join",
+  "migrations": []
+}

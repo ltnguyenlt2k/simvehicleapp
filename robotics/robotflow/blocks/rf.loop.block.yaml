@@ -1,0 +1,49 @@
+{
+  "schema": "block.v1",
+  "id": "rf.loop",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Lặp có cấu trúc",
+    "en": "Loop"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "body": {
+        "role": "body",
+        "required": true
+      },
+      "done": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "count": {
+      "type": "integer",
+      "required": true,
+      "default": 2,
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "forever": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    }
+  },
+  "semantics": {
+    "vi": "Lặp vùng thân theo số lần; lặp mãi phải có bước chờ trên mọi nhánh. Lỗi hoặc hủy dừng các vòng còn lại.",
+    "en": "Separate body region runs count times; explicit forever must yield on every path. Failure/cancel aborts remaining iterations; no graph back-edge."
+  },
+  "lowering": "loop",
+  "migrations": []
+}

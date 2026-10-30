@@ -109,7 +109,7 @@ def ir_schema():
         statement('wait',{'ms':MS}),statement('wait_until',{'condition':ref('expr'),'timeoutMs':MS,
             'on':obj({'succeeded':ref('body'),'timed_out':ref('body')})}),
         statement('set_target',{'path':PATH,'value':value}),
-        statement('hold',{'path':PATH,'value':value,'ms':MS,'on':ref('results')}),
+        statement('hold',{'path':PATH,'value':value,'ms':MS,'timeoutMs':MS,'on':ref('results')}),
         statement('invoke',{'path':PATH,'args':value,'timeoutMs':MS,'on':ref('results')}),
         statement('cancel',{'scope':const('body'),'timeoutMs':MS,'on':ref('results')}),
         statement('stop',{'timeoutMs':MS,'on':ref('results')}),

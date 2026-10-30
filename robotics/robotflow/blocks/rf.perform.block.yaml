@@ -1,0 +1,69 @@
+{
+  "schema": "block.v1",
+  "id": "rf.perform",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Thực hiện động tác",
+    "en": "Perform motion"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "name": {
+      "type": "enum",
+      "required": true,
+      "default": "BOW",
+      "values": [
+        "CROUCH",
+        "BOW",
+        "TILT",
+        "LIFT_FRONT_LEFT",
+        "JUMP"
+      ]
+    },
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 15000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 15000
+    }
+  },
+  "semantics": {
+    "vi": "Thực hiện một động tác đã kiểm chứng; chờ đúng kết quả vật lý và trả quyền chuyển động, không coi ACK là thành công.",
+    "en": "One qualified named motion; await matching physical terminal and body release. Physics rejection after ACK is failed, never succeeded."
+  },
+  "lowering": "perform",
+  "migrations": []
+}

@@ -1,7 +1,7 @@
 # RobotFlow compiler boundary
 
-Current increment: versioned graph/block/IR schemas and contract fixtures only.
-Compiler, block registry, Python emitter and runtime are not implemented yet.
+Current increment: versioned graph/block/IR schemas, 24 data-only blocks and their
+validated canonical registry. Compiler, Python emitter and runtime are not implemented yet.
 M25 tasks and acceptance remain authoritative; no live workflow claim.
 
 Inputs will be robotflow.v1 JSON, rss-catalog.v1, a pinned approved profile and

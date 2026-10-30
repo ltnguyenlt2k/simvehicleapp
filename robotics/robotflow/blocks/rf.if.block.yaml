@@ -1,0 +1,42 @@
+{
+  "schema": "block.v1",
+  "id": "rf.if",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Nếu / Không thì",
+    "en": "If / Else"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "then": {
+        "role": "branch",
+        "required": true
+      },
+      "else": {
+        "role": "branch",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "when": {
+      "type": "expression",
+      "required": true,
+      "default": "Robot.PowerSystem.Battery.StateOfCharge >= 20 %"
+    }
+  },
+  "semantics": {
+    "vi": "Chọn đúng một nhánh theo điều kiện có dữ liệu mới; thiếu dữ liệu không tự chọn nhánh chuyển động.",
+    "en": "Fresh typed boolean selects exactly one branch. Unavailable condition fails safely, never selects motion implicitly."
+  },
+  "lowering": "if",
+  "migrations": []
+}

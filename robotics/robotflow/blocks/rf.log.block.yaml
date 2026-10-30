@@ -1,0 +1,48 @@
+{
+  "schema": "block.v1",
+  "id": "rf.log",
+  "version": 1,
+  "category": "log",
+  "title": {
+    "vi": "Ghi log",
+    "en": "Log"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": false
+      }
+    }
+  },
+  "props": {
+    "level": {
+      "type": "enum",
+      "required": true,
+      "default": "info",
+      "values": [
+        "info",
+        "warn",
+        "error"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "required": true,
+      "default": "Robot workflow"
+    }
+  },
+  "semantics": {
+    "vi": "Ghi bản tin và giá trị có kiểu kèm mã node; bản tin người dùng không quyết định trạng thái thành công.",
+    "en": "Typed interpolation with source identity. User message is not authoritative run success."
+  },
+  "lowering": "log",
+  "migrations": []
+}

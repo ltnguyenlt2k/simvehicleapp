@@ -1,0 +1,69 @@
+{
+  "schema": "block.v1",
+  "id": "rf.go_to",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Đi tới điểm",
+    "en": "Go to point"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "x": {
+      "type": "expression",
+      "required": true,
+      "default": "0.8 m",
+      "unit": "m"
+    },
+    "y": {
+      "type": "expression",
+      "required": true,
+      "default": "0 m",
+      "unit": "m"
+    },
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 60000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 60000
+    }
+  },
+  "semantics": {
+    "vi": "Đi tới tọa độ thuộc đúng bản đồ; chờ kết quả nhiệm vụ khớp mã, không dùng vị trí odom làm tọa độ bản đồ.",
+    "en": "Map-frame goal bound to approved scene/map generation. Match actual mission ID/result; never odometry-as-map or ACK completion."
+  },
+  "lowering": "go_to",
+  "migrations": []
+}

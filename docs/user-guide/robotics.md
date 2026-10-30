@@ -46,4 +46,5 @@ This permits a later explicit Arm command; it does not start robot motion.
 After STOP or connection loss, explicitly recover and acquire fresh authority.
 Never reuse old lease files as recovery. `sr down` stops this robotics stack and
 preserves its volumes. See [M24 progress](../reports/M24-progress.md) for the open
-fault/equality/30-minute/video gates. Software STOP is not a physical E-stop.
+workflow/compiler/UI/video gates; M24 transport/fault/equality/30-minute gates
+have passed. Software STOP is not a physical E-stop.

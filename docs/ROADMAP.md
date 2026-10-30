@@ -66,8 +66,8 @@
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
 | [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069–0074 Accepted | ✔ | T01–T09 scoped gate PASS at 62529137; Robotics CI 40896228193; [report](reports/M23.md); general CI queued |
-| [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069, 0075 Accepted | 🔄 | T01–T06 local PASS: actual ROS commands/faults, 21-path equality, 1800 s/four-client soak, refresh expiry 0.294 s; c9f3f1b0 CI green; fresh-zero test fix CI pending; final video/workflow OPEN |
-| [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069, 0076 Accepted | 🔄 | T01 local 9 contract groups PASS; schema/tool-image CI pending; T02–T09 OPEN; no workflow runtime yet |
+| [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069, 0075 Accepted | ✔ | Scoped technical PASS: actual ROS commands/faults, 21-path equality, 1800 s/four-client soak, refresh expiry 0.294 s; 350f2ca8 CI green; workflow/UI/final video remain M25–M27 |
+| [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069, 0076 Accepted | 🔄 | T01 Robotics CI PASS; T02 local 24 blocks/14 test groups PASS, CI pending; T03–T09 OPEN; no workflow runtime yet |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
 | [M27](#m27--robotics-e2e-live-video-tài-liệu) | Complex live E2E, full video, docs, baseline | 0064–0070 Accepted | ☐ | 0/6; RW-E journey fixed in acceptance design |
 
@@ -503,17 +503,17 @@ Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](
 | Gate + báo cáo | 0066 | ✔ | Scoped Robotics CI 40896228193 SUCCESS at 62529137; reports/M23.md; general CI queued | T09 |
 
 ## M24 — Protobus bridge ROS 2 + adapter dog
-Chi tiết: [phases/M24](../analysis/phases/M24-protobus-ros2-bridge.md) · ADR [0066](../analysis/adr/ADR-0066-protobus-rss-ros2-bridge.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
+Chi tiết: [phases/M24](../analysis/phases/M24-protobus-ros2-bridge.md) · ADR 0066/0069/0075 — **Scoped technical PASS 2026-10-31**. Actual ROS/physics, faults, equality and 1800 s soak qualified; workflow/UI/full video remain M25–M27.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Image Humble digest + `dog_interfaces` | 0066 | ✔ | 2026-10-30: Robotics 40897932686 + general CI 40897932762 SUCCESS at f4f6a382; image/import/pip checks | T01 |
-| Engine mapping + transform đóng | 0066 | ✔ | 2026-10-30 local: 92 tests + 11 on Py3.10 + 2 actual isolated DDS tests PASS; M24-progress.md; CI pending | T02 |
-| Adapter `dog-control/1` | 0066, 0075 | 🔄 | 2026-10-30: producer Brain cbd1a48 qualified; wire/kernel tests PASS; actual consumer transport still in progress | T03 |
-| Luật an toàn + allowlist publisher + fault test | 0066 | ☐ | | T04 |
-| Compose profile `live` + external network dog | 0066 | ☐ | | T05 |
-| Gate live dog sim + đo RAM | 0066 | ☐ | | T06 |
-| Báo cáo | 0066 | ☐ | | T07 |
+| Engine mapping + transform đóng | 0066 | ✔ | Py3.10/actual DDS fixtures, original capture metadata; 21 raw/live path equality PASS; CI 41094388997 SUCCESS | T02 |
+| Adapter `dog-control/1` | 0066, 0075 | ✔ | Actual Arm/Velocity/BOW/LIFT/JUMP/GoTo/STOP with correlated physical terminal PASS; M24.md | T03 |
+| Luật an toàn + allowlist publisher + fault test | 0066 | ✔ | Actual priority STOP, broker/provider kill, ROS network/scene loss, hash/expiry/lost ACK; no auto Arm; M24-progress.md | T04 |
+| Compose profile `live` + external network dog | 0066 | ✔ | Production CLI/health/default Arm refusal + explicit opt-in motion PASS; independent network/audit | T05 |
+| Gate live dog sim + đo RAM | 0066 | ✔ | 1800 s/four-client live soak PASS, 21-path equality, refresh expiry 0.294 s; actual caps/host/memory recorded | T06 |
+| Báo cáo | 0066 | ✔ | M24.md + failure history/source equivalence/soak summary; 350f2ca8 Robotics/general CI SUCCESS; final workflow video remains M27 | T07 |
 
 ## M25 — RobotFlow compiler + runtime
 Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) · ADR [0067](../analysis/adr/ADR-0067-robotflow-language-compiler-runtime.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
@@ -521,7 +521,7 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
 | Schema `robotflow.v1`, `rfir.v1`, `block.v1`, mã `RF*` | 0067,0076 | ✔ | Local 9 contract groups /0.142 s PASS, malformed/typed/recursive/schema-sync/all-opcode coverage; RSS20 PASS; CI pending, no compiler/runtime acceptance | T01 |
-| Block registry v0.1 | 0067 | ☐ | | T02 |
+| Block registry v0.1 | 0067,0076 | ✔ | 24 canonical single-source blocks; all robot result ports/timeouts; 14 tests /0.870 s local PASS; candidate CI pending | T02 |
 | Biểu thức + kiểu/đơn vị | 0067 | ☐ | | T03 |
 | Compiler S0–S6 + IR + hash | 0067 | ☐ | | T04 |
 | Codegen Python + golden RW-A..D | 0067 | ☐ | | T05 |

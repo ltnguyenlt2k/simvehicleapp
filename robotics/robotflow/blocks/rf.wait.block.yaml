@@ -1,0 +1,41 @@
+{
+  "schema": "block.v1",
+  "id": "rf.wait",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Chờ",
+    "en": "Wait"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "durationMs": {
+      "type": "duration",
+      "required": true,
+      "default": 500,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 86400000
+    }
+  },
+  "semantics": {
+    "vi": "Chờ trong thời gian giới hạn và vẫn có thể hủy ngay.",
+    "en": "Bounded monotonic wait, promptly cancellable."
+  },
+  "lowering": "wait",
+  "migrations": []
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "block.v1",
+  "id": "rf.cancel",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Hủy chuyển động đang chạy",
+    "en": "Cancel body"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 15000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 15000
+    }
+  },
+  "semantics": {
+    "vi": "Hủy lệnh đang theo dõi theo đúng mã và chờ trả quyền; không nhầm hủy logic với dừng vật lý.",
+    "en": "Cancel tracked body/navigation by identity, then confirm release. Never cancel arbitrary external owner or infer release from logical cancellation."
+  },
+  "lowering": "cancel",
+  "migrations": []
+}

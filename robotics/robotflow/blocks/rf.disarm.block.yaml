@@ -1,0 +1,57 @@
+{
+  "schema": "block.v1",
+  "id": "rf.disarm",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Ngừng cho phép chuyển động",
+    "en": "Disarm"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 3000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 3000
+    }
+  },
+  "semantics": {
+    "vi": "Chờ trạng thái DISARMED và không còn chuyển động; nhận lệnh chưa phải hoàn tất.",
+    "en": "Wait for actual DISARMED and no active body command; ACK alone is insufficient."
+  },
+  "lowering": "disarm",
+  "migrations": []
+}

@@ -277,3 +277,9 @@ while DDS discovery is still starting. No startup claim/reset/arm. Read-only
 precheck PASS; synthetic default `sr up` also tested with an intentionally absent
 external dog network (PASS), then only its mock/broker were stopped. Live services
 were retained. Video remains a required M27 deliverable, not supplied by logs.
+
+2026-10-31 closure: 350f2ca8 Robotics 41094388997 SUCCESS and general 41094388689
+SUCCESS. M24 scoped technical T01–T07 PASS; all prior failed attempts retained.
+No remaining M24 gate substituted by a mock. Workflow/compiler/GUI/final full
+video are still required M25–M27 work. Default-off restored image core source
+matches soak-qualified core exactly (source-equivalence.json).

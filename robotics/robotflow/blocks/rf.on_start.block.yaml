@@ -1,0 +1,44 @@
+{
+  "schema": "block.v1",
+  "id": "rf.on_start",
+  "version": 1,
+  "category": "trigger",
+  "title": {
+    "vi": "Khi bắt đầu",
+    "en": "On start"
+  },
+  "ports": {
+    "inputs": {},
+    "outputs": {
+      "next": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "concurrency": {
+      "type": "enum",
+      "required": true,
+      "default": "drop",
+      "values": [
+        "queue",
+        "drop",
+        "restart"
+      ]
+    },
+    "queueMax": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "minimum": 1,
+      "maximum": 16
+    }
+  },
+  "semantics": {
+    "vi": "Chỉ chạy một lần sau thao tác bắt đầu; triển khai không tự chạy.",
+    "en": "Starts once only after explicit run launch. Deployment or import never fires this trigger."
+  },
+  "lowering": "on_start",
+  "migrations": []
+}

@@ -57,3 +57,11 @@ fixture and final logs retained; deterministic schema source/JSON equality teste
 CI contract/image/lock scan pending. T02–T09 remain OPEN; no runtime or live
 workflow acceptance. M23 prerequisite PASS; M24 live local gate complete while
 the fresh-zero test-fix candidate CI is pending. See docs/reports/M25-progress.md.
+
+2026-10-31: T01 Robotics CI 41094829674 SUCCESS at 964f636b. T02 local PASS:
+24 single-source data-only block records with localized semantics, closed safe
+registry loader, immutable canonical snapshots/hash and typed default validation.
+All robot outputs/timeouts required. Combined 14 tests PASS /0.870 s, precheck
+PASS. Hold explicit overall timeout amendment in ADR-0076; no released artifacts
+exist. T02 candidate CI pending. T03 parser/units next; no runtime/UI/video claim.
+M24 scoped live technical gate closed with 350f2ca8 CI green and 1800-second soak.

@@ -1,0 +1,50 @@
+{
+  "schema": "block.v1",
+  "id": "rf.parallel",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Chạy song song",
+    "en": "Parallel"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "branch1": {
+        "role": "body",
+        "required": true
+      },
+      "branch2": {
+        "role": "body",
+        "required": true
+      },
+      "done": {
+        "role": "next",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "mode": {
+      "type": "enum",
+      "required": true,
+      "default": "all",
+      "values": [
+        "all",
+        "any"
+      ]
+    }
+  },
+  "semantics": {
+    "vi": "Chạy hai nhánh; chờ tất cả hoặc chờ một rồi hủy và thu dọn nhánh kia. Lỗi được truyền ra ngoài.",
+    "en": "Two children: all waits both; any cancels and awaits loser cleanup. Failures propagate; Stop stays outside body ownership."
+  },
+  "lowering": "parallel",
+  "migrations": []
+}

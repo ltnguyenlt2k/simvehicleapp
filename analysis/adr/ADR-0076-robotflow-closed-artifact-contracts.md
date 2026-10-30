@@ -45,3 +45,9 @@ runner execution/provenance/isolation gates remain M26 responsibilities.
 Verification: valid graph/block/nested IR fixtures; unknown fields/opcodes,
 missing source/results, invalid identities/versions/types; diagnostic metadata;
 generated-schema equality. Full compiler/unit/conformance/live gates remain OPEN.
+
+T02 refinement before any released compiled artifact: Hold has required
+`timeoutMs` in addition to requested hold `ms`, so admission, timed hold and safe
+release share an explicit finite overall budget. The earlier T01 shape omitted
+that field; it is corrected while v0.1 is unimplemented/unreleased, with schema
+fixtures regenerated. No deployed graph/IR migration or wire Protobus change.

@@ -1,0 +1,27 @@
+{
+  "schema": "block.v1",
+  "id": "rf.end",
+  "version": 1,
+  "category": "flow",
+  "title": {
+    "vi": "Kết thúc nhánh",
+    "en": "End region"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {}
+  },
+  "props": {},
+  "semantics": {
+    "vi": "Kết thúc vùng hiện tại có ghi dấu; không bỏ qua thu dọn hoặc biến lỗi thành thành công.",
+    "en": "End current structured region with trace. Never bypass cleanup or convert failure to success."
+  },
+  "lowering": "end",
+  "migrations": []
+}

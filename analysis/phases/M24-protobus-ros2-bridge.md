@@ -65,3 +65,11 @@ command sequence PASS. T06 exact-capture equality 21 paths/129 comparisons PASS;
 (on-change event count and assumed battery cadence). No runtime thresholds were
 loosened; fixed plan now follows actual 1 Hz battery source/2500 ms RSS age.
 Report M24.md remains IN_PROGRESS; T07, deployment/UI/video gates remain OPEN.
+
+2026-10-31 scoped technical gate PASS, T01–T07 complete. Actual run03 1800 s/four
+clients, all fixed rate/quality/epoch/RSS bounds met; dedicated refresh-expiry
+safe zero 0.293997409 s. Default remote Arm restored off and verified. Core source
+matches qualified images; all failures retained. Candidate 350f2ca8 Robotics
+41094388997 + general 41094388689 SUCCESS, including corrected fresh-zero fixture.
+M24.md/soak summary/progress/README/user guide are current. This closes only M24;
+M25 compiler/runtime, M26 UI/deployment and M27 complex full-flow video remain OPEN.

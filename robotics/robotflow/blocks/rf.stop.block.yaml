@@ -1,0 +1,57 @@
+{
+  "schema": "block.v1",
+  "id": "rf.stop",
+  "version": 1,
+  "category": "robot",
+  "title": {
+    "vi": "Dừng ưu tiên",
+    "en": "Priority Stop"
+  },
+  "ports": {
+    "inputs": {
+      "in": {
+        "role": "in",
+        "required": true,
+        "fanIn": false
+      }
+    },
+    "outputs": {
+      "succeeded": {
+        "role": "result",
+        "required": true
+      },
+      "failed": {
+        "role": "result",
+        "required": true
+      },
+      "rejected": {
+        "role": "result",
+        "required": true
+      },
+      "cancelled": {
+        "role": "result",
+        "required": true
+      },
+      "timed_out": {
+        "role": "result",
+        "required": true
+      }
+    }
+  },
+  "props": {
+    "timeoutMs": {
+      "type": "duration",
+      "required": true,
+      "default": 3000,
+      "unit": "ms",
+      "minimum": 1,
+      "maximum": 3000
+    }
+  },
+  "semantics": {
+    "vi": "Dừng bằng đường ưu tiên độc lập; chỉ thành công khi có xác nhận phục hồi vật lý.",
+    "en": "Independent priority STOP outside body resource lock. Success requires physical confirmation; receipt is not completion."
+  },
+  "lowering": "stop",
+  "migrations": []
+}
