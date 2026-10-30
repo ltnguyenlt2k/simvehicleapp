@@ -126,3 +126,20 @@ previous qualified 1.3 image; no unqualified recreation or motion performed.
 Mandatory target mapping/source/context metadata, normal Dog Cancel and freshness
 qualification remain unresolved before live runtime acceptance. T06 still OPEN;
 no full runtime, conformance, GUI or video completion claim.
+
+T06 internal execution checkpoint: native generated RW-B visits all six
+waypoints and Disarms; injected second-waypoint timeout skips remaining points,
+runs Stop cleanup and retains TIMED_OUT. Unknown setup condition cannot select
+a reset/Arm branch. Structured Parallel-any waits loser cleanup, propagates
+cleanup failure and survives repeated parent cancellation without detached tasks.
+Behavior scheduling implements explicit launch, bounded drop/queue/restart,
+condition debounce with fresh-false rearm, on-change value semantics, periodic
+skip of missed ticks and named event replay suppression. Restart awaits cleanup;
+lease loss/deadline starts independent Stop before draining owned tasks.
+
+Final runtime foundation/core/engine suite **30 groups PASS /4.052 s**, including
+118 expression fixtures; precheck/diff PASS. These are explicit internal fake-bus
+unit tests and native source execution, not actual Protobus/ROS conformance.
+Remaining T06 BusClient/Hold/lease/transport/real-wheel/entrypoint/shutdown and
+T07–T09 remain OPEN. Event identity storage is bounded at1024; exhaustion rejects
+further events until a new explicit run, rather than evicting replay history.

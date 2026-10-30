@@ -49,3 +49,18 @@ Dynamic source/variable cases add missing data, percent/temperature round trips,
 integer/float boundaries, zero division and inverted clamp tests. Full T06 needs
 BusClient/behavior/Hold/trace/event/shutdown plus an actual reproducible wheel;
 T07 real broker/mock conformance and T08 actual dog simulation remain mandatory.
+
+## Native execution/scheduling checkpoint
+
+Context executes operations called by native generated source, never statement
+IR. Failed operations remain failed after successful cleanup. Node spans finish
+before outcome continuation, and logs inherit current node identity. Parallel-any
+awaits losing cleanup, including repeated parent cancellation. Behavior workers
+own one coroutine each; restart replaces a child only after recovery, and bounded
+event identities are never evicted into accidental replay. Fresh true debounce
+resets on unavailable observations, but requires fresh false to rearm after firing.
+Periodic triggers skip missed ticks; on-change ignores unchanged capture refresh.
+Loss/deadline dispatches independent Stop before waiting for child cleanup. The
+BusClient/runner must still enforce bounded RPC/process shutdown and physical
+release; async cancellation alone is not physical cancellation. Thirty internal
+fake-bus groups PASS /4.052 s; actual transport/live gates remain open.
