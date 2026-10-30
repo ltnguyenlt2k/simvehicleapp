@@ -1,5 +1,6 @@
 """Pinned producer wire artifact only; never import dog implementation code."""
 import hashlib
+import ast
 import json
 from pathlib import Path
 import unittest
@@ -30,6 +31,19 @@ class DogContractTests(unittest.TestCase):
     def test_controller_wire_accepts_exact_integer_fields(self):
         Draft202012Validator.check_schema(self.schema)
         self.validator.validate(self.packet())
+
+    def test_ros_application_has_exactly_one_allowed_command_publisher(self):
+        root=Path(__file__).resolve().parents[1]
+        calls=[]
+        for name in ('dog_ros_link.py','ros_telemetry.py','dog_backend.py','ros_bridge.py'):
+            tree=ast.parse((root/name).read_text())
+            calls.extend(node for node in ast.walk(tree) if isinstance(node,ast.Call)
+                and isinstance(node.func,ast.Attribute) and node.func.attr=='create_publisher')
+        self.assertEqual(len(calls),1)
+        topic=calls[0].args[1]
+        self.assertIsInstance(topic,ast.BinOp)
+        self.assertIsInstance(topic.op,ast.Add)
+        self.assertEqual(topic.right.value,'/control/request')
 
     def test_controller_wire_rejects_bool_overflow_unknown_fields_and_wrong_source(self):
         for changes in [dict(sequence=True), dict(sequence=2**64),

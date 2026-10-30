@@ -3,17 +3,30 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dc=(docker compose -f "$root/compose.yaml")
 case "${1:-help}" in
- build) "${dc[@]}" --profile build build contracts; "${dc[@]}" --profile tools build rss protobus-sim ;;
+ build)
+   [[ $# == 1 || ( $# == 2 && $2 == --live ) ]] || { echo 'Usage: sr build [--live]' >&2; exit 2; }
+   "${dc[@]}" --profile build build contracts
+   "${dc[@]}" --profile tools build rss protobus-sim
+   if [[ ${2:-} == --live ]]; then "${dc[@]}" --profile live build protobus-ros2; fi
+   ;;
  test)
    mkdir -p "$root/runtime/ci-tests"
    "${dc[@]}" --profile tools run --rm --no-deps rss 2>&1 | tee "$root/runtime/ci-tests/rss.log"
    docker run --rm --network none --cpus 2 --memory 256m sr-protobus:dev 2>&1 | tee "$root/runtime/ci-tests/protobus.log"
    ;;
- precheck) python3 "$root/scripts/precheck.py"; "${dc[@]}" --profile tools config -q ;;
- up) "${dc[@]}" up -d ;;
+ precheck) python3 "$root/scripts/precheck.py"; "${dc[@]}" --profile tools --profile live --profile live-tools config -q ;;
+ up)
+   case "${2:-}" in
+     '') [[ $# == 1 ]] || exit 2; "${dc[@]}" up -d ;;
+     --live) [[ $# == 2 ]] || exit 2; "${dc[@]}" --profile live up -d protobus-ros2 ;;
+     *) echo 'Usage: sr up [--live]' >&2; exit 2 ;;
+   esac ;;
  down) [[ $# == 1 ]] || { echo 'down accepts no extra arguments' >&2; exit 2; }; "${dc[@]}" down ;;
  rss) shift; "${dc[@]}" --profile tools run --rm --no-deps rss python rssc.py "$@" ;;
  smoke) "${dc[@]}" --profile tools run --rm --no-deps rss python rssc.py validate spec/go2.rss.yaml ;;
- pbctl) shift; "${dc[@]}" --profile tools run --rm --no-deps pbctl "$@" ;;
+ pbctl)
+   shift
+   if [[ ${1:-} == --live ]]; then shift; "${dc[@]}" --profile live-tools run --rm --no-deps pbctl-live "$@"
+   else "${dc[@]}" --profile tools run --rm --no-deps pbctl "$@"; fi ;;
  *) echo 'Usage: sr build|test|precheck|up|down|rss|smoke|pbctl'; exit 2 ;;
 esac

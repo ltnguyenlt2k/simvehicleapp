@@ -1,8 +1,8 @@
 # Robotics development preview
 
-The independent robotics stack currently provides RSS contracts, Protobus and a
-synthetic mock provider. Robot Studio and deployment to the ROS/MuJoCo dog are
-being implemented in the later roadmap milestones; they are not available yet.
+The independent robotics stack provides RSS contracts, Protobus, a synthetic
+mock provider and a development adapter to the ROS/MuJoCo dog. Robot Studio and
+workflow deployment are still being implemented.
 
 From the repo root:
 
@@ -23,3 +23,26 @@ The mock is a synthetic unicycle, not ROS physics or a real robot.
 
 For the complete test status and remaining integration work, read
 [M23 progress](../reports/M23-progress.md). No hardware operation is enabled.
+
+## Live dog simulation preview
+
+Start the separate dog simulation first (domain 52, Docker network
+`dog-ros2-r1_robot`). Then run from this repo root:
+
+1. `bash robotics/scripts/sr build --live`
+2. `bash robotics/scripts/sr precheck`
+3. `bash robotics/scripts/sr up --live`
+4. `bash robotics/scripts/sr pbctl --live describe`
+5. `bash robotics/scripts/sr pbctl --live get Robot.Safety.Mode`
+6. `bash robotics/scripts/sr pbctl --live stop`
+
+Set `SR_ROBOT_NETWORK` if the external Docker network has a different name.
+The live broker has its own network and audit volume. The adapter only publishes
+robot requests through the Brain's control interface. Startup does not Arm;
+tracked defaults reject remote Arm. An explicitly authorized local SIM session
+can opt in with `SR_AUTHORIZE_SIM_ARM=true bash robotics/scripts/sr up --live`.
+This permits a later explicit Arm command; it does not start robot motion.
+After STOP or connection loss, explicitly recover and acquire fresh authority.
+Never reuse old lease files as recovery. `sr down` stops this robotics stack and
+preserves its volumes. See [M24 progress](../reports/M24-progress.md) for the open
+fault/equality/30-minute/video gates. Software STOP is not a physical E-stop.

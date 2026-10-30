@@ -1,7 +1,9 @@
 """Actual ROS safe-output observer plus broker client for host process-fault tests."""
 import asyncio
+import argparse
 from collections import deque
 import json
+import os
 import sys
 import threading
 import time
@@ -16,7 +18,7 @@ from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
 
-async def run():
+async def run(target_expiry=False):
     rclpy.init(args=[])
     node=rclpy.create_node('protobus_fault_observer_'+uuid.uuid4().hex[:8])
     safe=deque(maxlen=2000)
@@ -44,7 +46,7 @@ async def run():
         assert len(node.get_publishers_info_by_topic('/dog1/cmd_vel/safe'))==1
         assert all(pub.topic_name not in ('/dog1/control/request','/dog1/cmd_vel/safe','/dog1/motion/request')
                    for pub in node.publishers)
-        async with grpc.aio.insecure_channel('broker:55600') as channel:
+        async with grpc.aio.insecure_channel(os.environ.get('SR_TEST_BUS','broker:55600')) as channel:
             bus=rpc.BusStub(channel)
             descriptor=await bus.Describe(pb.Empty(),timeout=2)
             assert descriptor.provider_online
@@ -71,8 +73,15 @@ async def run():
                     await asyncio.sleep(.05)
             holding=asyncio.create_task(hold())
             await wait(lambda:safe and safe[-1][1]>.1)
+            original_scene=brain['scene_epoch']
             print(json.dumps({'event':'fault_ready','safe_linear':safe[-1][1]}),flush=True)
-            marker=json.loads(await asyncio.to_thread(sys.stdin.readline))
+            if target_expiry:
+                cutoff=time.monotonic_ns()
+                holding.cancel()
+                await asyncio.gather(holding,return_exceptions=True)
+                marker={'cutoff_monotonic_ns':cutoff}
+            else:
+                marker=json.loads(await asyncio.to_thread(sys.stdin.readline))
             cutoff=marker['cutoff_monotonic_ns']
             await wait(lambda:any(t>=cutoff and x==0. and z==0. for t,x,z in safe),3)
             first=next(t for t,x,z in safe if t>=cutoff and x==0. and z==0.)
@@ -82,8 +91,17 @@ async def run():
             await asyncio.sleep(1.5)
             assert all(x==0. and z==0. for t,x,z in safe if t>=first)
             assert brain.get('mode')=='SAFE_STOP' and brain['authority']['owner'] is None,brain
+            if marker.get('require_new_scene'):
+                assert brain['scene_epoch']!=original_scene
+                try:
+                    await bus.RenewLease(lease,timeout=2)
+                except grpc.aio.AioRpcError:
+                    pass
+                else:
+                    raise AssertionError('old lease survived source scene epoch change')
             print(json.dumps({'passed':True,'safe_zero_seconds':latency,'no_auto_resume_seconds':1.5,
-                'safe_writer_count':1,'physical_distance_claimed':False}),flush=True)
+                'safe_writer_count':1,'physical_distance_claimed':False,
+                'scenario':'target_refresh_expiry' if target_expiry else 'host_fault'}),flush=True)
     finally:
         for task in (renewal,holding):
             if task: task.cancel()
@@ -94,4 +112,7 @@ async def run():
         rclpy.shutdown()
 
 
-if __name__=='__main__': asyncio.run(run())
+if __name__=='__main__':
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--target-expiry',action='store_true')
+    asyncio.run(run(parser.parse_args().target_expiry))

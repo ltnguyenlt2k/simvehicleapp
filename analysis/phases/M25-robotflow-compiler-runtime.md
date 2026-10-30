@@ -12,6 +12,12 @@
 > - mã `RF*` chỉ thêm;
 > - runtime không import ROS.
 
+M24 integration finding: Subscribe is on-change, not a capture heartbeat.
+BusClient must refresh current sensor records with Get when evaluating freshness,
+honor quality/source clock/epoch and keep event triggering separate from capture
+refresh. Constant healthy modes must not become stale solely because no value
+change event arrived. Cover this explicitly in T06/C-R conformance.
+
 ## Tasks
 
 | ID | Task | Module | Phụ thuộc | DoD |

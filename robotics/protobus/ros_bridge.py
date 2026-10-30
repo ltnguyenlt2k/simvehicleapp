@@ -2,6 +2,7 @@
 import argparse
 import asyncio
 import json
+import os
 from pathlib import Path
 
 import rclpy
@@ -50,11 +51,14 @@ async def serve(args):
 
 
 def main():
+    authorization=os.environ.get('SR_AUTHORIZE_SIM_ARM','false')
+    if authorization not in ('true','false'):
+        raise ValueError('SR_AUTHORIZE_SIM_ARM must be exactly true or false')
     parser = argparse.ArgumentParser()
     parser.add_argument('--catalog',required=True)
     parser.add_argument('--mapping',default='profiles/dog-go2-sim/mapping.json')
     parser.add_argument('--bus',default='protobus-live:55600')
-    parser.add_argument('--authorize-sim-arm',action='store_true')
+    parser.add_argument('--authorize-sim-arm',action='store_true',default=authorization=='true')
     parser.add_argument('--routes')
     asyncio.run(serve(parser.parse_args()))
 

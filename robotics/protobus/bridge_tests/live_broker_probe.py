@@ -2,6 +2,7 @@
 import asyncio
 import json
 import math
+import os
 import time
 import uuid
 import grpc
@@ -10,7 +11,7 @@ from protobus.v1 import protobus_pb2_grpc as rpc
 
 
 async def run():
-    async with grpc.aio.insecure_channel('broker:55600') as channel:
+    async with grpc.aio.insecure_channel(os.environ.get('SR_TEST_BUS','broker:55600')) as channel:
         bus = rpc.BusStub(channel)
         async def wait(predicate, timeout=10):
             end = time.monotonic()+timeout

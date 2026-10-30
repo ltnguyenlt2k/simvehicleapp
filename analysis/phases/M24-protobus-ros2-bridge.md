@@ -54,3 +54,14 @@ Current Robotics CI 41060689277 fails sr test; local RSS20/Protobus110 PASS.
 Added preserved test output/check annotations; exact CI cause remains unresolved.
 T04 remaining faults, T05 production live Compose, T06 30-minute/equality/resources
 and T07 closure remain OPEN. Final workflow/video milestones are not accepted.
+
+T04 local gate PASS: wrong hash/expired controller/actual ACK loss, STOP during
+BOW, broker/provider SIGKILL, ROS network loss, actual scene change/revoked lease,
+static/runtime publisher allowlist. Restored SAFE_STOP without auto Arm. CI
+33a94732 Robotics 41078050281 + general 41078050352 SUCCESS.
+T05 local production Compose/CLI/default Arm refusal and opt-in full actual
+command sequence PASS. T06 exact-capture equality 21 paths/129 comparisons PASS;
+30-minute run03 IN_PROGRESS after retaining two invalid measurement fixtures
+(on-change event count and assumed battery cadence). No runtime thresholds were
+loosened; fixed plan now follows actual 1 Hz battery source/2500 ms RSS age.
+Report M24.md remains IN_PROGRESS; T07, deployment/UI/video gates remain OPEN.

@@ -207,3 +207,40 @@ owner, sole writer one. These are bounded observations from cutoff before the
 host kill request; they are not hard realtime or stopping-distance claims.
 Both services restored after each fault. Wrong-hash/ACK-loss/source/epoch cases,
 post-reconnect explicit recovery and the sustained live gate remain required.
+
+T04 local gate PASS: actual wrong-config message dropped before admission (no
+ACK, as producer envelope contract requires); expired controller rejected;
+destroying the real ACK subscription before an actual admitted claim causes
+timeout, never false success; Brain grant expires with SAFE_STOP/no owner,
+no pending requests or auto Arm (`protocol-fault-live-final.log`). Initial test
+incorrectly expected a rejection ACK for an envelope-filtered hash; retained.
+Runtime provider application publisher is only control/request (ROS parameter
+events are infrastructure); static AST guard also checks the single writer.
+ROS-network loss while moving -> safe zero **0.277966895 s**, reconnect/recreate
+remains SAFE_STOP/no owner (`fault-ros-network.log`). Actual SIM scene change
+while controlling -> safe zero **0.188654850 s**, new scene observed, old broker
+lease rejected, restore without auto Arm (`fault-scene-epoch.log`).
+Earlier complete process/DDS policy cases and source pins remain applicable.
+
+33a94732 CI: Robotics **41078050281 SUCCESS**, general **41078050352 SUCCESS**.
+The preceding 86fdc758 sr-test failure remains unreproduced locally; no claim of
+a diagnosed transient cause. Current complete scoped CI requalifies that source.
+
+T05 production profile local PASS: `sr build --live`, precheck/config and `sr up
+--live` start only catalog-init/live broker/Humble provider, both healthy, separate
+network/audit, no socket, localhost port declaration. `sr pbctl --live describe`
+reports actual dog online. Default remote Arm rejection PASS while ROS connected;
+explicit SR_AUTHORIZE_SIM_ARM=true permits only later explicit invocation.
+Actual production-profile Arm/velocity (**0.211312158 m** odom)/BOW/LIFT/JUMP/GoTo/
+STOP all PASS (`live-profile-commands.log`). CLI invalid true/false boundary and
+isolated DDS mapping: 4 PASS /2.381 s. README/user guide updated; video still OPEN.
+
+T06 exact-capture comparison PASS: independent read-only raw DDS subscriber vs
+live broker, **21 sensor paths /129 comparisons**, tolerance 1e-8 absolute/relative,
+same original ROS timestamps, unknown battery charging stays NONE. No mapping
+engine reused to calculate expectations. First fixture used the wrong protobuf
+oneof name; failed log retained, corrected to the actual contract `kind`.
+`live-sensor-equality-final.log` stores values/stamps. Fixed 30-minute telemetry/
+resource criteria in M24-live-soak-plan.md before starting the live soak. Four
+subscribers and actual PID-1 RSS/Docker memory recording now IN_PROGRESS.
+M24 closure and final workflow/video remain OPEN.

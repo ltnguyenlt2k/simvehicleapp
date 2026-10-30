@@ -1,9 +1,9 @@
 # Robot Studio
-Independent stack under implementation, ADR-0069–0073. Current increment: RSS,
-Protobus broker, synthetic mock provider and diagnostic CLI. The 30-minute
-transport feasibility gate and local broker/provider/CLI checks passed; process
-faults and CI are tracked in M23. Workflow deployment, live ROS integration and
-Studio remain later gates. Hardware unsupported.
+Independent stack under implementation, ADR-0069–0075. Current increment: RSS,
+Protobus broker, synthetic mock provider, diagnostic CLI and development live
+ROS/MuJoCo adapter. Workflow deployment and Studio remain later gates. The M24
+live fault/equality checks passed locally; sustained acceptance is in progress.
+Hardware is unsupported. See M23/M24 reports for exact scope and evidence.
 
 From the repository root, run `bash robotics/scripts/sr build`, `precheck`, `test`
 and `smoke` for RSS foundations. Broker data/protocol tests: build the contracts
@@ -24,3 +24,21 @@ See [Protobus CLI](protobus/README.md) and
 stack's broker/provider and disconnects its mock network. It requires Docker
 access on the host and leaves a healthy, stopped stack (SAFE_STOP or DISARMED) after verification.
 Evidence goes under ignored `robotics/runtime/m23/process-faults/`.
+
+## Live ROS/MuJoCo development profile
+
+`bash robotics/scripts/sr build --live` builds the pinned independent Humble
+adapter. Start the dog stack separately on domain 52, then run
+`bash robotics/scripts/sr up --live`. This selects only the live broker/provider
+and catalog initializer, with its own internal bus/audit volume. It does not
+start the mock. `sr pbctl --live describe|get|subscribe|stop` (same script path)
+targets the live broker. Set `SR_ROBOT_NETWORK` to select the external dog Docker
+network (default `dog-ros2-r1_robot`). Compose must support `interface_name`;
+DDS uses eth0 and the internal broker bus eth1.
+
+Remote Arm defaults off. `SR_AUTHORIZE_SIM_ARM=true bash robotics/scripts/sr up
+--live` explicitly permits later Arm requests for local SIM; startup still never
+claims, resets, arms or resumes motion. Invalid true/false configuration fails
+startup. Host ports bind localhost only; use the container diagnostic CLI because
+internal-network port publishing varies by Docker version. Workflow Studio,
+deployment and final video remain pending. Follow [M24 progress](../docs/reports/M24-progress.md).

@@ -270,7 +270,9 @@ SimVehicleApp's own code is licensed **Apache-2.0** unless a module states other
 
 ## Robotics development preview
 
-The independent robotics stack currently provides RSS, Protobus and a synthetic
-mock provider. Workflow Studio and live ROS/MuJoCo deployment are still being
-implemented. See the [robotics guide](docs/user-guide/robotics.md),
-[stack commands](robotics/README.md) and [current evidence](docs/reports/M23-progress.md).
+The independent robotics stack provides RSS, Protobus, a synthetic mock provider
+and a development ROS/MuJoCo adapter. `sr up --live` connects the separate live
+broker to the dog simulation; remote Arm is disabled by default. Workflow Studio
+and workflow deployment remain under implementation. See the
+[robotics guide](docs/user-guide/robotics.md), [stack commands](robotics/README.md)
+and [current live evidence](docs/reports/M24-progress.md).

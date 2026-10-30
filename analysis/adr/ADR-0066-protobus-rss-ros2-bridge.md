@@ -1,5 +1,13 @@
 # ADR-0066: Protobus là bus tín hiệu tự viết theo RSS (giao thức `protobus.v1`), gồm broker, bridge ROS 2 theo mapping profile + adapter robot, và provider mock; luật an toàn bắt buộc
 
+Implementation clarification 2026-10-30: Subscribe remains on-change, as decided
+below. A constant healthy mode/battery value need not emit each new capture.
+Consumers requiring current capture metadata/freshness must refresh with Get
+and honor explicit quality/clock/epoch; they must not infer frozen transport
+from the absence of value-change events or compare ROS time to host monotonic.
+M24 soak counts unique captures from Get while maintaining four on-change
+subscriptions. This clarifies existing semantics; no wire/version change.
+
 - **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28
 - **Level:** L0 System

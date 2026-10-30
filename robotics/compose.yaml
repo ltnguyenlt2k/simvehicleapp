@@ -67,9 +67,54 @@ services:
     profiles: [tools]
     entrypoint: [python, -m, pbctl, --bus, "protobus-sim:55600"]
     command: [describe]
+  protobus-live:
+    <<: *runtime
+    profiles: [live]
+    networks: [live-bus]
+    depends_on:
+      catalog-init: {condition: service_completed_successfully}
+    volumes: ["catalog:/catalog:ro", "live-audit:/data"]
+    ports: ["127.0.0.1:55601:55600"]
+    command: [python, -m, broker, --catalog, /catalog/rss-catalog.json]
+    healthcheck:
+      test: [CMD, python, -m, health]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+  protobus-ros2:
+    <<: *runtime
+    image: sr-protobus-ros2:dev
+    build: {context: ./protobus, dockerfile: bridge-ros2.Dockerfile}
+    profiles: [live]
+    cpus: 2
+    depends_on:
+      protobus-live: {condition: service_healthy}
+    environment:
+      ROS_DOMAIN_ID: 52
+      CYCLONEDDS_URI: file:///opt/protobus/profiles/dog-go2-sim/cyclonedds.xml
+      SR_AUTHORIZE_SIM_ARM: ${SR_AUTHORIZE_SIM_ARM:-false}
+    networks:
+      dog: {interface_name: eth0}
+      live-bus: {interface_name: eth1}
+    command: [python3, -m, ros_bridge, --catalog, /catalog/rss-catalog.json, --bus, "protobus-live:55600"]
+    healthcheck:
+      test: [CMD, python3, -m, health, --bus, "protobus-live:55600", --provider]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+  pbctl-live:
+    <<: *runtime
+    profiles: [live-tools]
+    networks: [live-bus]
+    entrypoint: [python, -m, pbctl, --bus, "protobus-live:55600"]
+    command: [describe]
 volumes:
   catalog:
   audit:
+  live-audit:
 networks:
   sim-bus: {internal: true}
   live-bus: {internal: true}
+  dog: {external: true, name: "${SR_ROBOT_NETWORK:-dog-ros2-r1_robot}"}
