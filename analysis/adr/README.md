@@ -213,3 +213,5 @@ flowchart TB
 - [ADR-0078](ADR-0078-robotflow-compiler-validation-and-regions.md): Accepted for M25-T04; pure ordered compiler validation, closed approved policy, isolated regions, canonical unit/profile binding and finite expansion. Runtime/codegen/live gates remain OPEN.
 
 - [ADR-0079](ADR-0079-deterministic-python-files-and-lock.md): M25-T05 native async source and deterministic 10-file lock; actual runtime package pin and execution acceptance remain T06–T08.
+
+- [ADR-0080](ADR-0080-robotflow-runtime-integrity-and-values.md): M25-T06 independent artifact integrity and typed value boundary; unknown is non-coercible, no live/runtime acceptance from unit fixtures.

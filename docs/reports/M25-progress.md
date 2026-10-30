@@ -109,3 +109,16 @@ diff whitespace checks PASS. Localized property/enum labels added to single-sour
 block descriptors for the upcoming UI. T05 candidate CI pending. T06 next;
 conformance/live/UI/video remain OPEN.
 T04 e6920f58 CI qualified: Robotics41105342036 and general41105342105 SUCCESS.
+
+T05 CI qualified at 2fee1031: Robotics41110002948/general41110003083 SUCCESS.
+T06 IN_PROGRESS: independent ROS/compiler-free runtime foundations now verify
+the closed artifact set before import, return immutable checked bytes, reject
+missing/wrong runtime pins, altered files/semantic identities, symlinks and extra
+module paths. Strict JSON rejects duplicate/nonfinite/overflow numbers. Typed
+AST execution has 118 explicit wire fixtures and dynamic unit/unknown/overflow
+cases. 14 groups PASS /2.735 s; precheck/diff checks PASS. Initial registry hash
+interpretation mismatch retained and corrected against its public data contract.
+ADR-0080 records identity versus trust and non-coercible unknown semantics.
+Unit runtime digest is deliberately synthetic; no actual wheel or application
+launch is claimed. BusClient/engine/Hold/lease/trace/event/shutdown/wheel remain
+required for T06. T07–T09, GUI and final continuous video remain OPEN.

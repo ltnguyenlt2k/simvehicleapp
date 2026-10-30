@@ -1,0 +1,2580 @@
+[
+  {
+    "source": "1 + 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "1 - 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 0
+  },
+  {
+    "source": "1 * 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 1
+  },
+  {
+    "source": "1 / 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 1.0
+  },
+  {
+    "source": "1 + 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "1 - 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": -1
+  },
+  {
+    "source": "1 * 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "1 / 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.5
+  },
+  {
+    "source": "1 + 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 4
+  },
+  {
+    "source": "1 - 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": -2
+  },
+  {
+    "source": "1 * 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "1 / 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.3333333333333333
+  },
+  {
+    "source": "1 + 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 5
+  },
+  {
+    "source": "1 - 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": -3
+  },
+  {
+    "source": "1 * 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 4
+  },
+  {
+    "source": "1 / 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.25
+  },
+  {
+    "source": "2 + 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "2 - 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 1
+  },
+  {
+    "source": "2 * 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "2 / 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 2.0
+  },
+  {
+    "source": "2 + 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 4
+  },
+  {
+    "source": "2 - 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 0
+  },
+  {
+    "source": "2 * 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 4
+  },
+  {
+    "source": "2 / 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 1.0
+  },
+  {
+    "source": "2 + 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 5
+  },
+  {
+    "source": "2 - 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": -1
+  },
+  {
+    "source": "2 * 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 6
+  },
+  {
+    "source": "2 / 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.6666666666666666
+  },
+  {
+    "source": "2 + 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 6
+  },
+  {
+    "source": "2 - 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": -2
+  },
+  {
+    "source": "2 * 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 8
+  },
+  {
+    "source": "2 / 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.5
+  },
+  {
+    "source": "3 + 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 4
+  },
+  {
+    "source": "3 - 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "3 * 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "3 / 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 3.0
+  },
+  {
+    "source": "3 + 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 5
+  },
+  {
+    "source": "3 - 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 1
+  },
+  {
+    "source": "3 * 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 6
+  },
+  {
+    "source": "3 / 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 1.5
+  },
+  {
+    "source": "3 + 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 6
+  },
+  {
+    "source": "3 - 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 0
+  },
+  {
+    "source": "3 * 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 9
+  },
+  {
+    "source": "3 / 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 1.0
+  },
+  {
+    "source": "3 + 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 7
+  },
+  {
+    "source": "3 - 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": -1
+  },
+  {
+    "source": "3 * 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 12
+  },
+  {
+    "source": "3 / 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.75
+  },
+  {
+    "source": "4 + 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 5
+  },
+  {
+    "source": "4 - 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "4 * 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 4
+  },
+  {
+    "source": "4 / 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 4.0
+  },
+  {
+    "source": "4 + 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 6
+  },
+  {
+    "source": "4 - 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "4 * 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 8
+  },
+  {
+    "source": "4 / 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 2.0
+  },
+  {
+    "source": "4 + 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 7
+  },
+  {
+    "source": "4 - 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 1
+  },
+  {
+    "source": "4 * 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 12
+  },
+  {
+    "source": "4 / 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 1.3333333333333333
+  },
+  {
+    "source": "4 + 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 8
+  },
+  {
+    "source": "4 - 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 0
+  },
+  {
+    "source": "4 * 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 16
+  },
+  {
+    "source": "4 / 4",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 4,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 1.0
+  },
+  {
+    "source": "1 + 2 * 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "binary",
+        "operator": "*",
+        "left": {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        },
+        "right": {
+          "kind": "literal",
+          "value": 3,
+          "type": "int32",
+          "unit": "1"
+        },
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 7
+  },
+  {
+    "source": "(1 + 2) * 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "binary",
+        "operator": "+",
+        "left": {
+          "kind": "literal",
+          "value": 1,
+          "type": "int32",
+          "unit": "1"
+        },
+        "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        },
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 9
+  },
+  {
+    "source": "10 - 3 - 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "-",
+      "left": {
+        "kind": "binary",
+        "operator": "-",
+        "left": {
+          "kind": "literal",
+          "value": 10,
+          "type": "int32",
+          "unit": "1"
+        },
+        "right": {
+          "kind": "literal",
+          "value": 3,
+          "type": "int32",
+          "unit": "1"
+        },
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 5
+  },
+  {
+    "source": "12 / 2 / 3",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "binary",
+        "operator": "/",
+        "left": {
+          "kind": "literal",
+          "value": 12,
+          "type": "int32",
+          "unit": "1"
+        },
+        "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        },
+        "type": "float64",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "-2 * -3",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": -2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": -3,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 6
+  },
+  {
+    "source": "+.5",
+    "ast": {
+      "kind": "literal",
+      "value": 0.5,
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 0.5
+  },
+  {
+    "source": "-.5",
+    "ast": {
+      "kind": "literal",
+      "value": -0.5,
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": -0.5
+  },
+  {
+    "source": "1e2 + 2.5e-1",
+    "ast": {
+      "kind": "binary",
+      "operator": "+",
+      "left": {
+        "kind": "literal",
+        "value": 100.0,
+        "type": "float64",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 0.25,
+        "type": "float64",
+        "unit": "1"
+      },
+      "type": "float64",
+      "unit": "1"
+    },
+    "expected": 100.25
+  },
+  {
+    "source": "true and false",
+    "ast": {
+      "kind": "binary",
+      "operator": "and",
+      "left": {
+        "kind": "literal",
+        "value": true,
+        "type": "bool"
+      },
+      "right": {
+        "kind": "literal",
+        "value": false,
+        "type": "bool"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "true or false",
+    "ast": {
+      "kind": "binary",
+      "operator": "or",
+      "left": {
+        "kind": "literal",
+        "value": true,
+        "type": "bool"
+      },
+      "right": {
+        "kind": "literal",
+        "value": false,
+        "type": "bool"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "not true",
+    "ast": {
+      "kind": "unary",
+      "operator": "not",
+      "operand": {
+        "kind": "literal",
+        "value": true,
+        "type": "bool"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "not 1 < 2",
+    "ast": {
+      "kind": "unary",
+      "operator": "not",
+      "operand": {
+        "kind": "binary",
+        "operator": "<",
+        "left": {
+          "kind": "literal",
+          "value": 1,
+          "type": "int32",
+          "unit": "1"
+        },
+        "right": {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        },
+        "type": "bool"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "not false and true",
+    "ast": {
+      "kind": "binary",
+      "operator": "and",
+      "left": {
+        "kind": "unary",
+        "operator": "not",
+        "operand": {
+          "kind": "literal",
+          "value": false,
+          "type": "bool"
+        },
+        "type": "bool"
+      },
+      "right": {
+        "kind": "literal",
+        "value": true,
+        "type": "bool"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "false or true and false",
+    "ast": {
+      "kind": "binary",
+      "operator": "or",
+      "left": {
+        "kind": "literal",
+        "value": false,
+        "type": "bool"
+      },
+      "right": {
+        "kind": "binary",
+        "operator": "and",
+        "left": {
+          "kind": "literal",
+          "value": true,
+          "type": "bool"
+        },
+        "right": {
+          "kind": "literal",
+          "value": false,
+          "type": "bool"
+        },
+        "type": "bool"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "\"MANUAL\" == \"MANUAL\"",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": "MANUAL",
+        "type": "string"
+      },
+      "right": {
+        "kind": "literal",
+        "value": "MANUAL",
+        "type": "string"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "\"a\" != \"b\"",
+    "ast": {
+      "kind": "binary",
+      "operator": "!=",
+      "left": {
+        "kind": "literal",
+        "value": "a",
+        "type": "string"
+      },
+      "right": {
+        "kind": "literal",
+        "value": "b",
+        "type": "string"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "100 cm == 1 m",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 1.0,
+        "type": "float64",
+        "unit": "m"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "m"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "1000 ms == 1 s",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 1.0,
+        "type": "float64",
+        "unit": "s"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "s"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "20 % == 0.2",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 0.2,
+        "type": "float64",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 0.2,
+        "type": "float64",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "1 m / 2 s",
+    "ast": {
+      "kind": "binary",
+      "operator": "/",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "m"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "s"
+      },
+      "type": "float64",
+      "unit": "m/s"
+    },
+    "expected": 0.5
+  },
+  {
+    "source": "2 m/s * 3 s",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "m/s"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 3,
+        "type": "int32",
+        "unit": "s"
+      },
+      "type": "int32",
+      "unit": "m"
+    },
+    "expected": 6
+  },
+  {
+    "source": "1 m/s² * 2 s",
+    "ast": {
+      "kind": "binary",
+      "operator": "*",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "m/s²"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "s"
+      },
+      "type": "int32",
+      "unit": "m/s"
+    },
+    "expected": 2
+  },
+  {
+    "source": "20 °C == 293.15 K",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 293.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 293.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "20 °C > 0 K",
+    "ast": {
+      "kind": "binary",
+      "operator": ">",
+      "left": {
+        "kind": "literal",
+        "value": 293.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 0,
+        "type": "int32",
+        "unit": "K"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "-20 °C == 253.15 K",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 253.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 253.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "-20 °C < 0 °C",
+    "ast": {
+      "kind": "binary",
+      "operator": "<",
+      "left": {
+        "kind": "literal",
+        "value": 253.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 273.15,
+        "type": "float64",
+        "unit": "K"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "abs(-3)",
+    "ast": {
+      "kind": "call",
+      "name": "abs",
+      "args": [
+        {
+          "kind": "literal",
+          "value": -3,
+          "type": "int32",
+          "unit": "1"
+        }
+      ],
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "abs(-2 m)",
+    "ast": {
+      "kind": "call",
+      "name": "abs",
+      "args": [
+        {
+          "kind": "literal",
+          "value": -2,
+          "type": "int32",
+          "unit": "m"
+        }
+      ],
+      "type": "int32",
+      "unit": "m"
+    },
+    "expected": 2
+  },
+  {
+    "source": "min(3,1)",
+    "ast": {
+      "kind": "call",
+      "name": "min",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 3,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 1,
+          "type": "int32",
+          "unit": "1"
+        }
+      ],
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 1
+  },
+  {
+    "source": "min(3,2,1)",
+    "ast": {
+      "kind": "call",
+      "name": "min",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 3,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 1,
+          "type": "int32",
+          "unit": "1"
+        }
+      ],
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 1
+  },
+  {
+    "source": "max(1,2,3)",
+    "ast": {
+      "kind": "call",
+      "name": "max",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 1,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 3,
+          "type": "int32",
+          "unit": "1"
+        }
+      ],
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 3
+  },
+  {
+    "source": "clamp(3,0,2)",
+    "ast": {
+      "kind": "call",
+      "name": "clamp",
+      "args": [
+        {
+          "kind": "literal",
+          "value": 3,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 0,
+          "type": "int32",
+          "unit": "1"
+        },
+        {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "1"
+        }
+      ],
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2
+  },
+  {
+    "source": "clamp(-1 m,0 m,2 m)",
+    "ast": {
+      "kind": "call",
+      "name": "clamp",
+      "args": [
+        {
+          "kind": "literal",
+          "value": -1,
+          "type": "int32",
+          "unit": "m"
+        },
+        {
+          "kind": "literal",
+          "value": 0,
+          "type": "int32",
+          "unit": "m"
+        },
+        {
+          "kind": "literal",
+          "value": 2,
+          "type": "int32",
+          "unit": "m"
+        }
+      ],
+      "type": "int32",
+      "unit": "m"
+    },
+    "expected": 0
+  },
+  {
+    "source": "2147483647",
+    "ast": {
+      "kind": "literal",
+      "value": 2147483647,
+      "type": "int32",
+      "unit": "1"
+    },
+    "expected": 2147483647
+  },
+  {
+    "source": "9223372036854775807",
+    "ast": {
+      "kind": "literal",
+      "value": 9223372036854775807,
+      "type": "int64",
+      "unit": "1"
+    },
+    "expected": 9223372036854775807
+  },
+  {
+    "source": "-9223372036854775808",
+    "ast": {
+      "kind": "literal",
+      "value": -9223372036854775808,
+      "type": "int64",
+      "unit": "1"
+    },
+    "expected": -9223372036854775808
+  },
+  {
+    "source": "1 < 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "<",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "1 <= 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "<=",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "1 > 2",
+    "ast": {
+      "kind": "binary",
+      "operator": ">",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "1 >= 2",
+    "ast": {
+      "kind": "binary",
+      "operator": ">=",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "1 == 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "1 != 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "!=",
+      "left": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 < 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "<",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "2 <= 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "<=",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "2 > 1",
+    "ast": {
+      "kind": "binary",
+      "operator": ">",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 >= 1",
+    "ast": {
+      "kind": "binary",
+      "operator": ">=",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 == 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "2 != 1",
+    "ast": {
+      "kind": "binary",
+      "operator": "!=",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 1,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 < 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "<",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "2 <= 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "<=",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 > 2",
+    "ast": {
+      "kind": "binary",
+      "operator": ">",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  },
+  {
+    "source": "2 >= 2",
+    "ast": {
+      "kind": "binary",
+      "operator": ">=",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 == 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "==",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": true
+  },
+  {
+    "source": "2 != 2",
+    "ast": {
+      "kind": "binary",
+      "operator": "!=",
+      "left": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "right": {
+        "kind": "literal",
+        "value": 2,
+        "type": "int32",
+        "unit": "1"
+      },
+      "type": "bool"
+    },
+    "expected": false
+  }
+]
