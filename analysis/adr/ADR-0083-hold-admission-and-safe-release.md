@@ -1,7 +1,7 @@
 # ADR-0083: Hold admission and correlated safe release
 
 Status: Accepted design for M25-T06 prerequisite implementation under user
-delegation, 2026-10-31. NOT IMPLEMENTED; no new wire/runtime gate accepted.
+delegation, 2026-10-31. Ledger component IN_PROGRESS; transport/backend integration not implemented; no new wire/runtime gate accepted.
 
 ## Finding
 
@@ -71,3 +71,10 @@ ordinary Cancel handover, source-fault tests and final complex workflow/video.
 
 Next action: implement transport records/feedback and backend admission/release
 confirmation, qualify them before completing BusClient/Hold and runtime wheel.
+
+Component checkpoint: targets.py adds a bounded HoldLedger with unique operation
+identity, admission/release sequence checks, immutable logical timeout/physical
+release, non-extending cleanup retries and no eviction of an unconfirmed resource.
+Eight component groups PASS; not imported into broker/provider yet. A failed
+refresh cannot falsely release an earlier admitted target. Actual RPC/backend
+integration and all live Hold acceptance remain OPEN.

@@ -593,3 +593,5 @@ M25-T06 internal native execution/scheduling checkpoint: 30 runtime groups PASS 
 M25-T06 target-context prerequisite local PASS: candidate wire1.5, RSS22/Protobus123, Humble backend8/bridge4 and actual read-only DDS metadata9frames. No command/lease sent; production1.3 unchanged. See M25-target-context-checkpoint.json. Runtime/control/freshness/conformance/GUI/video remain OPEN.
 
 M25-T06 next prerequisite: actual Hold admission/safe-release feedback (ADR-0083). Broker receipt alone cannot prove Hold success or body handover. Implementation/tests still OPEN; do not skip to GUI/video acceptance.
+
+M25-T06 HoldLedger component8 groups PASS; broker/provider integration still OPEN. No actual Hold-release or full runtime acceptance. Next: wire operation IDs/admission/release feedback to real backends.

@@ -188,3 +188,10 @@ Next action is this transport/backend prerequisite, then complete BusClient/Hold
 wheel. Normal Cancel cause/recovery and ROS freshness gates remain mandatory.
 This finding is not accepted from the already-passing metadata tests; full
 runtime/GUI/video remain unfinished.
+
+T06 Hold prerequisite component: bounded HoldLedger8 groups PASS /0.001 s;
+strict owner/session/sequence, immutable logical versus physical terminal, retry
+cleanup deadline and recovery-without-fabricated-proof cases. The module is NOT
+yet wired into broker/provider. An initial fixture argument collision is retained
+and corrected. No transport/Hold/live success claim; wire/backend integration is
+the next action, then BusClient/wheel/conformance and final GUI/video.
