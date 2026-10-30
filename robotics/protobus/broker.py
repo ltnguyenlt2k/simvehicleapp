@@ -20,7 +20,7 @@ from commands import CommandPlane
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
-PROTOCOL_VERSION = '1.3'
+PROTOCOL_VERSION = '1.4'
 CONNECTION_PATHS = {
     'Robot.Connection.IsOnline', 'Robot.Connection.IsHandshakeComplete',
     'Robot.Connection.LastSampleAgeMs',
@@ -502,7 +502,8 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
                              catalog_hash=self.catalog_hash, broker_epoch=self.epoch,
                              provider_online=self.provider is not None, backend='SIM',
                              host_clock_id=self.host_clock_id, protocol_version=PROTOCOL_VERSION,
-                             audit_ok=not self.audit.failed)
+                             audit_ok=not self.audit.failed,
+                             provider_session=self.provider.hello.session if self.provider else '')
 
     async def Get(self, request, context):
         try:

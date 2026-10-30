@@ -101,3 +101,11 @@ class CliTests(ControlFixture):
         await self.reply(stop, pb.SUCCEEDED, True)
         stdout, _ = await stop_task
         self.assertTrue(json.loads(stdout)['robotConfirmed'])
+        receipt=json.loads(stdout)
+        stdout,_=await self.cli('inspect',receipt['executionId'],'--epoch',receipt['brokerEpoch'])
+        state=json.loads(stdout)
+        self.assertTrue(state['physicalReleased'])
+        self.assertEqual(state['physicalPhase'],'SUCCEEDED')
+        self.assertEqual(state['providerSession'],self.hello.session)
+        self.assertIsNone(self.broker.lease)
+        await self.cli('inspect',receipt['executionId'],'--epoch','old',expected=2)

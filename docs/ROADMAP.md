@@ -585,3 +585,5 @@ M22 gate PASS 2026-10-29: 15 containerized RSS tests, 113-node deterministic cat
 M25-T05 local PASS: RW-A..D native Python/IR goldens ×2, exact artifact identities, 38 groups /14.726 s; recursive schema performance failure fixed and retained. T04 CI green (41105342036/41105342105). T06 runtime next; full workflow UI/video not yet delivered. See M25-progress.md.
 
 M25-T05 CI green (2fee1031); T06 IN_PROGRESS: artifact integrity/typed AST foundations 14 groups PASS, no runtime execution claim. Remaining runtime/control/conformance/live/UI/video gates stay OPEN.
+
+M25-T06 ongoing: correlated release inspection prerequisite passed RSS22/broker118 tests and actual CLI/protocol checks. Candidate wire1.4 is not yet live-qualified; running live remains qualified1.3. Runtime/metadata/Cancel/freshness/GUI/video gates remain OPEN.

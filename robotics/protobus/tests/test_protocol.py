@@ -8,7 +8,7 @@ class ProtocolTests(unittest.TestCase):
         services = pb.DESCRIPTOR.services_by_name
         self.assertEqual(set(services['Bus'].methods_by_name), {
             'Describe', 'Get', 'Subscribe', 'AcquireLease', 'RenewLease',
-            'ReleaseLease', 'SetTarget', 'Invoke', 'Cancel', 'Stop'})
+            'ReleaseLease', 'SetTarget', 'Invoke', 'Cancel', 'Stop', 'InspectExecution'})
         self.assertEqual(set(services['Provider'].methods_by_name), {'Attach', 'Control', 'Safety'})
         self.assertTrue(services['Provider'].methods_by_name['Attach'].client_streaming)
         self.assertTrue(services['Provider'].methods_by_name['Control'].server_streaming)
@@ -39,6 +39,8 @@ class ProtocolTests(unittest.TestCase):
             'Samples': {'samples': 1, 'provider_session': 2, 'broker_epoch': 3},
             'CommandUpdate': {'execution_id': 1, 'phase': 2, 'reason': 3, 'provider_session': 4, 'path': 5, 'physical_confirmed': 6},
             'Target': {'lease': 1, 'path': 2, 'value': 3, 'sequence': 4, 'owner_id': 5, 'release': 6},
+            'StopReply': {'requested':1,'dispatched':2,'robot_confirmed':3,'reason':4,
+                          'execution_id':5,'broker_epoch':6,'provider_session':7},
         }
         for message, fields in expected.items():
             self.assertEqual({f.name: f.number for f in pb.DESCRIPTOR.message_types_by_name[message].fields}, fields)

@@ -375,7 +375,7 @@ class ProviderClient:
             descriptor = await rpc.BusStub(normal).Describe(pb.Empty(), timeout=2)
             clock = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
             if (descriptor.backend != 'SIM' or descriptor.catalog_hash != self.catalog['catalogHash']
-                    or descriptor.protocol_version != '1.3' or descriptor.host_clock_id != clock):
+                    or descriptor.protocol_version != '1.4' or descriptor.host_clock_id != clock):
                 raise ConnectionError('provider descriptor/catalog/clock mismatch')
             self.guard = AuthorityGuard(descriptor.broker_epoch, str(uuid.uuid4()))
             self.sequence = 0
@@ -383,7 +383,7 @@ class ProviderClient:
                       if not path.startswith('Robot.Connection.') and not node.get('generated')]
             hello = pb.ProviderHello(provider_id=self.provider_id, profile_id=self.profile_id,
                 catalog_hash=self.catalog['catalogHash'], session=self.guard.session,
-                claims=claims, backend='SIM', host_clock_id=clock, protocol_version='1.3')
+                claims=claims, backend='SIM', host_clock_id=clock, protocol_version='1.4')
             provider = rpc.ProviderStub(normal)
             call = provider.Attach()
             await call.write(pb.ProviderPacket(hello=hello))

@@ -215,3 +215,5 @@ flowchart TB
 - [ADR-0079](ADR-0079-deterministic-python-files-and-lock.md): M25-T05 native async source and deterministic 10-file lock; actual runtime package pin and execution acceptance remain T06–T08.
 
 - [ADR-0080](ADR-0080-robotflow-runtime-integrity-and-values.md): M25-T06 independent artifact integrity and typed value boundary; unknown is non-coercible, no live/runtime acceptance from unit fixtures.
+
+- [ADR-0081](ADR-0081-protobus-correlated-release-inspection.md): protocol candidate1.4 read-only correlated physical release and STOP identities; live requalification mandatory.

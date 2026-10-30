@@ -78,8 +78,12 @@ async def run(args):
         if args.command == 'stop':
             output(await bus.Stop(pb.StopRequest(reason=args.reason), timeout=3))
             return 0
-        if descriptor.backend != 'SIM' or descriptor.protocol_version != '1.3':
-            raise ValueError('writes require the supported local SIM protocol 1.3')
+        if args.command == 'inspect':
+            output(await bus.InspectExecution(pb.ExecutionQuery(catalog_hash=descriptor.catalog_hash,
+                broker_epoch=args.epoch, execution_id=args.execution), timeout=2))
+            return 0
+        if descriptor.backend != 'SIM' or descriptor.protocol_version != '1.4':
+            raise ValueError('writes require the supported local SIM protocol 1.4')
         if not args.lease_file:
             raise ValueError('--lease-file is required for control operations')
         path = Path(args.lease_file)
@@ -173,6 +177,9 @@ def parser():
     result.add_argument('--lease-file')
     commands = result.add_subparsers(dest='command', required=True)
     commands.add_parser('describe')
+    inspect = commands.add_parser('inspect')
+    inspect.add_argument('execution')
+    inspect.add_argument('--epoch', required=True)
     for name in ('get', 'subscribe'):
         command = commands.add_parser(name)
         command.add_argument('paths', nargs='*')

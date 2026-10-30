@@ -94,6 +94,7 @@ class Execution:
     phase: int = pb.PENDING
     cancelled: bool = False
     released: bool = False
+    physical_phase: int = pb.PHASE_UNSPECIFIED
     event: asyncio.Event = field(default_factory=asyncio.Event)
     history: list = field(default_factory=list)
 
@@ -157,6 +158,7 @@ class CommandPlane:
                 self.active_execution = None
             if physical_confirmed:
                 execution.released = True
+                execution.physical_phase = phase
                 self.draining.discard(execution.id)
             else:
                 self.draining.add(execution.id)
@@ -302,6 +304,30 @@ class CommandPlane:
         except self.error_type as error:
             await self.abort(context, error)
 
+    async def InspectExecution(self, request, context):
+        try:
+            if request.catalog_hash != self.catalog_hash:
+                raise self.reject('PB_CATALOG_MISMATCH')
+            if request.broker_epoch != self.epoch:
+                raise self.reject('PB_REPLAY', 'execution belongs to another broker epoch')
+            if not 1 <= len(request.execution_id) <= 128:
+                raise self.reject('PB_INVALID_VALUE', 'bounded execution identity required')
+            execution = self.executions.get(request.execution_id)
+            if execution is not None:
+                return pb.ExecutionState(execution_id=execution.id, path=execution.path,
+                    logical_phase=execution.phase, physical_released=execution.physical_phase in TERMINAL,
+                    physical_phase=execution.physical_phase, provider_session=execution.session,
+                    broker_epoch=self.epoch, fence=execution.fence)
+            stop = self.stop_records.get(request.execution_id)
+            if stop is not None:
+                return pb.ExecutionState(execution_id=stop.id, path='Robot.Safety.Stop',
+                    logical_phase=stop.phase, physical_released=stop.confirmed,
+                    physical_phase=pb.SUCCEEDED if stop.confirmed else pb.PHASE_UNSPECIFIED,
+                    provider_session=stop.session, broker_epoch=self.epoch)
+            raise self.reject('PB_INVALID_VALUE', 'execution unknown or history expired')
+        except self.error_type as error:
+            await self.abort(context, error)
+
     def request_stop(self, reason, record_audit=True, requester='broker'):
         self.stop_latched = True
         provider = self.provider
@@ -333,6 +359,7 @@ class CommandPlane:
                 pass
         return pb.StopReply(requested=True, dispatched=record.dispatched,
             robot_confirmed=record.confirmed,
+            execution_id=record.id, broker_epoch=self.epoch, provider_session=record.session,
             reason='confirmed' if record.confirmed else ('awaiting physical confirmation' if record.dispatched else 'PB_PROVIDER_OFFLINE_OR_UNCONFIRMED'))
 
     def process_command_update(self, update, provider):
@@ -368,13 +395,13 @@ class CommandPlane:
         if execution.phase not in TERMINAL and time.monotonic_ns() >= execution.deadline_ns:
             self.cancel_execution(execution, 'PB_TIMEOUT', terminal=pb.TIMED_OUT)
         if execution.phase in TERMINAL:
-            if execution.released:
-                if (update.phase == execution.phase
-                        and update.physical_confirmed == execution.history[-1].physical_confirmed):
+            if execution.physical_phase in TERMINAL:
+                if update.phase == execution.physical_phase and update.physical_confirmed:
                     return
                 raise self.reject('PB_BAD_TRANSITION', 'confirmed terminal result immutable')
             if update.phase in TERMINAL and update.physical_confirmed:
                 execution.released = True
+                execution.physical_phase = update.phase
                 self.draining.discard(execution.id)
                 self.audit_event('late_physical_release', execution_id=execution.id, path=execution.path,
                                  phase=pb.Phase.Name(update.phase))

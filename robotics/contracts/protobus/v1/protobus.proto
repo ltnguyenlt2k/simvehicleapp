@@ -13,6 +13,8 @@ service Bus {
   rpc SetTarget(Target) returns (Reply);
   rpc Invoke(Invocation) returns (stream CommandUpdate);
   rpc Cancel(CancelRequest) returns (Reply);
+  // v1.4: read-only correlated release state; never grants authority.
+  rpc InspectExecution(ExecutionQuery) returns (ExecutionState);
   rpc Stop(StopRequest) returns (StopReply);
 }
 
@@ -69,6 +71,7 @@ message Descriptor {
   string host_clock_id = 7;
   string protocol_version = 8;
   bool audit_ok = 9;
+  string provider_session = 10;
 }
 message Query {
   repeated string paths = 1;
@@ -128,6 +131,24 @@ message StopReply {
   bool dispatched = 2;
   bool robot_confirmed = 3;
   string reason = 4;
+  string execution_id = 5;
+  string broker_epoch = 6;
+  string provider_session = 7;
+}
+message ExecutionQuery {
+  string catalog_hash = 1;
+  string broker_epoch = 2;
+  string execution_id = 3;
+}
+message ExecutionState {
+  string execution_id = 1;
+  string path = 2;
+  Phase logical_phase = 3;
+  bool physical_released = 4;
+  Phase physical_phase = 5;
+  string provider_session = 6;
+  string broker_epoch = 7;
+  uint64 fence = 8;
 }
 message Reply { bool ok = 1; string code = 2; string detail = 3; }
 message ProviderHello {

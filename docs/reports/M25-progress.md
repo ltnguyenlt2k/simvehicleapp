@@ -122,3 +122,17 @@ ADR-0080 records identity versus trust and non-coercible unknown semantics.
 Unit runtime digest is deliberately synthetic; no actual wheel or application
 launch is claimed. BusClient/engine/Hold/lease/trace/event/shutdown/wheel remain
 required for T06. T07–T09, GUI and final continuous video remain OPEN.
+
+T06 prerequisite extension local PASS: Protobus protocol candidate 1.4 adds
+read-only InspectExecution with catalog/epoch/execution correlation, separate
+logical and physical terminal states, current provider session and STOP receipt
+identity (ADR-0081). Quarantine cleared by ResetStop does not fabricate an old
+physical result. Late matching release is idempotent; conflicting terminal fails.
+Actual gRPC tests cover pending/confirmed/late feedback, wrong identity and
+post-STOP inspection without authority. RSS22 + broker118 groups /31.113 s PASS;
+after CLI addition, CLI6 /UNRECORDED s and protocol5 /0.001 s PASS (actual duration in
+runtime logs authoritative). precheck/diff PASS. Production live remains the
+previous qualified 1.3 image; no unqualified recreation or motion performed.
+Mandatory target mapping/source/context metadata, normal Dog Cancel and freshness
+qualification remain unresolved before live runtime acceptance. T06 still OPEN;
+no full runtime, conformance, GUI or video completion claim.
