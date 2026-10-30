@@ -37,7 +37,8 @@ Start the separate dog simulation first (domain 52, Docker network
 6. `bash robotics/scripts/sr pbctl --live stop`
 
 Set `SR_ROBOT_NETWORK` if the external Docker network has a different name.
-The live broker has its own network and audit volume. The adapter only publishes
+The live broker has its own network and audit volume. `sr up --live` waits up to
+60 seconds for healthy broker/provider services. The adapter only publishes
 robot requests through the Brain's control interface. Startup does not Arm;
 tracked defaults reject remote Arm. An explicitly authorized local SIM session
 can opt in with `SR_AUTHORIZE_SIM_ARM=true bash robotics/scripts/sr up --live`.

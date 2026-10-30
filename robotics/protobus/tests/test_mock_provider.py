@@ -210,8 +210,12 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_kinematic_velocity_changes_pose_and_ttl_stops_actual_model(self):
         await self.arm()
         await self.bus.SetTarget(self.target(1))
-        await self.wait_value('Robot.Pose.Position.X', lambda sample: sample.value.float64_value > .025)
-        stopped = await self.wait_value('Robot.Velocity.Linear.X', lambda sample: sample.value.float64_value == 0)
+        await self.wait_value('Robot.Pose.Position.X', lambda sample: sample.quality == pb.OK and sample.value.float64_value > .025)
+        # Local target expiry intentionally replaces the provider session. The
+        # broker retains old values as STALE during that interval; a zero value
+        # alone is not fresh stopped-state evidence. Await the same assertion
+        # on the actual replacement session without extending any safety timer.
+        stopped = await self.wait_value('Robot.Velocity.Linear.X', lambda sample: sample.quality == pb.OK and sample.value.float64_value == 0)
         self.assertEqual(stopped.quality, pb.OK)
         pose = (await self.get('Robot.Pose.Position.X')).value.float64_value
         self.assertGreater(pose, .025)

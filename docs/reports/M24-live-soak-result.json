@@ -1,0 +1,109 @@
+{
+  "passed": true,
+  "duration_s": 1803.2978180219998,
+  "python_rss": {
+    "sr-protobus-live-1": {
+      "warm_rss_bytes": 48713728,
+      "final_rss_bytes": 49590272,
+      "growth_bytes": 876544,
+      "fitted_growth_bytes_per_minute": 22462.16559863773,
+      "peak_rss_bytes": 49815552
+    },
+    "sr-protobus-ros2-1": {
+      "warm_rss_bytes": 75870208,
+      "final_rss_bytes": 77910016,
+      "growth_bytes": 2039808,
+      "fitted_growth_bytes_per_minute": 76364.79133184606,
+      "peak_rss_bytes": 78585856
+    }
+  },
+  "peak_summed_docker_reported_memory_bytes": 1381687623.68,
+  "summed_container_caps_bytes": 5368709120,
+  "telemetry": {
+    "passed": true,
+    "duration_s": 1800,
+    "subscribers": [
+      {
+        "subscriber": 0,
+        "duration_s": 1800.0202902580004,
+        "complete_windows": 29,
+        "available_paths": 30,
+        "unique_samples": {
+          "Robot.Imu.AngularVelocity.X": 31685,
+          "Robot.Pose.Position.X": 29952,
+          "Robot.PowerSystem.Battery.Voltage": 1798,
+          "Robot.Safety.Mode": 23054,
+          "Robot.Simulation.TimeNs": 29936
+        },
+        "max_gap_s": 1.1644483170002786
+      },
+      {
+        "subscriber": 1,
+        "duration_s": 1800.0199943570005,
+        "complete_windows": 29,
+        "available_paths": 30,
+        "unique_samples": {
+          "Robot.Imu.AngularVelocity.X": 31685,
+          "Robot.Pose.Position.X": 29952,
+          "Robot.PowerSystem.Battery.Voltage": 1798,
+          "Robot.Safety.Mode": 23054,
+          "Robot.Simulation.TimeNs": 29936
+        },
+        "max_gap_s": 1.1566109199993662
+      },
+      {
+        "subscriber": 2,
+        "duration_s": 1800.0207804760012,
+        "complete_windows": 29,
+        "available_paths": 30,
+        "unique_samples": {
+          "Robot.Imu.AngularVelocity.X": 31685,
+          "Robot.Pose.Position.X": 29952,
+          "Robot.PowerSystem.Battery.Voltage": 1798,
+          "Robot.Safety.Mode": 23054,
+          "Robot.Simulation.TimeNs": 29936
+        },
+        "max_gap_s": 1.1596501839994744
+      },
+      {
+        "subscriber": 3,
+        "duration_s": 1800.0187127289992,
+        "complete_windows": 29,
+        "available_paths": 30,
+        "unique_samples": {
+          "Robot.Imu.AngularVelocity.X": 31685,
+          "Robot.Pose.Position.X": 29952,
+          "Robot.PowerSystem.Battery.Voltage": 1798,
+          "Robot.Safety.Mode": 23054,
+          "Robot.Simulation.TimeNs": 29936
+        },
+        "max_gap_s": 1.1485148860010668
+      }
+    ],
+    "scope": "actual stopped live ROS telemetry; no workflow/hardware acceptance"
+  },
+  "scope": "M24 actual live transport only; not workflow/hardware",
+  "per_complete_window_rates_hz": {
+    "Robot.Imu.AngularVelocity.X": {
+      "minimum": 17.34613819947543,
+      "maximum": 17.749556712216876
+    },
+    "Robot.Pose.Position.X": {
+      "minimum": 16.582357228628304,
+      "maximum": 16.7274629852064
+    },
+    "Robot.Safety.Mode": {
+      "minimum": 11.881374604174017,
+      "maximum": 14.149974235962915
+    },
+    "Robot.Simulation.TimeNs": {
+      "minimum": 16.56580409518668,
+      "maximum": 16.71080216550002
+    },
+    "Robot.PowerSystem.Battery.Voltage": {
+      "minimum": 0.9830077325340185,
+      "maximum": 1.0166426091409317
+    }
+  },
+  "evidence_directory": "robotics/runtime/m24/live-soak/run03"
+}

@@ -18,7 +18,7 @@ case "${1:-help}" in
  up)
    case "${2:-}" in
      '') [[ $# == 1 ]] || exit 2; "${dc[@]}" up -d ;;
-     --live) [[ $# == 2 ]] || exit 2; "${dc[@]}" --profile live up -d protobus-ros2 ;;
+     --live) [[ $# == 2 ]] || exit 2; "${dc[@]}" --profile live up -d --wait --wait-timeout 60 protobus-ros2 ;;
      *) echo 'Usage: sr up [--live]' >&2; exit 2 ;;
    esac ;;
  down) [[ $# == 1 ]] || { echo 'down accepts no extra arguments' >&2; exit 2; }; "${dc[@]}" down ;;

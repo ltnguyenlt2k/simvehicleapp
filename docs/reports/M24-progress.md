@@ -244,3 +244,36 @@ oneof name; failed log retained, corrected to the actual contract `kind`.
 resource criteria in M24-live-soak-plan.md before starting the live soak. Four
 subscribers and actual PID-1 RSS/Docker memory recording now IN_PROGRESS.
 M24 closure and final workflow/video remain OPEN.
+
+T06 run03 complete PASS: actual 1800 s telemetry /1803.298 s host recorder, four
+subscribers, each 30 available paths and identical unique-capture counts.
+All 29 complete per-client minute windows met the predeclared rates; no quality,
+epoch, disconnect/audit or gap assertion failed. Source battery is 1 Hz, not 3 Hz;
+two earlier invalid measurement attempts are retained and excluded.
+Warm RSS growth: broker **876,544 bytes**, provider **2,039,808 bytes**; fitted
+slopes 22,462 and 76,365 bytes/min, within fixed limits. Summed nine-service
+Docker-reported memory peak **1,381,687,624 bytes** (~1.287 GiB), caps 5 GiB.
+Measured host MemTotal 12,104,868 KiB (~11.54 GiB); no generic leak-free/11 GB-host
+or hardware claim. Full summary M24-live-soak-result.json, ignored raw run03 logs.
+
+Dedicated actual refresh-expiry gate PASS (`target-expiry-live.log`): stop sending
+targets while lease renewal continues; actual /cmd_vel/safe reaches zero in
+**0.293997409 s**, one writer, SAFE_STOP/no owner and no motion for 1.5 s.
+No explicit release or Stop request substitutes for expiry in this measurement.
+
+CI c9f3f1b0 Robotics **41082207189 SUCCESS**, general **41082206870 SUCCESS**.
+Additional local one-CPU diagnostic reproduced a test bug: stale retained zero
+value selected during intentional provider replacement after target TTL, then
+asserted quality OK prematurely. Corrected predicates wait for actual fresh pose
+and fresh zero in the same existing 3 s observation window. No runtime deadline,
+safety threshold or assertion relaxed. Full one-CPU rerun **112 PASS /30.790 s**.
+This is a concrete local failure/fix, not proof of the earlier inaccessible CI
+failure's exact identity. Candidate test fix still needs its CI requalification.
+
+Release restore PASS: default SR_AUTHORIZE_SIM_ARM=false, live services recreated
+and both healthy; connected Arm request rejected, SAFE_STOP retained. `sr up
+--live` now waits up to 60 s for actual Compose health rather than returning
+while DDS discovery is still starting. No startup claim/reset/arm. Read-only
+precheck PASS; synthetic default `sr up` also tested with an intentionally absent
+external dog network (PASS), then only its mock/broker were stopped. Live services
+were retained. Video remains a required M27 deliverable, not supplied by logs.
