@@ -60,3 +60,32 @@ metadata interface with negative mismatch tests before live artifact acceptance.
 This is not a current M24 transport failure, and must not be silently skipped.
 RW-A live additionally needs qualified marker mapping; currently unavailable
 marker/leg fields remain NONE rather than fabricated values.
+
+T03 CI qualified: 604f346f Robotics 41099279722 + general 41099279588 SUCCESS.
+T02 881889f6 Robotics 41096735300 + general 41096735367 SUCCESS.
+
+T04 local PASS: pure S0–S6 compiler, closed approved SIM policy schema, original
+catalog hash validation, source/port/type/unit/region/safety diagnostics and typed
+structured IR. Deliberate fixtures for all 31 RF codes; all 24 block lowerings
+have valid fixtures. UI coordinates and node/edge order do not affect IR/hash.
+Canonical profile/units identities bind IR even without literal unit use. Native
+IR expansion bounded before large JSON allocation; forever-loop yield proof uses
+reverse DAG order (no Python recursion), and an immediately true WaitUntil is not
+a guaranteed delay. Shared variable writers/body owner conflicts are rejected.
+
+Final compiler suite **30 groups PASS /8.869 s**, including the 163 expression
+cases. Warm cached 200-node lint **44.816 ms** on 2-CPU/256-MiB offline read-only
+container (<300 ms). Foundation regression RSS22 and Protobus112 /30.413 s PASS;
+precheck PASS. M25-compiler-checkpoint.json pins image/source and scope. Candidate
+CI still pending; source emission/runtime/conformance/live apps remain OPEN.
+ADR-0078 adds compiler-policy/unitsHash/region budget rules before any released
+compiled artifact; tests and schema source synchronized.
+
+Live integration work remains mandatory before T08/M26: (1) actual mapping hash
+and source/map context metadata, with Stop receipt identity; (2) normal explicit
+Cancel should preserve MANUAL after confirmed recovery when authority remains
+valid, whereas timeout/Stop/loss must retain fail-safe revocation; current adapter
+uses Stop for every cancellation, so do not claim RW-D handover yet; (3) marker
+mapping qualification; (4) actual paused/reset-clock freshness probe, distinguishing
+clock-message receipt from clock advance. These are upcoming integration tasks,
+not accepted from parser/compiler unit tests. Final video remains OPEN.

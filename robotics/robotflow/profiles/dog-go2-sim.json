@@ -1,0 +1,21 @@
+{
+  "schema": "robotflow-profile.v1",
+  "id": "dog-go2-sim",
+  "backend": "SIM",
+  "catalogHash": "sha256:f382fce1b998fb60633fb73f0c4aa5eedb0ac7103734c48253e1be2440cd00a2",
+  "allowRemoteArm": false,
+  "limits": {
+    "maxNodes": 1000,
+    "maxMoveMs": 10000,
+    "maxWaitMs": 600000,
+    "maxCommandMs": 120000,
+    "maxRunMs": 3600000,
+    "maxLoopCount": 1000,
+    "maxPatrolPoints": 20
+  },
+  "navigation": {
+    "frame": "map",
+    "sceneId": "courtyard",
+    "maxAbsCoordinateM": 2.5
+  }
+}

@@ -27,7 +27,7 @@ def block():
 
 def ir():
     return dict(schema='rfir.v1',catalogHash=HASH,profile='dog-go2-sim',profileHash=HASH,
-        runtimeVersion='0.1.0',irHash=HASH,vars={},behaviors=[dict(id='start',src={'nodeId':'start'},
+        runtimeVersion='0.1.0',unitsHash=HASH,irHash=HASH,vars={},behaviors=[dict(id='start',src={'nodeId':'start'},
         trigger={'kind':'start'},concurrency='drop',queueMax=1,
         body=[{'op':'log','src':{'nodeId':'log'},'level':'info','parts':['Hello']}])])
 

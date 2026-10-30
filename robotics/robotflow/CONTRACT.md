@@ -1,11 +1,14 @@
 # RobotFlow compiler boundary
 
 Current increment: versioned graph/block/IR schemas, 24 data-only blocks and their
-validated canonical registry. Compiler, Python emitter and runtime are not implemented yet.
+validated canonical registry, bounded typed expression parser and S0–S6 IR compiler.
+Python source emitter and runtime are not implemented yet.
 M25 tasks and acceptance remain authoritative; no live workflow claim.
 
-Inputs will be robotflow.v1 JSON, rss-catalog.v1, a pinned approved profile and
-block.v1 registry. Compiler returns diagnostics or a deterministic file set; it
+Inputs are robotflow.v1 JSON, rss-catalog.v1, a closed approved robotflow-profile.v1
+policy, canonical unit data and block.v1 registry. `compile_workflow` returns
+diagnostics and canonical typed IR (build) or diagnostics alone (lint); a source
+file-set emitter is next. The compiler
 does not write project files, call an LLM, import ROS or import vehicle modules.
 Graph UI coordinates are saved for the canvas and excluded from compiled hashes.
 

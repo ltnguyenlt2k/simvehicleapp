@@ -72,3 +72,10 @@ bytes/hash unchanged. Canonical data-only units.v1 (ADR-0077), checked source
 snapshot, signed affine conversion and numeric/grammar/depth boundaries.
 Failure retained before decimal normalization fix. Candidate CI pending; T04
 compiler diagnostic/flow/safety/performance gates next. Runtime/GUI/video OPEN.
+
+T04 local PASS: every RF code deliberately exercised (31), valid lowering for all
+24 blocks, canonical profile/units/IR hashes excluding UI, finite expansion and
+structured-region/yield/resource checks. 30 groups /8.869 s PASS; warm 200-node
+lint44.816 ms on 2 CPUs/256MiB; RSS22/Protobus112 regressions PASS. ADR-0078 and
+checkpoint JSON record boundaries/limits. T04 candidate CI pending; T05 source
+codegen/goldens next, no runtime or live workflow acceptance yet.

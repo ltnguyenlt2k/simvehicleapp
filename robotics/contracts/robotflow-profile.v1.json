@@ -1,0 +1,107 @@
+{
+  "$id": "urn:robotflow:robotflow-profile.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allowRemoteArm": {
+      "type": "boolean"
+    },
+    "backend": {
+      "const": "SIM"
+    },
+    "catalogHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[a-z][a-z0-9-]{0,95}$",
+      "type": "string"
+    },
+    "limits": {
+      "additionalProperties": false,
+      "properties": {
+        "maxCommandMs": {
+          "maximum": 86400000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxLoopCount": {
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxMoveMs": {
+          "maximum": 10000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxNodes": {
+          "maximum": 1000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxPatrolPoints": {
+          "maximum": 20,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxRunMs": {
+          "maximum": 86400000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "maxWaitMs": {
+          "maximum": 86400000,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "maxNodes",
+        "maxMoveMs",
+        "maxWaitMs",
+        "maxCommandMs",
+        "maxRunMs",
+        "maxLoopCount",
+        "maxPatrolPoints"
+      ],
+      "type": "object"
+    },
+    "navigation": {
+      "additionalProperties": false,
+      "properties": {
+        "frame": {
+          "const": "map"
+        },
+        "maxAbsCoordinateM": {
+          "maximum": 1000,
+          "minimum": 0.1,
+          "type": "number"
+        },
+        "sceneId": {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,95}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "frame",
+        "sceneId",
+        "maxAbsCoordinateM"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "robotflow-profile.v1"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "backend",
+    "catalogHash",
+    "allowRemoteArm",
+    "limits",
+    "navigation"
+  ],
+  "type": "object"
+}

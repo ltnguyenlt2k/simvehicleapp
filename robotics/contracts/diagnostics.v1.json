@@ -51,11 +51,14 @@
     "RF5003": "Invalid structured region",
     "RF5004": "Forever loop must yield on every path",
     "RF6001": "Motion speed exceeds profile bounds",
-    "RF6002": "Move duration exceeds profile bounds",
+    "RF6002": "Operation duration exceeds profile bounds",
     "RF6003": "Remote Arm is not authorized",
     "RF6004": "Motion workflow has no priority Stop path",
     "RF6005": "Command timeout exceeds allowed bounds",
-    "RF6006": "Concurrent body resource conflict"
+    "RF6006": "Concurrent body resource conflict",
+    "RF5005": "Concurrent writes to one variable are forbidden",
+    "RF6007": "Patrol exceeds waypoint budget",
+    "RF6008": "Navigation coordinate is not proven within allowed range"
   },
   "details": {
     "RF1001": {
@@ -246,8 +249,8 @@
       "stage": "S6",
       "severity": "error",
       "message": {
-        "en": "Move duration exceeds profile bounds",
-        "vi": "Thời gian di chuyển vượt giới hạn profile"
+        "en": "Operation duration exceeds profile bounds",
+        "vi": "Thời gian thao tác vượt giới hạn profile"
       }
     },
     "RF6003": {
@@ -280,6 +283,30 @@
       "message": {
         "en": "Concurrent body resource conflict",
         "vi": "Các nhánh đồng thời tranh chấp quyền chuyển động"
+      }
+    },
+    "RF5005": {
+      "stage": "S5",
+      "severity": "error",
+      "message": {
+        "en": "Concurrent writes to one variable are forbidden",
+        "vi": "Không cho phép nhiều nhánh đồng thời ghi cùng biến"
+      }
+    },
+    "RF6007": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Patrol exceeds waypoint budget",
+        "vi": "Tuần tra vượt số điểm cho phép"
+      }
+    },
+    "RF6008": {
+      "stage": "S6",
+      "severity": "error",
+      "message": {
+        "en": "Navigation coordinate is not proven within allowed range",
+        "vi": "Chưa chứng minh tọa độ nằm trong giới hạn cho phép"
       }
     }
   }

@@ -1,0 +1,29 @@
+{
+  "scope": "M25-T04 pure compiler only; no runtime/ROS workflow acceptance",
+  "tests": 30,
+  "seconds": 8.869,
+  "lint200NodesMs": 44.816,
+  "lintConditions": {
+    "cpus": 2,
+    "memoryBytes": 268435456,
+    "network": "none",
+    "readOnly": true,
+    "registryAndSchemaCaches": "warm"
+  },
+  "rfDeliberateFixtures": 31,
+  "validBlockLowerings": 24,
+  "image": "sha256:67b35477d763e3ae17212dbda10a752e7bd3cb32be18d31e9bed96842a65276b",
+  "sourceSha256": {
+    "compiler.py": "6e20e231b4984b2cae0cf80a9c924e1191c505a7ea51ed59782be4b608e887b2",
+    "lowering.py": "359fd994d61a9577e62fc6c28cdd08a5273ca4fc2fe9115cdfc455064163b3c1",
+    "expression.py": "02f63ce8f9d6d57acf72c44926f9f8a62a9480f9234b3a6408a7f4c4b0f09584",
+    "units.py": "869f974eb487d43b4b7fb93883e4622db5a8c8874d4a2a81249a29c2b9adb1b8",
+    "registry.py": "a9d7e4c2e00f49506cefe518e1128e940c61276ef0a00e7b4a01cf6496ab62f0"
+  },
+  "foundationRegression": {
+    "rss": 22,
+    "protobus": 112,
+    "protobusSeconds": 30.413
+  },
+  "ci": "pending"
+}

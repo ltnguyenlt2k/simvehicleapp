@@ -123,12 +123,25 @@ def ir_schema():
         'concurrency':enum('queue','drop','restart'),'queueMax':{'type':'integer','minimum':1,'maximum':16},'body':ref('body')})
     return dict(HEADER,**{'$id':'urn:robotflow:rfir.v1','$defs':definitions},**obj({
         'schema':const('rfir.v1'),'catalogHash':HASH,'profile':PROFILE,'profileHash':HASH,
-        'runtimeVersion':const('0.1.0'),'vars':dict(record(ref('variable')),propertyNames=IDENT),
+        'runtimeVersion':const('0.1.0'),'unitsHash':HASH,'vars':dict(record(ref('variable')),propertyNames=IDENT),
         'behaviors':arr(behavior,1,64),'irHash':HASH}))
 
 
+def profile_schema():
+    limits=obj({'maxNodes':{'type':'integer','minimum':1,'maximum':1000},
+        'maxMoveMs':dict(MS,maximum=10000),'maxWaitMs':MS,'maxCommandMs':MS,'maxRunMs':MS,
+        'maxLoopCount':{'type':'integer','minimum':1,'maximum':1000},
+        'maxPatrolPoints':{'type':'integer','minimum':1,'maximum':20}})
+    return dict(HEADER,**{'$id':'urn:robotflow:robotflow-profile.v1'},**obj({
+        'schema':const('robotflow-profile.v1'),'id':PROFILE,'backend':const('SIM'),
+        'catalogHash':HASH,'allowRemoteArm':{'type':'boolean'},'limits':limits,
+        'navigation':obj({'frame':const('map'),'sceneId':IDENT,
+            'maxAbsCoordinateM':{'type':'number','minimum':.1,'maximum':1000}})}))
+
+
 def schemas():
-    return {'robotflow.v1':workflow_schema(),'block.v1':block_schema(),'rfir.v1':ir_schema()}
+    return {'robotflow.v1':workflow_schema(),'block.v1':block_schema(),'rfir.v1':ir_schema(),
+            'robotflow-profile.v1':profile_schema()}
 
 
 if __name__=='__main__':

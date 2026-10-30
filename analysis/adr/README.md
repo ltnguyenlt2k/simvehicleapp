@@ -209,3 +209,5 @@ flowchart TB
 - [ADR-0076](ADR-0076-robotflow-closed-artifact-contracts.md): Accepted for M25 implementation under delegation; closed graph/block/typed IR schemas, deterministic schema source and additive localized RF diagnostics. Compiler/runtime/live gates remain OPEN.
 
 - [ADR-0077](ADR-0077-robotflow-expression-units.md): Accepted for M25-T03 implementation; bounded typed Pratt expressions and canonical unit data, decimal unit normalization, no eval. Compiler/runtime conformance still required.
+
+- [ADR-0078](ADR-0078-robotflow-compiler-validation-and-regions.md): Accepted for M25-T04; pure ordered compiler validation, closed approved policy, isolated regions, canonical unit/profile binding and finite expansion. Runtime/codegen/live gates remain OPEN.

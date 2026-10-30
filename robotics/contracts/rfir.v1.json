@@ -1227,6 +1227,10 @@
     "schema": {
       "const": "rfir.v1"
     },
+    "unitsHash": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
     "vars": {
       "additionalProperties": {
         "$ref": "#/$defs/variable"
@@ -1245,6 +1249,7 @@
     "profile",
     "profileHash",
     "runtimeVersion",
+    "unitsHash",
     "vars",
     "behaviors",
     "irHash"
