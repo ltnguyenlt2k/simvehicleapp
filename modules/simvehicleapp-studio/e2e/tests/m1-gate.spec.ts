@@ -49,9 +49,23 @@ test.describe
     let workflowUrl = ''
 
     test('sign-up lands in a workspace branded SimVehicleApp', async ({ page }) => {
+      /** M01 removed legacy sidebar chat; the separate M10 assistant remains available. */
+      await page.route('**/api/sv/ai/status', (route) =>
+        route.fulfill({
+          json: { configured: true, provider: 'scripted', model: 'e2e', externalServers: [] },
+        })
+      )
+      await page.route(/\/api\/sv\/ai\/conversations\?workflowId=/, (route) =>
+        route.fulfill({ json: { conversations: [] } })
+      )
       await signUp(page)
       await expect(page).toHaveTitle(/SimVehicleApp/)
-      await expect(page.getByText('New chat')).toHaveCount(0)
+      const sidebar = page.getByRole('complementary', { name: 'Workspace sidebar' })
+      await expect(sidebar).toBeVisible()
+      await expect(sidebar.getByText('New chat', { exact: true })).toHaveCount(0)
+      await page.locator('[data-tab-button="copilot"]').click()
+      await expect(page.locator('[data-sv-assistant="new"]')).toBeVisible()
+      await expect(sidebar.getByText('New chat', { exact: true })).toHaveCount(0)
     })
 
     test('creates a workflow and finds it again after reload', async ({ page }) => {
