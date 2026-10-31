@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://simvehicleapp.local/contracts/studio/rfbuild.v1.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "projectId",
+    "projectRevision",
+    "artifactHash",
+    "runtimePackageHash",
+    "allowRemoteArm",
+    "identities",
+    "projectSnapshot",
+    "createdAt"
+  ],
+  "properties": {
+    "schema": {
+      "const": "rfbuild.v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "projectId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "projectRevision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifactHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "runtimePackageHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "allowRemoteArm": {
+      "type": "boolean"
+    },
+    "identities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflowHash",
+        "sourceHash",
+        "catalogHash",
+        "profileHash",
+        "irHash",
+        "registryHash",
+        "unitsHash",
+        "profileId",
+        "compilerVersion",
+        "runtimeVersion"
+      ],
+      "properties": {
+        "workflowHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "sourceHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "catalogHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "profileHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "irHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "registryHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "unitsHash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "compilerVersion": {
+          "const": "0.1.0"
+        },
+        "runtimeVersion": {
+          "const": "0.1.0"
+        }
+      }
+    },
+    "projectSnapshot": {
+      "type": "object"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
+    }
+  }
+}

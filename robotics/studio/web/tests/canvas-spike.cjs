@@ -7,7 +7,7 @@ const fs = require('node:fs');
     const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto('http://web:8080', { waitUntil: 'networkidle' });
+    await page.goto('http://web:8080/canvas-spike.html', { waitUntil: 'networkidle' });
     const nodes = page.locator('.react-flow__node');
     await expect(nodes).toHaveCount(200);
     await expect(page.locator('.react-flow__edge')).toHaveCount(199);

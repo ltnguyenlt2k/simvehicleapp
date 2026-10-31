@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scenario.v1.json",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "scenario.v1"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "timeScale": {
+      "const": 1
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 120000
+    },
+    "toleranceMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 500
+    },
+    "steps": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "atMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 120000
+              },
+              "sensor": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "quality": {
+                    "enum": [
+                      "OK",
+                      "STALE",
+                      "NONE"
+                    ]
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ],
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "path",
+                  "quality",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "atMs",
+              "sensor"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "atMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 120000
+              },
+              "commandResult": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "phase": {
+                    "enum": [
+                      "REJECTED",
+                      "FAILED",
+                      "TIMED_OUT"
+                    ]
+                  },
+                  "count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "path",
+                  "phase",
+                  "count"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "atMs",
+              "commandResult"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "atMs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 120000
+              },
+              "event": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+              }
+            },
+            "required": [
+              "atMs",
+              "event"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "expect": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "invoke"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "args": {
+                "type": "object",
+                "maxProperties": 16,
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ],
+                  "maxLength": 256
+                }
+              },
+              "withinMs": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120000
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "phase": {
+                "enum": [
+                  "PENDING",
+                  "ACCEPTED",
+                  "RUNNING",
+                  "SUCCEEDED",
+                  "REJECTED",
+                  "FAILED",
+                  "CANCELLED",
+                  "TIMED_OUT"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "kind",
+              "path",
+              "args",
+              "withinMs",
+              "phase",
+              "count"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "forbid"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "args": {
+                "type": "object",
+                "maxProperties": 16,
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ],
+                  "maxLength": 256
+                }
+              },
+              "withinMs": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120000
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "kind",
+              "path",
+              "args",
+              "withinMs"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "log"
+              },
+              "contains": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "withinMs": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120000
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "kind",
+              "contains",
+              "withinMs",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "name",
+    "timeScale",
+    "durationMs",
+    "toleranceMs",
+    "steps",
+    "expect"
+  ],
+  "additionalProperties": false
+}

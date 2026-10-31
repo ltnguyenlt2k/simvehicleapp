@@ -100,6 +100,32 @@ jobs:
       - name: Stop only Studio spike services
         if: always()
         run: docker compose -f robotics/studio/spikes/compose.yaml down
+      - name: Studio API, actual native backend, editor and scenario PASS/FAIL
+        run: python3 robotics/studio/ci.py > robotics/runtime/m26/studio-ci.log 2>&1
+      - name: Preserve the qualified production images for local live acceptance
+        run: |
+          mkdir -p robotics/runtime/ci-images
+          docker save -o robotics/runtime/ci-images/robot-studio.tar sr-studio-web:dev sr-studio-api:dev sr-runner:dev sr-rflowc-api:dev sr-protobus:dev sr-protobus-ros2:ci
+          python3 - <<'PY'
+          import hashlib,json,subprocess
+          from pathlib import Path
+          root=Path('robotics/runtime/ci-images')
+          names=['sr-studio-web:dev','sr-studio-api:dev','sr-runner:dev','sr-rflowc-api:dev','sr-protobus:dev','sr-protobus-ros2:ci']
+          images=json.loads(subprocess.check_output(['docker','image','inspect']+names,text=True))
+          metadata={'commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'images':[{"tags":item['RepoTags'],"id":item['Id']} for item in images]}
+          digest=hashlib.sha256()
+          with (root/'robot-studio.tar').open('rb') as stream:
+              for chunk in iter(lambda:stream.read(1024*1024),b''):digest.update(chunk)
+          metadata['archiveSha256']=digest.hexdigest()
+          (root/'manifest.json').write_text(json.dumps(metadata,indent=2)+'\n')
+          PY
+      - name: Retain qualified images with source identity
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: robot-studio-qualified-images
+          path: robotics/runtime/ci-images/
+          compression-level: 1
+          retention-days: 7
       - name: Retain Studio and runner spike failures and measurements
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -115,5 +141,6 @@ jobs:
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/robotflow/requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rfrt/requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rfrt/build-requirements.txt
+          docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/studio/api/requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/studio/control-requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/studio/web/package-lock.json

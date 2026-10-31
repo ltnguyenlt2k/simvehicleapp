@@ -10,6 +10,8 @@ case "${1:-help}" in
    "${dc[@]}" --profile tools build rss protobus-sim
    if [[ ${2:-} == --live ]]; then "${dc[@]}" --profile live build protobus-ros2; fi
    ;;
+ studio) shift; exec python3 "$root/scripts/studio_cli.py" "$@" ;;
+ demo-video) shift; exec python3 "$root/scripts/studio_cli.py" demo-video "$@" ;;
  target|run) exec python3 "$root/scripts/native_cli.py" "$@" ;;
  test)
    mkdir -p "$root/runtime/ci-tests"
@@ -30,5 +32,5 @@ case "${1:-help}" in
    shift
    if [[ ${1:-} == --live ]]; then shift; "${dc[@]}" --profile live-tools run --rm --no-deps pbctl-live "$@"
    else "${dc[@]}" --profile tools run --rm --no-deps pbctl "$@"; fi ;;
- *) echo 'Usage: sr build|target|run|test|precheck|up|down|rss|smoke|pbctl'; exit 2 ;;
+ *) echo 'Usage: sr studio|demo-video|build|target|run|test|precheck|up|down|rss|smoke|pbctl'; exit 2 ;;
 esac

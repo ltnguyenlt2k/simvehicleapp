@@ -17,7 +17,7 @@ def run(command):subprocess.run(command,env=env,check=True,timeout=300)
 try:
     templates=json.loads(subprocess.check_output(['docker','run','--rm','--network','none','sr-robotflow:dev',
         'python','-c','import json;from templates import templates;print(json.dumps(templates()))'],env=env,text=True))
-    assert set(templates)=={'RW-A','RW-B','RW-C','RW-D'}
+    assert set(templates)=={'RW-A','RW-B','RW-C','RW-D','RW-E'}
     folder=OUTPUT/'flows';folder.mkdir(exist_ok=True)
     for name,value in templates.items():(folder/(name+'.json')).write_text(json.dumps(value),encoding='utf-8')
     run(compose+['up','-d','--wait','--wait-timeout','60','protobus-mock'])

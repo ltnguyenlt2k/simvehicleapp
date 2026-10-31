@@ -535,15 +535,15 @@ Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio.md) · ADR [0068](.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Spike S-R5 React Flow, S-R6 runner sandbox | 0068,0087 | 🔄 | Local S-R5/S-R6 PASS: headed200 nodes60fps; actual SDK/OOM/safeValue/network denial. CI pending; M26-spikes-checkpoint.json | T01 |
-| studio-api | 0068 | ☐ | | T02 |
-| rflowc service | 0067, 0068 | ☐ | | T03 |
-| runner | 0068 | ☐ | | T04 |
-| Web: Projects + Editor | 0068 | ☐ | | T05 |
-| Simulate | 0068 | ☐ | | T06 |
-| Test + `scenario.v1` | 0068 | ☐ | | T07 |
-| Run (STOP, lease, Robot Zoo) + Export | 0068 | ☐ | | T08 |
-| Mẫu RW-A..RW-D | 0068 | ☐ | | T09 |
+| Spike S-R5 React Flow, S-R6 runner sandbox | 0068,0087 | ✅ | Foundation S-R5/S-R6 PASS, Robotics41227036361 at b673ca77; actual SDK/OOM/safeValue/network denial. Production service gate separate | T01 |
+| studio-api | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T02 |
+| rflowc service | 0067, 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T03 |
+| runner | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T04 |
+| Web: Projects + Editor | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T05 |
+| Simulate | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T06 |
+| Test + `scenario.v1` | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T07 |
+| Run (STOP, lease, Robot Zoo) + Export | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T08 |
+| Mẫu RW-A..RW-D | 0068 | 🔄 | Implemented; local/CI qualification in reports/M26.md | T09 |
 | Gate + báo cáo | 0068 | ☐ | | T10 |
 
 ## M27 — Robotics: E2E live, video, tài liệu
@@ -576,7 +576,7 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 | M23 broker | PASS (scoped) | T01–T09; Robotics CI 40896228193 SUCCESS at 62529137; general CI queued |
 | M24 ROS bridge | IN_PROGRESS | T01 image; actual ROS acceptance remains OPEN |
 | M25 RobotFlow | IN PROGRESS | T01–T05 implemented; T06 installed wheel 58 local groups PASS, new CI pending. Actual ROS Hold/Cancel prerequisites PASS. T07 local12/12 twice PASS/new CI pending; T08–T09 and full GUI/video remain OPEN; M25-rfrt-checkpoint.json |
-| M26 Studio/deploy/Zoo launch | NOT STARTED | Requires compiler/mock and adapter gates |
+| M26 Studio/deploy/Zoo launch | IN VALIDATION | Production UI, immutable deploy and real Zoo Start implemented; CI/scenario closure pending |
 | M27 complex live E2E/video/soak | OPEN | Three live passes + restart/fault cases + 30-min soak + recorded full flow |
 | Hardware/Jetson | OPEN / OUT OF SCOPE | No hardware evidence |
 

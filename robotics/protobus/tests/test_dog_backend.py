@@ -88,7 +88,7 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         for stamp,epoch,domain,clock in [(300_000_000,'epoch','ROS_TIME',200_000_000),(100,'epoch','ROS_TIME',None),(100,'old','ROS_TIME',200),(100,'epoch','MONOTONIC',200)]:
             self.engine.observations[path]=Observation(.2,pb.OK,stamp,epoch,domain)
             self.engine.last_sent[path]=time.monotonic_ns();self.link.ros_now=clock
-            self.backend.values();self.assertEqual(self.backend.quality(path),pb.NONE)
+            self.backend.values();self.assertEqual(self.backend.quality(path),pb.STALE if epoch=='epoch' and domain=='ROS_TIME' else pb.NONE)
 
     async def test_actual_ros_age_and_host_receipt_are_both_fresh(self):
         path='Robot.Imu.AngularVelocity.X'

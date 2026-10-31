@@ -1,0 +1,14 @@
+services:
+  backend-client:
+    image: sr-runner:dev
+    profiles: [backend-tests]
+    user: "10001:10001"
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 2
+    networks: [studio-front]
+    volumes: ["./studio/backend_tests:/probe:ro"]
+    command: [python, -I, /probe/probe.py]

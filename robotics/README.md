@@ -47,3 +47,7 @@ internal-network port publishing varies by Docker version. Workflow Studio,
 deployment and final video remain pending. Follow [M24 progress](../docs/reports/M24-progress.md).
 
 Native developer workflow CLI: `sr build FLOW.json --out NAME`, explicit `sr target --sim|--live --out NAME`, then `sr run --sim|--live NAME --target NAME`. See the [user guide](../docs/user-guide/robotics.md#build-và-chạy-ứng-dụng-robotflow-native-bản-phát-triển) and [capture/CLI checkpoint](../docs/reports/M25-capture-cli-checkpoint.json). Live native workflow acceptance remains separate.
+
+## Robot Studio
+
+`bash robotics/scripts/sr studio build --live` rồi `studio up --live --authorize-sim-arm`. Hướng dẫn đầy đủ: [Robot Studio trong WSL](../docs/user-guide/robotics/README.md). `sr demo-video --out video-new-run` ghi toàn luồng qua các tab bằng X11.

@@ -164,7 +164,7 @@ class ProviderClient:
                 await call.write(packet)
                 ack = await call.read()
                 if ack is grpc.aio.EOF or not ack.ok:
-                    raise ConnectionError('provider packet rejected: '+getattr(ack, 'code', 'EOF'))
+                    raise ConnectionError('provider packet rejected: '+getattr(ack, 'code', 'EOF')+' '+getattr(ack,'detail',''))
                 if not future.done():
                     future.set_result(ack)
             except BaseException as error:

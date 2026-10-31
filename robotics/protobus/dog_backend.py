@@ -63,7 +63,10 @@ class DogBackend:
         if received is None or host_now<received:return pb.NONE
         if maximum and host_now-received>=maximum*1_000_000:return pb.STALE
         ros_now=self.link.ros_time_ns()
-        if type(ros_now) is not int or not 0<=item.source_time_ns<=ros_now:return pb.NONE
+        # The capture still exists if /clock delivery lags its sensor. Preserve
+        # its value/stamp as untrusted STALE, so clock catch-up can restore OK
+        # without fabricating a second capture or erasing the original value.
+        if type(ros_now) is not int or not 0<=item.source_time_ns<=ros_now:return pb.STALE
         if maximum and ros_now-item.source_time_ns>=maximum*1_000_000:return pb.STALE
         return pb.OK
 

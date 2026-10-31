@@ -1,0 +1,99 @@
+x-studio: &studio
+  read_only: true
+  tmpfs: [/tmp]
+  user: "10001:10001"
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 128
+  cpus: 2
+services:
+  studio-init:
+    image: sr-studio-api:dev
+    user: "0:0"
+    read_only: true
+    tmpfs: [/tmp]
+    network_mode: none
+    volumes: ["studio-projects:/projects", "zoo-capability:/control", "audit:/audit-sim", "live-audit:/audit-live"]
+    command: [python, init.py]
+  rflowc:
+    <<: *studio
+    image: sr-rflowc-api:dev
+    mem_limit: 256m
+    networks: [studio-front]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8012/health',timeout=1).status==200"]
+      interval: 3s
+      timeout: 2s
+      retries: 15
+  runner-sim:
+    <<: *studio
+    image: sr-runner:dev
+    init: true
+    mem_limit: 256m
+    environment: {SR_RUNNER_MODE: sim}
+    volumes: ["studio-projects:/projects:ro", "audit:/audit:ro"]
+    networks:
+      sim-control: {interface_name: eth0}
+      sim-bus: {interface_name: eth1}
+    command: [python, main.py]
+    depends_on: {studio-init: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, python, -c, "from main import interface_address;import urllib.request;assert urllib.request.urlopen('http://'+interface_address('eth0')+':8011/health',timeout=1).status==200"]
+      interval: 3s
+      timeout: 2s
+      retries: 15
+  runner-live:
+    <<: *studio
+    image: sr-runner:dev
+    init: true
+    mem_limit: 256m
+    environment: {SR_RUNNER_MODE: live}
+    volumes: ["studio-projects:/projects:ro", "live-audit:/audit:ro"]
+    networks:
+      live-control: {interface_name: eth0}
+      live-bus: {interface_name: eth1}
+    command: [python, main.py]
+    depends_on: {studio-init: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, python, -c, "from main import interface_address;import urllib.request;assert urllib.request.urlopen('http://'+interface_address('eth0')+':8011/health',timeout=1).status==200"]
+      interval: 3s
+      timeout: 2s
+      retries: 15
+  studio-api:
+    <<: *studio
+    image: sr-studio-api:dev
+    init: true
+    mem_limit: 512m
+    environment: {SR_STUDIO_HTTP_PORT: "${SR_STUDIO_HTTP_PORT:-3180}"}
+    volumes: ["studio-projects:/projects", "zoo-capability:/control:ro"]
+    networks:
+      studio-front: {interface_name: eth0}
+      sim-control: {interface_name: eth1}
+      live-control: {interface_name: eth2}
+    command: [python, main.py]
+    depends_on:
+      studio-init: {condition: service_completed_successfully}
+      rflowc: {condition: service_healthy}
+      runner-sim: {condition: service_healthy}
+      runner-live: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "from main import address;import urllib.request;assert urllib.request.urlopen('http://'+address()+':8010/health',timeout=1).status==200"]
+      interval: 3s
+      timeout: 2s
+      retries: 15
+  studio-web:
+    <<: *studio
+    image: sr-studio-web:dev
+    mem_limit: 128m
+    cpus: 1
+    networks: [studio-public, studio-front]
+    ports: ["127.0.0.1:${SR_STUDIO_HTTP_PORT:-3180}:8080"]
+    depends_on: {studio-api: {condition: service_healthy}}
+volumes:
+  studio-projects: {name: "${SR_PROJECT_VOLUME:-sr-projects}"}
+  zoo-capability: {name: "${SR_ZOO_CAPABILITY_VOLUME:-sr-zoo-capability}"}
+networks:
+  studio-front: {internal: true, name: "${SR_STUDIO_FRONT_NETWORK:-sr-studio-front}"}
+  studio-public: {}
+  sim-control: {internal: true}
+  live-control: {internal: true}

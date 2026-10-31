@@ -122,6 +122,39 @@ class BrokerFixture(unittest.IsolatedAsyncioTestCase):
 
 
 class BrokerDataTests(BrokerFixture):
+    async def test_ros_clock_catchup_preserves_capture_and_provider_lane(self):
+        # Actual provider serializer and gRPC broker: /clock can arrive after
+        # the captured sensor without erasing its value then triggering replay.
+        from types import SimpleNamespace
+        from dog_backend import DogBackend
+        from mapping import Observation
+        from provider import ProviderClient
+        await self.attach()
+        path='Robot.Signal.Speed'
+        engine=SimpleNamespace(observations={path:Observation(.2,pb.OK,100,'epoch','ROS_TIME')},last_sent={path:time.monotonic_ns()})
+        clock=[90]
+        link=SimpleNamespace(protocol=SimpleNamespace(source_epoch='epoch'),ros_time_ns=lambda:clock[0])
+        backend=DogBackend(self.catalog,engine,link)
+        emitted=[];complete=asyncio.Event()
+        async def send(packet):
+            sample=packet.samples.samples[0]
+            emitted.append(pb.Sample.FromString(sample.SerializeToString()))
+            ack=await self.packet(packet)
+            self.assertTrue(ack.ok,(ack.code,ack.detail))
+            clock[0]=150
+            if len(emitted)==2:complete.set()
+        client=SimpleNamespace(backend=backend,catalog=self.catalog,sequence=0,guard=SimpleNamespace(session=self.hello.session),send=send)
+        task=asyncio.create_task(ProviderClient.telemetry(client))
+        try:
+            done,_=await asyncio.wait([task,asyncio.create_task(complete.wait())],timeout=2,return_when=asyncio.FIRST_COMPLETED)
+            if task in done:await task
+            self.assertTrue(complete.is_set())
+            self.assertEqual([s.quality for s in emitted],[pb.STALE,pb.OK])
+            self.assertEqual([s.source_time_ns for s in emitted],[100,100])
+            self.assertEqual([s.value.float64_value for s in emitted],[.2,.2])
+            self.assertTrue((await self.bus.Describe(pb.Empty())).provider_online)
+        finally:
+            task.cancel();await asyncio.gather(task,return_exceptions=True)
     async def test_descriptor_and_missing_value_snapshot(self):
         descriptor = await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.backend, 'SIM')
