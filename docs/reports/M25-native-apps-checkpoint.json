@@ -1,7 +1,7 @@
 {
   "date": "2026-10-31",
   "parentCommit": "bfdbf38b",
-  "scope": "M25 native application local acceptance on mock and ROS/MuJoCo; candidate CI pending; M26/M27/video/hardware excluded",
+  "scope": "M25 native technical PASS on mock and ROS/MuJoCo; M26/M27/video/hardware excluded",
   "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
   "images": {
     "sr-rfrt:dev": "sha256:83b8e3061ea6d442752b98261404192ab5f32b7ad437aa17d5aa12f18c1421e9",
@@ -192,7 +192,6 @@
     "RW-D Cancel has no body work because its concurrent main loop is read-only. Assert successful no-work and observed MANUAL/no active motion, never invent physical confirmation. Active physical Cancel was separately qualified twice."
   ],
   "open": [
-    "Candidate GitHub CI for changed Stop classification/native CLI gate",
     "M26 Robot Studio/control-plane UI",
     "M27 three full complex runs, faults, soak and continuous cross-tab video",
     "Hardware/Jetson"
@@ -209,5 +208,14 @@
     },
     "restoredProfile": "realistic",
     "restoredMode": "DISARMED"
+  },
+  "ci": {
+    "roboticsRun": 41210272380,
+    "commit": "f8029821",
+    "result": "SUCCESS",
+    "generalCi": {
+      "run": 41210272277,
+      "result": "CANCELLED"
+    }
   }
 }

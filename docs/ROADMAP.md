@@ -525,17 +525,17 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 | Biểu thức + kiểu/đơn vị | 0067,0077 | ✔ | 163 explicit valid/error cases, 19 combined groups /1.055 s PASS; RSS22/frozen catalog PASS; Robotics41170674757 SUCCESS at7740ba7f | T03 |
 | Compiler S0–S6 + IR + hash | 0067,0078 | ✔ | Local31 RF fixtures/all24 block lowerings/30 groups PASS; deterministic hashes/UI exclusion; lint200 44.816ms; Robotics41170674757 SUCCESS at7740ba7f | T04 |
 | Codegen Python + golden RW-A..D | 0067,0079 | ✔ | Native deterministic 10-file artifacts; 38 local groups PASS including verify-before-import main fix; Robotics41170674757 SUCCESS at7740ba7f | T05 |
-| Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 63 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
+| Runtime `rfrt` | 0067,0080–0084 | ✔ | Actual installed wheel; 63 groups and native ROS PASS; Robotics41210272380 SUCCESS; M25-rfrt-checkpoint.json | T06 |
 | Conformance C-R01..C-R12 | 0067,0084 | ✔ | edff6d7f CI PASS; fresh Ubuntu12/12 twice after handover fix; candidate CI pending. environment-recovery-checkpoint.json | T07 |
-| CLI `sr build/run`; RW-A..D headless trên dog sim | 0067,0085 | 🔄 | Clock/capture/marker faults and native RW-A..D mock + actual ROS PASS locally; new CI pending; M25-native-apps-checkpoint.json | T08 |
-| Gate + báo cáo | 0067 | ☐ | | T09 |
+| CLI `sr build/run`; RW-A..D headless trên dog sim | 0067,0085–0086 | ✔ | Clock/capture/marker faults and native RW-A..D mock + actual ROS PASS; Robotics41210272380 SUCCESS; M25-native-apps-checkpoint.json | T08 |
+| Gate + báo cáo | 0067 | ✔ | reports/M25.md; scoped native technical PASS2026-11-01 | T09 |
 
 ## M26 — Robot Studio
 Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio.md) · ADR [0068](../analysis/adr/ADR-0068-robot-studio-run-and-scenarios.md) — **Accepted for implementation 2026-10-29; gates OPEN**. Architecture authorized by PO 2026-10-29; follow ADR-0069 and all technical gates.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Spike S-R5 React Flow, S-R6 runner sandbox | 0068 | ☐ | | T01 |
+| Spike S-R5 React Flow, S-R6 runner sandbox | 0068,0087 | 🔄 | Actual headed200 nodes60fps; static build0.838s/303MiB. S-R6 pending | T01 |
 | studio-api | 0068 | ☐ | | T02 |
 | rflowc service | 0067, 0068 | ☐ | | T03 |
 | runner | 0068 | ☐ | | T04 |
@@ -608,3 +608,5 @@ M25-T06 normal Cancel physical handover PASS twice, no Reset/Arm between cancell
 M25-T08 checkpoint 2026-10-31: 165 provider/62 installed-runtime/38 compiler/9 actual DDS groups PASS; 22 RSS paths and223 original-capture comparisons, pause/perception/epoch actual faults and Hold/Cancel requalification PASS. Conformance12/12 twice (74.254/96.999s), CLI build/commission/event/stop and5 negative cases PASS. Native RW-A..D on actual ROS, M26 and continuous final video remain OPEN. See reports/M25-capture-cli-checkpoint.json.
 
 M25-T08 local native gate2026-10-31: RW-A/B/C/D all pass on mock and actual ROS/MuJoCo; six patrol goals, physical lift/BOW/JUMP/CROUCH,5s low-battery debounce, confirmed Stop and stale-target refusal observed. Stop watcher race fixed with63 installed-wheel groups and conformance12/12 twice75.514/97.366s. Candidate CI and T09 closure pending. M26/M27 and continuous video remain OPEN.
+
+2026-11-01: M25 scoped native technical gate closed after Robotics41210272380 SUCCESS. General CI for that commit was cancelled, not a pass. M26 S-R5 headed200-node canvas passes60fps; S-R6 and the complete Studio/deploy/continuous-video acceptance remain open. Canonical work moved to WSL /home/lenovo/02_Projects; see reports/M25.md.
