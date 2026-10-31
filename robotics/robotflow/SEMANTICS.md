@@ -46,6 +46,10 @@ and repetition count into sequential GoTo; each point uses the declared timeout,
 and any non-success skips all remaining points before its one result handler.
 No body operation silently Arms, reclaims a lost lease or replays after reconnect.
 
+The frontend Move always emits bounded Hold. The reserved low-level set_target
+IR primitive is a one-shot admission followed by immediate safe release; it is
+not an unbounded background writer and is not offered as a frontend block.
+
 ## Time and observation
 
 Safety deadlines, waits, debounce and periodic triggers use monotonic time.

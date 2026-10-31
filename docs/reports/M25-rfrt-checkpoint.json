@@ -1,0 +1,37 @@
+{
+  "schema": "m25-rfrt-checkpoint.v1",
+  "date": "2026-10-31",
+  "scope": "T06 installed runtime local gate; not conformance or live generated workflow acceptance",
+  "runtimeVersion": "0.1.0",
+  "protocolVersion": "1.6",
+  "packageHash": "sha256:d43859c1114386e5795a68525f2b1b039ef771377b41329df1c721ad643bf175",
+  "checks": {
+    "installedRuntime": {
+      "groups": 57,
+      "seconds": 9.275,
+      "result": "PASS",
+      "log": "robotics/runtime/m25/rfrt-local-gate-tests.log"
+    },
+    "compiler": {
+      "groups": 38,
+      "seconds": 14.989,
+      "result": "PASS",
+      "log": "robotics/runtime/m25/rfrt-main-codegen-tests.log"
+    },
+    "foundation": {
+      "rssGroups": 22,
+      "brokerGroups": 143,
+      "seconds": 33.662,
+      "result": "PASS",
+      "log": "robotics/runtime/m25/rfrt-foundation-final-tests.log"
+    }
+  },
+  "open": [
+    "new source GitHub CI",
+    "T07 actual broker/mock 12 cases twice",
+    "T08 generated applications on actual ROS",
+    "M26 deploy GUI",
+    "M27 continuous full workflow video",
+    "hardware"
+  ]
+}

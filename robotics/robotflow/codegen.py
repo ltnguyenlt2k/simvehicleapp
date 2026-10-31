@@ -118,8 +118,8 @@ def build_application(source,catalog,profile,registry=None,units=None,runtime_pa
     if len(flow.encode())>2*1024*1024:
         compiler.add('RF1002',field='nodes',detail='generated Python exceeds 2 MiB')
         result=compiler.result();result['files']=None;return result
-    main=('from pathlib import Path\nfrom rfrt import run_app\nfrom .flow import BEHAVIORS, FLOW_META\n\n'
-          'if __name__ == "__main__":\n    run_app(Path(__file__).resolve().parents[1], FLOW_META, BEHAVIORS)\n')
+    main=('from pathlib import Path\nfrom rfrt import run_app\n\n'
+          'if __name__ == "__main__":\n    raise SystemExit(run_app(Path(__file__).resolve().parents[1]))\n')
     files={'app/__init__.py':'# RobotFlow generated application.\n','app/flow.py':flow,'app/main.py':main,
         'rfir.json':text(ir),'rss-catalog.json':text(catalog),'profile.json':text(compiler.profile),
         'units.v1.json':text(units.artifact()),'registry.json':text(registry.public()),'workflow.json':text(workflow)}

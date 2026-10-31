@@ -154,6 +154,27 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.sleep(.02);self.backend.client.cancel_causes['exec']='PB_TIMEOUT'
         with self.assertRaises(ConnectionError):await task
 
+    async def test_cancel_during_stance_wait_confirms_no_motion_was_dispatched(self):
+        entered=asyncio.Event();self.phases=[]
+        async def pending(predicate,timeout):entered.set();await asyncio.sleep(1)
+        self.link.wait=pending
+        task=asyncio.create_task(self.backend.command('Robot.Motion.Perform',{'Name':'BOW'},self.progress))
+        await entered.wait();task.cancel()
+        result=await task
+        self.assertEqual(result[0],pb.CANCELLED);self.assertTrue(result[2])
+        self.assertEqual(self.link.sent,[])
+        self.assertEqual(self.link.protocol.grant_id,'grant')
+
+    async def test_every_controller_packet_rechecks_commissioned_map(self):
+        connected=asyncio.Event();connected.set()
+        self.backend.client=SimpleNamespace(connected=connected,guard=SimpleNamespace(fence=1,invalid_through=0,
+            session='session',lease_deadline=time.monotonic_ns()+500_000_000))
+        self.link.protocol.controller=lambda *args: {'unitFixture':True}
+        self.backend.controller=DogBackend.controller.__get__(self.backend)
+        self.assertEqual(self.backend.controller(),{'unitFixture':True})
+        self.link.frame['map_generation']='changed'
+        with self.assertRaises(RejectedBeforeStart):self.backend.controller()
+
     async def test_unavailable_stop_dispatch_is_never_confirmed(self):
         self.link.fail_send=True
         self.backend.request_stop()

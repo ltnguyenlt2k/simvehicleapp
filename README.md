@@ -276,3 +276,6 @@ broker to the dog simulation; remote Arm is disabled by default. Workflow Studio
 and workflow deployment remain under implementation. See the
 [robotics guide](docs/user-guide/robotics.md), [stack commands](robotics/README.md)
 and [current live evidence](docs/reports/M24-progress.md).
+
+
+RobotFlow runtime developer preview: [installed wheel and CLI checks](robotics/rfrt/README.md). Native generated Python now verifies artifacts and the actual runtime pin before loading. Hold and Cancel prerequisites passed actual ROS/physics checks; installed runtime local tests pass. Full generated workflow deployment UI and continuous video remain under M25–M27 implementation, not released functionality.

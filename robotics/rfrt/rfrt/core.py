@@ -13,6 +13,7 @@ PHASES=frozenset(('SUCCEEDED','FAILED','REJECTED','CANCELLED','TIMED_OUT'))
 
 
 class AuthorityLost(RuntimeError):pass
+class RunStopped(AuthorityLost):pass
 
 
 @dataclass(frozen=True)
@@ -21,10 +22,12 @@ class Outcome:
     reason:str=''
     physical_confirmed:bool=False
     execution_id:str=''
+    expected_cancel:bool=False
 
     def __post_init__(self):
         if self.phase not in PHASES:raise ValueError('unknown operation outcome')
         if type(self.physical_confirmed) is not bool:raise ValueError('physical confirmation must be boolean')
+        if self.expected_cancel and self.phase!='CANCELLED':raise ValueError('expected cancellation requires CANCELLED')
 
     @property
     def ok(self):return self.phase=='SUCCEEDED'
@@ -37,6 +40,7 @@ class Trace:
         self.metadata=dict(metadata)
         self.parent=ContextVar('robotflow_span',default=None)
         self.current_node=ContextVar('robotflow_node',default=None)
+        self.header_sent=False
 
     def emit(self,node,event,**data):
         self.sequence+=1
@@ -46,7 +50,9 @@ class Trace:
         self.sink(value)
         return self.sequence
 
-    def header(self):self.emit(None,'run_started',identities=self.metadata)
+    def header(self):
+        if not self.header_sent:
+            self.header_sent=True;self.emit(None,'run_started',identities=self.metadata)
 
 
 class Step:
@@ -85,7 +91,9 @@ class Context:
     def success():return Outcome('SUCCEEDED') # Region completion, no physical assertion.
 
     @staticmethod
-    def combine(original,branch):return branch if original.ok else original
+    def combine(original,branch):
+        if original.ok or original.expected_cancel and not branch.ok and not (branch.expected_cancel and branch.physical_confirmed):return branch
+        return original
 
     @asynccontextmanager
     async def node(self,identity,operation):
@@ -95,13 +103,13 @@ class Context:
         try:
             yield step
         except BaseException as error:
-            phase='CANCELLED' if isinstance(error,asyncio.CancelledError) else 'FAILED'
+            phase='CANCELLED' if isinstance(error,(asyncio.CancelledError,RunStopped)) else 'FAILED'
             self.trace.emit(identity,'node_finished',span=span,phase=phase,error=type(error).__name__)
             raise
         else:
             result=step.outcome or self.success()
             self.trace.emit(identity,'node_finished',span=span,phase=result.phase,
-                physicalConfirmed=result.physical_confirmed,executionId=result.execution_id,**step.details)
+                physicalConfirmed=result.physical_confirmed,executionId=result.execution_id,expectedCancellation=result.expected_cancel,**step.details)
         finally:
             self.trace.parent.reset(token)
             self.trace.current_node.reset(node_token)
@@ -210,7 +218,7 @@ class Context:
             for result in results:
                 if isinstance(result,BaseException):raise result
                 if not isinstance(result,Outcome):raise TypeError('child outcome required')
-                if not result.ok:return result
+                if not result.ok and not (result.expected_cancel and result.physical_confirmed):return result
             return self.success()
         except BaseException:
             for task in tasks:

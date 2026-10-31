@@ -71,6 +71,9 @@ class DogBackend:
         guard = self.client.guard
         if not guard or not self.client.connected.is_set() or guard.fence <= guard.invalid_through:
             raise RejectedBeforeStart('provider authority unavailable')
+        frame=self.link.protocol.require_frame(time.monotonic_ns())
+        if operation in ('command','renew') and self.claimed_map!=(frame.get('scene_id'),frame.get('map_generation')):
+            raise RejectedBeforeStart('current map differs from explicit authority claim')
         return self.link.protocol.controller(guard.session, time.monotonic_ns(), guard.lease_deadline, operation)
 
     async def call(self, action, controller=None, **fields):
@@ -292,6 +295,8 @@ class DogBackend:
                 # before blending into its standing hold. Observe completion;
                 # a low base velocity alone does not imply stationary joints.
                 await self.link.wait(standing, 5)
+            except asyncio.CancelledError:
+                return pb.CANCELLED,'no physical motion was dispatched',True
             except ConnectionError as error:
                 raise RejectedBeforeStart('stationary four-foot stance not observed before dispatch') from error
             fields['motion_name'] = mapping['enumMap'][args['Name']]

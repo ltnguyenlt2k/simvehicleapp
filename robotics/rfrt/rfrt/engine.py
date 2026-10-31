@@ -4,7 +4,7 @@ from collections import deque
 from dataclasses import dataclass,field
 import time
 
-from .core import AuthorityLost,Outcome,drain
+from .core import AuthorityLost,RunStopped,Outcome,drain
 from .values import UNKNOWN,Unavailable
 
 
@@ -59,7 +59,8 @@ class Engine:
         if self.finished.is_set():return
         self.result=result;self.finished.set()
         # Safety dispatch begins before potentially slow child recovery/draining.
-        if self.stop_task is None:self.stop_task=asyncio.create_task(self.context.bus.stop(1000))
+        if self.stop_task is None and not getattr(self.context.bus,'stop_requested',False):
+            self.stop_task=asyncio.create_task(self.context.bus.stop(1000))
 
     async def worker(self,slot):
         identity=slot.behavior['id']
@@ -76,7 +77,7 @@ class Engine:
                     if self.closing:raise
                     if slot.restarting:result=Outcome('CANCELLED','restarted by explicit trigger policy')
                     else:raise
-                except Exception as error:result=Outcome('FAILED',type(error).__name__)
+                except Exception as error:result=Outcome('CANCELLED' if isinstance(error,RunStopped) else 'FAILED',type(error).__name__)
                 finally:
                     # Only this worker may replace its owned child, after cleanup.
                     if slot.task is not None and not slot.task.done():
@@ -85,9 +86,11 @@ class Engine:
                     slot.task=None
                 restarting=slot.restarting;slot.restarting=False
                 self.context.trace.emit(identity,'behavior_finished',phase=result.phase,restarted=restarting)
-                if not result.ok and not restarting:
+                if not result.ok and not restarting and not (result.expected_cancel and result.physical_confirmed):
                     self.fail(result);return
                 if not self.reactive and all(item.task is None and not item.pending for item in self.slots.values()):
+                    if getattr(self.context.bus,'fault',None):
+                        self.fail(Outcome('FAILED','authority was lost during cleanup'));return
                     self.finished.set();return
 
     async def watch(self,identity,trigger):
@@ -123,7 +126,7 @@ class Engine:
             while True:
                 await self.context.checkpoint();await asyncio.sleep(self.poll_seconds)
         except Exception as error:
-            self.fail(Outcome('TIMED_OUT' if time.monotonic()>=self.context.deadline else 'FAILED',type(error).__name__))
+            self.fail(Outcome('CANCELLED' if isinstance(error,RunStopped) else 'TIMED_OUT' if time.monotonic()>=self.context.deadline else 'FAILED',type(error).__name__))
 
     async def guarded_watch(self,identity,trigger):
         try:await self.watch(identity,trigger)

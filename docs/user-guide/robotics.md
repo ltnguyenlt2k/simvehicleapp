@@ -48,3 +48,6 @@ Never reuse old lease files as recovery. `sr down` stops this robotics stack and
 preserves its volumes. See [M24 progress](../reports/M24-progress.md) for the open
 workflow/compiler/UI/video gates; M24 transport/fault/equality/30-minute gates
 have passed. Software STOP is not a physical E-stop.
+
+
+RobotFlow runtime developer preview: [installed wheel and CLI checks](../../robotics/rfrt/README.md). Native generated Python now verifies artifacts and the actual runtime pin before loading. Hold and Cancel prerequisites passed actual ROS/physics checks; installed runtime local tests pass. Full generated workflow deployment UI and continuous video remain under M25–M27 implementation, not released functionality.

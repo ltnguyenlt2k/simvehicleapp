@@ -14,6 +14,7 @@ FILES=frozenset(('app/__init__.py','app/flow.py','app/main.py','rfir.json',
     'rss-catalog.json','profile.json','units.v1.json','registry.json','workflow.json'))
 META=('compilerVersion','runtimeVersion','workflowHash','irHash','catalogHash',
       'profileId','profileHash','unitsHash','registryHash')
+SCHEMAS=Path(__file__).with_name('contracts')
 
 
 class ArtifactError(ValueError):pass
@@ -76,12 +77,13 @@ def read_file(root,path):
         for fd in reversed(descriptors):os.close(fd)
 
 
-def verify_application(root,installed_runtime_hash,contracts='/contracts'):
+def verify_application(root,installed_runtime_hash,contracts=None):
     """installed_runtime_hash comes from the trusted runtime image, not the app.
 
     This proves identity/integrity, not trust in arbitrary Python. The runner must
     accept only compiler-produced artifacts and isolate application processes.
     """
+    contracts=Path(contracts) if contracts is not None else SCHEMAS
     files={name:read_file(root,name) for name in sorted(FILES|{'rflow.lock.json'})}
     found=set()
     for folder,directories,names in os.walk(root,followlinks=False):

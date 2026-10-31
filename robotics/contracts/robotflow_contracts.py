@@ -158,9 +158,27 @@ def lock_schema():
         [key for key in properties if key!='runtimePackageHash']))
 
 
+def target_schema():
+    context=obj({'kind':enum('KINEMATIC_MOCK','ROS_SIM'),'mappingHash':HASH,'adapterSourceHash':HASH,
+        'sourceEpoch':{'type':'string','minLength':1,'maxLength':256},
+        'brainBootId':{'type':'string','minLength':1,'maxLength':256},
+        'sceneEpoch':{'type':'string','minLength':1,'maxLength':256},
+        'configHash':{'type':'string','pattern':'^[a-f0-9]{64}$'},
+        'sceneId':{'type':'string','minLength':1,'maxLength':256},
+        'mapGeneration':{'type':'string','minLength':1,'maxLength':256},
+        'remoteArmAuthorized':{'type':'boolean'}},['kind','mappingHash','adapterSourceHash'])
+    physical=['sourceEpoch','brainBootId','sceneEpoch','configHash','sceneId','mapGeneration']
+    context['allOf']=[{'if':{'properties':{'kind':const('ROS_SIM')}},'then':{'required':physical},
+        'else':{'not':{'anyOf':[{'required':[key]} for key in physical]}}}]
+    return dict(HEADER,**{'$id':'urn:robotflow:rftarget.v1'},**obj({'schema':const('rftarget.v1'),
+        'robotId':{'type':'string','minLength':1,'maxLength':128},'profileId':PROFILE,'catalogHash':HASH,'context':context}))
+
+
 def schemas():
     return {'robotflow.v1':workflow_schema(),'block.v1':block_schema(),'rfir.v1':ir_schema(),
-            'robotflow-profile.v1':profile_schema(),'rflow-lock.v1':lock_schema()}
+            'robotflow-profile.v1':profile_schema(),'rflow-lock.v1':lock_schema(),'rftarget.v1':target_schema(),
+            'rfevent.v1':dict(HEADER,**{'$id':'urn:robotflow:rfevent.v1'},**obj({'schema':const('rfevent.v1'),
+                'id':{'type':'string','minLength':1,'maxLength':128},'name':{'type':'string','minLength':1,'maxLength':64}}))}
 
 
 if __name__=='__main__':

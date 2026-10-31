@@ -220,4 +220,6 @@ flowchart TB
 
 - [ADR-0082](ADR-0082-protobus-actual-target-context.md): candidate1.5 actual provider/mapping/source and ROS scene/map identity; actual metadata probe passed, candidate live control qualification still OPEN.
 
-- [ADR-0083](ADR-0083-hold-admission-and-safe-release.md): accepted next-implementation design; current target receipt lacks actual admission/release proof. Transport/backend implementation and tests remain OPEN.
+- [ADR-0083](ADR-0083-hold-admission-and-safe-release.md): implemented protocol1.6 admission/release ledger; actual ROS Hold and normal Cancel prerequisite passes recorded. Generated live workflow gate remains OPEN.
+
+- [ADR-0084](ADR-0084-runtime-bus-binding-and-package.md): typed SDK, fixed target identity, reproducible installed wheel and verify-before-import CLI; 57 local groups PASS, real broker/live application gates remain OPEN.

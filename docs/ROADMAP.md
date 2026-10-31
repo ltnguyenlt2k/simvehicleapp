@@ -524,8 +524,8 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 | Block registry v0.1 | 0067,0076 | ✔ | 24 canonical single-source blocks; all robot result ports/timeouts; 14 tests /0.870 s local PASS; candidate CI pending | T02 |
 | Biểu thức + kiểu/đơn vị | 0067,0077 | ✔ | 163 explicit valid/error cases, 19 combined groups /1.055 s PASS; RSS22/frozen catalog PASS; candidate CI pending | T03 |
 | Compiler S0–S6 + IR + hash | 0067,0078 | ✔ | Local31 RF fixtures/all24 block lowerings/30 groups PASS; deterministic hashes/UI exclusion; lint200 44.816ms; candidate CI pending | T04 |
-| Codegen Python + golden RW-A..D | 0067 | ☐ | | T05 |
-| Runtime `rfrt` | 0067 | ☐ | | T06 |
+| Codegen Python + golden RW-A..D | 0067,0079 | ✔ | Native deterministic 10-file artifacts; 38 local groups PASS including verify-before-import main fix; new CI pending | T05 |
+| Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 57 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
 | Conformance C-R01..C-R12 | 0067 | ☐ | | T07 |
 | CLI `sr build/run`; RW-A..D headless trên dog sim | 0067 | ☐ | | T08 |
 | Gate + báo cáo | 0067 | ☐ | | T09 |
@@ -575,7 +575,7 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 | M22 foundations/RSS/spikes | PASS | Scoped Robotics CI + actual DDS/interface/motion evidence; M22 report |
 | M23 broker | PASS (scoped) | T01–T09; Robotics CI 40896228193 SUCCESS at 62529137; general CI queued |
 | M24 ROS bridge | IN_PROGRESS | T01 image; actual ROS acceptance remains OPEN |
-| M25 RobotFlow | NOT STARTED | Requires M23; live acceptance additionally M24 |
+| M25 RobotFlow | NOT STARTED | T01–T05 implemented; T06 installed wheel 57 local groups PASS, new CI pending. Actual ROS Hold/Cancel prerequisites PASS. T07–T09 and full GUI/video remain OPEN; M25-rfrt-checkpoint.json |
 | M26 Studio/deploy/Zoo launch | NOT STARTED | Requires compiler/mock and adapter gates |
 | M27 complex live E2E/video/soak | OPEN | Three live passes + restart/fault cases + 30-min soak + recorded full flow |
 | Hardware/Jetson | OPEN / OUT OF SCOPE | No hardware evidence |

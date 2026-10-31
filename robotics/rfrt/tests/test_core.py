@@ -101,3 +101,11 @@ class CoreTests(unittest.IsolatedAsyncioTestCase):
         await started.wait();task.cancel();await asyncio.sleep(.005);task.cancel()
         with self.assertRaises(asyncio.CancelledError):await task
         self.assertEqual(cleaned,[True,True])
+
+    async def test_expected_cancel_is_benign_only_after_confirmed_release(self):
+        ctx,bus,events,app=self.context()
+        async def okay(context):return Outcome('SUCCEEDED')
+        async def released(context):return Outcome('CANCELLED',physical_confirmed=True,expected_cancel=True)
+        async def unknown(context):return Outcome('CANCELLED',expected_cancel=True)
+        self.assertTrue((await ctx.parallel([okay,released],'all')).ok)
+        self.assertEqual((await ctx.parallel([okay,unknown],'all')).phase,'CANCELLED')

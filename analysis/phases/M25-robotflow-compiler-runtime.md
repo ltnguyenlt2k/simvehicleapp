@@ -241,3 +241,27 @@ M25-normal-cancel-checkpoint.json pins actual IDs/images/source. Isolated fixtur
 is torn down after evidence collection; no production1.3 replacement or hardware
 acceptance. ROS freshness/clock/epoch qualification and full runtime/GUI/video
 remain OPEN.
+
+
+### T06 installed runtime local gate — 2026-10-31
+
+Actual deterministic wheel 0.1.0 / protocol1.6 is built twice byte-identically,
+installed and tested through isolated Python (57 groups PASS /9.275s). Pin:
+`sha256:d43859c1114386e5795a68525f2b1b039ef771377b41329df1c721ad643bf175`.
+The SDK binds recorded target identity, owns bounded lease/command/Hold lifetimes,
+confirms release before handover, keeps cancellation streams alive, and uses an
+independent Stop lane. No import/startup implicit Arm or authority reacquisition.
+CLI verifies exact artifact bytes and actual package identity before importing
+native generated handlers; generator main no longer imports flow first. Four
+golden changes were reviewed: only main and its lock hashes changed; IR identical.
+Compiler38 groups PASS /14.989s. RSS22/broker143 PASS /33.662s includes per-packet
+map validation and pre-dispatch cancellation; those new backend changes still
+need latest-source actual ROS regression (older Hold/Cancel reports remain scoped).
+
+Report: M25-rfrt-checkpoint.json. Runtime tests include real typed gRPC fixture
+transport, installed-wheel CLI, actual subprocess SIGTERM, bounded stdin events,
+correlated release failure, parallel cancellation and identity loss. These are
+not actual broker/mock conformance or live generated application acceptance.
+T06 local PASS, new source CI pending. Next: T07 fixed12-case real broker/mock
+matrix twice, then T08 actual ROS generated apps and freshness/clock/epoch gates.
+M26 UI/deployment, M27 full continuous video and hardware remain OPEN.
