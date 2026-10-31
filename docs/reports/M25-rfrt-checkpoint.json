@@ -4,13 +4,13 @@
   "scope": "T06 installed runtime local gate; not conformance or live generated workflow acceptance",
   "runtimeVersion": "0.1.0",
   "protocolVersion": "1.6",
-  "packageHash": "sha256:d43859c1114386e5795a68525f2b1b039ef771377b41329df1c721ad643bf175",
+  "packageHash": "sha256:30f70e47042472f70bb53d93a6a4319db4662a02d7668e9840d82ea3c78ceb20",
   "checks": {
     "installedRuntime": {
-      "groups": 57,
-      "seconds": 9.275,
+      "groups": 58,
+      "seconds": 9.307,
       "result": "PASS",
-      "log": "robotics/runtime/m25/rfrt-local-gate-tests.log"
+      "log": "robotics/runtime/m25/rfrt-t06-tests.log"
     },
     "compiler": {
       "groups": 38,
@@ -27,11 +27,17 @@
     }
   },
   "open": [
-    "new source GitHub CI",
     "T07 actual broker/mock 12 cases twice",
     "T08 generated applications on actual ROS",
     "M26 deploy GUI",
     "M27 continuous full workflow video",
     "hardware"
-  ]
+  ],
+  "runtimeImage": "sha256:b4821cdf6ea4d374d24fbe86a31a0b4eb85b1590c378e33a0faafc0a962de92d",
+  "implementationCommit": "7740ba7f",
+  "ci": {
+    "run": 41170674757,
+    "result": "SUCCESS",
+    "commit": "7740ba7f"
+  }
 }

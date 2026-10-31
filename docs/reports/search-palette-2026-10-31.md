@@ -11,3 +11,9 @@ Fresh local build was interrupted after WSL/host memory pressure and connection
 timeouts during Next build; it is not a successful verification. Existing running
 image was not replaced. CI build/typecheck/E2E for the candidate is required;
 no pass claim based on source review. Full robot workflow video remains separate.
+
+GitHub general CI41171214970 at142757f1 completed SUCCESS. Fresh source image
+build, Studio type-check/unit suites, full browser E2E including M18 and the new
+six-reopen regression, and restart gate passed. Original CI failure remains
+retained; source reset race is a reviewed candidate cause, not a deterministic
+local reproduction. No robot workflow GUI/video acceptance follows from this.

@@ -55,6 +55,20 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(guard.fence, 5)
 
 
+class ScenarioResetTests(unittest.IsolatedAsyncioTestCase):
+    async def test_reset_keeps_stop_until_explicit_broker_reset_stop(self):
+        catalog=load_catalog('/contracts/fixtures/rss-go2-catalog.v1.json')
+        backend=MockBackend(catalog)
+        client=ProviderClient('unused:1',catalog,backend)
+        backend.x=.5
+        await MockControl(backend).Reset(mpb.ResetRequest(),None)
+        self.assertEqual(backend.x,0.)
+        self.assertTrue(backend.stop_latched)
+        self.assertEqual(backend.mode,'SAFE_STOP')
+        self.assertTrue(client.restart.is_set())
+        self.assertEqual(backend.v,0.)
+
+
 class DelayedDeliveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_fresh_queued_refresh_cannot_hide_an_expired_previous_target(self):
         catalog = load_catalog('/contracts/fixtures/rss-go2-catalog.v1.json')
@@ -361,7 +375,15 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
         response = await self.api.Reset(mpb.ResetRequest(time_scale=1))
         self.assertGreaterEqual(response.revision, 2)
         await self.until(lambda: self.client.connected.is_set() and self.client.guard.session != previous)
-        await self.arm()
+        self.assertTrue(self.backend.stop_latched)
+        self.assertEqual(self.backend.mode,'SAFE_STOP')
+        await self.acquire()
+        rejected=await self.invoke('Robot.Safety.Arm')
+        self.assertEqual(rejected[-1].phase,pb.REJECTED)
+        reset=await self.invoke('Robot.Safety.ResetStop')
+        self.assertEqual(reset[-1].phase,pb.SUCCEEDED)
+        armed=await self.invoke('Robot.Safety.Arm')
+        self.assertEqual(armed[-1].phase,pb.SUCCEEDED)
         with self.assertRaises(grpc.aio.AioRpcError):
             await self.api.Reset(mpb.ResetRequest(time_scale=1))
 

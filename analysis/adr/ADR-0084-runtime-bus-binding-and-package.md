@@ -51,8 +51,8 @@ Package, higher BusClient, launch/shutdown and full conformance remain required.
 ### T06 installed runtime local gate — 2026-10-31
 
 Actual deterministic wheel 0.1.0 / protocol1.6 is built twice byte-identically,
-installed and tested through isolated Python (57 groups PASS /9.275s). Pin:
-`sha256:d43859c1114386e5795a68525f2b1b039ef771377b41329df1c721ad643bf175`.
+installed and tested through isolated Python (58 groups PASS /9.307s). Pin:
+`sha256:30f70e47042472f70bb53d93a6a4319db4662a02d7668e9840d82ea3c78ceb20`.
 The SDK binds recorded target identity, owns bounded lease/command/Hold lifetimes,
 confirms release before handover, keeps cancellation streams alive, and uses an
 independent Stop lane. No import/startup implicit Arm or authority reacquisition.
@@ -70,3 +70,10 @@ not actual broker/mock conformance or live generated application acceptance.
 T06 local PASS, new source CI pending. Next: T07 fixed12-case real broker/mock
 matrix twice, then T08 actual ROS generated apps and freshness/clock/epoch gates.
 M26 UI/deployment, M27 full continuous video and hardware remain OPEN.
+
+T07 additive observability: structural task cancellation is not itself a physical
+result. `target_release_result` records only the actual correlated inspection
+(execution/owner/fence/last target sequence, physical phase and confirmation),
+retaining the originating node context. Tests assert that proof precedes the
+next body operation; global Stop remains separate and never fabricates Hold
+release. Runtime58 groups PASS /10.751s for wheel82cd6e44.

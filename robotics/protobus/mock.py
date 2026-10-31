@@ -232,6 +232,7 @@ class MockControl(mrpc.MockControlServicer):
             backend.scenario_task.cancel()
             await asyncio.gather(backend.scenario_task, return_exceptions=True)
         backend.reset()
+        backend.request_stop() # A scenario reset cannot clear the broker's latched Stop.
         backend.client.restart.set()
         return mpb.ResetReply(revision=backend.revision)
 

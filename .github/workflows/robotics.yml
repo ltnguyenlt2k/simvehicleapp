@@ -51,6 +51,14 @@ jobs:
         with:
           name: robotics-process-faults
           path: robotics/runtime/m23/process-faults/
+      - name: Native generated-app conformance C-R01-C-R12 twice
+        run: python3 robotics/conformance/gate.py
+      - name: Retain native conformance including failed runs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: robotics-native-conformance
+          path: robotics/runtime/m25/conformance/
       - name: Build pinned ROS message interface without private source access
         run: docker build -f robotics/protobus/spikes/interfaces.Dockerfile -t sr-dog-interfaces:ci robotics/protobus
       - run: docker run --rm --network none sr-dog-interfaces:ci

@@ -496,7 +496,7 @@ Chi tiết: [phases/M23](../analysis/phases/M23-protobus-core.md) · ADR [0066](
 | Spike S-R4 hiệu năng broker Python | 0066 | ✔ | 2026-10-29: full 1800.01 s PASS; 5050.50 samples/s, 4 complete subscribers, p95 0.74 ms; M23-S-R4-evidence.json | T02 |
 | Broker: catalog, validate, Get/Subscribe, STALE | 0066 | ✔ | 2026-10-29: local 24 tests PASS, actual gRPC and bounded quality/sequence/epoch handling; M23-progress.md | T03 |
 | Lease + SetTarget TTL ⇒ safeValue | 0066, 0071 | ✔ | 2026-10-29: 38 local RPC/transport tests PASS; Hold ownership, typed release, lease/TTL/lane-loss; provider-side enforcement remains T06 | T04 |
-| Vòng đời lệnh, Stop ưu tiên, audit | 0066, 0072 | ✔ | 2026-10-29: 57 local tests PASS; actual RPC lifecycle/receipt, terminal quarantine, 1000 unread dispatches, real audit write fault; M23-progress.md | T05 |
+| Vòng đời lệnh, Stop ưu tiên, audit | 0066, 0072 | ✔ | 2026-10-29: 58 local tests PASS; actual RPC lifecycle/receipt, terminal quarantine, 1000 unread dispatches, real audit write fault; M23-progress.md | T05 |
 | Provider mock + API kịch bản + `timeScale` | 0066, 0073 | ✔ | 2026-10-29: 74 capped-container tests PASS; synthetic physics, provider fencing/local watchdog, scenario API; M23-progress.md | T06 |
 | CLI `pbctl` | 0066 | ✔ | 2026-10-29: five subprocess/socket tests PASS; private lease, typed control, invoke/cancel/STOP; M23-progress.md | T07 |
 | Compose `protobus-sim` + fault test tích hợp | 0066, 0074 | ✔ | 2026-10-29: 81 unit + 3 process faults; Robotics CI 40896228193 SUCCESS at 62529137 | T08 |
@@ -520,13 +520,13 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Schema `robotflow.v1`, `rfir.v1`, `block.v1`, mã `RF*` | 0067,0076 | ✔ | Local 9 contract groups /0.142 s PASS, malformed/typed/recursive/schema-sync/all-opcode coverage; RSS20 PASS; CI pending, no compiler/runtime acceptance | T01 |
-| Block registry v0.1 | 0067,0076 | ✔ | 24 canonical single-source blocks; all robot result ports/timeouts; 14 tests /0.870 s local PASS; candidate CI pending | T02 |
-| Biểu thức + kiểu/đơn vị | 0067,0077 | ✔ | 163 explicit valid/error cases, 19 combined groups /1.055 s PASS; RSS22/frozen catalog PASS; candidate CI pending | T03 |
-| Compiler S0–S6 + IR + hash | 0067,0078 | ✔ | Local31 RF fixtures/all24 block lowerings/30 groups PASS; deterministic hashes/UI exclusion; lint200 44.816ms; candidate CI pending | T04 |
-| Codegen Python + golden RW-A..D | 0067,0079 | ✔ | Native deterministic 10-file artifacts; 38 local groups PASS including verify-before-import main fix; new CI pending | T05 |
-| Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 57 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
-| Conformance C-R01..C-R12 | 0067 | ☐ | | T07 |
+| Schema `robotflow.v1`, `rfir.v1`, `block.v1`, mã `RF*` | 0067,0076 | ✔ | Local 9 contract groups /0.142 s PASS, malformed/typed/recursive/schema-sync/all-opcode coverage; RSS20 PASS; Robotics41170674757 SUCCESS at7740ba7f | T01 |
+| Block registry v0.1 | 0067,0076 | ✔ | 24 canonical single-source blocks; all robot result ports/timeouts; 14 tests /0.870 s local PASS; Robotics41170674757 SUCCESS at7740ba7f | T02 |
+| Biểu thức + kiểu/đơn vị | 0067,0077 | ✔ | 163 explicit valid/error cases, 19 combined groups /1.055 s PASS; RSS22/frozen catalog PASS; Robotics41170674757 SUCCESS at7740ba7f | T03 |
+| Compiler S0–S6 + IR + hash | 0067,0078 | ✔ | Local31 RF fixtures/all24 block lowerings/30 groups PASS; deterministic hashes/UI exclusion; lint200 44.816ms; Robotics41170674757 SUCCESS at7740ba7f | T04 |
+| Codegen Python + golden RW-A..D | 0067,0079 | ✔ | Native deterministic 10-file artifacts; 38 local groups PASS including verify-before-import main fix; Robotics41170674757 SUCCESS at7740ba7f | T05 |
+| Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 58 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
+| Conformance C-R01..C-R12 | 0067,0084 | 🔄 | Local12/12 twice,19 subcases/round,96.0471s/95.2383s; new CI pending; M25-conformance-checkpoint.json | T07 |
 | CLI `sr build/run`; RW-A..D headless trên dog sim | 0067 | ☐ | | T08 |
 | Gate + báo cáo | 0067 | ☐ | | T09 |
 
@@ -575,7 +575,7 @@ PO requests end-to-end implementation in both repos, independent layers, complex
 | M22 foundations/RSS/spikes | PASS | Scoped Robotics CI + actual DDS/interface/motion evidence; M22 report |
 | M23 broker | PASS (scoped) | T01–T09; Robotics CI 40896228193 SUCCESS at 62529137; general CI queued |
 | M24 ROS bridge | IN_PROGRESS | T01 image; actual ROS acceptance remains OPEN |
-| M25 RobotFlow | NOT STARTED | T01–T05 implemented; T06 installed wheel 57 local groups PASS, new CI pending. Actual ROS Hold/Cancel prerequisites PASS. T07–T09 and full GUI/video remain OPEN; M25-rfrt-checkpoint.json |
+| M25 RobotFlow | IN PROGRESS | T01–T05 implemented; T06 installed wheel 58 local groups PASS, new CI pending. Actual ROS Hold/Cancel prerequisites PASS. T07 local12/12 twice PASS/new CI pending; T08–T09 and full GUI/video remain OPEN; M25-rfrt-checkpoint.json |
 | M26 Studio/deploy/Zoo launch | NOT STARTED | Requires compiler/mock and adapter gates |
 | M27 complex live E2E/video/soak | OPEN | Three live passes + restart/fault cases + 30-min soak + recorded full flow |
 | Hardware/Jetson | OPEN / OUT OF SCOPE | No hardware evidence |

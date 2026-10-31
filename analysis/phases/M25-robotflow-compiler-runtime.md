@@ -246,8 +246,8 @@ remain OPEN.
 ### T06 installed runtime local gate — 2026-10-31
 
 Actual deterministic wheel 0.1.0 / protocol1.6 is built twice byte-identically,
-installed and tested through isolated Python (57 groups PASS /9.275s). Pin:
-`sha256:d43859c1114386e5795a68525f2b1b039ef771377b41329df1c721ad643bf175`.
+installed and tested through isolated Python (58 groups PASS /9.307s). Pin:
+`sha256:30f70e47042472f70bb53d93a6a4319db4662a02d7668e9840d82ea3c78ceb20`.
 The SDK binds recorded target identity, owns bounded lease/command/Hold lifetimes,
 confirms release before handover, keeps cancellation streams alive, and uses an
 independent Stop lane. No import/startup implicit Arm or authority reacquisition.
@@ -265,3 +265,42 @@ not actual broker/mock conformance or live generated application acceptance.
 T06 local PASS, new source CI pending. Next: T07 fixed12-case real broker/mock
 matrix twice, then T08 actual ROS generated apps and freshness/clock/epoch gates.
 M26 UI/deployment, M27 full continuous video and hardware remain OPEN.
+
+
+### Fixed T07 conformance matrix (before execution)
+
+Every case must compile native application files with the installed wheel pin,
+record an explicit target, and run against separate real broker/mock containers.
+Two consecutive complete passes are required. Synthetic mock results are never
+reported as ROS/physics. No injected fake SDK replaces the deployed transport.
+
+| Case | Observable acceptance |
+|---|---|
+| C-R01 | Condition forMs requires continuously fresh true; false/unknown resets; fresh false rearms |
+| C-R02 | drop/queue/restart bounded concurrency; restart awaits losing body cleanup |
+| C-R03 | Hold starts after admission, refreshes full target, advances pose, confirms zero safe release before next command |
+| C-R04 | Correlated SUCCEEDED/FAILED/REJECTED/TIMED_OUT branches and matching node trace outcomes |
+| C-R05 | Explicit Cancel during motion confirms CANCELLED then next command without re-Arm |
+| C-R06 | Independent Stop during active body; confirmed Stop, no later body admission |
+| C-R07 | Parallel all waits for all; any cancels and awaits losing owned operation |
+| C-R08 | Lease expiry/revocation Stops, no implicit reacquire/replay; explicit new Run needed |
+| C-R09 | Actual CLI subprocess SIGTERM drains owned body and confirms independent Stop |
+| C-R10 | Named stdin event, duplicate identity no replay, malformed input fails safe |
+| C-R11 | Native loops/typed variables/unit conversion/Patrol execute expected iteration and waypoint counts |
+| C-R12 | Complete executed node spans + immutable binding/hash trace, startup has no implicit Arm; identity loss fails closed |
+
+Run logs must retain failures, exact compiler/runtime/broker images, application
+artifact hashes and actual event assertions. A unit-only pass cannot close T07.
+
+
+T07 local gate PASS: C-R01–C-R12 twice consecutively (19 explicit subcases per
+round),96.0471s/95.2383s. Parsed logs contain each expected case exactly once,
+including lease loss and provider crash/start. Runtime wheel82cd6e44, runtime
+image03430d6a, compiler46e4b43e, broker58420c81 are pinned in
+M25-conformance-checkpoint.json with exact artifact hashes. Installed runtime58
+PASS /10.751s and broker144 PASS /34.628s. Dedicated fixture torn down; persistent
+catalog preserved. New conformance CI gate/artifacts added. Candidate CI pending;
+T08 latest-source ROS freshness/clock/epoch and native RW-A..D next, M26/M27/hardware
+remain OPEN. General CI41171214970 at142757f1 SUCCESS including fresh Studio build,
+M18/search regression and restart; Robotics41170674757 at7740ba7f SUCCESS for the
+prior T06 source. These historical CI results do not qualify the new candidate.

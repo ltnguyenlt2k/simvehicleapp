@@ -256,8 +256,8 @@ remain OPEN.
 ### T06 installed runtime local gate — 2026-10-31
 
 Actual deterministic wheel 0.1.0 / protocol1.6 is built twice byte-identically,
-installed and tested through isolated Python (57 groups PASS /9.275s). Pin:
-`sha256:d43859c1114386e5795a68525f2b1b039ef771377b41329df1c721ad643bf175`.
+installed and tested through isolated Python (58 groups PASS /9.307s). Pin:
+`sha256:30f70e47042472f70bb53d93a6a4319db4662a02d7668e9840d82ea3c78ceb20`.
 The SDK binds recorded target identity, owns bounded lease/command/Hold lifetimes,
 confirms release before handover, keeps cancellation streams alive, and uses an
 independent Stop lane. No import/startup implicit Arm or authority reacquisition.
@@ -275,3 +275,60 @@ not actual broker/mock conformance or live generated application acceptance.
 T06 local PASS, new source CI pending. Next: T07 fixed12-case real broker/mock
 matrix twice, then T08 actual ROS generated apps and freshness/clock/epoch gates.
 M26 UI/deployment, M27 full continuous video and hardware remain OPEN.
+
+
+General CI 41166426026 at96ca9f83 failed M18 search/Create workflow (44 other
+cases passed); Robotics41166426013 passed. Local old-image isolated M18 recheck
+passed1/1 (17.8s), so the intermittent CI failure is not reproduced locally.
+Source review found an uncontrolled search input plus passive native DOM reset
+that can erase a query entered after opening. Candidate uses controlled search
+state with synchronous reopen reset, retaining focus only in the passive effect.
+A six-reopen real-browser regression checks empty reopen and preserved new query.
+Fresh-image build and targeted tests are pending; no confirmed root-cause/pass
+claim from source review alone. Runtime and robotics gates remain independent.
+
+Correction: initial T06 report accidentally cited the preceding57-test wheel.
+Latest retained rfrt-t06-tests.log contains58 PASS /9.307s and rfrt-t06-info.log
+pins30f70e47. Installed imageb4821cdf matches this actual package. First actual
+CLI smoke failed closed on the old package pin before any connection/Arm.
+Report and test compiler input corrected to the measured package; no hash check
+relaxed. Robotics41170674757 at7740ba7f SUCCESS. T07 now IN_PROGRESS.
+
+
+T07 conformance implementation (local full gate running): real isolated Compose
+broker/mock, compiler-generated files pinned to measured installed wheel, actual
+CLI subprocess and native handlers through actual gRPC. Two Hold/BOW/Disarm and
+event/de-dup/SIGTERM smoke rounds passed. Expanded exploratory trigger/policy,
+parallel all/any/Cancel/Stop, forced result and mid-Hold SIGTERM cases passed.
+Lease-renew suspension and actual provider SIGKILL/start passed without automatic
+reacquisition or replay. These are synthetic-provider, not ROS qualification.
+
+Failures retained under robotics/runtime/m25/conformance: a test expected physical
+confirmation on a structural cancellation span; physical proof is now explicitly
+traced from correlated InspectExecution release and asserted before handover.
+Runtime58 groups PASS /10.751s for this additive trace, wheel82cd6e44. Separate
+scenarios originally accumulated pose beyond the commissioned BOW radius, so the
+provider correctly rejected BOW. Isolated resets now separate test initial state.
+Actual reset exposed false unlatched mock telemetry while broker correctly kept
+Stop; Reset now always retains SAFE_STOP and requires explicit ResetStop. Updated
+negative-Arm/reset RPC regression plus broker144 PASS /34.628s. A prior regression
+expected implicit clear and failed; original log retained. No safety check removed.
+A fault fixture was started while Patrol still held its lease and was correctly
+refused; all gate cases are now sequential. Patrol completed but reactive monitor
+kept running; fixture now explicitly SIGTERMs after confirmed Disarm/log instead
+of treating normal reactive lifetime as a finite app. Graceful10s provider restart
+was unsuitable for a crash fault within an8s run; SIGKILL/start now injects the
+intended abrupt loss. Full12-case two-round acceptance still pending.
+
+
+T07 local gate PASS: C-R01–C-R12 twice consecutively (19 explicit subcases per
+round),96.0471s/95.2383s. Parsed logs contain each expected case exactly once,
+including lease loss and provider crash/start. Runtime wheel82cd6e44, runtime
+image03430d6a, compiler46e4b43e, broker58420c81 are pinned in
+M25-conformance-checkpoint.json with exact artifact hashes. Installed runtime58
+PASS /10.751s and broker144 PASS /34.628s. Dedicated fixture torn down; persistent
+catalog preserved. New conformance CI gate/artifacts added. Candidate CI pending;
+T08 latest-source ROS freshness/clock/epoch and native RW-A..D next, M26/M27/hardware
+remain OPEN. General CI41171214970 at142757f1 SUCCESS including fresh Studio build,
+M18/search regression and restart; Robotics41170674757 at7740ba7f SUCCESS for the
+prior T06 source. These historical CI results do not qualify the new candidate.

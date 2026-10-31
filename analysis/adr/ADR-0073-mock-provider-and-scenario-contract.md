@@ -42,3 +42,10 @@ measured default BOW duration, scenario timing/failures, Stop confirmation,
 reordered stale dispatches, new fence isolation and network loss/no auto-resume.
 Pure guard tests cover deadline/fence/cancel edge cases. M24 remains required for
 ROS/Brain/physical simulation proof and M27 for the complete user journey/video.
+
+2026-10-31 conformance correction: scenario Reset reconnects the provider and
+must retain SAFE_STOP/latched Stop after resetting synthetic pose/sensors. It
+cannot clear safety state through the mock-only API. Explicit broker ResetStop
+is still required. Actual generated-app fixture exposed false provider latch
+telemetry versus the broker's correctly retained Stop; Arm was rejected safely.
+New reset unit plus real RPC replay qualify the correction; no ROS API changed.

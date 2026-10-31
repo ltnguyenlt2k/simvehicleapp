@@ -134,6 +134,11 @@ class BusTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls[-1][1].value.fields['LinearX'].float64_value,0.)
         sequences=[request.sequence for _,request in calls]
         self.assertEqual(sequences,sorted(set(sequences)))
+        releases=[event for event in self.events if event['event']=='target_release_result']
+        self.assertEqual(len(releases),1)
+        self.assertEqual(releases[0]['data']['executionId'],result.execution_id)
+        self.assertTrue(releases[0]['data']['physicalConfirmed'])
+        self.assertEqual(releases[0]['data']['ownerId'],calls[-1][1].owner_id)
 
     async def test_unconfirmed_release_never_succeeds_or_admits_next_motion(self):
         await self.client.open(True);self.fake.release_never_confirm=True

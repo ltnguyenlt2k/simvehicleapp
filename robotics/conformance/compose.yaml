@@ -1,0 +1,39 @@
+name: sr-conformance
+x-isolated: &isolated
+  read_only: true
+  user: "10001:10001"
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 256m
+  cpus: 2
+  networks: [bus]
+  tmpfs: [/tmp]
+services:
+  broker:
+    <<: *isolated
+    image: sr-protobus:dev
+    volumes: ["catalog:/catalog:ro"]
+    tmpfs: ["/tmp", "/data:uid=10001,gid=10001,mode=0700"]
+    command: [python, -m, broker, --catalog, /catalog/rss-catalog.json]
+    healthcheck:
+      test: [CMD, python, -m, health]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+  mock:
+    <<: *isolated
+    image: sr-protobus:dev
+    volumes: ["catalog:/catalog:ro"]
+    command: [python, -m, mock, --bus, "broker:55600", --catalog, /catalog/rss-catalog.json]
+    depends_on:
+      broker: {condition: service_healthy}
+  runner:
+    <<: *isolated
+    image: sr-rfrt:dev
+    profiles: [tools]
+    volumes: ["../runtime/m25/conformance/apps:/apps:ro", "./:/probe:ro"]
+    command: [python, /probe/probe.py]
+networks:
+  bus: {internal: true}
+volumes:
+  catalog: {external: true, name: sr_catalog}

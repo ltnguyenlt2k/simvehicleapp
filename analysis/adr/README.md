@@ -222,4 +222,4 @@ flowchart TB
 
 - [ADR-0083](ADR-0083-hold-admission-and-safe-release.md): implemented protocol1.6 admission/release ledger; actual ROS Hold and normal Cancel prerequisite passes recorded. Generated live workflow gate remains OPEN.
 
-- [ADR-0084](ADR-0084-runtime-bus-binding-and-package.md): typed SDK, fixed target identity, reproducible installed wheel and verify-before-import CLI; 57 local groups PASS, real broker/live application gates remain OPEN.
+- [ADR-0084](ADR-0084-runtime-bus-binding-and-package.md): typed SDK, fixed target identity, reproducible installed wheel and verify-before-import CLI; 58 local groups PASS, real broker/live application gates remain OPEN.

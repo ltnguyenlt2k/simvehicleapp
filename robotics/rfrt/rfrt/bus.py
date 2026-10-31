@@ -271,7 +271,12 @@ class BusClient:
                 if self.stop_is_confirmed():return False
                 state=await self.inspect(self.active_id,path,deadline)
                 if state.owner_id!=self.hold_owner or state.fence!=self.lease.fence:raise AuthorityLost('Hold owner changed')
-                if state.physical_released:return state.release_requested and state.physical_phase==pb.SUCCEEDED
+                if state.physical_released:
+                    confirmed=state.release_requested and state.physical_phase==pb.SUCCEEDED
+                    if self.trace:self.trace.emit(None,'target_release_result',executionId=state.execution_id,
+                        ownerId=state.owner_id,fence=str(state.fence),physicalConfirmed=confirmed,
+                        phase=pb.Phase.Name(state.physical_phase),targetSequence=str(state.last_sequence))
+                    return confirmed
                 await asyncio.sleep(.015)
         except Exception:return False
         return False
