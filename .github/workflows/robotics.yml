@@ -59,6 +59,14 @@ jobs:
         with:
           name: robotics-native-conformance
           path: robotics/runtime/m25/conformance/
+      - name: Native developer CLI and RW-A-D on isolated mock
+        run: python3 robotics/conformance/cli_gate.py
+      - name: Retain native developer CLI evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: robotics-native-cli
+          path: robotics/runtime/t08/
       - name: Build pinned ROS message interface without private source access
         run: docker build -f robotics/protobus/spikes/interfaces.Dockerfile -t sr-dog-interfaces:ci robotics/protobus
       - run: docker run --rm --network none sr-dog-interfaces:ci

@@ -8,6 +8,10 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 OUTPUT=ROOT/'runtime/t08'
 CLI=['python3',str(ROOT/'scripts/native_cli.py')]
+INFO=json.loads(subprocess.check_output(['docker','run','--rm','--network','none','sr-rfrt:dev','python','-I','-m','rfrt','--runtime-info'],text=True))
+TAG=INFO['packageHash'].split(':')[1][:10]
+RWA='t08-rwa-'+TAG
+RWC='t08-rwc-'+TAG
 
 
 def rejected(arguments):
@@ -16,14 +20,14 @@ def rejected(arguments):
 
 
 def main():
-    rejected(['build',str(OUTPUT/'flows/RW-A.json'),'--out','t08-rwa','--authorize-sim-arm'])
+    rejected(['build',str(OUTPUT/'flows/RW-A.json'),'--out',RWA,'--authorize-sim-arm'])
     rejected(['build',str(OUTPUT/'flows/RW-A.json'),'--out','../escape'])
     assert not (ROOT/'runtime/escape').exists()
     rejected(['build',str(OUTPUT/'flows/RW-A.json'),'--out','t08-denied-arm'])
     assert not (ROOT/'runtime/apps/t08-denied-arm').exists()
     rejected(['target','--sim','--out','t08-mock'])
-    rejected(['run','--sim','t08-rwc','--target','missing-target'])
-    process=subprocess.Popen(CLI+['run','--sim','t08-rwc','--target','t08-mock','--events-stdin','--max-run-ms','30000'],
+    rejected(['run','--sim',RWC,'--target','missing-target'])
+    process=subprocess.Popen(CLI+['run','--sim',RWC,'--target','t08-mock','--events-stdin','--max-run-ms','30000'],
                              stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
     events=[];sent=False;complete=False
     try:

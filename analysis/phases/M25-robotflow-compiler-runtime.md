@@ -304,3 +304,7 @@ T08 latest-source ROS freshness/clock/epoch and native RW-A..D next, M26/M27/har
 remain OPEN. General CI41171214970 at142757f1 SUCCESS including fresh Studio build,
 M18/search regression and restart; Robotics41170674757 at7740ba7f SUCCESS for the
 prior T06 source. These historical CI results do not qualify the new candidate.
+
+### T08 local native acceptance —2026-10-31
+
+All four native generated templates pass on the isolated mock and actual ROS/Brain/MuJoCo. RW-B completes six goals/two loop iterations; independent physical observer records555/1215/342/528 frames for A/B/C/D, actual motion terminal names, no falls and confirmed final Stop/no owner. Low battery uses the single simulator publisher through its bounded parameter;5s debounce is asserted. Stale recorded ROS target is refused before body/lease admission.63 installed-wheel groups,12/12 conformance twice75.514/97.366s, isolated native CLI/template gate and5 negative cases PASS. Original Stop-watch race and stimulus/test expectation failures remain in ignored logs. Candidate CI/T09 closure pending; M26/M27/video/hardware remain open. Exact identities/results: docs/reports/M25-native-apps-checkpoint.json.

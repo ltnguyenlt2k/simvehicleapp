@@ -130,7 +130,8 @@ class Engine:
 
     async def guarded_watch(self,identity,trigger):
         try:await self.watch(identity,trigger)
-        except Exception as error:self.fail(Outcome('FAILED',type(error).__name__))
+        except Exception as error:
+            self.fail(Outcome('CANCELLED' if isinstance(error,RunStopped) else 'FAILED',type(error).__name__))
 
     async def run(self):
         """Caller owns BusClient lifecycle and independent process shutdown limit."""

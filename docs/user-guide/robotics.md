@@ -51,3 +51,49 @@ have passed. Software STOP is not a physical E-stop.
 
 
 RobotFlow runtime developer preview: [installed wheel and CLI checks](../../robotics/rfrt/README.md). Native generated Python now verifies artifacts and the actual runtime pin before loading. Hold and Cancel prerequisites passed actual ROS/physics checks; installed runtime local tests pass. Full generated workflow deployment UI and continuous video remain under M25–M27 implementation, not released functionality.
+
+
+## Build và chạy ứng dụng RobotFlow native (bản phát triển)
+
+Chạy các lệnh dưới đây từ thư mục repo trong Ubuntu/WSL có Docker.
+`sr build` xây image nền; `sr build FLOW.json --out NAME` biên dịch workflow.
+Hai thao tác này không chạy hay Arm robot.
+
+```bash
+bash robotics/scripts/sr build workflow.json --out greeting --authorize-sim-arm
+bash robotics/scripts/sr target --sim --out mock-target
+bash robotics/scripts/sr run --sim greeting --target mock-target
+```
+
+`--sim` dùng mô hình kinematic tách biệt. `--live` dùng cầu nối ROS tới dog
+simulation. Trước lần chạy ROS, khởi động dog simulation trên domain52 và network
+`dog-ros2-r1_robot`, rồi khởi động bridge với quyền SIM rõ ràng:
+
+```bash
+SR_AUTHORIZE_SIM_ARM=true bash robotics/scripts/sr up --live
+bash robotics/scripts/sr target --live --out dog-target
+bash robotics/scripts/sr run --live greeting --target dog-target
+```
+
+Cờ `--authorize-sim-arm` chỉ cho phép block Arm trong ứng dụng được build; bridge
+cũng phải được cấu hình cho phép SIM Arm. Workflow vẫn phải có block Arm riêng.
+Không dùng các lệnh này cho robot phần cứng.
+
+Ứng dụng nằm trong `robotics/runtime/apps/NAME`, đích đã ghi nhận nằm trong
+`robotics/runtime/targets/NAME.json`. Tên đã tồn tại không bị ghi đè. Khi thế giới,
+map hay Brain thay đổi, lần chạy từ bản ghi cũ bị từ chối. Kiểm tra simulator rồi
+ghi nhận một tên đích mới; Run không tự đổi đích.
+
+`Ctrl+C` yêu cầu dừng container của chính lần chạy đó, để runtime gửi Stop và
+thu hồi điều khiển. Có thể gửi Stop độc lập với ứng dụng:
+
+```bash
+bash robotics/scripts/sr pbctl --live stop --reason 'Operator stop'
+```
+
+Workflow phản ứng theo sự kiện/điều kiện tiếp tục chờ sau khi hoàn thành một lần
+kích hoạt; dừng rõ ràng sau khi quan sát kết quả. `--max-run-ms` có thể rút ngắn
+giới hạn của profile. Với `--events-stdin`, mỗi dòng đầu vào là một JSON
+`{"schema":"rfevent.v1","id":"event-001","name":"jump"}`; tên sự kiện phải được
+khai báo trong workflow và id trùng không chạy lại. Giao diện Studio, toàn bộ
+workflow ROS và video cuối cùng vẫn đang được kiểm chứng riêng.

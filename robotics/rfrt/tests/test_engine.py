@@ -2,7 +2,7 @@ import asyncio
 import time
 import unittest
 
-from rfrt.core import Outcome
+from rfrt.core import Outcome, RunStopped, AuthorityLost
 from rfrt.engine import Engine
 import test_core
 
@@ -118,3 +118,19 @@ class EngineTests(unittest.IsolatedAsyncioTestCase):
         result=await asyncio.wait_for(engine.run(),.5)
         self.assertEqual(result.phase,'TIMED_OUT');self.assertEqual(bus.calls,[('STOP',{})])
         self.assertFalse(engine.activate('behavior'))
+
+
+    async def test_stop_seen_first_by_trigger_watcher_is_cancelled_while_authority_loss_is_failed(self):
+        for error,expected in ((RunStopped('explicit Stop completed'),'CANCELLED'),
+                               (AuthorityLost('lease was lost'),'FAILED')):
+            with self.subTest(expected=expected):
+                ctx,bus,events,app=self.context()
+                async def check():raise error
+                bus.check=check
+                bus.stop_requested=isinstance(error,RunStopped)
+                engine=Engine(ctx,[])
+                await engine.guarded_watch('observer',{'kind':'every','ms':100})
+                self.assertTrue(engine.finished.is_set())
+                self.assertEqual(engine.result.phase,expected)
+                if engine.stop_task is not None:await engine.stop_task
+                self.assertEqual(bus.calls,[] if expected=='CANCELLED' else [('STOP',{})])

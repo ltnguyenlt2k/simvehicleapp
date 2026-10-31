@@ -525,9 +525,9 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 | Biểu thức + kiểu/đơn vị | 0067,0077 | ✔ | 163 explicit valid/error cases, 19 combined groups /1.055 s PASS; RSS22/frozen catalog PASS; Robotics41170674757 SUCCESS at7740ba7f | T03 |
 | Compiler S0–S6 + IR + hash | 0067,0078 | ✔ | Local31 RF fixtures/all24 block lowerings/30 groups PASS; deterministic hashes/UI exclusion; lint200 44.816ms; Robotics41170674757 SUCCESS at7740ba7f | T04 |
 | Codegen Python + golden RW-A..D | 0067,0079 | ✔ | Native deterministic 10-file artifacts; 38 local groups PASS including verify-before-import main fix; Robotics41170674757 SUCCESS at7740ba7f | T05 |
-| Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 62 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
+| Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 63 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
 | Conformance C-R01..C-R12 | 0067,0084 | ✔ | edff6d7f CI PASS; fresh Ubuntu12/12 twice after handover fix; candidate CI pending. environment-recovery-checkpoint.json | T07 |
-| CLI `sr build/run`; RW-A..D headless trên dog sim | 0067,0085 | 🔄 | Clock/capture/marker actual ROS faults PASS; native CLI mock PASS; actual generated RW-A..D remain OPEN; M25-capture-cli-checkpoint.json | T08 |
+| CLI `sr build/run`; RW-A..D headless trên dog sim | 0067,0085 | 🔄 | Clock/capture/marker faults and native RW-A..D mock + actual ROS PASS locally; new CI pending; M25-native-apps-checkpoint.json | T08 |
 | Gate + báo cáo | 0067 | ☐ | | T09 |
 
 ## M26 — Robot Studio
@@ -606,3 +606,5 @@ M25-T06 normal Cancel physical handover PASS twice, no Reset/Arm between cancell
 2026-10-31 environment recovery: repositories moved to D:/02_Projects/04.dog-ros2-simulation and09.simvehicleapp; Ubuntu-24.04 reinstalled. Fresh broker144/compiler38/runtime58 PASS; source/checksum guards PASS. Conformance/ROS requalification in progress, final deploy GUI/video remain OPEN. See reports/environment-recovery-2026-10-31.md.
 
 M25-T08 checkpoint 2026-10-31: 165 provider/62 installed-runtime/38 compiler/9 actual DDS groups PASS; 22 RSS paths and223 original-capture comparisons, pause/perception/epoch actual faults and Hold/Cancel requalification PASS. Conformance12/12 twice (74.254/96.999s), CLI build/commission/event/stop and5 negative cases PASS. Native RW-A..D on actual ROS, M26 and continuous final video remain OPEN. See reports/M25-capture-cli-checkpoint.json.
+
+M25-T08 local native gate2026-10-31: RW-A/B/C/D all pass on mock and actual ROS/MuJoCo; six patrol goals, physical lift/BOW/JUMP/CROUCH,5s low-battery debounce, confirmed Stop and stale-target refusal observed. Stop watcher race fixed with63 installed-wheel groups and conformance12/12 twice75.514/97.366s. Candidate CI and T09 closure pending. M26/M27 and continuous video remain OPEN.

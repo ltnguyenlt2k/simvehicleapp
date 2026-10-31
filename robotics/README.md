@@ -2,7 +2,7 @@
 Independent robotics stack: RSS, Protobus1.6 broker/providers, deterministic
 RobotFlow compiler and installed native Python runtime development preview.
 M24 historical ROS/physics gate and M25 compiler/runtime/conformance checkpoints
-are recorded; fresh Ubuntu recovery passed broker147/compiler38/runtime58 and
+are recorded; fresh Ubuntu recovery passed broker165/compiler38/runtime62 and
 12 conformance cases twice. See [runtime preview](rfrt/README.md) and
 [environment recovery](../docs/reports/environment-recovery-2026-10-31.md).
 Live generated workflows, Robot Studio deployment UI and final continuous video
@@ -45,3 +45,5 @@ claims, resets, arms or resumes motion. Invalid true/false configuration fails
 startup. Host ports bind localhost only; use the container diagnostic CLI because
 internal-network port publishing varies by Docker version. Workflow Studio,
 deployment and final video remain pending. Follow [M24 progress](../docs/reports/M24-progress.md).
+
+Native developer workflow CLI: `sr build FLOW.json --out NAME`, explicit `sr target --sim|--live --out NAME`, then `sr run --sim|--live NAME --target NAME`. See the [user guide](../docs/user-guide/robotics.md#build-và-chạy-ứng-dụng-robotflow-native-bản-phát-triển) and [capture/CLI checkpoint](../docs/reports/M25-capture-cli-checkpoint.json). Live native workflow acceptance remains separate.

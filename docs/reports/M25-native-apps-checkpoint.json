@@ -1,0 +1,213 @@
+{
+  "date": "2026-10-31",
+  "parentCommit": "bfdbf38b",
+  "scope": "M25 native application local acceptance on mock and ROS/MuJoCo; candidate CI pending; M26/M27/video/hardware excluded",
+  "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+  "images": {
+    "sr-rfrt:dev": "sha256:83b8e3061ea6d442752b98261404192ab5f32b7ad437aa17d5aa12f18c1421e9",
+    "sr-robotflow:dev": "sha256:fc1f31f0ea4a8774f0d453011f49f8dc10dfbacece33d1ef82e72262ecd17289",
+    "sr-protobus:dev": "sha256:915bc728454ce728c7db45582ade1465c2f6eac39bc087088b873af652fee7e6",
+    "sr-protobus-ros2:dev": "sha256:811adb6c2a980690b22c15d46e9386d33f8884e84214b17b622f9ede66ce8dbe",
+    "dog-ros2/runtime:0.2.0": "sha256:ecd9813ddc378d244fa529675958b73f3deefc5aa032c9ccdb72c250032cdab4"
+  },
+  "sourceSha256": {
+    "robotics/rfrt/rfrt/engine.py": "d371aaf1918a9368393ef12e2156102429a392c5dcae67540bd35d1e9aec6def",
+    "robotics/rfrt/rfrt/bus.py": "f8cfc544678bbf0b07ffa1267e4cf18119e477a7efb53ae1161df47655e7ad76",
+    "robotics/rfrt/rfrt/transport.py": "46ca28c31ca606936fa8a8ef71fdf46ebf450b4d973d800de956a5e7d85585fd"
+  },
+  "installedRuntime": {
+    "groups": 63,
+    "seconds": 8.901,
+    "result": "PASS"
+  },
+  "conformance": [
+    {
+      "repetition": 1,
+      "result": "PASS",
+      "cases": 12,
+      "subcases": 19,
+      "seconds": 75.51413295299972
+    },
+    {
+      "repetition": 2,
+      "result": "PASS",
+      "cases": 12,
+      "subcases": 19,
+      "seconds": 97.36577681199924
+    }
+  ],
+  "actualMockTemplates": [
+    {
+      "passed": true,
+      "case": "RW-A",
+      "scope": "actual native application / kinematic mock only",
+      "runId": "eddfaae4-4a1c-45e4-9ae7-58ffad9e7623",
+      "nodeStarts": 9,
+      "safeState": {
+        "model": "synthetic-unicycle",
+        "mode": "SAFE_STOP",
+        "stopLatched": true,
+        "connected": true,
+        "revision": "2",
+        "session": "248d4b1b-3252-4257-88ff-d88cd5c8c54e"
+      }
+    },
+    {
+      "passed": true,
+      "case": "RW-B",
+      "scope": "actual native application / kinematic mock only",
+      "runId": "15583806-1936-4d29-8f37-941af891a2c3",
+      "nodeStarts": 16,
+      "safeState": {
+        "model": "synthetic-unicycle",
+        "mode": "SAFE_STOP",
+        "x": -0.034826840866809726,
+        "y": 0.018731326540430544,
+        "stopLatched": true,
+        "connected": true,
+        "revision": "3",
+        "session": "90bc669d-72ea-4b9e-839e-535106dc824c"
+      }
+    },
+    {
+      "passed": true,
+      "case": "RW-C",
+      "scope": "actual native application / kinematic mock only",
+      "runId": "d31319d8-1d56-44aa-b47d-10b75a739680",
+      "nodeStarts": 8,
+      "safeState": {
+        "model": "synthetic-unicycle",
+        "mode": "SAFE_STOP",
+        "stopLatched": true,
+        "connected": true,
+        "revision": "4",
+        "session": "30f2fc9d-a02b-46d1-9fb9-aeb3b5bc92b1"
+      }
+    },
+    {
+      "passed": true,
+      "case": "RW-D",
+      "scope": "actual native application / kinematic mock only",
+      "runId": "fc2b4ba0-4b00-4208-90de-1fe2b0af9e5e",
+      "nodeStarts": 37,
+      "safeState": {
+        "model": "synthetic-unicycle",
+        "mode": "SAFE_STOP",
+        "stopLatched": true,
+        "connected": true,
+        "revision": "5",
+        "session": "cec8becb-1ae0-4084-a279-90f424a23b99"
+      }
+    }
+  ],
+  "actualRosTemplates": [
+    {
+      "passed": true,
+      "case": "RW-A",
+      "scope": "actual native application / ROS / Brain / MuJoCo; SIM only",
+      "runId": "707f5392-f84b-4ed9-afd8-587d0f84a01e",
+      "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+      "frames": 555,
+      "sceneEpoch": "d463a6f0-7d44-4302-b43f-d978d352bb29",
+      "observedSucceededMotions": [
+        "bow",
+        "lift_fl"
+      ],
+      "maxDisplacementM": 0.07477280316242006,
+      "target": "live-9e8b9870f3a6",
+      "finalMode": "SAFE_STOP",
+      "finalOwner": null
+    },
+    {
+      "passed": true,
+      "case": "RW-B",
+      "scope": "actual native application / ROS / Brain / MuJoCo; SIM only",
+      "runId": "b72f7ff8-d8d0-4d90-a198-4d5fd8b0d86f",
+      "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+      "frames": 1215,
+      "sceneEpoch": "dbda6d40-ca22-4289-b12e-535f6f43ca6e",
+      "observedSucceededMotions": [],
+      "maxDisplacementM": 0.8034477569009993,
+      "target": "live-600ef686762c",
+      "finalMode": "SAFE_STOP",
+      "finalOwner": null
+    },
+    {
+      "passed": true,
+      "case": "RW-C",
+      "scope": "actual native application / ROS / Brain / MuJoCo; SIM only",
+      "runId": "064f84ed-84d5-4e73-be95-5e5dbe4613eb",
+      "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+      "frames": 342,
+      "sceneEpoch": "5fd6ddc5-e99c-428d-bb70-4c915a1d2c96",
+      "observedSucceededMotions": [
+        "jump"
+      ],
+      "maxDisplacementM": 0.21308770374885905,
+      "target": "live-640e922323cc",
+      "finalMode": "SAFE_STOP",
+      "finalOwner": null
+    },
+    {
+      "passed": true,
+      "case": "RW-D",
+      "scope": "actual native application / ROS / Brain / MuJoCo; SIM only",
+      "runId": "6ca785bb-94a2-4ff6-8fd8-93489997b2d8",
+      "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+      "frames": 528,
+      "sceneEpoch": "aa906c98-e446-4805-b6dd-5b6d92c8860d",
+      "observedSucceededMotions": [
+        "crouch"
+      ],
+      "maxDisplacementM": 0.05677091085820043,
+      "target": "live-062b37db1404",
+      "finalMode": "SAFE_STOP",
+      "finalOwner": null
+    }
+  ],
+  "cliGate": {
+    "isolatedProject": "sr-native-cli-test",
+    "templates": 4,
+    "negativeCases": 5,
+    "duplicateEventStarts": 1,
+    "confirmedSigtermStop": true,
+    "result": "PASS"
+  },
+  "staleRosTarget": {
+    "passed": true,
+    "scope": "actual ROS target mismatch; no body admitted",
+    "target": "live-03b4f1da55b8",
+    "returnCode": 2
+  },
+  "producerCommit": "bcc4788",
+  "producerRegression": "47 integration PASS/1 profile-dependent SKIP; unchanged129 physics/contract groups passed in full baseline",
+  "fixedFailure": {
+    "trigger": "RW-D explicit confirmed Stop racing reactive watcher",
+    "before": "guarded_watch converted RunStopped into FAILED",
+    "after": "confirmed Stop is CANCELLED, unconfirmed Stop/prior authority fault stays failure",
+    "red": "stop-watcher-red.log; native-RW-D-mock-attempt1.log; stop-unconfirmed-red.log"
+  },
+  "fixtureCorrections": [
+    "ROS exec stimulus must source the pinned Humble/interface entrypoint; failed attempt retained.",
+    "RW-D Cancel has no body work because its concurrent main loop is read-only. Assert successful no-work and observed MANUAL/no active motion, never invent physical confirmation. Active physical Cancel was separately qualified twice."
+  ],
+  "open": [
+    "Candidate GitHub CI for changed Stop classification/native CLI gate",
+    "M26 Robot Studio/control-plane UI",
+    "M27 three full complex runs, faults, soak and continuous cross-tab video",
+    "Hardware/Jetson"
+  ],
+  "producerFaultProfile": {
+    "passed": 1,
+    "seconds": 13.16,
+    "evaluation": {
+      "passed": true,
+      "actual_dds_scan_silence_s": 0.6234413359998143,
+      "first_latched_reason": "Map/odom TF unavailable: Lookup would require extrapolation into the future.  Requested time 35.510000 but the latest data is at time 35.500000, when looking up transform from frame [map] to frame [odom]",
+      "recovered_mode": "SAFE_STOP",
+      "auto_rearmed": false
+    },
+    "restoredProfile": "realistic",
+    "restoredMode": "DISARMED"
+  }
+}

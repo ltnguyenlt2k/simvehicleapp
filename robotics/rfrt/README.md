@@ -16,8 +16,9 @@ docker compose -f robotics/compose.yaml --profile runtime-tools run --rm --no-de
 ```
 
 The runtime-tools profile has no network. These commands do not execute a live
-workflow. Bus-connected CLI integration and live generated applications are the
-later M25-T07/T08 gates; Robot Studio/deploy/full video remain M26/M27.
+workflow. Bus-connected native CLI/mock and all four generated ROS/MuJoCo applications
+have passed local M25-T07/T08 gates. Candidate CI remains separate; Robot
+Studio/deploy/full video remain M26/M27.
 
 The image builds the actual 0.1.0 wheel twice with fixed timestamps, compares
 bytes, installs it and tests the installed package. Hash identity lives outside
@@ -42,3 +43,9 @@ No session/lease loss automatically reacquires authority, Arms or replays.
 Scoped acceptance and unresolved work are tracked in
 [M25 progress](../../docs/reports/M25-progress.md). Fake typed-server unit tests
 are separate from actual broker/mock conformance and ROS/physics qualification.
+
+Current local checkpoint:63 installed-wheel groups, conformance12/12 twice, all
+four native templates on mock and actual ROS/MuJoCo. Confirmed Stop is a normal
+CANCELLED run termination; an unconfirmed Stop or prior authority fault stays a
+failure. Exact pins, original failures and physical observations:
+[M25 native apps](../../docs/reports/M25-native-apps-checkpoint.json).

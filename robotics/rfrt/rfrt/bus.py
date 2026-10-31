@@ -70,8 +70,12 @@ class BusClient:
         if self.ever_control:self.ensure_stop(1000)
 
     async def check(self):
-        if self.stop_requested:raise RunStopped('explicit Stop completed')
         if self.fault:raise AuthorityLost(self.fault)
+        if self.stop_requested:
+            result=self.stop_task.result() if self.stop_task is not None and self.stop_task.done() else None
+            if result is not None and result.ok and result.physical_confirmed:
+                raise RunStopped('explicit Stop physically confirmed')
+            raise AuthorityLost('Stop not physically confirmed')
         self.transport.check()
         if self.lease and time.monotonic()>=self.lease_deadline and self.stop_task is None:
             self.lose('local lease deadline expired');raise AuthorityLost(self.fault)

@@ -9,7 +9,7 @@ import grpc
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 from rfrt.bus import BusClient
-from rfrt.core import AuthorityLost,Context,Outcome,Trace
+from rfrt.core import AuthorityLost,RunStopped,Context,Outcome,Trace
 from rfrt.transport import BusTransport,TargetBinding
 import test_transport
 
@@ -204,6 +204,8 @@ class BusTests(unittest.IsolatedAsyncioTestCase):
         await self.client.open(True);self.fake.stop_unconfirmed=True
         result=await self.client.stop(50)
         self.assertFalse(result.ok);self.assertFalse(result.physical_confirmed)
+        with self.assertRaises(AuthorityLost) as failure:await self.client.check()
+        self.assertNotIsInstance(failure.exception,RunStopped)
         with self.assertRaises(AuthorityLost):await self.client.close()
         self.client=None
         self.assertEqual(self.fake.stops,1)
