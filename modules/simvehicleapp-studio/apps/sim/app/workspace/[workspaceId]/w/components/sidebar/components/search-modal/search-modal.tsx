@@ -309,14 +309,7 @@ export function SearchModal({
 
   useEffect(() => {
     if (!open || !inputRef.current) return
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
-      'value'
-    )?.set
-    if (nativeInputValueSetter) {
-      nativeInputValueSetter.call(inputRef.current, '')
-      inputRef.current.dispatchEvent(new Event('input', { bubbles: true }))
-    }
+    /** SV: Search resets synchronously on open; a passive DOM reset can erase newly typed text. */
     inputRef.current.focus()
   }, [open])
 
@@ -684,6 +677,7 @@ export function SearchModal({
               <Command.Input
                 ref={inputRef}
                 autoFocus
+                value={search}
                 onValueChange={handleSearchChange}
                 placeholder='Search anything...'
                 className='h-full w-full bg-transparent text-[var(--text-body)] text-sm outline-none placeholder:text-[var(--text-muted)] focus:outline-none'
