@@ -142,6 +142,7 @@ message CommandUpdate {
   string provider_session = 4;
   string path = 5;
   bool physical_confirmed = 6;
+  uint64 target_sequence = 7;
 }
 message CancelRequest { Lease lease = 1; string execution_id = 2; }
 message StopRequest { string reason = 1; }
@@ -168,8 +169,12 @@ message ExecutionState {
   string provider_session = 6;
   string broker_epoch = 7;
   uint64 fence = 8;
+  string owner_id = 9;
+  uint64 accepted_sequence = 10;
+  uint64 last_sequence = 11;
+  bool release_requested = 12;
 }
-message Reply { bool ok = 1; string code = 2; string detail = 3; }
+message Reply { bool ok = 1; string code = 2; string detail = 3; string operation_id = 4; }
 message ProviderHello {
   string provider_id = 1;
   string profile_id = 2;

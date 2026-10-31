@@ -595,3 +595,5 @@ M25-T06 target-context prerequisite local PASS: candidate wire1.5, RSS22/Protobu
 M25-T06 next prerequisite: actual Hold admission/safe-release feedback (ADR-0083). Broker receipt alone cannot prove Hold success or body handover. Implementation/tests still OPEN; do not skip to GUI/video acceptance.
 
 M25-T06 HoldLedger component8 groups PASS; broker/provider integration still OPEN. No actual Hold-release or full runtime acceptance. Next: wire operation IDs/admission/release feedback to real backends.
+
+M25-T06 Hold transport candidate1.6: RSS22/broker134 PASS /33.331 s, actual gRPC and synthetic-model Stop isolation covered. Actual ROS admission/release qualification next; runtime/wheel/conformance/GUI/video remain OPEN.

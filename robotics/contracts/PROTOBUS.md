@@ -115,3 +115,7 @@ Context changes invalidate current authority/session. Bind immutable deployment
 to actual target context, record transient sessions/clock in each run and require
 a new explicit launch after any loss; never auto-reacquire/replay. Candidate1.5
 metadata tests do not substitute for actual ROS control/freshness acceptance.
+
+## v1.6 Hold lifecycle candidate
+
+SetTarget Reply.operation_id identifies one Hold across refresh/release. CommandUpdate.target_sequence correlates actual backend admission and safe release. InspectExecution adds owner_id, accepted_sequence, last_sequence and release_requested. Broker receipt is not admission or physical release; body quarantine remains until correctly correlated feedback or explicit recovered resource clearance. Old owners cannot reactivate after release. Backend/actual ROS acceptance remains separately required.

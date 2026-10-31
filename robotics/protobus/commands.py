@@ -10,6 +10,7 @@ import uuid
 from google.protobuf.json_format import MessageToDict
 
 from protobus.v1 import protobus_pb2 as pb
+from targets import HoldLedger,TargetError
 
 TERMINAL = {pb.SUCCEEDED, pb.FAILED, pb.REJECTED, pb.CANCELLED, pb.TIMED_OUT}
 TRANSITIONS = {
@@ -111,6 +112,7 @@ class StopRecord:
 
 class CommandPlane:
     def init_commands(self, audit_path=None, stop_wait_ms=200):
+        self.holds=HoldLedger()
         self.executions = {}
         self.invocation_keys = {}
         self.active_execution = None
@@ -229,7 +231,7 @@ class CommandPlane:
             raise self.reject('PB_QUEUE_FULL', 'renew authority before further invocations')
         if self.stop_latched and path not in RECOVERY_COMMANDS:
             raise self.reject('PB_STOPPED')
-        if self.active_execution or self.targets or (self.draining and path not in RECOVERY_COMMANDS):
+        if self.active_execution or self.targets or ((self.draining or self.holds.quarantined) and path not in RECOVERY_COMMANDS):
             raise self.reject('PB_RESOURCE_BUSY', 'body/navigation is active or awaiting physical recovery')
         provider = self.require_provider()
         if path not in provider.hello.claims:
@@ -312,6 +314,13 @@ class CommandPlane:
                 raise self.reject('PB_REPLAY', 'execution belongs to another broker epoch')
             if not 1 <= len(request.execution_id) <= 128:
                 raise self.reject('PB_INVALID_VALUE', 'bounded execution identity required')
+            hold=self.holds.records.get(request.execution_id)
+            if hold is not None:
+                return pb.ExecutionState(execution_id=hold.id,path=hold.path,logical_phase=hold.phase,
+                    physical_released=hold.physical_released,physical_phase=hold.physical_phase,
+                    provider_session=hold.session,broker_epoch=self.epoch,fence=hold.fence,
+                    owner_id=hold.owner,accepted_sequence=hold.accepted_sequence,last_sequence=hold.last_sequence,
+                    release_requested=hold.release_requested)
             execution = self.executions.get(request.execution_id)
             if execution is not None:
                 return pb.ExecutionState(execution_id=execution.id, path=execution.path,
@@ -365,6 +374,15 @@ class CommandPlane:
     def process_command_update(self, update, provider):
         if update.provider_session != provider.hello.session:
             raise self.reject('PB_PROVIDER_MISMATCH', 'command provider session')
+        if update.execution_id in self.holds.records:
+            try:
+                self.holds.feedback(update.execution_id,update.path,update.provider_session,
+                    update.target_sequence,update.phase,update.physical_confirmed)
+            except TargetError as error:raise self.reject('PB_BAD_TRANSITION',str(error)) from error
+            self.audit_event('target_feedback',execution_id=update.execution_id,path=update.path,
+                sequence=str(update.target_sequence),phase=pb.Phase.Name(update.phase),physical_confirmed=update.physical_confirmed)
+            if update.phase in (pb.FAILED,pb.REJECTED):self.request_stop('TARGET_ADMISSION_FAILED')
+            return
         stop = self.stop_records.get(update.execution_id)
         if stop is not None:
             if stop.session != update.provider_session or update.path != 'Robot.Safety.Stop':
@@ -420,3 +438,4 @@ class CommandPlane:
             for old in self.draining:
                 self.executions[old].released = True
             self.draining.clear()
+            self.holds.recover()

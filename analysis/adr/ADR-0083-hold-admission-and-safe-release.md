@@ -1,7 +1,7 @@
 # ADR-0083: Hold admission and correlated safe release
 
 Status: Accepted design for M25-T06 prerequisite implementation under user
-delegation, 2026-10-31. Ledger component IN_PROGRESS; transport/backend integration not implemented; no new wire/runtime gate accepted.
+delegation, 2026-10-31. Transport/backend candidate1.6 IN_PROGRESS; mock/socket gate passed, actual ROS gate remains OPEN.
 
 ## Finding
 
@@ -78,3 +78,19 @@ release, non-extending cleanup retries and no eviction of an unconfirmed resourc
 Eight component groups PASS; not imported into broker/provider yet. A failed
 refresh cannot falsely release an earlier admitted target. Actual RPC/backend
 integration and all live Hold acceptance remain OPEN.
+
+Wire checkpoint: candidate1.6 adds Reply.operation_id, CommandUpdate.target_sequence
+and Hold inspection fields without changing existing field numbers or RSS catalog.
+Broker retains quarantine after a release receipt; provider confirms actual backend
+admission or safe release. Normal lane may await target admission while independent
+Safety still processes Stop. Completed owners cannot resume; next Hold uses a fresh
+owner. Ordinary target TTL still emits its original safe dispatch; only unconfirmed
+explicit-release timeout adds independent Stop, preserving measured TTL evidence.
+
+RSS22 and broker134 groups PASS /33.331 s, including actual gRPC receipt/admission/
+release identity checks and Stop with a blocked mock admission ACK. Original first
+run retained: a redundant Stop coalesced away the TTL safe dispatch; corrected
+without changing its timing window or assertion. Existing fixtures now explicitly
+acknowledge safe release before admitting another body owner. ROS backend methods
+are implemented but await dedicated unit/actual DDS/physics qualification; no live
+Hold, runtime wheel, full workflow UI or video acceptance is claimed.

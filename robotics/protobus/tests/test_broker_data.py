@@ -125,7 +125,7 @@ class BrokerDataTests(BrokerFixture):
     async def test_descriptor_and_missing_value_snapshot(self):
         descriptor = await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.backend, 'SIM')
-        self.assertEqual(descriptor.protocol_version, '1.5')
+        self.assertEqual(descriptor.protocol_version, '1.6')
         self.assertEqual(descriptor.host_clock_id, 'test-host')
         self.assertFalse(descriptor.provider_online)
         snapshot = await self.bus.Get(self.query('Robot.Signal.Speed', 'Robot.Connection.IsOnline'))

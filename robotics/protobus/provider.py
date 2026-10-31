@@ -133,6 +133,7 @@ class ProviderClient:
         self.started_commands = set()
         self.cancel_requests = set()
         self.stop_waiters = set()
+        self.target_releases={}
         self.stop_task = None
         self.sequence = 0
         self.closing = False
@@ -148,11 +149,11 @@ class ProviderClient:
             future.cancel()
             raise
 
-    async def feedback(self, message, phase, reason='', confirmed=False):
+    async def feedback(self, message, phase, reason='', confirmed=False,target_sequence=0):
         return await self.send(pb.ProviderPacket(command=pb.CommandUpdate(
             execution_id=message.execution_id, path=message.path, phase=phase,
             reason=reason[:1024], physical_confirmed=confirmed,
-            provider_session=self.guard.session)), priority=0)
+            provider_session=self.guard.session,target_sequence=target_sequence)), priority=0)
 
     async def sender(self, call):
         while True:
@@ -275,6 +276,18 @@ class ProviderClient:
         except (ConnectionError, grpc.aio.AioRpcError):
             return
 
+    async def apply_target(self,message,release):
+        try:
+            await self.backend.apply_target(message.path,message.value,0 if release else message.deadline_monotonic_ns)
+            await self.feedback(message,pb.SUCCEEDED if release else pb.RUNNING,
+                'backend safe release' if release else 'backend target admission',release,message.sequence)
+        except asyncio.CancelledError:raise
+        except Exception:
+            self.backend.request_stop()
+            if not self.closing:
+                await self.feedback(message,pb.FAILED,'target application unconfirmed',False,message.sequence)
+            self.restart.set()
+
     async def control_loop(self, stream, safety=False):
         async for message in stream:
             now = time.monotonic_ns()
@@ -295,10 +308,17 @@ class ProviderClient:
                         self.backend.lost('NEW_LEASE_FENCE')
             elif message.kind == pb.SET_TARGET and not safety:
                 if self.guard.target(message, now):
-                    self.backend.target(message.path, message.value, message.deadline_monotonic_ns)
+                    await self.apply_target(message,False)
             elif message.kind == pb.SAFE_VALUE and safety:
                 if self.guard.safe(message):
                     self.backend.target(message.path, message.value, 0)
+                    if message.execution_id and message.execution_id not in self.target_releases:
+                        task=asyncio.create_task(self.apply_target(copy.deepcopy(message),True))
+                        self.target_releases[message.execution_id]=task
+                        self.stop_waiters.add(task)
+                        def finished(task,identity=message.execution_id):
+                            self.target_releases.pop(identity,None);self.background_done(task)
+                        task.add_done_callback(finished)
             elif message.kind == pb.LEASE_REVOKED and safety:
                 if self.guard.revoke(message):
                     self.cancel_all()
@@ -381,7 +401,7 @@ class ProviderClient:
             descriptor = await rpc.BusStub(normal).Describe(pb.Empty(), timeout=2)
             clock = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
             if (descriptor.backend != 'SIM' or descriptor.catalog_hash != self.catalog['catalogHash']
-                    or descriptor.protocol_version != '1.5' or descriptor.host_clock_id != clock):
+                    or descriptor.protocol_version != '1.6' or descriptor.host_clock_id != clock):
                 raise ConnectionError('provider descriptor/catalog/clock mismatch')
             self.guard = AuthorityGuard(descriptor.broker_epoch, str(uuid.uuid4()))
             self.target_context=validate_context(self.backend.target_context(self.guard.session))
@@ -390,7 +410,7 @@ class ProviderClient:
                       if not path.startswith('Robot.Connection.') and not node.get('generated')]
             hello = pb.ProviderHello(provider_id=self.provider_id, profile_id=self.profile_id,
                 catalog_hash=self.catalog['catalogHash'], session=self.guard.session,
-                claims=claims, backend='SIM', host_clock_id=clock, protocol_version='1.5',
+                claims=claims, backend='SIM', host_clock_id=clock, protocol_version='1.6',
                 target_context=self.target_context)
             provider = rpc.ProviderStub(normal)
             call = provider.Attach()

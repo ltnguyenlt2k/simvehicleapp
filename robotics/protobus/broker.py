@@ -17,10 +17,11 @@ from google.protobuf.json_format import MessageToDict
 import grpc
 from jsonschema import Draft202012Validator
 from commands import CommandPlane
+from targets import TargetError
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
-PROTOCOL_VERSION = '1.5'
+PROTOCOL_VERSION = '1.6'
 CONNECTION_PATHS = {
     'Robot.Connection.IsOnline', 'Robot.Connection.IsHandshakeComplete',
     'Robot.Connection.LastSampleAgeMs',
@@ -266,6 +267,8 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
             await self.provider_lost(self.provider)
         self.expire_control(now)
         self.expire_commands(now)
+        if any(record.release_requested for record in self.holds.expire(now)):
+            self.request_stop('TARGET_RELEASE_TIMEOUT')
         for path, record in list(self.records.items()):
             age_ms = self.nodes[path].get('maxAgeMs')
             if (path not in CONNECTION_PATHS and not self.nodes[path].get('generated')
@@ -348,19 +351,20 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
             queue.put_nowait(old)
         queue.put_nowait(message)
 
-    def safe_target(self, target, reason):
+    def safe_target(self, target, reason, operation_id=''):
         provider = self.provider
         self.emit_safety(pb.Dispatch(kind=pb.SAFE_VALUE, path=target.path,
                          value=safe_object(self.nodes[target.path]), fence=target.fence,
                          sequence=target.sequence, broker_epoch=self.epoch,
                          provider_session=provider.hello.session if provider else '',
-                         owner_id=target.owner_id, reason=reason))
+                         owner_id=target.owner_id, reason=reason,execution_id=operation_id))
 
     def revoke_lease(self, reason):
         lease = self.lease
         if lease is None:
             return
         self.lease = None
+        self.holds.revoke(lease.fence)
         self.fence += 1
         self.cancel_lease_commands(lease.fence, reason)
         self.invocation_keys = {key: value for key, value in self.invocation_keys.items() if key[0] != lease.fence}
@@ -472,16 +476,26 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
             deadline = min(lease.deadline_ns, time.monotonic_ns()+node['ttlMs']*1_000_000)
             if request.path not in provider.hello.claims:
                 raise BusError('PB_PROVIDER_MISMATCH', 'provider does not claim this setpoint')
+            key=(provider.hello.session,lease.fence,request.path,request.owner_id)
+            if any(not old.resource_released and self.holds.key(old)!=key for old in self.holds.records.values()):
+                raise BusError('PB_RESOURCE_BUSY','another Hold awaits physical release')
+            if not request.release and provider.control_queue.full():raise BusError('PB_QUEUE_FULL')
+            try:
+                record,dispatch_needed=self.holds.stage(request.path,request.owner_id,lease.fence,
+                    provider.hello.session,request.sequence,
+                    time.monotonic_ns()+3_000_000_000 if request.release else deadline,request.release)
+            except TargetError as error:raise BusError('PB_REPLAY',str(error)) from error
             target = ActiveTarget(request.path, request.owner_id, lease.fence, request.sequence, deadline)
             if request.release:
                 self.targets.pop(request.path, None)
-                self.safe_target(target, 'TARGET_RELEASED')
+                if dispatch_needed:self.safe_target(target, 'TARGET_RELEASED',record.id)
             else:
                 dispatch = pb.Dispatch(kind=pb.SET_TARGET, path=request.path, value=request.value,
                                       fence=lease.fence, sequence=request.sequence, broker_epoch=self.epoch,
                                       provider_session=provider.hello.session, owner_id=request.owner_id,
                                       valid_for_ms=max(0, (deadline-time.monotonic_ns())//1_000_000),
                                       deadline_monotonic_ns=deadline)
+                dispatch.execution_id=record.id
                 if provider.control_queue.full():
                     raise BusError('PB_QUEUE_FULL')
                 provider.control_queue.put_nowait(dispatch)
@@ -493,7 +507,7 @@ class Broker(CommandPlane, rpc.BusServicer, rpc.ProviderServicer):
                              value=MessageToDict(request.value))
             if not audit_ok:
                 raise BusError('PB_AUDIT_FAILED')
-            return pb.Reply(ok=True)
+            return pb.Reply(ok=True,operation_id=record.id)
         except BusError as error:
             await self.abort(context, error)
 

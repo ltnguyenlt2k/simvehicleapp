@@ -217,6 +217,7 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
             and self.broker.provider is not None and self.broker.provider.control_ready and self.broker.provider.safety_ready)
         self.assertIsNone(self.broker.lease)
         self.assertEqual(self.backend.v,0)
+
         self.assertEqual(self.backend.mode,'SAFE_STOP')
         descriptor=await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.target_context,self.backend.target_context(self.client.guard.session))
@@ -224,6 +225,27 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(grpc.aio.AioRpcError):await self.bus.SetTarget(self.target(2))
         await asyncio.sleep(.05)
         self.assertEqual(self.backend.v,0)
+
+    async def test_stop_bypasses_blocked_target_admission_feedback_without_replay(self):
+        await self.arm();entered=asyncio.Event();release=asyncio.Event()
+        original=self.backend.apply_target
+        async def blocked(path,value,deadline):
+            await original(path,value,deadline)
+            if deadline:entered.set();await release.wait()
+        self.backend.apply_target=blocked
+        try:
+            receipt=await self.bus.SetTarget(self.target(1))
+            await asyncio.wait_for(entered.wait(),.3)
+            started=time.monotonic()
+            stopped=await asyncio.wait_for(self.bus.Stop(pb.StopRequest(reason='blocked target ACK')), .4)
+            self.assertTrue(stopped.robot_confirmed)
+            self.assertLess(time.monotonic()-started,.4);self.assertEqual(self.backend.v,0)
+            release.set();await asyncio.sleep(.05)
+            state=await self.bus.InspectExecution(pb.ExecutionQuery(catalog_hash=self.catalog['catalogHash'],
+                broker_epoch=self.broker.epoch,execution_id=receipt.operation_id))
+            self.assertEqual(state.logical_phase,pb.CANCELLED)
+            self.assertEqual(self.backend.v,0)
+        finally:release.set()
 
     def target(self, sequence, linear=.2, release=False):
         return pb.Target(lease=self.lease, path='Robot.Motion.Velocity', owner_id='integration-hold',
@@ -320,7 +342,9 @@ class MockIntegrationTests(unittest.IsolatedAsyncioTestCase):
         await self.wait_value('Robot.Velocity.Linear.X', lambda sample: sample.value.float64_value > 0)
         await self.bus.SetTarget(self.target(2, linear=0, release=True))
         await self.until(lambda: self.backend.v == 0)
-        await self.bus.SetTarget(self.target(3, linear=.1))
+        following=self.target(3,linear=.1);following.owner_id='next-integration-hold'
+        await self.until(lambda:not self.broker.holds.quarantined)
+        await self.bus.SetTarget(following)
         await self.until(lambda: self.backend.v == .1)
         common = dict(path='Robot.Motion.Velocity', fence=self.lease.fence, broker_epoch=self.broker.epoch,
             provider_session=self.client.guard.session, owner_id='integration-hold')

@@ -77,4 +77,4 @@ class ExecutionInspectionTests(CommandFixture):
     async def test_descriptor_identifies_current_provider_session(self):
         descriptor=await self.bus.Describe(pb.Empty())
         self.assertEqual(descriptor.provider_session,self.hello.session)
-        self.assertEqual(descriptor.protocol_version,'1.5')
+        self.assertEqual(descriptor.protocol_version,'1.6')

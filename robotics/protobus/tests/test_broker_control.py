@@ -166,6 +166,10 @@ class LeaseAndTargetTests(ControlFixture):
         safe = await self.next_kind(self.safety, pb.SAFE_VALUE)
         self.assertEqual(safe.reason, 'TARGET_RELEASED')
         self.assertEqual(safe.owner_id, 'hold-1')
+        ack=await self.packet(pb.ProviderPacket(command=pb.CommandUpdate(execution_id=safe.execution_id,
+            path=safe.path,provider_session=self.hello.session,target_sequence=safe.sequence,
+            phase=pb.SUCCEEDED,physical_confirmed=True)))
+        self.assertTrue(ack.ok,ack)
         await self.bus.SetTarget(self.target(lease, sequence=3, owner='other'))
         new = await self.next_kind(self.control, pb.SET_TARGET)
         self.assertEqual(new.owner_id, 'other')

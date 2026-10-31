@@ -185,3 +185,15 @@ cleanup deadline and recovery-without-fabricated-proof cases. The module is NOT
 yet wired into broker/provider. An initial fixture argument collision is retained
 and corrected. No transport/Hold/live success claim; wire/backend integration is
 the next action, then BusClient/wheel/conformance and final GUI/video.
+
+T06 Hold transport checkpoint candidate1.6: broker/provider ledger integration,
+operation receipts/accepted sequences, correlated safe release quarantine and
+backend application callbacks. Fresh owner required after completed Hold. Added
+actual socket identity/retry/late-ACK tests and blocked mock target-admission ACK
+with independent confirmed Stop. RSS22 + broker134 PASS /33.331 s. Initial run
+failed three old TTL safe-dispatch checks because redundant Stop coalesced their
+safe message; fixed release-timeout escalation scope, preserving original timing
+assertions. Failure logs retained. Fixtures explicitly acknowledge release instead
+of treating its receipt as body availability. ROS admission/release implementation
+requires dedicated actual qualification next; no production replacement performed.
+BusClient/Hold/wheel/conformance/live templates/GUI/video remain OPEN.

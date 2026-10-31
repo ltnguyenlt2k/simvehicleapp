@@ -86,6 +86,12 @@ class MockBackend:
             self.request_stop()
         self.reason = reason
 
+    async def apply_target(self,path,value,deadline):
+        if deadline and self.mode!='MANUAL':raise RejectedBeforeStart('target requires MANUAL')
+        self.target(path,value,deadline)
+        if not deadline and (self.v!=0 or self.w!=0 or self.motion_active):
+            raise ConnectionError('mock safe release not observed')
+
     async def stop(self):
         self.request_stop()
         while self.motion_active:

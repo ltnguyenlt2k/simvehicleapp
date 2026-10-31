@@ -13,11 +13,11 @@ the robot must already be armed in MANUAL. `cancel <execution-id>` requests
 cancellation; only provider feedback confirms completion. `stop` needs no lease.
 STOP receipt and robot confirmation are distinct fields. This is a software STOP.
 
-Writes support the local SIM v1.5 protocol and require the matching catalog.
+Writes support the local SIM v1.6 protocol and require the matching catalog.
 `pbctl inspect <execution-id> --epoch <broker-epoch>` reads the correlated logical
 and physical release state without acquiring a lease. STOP replies identify their
 own execution so delayed confirmation can be inspected. Missing/evicted IDs and
-wrong epochs fail; latest status is never substituted. Protocol v1.5 live
+wrong epochs fail; latest status is never substituted. Protocol v1.6 live
 requalification is required before replacing an already running v1.3 stack.
 `describe` includes the actual provider kind, mapping/profile hash, measured
 adapter source/lock identity and provider session. ROS also advertises observed
@@ -35,3 +35,5 @@ Do not run concurrent writers against the same lease file. Exit codes: 0 success
 `python -m mock` is a synthetic unicycle provider, initially DISARMED. Its isolated
 MockControl API supports idle reset and typed scenario scheduling. It never
 represents ROS/MuJoCo or hardware validation; live adapters do not expose it.
+
+Hold receipts now include operationId. Inspect that operation to distinguish backend admission (acceptedSequence) from correlated physical safe release. Receipt alone never releases the body. The ROS candidate still needs actual admission/release requalification before production replacement.

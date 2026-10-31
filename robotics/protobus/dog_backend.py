@@ -100,6 +100,28 @@ class DogBackend:
         self.target_value = {key: scalar_from_wire(item, fields[key]) for key,item in value.fields.items()}
         self.target_deadline = deadline
 
+    async def apply_target(self,path,value,deadline):
+        frame=self.link.protocol.require_frame(time.monotonic_ns())
+        epoch=self.link.protocol.source_epoch
+        if deadline and (frame['mode']!='MANUAL' or frame.get('active_motion_id')):
+            raise RejectedBeforeStart('velocity admission requires MANUAL and free body')
+        self.target(path,value,deadline)
+        if not deadline and frame['mode'] in ('DISARMED','SAFE_STOP'):
+            await self.link.wait(lambda:self.link.protocol.source_epoch==epoch
+                and self.link.protocol.brain.get('safe_command')==[0.,0.]
+                and self.link.protocol.brain.get('active_motion_id') is None,.3)
+            return
+        packet=self.controller()
+        if deadline:packet['valid_until_monotonic_ns']=min(packet['valid_until_monotonic_ns'],deadline)
+        request,_=await self.call('manual',packet,linear=self.target_value['LinearX'],angular=self.target_value['AngularZ'])
+        if not deadline:
+            def released():
+                current=self.link.protocol.require_frame(time.monotonic_ns())
+                if self.link.protocol.source_epoch!=epoch:raise ConnectionError('source changed before release')
+                return (current['issued_at_ns']>=request.payload['issued_at_ns'] and current['mode']=='MANUAL'
+                    and current.get('safe_command')==[0.,0.] and current.get('active_motion_id') is None)
+            await self.link.wait(released,2)
+
     def request_stop(self):
         self.target_value = None
         self.target_deadline = 0
