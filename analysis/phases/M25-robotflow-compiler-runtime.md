@@ -197,3 +197,25 @@ assertions. Failure logs retained. Fixtures explicitly acknowledge release inste
 of treating its receipt as body availability. ROS admission/release implementation
 requires dedicated actual qualification next; no production replacement performed.
 BusClient/Hold/wheel/conformance/live templates/GUI/video remain OPEN.
+
+T06 actual Hold prerequisite checkpoint: two consecutive actual broker1.6 ->
+Humble provider -> Brain -> MuJoCo passes, each explicitly ResetStop/Arm, wait for
+first target admission, Hold, correlated safe release, BOW then Disarm. Latest
+source measured odom displacements0.187470597/0.214411649 m; release confirmation
+0.045191606/0.045743275 s. These are safe-output/body-release timings, not physical
+coasting distances or full workflow acceptance. M25-hold-live-checkpoint.json pins
+qualified images, source, execution identities and actual phase evidence.
+
+First fixture attempt correctly failed closed on audit directory permissions;
+fixed isolated tmpfs ownership. A repeated actual pass exposed Disarm versus
+authority-renew race: a renew attempted while Brain revoked the grant could tear
+down the safety lane before terminal Disarm. Explicit revocation now suspends
+renewal, clears the local grant on accepted Disarm and ignores only an already-
+revoked in-flight renew; it never restores/reclaims a grant. Dedicated delayed
+Disarm unit test plus two actual passes qualify the fix. Original failures kept.
+ROS map/source changes cannot confirm old target release. Humble backend12 tests
+PASS /0.998 s; final RSS22/broker138 PASS /34.232 s; precheck/diff PASS. Isolated
+fixture torn down without deleting volumes; production qualified1.3 unchanged.
+Next: normal Cancel/freshness prerequisites and rfrt BusClient/Hold/wheel/entrypoint,
+then actual conformance/live generated flows, GUI deployment and full video.
+No hardware or final M25/M26/M27 acceptance claimed.

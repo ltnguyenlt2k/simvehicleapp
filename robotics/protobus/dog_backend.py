@@ -37,6 +37,7 @@ class DogBackend:
         self.capture_received = {}
         self.tasks = []
         self.claiming = False
+        self.releasing_authority=False
         self.claimed_map = None
         self.link.on_epoch = self.epoch_changed
         self.routes = routes or {}
@@ -103,6 +104,8 @@ class DogBackend:
     async def apply_target(self,path,value,deadline):
         frame=self.link.protocol.require_frame(time.monotonic_ns())
         epoch=self.link.protocol.source_epoch
+        if self.claimed_map is not None and self.claimed_map!=(frame.get('scene_id'),frame.get('map_generation')):
+            raise ConnectionError('map changed before target application')
         if deadline and (frame['mode']!='MANUAL' or frame.get('active_motion_id')):
             raise RejectedBeforeStart('velocity admission requires MANUAL and free body')
         self.target(path,value,deadline)
@@ -118,6 +121,8 @@ class DogBackend:
             def released():
                 current=self.link.protocol.require_frame(time.monotonic_ns())
                 if self.link.protocol.source_epoch!=epoch:raise ConnectionError('source changed before release')
+                if self.claimed_map!=(current.get('scene_id'),current.get('map_generation')):
+                    raise ConnectionError('map changed before release confirmation')
                 return (current['issued_at_ns']>=request.payload['issued_at_ns'] and current['mode']=='MANUAL'
                     and current.get('safe_command')==[0.,0.] and current.get('active_motion_id') is None)
             await self.link.wait(released,2)
@@ -167,7 +172,7 @@ class DogBackend:
     async def renew_loop(self):
         while True:
             await asyncio.sleep(.1)
-            if not self.link.protocol.grant_id or self.claiming:
+            if not self.link.protocol.grant_id or self.claiming or self.releasing_authority:
                 continue
             try:
                 frame = self.link.protocol.require_frame(time.monotonic_ns())
@@ -179,6 +184,7 @@ class DogBackend:
             except asyncio.CancelledError:
                 raise
             except Exception:
+                if self.releasing_authority or not self.link.protocol.grant_id:continue
                 self.lost('AUTHORITY_RENEW_FAILED')
                 if self.client:
                     self.client.restart.set()
@@ -282,10 +288,12 @@ class DogBackend:
             'reset' if action == 'reset_stop' and not protocol.owns() else 'command')
         request = None
         try:
+            self.releasing_authority=action in ('disarm','stop')
             request = self.link.send(action, controller, **fields)
             ack = await self.link.response(request)
             if not ack['accepted']:
                 raise RejectedBeforeStart('Brain rejected: '+ack.get('reason','unknown'))
+            if action in ('disarm','stop'):protocol.clear_grant()
             await progress(pb.ACCEPTED, 'actual Brain admission')
             epoch = request.source_epoch
             running = False
@@ -333,6 +341,7 @@ class DogBackend:
                 return pb.CANCELLED, 'actual ROS standing/stop recovery observed', True
             except Exception:
                 return pb.CANCELLED, 'physical cancellation unconfirmed', False
+        finally:self.releasing_authority=False
 
     async def start(self):
         self.tasks = [asyncio.create_task(self.renew_loop()), asyncio.create_task(self.manual_loop())]

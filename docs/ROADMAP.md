@@ -597,3 +597,5 @@ M25-T06 next prerequisite: actual Hold admission/safe-release feedback (ADR-0083
 M25-T06 HoldLedger component8 groups PASS; broker/provider integration still OPEN. No actual Hold-release or full runtime acceptance. Next: wire operation IDs/admission/release feedback to real backends.
 
 M25-T06 Hold transport candidate1.6: RSS22/broker134 PASS /33.331 s, actual gRPC and synthetic-model Stop isolation covered. Actual ROS admission/release qualification next; runtime/wheel/conformance/GUI/video remain OPEN.
+
+M25-T06 actual Hold admission/safe-release/BOW/Disarm extension PASS twice, release45.2/45.7ms; Disarm-renew race fixed. Humble12 and RSS22/broker138 PASS. Full runtime, normal Cancel/freshness, conformance/live templates, GUI/video remain OPEN. See M25-hold-live-checkpoint.json.

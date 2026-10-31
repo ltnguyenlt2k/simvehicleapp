@@ -1,0 +1,152 @@
+{
+  "scope": "actual ROS Hold admission/release and BOW/Disarm handover; full runtime/GUI/video OPEN",
+  "protocol": "1.6",
+  "runs": [
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "3d04e0d9-e275-4b93-a71c-6fcb3b1330d3",
+      "holdExecutionId": "019de294-ac5e-4e59-82ec-7624964dba5f",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.04519160599738825,
+      "odomDisplacementM": 0.1874705969871712,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "551de605-a7e2-4a3d-9abb-090a563cdad2",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "8391c915-426c-4875-9ecf-31d2423b38bf",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "a2d3b6ca-63ff-4737-8230-a2d2f029e57b",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "d812602f-a245-4528-a8f9-fd4b5bfa4836",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "brokerEpoch": "0d03486b-b9dd-44de-80f8-d052887c3c94",
+      "providerSession": "890c9d6d-ce92-40ba-a0db-2717cf471272"
+    },
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "551b2467-a74e-462b-87dd-dbe00994fdda",
+      "holdExecutionId": "64dd35da-5645-42da-89a5-2e35f87c8a0e",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.045743275004497264,
+      "odomDisplacementM": 0.2144116485832553,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "b1babd90-adb1-49f4-b61f-eb2ba09f0717",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "7c836055-c558-4130-8835-8709724ec431",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "4ad6a490-ccbe-40be-a7ce-009552729a17",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "b5eac072-cc7f-41e9-9ad7-be54dc9fccdc",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "brokerEpoch": "0d03486b-b9dd-44de-80f8-d052887c3c94",
+      "providerSession": "890c9d6d-ce92-40ba-a0db-2717cf471272"
+    }
+  ],
+  "backendUnit": {
+    "tests": 12,
+    "seconds": 0.998,
+    "scope": "Python3.10 Humble; internal policy fixtures"
+  },
+  "qualifiedImages": {
+    "sr-hold-test-provider-1": "sha256:40948c0fd5cbae4d8c358a08daef932d01270a40c995a2f4811179d8984c1a38",
+    "sr-hold-test-broker-1": "sha256:db6cad66baeee9643fb270d08c80b919a97330f6154838ddc7c1ea8655598c25"
+  },
+  "sources": {
+    "robotics/protobus/dog_backend.py": "sha256:73eda755f562f66e3d58373b97eef967f890316f78bcdce64374cf966f8e0d0d",
+    "robotics/protobus/provider.py": "sha256:2feec195e8d93fca5364dd1cf846d97715029f71b563e6fe94269d6f98d4fa40",
+    "robotics/protobus/commands.py": "sha256:a728e8d2f984bbc99bae9ebddcc5954f6dc7a0666b71bf9f2a22eae1cbff2bcf",
+    "robotics/protobus/broker.py": "sha256:71a3970c12c8b3e8f5f9459c483c451c6258eff9b329b8c190b8fd45131063f2",
+    "robotics/protobus/bridge_tests/live_hold_probe.py": "sha256:31908958b89dfa7fa39f843b5587e4aeee92e431cdc765831b9ffff1c3459abc"
+  },
+  "failuresRetained": [
+    "hold-live-audit-fixture-failed.log",
+    "hold-live-disarm-race-failed.log"
+  ],
+  "remaining": [
+    "normal Cancel physical handover",
+    "ROS freshness/clock/epoch fault qualification",
+    "rfrt BusClient/Hold/wheel/entrypoint",
+    "actual conformance and live generated templates",
+    "GUI deployment",
+    "full continuous video"
+  ],
+  "regression": {
+    "rss": 22,
+    "protobus": 138,
+    "seconds": 34.232,
+    "result": "PASS"
+  }
+}

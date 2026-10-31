@@ -87,6 +87,51 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
         self.link.frame['map_generation']=1
         with self.assertRaises(ValueError):self.backend.target_context('transport-session')
 
+    def velocity(self,linear=0.):
+        return pb.Object(fields={'LinearX':pb.Value(float64_value=linear),'AngularZ':pb.Value(float64_value=0.)})
+
+    async def test_target_admission_dispatches_actual_manual_request_before_return(self):
+        self.backend.controller=lambda operation='command':{'valid_until_monotonic_ns':time.monotonic_ns()+500_000_000}
+        await self.backend.apply_target('Robot.Motion.Velocity',self.velocity(.2),time.monotonic_ns()+200_000_000)
+        self.assertEqual(self.link.sent[-1]['action'],'manual')
+        self.assertEqual(self.link.sent[-1]['linear'],.2)
+
+    async def test_release_waits_for_zero_observation_instead_of_ack_alone(self):
+        self.link.frame['safe_command']=[.2,0.]
+        task=asyncio.create_task(self.backend.apply_target('Robot.Motion.Velocity',self.velocity(),0))
+        await asyncio.sleep(.02);self.assertFalse(task.done())
+        self.link.frame['safe_command']=[0.,0.]
+        await asyncio.wait_for(task,.1)
+
+    async def test_changed_source_cannot_confirm_old_release(self):
+        self.link.frame['safe_command']=[.2,0.]
+        task=asyncio.create_task(self.backend.apply_target('Robot.Motion.Velocity',self.velocity(),0))
+        await asyncio.sleep(.02);self.link.protocol.source_epoch='changed'
+        self.link.frame['safe_command']=[0.,0.]
+        with self.assertRaises(ConnectionError):await task
+
+    async def test_disarm_admission_does_not_race_authority_renewal(self):
+        gate=asyncio.Event();self.phases=[]
+        self.backend.client=SimpleNamespace(restart=asyncio.Event())
+        original=self.link.response
+        async def delayed(request):await gate.wait();return await original(request)
+        self.link.response=delayed
+        renewal=asyncio.create_task(self.backend.renew_loop())
+        command=asyncio.create_task(self.backend.command('Robot.Safety.Disarm',{},self.progress))
+        try:
+            await asyncio.sleep(.12)
+            self.assertTrue(self.backend.releasing_authority)
+            self.assertFalse(self.backend.client.restart.is_set())
+            gate.set();await asyncio.sleep(.02)
+            self.assertEqual(self.link.protocol.grant_id,'')
+            self.link.frame['mode']='DISARMED'
+            result=await asyncio.wait_for(command,.2)
+            self.assertEqual(result[0],pb.SUCCEEDED)
+            self.assertFalse(self.backend.releasing_authority)
+        finally:
+            gate.set();renewal.cancel();command.cancel()
+            await asyncio.gather(renewal,command,return_exceptions=True)
+
     async def test_unavailable_stop_dispatch_is_never_confirmed(self):
         self.link.fail_send=True
         self.backend.request_stop()

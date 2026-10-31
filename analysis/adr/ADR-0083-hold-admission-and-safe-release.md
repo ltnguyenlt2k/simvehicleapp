@@ -94,3 +94,5 @@ without changing its timing window or assertion. Existing fixtures now explicitl
 acknowledge safe release before admitting another body owner. ROS backend methods
 are implemented but await dedicated unit/actual DDS/physics qualification; no live
 Hold, runtime wheel, full workflow UI or video acceptance is claimed.
+
+Actual Hold extension qualified on two successive ROS/physics runs: safe release45.2/45.7ms, physical odom displacement0.187/0.214m, subsequent BOW and Disarm confirmed. Explicit Disarm revocation now serializes renewal to avoid misclassifying intentional grant loss; no automatic reclaim. Report M25-hold-live-checkpoint.json retains source/image and initial failure evidence. Full runtime/control-fault/GUI/video gates remain open.
