@@ -55,7 +55,15 @@ function InnerEditor({workflow,blocks,catalog,diagnostics,onChange,disabled=fals
   const changedNodes=useCallback((changes:NodeChange<CanvasNode>[])=>{
     onNodesChange(changes);
     const chosen=changes.find(change=>change.type==='select'&&change.selected);if(chosen&&chosen.type==='select')setSelected(chosen.id);
-    if(!readOnly&&!disabled){const ids=new Set(changes.filter(change=>change.type==='remove').map(change=>change.id));if(ids.size)onChange(removeNodes(workflow,ids));}
+    if(!readOnly&&!disabled){
+      const positions=new Map<string,{x:number;y:number}>();
+      for(const change of changes)if(change.type==='position'&&change.position&&!change.dragging)positions.set(change.id,change.position);
+      const ids=new Set(changes.filter(change=>change.type==='remove').map(change=>change.id));
+      let next=workflow;
+      if(positions.size)next={...next,nodes:next.nodes.map(node=>positions.has(node.id)?{...node,ui:positions.get(node.id)!}:node)};
+      if(ids.size)next=removeNodes(next,ids);
+      if(next!==workflow)onChange(next);
+    }
   },[onNodesChange,workflow,onChange,readOnly,disabled]);
   const changedEdges=useCallback((changes:EdgeChange[])=>{onEdgesChange(changes);if(readOnly||disabled)return;const removed=new Set(changes.filter(change=>change.type==='remove').map(change=>change.id));if(removed.size)onChange({...workflow,edges:workflow.edges.filter(edge=>!removed.has(edgeId(edge)))});},[onEdgesChange,workflow,onChange,readOnly,disabled]);
   function add(block:Block,position?:{x:number;y:number}) {if(disabled||readOnly)return;const rect=canvas.current!.getBoundingClientRect();const node=newNode(block,position||flow.screenToFlowPosition({x:rect.x+rect.width/2,y:rect.y+rect.height/2}));onChange({...workflow,nodes:[...workflow.nodes,node]});setSelected(node.id);}
