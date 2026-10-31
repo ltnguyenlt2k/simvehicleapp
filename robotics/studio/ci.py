@@ -16,7 +16,7 @@ try:
       '--tmpfs','/work/node_modules/.vite-temp','--tmpfs','/work/node_modules/.vite','--tmpfs','/work/node_modules/.vitest-cache','sr-studio-web-builder:spike','npm','test'])
  run(['python3',str(ROBOT/'studio/backend_tests/qualify.py')],timeout=150)
  run(compose+['up','-d','--wait','--wait-timeout','90','protobus-mock','studio-web'],timeout=120)
- for name in ('editor-e2e.cjs','scenarios-e2e.cjs'):
+ for name in ('palette-e2e.cjs','editor-e2e.cjs','scenarios-e2e.cjs'):
   run(['docker','run','--rm','--init','--network','host','--user',f'{os.getuid()}:{os.getgid()}',
        '--read-only','--tmpfs','/tmp','--shm-size','256m','--env','STUDIO_URL=http://127.0.0.1:3181',
        '-v',str(ROBOT/'studio/web/tests')+':/opt/studio/tests:ro','-v',str(output)+':/evidence',

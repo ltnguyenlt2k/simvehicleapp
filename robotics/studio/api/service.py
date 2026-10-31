@@ -35,6 +35,7 @@ class StartInput(Closed):
     requestId:str=Field(pattern=UUID)
     maxRunMs:StrictInt|None=Field(default=None,ge=1,le=3600000)
 class EventInput(Closed):
+    deploymentId:str|None=Field(default=None,pattern=UUID)
     id:str=Field(min_length=1,max_length=128)
     name:str=Field(min_length=1,max_length=64)
 
@@ -147,7 +148,7 @@ def create_app(root=None,services=None,zoo_key=None,origins=None):
     @app.post('/control/{mode}/stop')
     async def stop(mode:Mode):return await remote().runner(mode,'POST','/stop')
     @app.post('/control/{mode}/event')
-    async def event(mode:Mode,value:EventInput):return await remote().runner(mode,'POST','/event',value.model_dump())
+    async def event(mode:Mode,value:EventInput):return await remote().runner(mode,'POST','/event',value.model_dump(exclude_none=True))
     @app.post('/deployments/{deployment_id}/test')
     async def test_start(deployment_id:str,scenario:dict):
         record=store.deployment(deployment_id)
@@ -213,5 +214,5 @@ def create_app(root=None,services=None,zoo_key=None,origins=None):
     @app.post('/zoo/deployments/{deployment_id}/event')
     async def zoo_event(deployment_id:str,value:EventInput):
         zoo_record(deployment_id)
-        return await event('live',value)
+        return await event('live',EventInput(**{**value.model_dump(),'deploymentId':deployment_id}))
     return app

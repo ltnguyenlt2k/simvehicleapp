@@ -102,3 +102,11 @@ class RunnerHttpTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code,413);self.assertFalse(self.process.starts)
         response=await self.client.post('/event',content=b'{"id":"one","id":"two","name":"jump"}',headers={'Content-Type':'application/json'})
         self.assertEqual(response.status_code,422);self.assertFalse(self.process.events)
+
+    async def test_event_for_an_old_deployment_never_reaches_a_new_job(self):
+        request=self.request();await self.client.post('/start',json=request)
+        denied=await self.client.post('/event',json={'id':'stale-tab','name':'jump','deploymentId':str(uuid.uuid4())})
+        self.assertEqual(denied.status_code,409);self.assertFalse(self.process.events)
+        accepted=await self.client.post('/event',json={'id':'current-tab','name':'jump','deploymentId':self.identity})
+        self.assertEqual(accepted.status_code,200)
+        self.assertEqual(self.process.events,[{'schema':'rfevent.v1','id':'current-tab','name':'jump'}])

@@ -37,6 +37,7 @@ class VerifyInput(BaseModel):
 
 class EventInput(BaseModel):
     model_config=ConfigDict(extra='forbid')
+    deploymentId:str|None=Field(default=None,pattern=UUID)
     id:str=Field(min_length=1,max_length=128)
     name:str=Field(min_length=1,max_length=64)
 
@@ -225,7 +226,12 @@ def create_app(mode=None,root='/projects',bus=None):
     @app.post('/event')
     async def event(value:EventInput):
         if tests.active:raise HTTPException(409,'the scenario controls events during this test')
-        try:await runner.supervisor.event(json.dumps({'schema':'rfevent.v1','id':value.id,'name':value.name}));return {'accepted':True}
+        try:
+            async with runner.guard:
+                if value.deploymentId is not None and (runner.job is None or runner.job['deploymentId']!=value.deploymentId):
+                    raise ValueError('event belongs to another deployment')
+                await runner.supervisor.event(json.dumps({'schema':'rfevent.v1','id':value.id,'name':value.name}))
+                return {'accepted':True}
         except Exception:raise HTTPException(409,'run is not accepting that event')
 
     if mode=='sim':

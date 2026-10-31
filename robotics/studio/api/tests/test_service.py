@@ -147,3 +147,15 @@ class StudioHttpTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get('/tests')).json(),{'report':None})
         self.assertEqual(self.services.calls[-1],('sim','GET','/tests'))
         self.assertFalse(self.services.starts)
+
+    async def test_zoo_event_is_bound_to_its_linked_deployment(self):
+        _,_,deployment=await self.deployed('live')
+        captured=[]
+        original=self.services.runner
+        async def runner(mode,method,path,data=None):
+            if path=='/event':captured.append(data)
+            return await original(mode,method,path,data)
+        self.services.runner=runner
+        response=await self.client.post('/zoo/deployments/'+deployment['id']+'/event',json={'id':'one','name':'jump','deploymentId':str(uuid.uuid4())},headers={'X-Zoo-Capability':KEY})
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(captured[0]['deploymentId'],deployment['id'])
