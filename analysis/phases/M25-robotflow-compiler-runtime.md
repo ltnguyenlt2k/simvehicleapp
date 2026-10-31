@@ -219,3 +219,25 @@ fixture torn down without deleting volumes; production qualified1.3 unchanged.
 Next: normal Cancel/freshness prerequisites and rfrt BusClient/Hold/wheel/entrypoint,
 then actual conformance/live generated flows, GUI deployment and full video.
 No hardware or final M25/M26/M27 acceptance claimed.
+
+T06 normal Cancel prerequisite PASS twice on actual ROS/physics: RUNNING BOW ->
+USER_CANCEL -> correlated physical CANCELLED -> observed MANUAL -> next BOW
+SUCCEEDED without Reset/Arm between commands, then Disarm. Cause is latched by
+execution ID; timeout/Stop/loss escalates normal cancellation and cannot retain
+a lost grant. Unrelated/unknown active motion is never cancelled by guessing.
+Guard state, original motion/mission, scene/map and grant are checked throughout
+recovery. Mock timeout/loss cancellation now also Stops instead of returning to
+MANUAL. Bounded cancellation causes are cleaned with owned tasks.
+
+Actual first attempt exposed cancellation arriving concurrently with progress ACK
+completion on Humble/Python3.10: cancellation was logged but execution continued
+to SUCCEEDED. The progress callback now checks the authoritative cancel latch
+after ACK; a deterministic unit test simulates that exact completed-ACK state.
+Another fixture read the on-change Mode record before telemetry published the
+confirmed MANUAL transition; it now waits at most0.5s for fresh observed MANUAL
+and checks unchanged broker/provider identities. Original failures retained.
+Final RSS22/broker141 PASS /33.984s, Humble backend14 PASS /1.093s.
+M25-normal-cancel-checkpoint.json pins actual IDs/images/source. Isolated fixture
+is torn down after evidence collection; no production1.3 replacement or hardware
+acceptance. ROS freshness/clock/epoch qualification and full runtime/GUI/video
+remain OPEN.

@@ -1,0 +1,163 @@
+{
+  "scope": "actual normal ROS motion Cancel and next BOW without Reset/Arm; full workflow/runtime/video OPEN",
+  "runs": [
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "a81d229e-6420-419b-bf99-1e9b6d428039",
+      "holdExecutionId": "7b298d5e-a7d0-452f-bf57-fb2c945dff2f",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.06873925900436006,
+      "odomDisplacementM": 0.19344257680551824,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "464c1c8b-533c-440c-a139-ceb574a6c193",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "ec62a4e5-ca9f-42d7-8e6e-78d678993bc8",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "eccf9a77-9eea-4165-a7e3-bc57f093b2ba",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "a8e3037d-2a6b-4c5e-a456-7f00662fcba1",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "normalCancellation": {
+        "executionId": "ccaeff9f-e89d-43f8-9b64-bca24f21744d",
+        "phases": [
+          "PENDING",
+          "ACCEPTED",
+          "RUNNING",
+          "CANCELLED"
+        ],
+        "physicalConfirmed": true,
+        "modeAfter": "MANUAL",
+        "rearmBetweenCommands": false
+      },
+      "brokerEpoch": "8385ffde-aa3a-4161-9201-0c8e34700b82",
+      "providerSession": "551e7927-86cb-4000-be64-d709544f2880"
+    },
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "3cb31252-0d32-4ab0-ad66-bd9d62d92cd6",
+      "holdExecutionId": "271f470c-399f-4fe6-bb8c-2d40e8630d75",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.06731508600205416,
+      "odomDisplacementM": 0.18765736362148597,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "17994da3-9512-48dc-98ee-d447cbbb7c15",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "68897116-d406-42da-b0d8-5e9ff76ac8f9",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "35210bb5-8a24-400b-b4c7-bd4de312e996",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "f69c850b-38e9-47da-a958-c294170eacf3",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "normalCancellation": {
+        "executionId": "ae89ee5a-265f-4a31-ab8a-b89f1365b71d",
+        "phases": [
+          "PENDING",
+          "ACCEPTED",
+          "RUNNING",
+          "CANCELLED"
+        ],
+        "physicalConfirmed": true,
+        "modeAfter": "MANUAL",
+        "rearmBetweenCommands": false
+      },
+      "brokerEpoch": "8385ffde-aa3a-4161-9201-0c8e34700b82",
+      "providerSession": "551e7927-86cb-4000-be64-d709544f2880"
+    }
+  ],
+  "regression": {
+    "rss": 22,
+    "protobus": 141,
+    "seconds": 33.984
+  },
+  "humbleBackend": {
+    "tests": 14,
+    "seconds": 1.093
+  },
+  "images": {
+    "sr-hold-test-provider-1": "sha256:536967afc2d2228201839097108e9857752300307e76048889bacf49990dbbcf",
+    "sr-hold-test-broker-1": "sha256:f5f06975f136cfa4dc751a33bc9578d78edf2b525839d4ac2762b0d936505ce6"
+  },
+  "sources": {
+    "robotics/protobus/provider.py": "sha256:7de832ef90c6ff645eb14e9ddfd9143b07a248cf1395866ed97b55114d71a3f1",
+    "robotics/protobus/dog_backend.py": "sha256:a99334c25d6fa9dabc8e2e11010116efa130b1025653a9a6747d1fbcbfbc0a82",
+    "robotics/protobus/mock.py": "sha256:13c9ccafc6d08f7b45ff2463c45652c5631c0ccbe39a92c010e163abcbfbc32d"
+  },
+  "retainedFailures": [
+    "normal-cancel-lost-request-failed.log",
+    "normal-cancel-observer-lag-failed.log"
+  ]
+}

@@ -132,6 +132,28 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
             gate.set();renewal.cancel();command.cancel()
             await asyncio.gather(renewal,command,return_exceptions=True)
 
+    async def test_normal_motion_cancel_waits_original_recovery_and_retains_grant(self):
+        self.backend.client=SimpleNamespace(cancel_causes={'exec':'USER_CANCEL'})
+        self.link.frame['active_motion_id']='original';self.link.frame['safe_command']=[0.,0.]
+        request=SimpleNamespace(source_epoch='epoch',payload=dict(request_id='original',config_hash='a'*64,issued_at_ns=100))
+        task=asyncio.create_task(self.backend.cancel_body_without_revoke('motion',request,self.link.frame.copy(),'exec'))
+        await asyncio.sleep(.02);self.assertFalse(task.done())
+        self.assertEqual(self.link.sent[-1]['action'],'motion_cancel')
+        self.link.frame['active_motion_id']=None
+        self.link.motion=dict(schema=1,source='SIM',config_hash='a'*64,scene_epoch='scene',
+            issued_at_ns=200,motion_id='original',phase='CANCELLED',active=False)
+        await asyncio.wait_for(task,.1)
+        self.assertEqual(self.link.protocol.grant_id,'grant')
+        self.assertFalse(any(item['action']=='stop' for item in self.link.sent))
+
+    async def test_cancel_timeout_escalation_cannot_claim_normal_handover(self):
+        self.backend.client=SimpleNamespace(cancel_causes={'exec':'USER_CANCEL'})
+        self.link.frame['active_motion_id']='original'
+        request=SimpleNamespace(source_epoch='epoch',payload=dict(request_id='original',config_hash='a'*64,issued_at_ns=100))
+        task=asyncio.create_task(self.backend.cancel_body_without_revoke('motion',request,self.link.frame.copy(),'exec'))
+        await asyncio.sleep(.02);self.backend.client.cancel_causes['exec']='PB_TIMEOUT'
+        with self.assertRaises(ConnectionError):await task
+
     async def test_unavailable_stop_dispatch_is_never_confirmed(self):
         self.link.fail_send=True
         self.backend.request_stop()

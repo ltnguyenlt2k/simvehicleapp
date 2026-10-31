@@ -133,7 +133,7 @@ class MockBackend:
             values[path] = None if quality == pb.NONE else value
         return {path: value for path, value in values.items() if path in self.catalog['nodes']}
 
-    async def command(self, path, args, progress):
+    async def command(self, path, args, progress,*,execution_id=None):
         is_recovery = path in ('Robot.Safety.ResetStop', 'Robot.Safety.Disarm')
         if self.stop_latched and not is_recovery:
             raise RejectedBeforeStart('STOP latched')
@@ -196,6 +196,7 @@ class MockBackend:
                 return pb.REJECTED, 'unsupported mock command', True
             return pb.SUCCEEDED, 'mock model completed', True
         except asyncio.CancelledError:
+            if not self.client or self.client.cancel_causes.get(execution_id)!='USER_CANCEL':self.request_stop()
             self.v = self.w = 0.
             await asyncio.sleep(self.profile.get('recoverySeconds', .25))
             self.mode = 'SAFE_STOP' if self.stop_latched else ('DISARMED' if prior_mode == 'DISARMED' else 'MANUAL')

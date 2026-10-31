@@ -217,7 +217,37 @@ class DogBackend:
                 if self.client:
                     self.client.restart.set()
 
-    async def command(self, path, args, progress):
+    async def cancel_body_without_revoke(self,action,request,frame,execution_id):
+        protocol=self.link.protocol
+        def valid():
+            if (not self.client or self.client.cancel_causes.get(execution_id)!='USER_CANCEL'
+                    or not self.link.ready() or protocol.source_epoch!=request.source_epoch
+                    or not protocol.owns()):raise ConnectionError('normal cancellation authority lost or escalated')
+            current=protocol.require_frame(time.monotonic_ns())
+            if self.claimed_map!=(current.get('scene_id'),current.get('map_generation')):
+                raise ConnectionError('map changed during cancellation')
+            self.controller() # Prove current fence and absolute grant validity.
+            return current
+        current=valid()
+        if action=='motion':
+            if current.get('active_motion_id')!=request.payload['request_id']:
+                await self.link.wait(lambda:valid().get('active_motion_id')==request.payload['request_id'],.3)
+            cancellation='motion_cancel'
+        elif action in ('goal','route'):
+            if current.get('mission_id')!=request.payload['request_id']:
+                raise ConnectionError('original navigation identity unavailable for cancellation')
+            cancellation='cancel'
+        else:raise ConnectionError('normal body cancellation is not supported for this operation')
+        await self.call(cancellation,self.controller())
+        def recovered():
+            current=valid()
+            phase=(motion_result(self.link.motion,request.payload,frame['scene_epoch']) if action=='motion'
+                else mission_result(current,request.payload,frame['boot_id'],frame['scene_epoch']))
+            return (phase in ('CANCELLED','SUCCEEDED','FAILED','REJECTED') and current['mode']=='MANUAL'
+                and current.get('active_motion_id') is None and current.get('safe_command')==[0.,0.])
+        await self.link.wait(recovered,20)
+
+    async def command(self, path, args, progress,*,execution_id=None):
         protocol = self.link.protocol
         frame = protocol.require_frame(time.monotonic_ns())
         if path == 'Robot.Safety.Arm':
@@ -335,6 +365,11 @@ class DogBackend:
         except asyncio.CancelledError:
             if request is None:
                 raise
+            if self.client and self.client.cancel_causes.get(execution_id)=='USER_CANCEL':
+                try:
+                    await self.cancel_body_without_revoke(action,request,frame,execution_id)
+                    return pb.CANCELLED,'actual correlated recovery; current grant retained',True
+                except Exception:pass # Escalate every ambiguous/lost recovery to Stop.
             self.request_stop()
             try:
                 await self.stop()

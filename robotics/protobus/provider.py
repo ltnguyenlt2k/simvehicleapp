@@ -132,6 +132,7 @@ class ProviderClient:
         self.command_messages = {}
         self.started_commands = set()
         self.cancel_requests = set()
+        self.cancel_causes={}
         self.stop_waiters = set()
         self.target_releases={}
         self.stop_task = None
@@ -207,10 +208,13 @@ class ProviderClient:
         self.started_commands.add(message.execution_id)
         async def progress(phase, reason='', confirmed=False):
             await self.feedback(message, phase, reason, confirmed)
+            # Python 3.10 wait_for may complete an inner ACK concurrently with
+            # Task.cancel. The latched control request remains authoritative.
+            if message.execution_id in self.cancel_requests:raise asyncio.CancelledError()
         try:
             args = {name: scalar_from_wire(value, self.catalog['nodes'][message.path]['args'][name])
                     for name, value in message.value.fields.items()}
-            phase, reason, confirmed = await self.backend.command(message.path, args, progress)
+            phase, reason, confirmed = await self.backend.command(message.path, args, progress,execution_id=message.execution_id)
             await self.feedback(message, phase, reason, confirmed=confirmed)
         except asyncio.CancelledError:
             # Backend command cancellation performs its own recovery before
@@ -230,6 +234,7 @@ class ProviderClient:
             self.command_messages.pop(message.execution_id, None)
             self.started_commands.discard(message.execution_id)
             self.cancel_requests.discard(message.execution_id)
+            self.cancel_causes.pop(message.execution_id,None)
 
     def command_done(self, task, message):
         if self.commands.get(message.execution_id) is task:
@@ -238,6 +243,7 @@ class ProviderClient:
             self.commands.pop(message.execution_id, None)
             self.command_messages.pop(message.execution_id, None)
             self.cancel_requests.discard(message.execution_id)
+            self.cancel_causes.pop(message.execution_id,None)
             if task.cancelled() and not self.closing:
                 reply = asyncio.create_task(self.feedback(message, pb.CANCELLED, 'cancelled before start', True))
                 self.stop_waiters.add(reply)
@@ -254,7 +260,9 @@ class ProviderClient:
             self.backend.request_stop()
             self.restart.set()
 
-    def cancel_command(self, execution_id):
+    def cancel_command(self, execution_id,reason='AUTHORITY_LOST'):
+        if execution_id in self.commands and (execution_id not in self.cancel_causes or reason!='USER_CANCEL'):
+            self.cancel_causes[execution_id]=reason
         if len(self.guard.cancelled) < 1024:
             self.guard.cancelled.add(execution_id)
         task = self.commands.get(execution_id)
@@ -335,7 +343,7 @@ class ProviderClient:
             elif message.kind == pb.CANCEL and safety:
                 if message.fence == self.guard.fence and message.fence > self.guard.invalid_through:
                     existed = message.execution_id in self.commands
-                    self.cancel_command(message.execution_id)
+                    self.cancel_command(message.execution_id,message.reason)
                     if not existed:
                         await self.feedback(message, pb.CANCELLED, 'cancelled before execution', True)
             elif message.kind == pb.INVOKE and not safety:
@@ -386,7 +394,7 @@ class ProviderClient:
             self.expire_targets(now)
             for message in tuple(self.command_messages.values()):
                 if now >= message.deadline_monotonic_ns:
-                    self.cancel_command(message.execution_id)
+                    self.cancel_command(message.execution_id,'PB_TIMEOUT')
             await asyncio.sleep(.01)
 
     async def session(self):
@@ -455,6 +463,7 @@ class ProviderClient:
             self.started_commands.clear()
             self.stop_waiters.clear()
             self.cancel_requests.clear()
+            self.cancel_causes.clear()
             self.outgoing = None
 
     async def run(self):

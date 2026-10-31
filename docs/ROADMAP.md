@@ -599,3 +599,5 @@ M25-T06 HoldLedger component8 groups PASS; broker/provider integration still OPE
 M25-T06 Hold transport candidate1.6: RSS22/broker134 PASS /33.331 s, actual gRPC and synthetic-model Stop isolation covered. Actual ROS admission/release qualification next; runtime/wheel/conformance/GUI/video remain OPEN.
 
 M25-T06 actual Hold admission/safe-release/BOW/Disarm extension PASS twice, release45.2/45.7ms; Disarm-renew race fixed. Humble12 and RSS22/broker138 PASS. Full runtime, normal Cancel/freshness, conformance/live templates, GUI/video remain OPEN. See M25-hold-live-checkpoint.json.
+
+M25-T06 normal Cancel physical handover PASS twice, no Reset/Arm between cancelled BOW and next BOW. RSS22/broker141/Humble14 PASS. Runtime consumer, ROS freshness faults, conformance, GUI and video still OPEN.

@@ -96,3 +96,5 @@ are implemented but await dedicated unit/actual DDS/physics qualification; no li
 Hold, runtime wheel, full workflow UI or video acceptance is claimed.
 
 Actual Hold extension qualified on two successive ROS/physics runs: safe release45.2/45.7ms, physical odom displacement0.187/0.214m, subsequent BOW and Disarm confirmed. Explicit Disarm revocation now serializes renewal to avoid misclassifying intentional grant loss; no automatic reclaim. Report M25-hold-live-checkpoint.json retains source/image and initial failure evidence. Full runtime/control-fault/GUI/video gates remain open.
+
+Normal Cancel extension: actual motion/mission IDs and authoritative cause latch gate grant-retaining recovery. Progress ACK completion cannot erase a latched cancel. Two real ROS cancellation-to-next-BOW handovers passed without rearming; RSS22/broker141 and Humble14 passed. Failure histories and scoped evidence are recorded in M25-normal-cancel-checkpoint.json. Full generated workflows/GUI/video remain open.
