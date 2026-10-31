@@ -1,0 +1,3 @@
+
+# Keep robotics build inputs reproducible across Windows and Linux.
+robotics/** text=auto eol=lf

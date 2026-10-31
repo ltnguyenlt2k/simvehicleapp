@@ -129,6 +129,7 @@ class ProviderClient:
         self.counter = itertools.count()
         self.tasks = []
         self.commands = {}
+        self.physically_released_commands=set()
         self.command_messages = {}
         self.started_commands = set()
         self.cancel_requests = set()
@@ -204,6 +205,9 @@ class ProviderClient:
                     provider_session=self.guard.session)))
             await asyncio.sleep(.05)
 
+    def body_busy(self):
+        return any(identity not in self.physically_released_commands for identity in self.commands)
+
     async def run_command(self, message):
         self.started_commands.add(message.execution_id)
         async def progress(phase, reason='', confirmed=False):
@@ -215,6 +219,9 @@ class ProviderClient:
             args = {name: scalar_from_wire(value, self.catalog['nodes'][message.path]['args'][name])
                     for name, value in message.value.fields.items()}
             phase, reason, confirmed = await self.backend.command(message.path, args, progress,execution_id=message.execution_id)
+            if confirmed and phase in (pb.SUCCEEDED,pb.FAILED,pb.REJECTED,pb.CANCELLED,pb.TIMED_OUT):
+                # Physical ownership ends before its terminal transport ACK.
+                self.physically_released_commands.add(message.execution_id)
             await self.feedback(message, phase, reason, confirmed=confirmed)
         except asyncio.CancelledError:
             # Backend command cancellation performs its own recovery before
@@ -223,6 +230,7 @@ class ProviderClient:
                 await self.feedback(message, pb.CANCELLED, 'physical cancellation not confirmed', False)
             raise
         except RejectedBeforeStart as error:
+            self.physically_released_commands.add(message.execution_id)
             await self.feedback(message, pb.REJECTED, str(error), True)
         except Exception as error:
             self.backend.request_stop()
@@ -230,6 +238,7 @@ class ProviderClient:
                 await self.feedback(message, pb.FAILED, 'backend error: '+str(error), False)
             self.restart.set()
         finally:
+            self.physically_released_commands.discard(message.execution_id)
             self.commands.pop(message.execution_id, None)
             self.command_messages.pop(message.execution_id, None)
             self.started_commands.discard(message.execution_id)
@@ -261,6 +270,7 @@ class ProviderClient:
             self.restart.set()
 
     def cancel_command(self, execution_id,reason='AUTHORITY_LOST'):
+        if execution_id in self.physically_released_commands:return
         if execution_id in self.commands and (execution_id not in self.cancel_causes or reason!='USER_CANCEL'):
             self.cancel_causes[execution_id]=reason
         if len(self.guard.cancelled) < 1024:
@@ -311,7 +321,7 @@ class ProviderClient:
                         node = self.catalog['nodes'][path]
                         self.backend.target(path, pb.Object(fields={name: scalar_value(value, node['fields'][name])
                             for name, value in node['safeValue'].items()}), 0)
-                    if self.commands:
+                    if self.body_busy():
                         self.cancel_all()
                         self.backend.lost('NEW_LEASE_FENCE')
             elif message.kind == pb.SET_TARGET and not safety:
@@ -348,7 +358,7 @@ class ProviderClient:
                         await self.feedback(message, pb.CANCELLED, 'cancelled before execution', True)
             elif message.kind == pb.INVOKE and not safety:
                 if self.guard.invocation(message, now):
-                    if self.commands:
+                    if self.body_busy():
                         await self.feedback(message, pb.REJECTED, 'provider body resource busy', True)
                     else:
                         task = asyncio.create_task(self.run_command(message))
@@ -459,6 +469,7 @@ class ProviderClient:
                 except asyncio.TimeoutError:
                     pass
             self.commands.clear()
+            self.physically_released_commands.clear()
             self.command_messages.clear()
             self.started_commands.clear()
             self.stop_waiters.clear()

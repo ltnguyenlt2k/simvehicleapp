@@ -67,7 +67,7 @@
 | [M22](#m22--nền-móng-robotics--rss-v01--spike-robot) | Robotics foundations + RSS + actual dog spikes | 0064, 0065, 0069 Accepted | ✔ | 8/8; scoped Robotics CI PASS at 0abd1585; [report](reports/M22.md) |
 | [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069–0074 Accepted | ✔ | T01–T09 scoped gate PASS at 62529137; Robotics CI 40896228193; [report](reports/M23.md); general CI queued |
 | [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069, 0075 Accepted | ✔ | Scoped technical PASS: actual ROS commands/faults, 21-path equality, 1800 s/four-client soak, refresh expiry 0.294 s; 350f2ca8 CI green; workflow/UI/final video remain M25–M27 |
-| [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067, 0069, 0076–0078 Accepted | 🔄 | T01–T03 CI PASS; T04 local 31 RF fixtures/all 24 lowerings/30 groups PASS, lint200=44.8ms; T04 CI pending; T05–T09 OPEN; no workflow runtime yet |
+| [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067,0069,0076–0085 | 🔄 | T01–T07 implemented/CI edff6d7f PASS; fresh Ubuntu broker147/compiler38/runtime58 and12-case conformance twice PASS. T08 ROS/CLI in progress; GUI/video OPEN |
 | [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ☐ | 0/10; technical gate precedes final acceptance |
 | [M27](#m27--robotics-e2e-live-video-tài-liệu) | Complex live E2E, full video, docs, baseline | 0064–0070 Accepted | ☐ | 0/6; RW-E journey fixed in acceptance design |
 
@@ -526,8 +526,8 @@ Chi tiết: [phases/M25](../analysis/phases/M25-robotflow-compiler-runtime.md) �
 | Compiler S0–S6 + IR + hash | 0067,0078 | ✔ | Local31 RF fixtures/all24 block lowerings/30 groups PASS; deterministic hashes/UI exclusion; lint200 44.816ms; Robotics41170674757 SUCCESS at7740ba7f | T04 |
 | Codegen Python + golden RW-A..D | 0067,0079 | ✔ | Native deterministic 10-file artifacts; 38 local groups PASS including verify-before-import main fix; Robotics41170674757 SUCCESS at7740ba7f | T05 |
 | Runtime `rfrt` | 0067,0080–0084 | 🔄 | Actual installed wheel; 58 local groups PASS, actual ROS Hold/Cancel prerequisite PASS; new CI pending; M25-rfrt-checkpoint.json | T06 |
-| Conformance C-R01..C-R12 | 0067,0084 | 🔄 | Local12/12 twice,19 subcases/round,96.0471s/95.2383s; new CI pending; M25-conformance-checkpoint.json | T07 |
-| CLI `sr build/run`; RW-A..D headless trên dog sim | 0067 | ☐ | | T08 |
+| Conformance C-R01..C-R12 | 0067,0084 | ✔ | edff6d7f CI PASS; fresh Ubuntu12/12 twice after handover fix; candidate CI pending. environment-recovery-checkpoint.json | T07 |
+| CLI `sr build/run`; RW-A..D headless trên dog sim | 0067,0085 | 🔄 | Capture/clock/marker design restored; CLI/live generated applications remain OPEN | T08 |
 | Gate + báo cáo | 0067 | ☐ | | T09 |
 
 ## M26 — Robot Studio
@@ -601,3 +601,6 @@ M25-T06 Hold transport candidate1.6: RSS22/broker134 PASS /33.331 s, actual gRPC
 M25-T06 actual Hold admission/safe-release/BOW/Disarm extension PASS twice, release45.2/45.7ms; Disarm-renew race fixed. Humble12 and RSS22/broker138 PASS. Full runtime, normal Cancel/freshness, conformance/live templates, GUI/video remain OPEN. See M25-hold-live-checkpoint.json.
 
 M25-T06 normal Cancel physical handover PASS twice, no Reset/Arm between cancelled BOW and next BOW. RSS22/broker141/Humble14 PASS. Runtime consumer, ROS freshness faults, conformance, GUI and video still OPEN.
+
+
+2026-10-31 environment recovery: repositories moved to D:/02_Projects/04.dog-ros2-simulation and09.simvehicleapp; Ubuntu-24.04 reinstalled. Fresh broker144/compiler38/runtime58 PASS; source/checksum guards PASS. Conformance/ROS requalification in progress, final deploy GUI/video remain OPEN. See reports/environment-recovery-2026-10-31.md.

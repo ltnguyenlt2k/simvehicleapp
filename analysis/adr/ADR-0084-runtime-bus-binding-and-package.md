@@ -77,3 +77,24 @@ result. `target_release_result` records only the actual correlated inspection
 retaining the originating node context. Tests assert that proof precedes the
 next body operation; global Stop remains separate and never fabricates Hold
 release. Runtime58 groups PASS /10.751s for wheel82cd6e44.
+
+
+Fresh-host conformance correction,2026-10-31: lease expiry may replace the provider
+session before independent Stop completes. The runtime must keep that old Stop
+unconfirmed. Test acceptance may independently observe a new source stopped with
+zero velocities/inactive motion, but may never reclassify it as old Hold/Stop
+completion. Unchanged-source Stop still requires physical confirmation. No SDK
+session/correlation guard changes; the fixture now covers both legitimate source
+outcomes rather than assuming no provider transition during the injected fault.
+
+
+Recovery handover regression: a confirmed backend result can be visible to the
+broker/client while the provider task still awaits its final transport ACK.
+Treating that task as an active body incorrectly rejects the next sequential
+command. A deterministic unit drives two dispatches while the first confirmed
+terminal ACK is deliberately held; the old provider rejects the second. Provider
+now tracks physically released terminal tasks separately from active body owners,
+retains structured ACK cleanup, and ignores a late Cancel for already confirmed
+physical completion. Unconfirmed results remain busy. Three targeted tests PASS;
+full provider and actual two-round conformance regression are required before
+acceptance. No broker fence/session/correlation validation is weakened.

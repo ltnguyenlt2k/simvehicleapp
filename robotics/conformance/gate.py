@@ -27,4 +27,6 @@ try:
   print(json.dumps(summary[-1]),flush=True)
  (OUTPUT/'gate-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
 finally:
+ with (OUTPUT/'broker-audit.jsonl').open('w') as log:subprocess.run(compose+['exec','-T','broker','cat','/data/protobus-audit.jsonl'],stdout=log,stderr=subprocess.STDOUT)
+ with (OUTPUT/'services.log').open('w') as log:subprocess.run(compose+['logs','--no-color','--tail','300'],stdout=log,stderr=subprocess.STDOUT)
  subprocess.run(compose+['down'],check=False)

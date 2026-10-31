@@ -1,0 +1,523 @@
+{
+  "date": "2026-10-31",
+  "scope": "Fresh Ubuntu actual broker/kinematic mock only; not ROS workflow or hardware acceptance",
+  "parentCommit": "edff6d7f",
+  "runtimePackageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+  "images": {
+    "sr-rfrt:dev": "sha256:d39dfbc16fa9ff2b40d986972fe262141a4f44c081384cb41d410705b72af629",
+    "sr-robotflow:dev": "sha256:1425120a422b693c8a38eb19d68a7d2f537a900d12e322966553e16c83ab301d",
+    "sr-protobus:dev": "sha256:16b21f128299c703a6a45614aad84f921ce593d557b1f8de5ad63eb57273a29a"
+  },
+  "rounds": [
+    {
+      "repetition": 1,
+      "result": "PASS",
+      "cases": 12,
+      "subcases": 19,
+      "seconds": 73.808461438
+    },
+    {
+      "repetition": 2,
+      "result": "PASS",
+      "cases": 12,
+      "subcases": 19,
+      "seconds": 94.47198572000002
+    }
+  ],
+  "caseResults": {
+    "1": [
+      {
+        "case": "condition",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:164310f579831bfda8ea53f21967005d9aca469eea9aec7ed1dac2a4d073e919"
+      },
+      {
+        "case": "policy-drop",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:7f8074a48c544ed3382f7e03bcfff962bf1facb069d223ef50ff73b2b4aa0069"
+      },
+      {
+        "case": "policy-queue",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:4ffac06eb18ed635dc03ba339227997744b7f7d0fa4b051fce4e48acb37e3ba9"
+      },
+      {
+        "case": "policy-restart",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:74bc1fa3db616a77a86265d9eaf3fca4e1171487723dce6186b9e9ffb1372456"
+      },
+      {
+        "case": "hold",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:f293434f5ce377af32464884a4dee22d168ee6699bfcbf70d4de01eadb43d514"
+      },
+      {
+        "case": "result-FAILED",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:4eacfd3ae27e5a2c52b95dc0d80e0031cf3630d76ac0e59b307e5c143de8c9c7"
+      },
+      {
+        "case": "result-REJECTED",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:4eacfd3ae27e5a2c52b95dc0d80e0031cf3630d76ac0e59b307e5c143de8c9c7"
+      },
+      {
+        "case": "result-TIMED_OUT",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:aec4a240d4aef9bb668444a2f9592acd192462e8bec2f7d4c5a22bf391ce3776"
+      },
+      {
+        "case": "parallel-cancel",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:6222c60552447a26a8f9844cba755af50b00173927f6dc81422f1c2e92aec2bc"
+      },
+      {
+        "case": "parallel-stop",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:79cb1a2665225eb4876085f062e12a01ff3a38982d3a7c27122dc7d1bdd98955"
+      },
+      {
+        "case": "parallel-all",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:ae7ed2dc1ba29895b2901895b4496a74fe89f331a702336a1b110e954e52c9a5"
+      },
+      {
+        "case": "parallel-any",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:003ee7913f532e8b11b5c90ed49af0024faf4c91b6b8a486058da89b76acc3eb"
+      },
+      {
+        "case": "sigterm",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:ea0e6f5451b1f06213ec0c177e180d52d3b67547f4a12ecdd836dfa119750c0d"
+      },
+      {
+        "case": "RW-C",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:77fbb6b768c5f8a92c1c21768290449ad078be3c9512c4377325026c1ab12022"
+      },
+      {
+        "case": "event-invalid",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:77fbb6b768c5f8a92c1c21768290449ad078be3c9512c4377325026c1ab12022"
+      },
+      {
+        "case": "typed-patrol",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:45bd8413fd8ae97d3f91c8973a32ae104481eb6d5b8392a91c731796d03fe94c"
+      },
+      {
+        "case": "binding-mismatch",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:77fbb6b768c5f8a92c1c21768290449ad078be3c9512c4377325026c1ab12022"
+      },
+      {
+        "case": "fault-lease",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "artifactHash": "sha256:ea0e6f5451b1f06213ec0c177e180d52d3b67547f4a12ecdd836dfa119750c0d"
+      },
+      {
+        "case": "fault-provider",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "artifactHash": "sha256:ea0e6f5451b1f06213ec0c177e180d52d3b67547f4a12ecdd836dfa119750c0d"
+      }
+    ],
+    "2": [
+      {
+        "case": "condition",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:164310f579831bfda8ea53f21967005d9aca469eea9aec7ed1dac2a4d073e919"
+      },
+      {
+        "case": "policy-drop",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:7f8074a48c544ed3382f7e03bcfff962bf1facb069d223ef50ff73b2b4aa0069"
+      },
+      {
+        "case": "policy-queue",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:4ffac06eb18ed635dc03ba339227997744b7f7d0fa4b051fce4e48acb37e3ba9"
+      },
+      {
+        "case": "policy-restart",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:74bc1fa3db616a77a86265d9eaf3fca4e1171487723dce6186b9e9ffb1372456"
+      },
+      {
+        "case": "hold",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:f293434f5ce377af32464884a4dee22d168ee6699bfcbf70d4de01eadb43d514"
+      },
+      {
+        "case": "result-FAILED",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:4eacfd3ae27e5a2c52b95dc0d80e0031cf3630d76ac0e59b307e5c143de8c9c7"
+      },
+      {
+        "case": "result-REJECTED",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:4eacfd3ae27e5a2c52b95dc0d80e0031cf3630d76ac0e59b307e5c143de8c9c7"
+      },
+      {
+        "case": "result-TIMED_OUT",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:aec4a240d4aef9bb668444a2f9592acd192462e8bec2f7d4c5a22bf391ce3776"
+      },
+      {
+        "case": "parallel-cancel",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:6222c60552447a26a8f9844cba755af50b00173927f6dc81422f1c2e92aec2bc"
+      },
+      {
+        "case": "parallel-stop",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:79cb1a2665225eb4876085f062e12a01ff3a38982d3a7c27122dc7d1bdd98955"
+      },
+      {
+        "case": "parallel-all",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:ae7ed2dc1ba29895b2901895b4496a74fe89f331a702336a1b110e954e52c9a5"
+      },
+      {
+        "case": "parallel-any",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:003ee7913f532e8b11b5c90ed49af0024faf4c91b6b8a486058da89b76acc3eb"
+      },
+      {
+        "case": "sigterm",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:ea0e6f5451b1f06213ec0c177e180d52d3b67547f4a12ecdd836dfa119750c0d"
+      },
+      {
+        "case": "RW-C",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:77fbb6b768c5f8a92c1c21768290449ad078be3c9512c4377325026c1ab12022"
+      },
+      {
+        "case": "event-invalid",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:77fbb6b768c5f8a92c1c21768290449ad078be3c9512c4377325026c1ab12022"
+      },
+      {
+        "case": "typed-patrol",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:45bd8413fd8ae97d3f91c8973a32ae104481eb6d5b8392a91c731796d03fe94c"
+      },
+      {
+        "case": "binding-mismatch",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "runtime": {
+          "schema": "rfrt-capabilities.v1",
+          "runtimeVersion": "0.1.0",
+          "packageHash": "sha256:51a780a0b00bdcf6858c6f578b9a510aabdfb4804f078b48ef3c47bd637c6ab4",
+          "protocolVersion": "1.6",
+          "backend": "SIM"
+        },
+        "artifactHash": "sha256:77fbb6b768c5f8a92c1c21768290449ad078be3c9512c4377325026c1ab12022"
+      },
+      {
+        "case": "fault-lease",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "artifactHash": "sha256:ea0e6f5451b1f06213ec0c177e180d52d3b67547f4a12ecdd836dfa119750c0d"
+      },
+      {
+        "case": "fault-provider",
+        "result": "PASS",
+        "scope": "actual broker/kinematic mock only",
+        "artifactHash": "sha256:ea0e6f5451b1f06213ec0c177e180d52d3b67547f4a12ecdd836dfa119750c0d"
+      }
+    ]
+  },
+  "checks": {
+    "broker": {
+      "groups": 147,
+      "seconds": 32.519,
+      "result": "PASS"
+    },
+    "compiler": {
+      "groups": 38,
+      "seconds": 10.912,
+      "result": "PASS"
+    },
+    "runtime": {
+      "groups": 58,
+      "seconds": 7.501,
+      "result": "PASS"
+    }
+  },
+  "testedProviderSha256": "c0d3b053080d5d0c33858c43685f2c0140aec9dc34a4fa88412fe1ef6362f600",
+  "open": [
+    "latest-source ROS adapter/live generated RW-A..D",
+    "Robot Studio deploy and Zoo controls",
+    "complex continuous full-flow video",
+    "hardware"
+  ]
+}

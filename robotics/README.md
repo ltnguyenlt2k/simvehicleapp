@@ -1,10 +1,12 @@
 # Robot Studio
-Independent stack under implementation, ADR-0069–0075. Current increment: RSS,
-Protobus broker, synthetic mock provider, diagnostic CLI and development live
-ROS/MuJoCo adapter. Workflow deployment and Studio remain later gates. The M24
-live fault/equality/1800-second gates passed and CI qualified M24. RobotFlow
-schemas/registry are in progress; no workflow runtime is available yet.
-Hardware is unsupported. See M23/M24 reports for exact scope and evidence.
+Independent robotics stack: RSS, Protobus1.6 broker/providers, deterministic
+RobotFlow compiler and installed native Python runtime development preview.
+M24 historical ROS/physics gate and M25 compiler/runtime/conformance checkpoints
+are recorded; fresh Ubuntu recovery passed broker147/compiler38/runtime58 and
+12 conformance cases twice. See [runtime preview](rfrt/README.md) and
+[environment recovery](../docs/reports/environment-recovery-2026-10-31.md).
+Live generated workflows, Robot Studio deployment UI and final continuous video
+remain under implementation. Hardware is unsupported.
 
 From the repository root, run `bash robotics/scripts/sr build`, `precheck`, `test`
 and `smoke` for RSS foundations. Broker data/protocol tests: build the contracts
