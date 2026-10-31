@@ -1,13 +1,28 @@
 {
-  "schema": "fixture-provenance.v1",
-  "dogSourceCommit": "25b4bfada838b25ab93cf73c658c356a8ab90ef9",
-  "runtimeImage": "sha256:e72a2f4a63cfca0fdddf2ee62cc99b1abfa36e2482502b975c33937c5e2179c5",
-  "rosDomainId": 52,
-  "network": "dog-ros2-r1_robot",
-  "capture": "spikes/capture_contract_fixtures.py",
-  "source": "Actual ROS DDS samples, not generated/mock",
-  "nonfiniteEncoding": {
-    "rosNonFinite": "nan / inf / -inf"
+  "schema": "fixture-provenance.v2",
+  "source": "Historical DDS fixture plus separately captured supplemental topic; not simultaneous",
+  "baseCapture": {
+    "schema": "fixture-provenance.v1",
+    "dogSourceCommit": "25b4bfada838b25ab93cf73c658c356a8ab90ef9",
+    "runtimeImage": "sha256:e72a2f4a63cfca0fdddf2ee62cc99b1abfa36e2482502b975c33937c5e2179c5",
+    "rosDomainId": 52,
+    "network": "dog-ros2-r1_robot",
+    "capture": "spikes/capture_contract_fixtures.py",
+    "source": "Actual ROS DDS samples, not generated/mock",
+    "nonfiniteEncoding": {
+      "rosNonFinite": "nan / inf / -inf"
+    },
+    "sha256": "aaaea7797f8510d7272b2a830322285685250db836c56fa654ade543f00f0b90"
   },
-  "sha256": "aaaea7797f8510d7272b2a830322285685250db836c56fa654ade543f00f0b90"
+  "supplementalCaptures": {
+    "perception/state": {
+      "date": "2026-10-31",
+      "dogSourceCommit": "0e33ef6",
+      "runtimeImage": "sha256:eaaa9551904b1d02f878ddcbbd755853f94c1f9973f0fa18a4b4548a4a8c6cd8",
+      "producerSourceSha256": "b9df2ce5456f390021f26cae3d45cea6e94dd1eb28dbbf2f8fe999462c181d78",
+      "scope": "Actual read-only ROS DDS, no robot command publisher or authority request",
+      "canonicalPayloadSha256": "d09f106dac17455d966892bf25c3059ca2fe198cac0710245e46bd58973ebb62"
+    }
+  },
+  "sha256": "c03fe542f4228f97f65c8b99293d75657e4ef83eeeca58beb2bffe59e4e90dc9"
 }

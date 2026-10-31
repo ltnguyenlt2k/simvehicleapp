@@ -126,6 +126,14 @@ def transform(value, operation, message=None):
         return args['map'][key]
     if op == 'count':
         return len(sequence(value))
+    if op == 'count_where':
+        count=0
+        for item in sequence(value):
+            selected=field(item,args['field'])
+            if not isinstance(selected,str) or not 1<=len(selected)<=128:
+                raise MappingError('valid object class string required')
+            if selected==args['equals']:count+=1
+        return count
     if op == 'compare':
         other = args['constant']
         if type(value) is bool or type(other) is bool:
@@ -170,6 +178,7 @@ class MappingEngine:
         self.last_sent = {}
         self.last_capture = {}
         self.epoch = None
+        self.minimum_capture_ns=0
         self.errors = {}
         for path, mapping in profile['sensors'].items():
             node = catalog['nodes'].get(path, {})
@@ -188,20 +197,28 @@ class MappingEngine:
                 if set(mapping.get('fields', {})) != set(fields):
                     raise MappingError('exact control fields required: '+path)
 
-    def reset(self, epoch):
+    def reset(self, epoch, *, minimum_capture_ns=None):
         if not isinstance(epoch, str) or not epoch:
             raise MappingError('source epoch required')
+        if minimum_capture_ns is not None and (type(minimum_capture_ns) is not int or not 0<=minimum_capture_ns<2**63):
+            raise MappingError('valid epoch capture floor required')
+        self.minimum_capture_ns=0 if minimum_capture_ns is None else minimum_capture_ns
         self.epoch = epoch
         self.observations.clear()
         self.last_sent.clear()
         self.last_capture.clear()
         self.errors.clear()
 
-    def receive(self, topic, message, *, source_time_ns, source_epoch, source_clock='ROS_TIME', now_ns=None):
+    def receive(self, topic, message, *, source_time_ns, source_epoch, source_clock='ROS_TIME', now_ns=None, source_now_ns=None):
         if source_epoch != self.epoch:
             raise MappingError('source epoch changed; explicit reset/session restart required')
-        if type(source_time_ns) is not int or source_time_ns < 0 or source_clock != 'ROS_TIME':
+        if type(source_time_ns) is not int or not 0<=source_time_ns<2**63 or source_clock != 'ROS_TIME':
             raise MappingError('invalid ROS capture metadata')
+        if source_time_ns<self.minimum_capture_ns:
+            raise MappingError('capture precedes source epoch')
+        if source_now_ns is not None:
+            if type(source_now_ns) is not int or not 0<=source_now_ns<2**63 or source_time_ns>source_now_ns:
+                raise MappingError('capture ahead of current ROS clock')
         if topic not in self.topics:
             raise MappingError('unmapped topic')
         if source_time_ns <= self.last_capture.get(topic, -1):

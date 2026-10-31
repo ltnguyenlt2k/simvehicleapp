@@ -120,6 +120,10 @@ class BusTransport:
         if any(path not in self.catalog['nodes'] or self.catalog['nodes'][path]['kind'] not in ('sensor','attribute') for path in paths):
             raise ValueError('known readable RSS paths required')
         if not paths:return {}
+        requested=paths
+        clock_path='Robot.Simulation.TimeNs';paused_path='Robot.Simulation.IsPaused'
+        needs_clock=self.descriptor.target_context.kind==pb.ROS_SIM and any(not (path.startswith('Robot.Connection.') or '.Status.' in path) for path in requested)
+        if needs_clock:paths=sorted(set(paths)|{clock_path,paused_path})
         try:batch=await self.bus.Get(pb.Query(paths=paths,catalog_hash=self.binding.catalog_hash),timeout=.5)
         except grpc.aio.AioRpcError:self.fail('sample transport lost')
         if batch.broker_epoch!=self.descriptor.broker_epoch or batch.provider_session!=self.descriptor.provider_session:
@@ -137,7 +141,8 @@ class BusTransport:
             if item.source_epoch!=epoch or item.source_clock!=clock:self.fail('sample source identity mismatch')
             if item.source_time_ns<0 or item.broker_time_ns<=0 or not item.sequence:self.fail('invalid sample timestamp/sequence')
             # Only host-domain broker receipt age is compared to host monotonic.
-            # ROS capture age/future/clock correctness is qualified in the adapter.
+            # ROS validation in the adapter is supplemented by same-batch clock
+            # checking below; no host-minus-ROS timestamp subtraction is valid.
             age=now-item.broker_time_ns
             if age<0 or (not owned and spec.get('maxAgeMs') and age>spec['maxAgeMs']*1_000_000):continue
             if clock=='MONOTONIC':
@@ -146,7 +151,19 @@ class BusTransport:
             if item.value.WhichOneof('kind')!=KINDS[spec['type']]:self.fail('sample wire type mismatch')
             try:result[path]=checked(getattr(item.value,KINDS[spec['type']]),spec)
             except ValueError:self.fail('invalid typed sample')
-        return result
+        if needs_clock:
+            clock=result[clock_path];paused=result[paused_path]
+            clock_bound=self.catalog['nodes'][clock_path].get('maxAgeMs',0)*1_000_000
+            for path in requested:
+                if path.startswith('Robot.Connection.') or '.Status.' in path or path==paused_path:continue
+                if type(clock) is not int or paused is not False:
+                    result[path]=UNKNOWN;continue
+                maximum=self.catalog['nodes'][path].get('maxAgeMs',0)*1_000_000
+                if maximum and clock-records[path].source_time_ns>=maximum:result[path]=UNKNOWN
+                # The exported sim-state clock can lag a current sensor capture.
+                # Gross future timestamps cannot fit its own freshness bound.
+                if records[path].source_time_ns-clock>clock_bound:result[path]=UNKNOWN
+        return {path:result[path] for path in requested}
 
     async def close(self):
         self.closed=True

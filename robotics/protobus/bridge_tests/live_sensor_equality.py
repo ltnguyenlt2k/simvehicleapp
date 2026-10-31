@@ -4,6 +4,7 @@ Expected values are calculated here without the mapping engine/transforms.
 This observer has no command publishers and never arms or moves the robot.
 """
 import asyncio
+import argparse
 from collections import OrderedDict
 import json
 import math
@@ -16,6 +17,7 @@ from nav_msgs.msg import Odometry
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import BatteryState,Imu
+from std_msgs.msg import String
 from protobus.v1 import protobus_pb2 as pb
 from protobus.v1 import protobus_pb2_grpc as rpc
 
@@ -28,7 +30,7 @@ def angles(q):
         Yaw=math.atan2(2*(w*z+x*y),1-2*(y*y+z*z)))
 
 
-async def run():
+async def run(bus_address="protobus-live:55600",include_marker=False):
     rclpy.init(args=[])
     node=rclpy.create_node('protobus_raw_sensor_equality')
     loop=asyncio.get_running_loop()
@@ -66,6 +68,18 @@ async def run():
     subscriptions=[node.create_subscription(kind,'/dog1/'+topic,
         lambda message,convert=convert:receive(message,convert),qos_profile_sensor_data)
         for kind,topic,convert in ((Imu,'imu/data',imu),(Odometry,'odom',odom),(BatteryState,'battery_state',battery))]
+    if include_marker:
+        def marker(message):
+            try:
+                payload=json.loads(message.data);capture=payload['capture_stamp']
+                stamp=capture['sec']*1_000_000_000+capture['nanosec']
+                objects=payload['objects']
+                assert all(isinstance(item['class_id'],str) for item in objects)
+                count=sum(item['class_id']=='red_sim_marker' for item in objects)
+                loop.call_soon_threadsafe(remember,stamp,{'Robot.Perception.Marker.Count':count})
+            except Exception as error:loop.call_soon_threadsafe(failures.append,str(error))
+        subscriptions.append(node.create_subscription(String,'/dog1/perception/state',marker,qos_profile_sensor_data))
+    expected_count=22 if include_marker else 21
     executor=SingleThreadedExecutor()
     executor.add_node(node)
     thread=threading.Thread(target=executor.spin,daemon=True)
@@ -75,13 +89,15 @@ async def run():
     try:
         assert all(pub.topic_name not in ('/dog1/control/request','/dog1/cmd_vel/safe','/dog1/motion/request')
             for pub in node.publishers)
-        async with grpc.aio.insecure_channel('protobus-live:55600') as channel:
+        async with grpc.aio.insecure_channel(bus_address) as channel:
             bus=rpc.BusStub(channel)
             descriptor=await bus.Describe(pb.Empty(),timeout=3)
             assert descriptor.provider_online
+            if include_marker:assert descriptor.protocol_version=='1.6'
             deadline=time.monotonic()+20
             while time.monotonic()<deadline:
                 result=await bus.Get(pb.Query(catalog_hash=descriptor.catalog_hash),timeout=2)
+                assert result.provider_session==descriptor.provider_session and result.broker_epoch==descriptor.broker_epoch
                 for sample in result.samples:
                     key=(sample.path,sample.source_time_ns)
                     if sample.quality!=pb.OK or key not in captures: continue
@@ -91,10 +107,10 @@ async def run():
                     assert math.isclose(actual,expected,rel_tol=1e-8,abs_tol=1e-8),(sample.path,actual,expected,key)
                     matched[sample.path]=dict(source_time_ns=sample.source_time_ns,expected=expected,actual=actual)
                     comparisons+=1
-                if len(matched)==21 and comparisons>=100: break
+                if len(matched)==expected_count and comparisons>=100: break
                 await asyncio.sleep(.02)
             assert not failures,failures
-            assert len(expected_paths)==21 and len(matched)==21,(sorted(expected_paths-set(matched)),len(matched))
+            assert len(expected_paths)==expected_count and len(matched)==expected_count,(sorted(expected_paths-set(matched)),len(matched))
             assert comparisons>=100,comparisons
             charging=next(sample for sample in result.samples if sample.path=='Robot.PowerSystem.Battery.IsCharging')
             assert charging.quality==pb.NONE,'unknown battery charging status must stay unavailable'
@@ -108,4 +124,8 @@ async def run():
         rclpy.shutdown()
 
 
-if __name__=='__main__': asyncio.run(run())
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--marker',action='store_true')
+    parser.add_argument('--bus',default='protobus-live:55600')
+    args=parser.parse_args();asyncio.run(run(args.bus,args.marker))

@@ -137,6 +137,28 @@
       ],
       "type": "sensor_msgs/msg/Imu"
     },
+    "Robot.Perception.Marker.Count": {
+      "field": "data",
+      "maxRateHz": 10,
+      "qos": "sensor_data",
+      "topic": "perception/state",
+      "transforms": [
+        {
+          "args": {
+            "path": "$.objects"
+          },
+          "op": "json"
+        },
+        {
+          "args": {
+            "equals": "red_sim_marker",
+            "field": "class_id"
+          },
+          "op": "count_where"
+        }
+      ],
+      "type": "std_msgs/msg/String"
+    },
     "Robot.Perception.Obstacle.FrontMinDistance": {
       "field": "ranges",
       "maxRateHz": 10,

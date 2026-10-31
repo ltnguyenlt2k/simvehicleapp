@@ -23,6 +23,7 @@ from dog_protocol import DogProtocol, DogProtocolError
 from mapping import strict_json
 from provider import RejectedBeforeStart
 from ros_telemetry import RosTelemetry
+from ros_clock import ClockProgress,stamp_ns
 
 
 class DogLinkError(ConnectionError):
@@ -53,14 +54,14 @@ class DogRosLink:
         self.motion_received_ns = 0
         self.sim = None
         self.sim_received_ns = 0
-        self.clock_received_ns = 0
+        self.clock=ClockProgress()
         self.namespace = engine.profile['ros']['namespace'].rstrip('/')
         self.node = Node('protobus_ros_link_'+uuid.uuid4().hex[:8])
         results = self.node.set_parameters([Parameter('use_sim_time', Parameter.Type.BOOL, True)])
         if not all(item.successful for item in results):
             raise DogLinkError('SIM clock parameter rejected')
         self.publisher = self.node.create_publisher(String, self.namespace+'/control/request', 1)
-        self.telemetry = RosTelemetry(self.node, engine, self.loop, lambda: self.protocol.source_epoch)
+        self.telemetry = RosTelemetry(self.node, engine, self.loop, lambda: self.protocol.source_epoch,self.ros_time_ns)
         self.subscriptions = [
             self.node.create_subscription(String, self.namespace+'/brain/state',
                 lambda message: self.receive('brain', message), 1),
@@ -70,14 +71,21 @@ class DogRosLink:
                 lambda message: self.receive('sim', message), 1),
             self.node.create_subscription(String, self.namespace+'/control/ack',
                 lambda message: self.receive('ack', message), 10),
-            self.node.create_subscription(Clock, '/clock', lambda _: self.clock_seen(), qos_profile_sensor_data)]
+            self.node.create_subscription(Clock, '/clock', lambda message:self.clock_seen(message),qos_profile_sensor_data)]
         self.executor = SingleThreadedExecutor()
         self.executor.add_node(self.node)
         self.thread = threading.Thread(target=self.executor.spin, name='protobus-ros-reader', daemon=True)
         self.thread.start()
 
-    def clock_seen(self):
-        self.clock_received_ns = time.monotonic_ns()
+    def clock_seen(self,message):
+        try:value=stamp_ns(message.clock.sec,message.clock.nanosec)
+        except ValueError:
+            with self.lock:self.clock.fault=True
+            self.error='invalid ROS clock';return
+        with self.lock:self.clock.observe(value,time.monotonic_ns())
+
+    def ros_time_ns(self):
+        with self.lock:return self.clock.last_ns if self.clock.fresh(time.monotonic_ns()) else None
 
     def receive(self, kind, message):
         try:
@@ -123,7 +131,8 @@ class DogRosLink:
                     previous = self.protocol.source_epoch
                     changed = self.protocol.update_brain(payload, received)
                     if changed or previous is None:
-                        self.engine.reset(self.protocol.source_epoch)
+                        with self.lock:self.clock.reset()
+                        self.engine.reset(self.protocol.source_epoch,minimum_capture_ns=payload['issued_at_ns'])
                     if changed:
                         self.fail_pending('dog source epoch changed after request')
                         if self.on_epoch:
@@ -158,10 +167,11 @@ class DogRosLink:
 
     def ready(self):
         now = time.monotonic_ns()
+        ros_now=self.ros_time_ns()
         return (not self.error and self.protocol.brain is not None
-                and now-self.protocol.received_ns < 300_000_000
-                and now-self.clock_received_ns < 300_000_000
-                and self.node.get_clock().now().nanoseconds > 0)
+                and 0<=now-self.protocol.received_ns<300_000_000 and ros_now is not None
+                and 0<=ros_now-self.protocol.brain['issued_at_ns']<300_000_000
+                and self.node.get_clock().now().nanoseconds>0)
 
     async def wait_ready(self, timeout=20):
         await self.wait(self.ready, timeout)

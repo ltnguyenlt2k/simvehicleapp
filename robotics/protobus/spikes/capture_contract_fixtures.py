@@ -1,4 +1,4 @@
-"""Read-only DDS fixture capture. No publishers or robot state changes."""
+"""Read-only DDS fixture capture. No robot command publishers or robot state changes."""
 import json
 import time
 from pathlib import Path
@@ -14,7 +14,7 @@ from dog_interfaces.msg import FootContacts
 rclpy.init()
 node = Node('protobus_contract_fixture_capture')
 samples = {}
-topics = [('brain/state', String), ('motion/state', String), ('sim/state', String),
+topics = [('brain/state',String),('motion/state',String),('sim/state',String),('perception/state',String),
           ('imu/data', Imu), ('joint_states', JointState), ('battery_state', BatteryState),
           ('scan', LaserScan), ('odom', Odometry), ('foot_contacts', FootContacts)]
 
@@ -47,4 +47,4 @@ def normalize(value):
     return value
 
 Path('/evidence/dds-fixtures.json').write_text(json.dumps(normalize(samples), indent=2, allow_nan=False))
-print('Captured 9 actual DDS topic fixtures without command publishers')
+print('Captured',len(topics),'actual DDS topic fixtures without robot command publishers')

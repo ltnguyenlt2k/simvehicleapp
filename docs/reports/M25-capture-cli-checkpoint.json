@@ -1,0 +1,431 @@
+{
+  "date": "2026-10-31",
+  "parentCommit": "277a6320",
+  "scope": "M25-T08 capture/clock prerequisites and developer CLI checkpoint; live native RW-A..D, Studio and video remain open",
+  "sourceSha256": {
+    "robotics/protobus/dog_backend.py": "0d8ace37cb75ae812f78f20e04c47bba0f1fe109fc7c137ec9935f98acae03f5",
+    "robotics/protobus/dog_ros_link.py": "45955c207588a1ca44acdc1217955f8154c3adfcafc872a4d630865118c14225",
+    "robotics/protobus/ros_telemetry.py": "1c5a98d5cebd31118eb53a5460cdf515732a45ed5e4d3b33c3c2b3563b0e220f",
+    "robotics/protobus/ros_clock.py": "c390a2e0f898479c825db7f095b9200a9d227269b53fac190ec51e55113a4748",
+    "robotics/protobus/mapping.py": "73ed8c7220d2a54876bcae636e3e64b42fa125a0a6d44a926659b962acbf9142",
+    "robotics/protobus/profiles/dog-go2-sim/mapping.json": "a064ac3dd6fd301f5bd37d5b2f058fb1d5b434e4038b82aee8b354abe82e7741",
+    "robotics/rfrt/rfrt/transport.py": "46ca28c31ca606936fa8a8ef71fdf46ebf450b4d973d800de956a5e7d85585fd"
+  },
+  "tests": {
+    "provider": {
+      "groups": 165,
+      "seconds": 32.276
+    },
+    "installedRuntime": {
+      "groups": 62,
+      "seconds": 8.694
+    },
+    "compiler": {
+      "groups": 38,
+      "seconds": 14.341
+    },
+    "actualCycloneDDS": {
+      "groups": 9,
+      "seconds": 2.815
+    }
+  },
+  "runtimePackageHash": "sha256:7058e368749bd0305b62a87549ca4cbdeefe3365d2849a581adbbda55414b909",
+  "exactRosCaptureEquality": {
+    "passed": true,
+    "matched_paths": 22,
+    "exact_capture_comparisons": 223,
+    "relative_tolerance": 1e-08,
+    "absolute_tolerance": 1e-08,
+    "unknown_charging_quality": "NONE",
+    "matches": {
+      "Robot.Imu.AngularVelocity.X": {
+        "source_time_ns": 1319959999982,
+        "expected": -0.0009229898651778267,
+        "actual": -0.0009229898651778267
+      },
+      "Robot.Imu.AngularVelocity.Y": {
+        "source_time_ns": 1319959999982,
+        "expected": 0.006691991286042688,
+        "actual": 0.006691991286042688
+      },
+      "Robot.Imu.AngularVelocity.Z": {
+        "source_time_ns": 1319959999982,
+        "expected": 0.007214366820979061,
+        "actual": 0.007214366820979061
+      },
+      "Robot.Imu.LinearAcceleration.X": {
+        "source_time_ns": 1319959999982,
+        "expected": 2.410046796327381,
+        "actual": 2.410046796327381
+      },
+      "Robot.Imu.LinearAcceleration.Y": {
+        "source_time_ns": 1319959999982,
+        "expected": 0.011452571710760296,
+        "actual": 0.011452571710760296
+      },
+      "Robot.Imu.LinearAcceleration.Z": {
+        "source_time_ns": 1319959999982,
+        "expected": 9.481996452277768,
+        "actual": 9.481996452277768
+      },
+      "Robot.Imu.Orientation.Pitch": {
+        "source_time_ns": 1319959999982,
+        "expected": -0.2477124702976508,
+        "actual": -0.2477124702976508
+      },
+      "Robot.Imu.Orientation.Roll": {
+        "source_time_ns": 1319959999982,
+        "expected": 2.4858078593864513e-09,
+        "actual": 2.4858078593864513e-09
+      },
+      "Robot.Imu.Orientation.Yaw": {
+        "source_time_ns": 1319959999982,
+        "expected": 0.019231927024952196,
+        "actual": 0.019231927024952196
+      },
+      "Robot.Perception.Marker.Count": {
+        "source_time_ns": 1319869999982,
+        "expected": 1,
+        "actual": 1
+      },
+      "Robot.Pose.Orientation.Pitch": {
+        "source_time_ns": 1320029999982,
+        "expected": -0.2477124707643049,
+        "actual": -0.2477124707643049
+      },
+      "Robot.Pose.Orientation.Roll": {
+        "source_time_ns": 1320029999982,
+        "expected": 2.48580724325163e-09,
+        "actual": 2.48580724325163e-09
+      },
+      "Robot.Pose.Orientation.Yaw": {
+        "source_time_ns": 1320029999982,
+        "expected": 0.01923192702495501,
+        "actual": 0.01923192702495501
+      },
+      "Robot.Pose.Position.X": {
+        "source_time_ns": 1320029999982,
+        "expected": -0.15722931529855994,
+        "actual": -0.15722931529855994
+      },
+      "Robot.Pose.Position.Y": {
+        "source_time_ns": 1320029999982,
+        "expected": -0.005366339612875928,
+        "actual": -0.005366339612875928
+      },
+      "Robot.Pose.Position.Z": {
+        "source_time_ns": 1320029999982,
+        "expected": 0.2653259850501602,
+        "actual": 0.2653259850501602
+      },
+      "Robot.Velocity.Angular.Z": {
+        "source_time_ns": 1320029999982,
+        "expected": 3.8951322738462926e-14,
+        "actual": 3.8951322738462926e-14
+      },
+      "Robot.Velocity.Linear.X": {
+        "source_time_ns": 1320029999982,
+        "expected": -9.289199795517397e-10,
+        "actual": -9.289199795517397e-10
+      },
+      "Robot.Velocity.Linear.Y": {
+        "source_time_ns": 1320029999982,
+        "expected": -2.8284970489043708e-14,
+        "actual": -2.8284970489043708e-14
+      },
+      "Robot.PowerSystem.Battery.Current": {
+        "source_time_ns": 1319999999982,
+        "expected": 0.0,
+        "actual": 0.0
+      },
+      "Robot.PowerSystem.Battery.StateOfCharge": {
+        "source_time_ns": 1319999999982,
+        "expected": 92.00000166893005,
+        "actual": 92.00000166893005
+      },
+      "Robot.PowerSystem.Battery.Voltage": {
+        "source_time_ns": 1319999999982,
+        "expected": 28.799999237060547,
+        "actual": 28.799999237060547
+      }
+    },
+    "command_publishers": 0
+  },
+  "actualCaptureFaults": [
+    {
+      "passed": true,
+      "case": "pause",
+      "scope": "actual ROS/SIM capture fault; no motion start",
+      "oldProviderSession": "f598c1d4-edeb-44a3-829d-4d63c0dd05f6",
+      "newProviderSession": "5554d9a4-159e-4fa8-8073-a386a27d27cc",
+      "oldEpoch": "dog:3b083ceea4869c8f758fbafc6343fd015bde4915dffa1aae85671928549d6e88",
+      "newEpoch": "dog:3b083ceea4869c8f758fbafc6343fd015bde4915dffa1aae85671928549d6e88",
+      "oldOrMissingCaptureObservations": 1,
+      "largestDeliveredOkCaptureAgeMs": 200.0,
+      "qualityPropagationBoundMs": 100,
+      "commandPublishers": 0,
+      "leasesAcquired": 0,
+      "autoArm": false
+    },
+    {
+      "passed": true,
+      "case": "perception",
+      "scope": "actual ROS/SIM capture fault; no motion start",
+      "oldProviderSession": "5554d9a4-159e-4fa8-8073-a386a27d27cc",
+      "newProviderSession": "5554d9a4-159e-4fa8-8073-a386a27d27cc",
+      "oldEpoch": "dog:3b083ceea4869c8f758fbafc6343fd015bde4915dffa1aae85671928549d6e88",
+      "newEpoch": "dog:3b083ceea4869c8f758fbafc6343fd015bde4915dffa1aae85671928549d6e88",
+      "oldOrMissingCaptureObservations": 14,
+      "largestDeliveredOkCaptureAgeMs": 1000.0,
+      "qualityPropagationBoundMs": 100,
+      "commandPublishers": 0,
+      "leasesAcquired": 0,
+      "autoArm": false
+    },
+    {
+      "passed": true,
+      "case": "epoch",
+      "scope": "actual ROS/SIM capture fault; no motion start",
+      "oldProviderSession": "5554d9a4-159e-4fa8-8073-a386a27d27cc",
+      "newProviderSession": "90e2d3de-2115-498b-8d4d-a3568f5cb7e3",
+      "oldEpoch": "dog:3b083ceea4869c8f758fbafc6343fd015bde4915dffa1aae85671928549d6e88",
+      "newEpoch": "dog:104b55d4a4e04444b885eeb8a69fe2f85d411c28301c9c08140fb629be4713d4",
+      "oldOrMissingCaptureObservations": 0,
+      "largestDeliveredOkCaptureAgeMs": 320.0,
+      "qualityPropagationBoundMs": 100,
+      "commandPublishers": 0,
+      "leasesAcquired": 0,
+      "autoArm": false
+    }
+  ],
+  "actualHoldAndCancel": [
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "09caddbc-3f76-480c-9165-0aa338167a3b",
+      "holdExecutionId": "e772bcda-5c33-42df-85dd-b61c295ad689",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.045429990000229736,
+      "odomDisplacementM": 0.19616268346102242,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "a12aaec6-3e11-43fd-aeee-6e440462b089",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "09b546a2-af57-4ea6-a8a8-726a665df49c",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "93cf64d5-f748-4de6-b29b-a053cb8d6293",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "da8985a5-cf35-4155-a4de-e3a684a000b0",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "normalCancellation": null,
+      "brokerEpoch": "3a1d4123-8347-4c1e-a5c4-63fd5577c7f2",
+      "providerSession": "17f790da-9e01-4c0d-8fd5-43cc13f61789"
+    },
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "24ee2efd-1fd3-4400-9f0c-b58936faaf7a",
+      "holdExecutionId": "57ad7038-6041-4eeb-a5f8-b60912d3972b",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.022978189999776077,
+      "odomDisplacementM": 0.18495866143919054,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "f8939d5b-1afc-49e4-ac41-186c5cb9727b",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "c30ac2a0-6631-4296-a12b-c1b802b8ae80",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "d496909a-29d2-45eb-9a3b-28a0303d282e",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "0b30eea6-365f-4242-ab96-40b2b6ba4a16",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "normalCancellation": {
+        "executionId": "678f2f25-8e58-4234-b0ef-74db96c27db4",
+        "phases": [
+          "PENDING",
+          "ACCEPTED",
+          "RUNNING",
+          "CANCELLED"
+        ],
+        "physicalConfirmed": true,
+        "modeAfter": "MANUAL",
+        "rearmBetweenCommands": false
+      },
+      "brokerEpoch": "3a1d4123-8347-4c1e-a5c4-63fd5577c7f2",
+      "providerSession": "f76e1ad5-ece6-4582-a9bd-f57b1a78d941"
+    },
+    {
+      "passed": true,
+      "scope": "actual ROS Hold admission/release and BOW handover only",
+      "protocol": "1.6",
+      "runId": "492e4b0f-4c8e-4c30-8c4d-edd90702c2cd",
+      "holdExecutionId": "2973e5f7-4fbb-4d0f-a4a9-2eeead9d108b",
+      "acceptedSequence": "12",
+      "releaseSequence": "13",
+      "physicalReleaseSeconds": 0.044339413999296085,
+      "odomDisplacementM": 0.19634132754742312,
+      "operations": [
+        {
+          "path": "Robot.Safety.ResetStop",
+          "executionId": "7c0f2e02-c84c-4236-94e7-b1a687826d5c",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Arm",
+          "executionId": "217c5730-80e4-486b-82a1-b6ce08f4be11",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Motion.Perform",
+          "executionId": "9e629d71-32af-4638-a6dc-8c32b10413a7",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "RUNNING",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        },
+        {
+          "path": "Robot.Safety.Disarm",
+          "executionId": "666a48ec-bdd6-4595-8fff-f59e0e85382f",
+          "phases": [
+            "PENDING",
+            "ACCEPTED",
+            "SUCCEEDED"
+          ],
+          "physicalConfirmed": true
+        }
+      ],
+      "normalCancellation": {
+        "executionId": "de4b23c4-5cf9-4dd9-bd93-4c2af97cac7f",
+        "phases": [
+          "PENDING",
+          "ACCEPTED",
+          "RUNNING",
+          "CANCELLED"
+        ],
+        "physicalConfirmed": true,
+        "modeAfter": "MANUAL",
+        "rearmBetweenCommands": false
+      },
+      "brokerEpoch": "3a1d4123-8347-4c1e-a5c4-63fd5577c7f2",
+      "providerSession": "d301fb2a-1ab2-49b9-8958-68d72d8c1a8b"
+    }
+  ],
+  "conformance": [
+    {
+      "repetition": 1,
+      "result": "PASS",
+      "cases": 12,
+      "subcases": 19,
+      "seconds": 74.2538184619998
+    },
+    {
+      "repetition": 2,
+      "result": "PASS",
+      "cases": 12,
+      "subcases": 19,
+      "seconds": 96.99897538599998
+    }
+  ],
+  "conformanceImages": {
+    "sr-rfrt:dev": "sha256:58bc4f1a77b232c3a279ca58afffb2e7b575b30315163fae8f4502c8c058bddb",
+    "sr-robotflow:dev": "sha256:0eef84839119deb7751da765a3e860aef3f9db03ecedf6d8eb1a2c52d469230f",
+    "sr-protobus:dev": "sha256:915bc728454ce728c7db45582ade1465c2f6eac39bc087088b873af652fee7e6"
+  },
+  "actualCliMock": {
+    "passed": true,
+    "scope": "actual local CLI/mock; not ROS qualification",
+    "negativeCases": 5,
+    "duplicateEventStarts": 1,
+    "explicitStopConfirmed": true
+  },
+  "limitations": [
+    "Live equality/fault/motion use Dog image eaaa955 before the battery-only extension. New Dog image separately qualifies parameter and safety regressions.",
+    "Delivered provider quality has an observed bounded 100ms propagation envelope; at-use SDK independently rejects expired original capture. No hard realtime claim.",
+    "Fixture contains historical base plus separately captured perception; not a simultaneous fixture recording.",
+    "Negative clock/capture DDS publishers use isolated fixture topics, never dog control/sensor topics.",
+    "No hardware qualification and no final video acceptance."
+  ]
+}

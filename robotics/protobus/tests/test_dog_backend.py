@@ -16,6 +16,7 @@ from protobus.v1 import protobus_pb2 as pb
 class FakeLink:
     def __init__(self):
         self.authorize_sim_arm = False
+        self.ros_now=200_000_000
         self.sent = []
         self.fail_send = False
         self.frame = dict(schema=1, source='SIM', config_hash='a'*64, boot_id='brain',
@@ -31,6 +32,7 @@ class FakeLink:
 
     def clear(self): self.protocol.grant_id = ''
     def ready(self): return True
+    def ros_time_ns(self):return self.ros_now
 
     def send(self, action, controller=None, **fields):
         if self.fail_send: raise ConnectionError('actual dispatch unavailable in unit fixture')
@@ -69,11 +71,30 @@ class BackendTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_stale_capture_remains_stale_across_provider_snapshot(self):
         path='Robot.Imu.AngularVelocity.X'
-        self.engine.observations[path]=Observation(.2,pb.OK,123,'scene','ROS_TIME')
+        self.engine.observations[path]=Observation(.2,pb.OK,123,'epoch','ROS_TIME')
         self.engine.last_sent[path]=time.monotonic_ns()-300_000_000
         self.assertEqual(self.backend.values()[path],.2)
         self.assertEqual(self.backend.quality(path),pb.STALE)
         self.assertEqual(self.backend.sample_metadata(path)['source_time_ns'],123)
+
+    async def test_recent_receipt_cannot_refresh_an_old_ros_capture(self):
+        path='Robot.Imu.AngularVelocity.X'
+        self.engine.observations[path]=Observation(.2,pb.OK,1,'epoch','ROS_TIME')
+        self.engine.last_sent[path]=time.monotonic_ns();self.link.ros_now=500_000_000
+        self.backend.values();self.assertEqual(self.backend.quality(path),pb.STALE)
+
+    async def test_future_missing_clock_old_epoch_and_wrong_domain_stay_unknown(self):
+        path='Robot.Imu.AngularVelocity.X'
+        for stamp,epoch,domain,clock in [(300_000_000,'epoch','ROS_TIME',200_000_000),(100,'epoch','ROS_TIME',None),(100,'old','ROS_TIME',200),(100,'epoch','MONOTONIC',200)]:
+            self.engine.observations[path]=Observation(.2,pb.OK,stamp,epoch,domain)
+            self.engine.last_sent[path]=time.monotonic_ns();self.link.ros_now=clock
+            self.backend.values();self.assertEqual(self.backend.quality(path),pb.NONE)
+
+    async def test_actual_ros_age_and_host_receipt_are_both_fresh(self):
+        path='Robot.Imu.AngularVelocity.X'
+        self.engine.observations[path]=Observation(.2,pb.OK,100_000_000,'epoch','ROS_TIME')
+        self.engine.last_sent[path]=time.monotonic_ns();self.link.ros_now=200_000_000
+        self.backend.values();self.assertEqual(self.backend.quality(path),pb.OK)
 
     async def test_target_context_preserves_actual_string_map_and_effective_authorization(self):
         context=self.backend.target_context('transport-session')

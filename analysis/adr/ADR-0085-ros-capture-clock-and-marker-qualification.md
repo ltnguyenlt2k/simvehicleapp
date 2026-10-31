@@ -31,3 +31,22 @@ Mapping/context changes require explicit target recording; source/session loss
 never resumes an old run. Verify unit negatives, actual CycloneDDS transport,
 original capture equality, pause/freeze/epoch faults, latest-source Hold/Cancel,
 then native RW-A..D on Brain/MuJoCo. Hardware remains outside these SIM gates.
+
+
+Live boundary clarification: source validity is computed against the provider's
+observed ROS clock. Quality is delivered on a50ms publisher loop; it is not an
+instantaneous globally synchronized flag at the observer's later clock. The
+live test fixes a100ms measured delivery envelope after the1000ms marker expiry
+(50ms publication plus clock/observation/transport scheduling), retains the
+strict source maxAge and records largest delivered-OK age. This is a tested SIM
+envelope, not a hard realtime/network guarantee. The initial zero-propagation
+assertion failed at the boundary and remains retained.
+
+The runtime additionally requests ROS clock/paused state in the same typed Get
+batch and rechecks original capture age at use. Expired captures become UNKNOWN
+even if a last OK flag has not updated. Missing/paused clock cannot make a sensor
+fresh. The exported sim-state clock may lag a current header; provider validation
+remains authoritative for that bounded lag, while captures beyond the clock's
+own maxAge bound remain unknown. Never subtract host and ROS timestamps.
+Four explicit typed-gRPC regressions first failed on the old SDK; installed
+package tests and actual ROS/live generated apps are required before acceptance.

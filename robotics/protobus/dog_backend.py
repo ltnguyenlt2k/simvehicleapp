@@ -54,13 +54,18 @@ class DogBackend:
         return {path: item.value for path, item in self.snapshot.items()}
 
     def quality(self, path):
-        item = self.snapshot.get(path)
-        if not item:
-            return pb.NONE
-        maximum = self.catalog['nodes'][path].get('maxAgeMs', 0)
-        if item.quality == pb.OK and maximum and time.monotonic_ns()-self.capture_received[path] >= maximum*1_000_000:
-            return pb.STALE
-        return item.quality
+        item=self.snapshot.get(path)
+        if not item:return pb.NONE
+        if item.quality!=pb.OK:return item.quality
+        if item.source_epoch!=self.link.protocol.source_epoch or item.source_clock!='ROS_TIME':return pb.NONE
+        maximum=self.catalog['nodes'][path].get('maxAgeMs',0)
+        received=self.capture_received.get(path);host_now=time.monotonic_ns()
+        if received is None or host_now<received:return pb.NONE
+        if maximum and host_now-received>=maximum*1_000_000:return pb.STALE
+        ros_now=self.link.ros_time_ns()
+        if type(ros_now) is not int or not 0<=item.source_time_ns<=ros_now:return pb.NONE
+        if maximum and ros_now-item.source_time_ns>=maximum*1_000_000:return pb.STALE
+        return pb.OK
 
     def sample_metadata(self, path):
         item = self.snapshot[path]

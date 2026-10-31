@@ -1,0 +1,41 @@
+name: sr-t08-test
+x-limits: &limits
+  user: "10001:10001"
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 256m
+  cpus: 2
+services:
+  broker:
+    <<: *limits
+    image: sr-protobus:dev
+    tmpfs: [/tmp, "/data:uid=10001,gid=10001,mode=0700"]
+    command: [python, -m, broker, --catalog, /contracts/fixtures/rss-go2-catalog.v1.json]
+    networks:
+      bus: {aliases: [protobus-live]}
+  ros:
+    <<: *limits
+    image: sr-protobus-ros2:t08
+    environment:
+      ROS_DOMAIN_ID: 52
+      CYCLONEDDS_URI: file:///opt/protobus/profiles/dog-go2-sim/cyclonedds.xml
+    command: [python3, -m, ros_bridge, --catalog, /contracts/fixtures/rss-go2-catalog.v1.json, --bus, "broker:55600", --authorize-sim-arm]
+    networks:
+      dog: {interface_name: eth0}
+      bus: {interface_name: eth1}
+  observer:
+    <<: *limits
+    image: sr-protobus-ros2:t08
+    profiles: [tools]
+    environment:
+      ROS_DOMAIN_ID: 52
+      CYCLONEDDS_URI: file:///opt/protobus/profiles/dog-go2-sim/cyclonedds.xml
+    command: [python3, -m, bridge_tests.live_sensor_equality, --marker]
+    networks:
+      dog: {interface_name: eth0}
+      bus: {interface_name: eth1}
+networks:
+  bus: {internal: true}
+  dog: {external: true, name: dog-ros2-r1_robot}

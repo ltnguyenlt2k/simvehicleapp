@@ -74,20 +74,24 @@ class EngineTests(unittest.TestCase):
         for topic in engine.topics:
             message = fixture[topic]
             if topic.endswith('/state'):
-                stamp = message['issued_at_ns']
+                original=message.get('capture_stamp')
+                stamp=original['sec']*10**9+original['nanosec'] if original else message['issued_at_ns']
                 message = {'data': json.dumps(message)}
             else:
                 stamp = message['header']['stamp']['sec']*10**9+message['header']['stamp']['nanosec']
             engine.receive(topic, message, source_time_ns=stamp, source_epoch='capture-fixture')
-        self.assertEqual(len(engine.observations), 31)
+        self.assertEqual(len(engine.observations), 32)
         unknown = 'Robot.PowerSystem.Battery.IsCharging'
         self.assertEqual(engine.quality(unknown), pb.NONE)
         self.assertIsNone(engine.values()[unknown])
-        self.assertEqual(sum(item.quality == pb.OK for item in engine.observations.values()), 30)
+        self.assertEqual(sum(item.quality == pb.OK for item in engine.observations.values()), 31)
         self.assertAlmostEqual(engine.values()['Robot.PowerSystem.Battery.StateOfCharge'], 92., places=4)
         self.assertEqual(engine.values()['Robot.Pose.Position.X'], fixture['odom']['pose']['pose']['position']['x'])
         self.assertEqual(engine.values()['Robot.Velocity.Linear.X'], fixture['odom']['twist']['twist']['linear']['x'])
         self.assertEqual(engine.values()['Robot.Simulation.TimeNs'], fixture['sim/state']['issued_at_ns'])
+        self.assertEqual(engine.values()['Robot.Perception.Marker.Count'],1)
+        original=fixture['perception/state']['capture_stamp']
+        self.assertEqual(engine.sample_metadata('Robot.Perception.Marker.Count')['source_time_ns'],original['sec']*10**9+original['nanosec'])
         self.assertFalse(profile['allowRemoteArm'])
 
     def setUp(self):
