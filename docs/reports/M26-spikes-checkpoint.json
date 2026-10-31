@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-01",
+  "scope": "M26-T01 local technical spikes; not complete Studio, deploy or final video",
+  "canvas": {
+    "passed": true,
+    "scope": "actual headed Chromium, 200 React Flow custom nodes",
+    "frames": 202,
+    "elapsedMs": 3349.7999999999997,
+    "fps": 60.003582303421105,
+    "keyboardMovedPx": 1.360748291015625,
+    "pointerMovedPx": 98,
+    "nodes": 200,
+    "edges": 200,
+    "resultHandles": 78,
+    "validConnectionAdded": true,
+    "selfConnectionRejected": true
+  },
+  "staticBuild": {
+    "scope": "actual container static TypeScript/Vite build",
+    "elapsedSeconds": 0.838197307,
+    "peakBytes": 317190144,
+    "maxSeconds": 120,
+    "maxBytes": 2147483648
+  },
+  "buildMeasurement": "Actual TypeScript/Vite build after frozen dependencies installed; cgroup memory.peak, not a browser RSS estimate",
+  "supervisorUnit": {
+    "groups": 5,
+    "seconds": 3.248,
+    "result": "PASS",
+    "safetyCallback": "explicitly synthetic unit fixture"
+  },
+  "actualNativeRunner": [
+    {
+      "case": "normal-stop",
+      "passed": true,
+      "scope": "actual native SDK / kinematic mock only",
+      "observedMovingX": 0.0101465732,
+      "observedMovingVelocity": 0.2,
+      "oomKillDelta": 0,
+      "process": {
+        "phase": "STOPPED",
+        "exitCode": 0,
+        "forced": false,
+        "safeResult": {
+          "confirmed": true,
+          "phase": "SUCCEEDED"
+        },
+        "startedMonotonicNs": 3207300927426,
+        "logSequence": 17,
+        "outputError": false
+      },
+      "runtime": {
+        "schema": "rfrt-capabilities.v1",
+        "runtimeVersion": "0.1.0",
+        "packageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+        "protocolVersion": "1.6",
+        "backend": "SIM"
+      }
+    },
+    {
+      "case": "memory-oom",
+      "passed": true,
+      "scope": "actual native SDK / kinematic mock only",
+      "observedMovingX": 0.010900683000000001,
+      "observedMovingVelocity": 0.2,
+      "oomKillDelta": 1,
+      "process": {
+        "phase": "FAILED",
+        "exitCode": -9,
+        "forced": false,
+        "safeResult": {
+          "confirmed": true,
+          "phase": "SUCCEEDED"
+        },
+        "startedMonotonicNs": 3208328784760,
+        "logSequence": 13,
+        "outputError": false
+      },
+      "runtime": {
+        "schema": "rfrt-capabilities.v1",
+        "runtimeVersion": "0.1.0",
+        "packageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+        "protocolVersion": "1.6",
+        "backend": "SIM"
+      }
+    },
+    {
+      "passed": true,
+      "scope": "S-R6 native child prototype",
+      "uid": 10001,
+      "cases": 2,
+      "readOnlyArtifacts": true,
+      "outsideDenied": true,
+      "oppositeModeDenied": true,
+      "controlToFrontListenerDenied": true
+    }
+  ],
+  "images": {
+    "sr-runner:spike": "sha256:b9b90bf250bacb5c101defa3cdd26c7ba1ece0e0b3e3df2ccecf892ee95c1fb9",
+    "sr-studio-web:spike": "sha256:31557b90dafdae7b02133e13dbe92e05fad2a1f1f8e085f7da980c7665cbaed9",
+    "sr-studio-browser:spike": "sha256:ace930d26deab2c7abd58b3b80064c82ecb54401852a64b8d076f0774535d79d"
+  },
+  "runtimePackageHash": "sha256:0e9368acb31a4d3fa443cf728964a84c8b875f1fd9f6273c5f353681a5336b8e",
+  "findings": [
+    "xvfb-run needs an init process for reliable child/signal management in this container.",
+    "Evidence writer uses the Linux caller UID/GID; production runner stays10001.",
+    "Select a node before testing keyboard movement.",
+    "Fresh interpreter applies rlimits before exec; no Python preexec callback after gRPC threads start.",
+    "RLIMIT_NPROC accounts across shared host UID; per-service Docker pids_limit128 provides the tight container bound."
+  ],
+  "open": [
+    "CI for new M26 spikes/dependency audit",
+    "Actual Studio API/control boundaries must be rechecked on final services",
+    "M26 remaining API/editor/Simulate/Test/Run/Zoo/Export tasks",
+    "M27 complex live runs, faults, soak and continuous full video"
+  ],
+  "audits": {
+    "controlPackages": 18,
+    "webLockPackages": 110,
+    "result": "No issues found",
+    "scanner": "ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa"
+  },
+  "compilerHttp": {
+    "groups": 6,
+    "seconds": 2.496,
+    "result": "PASS",
+    "actualTcpBundlesVerified": 4,
+    "generatedCodeExecuted": false
+  }
+}

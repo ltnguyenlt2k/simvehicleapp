@@ -1,0 +1,66 @@
+name: sr-runner-spike
+x-limits: &limits
+  read_only: true
+  user: "10001:10001"
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 256m
+  pids_limit: 128
+  cpus: 2
+services:
+  broker:
+    <<: *limits
+    image: sr-protobus:dev
+    tmpfs: [/tmp, "/data:uid=10001,gid=10001,mode=0700"]
+    networks: {bus: {aliases: [protobus-sim]}}
+    command: [python, -m, broker, --catalog, /contracts/fixtures/rss-go2-catalog.v1.json]
+    healthcheck:
+      test: [CMD, python, -m, health]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+  mock:
+    <<: *limits
+    image: sr-protobus:dev
+    networks: [bus]
+    command: [python, -m, mock, --bus, "protobus-sim:55600", --catalog, /contracts/fixtures/rss-go2-catalog.v1.json]
+    depends_on: {broker: {condition: service_healthy}}
+  runner:
+    <<: *limits
+    image: sr-runner:spike
+    profiles: [tools]
+    init: true
+    networks:
+      control: {interface_name: eth0}
+      bus: {interface_name: eth1}
+    volumes: ["../../runtime/m26/runner-apps:/apps:ro"]
+    command: [python, -m, spikes.probe]
+  guard-api:
+    <<: *limits
+    image: sr-runner:spike
+    networks:
+      front: {interface_name: eth0}
+      control: {interface_name: eth1}
+    command: [python, -m, spikes.network_guard]
+    healthcheck:
+      test: [CMD, python, -m, spikes.network_guard, --check]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+  opposite:
+    <<: *limits
+    image: sr-runner:spike
+    networks: [opposite]
+    command: [python, -m, http.server, "8010", --bind, "0.0.0.0"]
+  front-probe:
+    <<: *limits
+    image: sr-runner:spike
+    profiles: [tools]
+    networks: [front]
+    command: [python, -c, "import urllib.request; assert urllib.request.urlopen('http://guard-api:8010',timeout=2).status==200; print('front-bound listener reachable from intended frontend')"]
+networks:
+  front: {internal: true}
+  opposite: {internal: true}
+  bus: {internal: true}
+  control: {internal: true}

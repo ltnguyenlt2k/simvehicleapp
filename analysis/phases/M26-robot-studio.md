@@ -42,3 +42,7 @@
 ## Amendment 2026-10-29
 
 ADR-0069 is authoritative for integration and review R01–R08. Implementation authorized; no runtime gate has passed yet. M25 compiler/mock gate may proceed after M23; combined live acceptance requires M24. M26 technical gate precedes M27 final UI/video acceptance. CI source artifacts must be available before image gates.
+
+### T01 local technical spikes —2026-11-01
+
+S-R5: actual headed Chromium200 custom nodes/199 initial edges/78 result handles; keyboard and pointer movement, valid connection and rejected self-connection.60.004fps over3.35s. Static TypeScript/Vite build0.838s, cgroup peak317190144bytes after dependency install. S-R6: nonroot supervisor5 groups PASS3.243s; actual installed native SDK drives isolated mock then confirms Stop. Explicit memory pressure produces a real cgroup OOM kill (-9, counter+1), runner survives, independent Stop confirmed and mock velocity zero. Readonly artifacts, concurrent-run refusal, outside/opposite network denial and front-only listener isolation PASS. Fresh limits-exec removes unsafe Python preexec after gRPC threads. Candidate dependencies locked; CI/audit pending. Actual final-service boundary, T02–T10 and final video remain open. See docs/reports/M26-spikes-checkpoint.json.

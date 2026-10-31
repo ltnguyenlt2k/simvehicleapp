@@ -1,0 +1,27 @@
+name: sr-rflowc-http-test
+x-limits: &limits
+  read_only: true
+  tmpfs: [/tmp]
+  user: "10001:10001"
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 256m
+  cpus: 2
+  networks: [front]
+services:
+  compiler:
+    <<: *limits
+    image: sr-rflowc-api:dev
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8012/health',timeout=1).status==200"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+  client:
+    <<: *limits
+    image: sr-runner:spike
+    profiles: [tools]
+    volumes: ["./:/probe:ro"]
+    command: [python, -I, /probe/tcp_probe.py]
+networks:
+  front: {internal: true}

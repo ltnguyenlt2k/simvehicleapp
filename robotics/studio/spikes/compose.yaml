@@ -1,0 +1,26 @@
+name: sr-studio-spike
+x-limits: &limits
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [front]
+services:
+  web:
+    <<: *limits
+    image: sr-studio-web:spike
+    mem_limit: 256m
+    cpus: 1
+    ports: ["127.0.0.1:3180:8080"]
+  browser:
+    <<: *limits
+    init: true
+    user: "${SR_DEV_UID:-1000}:${SR_DEV_GID:-1000}"
+    image: sr-studio-browser:spike
+    mem_limit: 2g
+    cpus: 2
+    profiles: [tools]
+    shm_size: 256m
+    volumes: ["../../runtime/m26:/evidence"]
+networks:
+  front: {internal: true}

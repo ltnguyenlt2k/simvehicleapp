@@ -535,7 +535,7 @@ Chi tiết: [phases/M26](../analysis/phases/M26-robot-studio.md) · ADR [0068](.
 
 | Feature | ADR | Trạng thái | Ghi chú | Task |
 |---|---|---|---|---|
-| Spike S-R5 React Flow, S-R6 runner sandbox | 0068,0087 | 🔄 | Actual headed200 nodes60fps; static build0.838s/303MiB. S-R6 pending | T01 |
+| Spike S-R5 React Flow, S-R6 runner sandbox | 0068,0087 | 🔄 | Local S-R5/S-R6 PASS: headed200 nodes60fps; actual SDK/OOM/safeValue/network denial. CI pending; M26-spikes-checkpoint.json | T01 |
 | studio-api | 0068 | ☐ | | T02 |
 | rflowc service | 0067, 0068 | ☐ | | T03 |
 | runner | 0068 | ☐ | | T04 |

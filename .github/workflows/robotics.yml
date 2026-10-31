@@ -78,6 +78,34 @@ jobs:
           docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s tests -p test_mapping.py -v
           docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s tests -p 'test_dog_*.py' -v
           docker run --rm --network none --cpus 2 --memory 256m --read-only --tmpfs /tmp sr-protobus-ros2:ci python3 -m unittest discover -s bridge_tests -v
+      - name: Nonroot runner process, OOM and mode network spikes
+        run: |
+          mkdir -p robotics/runtime/m26
+          docker build -f robotics/runner/Dockerfile -t sr-runner:spike robotics
+          docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true --memory 256m --pids-limit 128 sr-runner:spike > robotics/runtime/m26/runner-tests-ci.log 2>&1
+          python3 robotics/runner/spikes/qualify.py > robotics/runtime/m26/runner-native-ci.log 2>&1
+      - name: Pure compiler HTTP contracts and installed artifact verification
+        run: |
+          docker build -f robotics/robotflow/service.Dockerfile -t sr-rflowc-api:dev robotics
+          docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true --memory 256m sr-rflowc-api:dev python -m unittest discover -s service_tests -v > robotics/runtime/m26/compiler-http-ci.log 2>&1
+          python3 robotics/robotflow/service_tests/qualify.py > robotics/runtime/m26/compiler-http-tcp-ci.log 2>&1
+      - name: Static React Flow 200-node headed browser spike
+        run: |
+          export SR_DEV_UID="$(id -u)" SR_DEV_GID="$(id -g)"
+          docker build --target builder -t sr-studio-web-builder:spike robotics/studio/web
+          docker build -t sr-studio-web:spike robotics/studio/web
+          docker build -f robotics/studio/web/browser.Dockerfile -t sr-studio-browser:spike robotics/studio/web
+          docker compose -f robotics/studio/spikes/compose.yaml up -d web
+          docker compose -f robotics/studio/spikes/compose.yaml --profile tools run --rm browser > robotics/runtime/m26/canvas-ci.log 2>&1
+      - name: Stop only Studio spike services
+        if: always()
+        run: docker compose -f robotics/studio/spikes/compose.yaml down
+      - name: Retain Studio and runner spike failures and measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: robotics-studio-spikes
+          path: robotics/runtime/m26/
       - name: Scan the independent robot stack dependency locks
         run: |
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rss/requirements.txt
@@ -87,3 +115,5 @@ jobs:
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/robotflow/requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rfrt/requirements.txt
           docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/rfrt/build-requirements.txt
+          docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/studio/control-requirements.txt
+          docker run --rm -v "$PWD":/src:ro ghcr.io/google/osv-scanner@sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa scan source --lockfile=/src/robotics/studio/web/package-lock.json
