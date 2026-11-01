@@ -1,7 +1,8 @@
 # Optional overlay (ADR-0068 §2): lets the studio BFF reach robotics-control of the robotics stack (compose project
 # "sr", robotics/compose.yaml). Only the internal network sr-gui-v1 is shared; no code or image is shared.
+# Not a module fragment: it lives outside compose*.yaml so the root include list and compose-lint ignore it.
 #   docker compose -p simvehicleapp --env-file .env -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml \
-#     -f modules/simvehicleapp-studio/compose.robotics.yaml up -d studio
+#     -f modules/simvehicleapp-studio/overlays/robotics.yaml up -d studio
 services:
   studio:
     environment:

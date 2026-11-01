@@ -32,7 +32,7 @@
 | Deploy | Deploy targets (ADR-0060) | Deploy robot = gắn build bất biến với target `mock`/`ros-sim` đã quan sát; nút *Mở Robot Zoo* (tab mới, chỉ để xem 3D) |
 | BFF | `app/api/sv/*`, `lib/sv/api-client.ts` (`SV_SERVICES`) | `app/api/sv/robotics/{catalog,blocks,lint,builds,deployments,runs,scenarios}`; service mới `robotics` (env `SV_ROBOTICS_URL`) và `robotflow` (`SV_ROBOTFLOW_URL`) trong `lib/core/config/env.ts`; mọi route kiểm session + quyền workspace/workflow như route xe |
 | Trợ lý AI | `modules/simvehicleapp-ai/src/{tools.ts,prompt.ts,patch.ts}` | Tool theo miền: `rss_search`, `rss_get_signal`, `robot_blocks_list`, `robot_validate`, `robot_scenario_propose`, `robot_scenario_run` (chỉ `mock`). `workflow_propose_patch` mang `domain`. **Không có tool Arm/Start/Stop/setpoint cho robot** |
-| Compose | `modules/simvehicleapp-studio/compose.simvehicleapp.yaml` | Overlay tuỳ chọn `compose.robotics.yaml`: gắn service `studio` vào network external `sr-gui` và đặt URL robotics. Stack robotics là compose project riêng `sr` |
+| Compose | `modules/simvehicleapp-studio/compose.simvehicleapp.yaml` | Overlay tuỳ chọn `overlays/robotics.yaml`: gắn service `studio` vào network external `sr-gui` và đặt URL robotics. Stack robotics là compose project riêng `sr` |
 
 ## 3. Luồng người dùng
 

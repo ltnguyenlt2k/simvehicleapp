@@ -29,7 +29,7 @@ COMPOSE_PROFILES=ros robotics/scripts/sr up
 
 ```bash
 # studio kèm overlay robotics (studio vào mạng sr-gui-v1, gọi robotics-control qua x-sv-internal)
-docker compose -p simvehicleapp --env-file .env -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml -f modules/simvehicleapp-studio/compose.robotics.yaml up -d studio
+docker compose -p simvehicleapp --env-file .env -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml -f modules/simvehicleapp-studio/overlays/robotics.yaml up -d studio
 ```
 
 Biến môi trường:

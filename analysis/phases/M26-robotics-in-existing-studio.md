@@ -13,7 +13,7 @@
 | T03 | Snapshot `rf-block-specs.json` + factory `blocks/robot/` + parity CI + palette lọc theo miền | studio | T01, M25-T02 | Parity PASS; toolbar xe giữ nguyên |
 | T04 | `robot-graph-adapter.ts` thuần + golden + từ chối trộn miền | studio | T03 | Golden round-trip |
 | T05 | `robotics/control` (build bất biến, deploy, runs Start/Stop/SSE, scenarios; chỉ nhận header nội bộ) + `robotics/runner` (không root, mode network tách) + compose | robotics | M25 | Unit/HTTP; runner từ chối artifact sai hash |
-| T06 | BFF `/api/sv/robotics/*` + service `robotics`/`robotflow` trong `api-client`/env + overlay `compose.robotics.yaml` | studio | T05 | 401/403/404; không route nhận URL/code từ client |
+| T06 | BFF `/api/sv/robotics/*` + service `robotics`/`robotflow` trong `api-client`/env + overlay `overlays/robotics.yaml` | studio | T05 | 401/403/404; không route nhận URL/code từ client |
 | T07 | RSS path selector + Problems `RF*` + quick-fix | studio | T04, T06 | Vitest + E2E mock |
 | T08 | Test tab robot (scenario trên mock) | studio | T06 | E2E: PASS và FAIL có lý do |
 | T09 | Build/Deploy + Run dock (Start xác nhận, Stop luôn hiện, Flow, Signals ≤ 10 Hz, Console) + nút *Mở Robot Zoo* | studio | T06 | E2E mock + đo long task |

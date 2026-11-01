@@ -13,7 +13,7 @@
   - service `robotics-control` (lint/build/deploy/run/stop).
 - **Studio:**
   - miền Robot: 17 block `rf_*`, toolbar lọc theo miền, thanh Robot (Build/Deploy/Start/Stop/Robot Zoo), panel Kiểm tra/Chạy;
-  - BFF `/api/sv/robotics/*`, overlay `compose.robotics.yaml`;
+  - BFF `/api/sv/robotics/*`, overlay `overlays/robotics.yaml`;
   - cho phép chu trình chỉ giữa block robot.
 - **Build studio trên máy yếu:** `SV_NEXT_BUILD_CPUS` (mặc định 4) và `staticPageGenerationTimeout` 180 s.
 - **Video full luồng thật** `docs/media/robotics/robot-full-flow.mp4` + manifest. Quay lại bằng `robotics/scripts/video/run.sh`.
