@@ -6,10 +6,17 @@ DEV_IMAGE="robotics/python-dev:local"
 dev() { docker run --rm --network none -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$ROOT":/w -w /w "$DEV_IMAGE" "$@"; }
 case "${1:-}" in
   build-dev) docker build -q --target dev -t "$DEV_IMAGE" -f "$ROOT/tools/python.Dockerfile" "$ROOT" ;;
+  build)
+    docker build -q --target base -t robotics/python-base:local -f "$ROOT/tools/python.Dockerfile" "$ROOT"
+    docker build -q --target dev -t "$DEV_IMAGE" -f "$ROOT/tools/python.Dockerfile" "$ROOT"
+    docker build -q -t robotics/protobus:local -f "$ROOT/protobus/Dockerfile" "$ROOT" ;;
+  up) shift; docker compose -f "$ROOT/compose.yaml" up -d --wait "$@" ;;
+  down) docker compose -f "$ROOT/compose.yaml" down ;;
+  pbctl) shift; docker compose -f "$ROOT/compose.yaml" run --rm -T pbctl "$@" ;;
   test) shift; dev python -m pytest -q -p no:cacheprovider "${@:-.}" ;;
   py) shift; dev python "$@" ;;
   rssc) shift; dev python -m rss.rssc "$@" ;;
   precheck) python3 "$ROOT/scripts/precheck.py" ;;
   compose) shift; docker compose -f "$ROOT/compose.yaml" "$@" ;;
-  *) sed -n '2,3p' "$0"; echo "usage: sr build-dev|test [paths]|py|rssc|precheck|compose ..."; exit 2 ;;
+  *) sed -n '2,3p' "$0"; echo "usage: sr build|build-dev|up [svc]|down|pbctl ...|test [paths]|py|rssc|precheck|compose ..."; exit 2 ;;
 esac

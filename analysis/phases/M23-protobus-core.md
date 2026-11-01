@@ -20,6 +20,9 @@ Broker tín hiệu RSS chạy độc lập: các ngữ nghĩa setpoint TTL, leas
 | T08 | Image, compose service `protobus-broker`, `protobus-mock` (giới hạn RAM/CPU), healthcheck | robotics | T05–T06 | Compose valid; khởi động < 10 s |
 | T09 | Gate + báo cáo M23 | docs | T01–T08 | `docs/reports/M23.md` |
 
+## Trạng thái (2026-11-01)
+T01–T09 ✔ — gate PASS, [báo cáo](../../docs/reports/M23.md).
+
 ## Acceptance Gate
 - Toàn bộ unit/contract PASS trên CI.
 - Benchmark lặp lại S-R2 trên broker thật vẫn đạt ADR-0070.

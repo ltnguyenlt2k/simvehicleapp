@@ -124,3 +124,4 @@ sequenceDiagram
 
 - 2026-11-01 (M22 S-R1): bridge ngoài compose dog nhận odom 50,04 Hz qua CycloneDDS unicast với peer list riêng; không cần sửa peer phía dog cho node đang chạy (kiểm lại chiều writer→Brain ở M24).
 - 2026-11-01 (M22 S-R2): broker Python asyncio + grpcio 1.84.1, 1 CPU: p95 2,43 ms, 0,198 core, 41,8 MiB ⇒ giữ Python. Làn Stop: service `SafetyLane` riêng; provider giữ stream `AttachProvider` riêng để lệnh dừng không đi qua `Provider.Attach`.
+- 2026-11-01 (M23): **SafetyLane chuyển sang server gRPC đồng bộ** (thread pool riêng) — `grpc.aio` trên loop thứ hai vẫn phụ thuộc loop chính (treo khi loop chính bị chặn). Stop dưới tải container p99 15,5 ms. Lease: mọi lần dùng hợp lệ gia hạn; client phải renew (TTL 1 s). Lease hết ⇒ command `CANCELLED PB1406` ngay, robot nhận cancel bất đồng bộ. `Events` RPC chưa dùng ở v0.1 (UNIMPLEMENTED); sự kiện đi dưới dạng sample.

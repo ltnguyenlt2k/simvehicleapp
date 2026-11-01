@@ -76,6 +76,91 @@
    "severity": "error",
    "stage": "rss",
    "message": "A safety-lane command must not have a REJECTED result."
+  },
+  "PB1001": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Provider catalog hash differs from the broker catalog."
+  },
+  "PB1002": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Provider claims a path that is not a leaf of the catalog."
+  },
+  "PB1003": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Provider claims a path already owned by another provider."
+  },
+  "PB1101": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Unknown RSS path."
+  },
+  "PB1102": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Operation does not match the node kind (e.g. setpoint on a sensor)."
+  },
+  "PB1201": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "A valid control lease is required (missing, wrong or expired)."
+  },
+  "PB1202": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Control is already held by another client."
+  },
+  "PB1301": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Setpoint fields invalid: missing, extra or non-finite values."
+  },
+  "PB1302": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Setpoint value outside the catalog range."
+  },
+  "PB1401": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Command arguments invalid for the catalog definition."
+  },
+  "PB1402": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Duplicate command request_id."
+  },
+  "PB1403": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "No provider serves this path."
+  },
+  "PB1404": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Provider disconnected while the command was active."
+  },
+  "PB1405": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Command timed out (catalog timeoutMs)."
+  },
+  "PB1406": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Command cancelled because the control lease ended."
+  },
+  "PB1501": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "Stop was not confirmed by the robot within the catalog timeout."
+  },
+  "PB1502": {
+   "severity": "error",
+   "stage": "protobus",
+   "message": "No provider is attached to the safety lane."
   }
  }
 }

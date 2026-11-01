@@ -1,0 +1,48 @@
+{
+ "brokerForwarding50Hz": {
+  "rate": 2000,
+  "subscribers": 20,
+  "seconds": 30.0,
+  "paths": 86,
+  "sent": 58000,
+  "delivered": 1160380,
+  "laggedBatches": 0,
+  "droppedAtProvider": 0,
+  "latencyMs": {
+   "p50": 1.94,
+   "p95": 3.14,
+   "p99": 6.32,
+   "max": 125.22
+  }
+ },
+ "brokerThrottled20Hz": {
+  "rate": 2000,
+  "subscribers": 20,
+  "seconds": 30.0,
+  "paths": 86,
+  "sent": 58000,
+  "delivered": 972594,
+  "laggedBatches": 0,
+  "droppedAtProvider": 0,
+  "latencyMs": {
+   "p50": 22.42,
+   "p95": 44.5,
+   "p99": 50.3,
+   "max": 110.3
+  }
+ },
+ "brokerCpuCores": {
+  "forwarding50Hz": 0.302,
+  "throttled20Hz": 0.316
+ },
+ "brokerMemPeakMiB": 47.4,
+ "stopUnderLoad": {
+  "stops": 60,
+  "p50": 3.22,
+  "p99": 15.53,
+  "max": 20.67
+ },
+ "stopInProcessTestP99Ms": 43.98,
+ "reattachAfterBrokerRestartS": 4.55,
+ "tests": "51 passed (rss 40 + protobus 11), twice for protobus"
+}

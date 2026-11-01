@@ -67,7 +67,7 @@
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--robotics-nền--rss-v01--spike) | Robotics: nền `robotics/` + RSS v0.1 + spike S-R1…S-R4 | 0064, 0065, 0070 (Accepted 2026-11-01) | ✔ | 9/10 ✔ + S-R3 ↷ M26-T01 — gate PASS 2026-11-01 ([báo cáo](reports/M22.md)) |
-| [M23](#m23--protobus-core) | Protobus core: broker, SafetyLane, mock | 0066, 0069 (Accepted 2026-11-01) | ☐ | 0/9 |
+| [M23](#m23--protobus-core) | Protobus core: broker, SafetyLane, mock | 0066, 0069 (Accepted 2026-11-01) | ✔ | 9/9 ✔ — gate PASS 2026-11-01: forwarding p95 3,14 ms, Stop p99 15,5 ms dưới tải ([báo cáo](reports/M23.md)) |
 | [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Accepted 2026-11-01) | ☐ | 0/9 |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Accepted 2026-11-01) | ☐ | 0/10 |
 | [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | ☐ | 0/12 |
@@ -496,10 +496,10 @@ Yêu cầu và truy vết R1–R7: [design §0](design/robotics/README.md#0-yêu
 
 | Feature | Task | Trạng thái |
 |---|---|---|
-| Proto `protobus.v1` + mã `PB*` | T01 | ☐ |
-| Get/Subscribe, lease, setpoint TTL, command lifecycle | T02–T04 | ☐ |
-| SafetyLane | T05 | ☐ |
-| Provider mock + scenario, `pbctl`, compose | T06–T08 | ☐ |
+| Proto `protobus.v1` + mã `PB*` | T01 | ✔ |
+| Get/Subscribe, lease, setpoint TTL, command lifecycle | T02–T04 | ✔ |
+| SafetyLane | T05 | ✔ |
+| Provider mock + scenario, `pbctl`, compose | T06–T08 | ✔ |
 
 ## M24 — Protobus ROS 2 bridge + dog
 [phase](../analysis/phases/M24-protobus-ros2-bridge-dog.md) · ADR-0066, 0069 · cần dog R4 W1/W4

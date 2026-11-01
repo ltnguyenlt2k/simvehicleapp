@@ -82,3 +82,4 @@ flowchart LR
 ## Notes / Deviations
 
 - 2026-11-01 (M22): S-R2 PASS (số ở ADR-0066 Notes). S-R4 PASS: recorder 0,463 core, camera Robot Zoo giảm 0,4 %. **S-R3 chuyển sang M26-T01** vì cần stack studio + block `rf_*`; không ảnh hưởng quyết định M23–M25.
+- 2026-11-01 (M23): ngân sách "broker p95 < 20 ms" là **độ trễ chuyển tiếp** (subscriber không bị giới hạn tần số): đo 3,14 ms. Khi path cập nhật nhanh hơn `max_rate_hz` của subscriber, độ trễ gồm thời gian giữ latest-wins có chủ đích (≤ 1 chu kỳ, ví dụ 50 ms ở 20 Hz). Broker thật 1 CPU: 0,30 core, 47 MiB ở 2.000 cập nhật/s × 20 subscriber.

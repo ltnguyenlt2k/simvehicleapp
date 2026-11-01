@@ -1,20 +1,62 @@
 # Robotics stack (compose project "sr"), independent from the vehicle compose (ADR-0064).
-# Services are added per milestone; every service has memory/CPU/pids limits (ADR-0070).
+# Every service: read-only root, no capabilities, memory/CPU/pids limits (ADR-0070). Ports bind 127.0.0.1 only.
 name: sr
 x-limits: &limits
   read_only: true
   tmpfs: [/tmp]
   cap_drop: [ALL]
   security_opt: [no-new-privileges:true]
+  init: true
   pids_limit: 64
+  restart: unless-stopped
 services:
+  protobus-broker:
+    <<: *limits
+    image: robotics/protobus:local
+    command: [python, -m, protobus.broker.main]
+    environment: { PB_AUDIT_DIR: /audit }
+    volumes: ["pb-audit:/audit"]
+    networks: [bus]
+    mem_limit: 192m
+    cpus: 1.0
+    healthcheck:
+      test: [CMD, python, -m, protobus.pbctl, --broker, "127.0.0.1:55500", health]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  protobus-mock:
+    <<: *limits
+    image: robotics/protobus:local
+    command: [python, -m, protobus.mock.provider, --broker, "protobus-broker:55500", --safety, "protobus-broker:55501"]
+    networks: [bus]
+    mem_limit: 128m
+    cpus: 0.5
+    depends_on: { protobus-broker: { condition: service_healthy } }
+    healthcheck:
+      test: [CMD, python, -c, "import json,urllib.request;assert json.load(urllib.request.urlopen('http://127.0.0.1:8070/health',timeout=2))['ready']"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  pbctl:
+    <<: *limits
+    profiles: [tools]
+    restart: "no"
+    image: robotics/protobus:local
+    entrypoint: [python, -m, protobus.pbctl, --broker, "protobus-broker:55500", --safety, "protobus-broker:55501"]
+    networks: [bus]
+    mem_limit: 96m
+    cpus: 0.5
   dev:
     <<: *limits
     profiles: [tools]
+    restart: "no"
     image: robotics/python-dev:local
-    build: { context: ., dockerfile: tools/python.Dockerfile, target: dev }
     network_mode: none
     mem_limit: 512m
     cpus: 2
     volumes: [".:/w"]
     command: [python, -m, pytest, -q, -p, no:cacheprovider]
+volumes:
+  pb-audit: { name: sr-pb-audit-v1 }
+networks:
+  bus: { name: sr-bus-v1, internal: true }
