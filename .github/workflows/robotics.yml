@@ -39,8 +39,9 @@ jobs:
       - name: Studio snapshot of the block registry is current (ADR-0068 parity)
         run: |
           robotics/scripts/sr py scripts/studio_snapshot.py
-          diff robotics/runtime/studio-snapshot/rf-registry.json modules/simvehicleapp-studio/apps/sim/blocks/robot/rf-registry.json
+          # Compared as JSON: the studio copy is formatted by the studio's Biome, the content must be identical.
+          python3 -c 'import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:]); sys.exit(a!=b)' robotics/runtime/studio-snapshot/rf-registry.json modules/simvehicleapp-studio/apps/sim/blocks/robot/rf-registry.json
       - name: Unit and contract tests
         run: robotics/scripts/sr test
       - name: Compose files are valid
-        run: docker compose -f robotics/compose.yaml config -q
+        run: INTERNAL_API_SECRET=ci-only docker compose -f robotics/compose.yaml config -q
