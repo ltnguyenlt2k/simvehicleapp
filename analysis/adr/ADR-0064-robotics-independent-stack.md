@@ -1,5 +1,7 @@
 # ADR-0064: Robotics là một stack độc lập trong `robotics/`, viết từ đầu, không dùng lại code, contract hay hạ tầng của stack xe
 
+> **GUI correction2026-11-01:** the user requires the existing SimVehicleApp GUI. Standalone-GUI and UI-reuse prohibitions below are superseded by [ADR0089](../../analysis/adr/ADR-0089-shared-simvehicleapp-gui-independent-robotics-layers.md). Backend layer independence remains required.
+
 - **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28 theo đính chính của PO
 - **Level:** L0 System

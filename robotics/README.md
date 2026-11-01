@@ -51,3 +51,5 @@ Native developer workflow CLI: `sr build FLOW.json --out NAME`, explicit `sr tar
 ## Robot Studio
 
 `bash robotics/scripts/sr studio build --live` rồi `studio up --live --authorize-sim-arm`. Hướng dẫn đầy đủ: [Robot Studio trong WSL](../docs/user-guide/robotics/README.md). `sr demo-video --out video-new-run` ghi toàn luồng qua các tab bằng X11.
+
+> GUI correction2026-11-01: the standalone Robot Studio and its recording were rejected. The feature is being integrated into the existing SimVehicleApp GUI; see ADR0089. The older MP4 is prototype evidence only.

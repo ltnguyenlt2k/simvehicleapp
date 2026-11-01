@@ -1,5 +1,7 @@
 # ADR-0068: Robot Studio là web app mới (React + React Flow, FastAPI, runner sandbox); Simulate/Test chạy app thật trên broker sim + mock, Run trên broker live; mẫu kịch bản RW-A..RW-D
 
+> **GUI correction2026-11-01:** the user requires the existing SimVehicleApp GUI. Standalone-GUI and UI-reuse prohibitions below are superseded by [ADR0089](../../analysis/adr/ADR-0089-shared-simvehicleapp-gui-independent-robotics-layers.md). Backend layer independence remains required.
+
 - **Status:** Accepted — PO authorized implementation 2026-10-29; acceptance gates remain open
 - **Date:** 2026-10-27, viết lại 2026-10-28
 - **Level:** L1 Subsystem

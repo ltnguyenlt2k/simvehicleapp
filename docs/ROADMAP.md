@@ -1,3 +1,5 @@
+> **Authoritative GUI correction2026-11-01:** robotics must use the existing SimVehicleApp GUI with independent execution layers. M26/M27 product acceptance is reopened; the separate Robot Studio video is rejected. See [ADR0089](../analysis/adr/ADR-0089-shared-simvehicleapp-gui-independent-robotics-layers.md).
+
 # ROADMAP.md — Theo dõi tiến độ SimVehicleApp (nguồn: 34 ADR + `analysis/phases/*`)
 
 > File này là **bảng tracking sống** (cập nhật liên tục khi code), khác với [`analysis/13-implementation-roadmap.md`](../analysis/13-implementation-roadmap.md) (kế hoạch tổng, ít đổi) và `analysis/phases/M<nn>-*.md` (chi tiết task/DoD/Gate từng milestone, ít đổi). Khi một **feature** dưới đây hoàn thành thật (có test/bằng chứng, không phải "nghĩ là xong"), đổi trạng thái ngay trong PR đóng task đó.
@@ -68,7 +70,7 @@
 | [M23](#m23--protobus-core) | Protobus core: wire protocol, broker, provider mock | 0066, 0069–0074 Accepted | ✔ | T01–T09 scoped gate PASS at 62529137; Robotics CI 40896228193; [report](reports/M23.md); general CI queued |
 | [M24](#m24--protobus-bridge-ros-2--adapter-dog) | Protobus bridge ROS 2 + dog adapter (live) | 0066, 0069, 0075 Accepted | ✔ | Scoped technical PASS: actual ROS commands/faults, 21-path equality, 1800 s/four-client soak, refresh expiry 0.294 s; 350f2ca8 CI green; workflow/UI/final video remain M25–M27 |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow registry/compiler/codegen/runtime | 0067,0069,0076–0085 | 🔄 | T01–T07 implemented/CI edff6d7f PASS; fresh Ubuntu broker147/compiler38/runtime58 and12-case conformance twice PASS. T08 ROS/CLI in progress; GUI/video OPEN |
-| [M26](#m26--robot-studio) | Robot Studio + immutable deploy + explicit Robot Zoo launch | 0068, 0069 Accepted | ✅ | 10/10; Robotics41237828598 PASS at323bbb28; final services use its verified images |
+| [M26](#m26--robot-studio) | Existing SimVehicleApp GUI + robotics interfaces + Robot Zoo launch | 0089 supersedes GUI direction | 🔄 | GUI acceptance reopened by user correction; backend CI remains technical evidence |
 | [M27](#m27--robotics-e2e-live-video-tài-liệu) | Complex live E2E, full video, docs, baseline | 0064–0070 Accepted | ☐ | 0/6; RW-E journey fixed in acceptance design |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
@@ -610,3 +612,7 @@ M25-T08 checkpoint 2026-10-31: 165 provider/62 installed-runtime/38 compiler/9 a
 M25-T08 local native gate2026-10-31: RW-A/B/C/D all pass on mock and actual ROS/MuJoCo; six patrol goals, physical lift/BOW/JUMP/CROUCH,5s low-battery debounce, confirmed Stop and stale-target refusal observed. Stop watcher race fixed with63 installed-wheel groups and conformance12/12 twice75.514/97.366s. Candidate CI and T09 closure pending. M26/M27 and continuous video remain OPEN.
 
 2026-11-01: M25 scoped native technical gate closed after Robotics41210272380 SUCCESS. General CI for that commit was cancelled, not a pass. M26 S-R5 headed200-node canvas passes60fps; S-R6 and the complete Studio/deploy/continuous-video acceptance remain open. Canonical work moved to WSL /home/lenovo/02_Projects; see reports/M25.md.
+
+## Existing GUI correction — ADR0089
+
+I01 inspect existing GUI/persistence/AI/realtime/deploy → I02 typed domain and lossless graph adapter → I03 existing canvas/palette/RSS/lint → I04 existing projects/build/test/run/deploy and assistant → I05 actual existing-GUI E2E and replacement MP4. All gates OPEN; no standalone frontend accepted.

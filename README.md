@@ -283,3 +283,5 @@ RobotFlow runtime developer preview: [installed wheel and CLI checks](robotics/r
 ## Robot Studio và Dog simulation
 
 Giao diện workflow robotics độc lập: [hướng dẫn WSL](docs/user-guide/robotics/README.md), [module robotics](robotics/README.md), [video MP4 toàn luồng](robotics/docs/media/robotics-full-flow-final.mp4). Video37 bước chạy trên image đã qua CI, mở Robot Zoo, Start runtime ROS2/MuJoCo, xác nhận chuyển động và Stop.
+
+> GUI correction2026-11-01: the standalone Robot Studio and its recording were rejected. The feature is being integrated into the existing SimVehicleApp GUI; see ADR0089. The older MP4 is prototype evidence only.
