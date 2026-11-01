@@ -3,9 +3,9 @@ name: robotics
 on:
   push:
     branches: [main]
-    paths: ["robotics/**", ".github/workflows/robotics.yml"]
+    paths: ["robotics/**", "modules/simvehicleapp-studio/apps/sim/blocks/robot/**", ".github/workflows/robotics.yml"]
   pull_request:
-    paths: ["robotics/**", ".github/workflows/robotics.yml"]
+    paths: ["robotics/**", "modules/simvehicleapp-studio/apps/sim/blocks/robot/**", ".github/workflows/robotics.yml"]
 permissions:
   contents: read
 concurrency:
@@ -36,6 +36,10 @@ jobs:
         run: |
           robotics/scripts/sr rssc docs --profile dog-go2-sim --out runtime/ci/docs
           diff -r robotics/runtime/ci/docs docs/reference/rss
+      - name: Studio snapshot of the block registry is current (ADR-0068 parity)
+        run: |
+          robotics/scripts/sr py scripts/studio_snapshot.py
+          diff robotics/runtime/studio-snapshot/rf-registry.json modules/simvehicleapp-studio/apps/sim/blocks/robot/rf-registry.json
       - name: Unit and contract tests
         run: robotics/scripts/sr test
       - name: Compose files are valid

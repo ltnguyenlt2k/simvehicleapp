@@ -37,6 +37,22 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  robotics-control:
+    <<: *limits
+    image: robotics/control:local
+    environment:
+      RC_INTERNAL_SECRET: ${INTERNAL_API_SECRET:?set INTERNAL_API_SECRET in the root .env (scripts/sv init)}
+      RC_ZOO_URL: ${SR_ZOO_URL:-http://127.0.0.1:8090}
+    volumes: ["rc-data:/data"]
+    networks: [bus, bus-ros, gui]
+    mem_limit: 512m
+    cpus: 1.5
+    pids_limit: 256
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request;urllib.request.urlopen('http://127.0.0.1:4600/healthz',timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   # ---- ros mode: an independent broker + the ROS 2 bridge, joined to the dog robot's DDS network (profile "ros")
   protobus-broker-ros:
     <<: *limits
@@ -102,7 +118,9 @@ services:
 volumes:
   pb-audit: { name: sr-pb-audit-v1 }
   pb-audit-ros: { name: sr-pb-audit-ros-v1 }
+  rc-data: { name: sr-rc-data-v1 }
 networks:
   bus: { name: sr-bus-v1, internal: true }
   bus-ros: { name: sr-bus-ros-v1, internal: true }
+  gui: { name: sr-gui-v1, internal: true }  # studio BFF ↔ robotics-control only
   dog: { name: "${SR_DOG_NETWORK:-dog-ros2_robot}", external: true }

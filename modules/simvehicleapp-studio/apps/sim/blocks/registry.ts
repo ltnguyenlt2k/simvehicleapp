@@ -38,6 +38,8 @@ import type {
   BlockTemplate,
   SuggestedSkill,
 } from '@/blocks/types'
+// SV: SimVehicleApp robot-domain blocks (ADR-0068)
+import { SV_ROBOT_BLOCKS } from '@/blocks/robot'
 // SV: SimVehicleApp vehicle blocks (ADR-0011 §3)
 import { SV_VEHICLE_BLOCKS } from '@/blocks/vehicle'
 
@@ -81,6 +83,8 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   workflow_input: WorkflowInputBlock,
   // SV: SimVehicleApp vehicle blocks (ADR-0011 §3)
   ...SV_VEHICLE_BLOCKS,
+  // SV: SimVehicleApp robot-domain blocks (ADR-0068)
+  ...SV_ROBOT_BLOCKS,
 }
 
 /**

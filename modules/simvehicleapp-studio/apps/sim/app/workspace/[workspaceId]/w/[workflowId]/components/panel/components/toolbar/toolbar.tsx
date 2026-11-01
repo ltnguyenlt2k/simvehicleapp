@@ -31,6 +31,7 @@ import { usePermissionConfig } from '@/hooks/use-permission-config'
 import { useSandboxBlockConstraints } from '@/hooks/use-sandbox-block-constraints'
 import { useToolbarStore } from '@/stores/panel'
 import type { ToolbarSectionKey } from '@/stores/panel/toolbar/store'
+import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 interface BlockItem {
   name: string
@@ -415,9 +416,29 @@ export const Toolbar = memo(
 
     const { handleDragStart, handleItemClick } = useToolbarItemInteractions()
 
-    const allTriggers = getTriggers()
-    const allBlocks = getBlocks()
-    const allTools = getTools()
+    /**
+     * SV: the palette follows the workflow's domain (ADR-0068 §1): robot blocks (`rf_*`) and vehicle blocks never mix.
+     * An empty workflow offers both; the first block chosen decides.
+     */
+    const svDomain = useWorkflowStore((state) => {
+      const types = Object.values(state.blocks).map((block) => block.type)
+      if (types.some((type) => type.startsWith('rf_'))) return 'robot'
+      if (types.some((type) => type.startsWith('sv_') || type === 'loop' || type === 'parallel'))
+        return 'vehicle'
+      return null
+    })
+    const inDomain = useCallback(
+      (block: { type: string }) =>
+        svDomain === 'robot'
+          ? block.type.startsWith('rf_') || block.type === 'note'
+          : svDomain === 'vehicle'
+            ? !block.type.startsWith('rf_')
+            : true,
+      [svDomain]
+    )
+    const allTriggers = useMemo(() => getTriggers().filter(inDomain), [inDomain])
+    const allBlocks = useMemo(() => getBlocks().filter(inDomain), [inDomain])
+    const allTools = useMemo(() => getTools().filter(inDomain), [inDomain])
 
     const visibleTriggers = useMemo(() => {
       if (sandboxAllowedBlocks !== null) return []

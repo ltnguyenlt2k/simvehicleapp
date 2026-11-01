@@ -1,0 +1,1202 @@
+{
+  "schema": "rf-studio-snapshot.v1",
+  "profile": "dog-go2-sim",
+  "catalogHash": "sha256:9ae3eaa7726c38060615a8484ca46e2752841e0e65eae0b69d077a50f02a6ef8",
+  "registryVersion": 1,
+  "blocks": [
+    {
+      "id": "rf.on_start",
+      "category": "trigger",
+      "title": {
+        "vi": "Khi bắt đầu",
+        "en": "On start"
+      },
+      "description": {
+        "vi": "Chạy một lần khi workflow được Start.",
+        "en": "Runs once when the workflow starts."
+      },
+      "props": [],
+      "outputs": ["next"]
+    },
+    {
+      "id": "rf.on_condition",
+      "category": "trigger",
+      "title": {
+        "vi": "Khi điều kiện đúng",
+        "en": "When condition"
+      },
+      "description": {
+        "vi": "Kích hoạt khi điều kiện đúng liên tục trong thời gian giữ, với dữ liệu mới.",
+        "en": "Fires when the condition holds continuously with fresh data."
+      },
+      "props": [
+        {
+          "name": "when",
+          "type": "condition",
+          "required": true,
+          "default": "Robot.Perception.Marker.IsDetected == true",
+          "title": {
+            "vi": "Điều kiện",
+            "en": "Condition"
+          }
+        },
+        {
+          "name": "forMs",
+          "type": "duration",
+          "required": true,
+          "default": 0,
+          "min": 0,
+          "max": 600000,
+          "title": {
+            "vi": "Giữ trong (ms)",
+            "en": "Hold for (ms)"
+          }
+        },
+        {
+          "name": "repeat",
+          "type": "boolean",
+          "required": true,
+          "default": false,
+          "title": {
+            "vi": "Lặp lại khi đúng lần nữa",
+            "en": "Fire again after it turns false"
+          }
+        }
+      ],
+      "outputs": ["next"]
+    },
+    {
+      "id": "rf.every",
+      "category": "trigger",
+      "title": {
+        "vi": "Mỗi chu kỳ",
+        "en": "Every"
+      },
+      "description": {
+        "vi": "Kích hoạt định kỳ; bỏ qua nếu lần trước chưa xong.",
+        "en": "Fires periodically; skipped while the previous run is busy."
+      },
+      "props": [
+        {
+          "name": "periodMs",
+          "type": "duration",
+          "required": true,
+          "default": 1000,
+          "min": 100,
+          "max": 3600000,
+          "title": {
+            "vi": "Chu kỳ (ms)",
+            "en": "Period (ms)"
+          }
+        }
+      ],
+      "outputs": ["next"]
+    },
+    {
+      "id": "rf.if",
+      "category": "flow",
+      "title": {
+        "vi": "Nếu / Không thì",
+        "en": "If / Else"
+      },
+      "description": {
+        "vi": "Chọn nhánh theo điều kiện; dữ liệu cũ thì chờ tối đa 1 s rồi dừng nhánh an toàn.",
+        "en": "Chooses a branch; stale data waits up to 1 s then ends the branch safely."
+      },
+      "props": [
+        {
+          "name": "when",
+          "type": "condition",
+          "required": true,
+          "default": "Robot.PowerSystem.Battery.StateOfCharge >= 20 %",
+          "title": {
+            "vi": "Điều kiện",
+            "en": "Condition"
+          }
+        }
+      ],
+      "outputs": ["then", "else"]
+    },
+    {
+      "id": "rf.wait",
+      "category": "flow",
+      "title": {
+        "vi": "Chờ",
+        "en": "Wait"
+      },
+      "description": {
+        "vi": "Chờ một khoảng thời gian.",
+        "en": "Waits for a duration."
+      },
+      "props": [
+        {
+          "name": "ms",
+          "type": "duration",
+          "required": true,
+          "default": 1000,
+          "min": 0,
+          "max": 3600000,
+          "title": {
+            "vi": "Thời gian (ms)",
+            "en": "Duration (ms)"
+          }
+        }
+      ],
+      "outputs": ["next"]
+    },
+    {
+      "id": "rf.wait_until",
+      "category": "flow",
+      "title": {
+        "vi": "Chờ đến khi",
+        "en": "Wait until"
+      },
+      "description": {
+        "vi": "Chờ điều kiện đúng (dữ liệu mới) hoặc hết thời hạn.",
+        "en": "Waits for a fresh true condition or the timeout."
+      },
+      "props": [
+        {
+          "name": "when",
+          "type": "condition",
+          "required": true,
+          "default": "Robot.Perception.Marker.IsDetected == true",
+          "title": {
+            "vi": "Điều kiện",
+            "en": "Condition"
+          }
+        },
+        {
+          "name": "timeoutMs",
+          "type": "duration",
+          "required": true,
+          "default": 30000,
+          "min": 100,
+          "max": 3600000,
+          "title": {
+            "vi": "Thời hạn (ms)",
+            "en": "Timeout (ms)"
+          }
+        }
+      ],
+      "outputs": ["next", "timeout"]
+    },
+    {
+      "id": "rf.repeat",
+      "category": "flow",
+      "title": {
+        "vi": "Lặp N lần",
+        "en": "Repeat N times"
+      },
+      "description": {
+        "vi": "Đi nhánh 'body' N lần (nối cuối body quay lại block này), sau đó đi 'done'.",
+        "en": "Takes 'body' N times (wire the end of the body back here), then 'done'."
+      },
+      "props": [
+        {
+          "name": "count",
+          "type": "integer",
+          "required": true,
+          "default": 2,
+          "min": 1,
+          "max": 1000,
+          "title": {
+            "vi": "Số lần",
+            "en": "Count"
+          }
+        }
+      ],
+      "outputs": ["body", "done"]
+    },
+    {
+      "id": "rf.log",
+      "category": "data",
+      "title": {
+        "vi": "Ghi log",
+        "en": "Log"
+      },
+      "description": {
+        "vi": "Ghi một dòng log; {{Robot.X}} chèn giá trị tín hiệu.",
+        "en": "Writes a log line; {{Robot.X}} inserts a signal value."
+      },
+      "props": [
+        {
+          "name": "level",
+          "type": "enum",
+          "required": true,
+          "default": "info",
+          "values": ["info", "warn", "error"],
+          "title": {
+            "vi": "Mức",
+            "en": "Level"
+          }
+        },
+        {
+          "name": "message",
+          "type": "template",
+          "required": true,
+          "default": "Pin {{Robot.PowerSystem.Battery.StateOfCharge}} %",
+          "title": {
+            "vi": "Nội dung",
+            "en": "Message"
+          }
+        }
+      ],
+      "outputs": ["next"]
+    },
+    {
+      "id": "rf.end",
+      "category": "flow",
+      "title": {
+        "vi": "Kết thúc",
+        "en": "End"
+      },
+      "description": {
+        "vi": "Kết thúc nhánh này.",
+        "en": "Ends this branch."
+      },
+      "props": [],
+      "outputs": []
+    },
+    {
+      "id": "rf.arm",
+      "category": "safety",
+      "title": {
+        "vi": "Arm (sẵn sàng)",
+        "en": "Arm"
+      },
+      "description": {
+        "vi": "Yêu cầu robot sang MANUAL; không bao giờ tự Arm ngầm.",
+        "en": "Requests MANUAL; never implicit."
+      },
+      "props": [],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Safety.Arm"
+    },
+    {
+      "id": "rf.disarm",
+      "category": "safety",
+      "title": {
+        "vi": "Disarm",
+        "en": "Disarm"
+      },
+      "description": {
+        "vi": "Đưa robot về DISARMED.",
+        "en": "Returns the robot to DISARMED."
+      },
+      "props": [],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Safety.Disarm"
+    },
+    {
+      "id": "rf.stop",
+      "category": "safety",
+      "title": {
+        "vi": "Dừng khẩn (Stop)",
+        "en": "Stop"
+      },
+      "description": {
+        "vi": "Dừng qua làn an toàn; robot chốt SAFE_STOP.",
+        "en": "Stops through the safety lane; the robot latches SAFE_STOP."
+      },
+      "props": [],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Safety.Stop"
+    },
+    {
+      "id": "rf.reset_stop",
+      "category": "safety",
+      "title": {
+        "vi": "Bỏ chốt Stop",
+        "en": "Reset stop"
+      },
+      "description": {
+        "vi": "Bỏ chốt SAFE_STOP (robot về DISARMED).",
+        "en": "Clears SAFE_STOP (robot returns to DISARMED)."
+      },
+      "props": [],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Safety.ResetStop"
+    },
+    {
+      "id": "rf.move",
+      "category": "motion",
+      "title": {
+        "vi": "Di chuyển",
+        "en": "Move"
+      },
+      "description": {
+        "vi": "Gửi vận tốc 20 Hz trong thời gian đặt; luôn trả về 0 khi kết thúc.",
+        "en": "Sends velocity at 20 Hz for the duration; always returns to zero."
+      },
+      "props": [
+        {
+          "name": "linear",
+          "type": "number",
+          "unit": "m/s",
+          "required": true,
+          "default": 0.2,
+          "signal": "Robot.Motion.Velocity.LinearX",
+          "title": {
+            "vi": "Tốc độ tiến (m/s)",
+            "en": "Forward speed (m/s)"
+          },
+          "min": -0.5,
+          "max": 0.5
+        },
+        {
+          "name": "angular",
+          "type": "number",
+          "unit": "rad/s",
+          "required": true,
+          "default": 0,
+          "signal": "Robot.Motion.Velocity.AngularZ",
+          "title": {
+            "vi": "Tốc độ quay (rad/s)",
+            "en": "Turn rate (rad/s)"
+          },
+          "min": -0.65,
+          "max": 0.65
+        },
+        {
+          "name": "durationMs",
+          "type": "duration",
+          "required": true,
+          "default": 1000,
+          "min": 50,
+          "max": 30000,
+          "title": {
+            "vi": "Thời gian (ms)",
+            "en": "Duration (ms)"
+          }
+        }
+      ],
+      "outputs": ["ok", "failed"],
+      "setpoint": "Robot.Motion.Velocity"
+    },
+    {
+      "id": "rf.perform",
+      "category": "motion",
+      "title": {
+        "vi": "Thực hiện động tác",
+        "en": "Perform motion"
+      },
+      "description": {
+        "vi": "Động tác đã kiểm định; thành công chỉ khi robot báo kết quả vật lý.",
+        "en": "Qualified motion; success only from the measured physical result."
+      },
+      "props": [
+        {
+          "name": "name",
+          "type": "enum",
+          "required": true,
+          "default": "BOW",
+          "title": {
+            "vi": "Động tác",
+            "en": "Motion"
+          },
+          "values": [
+            "CROUCH",
+            "BOW",
+            "TILT",
+            "LIFT_FRONT_LEFT",
+            "JUMP",
+            "WAVE_FRONT_LEFT",
+            "SIT",
+            "STAND"
+          ]
+        }
+      ],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Motion.Perform",
+      "pending": "dog R4 W2: WAVE_FRONT_LEFT, SIT, STAND not yet in the dog (CROUCH, BOW, TILT, LIFT_FRONT_LEFT, JUMP available)"
+    },
+    {
+      "id": "rf.go_to",
+      "category": "navigation",
+      "title": {
+        "vi": "Đi tới điểm",
+        "en": "Go to"
+      },
+      "description": {
+        "vi": "Điều hướng tới (X, Y) trong khung map bằng Nav2 của robot.",
+        "en": "Navigates to (X, Y) in the map frame with the robot's Nav2."
+      },
+      "props": [
+        {
+          "name": "x",
+          "type": "number",
+          "unit": "m",
+          "required": true,
+          "default": 1.0,
+          "title": {
+            "vi": "X (m)",
+            "en": "X (m)"
+          }
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "unit": "m",
+          "required": true,
+          "default": 0.0,
+          "title": {
+            "vi": "Y (m)",
+            "en": "Y (m)"
+          }
+        }
+      ],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Navigation.GoTo"
+    },
+    {
+      "id": "rf.follow_route",
+      "category": "navigation",
+      "title": {
+        "vi": "Đi theo tuyến",
+        "en": "Follow route"
+      },
+      "description": {
+        "vi": "Đi qua các điểm theo thứ tự (tối đa theo profile).",
+        "en": "Visits waypoints in order (profile maximum)."
+      },
+      "props": [
+        {
+          "name": "waypoints",
+          "type": "points",
+          "required": true,
+          "default": "1.0,0.0; 1.0,0.8; 0.2,0.0",
+          "title": {
+            "vi": "Các điểm X,Y; ...",
+            "en": "Points X,Y; ..."
+          }
+        }
+      ],
+      "outputs": ["ok", "failed"],
+      "command": "Robot.Navigation.FollowRoute"
+    }
+  ],
+  "signals": [
+    {
+      "path": "Robot.Connection.IsOnline",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "True while robot state arrives fresher than 1 s."
+    },
+    {
+      "path": "Robot.Connection.StateAgeMs",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "ms",
+      "values": [],
+      "description": "Age of the newest robot state sample."
+    },
+    {
+      "path": "Robot.Identity.Backend",
+      "kind": "attribute",
+      "type": "enum",
+      "unit": "",
+      "values": ["SIM", "REAL"],
+      "description": "Whether the robot is simulated or physical."
+    },
+    {
+      "path": "Robot.Identity.Id",
+      "kind": "attribute",
+      "type": "string",
+      "unit": "",
+      "values": [],
+      "description": "Robot identifier (ROS namespace without slash for ROS robots)."
+    },
+    {
+      "path": "Robot.Identity.Model",
+      "kind": "attribute",
+      "type": "string",
+      "unit": "",
+      "values": [],
+      "description": "Robot model identifier."
+    },
+    {
+      "path": "Robot.Imu.AngularVelocity.X",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Gyro X."
+    },
+    {
+      "path": "Robot.Imu.AngularVelocity.Y",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Gyro Y."
+    },
+    {
+      "path": "Robot.Imu.AngularVelocity.Z",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Gyro Z."
+    },
+    {
+      "path": "Robot.Imu.LinearAcceleration.X",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m/s^2",
+      "values": [],
+      "description": "Accel X."
+    },
+    {
+      "path": "Robot.Imu.LinearAcceleration.Y",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m/s^2",
+      "values": [],
+      "description": "Accel Y."
+    },
+    {
+      "path": "Robot.Imu.LinearAcceleration.Z",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m/s^2",
+      "values": [],
+      "description": "Accel Z."
+    },
+    {
+      "path": "Robot.Imu.Orientation.Pitch",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Pitch."
+    },
+    {
+      "path": "Robot.Imu.Orientation.Roll",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Roll."
+    },
+    {
+      "path": "Robot.Imu.Orientation.Yaw",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Yaw."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.ContactForce",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N",
+      "values": [],
+      "description": "Summed contact-normal force."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.IsInContact",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Foot touches the ground."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Calf.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Calf.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Calf.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Hip.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Hip.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Hip.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Thigh.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Thigh.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.FrontLeft.Joint.Thigh.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.ContactForce",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N",
+      "values": [],
+      "description": "Summed contact-normal force."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.IsInContact",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Foot touches the ground."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Calf.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Calf.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Calf.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Hip.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Hip.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Hip.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Thigh.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Thigh.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.FrontRight.Joint.Thigh.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.ContactForce",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N",
+      "values": [],
+      "description": "Summed contact-normal force."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.IsInContact",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Foot touches the ground."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Calf.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Calf.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Calf.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Hip.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Hip.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Hip.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Thigh.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Thigh.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.RearLeft.Joint.Thigh.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.RearRight.ContactForce",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N",
+      "values": [],
+      "description": "Summed contact-normal force."
+    },
+    {
+      "path": "Robot.Leg.RearRight.IsInContact",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Foot touches the ground."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Calf.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Calf.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Calf.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Hip.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Hip.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Hip.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Thigh.Effort",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "N.m",
+      "values": [],
+      "description": "Joint torque."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Thigh.Position",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Joint angle."
+    },
+    {
+      "path": "Robot.Leg.RearRight.Joint.Thigh.Velocity",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Joint speed."
+    },
+    {
+      "path": "Robot.Motion.IsBodyBusy",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "A named motion owns the body."
+    },
+    {
+      "path": "Robot.Motion.State.Name",
+      "kind": "sensor",
+      "type": "string",
+      "unit": "",
+      "values": [],
+      "description": "Name of the current or last motion."
+    },
+    {
+      "path": "Robot.Motion.State.Phase",
+      "kind": "sensor",
+      "type": "enum",
+      "unit": "",
+      "values": [
+        "IDLE",
+        "DISPATCHED",
+        "RUNNING",
+        "RECOVERING",
+        "SUCCEEDED",
+        "CANCELLED",
+        "FAILED",
+        "REJECTED"
+      ],
+      "description": "Phase of the current or last motion."
+    },
+    {
+      "path": "Robot.Navigation.IsReady",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Planner and map are ready."
+    },
+    {
+      "path": "Robot.Navigation.Mission.State",
+      "kind": "sensor",
+      "type": "enum",
+      "unit": "",
+      "values": ["IDLE", "RUNNING", "SUCCEEDED", "FAILED", "REJECTED", "CANCELLED"],
+      "description": "State of the current or last mission."
+    },
+    {
+      "path": "Robot.Navigation.Route.Completed",
+      "kind": "sensor",
+      "type": "uint32",
+      "unit": "",
+      "values": [],
+      "description": "Waypoints reached."
+    },
+    {
+      "path": "Robot.Navigation.Route.Total",
+      "kind": "sensor",
+      "type": "uint32",
+      "unit": "",
+      "values": [],
+      "description": "Waypoints in the route."
+    },
+    {
+      "path": "Robot.Obstacle.MinRange",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m",
+      "values": [],
+      "description": "Nearest finite range of the planar scan."
+    },
+    {
+      "path": "Robot.Perception.Marker.Count",
+      "kind": "sensor",
+      "type": "uint32",
+      "unit": "",
+      "values": [],
+      "description": "Number of markers detected."
+    },
+    {
+      "path": "Robot.Perception.Marker.IsDetected",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "At least one marker detected."
+    },
+    {
+      "path": "Robot.Pose.Orientation.Pitch",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Pitch."
+    },
+    {
+      "path": "Robot.Pose.Orientation.Roll",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Roll."
+    },
+    {
+      "path": "Robot.Pose.Orientation.Yaw",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad",
+      "values": [],
+      "description": "Yaw."
+    },
+    {
+      "path": "Robot.Pose.Position.X",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m",
+      "values": [],
+      "description": "Position X in odom."
+    },
+    {
+      "path": "Robot.Pose.Position.Y",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m",
+      "values": [],
+      "description": "Position Y in odom."
+    },
+    {
+      "path": "Robot.Pose.Position.Z",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m",
+      "values": [],
+      "description": "Position Z in odom."
+    },
+    {
+      "path": "Robot.PowerSystem.Battery.IsPresent",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Battery reported present."
+    },
+    {
+      "path": "Robot.PowerSystem.Battery.StateOfCharge",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "%",
+      "values": [],
+      "description": "Remaining charge."
+    },
+    {
+      "path": "Robot.PowerSystem.Battery.Voltage",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "V",
+      "values": [],
+      "description": "Pack voltage."
+    },
+    {
+      "path": "Robot.Safety.Controller",
+      "kind": "sensor",
+      "type": "enum",
+      "unit": "",
+      "values": ["NONE", "OPERATOR", "WORKFLOW"],
+      "description": "Who currently holds control authority."
+    },
+    {
+      "path": "Robot.Safety.IsArmed",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Mode is MANUAL, AUTO or MOTION."
+    },
+    {
+      "path": "Robot.Safety.IsReady",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Sensors and stack are healthy enough to arm."
+    },
+    {
+      "path": "Robot.Safety.IsStopLatched",
+      "kind": "sensor",
+      "type": "bool",
+      "unit": "",
+      "values": [],
+      "description": "Mode is SAFE_STOP; a reset is required."
+    },
+    {
+      "path": "Robot.Safety.Mode",
+      "kind": "sensor",
+      "type": "enum",
+      "unit": "",
+      "values": ["DISARMED", "MANUAL", "AUTO", "MOTION", "SAFE_STOP"],
+      "description": "Arbiter mode."
+    },
+    {
+      "path": "Robot.Safety.Reason",
+      "kind": "sensor",
+      "type": "string",
+      "unit": "",
+      "values": [],
+      "description": "Human-readable reason of the last mode change or refusal."
+    },
+    {
+      "path": "Robot.Simulation.SceneId",
+      "kind": "sensor",
+      "type": "string",
+      "unit": "",
+      "values": [],
+      "description": "Active simulation scene."
+    },
+    {
+      "path": "Robot.Velocity.Angular.Z",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Yaw rate."
+    },
+    {
+      "path": "Robot.Velocity.Commanded.AngularZ",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "rad/s",
+      "values": [],
+      "description": "Arbitrated yaw-rate command."
+    },
+    {
+      "path": "Robot.Velocity.Commanded.LinearX",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m/s",
+      "values": [],
+      "description": "Arbitrated forward command."
+    },
+    {
+      "path": "Robot.Velocity.Linear.X",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m/s",
+      "values": [],
+      "description": "Forward speed."
+    },
+    {
+      "path": "Robot.Velocity.Linear.Y",
+      "kind": "sensor",
+      "type": "float64",
+      "unit": "m/s",
+      "values": [],
+      "description": "Lateral speed."
+    }
+  ]
+}

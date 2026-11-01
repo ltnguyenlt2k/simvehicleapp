@@ -4,7 +4,7 @@ import { defineRouteContract } from '@/lib/api/contracts/types'
 
 /** Health of one SimVehicleApp service as seen by the studio BFF. */
 export const svServiceHealthSchema = z.object({
-  service: z.enum(['vss-catalog', 'compiler', 'orchestrator', 'signal-gateway', 'ai-assistant']),
+  service: z.enum(['vss-catalog', 'compiler', 'orchestrator', 'signal-gateway', 'ai-assistant', 'robotics']),
   status: z.enum(['ok', 'degraded', 'down', 'unconfigured']),
   latencyMs: z.number().int().min(0).optional(),
   error: z.string().optional(),

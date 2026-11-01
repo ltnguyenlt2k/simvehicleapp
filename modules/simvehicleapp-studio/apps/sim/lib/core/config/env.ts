@@ -41,6 +41,7 @@ export const env = createEnv({
     SV_COMPILER_URL:                       z.string().url().optional(),            // SV: compiler service base URL (http://compiler:4020)
     SV_ORCHESTRATOR_URL:                   z.string().url().optional(),            // SV: orchestrator service base URL (http://orchestrator:4030)
     SV_AI_URL:                             z.string().url().optional(),            // SV: ai-assistant service base URL (http://ai-assistant:4300)
+    SV_ROBOTICS_URL:                             z.string().url().optional(),            // SV: robotics-control base URL (ADR-0068, http://robotics-control:4600)
     SV_SIGNAL_GATEWAY_URL:                 z.string().url().optional(),            // SV: signal-gateway base URL (http://signal-gateway:4050, M8)
 
     // Copilot

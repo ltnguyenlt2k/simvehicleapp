@@ -10,9 +10,10 @@ case "${1:-}" in
     docker build -q --target base -t robotics/python-base:local -f "$ROOT/tools/python.Dockerfile" "$ROOT"
     docker build -q --target dev -t "$DEV_IMAGE" -f "$ROOT/tools/python.Dockerfile" "$ROOT"
     docker build -q -t robotics/protobus:local -f "$ROOT/protobus/Dockerfile" "$ROOT"
-    docker build -q --target bridge -t robotics/protobus-ros2:local -f "$ROOT/protobus/ros2/Dockerfile" "$ROOT" ;;
-  up) shift; docker compose -f "$ROOT/compose.yaml" up -d --wait "$@" ;;
-  down) docker compose -f "$ROOT/compose.yaml" down ;;
+    docker build -q --target bridge -t robotics/protobus-ros2:local -f "$ROOT/protobus/ros2/Dockerfile" "$ROOT"
+    docker build -q -t robotics/control:local -f "$ROOT/control/Dockerfile" "$ROOT" ;;
+  up) shift; docker compose --env-file "$ROOT/../.env" -f "$ROOT/compose.yaml" up -d --wait "$@" ;;
+  down) docker compose --env-file "$ROOT/../.env" -f "$ROOT/compose.yaml" --profile ros down ;;
   pbctl) shift; docker compose -f "$ROOT/compose.yaml" run --rm -T pbctl "$@" ;;
   test) shift; dev python -m pytest -q -p no:cacheprovider "${@:-.}" ;;
   py) shift; dev python "$@" ;;

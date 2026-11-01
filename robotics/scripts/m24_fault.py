@@ -17,10 +17,13 @@ probe = subprocess.Popen(["docker", "start", "-a", "m24-stream"], stdout=subproc
 for line in probe.stdout:
     if '"streaming"' in line:
         break
-end = time.monotonic() + 10
+end = time.monotonic() + 15
 while time.monotonic() < end and brain()["safe_command"][0] <= 0.05:
     time.sleep(0.02)
 moving = brain()["safe_command"]
+if moving[0] <= 0.05:
+    print(json.dumps({"valid": False, "reason": "robot was not moving before the kill", "probe": probe.communicate(timeout=30)[0][-400:]}))
+    sys.exit(1)
 time.sleep(1.0)
 killed_at = time.monotonic()
 subprocess.run(["docker", "kill", TARGET], check=True, capture_output=True)
@@ -33,6 +36,6 @@ while time.monotonic() - killed_at < 5:
     time.sleep(0.01)
 final = brain()
 rest = probe.communicate(timeout=30)[0]
-print(json.dumps({"killed": TARGET, "commandBeforeKill": moving, "bodyCommandZeroAfterS": stopped_after,
+print(json.dumps({"valid": True, "killed": TARGET, "commandBeforeKill": moving, "bodyCommandZeroAfterS": stopped_after,
                   "modeAfter": final["mode"], "reasonAfter": final["reason"], "controllerAfter": final["controller"],
                   "controllerReason": final.get("controller_reason"), "probe": rest.strip()[-400:]}, indent=1))

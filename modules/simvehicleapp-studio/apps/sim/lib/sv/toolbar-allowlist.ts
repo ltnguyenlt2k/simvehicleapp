@@ -2,11 +2,11 @@ import { getEnv } from '@/lib/core/config/env'
 
 /**
  * Block types offered by the toolbar and block search (M01-T05, analysis/11b): SimVehicleApp blocks
- * (`sv_*`), the canvas `note`, and Sim's `loop`/`parallel` containers, which carry `sv_repeat`,
+ * (`sv_*`), robot-domain blocks (`rf_*`, ADR-0068), the canvas `note`, and Sim's `loop`/`parallel` containers, which carry `sv_repeat`,
  * `sv_while` and `sv_parallel` (M03-T10, `lib/sv/container-mapping.ts`). Sim's other blocks stay
  * registered (existing workflows still load) but are not offered; they are deleted in M11.
  */
-export const DEFAULT_TOOLBAR_ALLOWLIST = 'sv_*,note,loop,parallel'
+export const DEFAULT_TOOLBAR_ALLOWLIST = 'sv_*,rf_*,note,loop,parallel'
 
 /** Parses a comma-separated list of block-type globs (`*` wildcard only). */
 export function parseToolbarAllowlist(value: string | undefined): RegExp[] {

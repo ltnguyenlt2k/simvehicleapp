@@ -26,6 +26,22 @@ export function clampParallelBatchSize(batchSize: unknown): number {
  * @param targetId - Target node ID of the proposed edge
  * @returns true if adding this edge would create a cycle
  */
+/**
+ * SV: robot workflows loop with back-edges (RobotFlow `rf.repeat`, ADR-0067); the RobotFlow compiler rejects busy
+ * loops (RF4003), so a cycle between two robot blocks is allowed. Every other edge keeps Sim's acyclic rule.
+ */
+export function svAllowsCycle(
+  blocks: Record<string, { type: string }>,
+  sourceId: string,
+  targetId: string
+): boolean {
+  return (
+    sourceId !== targetId &&
+    Boolean(blocks[sourceId]?.type.startsWith('rf_')) &&
+    Boolean(blocks[targetId]?.type.startsWith('rf_'))
+  )
+}
+
 export function wouldCreateCycle(edges: Edge[], sourceId: string, targetId: string): boolean {
   if (sourceId === targetId) {
     return true

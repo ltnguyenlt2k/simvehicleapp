@@ -1,0 +1,393 @@
+{
+ "schema": "robotflow.v1",
+ "rss": {
+  "version": "0.1"
+ },
+ "profile": "dog-go2-sim",
+ "nodes": [
+  {
+   "id": "start",
+   "block": "rf.on_start",
+   "props": {},
+   "label": "Khi bắt đầu"
+  },
+  {
+   "id": "hello",
+   "block": "rf.log",
+   "props": {
+    "level": "info",
+    "message": "Bắt đầu kịch bản, pin {{Robot.PowerSystem.Battery.StateOfCharge}} %"
+   },
+   "label": ""
+  },
+  {
+   "id": "arm",
+   "block": "rf.arm",
+   "props": {},
+   "label": ""
+  },
+  {
+   "id": "battery",
+   "block": "rf.if",
+   "props": {
+    "when": "Robot.PowerSystem.Battery.StateOfCharge >= 20 %"
+   },
+   "label": ""
+  },
+  {
+   "id": "see",
+   "block": "rf.wait_until",
+   "props": {
+    "when": "Robot.Perception.Marker.IsDetected == true",
+    "timeoutMs": 10000
+   },
+   "label": ""
+  },
+  {
+   "id": "bow",
+   "block": "rf.perform",
+   "props": {
+    "name": "BOW"
+   },
+   "label": ""
+  },
+  {
+   "id": "paw",
+   "block": "rf.perform",
+   "props": {
+    "name": "LIFT_FRONT_LEFT"
+   },
+   "label": ""
+  },
+  {
+   "id": "jump",
+   "block": "rf.perform",
+   "props": {
+    "name": "JUMP"
+   },
+   "label": ""
+  },
+  {
+   "id": "patrol",
+   "block": "rf.repeat",
+   "props": {
+    "count": 2
+   },
+   "label": ""
+  },
+  {
+   "id": "out",
+   "block": "rf.go_to",
+   "props": {
+    "x": 1.2,
+    "y": 0.0
+   },
+   "label": ""
+  },
+  {
+   "id": "back",
+   "block": "rf.go_to",
+   "props": {
+    "x": 0.3,
+    "y": 0.0
+   },
+   "label": ""
+  },
+  {
+   "id": "done",
+   "block": "rf.log",
+   "props": {
+    "level": "info",
+    "message": "Hoàn tất tuần tra, x={{Robot.Pose.Position.X}} m"
+   },
+   "label": ""
+  },
+  {
+   "id": "rest",
+   "block": "rf.disarm",
+   "props": {},
+   "label": ""
+  },
+  {
+   "id": "low",
+   "block": "rf.log",
+   "props": {
+    "level": "warn",
+    "message": "Pin yếu {{Robot.PowerSystem.Battery.StateOfCharge}} % — không chạy kịch bản"
+   },
+   "label": ""
+  },
+  {
+   "id": "nomarker",
+   "block": "rf.log",
+   "props": {
+    "level": "warn",
+    "message": "Không thấy marker sau 10 s"
+   },
+   "label": ""
+  },
+  {
+   "id": "fail",
+   "block": "rf.log",
+   "props": {
+    "level": "error",
+    "message": "Bước thất bại — dừng an toàn"
+   },
+   "label": ""
+  },
+  {
+   "id": "halt",
+   "block": "rf.stop",
+   "props": {},
+   "label": ""
+  },
+  {
+   "id": "rest2",
+   "block": "rf.disarm",
+   "props": {},
+   "label": ""
+  }
+ ],
+ "edges": [
+  {
+   "from": [
+    "start",
+    "next"
+   ],
+   "to": [
+    "hello",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "hello",
+    "next"
+   ],
+   "to": [
+    "arm",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "arm",
+    "ok"
+   ],
+   "to": [
+    "battery",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "arm",
+    "failed"
+   ],
+   "to": [
+    "fail",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "battery",
+    "then"
+   ],
+   "to": [
+    "see",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "battery",
+    "else"
+   ],
+   "to": [
+    "low",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "low",
+    "next"
+   ],
+   "to": [
+    "rest2",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "see",
+    "next"
+   ],
+   "to": [
+    "bow",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "see",
+    "timeout"
+   ],
+   "to": [
+    "nomarker",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "nomarker",
+    "next"
+   ],
+   "to": [
+    "bow",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "bow",
+    "ok"
+   ],
+   "to": [
+    "paw",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "bow",
+    "failed"
+   ],
+   "to": [
+    "fail",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "paw",
+    "ok"
+   ],
+   "to": [
+    "jump",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "paw",
+    "failed"
+   ],
+   "to": [
+    "fail",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "jump",
+    "ok"
+   ],
+   "to": [
+    "patrol",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "jump",
+    "failed"
+   ],
+   "to": [
+    "fail",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "patrol",
+    "body"
+   ],
+   "to": [
+    "out",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "out",
+    "ok"
+   ],
+   "to": [
+    "back",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "out",
+    "failed"
+   ],
+   "to": [
+    "fail",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "back",
+    "ok"
+   ],
+   "to": [
+    "patrol",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "back",
+    "failed"
+   ],
+   "to": [
+    "fail",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "patrol",
+    "done"
+   ],
+   "to": [
+    "done",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "done",
+    "next"
+   ],
+   "to": [
+    "rest",
+    "in"
+   ]
+  },
+  {
+   "from": [
+    "fail",
+    "next"
+   ],
+   "to": [
+    "halt",
+    "in"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+# Optional overlay (ADR-0068 §2): lets the studio BFF reach robotics-control of the robotics stack (compose project
+# "sr", robotics/compose.yaml). Only the internal network sr-gui-v1 is shared; no code or image is shared.
+#   docker compose -p simvehicleapp --env-file .env -f modules/simvehicleapp-studio/compose.simvehicleapp.yaml \
+#     -f modules/simvehicleapp-studio/compose.robotics.yaml up -d studio
+services:
+  studio:
+    environment:
+      SV_ROBOTICS_URL: ${SV_ROBOTICS_URL:-http://robotics-control:4600}
+    networks: [sv-internal, sv-edge, sr-gui]
+networks:
+  sr-gui: { name: sr-gui-v1, external: true }

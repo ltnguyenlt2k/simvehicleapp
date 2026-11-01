@@ -29,6 +29,7 @@ import {
   generateLoopBlocks,
   generateParallelBlocks,
   isBlockProtected,
+  svAllowsCycle,
   wouldCreateCycle,
 } from '@/stores/workflows/workflow/utils'
 import { normalizeWorkflowState } from '@/stores/workflows/workflow/validation'
@@ -404,7 +405,12 @@ export const useWorkflowStore = create<WorkflowStore>()(
         const newEdges = [...currentEdges]
 
         for (const edge of filtered) {
-          if (wouldCreateCycle([...newEdges], edge.source, edge.target)) continue
+          // SV: robot back-edges (rf.repeat) are allowed (ADR-0067)
+          if (
+            !svAllowsCycle(blocks, edge.source, edge.target) &&
+            wouldCreateCycle([...newEdges], edge.source, edge.target)
+          )
+            continue
           newEdges.push({
             id: edge.id || generateId(),
             source: edge.source,

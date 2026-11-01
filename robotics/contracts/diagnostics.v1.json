@@ -161,6 +161,121 @@
    "severity": "error",
    "stage": "protobus",
    "message": "No provider is attached to the safety lane."
+  },
+  "RF1001": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Workflow is not a valid robotflow.v1 document or is too large."
+  },
+  "RF1002": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Unknown block type."
+  },
+  "RF1003": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Workflow profile or RSS catalog differs from the robot."
+  },
+  "RF1004": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Duplicate block id."
+  },
+  "RF1005": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Link refers to a missing block or output."
+  },
+  "RF1006": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "An output is linked more than once."
+  },
+  "RF1007": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Block is not reachable from any trigger."
+  },
+  "RF1008": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Workflow has no trigger block."
+  },
+  "RF1009": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "A trigger cannot have incoming links."
+  },
+  "RF1010": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Robot interface not available (or pending) on the selected robot/mode."
+  },
+  "RF2001": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Expression syntax error."
+  },
+  "RF2002": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Unknown or unreadable RSS signal in an expression."
+  },
+  "RF2003": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Type mismatch in an expression."
+  },
+  "RF2004": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Unit mismatch in an expression."
+  },
+  "RF2005": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Value is not one of the signal's enum values."
+  },
+  "RF2006": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "A condition must evaluate to true/false."
+  },
+  "RF3001": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Block property missing or invalid."
+  },
+  "RF3002": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Value not supported by the robot (e.g. motion name)."
+  },
+  "RF3003": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Value outside the robot profile limits."
+  },
+  "RF3004": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Invalid waypoint list."
+  },
+  "RF4001": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Motion block may run without Arm on that path."
+  },
+  "RF4002": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Failure output not handled."
+  },
+  "RF4003": {
+   "severity": "error",
+   "stage": "robotflow",
+   "message": "Loop without wait or robot step (would spin forever)."
   }
  }
 }

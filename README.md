@@ -253,15 +253,29 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
 
 Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md) · chạy app trên databroker của xe/bench: [deploy](docs/user-guide/deploy.md) · app WebAssembly: [wasm](docs/user-guide/wasm.md) · nhiều app qua MQTT: [multiple-apps](docs/user-guide/multiple-apps.md) · gọi workflow từ workflow: [sub-workflows](docs/user-guide/sub-workflows.md).
 
-### Robotics — đang lập kế hoạch / planned (chưa có code)
+### Robotics — điều khiển robot dog bằng workflow kéo thả
 
-Mở rộng sang robot (trước mắt dog Unitree Go2 mô phỏng, repo [dog-ros2-simulation](https://github.com/ltnguyenlt2k/dog-ros2-simulation)):
-- kéo thả workflow robot **ngay trong GUI này** (miền *Robot*);
-- tín hiệu chuẩn hoá theo **RSS** (Robotic Signal Specification, tương tự VSS);
-- compiler **RobotFlow** sinh app Python;
-- broker **Protobus** độc lập chuyển RSS ↔ ROS 2.
+Workflow robot soạn **ngay trong GUI này** (miền *Robot*). Robot hiện tại là dog Unitree Go2 mô phỏng, repo [dog-ros2-simulation](https://github.com/ltnguyenlt2k/dog-ros2-simulation) chạy độc lập.
 
-Kế hoạch 2026-11-01: [thiết kế](docs/design/robotics/README.md) · ADR-0064…0071 · phase M22–M28 trong [ROADMAP](docs/ROADMAP.md). Chưa có tính năng robotics nào chạy được.
+Luồng chạy: workflow → compiler **RobotFlow** sinh app Python → tín hiệu theo **RSS** (Robotic Signal Specification, tương tự VSS) → broker **Protobus** → bridge ROS 2 → robot.
+
+Hai repo chỉ nói chuyện qua giao thức: topic `/dog1/workflow/request` / `ack` và HTTP của Robot Zoo.
+
+[![Full luồng robotics](docs/media/robotics/studio-run.jpg)](docs/media/robotics/robot-full-flow.mp4)
+
+Video thật, một lần quay liền: [`robot-full-flow.mp4`](docs/media/robotics/robot-full-flow.mp4), kèm [manifest](docs/media/robotics/manifest.json). Nội dung:
+- soạn workflow 16 block trên studio;
+- Build → Deploy → Start;
+- Robot Zoo ở tab mới hiện dog làm Arm → cúi chào → giơ chân → nhảy → tuần tra 2 vòng;
+- 9/9 lệnh SUCCEEDED, request id khớp audit Protobus.
+
+Hướng dẫn: [robotics](docs/user-guide/robotics.md) · thiết kế: [design robotics](docs/design/robotics/README.md) · ADR-0064…0071 · tiến độ M22–M28 trong [ROADMAP](docs/ROADMAP.md).
+
+**Còn mở:**
+- động tác vẫy, ngồi, đứng và mức pin (repo dog W2/W3);
+- trợ lý AI cho block robot;
+- tab Test bằng scenario;
+- hồ sơ máy cấu hình thấp.
 
 ## 7. Đọc tiếp / Where to go next
 

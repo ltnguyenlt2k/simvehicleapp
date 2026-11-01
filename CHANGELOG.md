@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+### Robotics — M22–M28 (2026-11-01)
+- **`robotics/` (độc lập với `modules/`):**
+  - RSS v0.1 + catalog `rss-catalog.v1`;
+  - Protobus: broker gRPC, SafetyLane, provider mock và bridge ROS 2 cho `dog-go2-sim`;
+  - compiler RobotFlow + runtime `rfrt`;
+  - service `robotics-control` (lint/build/deploy/run/stop).
+- **Studio:**
+  - miền Robot: 17 block `rf_*`, toolbar lọc theo miền, thanh Robot (Build/Deploy/Start/Stop/Robot Zoo), panel Kiểm tra/Chạy;
+  - BFF `/api/sv/robotics/*`, overlay `compose.robotics.yaml`;
+  - cho phép chu trình chỉ giữa block robot.
+- **Build studio trên máy yếu:** `SV_NEXT_BUILD_CPUS` (mặc định 4) và `staticPageGenerationTimeout` 180 s.
+- **Video full luồng thật** `docs/media/robotics/robot-full-flow.mp4` + manifest. Quay lại bằng `robotics/scripts/video/run.sh`.
+- **Báo cáo:** M24 (PASS có điều kiện), M25 ✔; M26–M28 đang làm, phần còn mở ghi trong báo cáo.
+
 ### Robotics — kế hoạch (2026-11-01, chỉ tài liệu)
 - **Plan mới cho robotics:**
   - [thiết kế](docs/design/robotics/README.md): RSS v0.1, Protobus, RobotFlow, tích hợp GUI hiện có, hiệu năng và video;

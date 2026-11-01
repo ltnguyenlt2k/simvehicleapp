@@ -95,3 +95,10 @@ flowchart LR
 - Runtime từ chối artifact bị sửa một byte.
 
 ## Notes / Deviations
+
+- **2026-11-01 — Cổng kết quả của lệnh gọn thành `ok`/`failed`.** Pha chi tiết (`REJECTED`, `TIMED_OUT`, …) vẫn có trong trace `RFTRACE` và panel log.
+- **2026-11-01 — Lint/build/run gộp vào service `robotics/control`** thay vì một service HTTP riêng cho compiler, để ít tiến trình và RAM hơn (ADR-0070). Runner là tiến trình con (`control/launch.py`):
+  - giới hạn CPU/NOFILE đặt trong tiến trình con, RAM giới hạn theo cgroup;
+  - không dùng `RLIMIT_AS` vì gRPC không tạo được thread dưới giới hạn đó;
+  - không dùng `preexec_fn` vì không an toàn khi fork từ tiến trình đang có thread gRPC.
+- **2026-11-01 — Golden RW-A…F rút gọn thành workflow mẫu `greet-and-patrol`** cùng các test compiler theo từng mã `RF*`.

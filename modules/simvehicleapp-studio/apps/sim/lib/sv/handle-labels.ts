@@ -17,6 +17,10 @@ const TONE: Record<string, SvHandleTone> = {
   broken: 'warning',
   timeout: 'warning',
   error: 'error',
+  /** SV: RobotFlow outcomes (ADR-0067). */
+  failed: 'error',
+  body: 'positive',
+  done: 'negative',
 }
 
 /** Tone of a handle id; `case-<i>` handles of Switch are positive (a case matched). */
@@ -61,8 +65,20 @@ const EDGE_LABEL: Record<string, string> = {
  * Label of an edge leaving a named branch (`then`, `in time`, `case 2`…), or `null` for a plain sequence edge, which
  * stays unlabelled so the canvas is not cluttered.
  */
-export function svEdgeLabel(handleId: string | null | undefined): string | null {
+/** Labels of RobotFlow ports (robot workflows, ADR-0067); `next` stays unlabelled. */
+const ROBOT_EDGE_LABEL: Record<string, string> = {
+  ok: 'xong',
+  failed: 'lỗi',
+  then: 'đúng',
+  else: 'sai',
+  timeout: 'hết giờ',
+  body: 'lặp',
+  done: 'xong lặp',
+}
+
+export function svEdgeLabel(handleId: string | null | undefined, robot = false): string | null {
   if (!handleId) return null
+  if (robot) return ROBOT_EDGE_LABEL[handleId] ?? null
   const caseIndex = /^case-(\d+)$/.exec(handleId)
   if (caseIndex) return `case ${Number(caseIndex[1]) + 1}`
   return EDGE_LABEL[handleId] ?? null

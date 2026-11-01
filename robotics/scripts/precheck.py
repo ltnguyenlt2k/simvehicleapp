@@ -5,7 +5,9 @@ REPO = pathlib.Path(__file__).resolve().parents[2]
 ROBOTICS = REPO / "robotics"
 CODE = {".py", ".ts", ".tsx", ".js", ".proto", ".yaml", ".yml", ".toml", ".cfg", ".txt", ".sh"}
 FORBIDDEN_IN_ROBOTICS = re.compile(r"(modules/|kuksa|velocitas|vss-tools|simvehicleapp-core)", re.I)
-FORBIDDEN_IN_MODULES = re.compile(r"""(from\s+['"][^'"]*robotics/|import\s+['"][^'"]*robotics/|['"]\.\./+robotics/)""")
+# The repository-root robotics/ folder (relative climbs or bare "robotics/…" specifiers); module-internal folders that
+# happen to be named robotics (e.g. the studio's @/lib/sv/robotics adapter) are not cross-module references.
+FORBIDDEN_IN_MODULES = re.compile(r"""['"](?:\.\./)+robotics/|['"]robotics/""")
 
 
 def is_code(path: pathlib.Path) -> bool:

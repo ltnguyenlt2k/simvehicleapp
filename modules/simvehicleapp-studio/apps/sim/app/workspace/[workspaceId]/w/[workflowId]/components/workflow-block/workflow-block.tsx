@@ -69,10 +69,11 @@ import { useReactiveConditions } from '@/hooks/use-reactive-conditions'
 import { useSelectorDisplayName } from '@/hooks/use-selector-display-name'
 import { useSvCanvasHighlightStore } from '@/stores/sv/canvas-highlight/store'
 import { useSvCanvasViewStore } from '@/stores/sv/canvas-view/store'
+import { useSvRobotStore } from '@/stores/sv/robot/store'
 import { useVariablesStore } from '@/stores/variables/store'
 import { useSubBlockStore } from '@/stores/workflows/subblock/store'
 import { useWorkflowStore } from '@/stores/workflows/workflow/store'
-import { wouldCreateCycle } from '@/stores/workflows/workflow/utils'
+import { svAllowsCycle, wouldCreateCycle } from '@/stores/workflows/workflow/utils'
 import { formatParameterLabel } from '@/tools/params'
 
 const logger = createLogger('WorkflowBlock')
@@ -623,6 +624,9 @@ export const WorkflowBlock = memo(function WorkflowBlock({
     (s) => s.blockName !== null && s.blockName === normalizeName(name)
   )
 
+  /** SV: the block a running robot workflow is executing (ADR-0068 §5). */
+  const rfActive = useSvRobotStore((s) => s.activeNodeId === id)
+
   /** SV: values of a vehicle block's props, for its summary line and value-dependent handles (ADR-0055). */
   const svValues = useMemo(() => {
     if (!type.startsWith('sv_')) return undefined
@@ -791,10 +795,12 @@ export const WorkflowBlock = memo(function WorkflowBlock({
         onClick={handleClick}
         onKeyDown={(event) => handleKeyboardActivation(event, handleClick)}
         data-sv-highlighted={svHighlighted || undefined}
+        data-rf-active={rfActive || undefined}
         data-sv-compact={svCompact || undefined}
         className={cn(
           'workflow-drag-handle relative z-[20] w-[250px] cursor-grab select-none rounded-lg border border-[var(--border-1)] bg-[var(--surface-2)] [&:active]:cursor-grabbing',
-          svHighlighted && 'ring-2 ring-[var(--brand-accent)]'
+          svHighlighted && 'ring-2 ring-[var(--brand-accent)]',
+          rfActive && 'ring-[3px] ring-[#F97316] shadow-[0_0_18px_rgba(249,115,22,0.6)]'
         )}
       >
         {isPending && (
@@ -821,7 +827,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
             isValidConnection={(connection) => {
               if (connection.source === id) return false
               const edges = useWorkflowStore.getState().edges
-              return !wouldCreateCycle(edges, connection.source!, connection.target!)
+              return (
+                svAllowsCycle(
+                  useWorkflowStore.getState().blocks,
+                  connection.source!,
+                  connection.target!
+                ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+              )
             }}
           />
         )}
@@ -1060,7 +1072,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
                   isValidConnection={(connection) => {
                     if (connection.target === id) return false
                     const edges = useWorkflowStore.getState().edges
-                    return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                    return (
+                      svAllowsCycle(
+                        useWorkflowStore.getState().blocks,
+                        connection.source!,
+                        connection.target!
+                      ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+                    )
                   }}
                 />
               )
@@ -1083,7 +1101,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
               isValidConnection={(connection) => {
                 if (connection.target === id) return false
                 const edges = useWorkflowStore.getState().edges
-                return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                return (
+                  svAllowsCycle(
+                    useWorkflowStore.getState().blocks,
+                    connection.source!,
+                    connection.target!
+                  ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+                )
               }}
             />
           </>
@@ -1111,7 +1135,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
                   isValidConnection={(connection) => {
                     if (connection.target === id) return false
                     const edges = useWorkflowStore.getState().edges
-                    return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                    return (
+                      svAllowsCycle(
+                        useWorkflowStore.getState().blocks,
+                        connection.source!,
+                        connection.target!
+                      ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+                    )
                   }}
                 />
               )
@@ -1134,7 +1164,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
               isValidConnection={(connection) => {
                 if (connection.target === id) return false
                 const edges = useWorkflowStore.getState().edges
-                return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                return (
+                  svAllowsCycle(
+                    useWorkflowStore.getState().blocks,
+                    connection.source!,
+                    connection.target!
+                  ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+                )
               }}
             />
           </>
@@ -1161,7 +1197,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
             isValidConnection={(connection) => {
               if (connection.target === id) return false
               const edges = useWorkflowStore.getState().edges
-              return !wouldCreateCycle(edges, connection.source!, connection.target!)
+              return (
+                svAllowsCycle(
+                  useWorkflowStore.getState().blocks,
+                  connection.source!,
+                  connection.target!
+                ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+              )
             }}
           />
         ))}
@@ -1181,7 +1223,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
               isValidConnection={(connection) => {
                 if (connection.target === id) return false
                 const edges = useWorkflowStore.getState().edges
-                return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                return (
+                  svAllowsCycle(
+                    useWorkflowStore.getState().blocks,
+                    connection.source!,
+                    connection.target!
+                  ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+                )
               }}
             />
 
@@ -1204,7 +1252,13 @@ export const WorkflowBlock = memo(function WorkflowBlock({
                 isValidConnection={(connection) => {
                   if (connection.target === id) return false
                   const edges = useWorkflowStore.getState().edges
-                  return !wouldCreateCycle(edges, connection.source!, connection.target!)
+                  return (
+                    svAllowsCycle(
+                      useWorkflowStore.getState().blocks,
+                      connection.source!,
+                      connection.target!
+                    ) || !wouldCreateCycle(edges, connection.source!, connection.target!)
+                  )
                 }}
               />
             )}

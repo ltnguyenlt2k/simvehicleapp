@@ -46,6 +46,12 @@ import {
 import { SvLaneBackdrop } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/lane-backdrop'
 import { SvLogicPanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/logic-panel'
 import { SvLintRunner } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/lint'
+// SV: robot-domain editor chrome (ADR-0068)
+import {
+  RobotActionBar,
+  RobotPanel,
+  useIsRobotWorkflow,
+} from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/robot'
 import {
   dispatchSignalDrop,
   parseSignalPayload,
@@ -273,6 +279,8 @@ const WorkflowContent = React.memo(
     const hasCompletedInitialEmbeddedFitRef = useRef(false)
     const canvasMode = useCanvasModeStore((state) => state.mode)
     const isHandMode = embedded ? true : canvasMode === 'hand'
+    /** SV: a workflow with robot blocks gets the robot chrome instead of the vehicle one (ADR-0068). */
+    const isRobotWorkflow = useIsRobotWorkflow()
     const { handleCanvasMouseDown, selectionProps } = useShiftSelectionLock({ isHandMode })
     const [oauthModal, setOauthModal] = useState<{
       provider: OAuthProvider
@@ -4090,13 +4098,13 @@ const WorkflowContent = React.memo(
         <div className='flex min-w-0 flex-1 flex-col'>
           {/* SV: vehicle editor chrome — safety notice (NFR-10) and action bar (M01-T10). */}
           {!embedded && <SvSafetyBanner />}
-          {!embedded && <SvActionBar />}
+          {!embedded && (isRobotWorkflow ? <RobotActionBar /> : <SvActionBar />)}
           {/* SV: Read / When changes / Set menu for dropped VSS signals (M02-T10). */}
           {!embedded && <SvSignalDropMenu />}
           {/* SV: the workflow as sentences over the canvas (ADR-0059 §2). */}
           {!embedded && <SvLogicPanel />}
           {/* SV: realtime lint of the canvas (M03-T11). */}
-          {!embedded && <SvLintRunner />}
+          {!embedded && !isRobotWorkflow && <SvLintRunner />}
           <div ref={canvasContainerRef} className='relative flex-1 overflow-hidden'>
             {!isWorkflowReady && (
               <div className='absolute inset-0 z-[5] flex items-center justify-center bg-[var(--bg)]'>
@@ -4293,7 +4301,7 @@ const WorkflowContent = React.memo(
           </div>
 
           {/* SV: vehicle bottom dock replaces Sim's executor terminal (ADR-0006, M01-T10). */}
-          {!embedded && <SvBottomDock />}
+          {!embedded && (isRobotWorkflow ? <RobotPanel /> : <SvBottomDock />)}
         </div>
 
         {(!embedded || sandbox) && <Panel workspaceId={sandbox ? workspaceId : undefined} />}

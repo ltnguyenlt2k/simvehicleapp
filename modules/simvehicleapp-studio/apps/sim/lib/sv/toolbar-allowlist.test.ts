@@ -9,6 +9,7 @@ import {
   parseToolbarAllowlist,
 } from '@/lib/sv/toolbar-allowlist'
 import { getAllBlocks } from '@/blocks/registry'
+import { SV_ROBOT_BLOCKS } from '@/blocks/robot'
 import { SV_VEHICLE_BLOCKS } from '@/blocks/vehicle'
 
 vi.unmock('@/blocks/registry')
@@ -18,10 +19,10 @@ afterEach(() => {
 })
 
 describe('toolbar allowlist (M01-T05)', () => {
-  it('defaults to sv_*, note and the loop/parallel containers (M03-T10)', () => {
-    expect(DEFAULT_TOOLBAR_ALLOWLIST).toBe('sv_*,note,loop,parallel')
+  it('defaults to sv_*, rf_* (ADR-0068), note and the loop/parallel containers (M03-T10)', () => {
+    expect(DEFAULT_TOOLBAR_ALLOWLIST).toBe('sv_*,rf_*,note,loop,parallel')
     const patterns = getToolbarAllowlist()
-    for (const type of ['sv_read_signal', 'note', 'loop', 'parallel']) {
+    for (const type of ['sv_read_signal', 'rf_move', 'note', 'loop', 'parallel']) {
       expect(isToolbarBlockAllowed(type, patterns)).toBe(true)
     }
     for (const type of ['agent', 'api', 'slack', 'starter', 'notes', 'xsv_x', 'loops']) {
@@ -33,7 +34,12 @@ describe('toolbar allowlist (M01-T05)', () => {
     const offered = getAllBlocks()
       .map((block) => block.type)
       .filter((type) => isToolbarBlockAllowed(type))
-    expect(offered.filter((type) => !type.startsWith('sv_'))).toEqual(['note'])
+    expect(offered.filter((type) => !type.startsWith('sv_') && !type.startsWith('rf_'))).toEqual([
+      'note',
+    ])
+    expect(offered.filter((type) => type.startsWith('rf_')).sort()).toEqual(
+      Object.keys(SV_ROBOT_BLOCKS).sort()
+    )
     expect(offered.filter((type) => type.startsWith('sv_')).sort()).toEqual(
       Object.keys(SV_VEHICLE_BLOCKS).sort()
     )

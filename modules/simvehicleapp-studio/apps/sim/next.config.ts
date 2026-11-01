@@ -91,7 +91,10 @@ const nextConfig: NextConfig = {
       './lib/execution/sandbox/bundles/*.cjs',
     ],
   },
+  /** SV: low-spec hosts — bounded build workers (SV_NEXT_BUILD_CPUS) and a longer static page timeout. */
+  staticPageGenerationTimeout: 180,
   experimental: {
+    ...(process.env.SV_NEXT_BUILD_CPUS ? { cpus: Number(process.env.SV_NEXT_BUILD_CPUS) } : {}),
     optimizeCss: true,
     preloadEntriesOnStart: false,
     optimizePackageImports: [

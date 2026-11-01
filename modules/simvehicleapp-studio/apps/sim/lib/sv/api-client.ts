@@ -12,6 +12,7 @@ export const SV_SERVICES = [
   'orchestrator',
   'signal-gateway',
   'ai-assistant',
+  'robotics',
 ] as const
 export type SvService = (typeof SV_SERVICES)[number]
 
@@ -27,6 +28,7 @@ export function getSvServiceUrl(service: SvService): string | undefined {
     orchestrator: env.SV_ORCHESTRATOR_URL,
     'signal-gateway': env.SV_SIGNAL_GATEWAY_URL,
     'ai-assistant': env.SV_AI_URL,
+    robotics: env.SV_ROBOTICS_URL,
   }[service]
   return url ? url.replace(/\/+$/, '') : undefined
 }

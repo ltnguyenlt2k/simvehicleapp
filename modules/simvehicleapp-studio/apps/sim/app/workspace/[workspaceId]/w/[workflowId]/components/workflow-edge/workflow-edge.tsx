@@ -7,6 +7,7 @@ import type { EdgeDiffStatus } from '@/lib/workflows/diff/types'
 import { useSvEdgeFlow } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/use-edge-flow'
 import { useLastRunEdges } from '@/stores/execution'
 import { useWorkflowDiffStore } from '@/stores/workflow-diff'
+import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 /** Extended edge props with optional handle identifiers */
 interface WorkflowEdgeProps extends EdgeProps {
@@ -57,7 +58,8 @@ const WorkflowEdgeComponent = ({
   const isErrorEdge = (sourceHandle ?? dataSourceHandle) === 'error'
   // SV: an edge leaving a named branch of a vehicle block says which one, in its colour (ADR-0055).
   const svBranch = sourceHandle ?? dataSourceHandle
-  const svLabel = svEdgeLabel(svBranch)
+  const svRobot = useWorkflowStore((state) => Boolean(state.blocks[source]?.type.startsWith('rf_')))
+  const svLabel = svEdgeLabel(svBranch, svRobot)
   const svTone = svHandleTone(svBranch)
   // SV: the way the replay/live run went (ADR-0059 §4): taken bright, other branches dimmed, trigger value shown.
   const svFlow = useSvEdgeFlow(source, svBranch)

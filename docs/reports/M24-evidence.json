@@ -1,0 +1,348 @@
+{
+ "liveChecks": {
+  "prepare": {
+   "worldReset": false,
+   "mode": "DISARMED",
+   "ready": true
+  },
+  "equality": {
+   "paths": 35,
+   "mismatches": []
+  },
+  "stopLatencyMs": {
+   "n": 20,
+   "p50": 50.0,
+   "p95": 50.6,
+   "max": 50.6
+  },
+  "motion": {
+   "BOW": [
+    "ACCEPTED:Queued; inspect actual motion feedback for admission/result",
+    "RUNNING:running",
+    "SUCCEEDED:robot reported SUCCEEDED"
+   ],
+   "JUMP": [
+    "ACCEPTED:Queued; inspect actual motion feedback for admission/result",
+    "RUNNING:running",
+    "SUCCEEDED:robot reported SUCCEEDED"
+   ],
+   "LIFT_FRONT_LEFT": [
+    "ACCEPTED:Queued; inspect actual motion feedback for admission/result",
+    "RUNNING:running",
+    "SUCCEEDED:robot reported SUCCEEDED"
+   ]
+  },
+  "velocity": {
+   "commandedS": 2.0,
+   "movedM": 0.618,
+   "safeCommandZeroAfterS": 0.179
+  },
+  "navigation": {
+   "goto": [
+    "ACCEPTED:Accepted",
+    "RUNNING:running",
+    "SUCCEEDED:robot reported SUCCEEDED"
+   ],
+   "route": [
+    "ACCEPTED:Accepted",
+    "RUNNING:running",
+    "SUCCEEDED:robot reported SUCCEEDED"
+   ],
+   "routeCompleted": 2,
+   "routeTotal": 2,
+   "modeAfter": "MANUAL"
+  },
+  "operatorTakeover": {
+   "operatorAccepted": true,
+   "revokedAfterS": 0.020230146998073906,
+   "workflowCommandAfterTakeover": [
+    "REJECTED:robot did not grant workflow control (operator may hold it)"
+   ],
+   "rssController": "OPERATOR"
+  },
+  "passed": true
+ },
+ "faults": {
+  "sr-protobus-ros2-1": {
+   "valid": true,
+   "killed": "sr-protobus-ros2-1",
+   "commandBeforeKill": [
+    0.25,
+    0.0
+   ],
+   "bodyCommandZeroAfterS": 0.7155022470033146,
+   "modeAfter": "MANUAL",
+   "reasonAfter": "Manual deadman released",
+   "controllerAfter": "WORKFLOW",
+   "controllerReason": "Workflow control granted"
+  },
+  "sr-protobus-broker-ros-1": {
+   "valid": true,
+   "killed": "sr-protobus-broker-ros-1",
+   "commandBeforeKill": [
+    0.25,
+    0.0
+   ],
+   "bodyCommandZeroAfterS": 0.4601276829998824,
+   "modeAfter": "MANUAL",
+   "reasonAfter": "Manual deadman released",
+   "controllerAfter": "WORKFLOW",
+   "controllerReason": "Workflow control granted"
+  }
+ },
+ "soak": {
+  "cycles": 98,
+  "failedCycles": 31,
+  "telemetrySamples": 356940,
+  "nonOkSamples": 0,
+  "failures": [
+   {
+    "cycle": 2,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 7,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 8,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 12,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 13,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 17,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 18,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 22,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 23,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 28,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 34,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 39,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 40,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 45,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 46,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 51,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 52,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 55,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 59,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 60,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 67,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 68,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 73,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 74,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 80,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 81,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 87,
+    "steps": {
+     "lift": "REJECTED:Return within 0.6 m of the courtyard spawn before a named motion"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 88,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 92,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 95,
+    "steps": {
+     "lift": "REJECTED:robot reported REJECTED: Motion requires a stationary upright four-foot stance"
+    },
+    "stopConfirmed": true
+   },
+   {
+    "cycle": 96,
+    "steps": {
+     "arm": "REJECTED:Disarm/reset stop and wait for healthy sensors before arm",
+     "lift": "REJECTED:Motion requires MANUAL, healthy sensors and exclusive body ownership"
+    },
+    "stopConfirmed": true
+   }
+  ]
+ },
+ "soakAttempt1": {
+  "cycles": 192,
+  "failedCycles": 181,
+  "telemetrySamples": 352980,
+  "nonOkSamples": 0,
+  "note": "fixed 1 s settle before motion: invalid workload"
+ },
+ "memory": {
+  "bridgeMiB": [
+   50.09,
+   53.32
+  ],
+  "brokerMiB": [
+   24.62,
+   25.7
+  ]
+ }
+}

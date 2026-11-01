@@ -76,6 +76,10 @@ ENV DATABASE_URL=${DATABASE_URL}
 ARG NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
+# SV: bounded Next build workers so low-spec hosts do not thrash (next.config.ts).
+ARG SV_NEXT_BUILD_CPUS=4
+ENV SV_NEXT_BUILD_CPUS=${SV_NEXT_BUILD_CPUS}
+
 # Per-platform cache id keeps arm64/amd64 SWC artifacts isolated.
 RUN --mount=type=cache,id=next-cache-${TARGETPLATFORM},target=/app/apps/sim/.next/cache \
     --mount=type=cache,id=turbo-cache-${TARGETPLATFORM},target=/app/.turbo \

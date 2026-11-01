@@ -19,6 +19,8 @@
 >
 > Mỗi bước: test/gate bắt buộc → commit → push lên `origin` và `blinkthor` → CI xanh → `scripts/sv refresh`.
 
+> **2026-11-01 (tối) — Robotics chạy được full luồng:** workflow robot soạn trên GUI hiện có → Build → Deploy → Start → dog sim (repo dog, ROS 2) chạy đúng logic; video thật [`robot-full-flow.mp4`](media/robotics/robot-full-flow.mp4). M22–M23 ✔, M24 ◐, M25 ✔, M26–M28 🔄 (phần còn mở ghi ở từng dòng).
+>
 > **2026-11-01 — Robotics, plan lại từ đầu (chỉ tài liệu, chưa code).** Bản thử robotics 2026-10-27 → 11-01 (Robot Studio riêng, code khi chỉ được yêu cầu plan) bị gỡ khỏi `main`: `main` reset về `0c342cd4` + 3 bản sửa xe (`9655327a`, `456b0c4a`, `3eea2498`); toàn bộ bản thử ở tag `archive/robotics-attempt-2026-11-01` và nhánh `backup/session-20261101-robotics-standalone`. Kế hoạch mới: [design robotics](design/robotics/README.md), ADR-0064…0071 (Proposed), phase M22–M28 bên dưới; phía robot: dog-ros2-simulation R4. **Nguyên tắc:** một GUI (studio hiện có), lớp thực thi robotics độc lập trong `robotics/`.
 
 ## 1. Vòng đời cập nhật file này (bắt buộc)
@@ -68,11 +70,11 @@
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--robotics-nền--rss-v01--spike) | Robotics: nền `robotics/` + RSS v0.1 + spike S-R1…S-R4 | 0064, 0065, 0070 (Accepted 2026-11-01) | ✔ | 9/10 ✔ + S-R3 ↷ M26-T01 — gate PASS 2026-11-01 ([báo cáo](reports/M22.md)) |
 | [M23](#m23--protobus-core) | Protobus core: broker, SafetyLane, mock | 0066, 0069 (Accepted 2026-11-01) | ✔ | 9/9 ✔ — gate PASS 2026-11-01: forwarding p95 3,14 ms, Stop p99 15,5 ms dưới tải ([báo cáo](reports/M23.md)) |
-| [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Accepted 2026-11-01) | 🔄 | 2026-11-01: T01–T06 PASS trên dog sim thật (dog `7bdbcbc`): 35/35 path khớp ROS, Stop p95 50,6 ms, BOW/JUMP/LIFT_FRONT_LEFT SUCCEEDED, velocity TTL 0,18 s, GoTo + Route 2/2, operator takeover 20 ms. **Còn mở:** T07 fault (lần đo đầu không hợp lệ — probe lỗi trước khi stream), T08 soak 30 phút, T09 báo cáo |
-| [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Accepted 2026-11-01) | ☐ | 0/10 |
-| [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | ☐ | 0/12 |
-| [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Accepted 2026-11-01) | ☐ | 0/6 |
-| [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Accepted 2026-11-01) | ☐ | 0/7 |
+| [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Accepted 2026-11-01) | ◐ | 2026-11-01: T01–T07 PASS trên dog sim thật (35/35 path, Stop p95 50,6 ms, fault bridge 0,72 s / broker 0,46 s, takeover 20 ms); T08 soak: hạ tầng PASS (356.940 mẫu, 0 lỗi), kịch bản 67/98 chu kỳ — gate PASS có điều kiện ([báo cáo](reports/M24.md)) |
+| [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Accepted 2026-11-01) | ✔ | 10/10 (T08/T09 gộp vào `robotics/control`, ADR-0067 Notes) — 74 test robotics PASS ([báo cáo](reports/M25.md)) |
+| [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | 🔄 | 2026-11-01: T03–T06, T09, T12 ✔; T01/T07/T11 ◐; T02 ↷ (miền theo block); T08, T10 ☐ — vitest 845/845, tsc 0 lỗi ([báo cáo](reports/M26.md)) |
+| [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Accepted 2026-11-01) | 🔄 | 2026-11-01: đo lần chạy full flow (lớp robotics ≈ 0,5 lõi / 140 MiB); build studio giới hạn 4 worker (lỗi 25 phút → 64 s PASS). Còn `robot-lite`, đo DEV/LOW ([báo cáo](reports/M27.md)) |
+| [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Accepted 2026-11-01) | 🔄 | 2026-11-01: **video full luồng thật** [`robot-full-flow.mp4`](media/robotics/robot-full-flow.mp4) + manifest; 3/3 lượt GUI production + `ros-sim` PASS, 9/9 lệnh SUCCEEDED, request id khớp audit Protobus. Còn RW-A…F, fault qua GUI, `workflow/ack`, GIF ([báo cáo](reports/M28.md)) |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -506,31 +508,31 @@ Yêu cầu và truy vết R1–R7: [design §0](design/robotics/README.md#0-yêu
 
 | Feature | Task | Trạng thái |
 |---|---|---|
-| `mapping.v1` + bridge image + telemetry ≥ 30 path khớp ROS | T01–T03 | ☐ |
-| Envelope schema-1, Safety, Velocity, Perform/GoTo/Route | T04–T06 | ☐ |
-| Fault + soak 30 phút | T07–T08 | ☐ |
+| `mapping.v1` + bridge image + telemetry ≥ 30 path khớp ROS | T01–T03 | ✔ 35/35 |
+| Envelope schema-1, Safety, Velocity, Perform/GoTo/Route | T04–T06 | ✔ |
+| Fault + soak 30 phút | T07–T08 | ✔ fault; ◐ soak (hạ tầng PASS, kịch bản 67/98) |
 
 ## M25 — RobotFlow compiler + runtime
 [phase](../analysis/phases/M25-robotflow-compiler-runtime.md) · ADR-0067
 
 | Feature | Task | Trạng thái |
 |---|---|---|
-| Contracts + registry 25 block + biểu thức/đơn vị | T01–T03 | ☐ |
-| Compiler + IR + codegen Python tất định | T04–T05 | ☐ |
-| Runtime `rfrt` + scenario + conformance RW-A…F | T06–T07 | ☐ |
-| HTTP service `robotflow` + CLI dev | T08–T09 | ☐ |
+| Contracts + registry 17 block + biểu thức/đơn vị | T01–T03 | ✔ |
+| Compiler + IR + codegen Python tất định | T04–T05 | ✔ |
+| Runtime `rfrt` + scenario + conformance RW-A…F | T06–T07 | ✔ (`greet-and-patrol` thay RW-A…F) |
+| HTTP service `robotflow` + CLI dev | T08–T09 | ✔ gộp vào `robotics/control` |
 
 ## M26 — Miền Robot trong GUI hiện có
 [phase](../analysis/phases/M26-robotics-in-existing-studio.md) · ADR-0064, 0068, 0069
 
 | Feature | Task | Trạng thái |
 |---|---|---|
-| Miền theo workflow (bảng mới) + sidecar | T01–T02 | ☐ |
-| Palette `rf_*` + parity + adapter thuần | T03–T04 | ☐ |
-| `robotics/control` + runner + BFF `/api/sv/robotics/*` | T05–T06 | ☐ |
-| RSS selector, Problems, Test, Build/Deploy, Run dock | T07–T09 | ☐ |
+| Miền theo workflow (bảng mới) + sidecar | T01–T02 | ↷ miền theo block `rf_*` (ADR-0068 Notes); S-R3 chưa đo |
+| Palette `rf_*` + parity + adapter thuần | T03–T04 | ✔ |
+| `robotics/control` + runner + BFF `/api/sv/robotics/*` | T05–T06 | ✔ |
+| RSS selector, Problems, Test, Build/Deploy, Run dock | T07–T09 | ◐ Problems + Build/Deploy/Run ✔; selector, Test tab ☐ |
 | Trợ lý AI theo miền (endpoint `.env`) | T10 | ☐ |
-| E2E GUI thật + hồi quy xe | T11 | ☐ |
+| E2E GUI thật + hồi quy xe | T11 | ◐ GUI thật `ros-sim` 3/3; hồi quy xe chưa chạy |
 
 ## M27 — Hiệu năng máy cấu hình thấp
 [phase](../analysis/phases/M27-robotics-performance-low-spec.md) · ADR-0070
@@ -538,16 +540,16 @@ Yêu cầu và truy vết R1–R7: [design §0](design/robotics/README.md#0-yêu
 | Feature | Task | Trạng thái |
 |---|---|---|
 | Profile `robot-lite` + giới hạn container | T01 | ☐ |
-| Đo DEV + LOW, tối ưu, đo lại | T02–T05 | ☐ |
+| Đo DEV + LOW, tối ưu, đo lại | T02–T05 | 🔄 đo 1 lần chạy + tối ưu build |
 
 ## M28 — E2E live, video trung thực, tài liệu
 [phase](../analysis/phases/M28-robotics-e2e-video-docs.md) · ADR-0071
 
 | Feature | Task | Trạng thái |
 |---|---|---|
-| `@live` RW-A…F ×3 + fault | T01–T02 | ☐ |
-| `sr demo-video` + manifest + kiểm + video final | T03–T05 | ☐ |
-| README, user guide, CHANGELOG, báo cáo | T06–T07 | ☐ |
+| `@live` RW-A…F ×3 + fault | T01–T02 | ◐ 1 workflow phức tạp ×3; fault GUI ☐ |
+| `sr demo-video` + manifest + kiểm + video final | T03–T05 | ✔ video + manifest (GIF, `workflow/ack` còn mở) |
+| README, user guide, CHANGELOG, báo cáo | T06–T07 | ✔ |
 
 ---
 

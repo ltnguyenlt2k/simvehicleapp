@@ -162,8 +162,9 @@ async def until(predicate, timeout: float, step: float = 0.02) -> float | None:
 async def main_async(args) -> dict:
     ros = RosView()
     report: dict = {}
-    await until(lambda: all(k in ros.latest for k in ("odom", "imu/data", "joint_states", "foot_contacts",
-                                                     "battery_state", "scan", "brain/state")), 15)
+    if await until(lambda: all(k in ros.latest for k in ("odom", "imu/data", "joint_states", "foot_contacts",
+                                                        "battery_state", "scan", "brain/state")), 40) is None:
+        raise SystemExit(f"probe missing topics: {sorted(ros.latest)}")
     async with grpc.aio.insecure_channel(args.broker) as channel, grpc.aio.insecure_channel(args.safety) as safety_channel:
         app = App(rpc.BrokerStub(channel), rpc.SafetyLaneStub(safety_channel))
         report["prepare"] = await prepare(ros)
@@ -252,7 +253,8 @@ async def main_async(args) -> dict:
 async def stream_async(args) -> dict:
     """Fault fixture: arm and stream a forward velocity until the broker/bridge disappears."""
     ros = RosView()
-    await until(lambda: "brain/state" in ros.latest and "odom" in ros.latest, 15)
+    if await until(lambda: "brain/state" in ros.latest and "odom" in ros.latest, 40) is None:
+        raise SystemExit("probe did not receive brain/state and odom")
     prepared = await prepare(ros)
     sent, error = 0, None
     async with grpc.aio.insecure_channel(args.broker) as channel, grpc.aio.insecure_channel(args.safety) as safety_channel:
@@ -273,14 +275,89 @@ async def stream_async(args) -> dict:
     return {"prepare": prepared, "setpointsSent": sent, "streamError": error}
 
 
+async def soak_async(args) -> dict:
+    """M24-T08: repeated workflow cycles for args.soak seconds; counts failures, keeps telemetry subscribed."""
+    ros = RosView()
+    if await until(lambda: "brain/state" in ros.latest and "odom" in ros.latest, 40) is None:
+        raise SystemExit("probe did not receive brain/state and odom")
+    await prepare(ros)
+    cycles, failures, samples, stale = 0, [], 0, 0
+    async with grpc.aio.insecure_channel(args.broker) as channel, grpc.aio.insecure_channel(args.safety) as safety_channel:
+        app = App(rpc.BrokerStub(channel), rpc.SafetyLaneStub(safety_channel))
+        stop_watch = False
+
+        async def watch():
+            nonlocal samples, stale
+            stream = app.broker.Subscribe(pb.SubscribeRequest(paths=["Robot.Pose.*", "Robot.Imu.*", "Robot.Safety.*"], max_rate_hz=10))
+            async for response in stream:
+                samples += len(response.samples)
+                stale += sum(1 for x in response.samples if x.quality != pb.OK)
+                if stop_watch:
+                    break
+
+        watcher = asyncio.ensure_future(watch())
+        end = time.monotonic() + args.soak
+        while time.monotonic() < end:
+            cycles += 1
+            async def settled(need_ready=False, timeout=15.0):
+                """Wait for the robot's own preconditions instead of a fixed delay."""
+                end = time.monotonic() + timeout
+                stable_since = None
+                while time.monotonic() < end:
+                    v = await app.values(["Robot.Velocity.Linear.X", "Robot.Velocity.Angular.Z", "Robot.Safety.IsReady",
+                                          "Robot.Leg.FrontLeft.IsInContact", "Robot.Leg.FrontRight.IsInContact",
+                                          "Robot.Leg.RearLeft.IsInContact", "Robot.Leg.RearRight.IsInContact"])
+                    ok = (abs(v["Robot.Velocity.Linear.X"][0] or 0) < 0.02 and abs(v["Robot.Velocity.Angular.Z"][0] or 0) < 0.05
+                          and all(v[f"Robot.Leg.{leg}.IsInContact"][0] for leg in ("FrontLeft", "FrontRight", "RearLeft", "RearRight"))
+                          and (v["Robot.Safety.IsReady"][0] or not need_ready))
+                    stable_since = (stable_since or time.monotonic()) if ok else None
+                    if stable_since and time.monotonic() - stable_since >= 1.0:
+                        return True
+                    await asyncio.sleep(0.1)
+                return False
+
+            try:
+                await settled(need_ready=True)
+                await app.acquire()
+                steps = {"arm": await app.run("Robot.Safety.Arm")}
+                for linear in (0.2, -0.2):
+                    for _ in range(20):
+                        await app.broker.SetSetpoint(pb.SetpointRequest(lease_id=app.lease.lease_id, path="Robot.Motion.Velocity",
+                                                                        fields={"LinearX": linear, "AngularZ": 0.0}))
+                        await asyncio.sleep(0.05)
+                await settled()
+                steps["lift"] = await app.run("Robot.Motion.Perform", {"Name": "LIFT_FRONT_LEFT"})
+                stop = await app.safety.Stop(pb.StopRequest(request_id=str(uuid.uuid4()), source="WORKFLOW", reason="soak"))
+                await app.release()
+                await app.acquire()
+                steps["reset"] = await app.run("Robot.Safety.ResetStop")
+                await app.release()
+                bad = {k: v[-1] for k, v in steps.items() if not v[-1].startswith("SUCCEEDED")}
+                if bad or not stop.confirmed:
+                    failures.append({"cycle": cycles, "steps": bad, "stopConfirmed": stop.confirmed})
+                    await app.release()
+                    await prepare(ros)
+            except Exception as error:  # keep soaking; record the failure
+                failures.append({"cycle": cycles, "error": repr(error)[:200]})
+                await app.release()
+                await prepare(ros)
+            await until(lambda: ros.brain().get("controller") == "NONE", 3)
+        stop_watch = True
+        watcher.cancel()
+    ros.close()
+    return {"seconds": args.soak, "cycles": cycles, "failures": failures, "telemetrySamples": samples, "nonOkSamples": stale}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--soak", type=float, default=0)
     parser.add_argument("--stream", type=float, default=0)
     parser.add_argument("--broker", default="protobus-broker-ros:55500")
     parser.add_argument("--safety", default="protobus-broker-ros:55501")
     parser.add_argument("--stops", type=int, default=20)
     args = parser.parse_args()
-    print(json.dumps(asyncio.run(stream_async(args) if args.stream else main_async(args)), indent=1))
+    job = soak_async(args) if args.soak else stream_async(args) if args.stream else main_async(args)
+    print(json.dumps(asyncio.run(job), indent=1))
 
 
 if __name__ == "__main__":
