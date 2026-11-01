@@ -36,3 +36,10 @@
 | **MCP** | Model Context Protocol — giao thức tool cho LLM |
 | **Entitlement** | Quyền theo license (export source, ngôn ngữ…) |
 | **Golden workflow** | Workflow chuẩn GW-A..G dùng làm test hồi quy |
+| **RSS** | Robotic Signal Specification — cây tín hiệu robot `Robot.*` (như VSS cho xe), ADR-0065 |
+| **Protobus** | Broker tín hiệu RSS độc lập (gRPC `protobus.v1`) + provider mock/ROS 2 bridge, ADR-0066 |
+| **Setpoint** | Tín hiệu điều khiển liên tục có TTL; hết hạn ⇒ `safeValue` |
+| **Command (RSS)** | Lệnh rời rạc có vòng đời và kết quả vật lý (`SUCCEEDED/FAILED/REJECTED/CANCELLED/TIMED_OUT`) |
+| **RobotFlow / `rflowc` / `rfrt`** | Ngôn ngữ workflow robot, compiler và runtime Python, ADR-0067 |
+| **Miền (domain)** | `vehicle` hoặc `robot` của một workflow trong studio, ADR-0068 |
+| **RW-A…F** | Workflow robot chuẩn dùng cho conformance/E2E |

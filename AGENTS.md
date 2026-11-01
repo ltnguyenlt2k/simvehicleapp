@@ -23,6 +23,9 @@
 8. **Mã diagnostic là API công khai**: không đổi tên/xoá.
 9. **Mọi thay đổi contract/kiến trúc ⇒ ADR** (skill `adr-writing`).
 10. **Docker Compose là mode chạy duy nhất**; không mount `/var/run/docker.sock`; port bind `127.0.0.1`.
+11. **Robotics** (ADR-0064, chờ PO xác nhận): `robotics/` và `modules/` không import/copy code của nhau; robot không dùng KUKSA/Velocitas/VSS/compiler xe.
+12. **Không tạo GUI/editor/portal soạn thảo thứ hai cho robotics**: workflow robot là miền `robot` trong studio hiện có (ADR-0068).
+13. **Robot chỉ nhận lệnh cấp cao qua kênh repo dog cho phép** (`/dog1/workflow/request`); không bao giờ `cmd_vel`/`motion/request`/lệnh motor; deploy không Arm/Start; Stop luôn ưu tiên (ADR-0069). Khi PO chỉ yêu cầu plan/tài liệu thì **không viết code**.
 
 ## 3. Skills dùng chung cho Codex / Claude
 

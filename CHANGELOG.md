@@ -5,6 +5,17 @@
 
 ## [Unreleased]
 
+### Robotics — kế hoạch (2026-11-01, chỉ tài liệu)
+- **Plan mới cho robotics:**
+  - [thiết kế](docs/design/robotics/README.md): RSS v0.1, Protobus, RobotFlow, tích hợp GUI hiện có, hiệu năng và video;
+  - ADR-0064…0071 (Proposed);
+  - phase M22–M28;
+  - ROADMAP.
+- **Bản thử robotics trước đó đã gỡ khỏi `main`:**
+  - các thành phần gỡ: Robot Studio riêng, ADR-0064…0089 cũ, code `robotics/`;
+  - lưu tại tag `archive/robotics-attempt-2026-11-01`;
+  - `main` = `0c342cd4` + 3 bản sửa xe (`qs` security pin, gate test chat cũ, ô tìm kiếm palette).
+
 ## [baseline-2026-10-27] — 2026-10-27 (baseline, tag local)
 
 Tag annotated `baseline-2026-10-27`, gắn ở máy dev theo yêu cầu PO: commit để baseline, **chưa push nên chưa có CI** cho commit này.

@@ -7,6 +7,8 @@
 
 > Hiện có 34 ADR. Status trong từng file là nguồn kiểm prerequisite. 2026-10-03: PO chấp thuận ADR-0004/0006/0007 (Accepted) — đủ ADR cho gate M0; ADR-0002 Accepted cho release, dev được điều chỉnh bởi ADR-0009. Xem [review và bằng chứng](../../docs/reports/2026-10-03-documentation-review.md); không coi review tài liệu là chấp thuận ADR.
 
+> **2026-11-01 — Robotics (ADR-0064…0071, Proposed — chờ PO xác nhận):** plan lại từ đầu sau khi bản thử 2026-10-27…11-01 (ADR-0064…0089 cũ, Robot Studio riêng) bị gỡ khỏi `main` và lưu ở tag `archive/robotics-attempt-2026-11-01`. Số ADR 0064+ trên `main` là bộ mới.
+
 ## 1. Cây phân cấp quyết định
 
 ```mermaid
@@ -165,6 +167,14 @@ flowchart TB
 | [0061](ADR-0061-wasm-targets-cpp-rust-and-host-runtime.md) | Target `wasm` cho backend C++ và Rust (cùng emitter), ABI `sv-wasm-abi/1` (core module wasip1 reactor, JSON), host chung `sv-wasm-host` (Wasmtime LTS, KUKSA v2, allowlist, giới hạn) | L1 | M20 |
 | [0062](ADR-0062-execution-flow-trace-and-signal-testing.md) | Mô hình Flow chung cho Simulate/Test/Run, `data.eval` (lý do rẽ nhánh), `signal-update.source`, console dạng câu, giải thích case FAIL | L1 | M19 |
 | [0063](ADR-0063-sub-workflow-inline-call.md) | Sub-workflow: `sv_call_workflow` gọi workflow hàm (`sv_on_call`), inline lúc compile (`expandCalls`), cấm đệ quy, ≤ 4 cấp | L1 | M21 |
+| [0064](ADR-0064-robotics-architecture-shared-gui-independent-execution.md) | **Robotics:** GUI SimVehicleApp hiện có là giao diện duy nhất; RSS/Protobus/RobotFlow/runtime độc lập trong `robotics/` (Proposed) | L0 | M22 |
+| [0065](ADR-0065-rss-robotic-signal-specification.md) | RSS: cây `Robot.*`, kind `setpoint`/`command`/`event`, `maxAgeMs` bắt buộc, profile robot (Proposed) | L1 | M22 |
+| [0066](ADR-0066-protobus-signal-broker-and-ros2-bridge.md) | Protobus: broker gRPC `protobus.v1` riêng, SafetyLane, provider mock + ROS 2 bridge theo `mapping.v1` (Proposed) | L1 | M23–M24 |
+| [0067](ADR-0067-robotflow-compiler-and-python-runtime.md) | RobotFlow: compiler Python, IR `rfir.v1`, sinh app Python, runtime `rfrt`, scenario (Proposed) | L1 | M25 |
+| [0068](ADR-0068-robotics-domain-in-existing-studio.md) | Miền `robot` trong studio: `rf_*`, adapter thuần, BFF `/api/sv/robotics/*`, Test/Run/Live, AI theo miền (Proposed) | L1 | M26 |
+| [0069](ADR-0069-robotics-safety-and-execution-policy.md) | An toàn: deploy không Arm, Start tường minh, Stop ưu tiên, chỉ lệnh cấp cao, chỉ mô phỏng (Proposed) | L1 | M23–M26 |
+| [0070](ADR-0070-robotics-performance-budget-low-spec.md) | Ngân sách hiệu năng máy yếu: `robot-lite`, downsample, live ≤ 10 Hz (Proposed) | L1 | M27 |
+| [0071](ADR-0071-robotics-acceptance-and-honest-video.md) | Nghiệm thu E2E thật + video full luồng liên tục có manifest, không bịa (Proposed) | L1 | M28 |
 
 
 ## 3. Ánh xạ ADR bắt buộc của Master Plan v2

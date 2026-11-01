@@ -39,6 +39,14 @@ flowchart LR
   M18 --> M19["M19 Luồng thực thi (Flow) + thử tín hiệu"]
   M19 --> M20["M20 Target WASM C++/Rust + sv-wasm-host"]
   M13 --> M20
+  M21["M21 Hoàn tất roadmap"] -.-> M22["M22 Robotics nền + RSS + spike"]
+  M22 --> M23["M23 Protobus core"]
+  M23 --> M24["M24 ROS 2 bridge + dog (cần dog R4 W1)"]
+  M23 --> M25["M25 RobotFlow compiler + rfrt"]
+  M24 --> M26["M26 Miền Robot trong studio hiện có"]
+  M25 --> M26
+  M26 --> M27["M27 Hiệu năng máy yếu"]
+  M27 --> M28["M28 E2E live + video trung thực"]
 ```
 
 **Đường găng (critical path):** M0 → M1 → M2 → M3 → M4 → M6 → M7 → M8 → M11.
@@ -69,6 +77,13 @@ flowchart LR
 | [M14](phases/M14-services-curated-multiuser.md) | Mở rộng | gRPC service block, standalone mode, curated multi-VSS blocks, multi-user workspaces, kuksa.val.v2 | 0043+ | 23–25 | 6+ |
 | [M15](phases/M15-final-e2e-demo-video.md) | E2E toàn diện + video demo | Playwright: mọi kéo thả, 7 golden bằng UI, full luồng signup→run→export, cộng tác, lỗi service; 3 run xanh liên tiếp; video full luồng trong README | — | (mới) | 2–3 |
 | [M19](phases/M19-execution-flow-and-signal-testing.md) | Luồng thực thi + thử tín hiệu | Mô hình Flow chung (Simulate/Test/Live), `data.eval`, nguồn tín hiệu, console dạng câu, giải thích case FAIL | 0062 | (mới, PO 2026-10-24) | 3 |
+| [M22](phases/M22-robotics-foundation-rss.md) | Robotics nền + RSS | `robotics/` + guard, RSS v0.1 + `rssc`, spike S-R1…S-R4 | 0064, 0065, 0070 | (mới, PO 2026-10-27/11-01) | 2 |
+| [M23](phases/M23-protobus-core.md) | Protobus core | broker gRPC, lease/TTL/command, SafetyLane, mock | 0066, 0069 | (mới) | 3 |
+| [M24](phases/M24-protobus-ros2-bridge-dog.md) | ROS 2 bridge + dog | mapping `dog-go2-sim`, lệnh thật trên dog sim, fault, soak | 0066, 0069 | (mới) | 3 |
+| [M25](phases/M25-robotflow-compiler-runtime.md) | RobotFlow | compiler Python, IR, codegen, `rfrt`, scenario, conformance RW-A…F | 0067 | (mới) | 4 |
+| [M26](phases/M26-robotics-in-existing-studio.md) | Miền Robot trong studio | `rf_*`, adapter, BFF, RSS selector, Test/Run/Live, AI theo miền, control/runner | 0064, 0068, 0069 | (mới) | 5 |
+| [M27](phases/M27-robotics-performance-low-spec.md) | Hiệu năng máy yếu | `robot-lite`, đo DEV/LOW | 0070 | (mới) | 1–2 |
+| [M28](phases/M28-robotics-e2e-video-docs.md) | E2E + video | `@live` ×3, video liên tục có manifest, docs | 0071 | (mới) | 1–2 |
 | [M20](phases/M20-wasm-targets.md) | Target WASM C++/Rust | target `cpp-wasm`/`rust-wasm` (cùng emitter), ABI `sv-wasm-abi/1`, `sv-wasm-host` (Wasmtime LTS), `toolchain-wasm`, conformance + parity | 0061 | (mới, PO 2026-10-24) | 6 |
 
 **MVP (v1.0) = M0 → M11** ≈ 48 người-tuần; với đội 4 dev (1 FE, 2 BE/TS, 1 C++/Velocitas) ≈ 4–5 tháng lịch có song song. Đây là ước lượng kế hoạch, cần cập nhật theo throughput và thời gian build thực tế; Python/Rust và M14 nằm sau v1.0.

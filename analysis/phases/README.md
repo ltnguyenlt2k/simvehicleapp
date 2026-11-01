@@ -27,3 +27,14 @@
 - [M18 — Bàn thử nghiệm, workflow dễ đọc v2, Deploy](M18-test-workbench-readability-deploy.md) (PO 2026-10-15)
 - [M19 — Luồng thực thi (Flow) và thử tín hiệu chỉn chu](M19-execution-flow-and-signal-testing.md) (PO 2026-10-24)
 - [M20 — Target WebAssembly cho C++ và Rust + host runtime](M20-wasm-targets.md) (PO 2026-10-24)
+- [M21 — Hoàn tất roadmap](M21-roadmap-completion.md) (PO 2026-10-25)
+
+### Robotics (PO 2026-10-27, plan lại 2026-11-01 — chỉ tài liệu, chưa code)
+Thiết kế: [docs/design/robotics/](../../docs/design/robotics/README.md) · ADR-0064…0071 · repo robot: dog-ros2-simulation R4.
+- [M22 — Nền robotics + RSS v0.1 + spike](M22-robotics-foundation-rss.md)
+- [M23 — Protobus core](M23-protobus-core.md)
+- [M24 — Protobus ROS 2 bridge + dog](M24-protobus-ros2-bridge-dog.md)
+- [M25 — RobotFlow compiler + runtime](M25-robotflow-compiler-runtime.md)
+- [M26 — Miền Robot trong GUI hiện có](M26-robotics-in-existing-studio.md)
+- [M27 — Hiệu năng, máy cấu hình thấp](M27-robotics-performance-low-spec.md)
+- [M28 — E2E live, video trung thực, tài liệu](M28-robotics-e2e-video-docs.md)

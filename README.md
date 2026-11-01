@@ -253,6 +253,16 @@ Thanh hành động cho biết bước nên làm tiếp (nút đậm), đang dù
 
 Hướng dẫn từng bước: [tutorial](docs/user-guide/tutorial.md) · kiểm logic bằng tín hiệu (UI, curl, kuksa-client): [test-signals](docs/user-guide/test-signals.md) · danh mục block: [blocks](docs/user-guide/blocks.md) · kịch bản: [scenarios](docs/user-guide/scenarios.md) · chạy app trên databroker của xe/bench: [deploy](docs/user-guide/deploy.md) · app WebAssembly: [wasm](docs/user-guide/wasm.md) · nhiều app qua MQTT: [multiple-apps](docs/user-guide/multiple-apps.md) · gọi workflow từ workflow: [sub-workflows](docs/user-guide/sub-workflows.md).
 
+### Robotics — đang lập kế hoạch / planned (chưa có code)
+
+Mở rộng sang robot (trước mắt dog Unitree Go2 mô phỏng, repo [dog-ros2-simulation](https://github.com/ltnguyenlt2k/dog-ros2-simulation)):
+- kéo thả workflow robot **ngay trong GUI này** (miền *Robot*);
+- tín hiệu chuẩn hoá theo **RSS** (Robotic Signal Specification, tương tự VSS);
+- compiler **RobotFlow** sinh app Python;
+- broker **Protobus** độc lập chuyển RSS ↔ ROS 2.
+
+Kế hoạch 2026-11-01: [thiết kế](docs/design/robotics/README.md) · ADR-0064…0071 · phase M22–M28 trong [ROADMAP](docs/ROADMAP.md). Chưa có tính năng robotics nào chạy được.
+
 ## 7. Đọc tiếp / Where to go next
 
 | Vai trò | Đọc |
