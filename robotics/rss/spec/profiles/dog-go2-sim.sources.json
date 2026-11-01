@@ -2,7 +2,7 @@
  "schema": "rss-sources.v1",
  "profile": "dog-go2-sim",
  "rosNamespace": "/dog1",
- "sourceCommit": "35c45ee0270f0c40b98a84b3600154ed83e1ff14",
+ "sourceCommit": "7bdbcbc1961c3a6a148a953abc02e67b6506ae1c",
  "sources": {
   "Robot.Identity.*": {
    "origin": "profile attribute"

@@ -1,0 +1,8 @@
+{
+ "purpose": "ROS 2 message contract needed to decode /dog1/foot_contacts; interface definition only, no code",
+ "source": "github.com/ltnguyenlt2k/dog-ros2-simulation ros2_ws/src/dog_interfaces/msg/FootContacts.msg",
+ "commit": "35c45ee0270f0c40b98a84b3600154ed83e1ff14",
+ "license": "Apache-2.0",
+ "sha256": {"msg/FootContacts.msg": "24123f58ba33610324ae240a5b66ea868a9c4c8874fbae6612427a83864331aa"},
+ "check": "robotics/rss/check_dog_profile.py compares this file with git show <commit>:<path>"
+}

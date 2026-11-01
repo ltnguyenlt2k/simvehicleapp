@@ -71,7 +71,7 @@ def test_instances_expand_vss_style():
 def test_attributes_and_pending_are_applied():
     nodes = rssc.build("dog-go2-sim")["nodes"]
     assert nodes["Robot.Identity.Id"]["value"] == "dog1"
-    assert "W1" in nodes["Robot.Motion.Perform"]["pending"]
+    assert "W2" in nodes["Robot.Motion.Perform"]["pending"]
     assert "pending" not in nodes["Robot.Pose.Position.X"]
 
 
@@ -158,7 +158,7 @@ def test_docs_cover_every_leaf():
     text = "".join(pages.values())
     leaves = [p for p, n in catalog["nodes"].items() if n["kind"] != "branch"]
     assert all(f"`{p}`" in text for p in leaves)
-    assert "Pending: dog R4 W1" in pages["Motion.md"]
+    assert "Pending: dog R4 W2" in pages["Motion.md"]
 
 
 def test_catalog_schema_rejects_unknown_kind():

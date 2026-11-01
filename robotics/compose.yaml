@@ -37,6 +37,49 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  # ---- ros mode: an independent broker + the ROS 2 bridge, joined to the dog robot's DDS network (profile "ros")
+  protobus-broker-ros:
+    <<: *limits
+    profiles: [ros]
+    image: robotics/protobus:local
+    command: [python, -m, protobus.broker.main]
+    environment: { PB_AUDIT_DIR: /audit }
+    volumes: ["pb-audit-ros:/audit"]
+    networks: [bus-ros]
+    mem_limit: 192m
+    cpus: 1.0
+    healthcheck:
+      test: [CMD, python, -m, protobus.pbctl, --broker, "127.0.0.1:55500", health]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  protobus-ros2:
+    <<: *limits
+    profiles: [ros]
+    image: robotics/protobus-ros2:local
+    hostname: protobus-ros2
+    environment:
+      ROS_DOMAIN_ID: ${SR_DOG_ROS_DOMAIN_ID:-42}
+      PB_BROKER: protobus-broker-ros:55500
+      PB_SAFETY: protobus-broker-ros:55501
+      ROS_LOG_DIR: /tmp/roslog
+      HOME: /tmp
+    networks:  # DDS is pinned to eth0 (cyclonedds.xml), so the dog network must be eth0
+      dog: { interface_name: eth0 }
+      bus-ros: { interface_name: eth1 }
+    mem_limit: 256m
+    cpus: 1.0
+    pids_limit: 128
+    depends_on: { protobus-broker-ros: { condition: service_healthy } }
+  pbctl-ros:
+    <<: *limits
+    profiles: [tools]
+    restart: "no"
+    image: robotics/protobus:local
+    entrypoint: [python, -m, protobus.pbctl, --broker, "protobus-broker-ros:55500", --safety, "protobus-broker-ros:55501"]
+    networks: [bus-ros]
+    mem_limit: 96m
+    cpus: 0.5
   pbctl:
     <<: *limits
     profiles: [tools]
@@ -58,5 +101,8 @@ services:
     command: [python, -m, pytest, -q, -p, no:cacheprovider]
 volumes:
   pb-audit: { name: sr-pb-audit-v1 }
+  pb-audit-ros: { name: sr-pb-audit-ros-v1 }
 networks:
   bus: { name: sr-bus-v1, internal: true }
+  bus-ros: { name: sr-bus-ros-v1, internal: true }
+  dog: { name: "${SR_DOG_NETWORK:-dog-ros2_robot}", external: true }

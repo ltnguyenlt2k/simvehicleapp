@@ -68,7 +68,7 @@
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
 | [M22](#m22--robotics-nền--rss-v01--spike) | Robotics: nền `robotics/` + RSS v0.1 + spike S-R1…S-R4 | 0064, 0065, 0070 (Accepted 2026-11-01) | ✔ | 9/10 ✔ + S-R3 ↷ M26-T01 — gate PASS 2026-11-01 ([báo cáo](reports/M22.md)) |
 | [M23](#m23--protobus-core) | Protobus core: broker, SafetyLane, mock | 0066, 0069 (Accepted 2026-11-01) | ✔ | 9/9 ✔ — gate PASS 2026-11-01: forwarding p95 3,14 ms, Stop p99 15,5 ms dưới tải ([báo cáo](reports/M23.md)) |
-| [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Accepted 2026-11-01) | ☐ | 0/9 |
+| [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Accepted 2026-11-01) | 🔄 | 2026-11-01: T01–T06 PASS trên dog sim thật (dog `7bdbcbc`): 35/35 path khớp ROS, Stop p95 50,6 ms, BOW/JUMP/LIFT_FRONT_LEFT SUCCEEDED, velocity TTL 0,18 s, GoTo + Route 2/2, operator takeover 20 ms. **Còn mở:** T07 fault (lần đo đầu không hợp lệ — probe lỗi trước khi stream), T08 soak 30 phút, T09 báo cáo |
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Accepted 2026-11-01) | ☐ | 0/10 |
 | [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | ☐ | 0/12 |
 | [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Accepted 2026-11-01) | ☐ | 0/6 |

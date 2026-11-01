@@ -87,6 +87,16 @@ def check(catalog: dict, dog: pathlib.Path) -> dict:
     max_items = catalog["nodes"]["Robot.Navigation.FollowRoute"]["args"]["Waypoints"]["maxItems"]
     if not route or max_items > int(route.group(1)):
         problems.append("FollowRoute maxItems exceeds brain route limit")
+    msg_dir = HERE.parent / "protobus" / "ros2" / "interfaces" / "dog_interfaces"
+    provenance = json.loads((msg_dir / "PROVENANCE.json").read_text())
+    pinned = git_show(dog, provenance["commit"], "ros2_ws/src/dog_interfaces/msg/FootContacts.msg")
+    local = (msg_dir / "msg" / "FootContacts.msg").read_text()
+    import hashlib
+    if pinned != local or hashlib.sha256(local.encode()).hexdigest() != provenance["sha256"]["msg/FootContacts.msg"]:
+        problems.append("FootContacts.msg differs from the dog repository or its recorded sha256")
+    current = git_show(dog, commit, "ros2_ws/src/dog_interfaces/msg/FootContacts.msg")
+    if current != local:
+        problems.append("FootContacts.msg changed in the dog repository since the pinned contract")
     named = re.search(r"NAMED_MOTIONS = \(([^)]*)\)", capabilities)
     existing = set(re.findall(r'"([a-z_]+)"', named.group(1))) if named else set()
     perform = catalog["nodes"]["Robot.Motion.Perform"]

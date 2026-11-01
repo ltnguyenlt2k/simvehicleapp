@@ -1,0 +1,1032 @@
+{
+ "schema": "mapping.v1",
+ "profile": "dog-go2-sim",
+ "rosNamespace": "/dog1",
+ "sourceCommit": "7bdbcbc1961c3a6a148a953abc02e67b6506ae1c",
+ "requires": "dog-ros2-simulation R4 W1 (workflow/request, brain/state.controller)",
+ "envelope": {
+  "requestTopic": "workflow/request",
+  "ackTopic": "workflow/ack",
+  "schema": 1,
+  "leaseTtlMs": 1000,
+  "renewMs": 300,
+  "clockTopic": "/clock",
+  "configHashFrom": "brain/state"
+ },
+ "topics": {
+  "odom": {
+   "type": "nav_msgs/msg/Odometry",
+   "reliability": "reliable",
+   "depth": 5
+  },
+  "imu/data": {
+   "type": "sensor_msgs/msg/Imu",
+   "reliability": "best_effort",
+   "depth": 2
+  },
+  "joint_states": {
+   "type": "sensor_msgs/msg/JointState",
+   "reliability": "best_effort",
+   "depth": 2
+  },
+  "foot_contacts": {
+   "type": "dog_interfaces/msg/FootContacts",
+   "reliability": "best_effort",
+   "depth": 2
+  },
+  "battery_state": {
+   "type": "sensor_msgs/msg/BatteryState",
+   "reliability": "reliable",
+   "depth": 1
+  },
+  "brain/state": {
+   "type": "std_msgs/msg/String",
+   "reliability": "reliable",
+   "depth": 5
+  },
+  "cmd_vel/safe": {
+   "type": "geometry_msgs/msg/TwistStamped",
+   "reliability": "reliable",
+   "depth": 1
+  },
+  "perception/detections": {
+   "type": "vision_msgs/msg/Detection2DArray",
+   "reliability": "best_effort",
+   "depth": 2
+  },
+  "scan": {
+   "type": "sensor_msgs/msg/LaserScan",
+   "reliability": "best_effort",
+   "depth": 2
+  }
+ },
+ "sensors": [
+  {
+   "path": "Robot.Pose.Position.X",
+   "topic": "odom",
+   "fn": "field",
+   "args": {
+    "field": "pose.pose.position.x"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Pose.Position.Y",
+   "topic": "odom",
+   "fn": "field",
+   "args": {
+    "field": "pose.pose.position.y"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Pose.Position.Z",
+   "topic": "odom",
+   "fn": "field",
+   "args": {
+    "field": "pose.pose.position.z"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Pose.Orientation.Roll",
+   "topic": "odom",
+   "fn": "quat",
+   "args": {
+    "field": "pose.pose.orientation",
+    "axis": "roll"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.Orientation.Roll",
+   "topic": "imu/data",
+   "fn": "quat",
+   "args": {
+    "field": "orientation",
+    "axis": "roll"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Pose.Orientation.Pitch",
+   "topic": "odom",
+   "fn": "quat",
+   "args": {
+    "field": "pose.pose.orientation",
+    "axis": "pitch"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.Orientation.Pitch",
+   "topic": "imu/data",
+   "fn": "quat",
+   "args": {
+    "field": "orientation",
+    "axis": "pitch"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Pose.Orientation.Yaw",
+   "topic": "odom",
+   "fn": "quat",
+   "args": {
+    "field": "pose.pose.orientation",
+    "axis": "yaw"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.Orientation.Yaw",
+   "topic": "imu/data",
+   "fn": "quat",
+   "args": {
+    "field": "orientation",
+    "axis": "yaw"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Velocity.Linear.X",
+   "topic": "odom",
+   "fn": "field",
+   "args": {
+    "field": "twist.twist.linear.x"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Velocity.Linear.Y",
+   "topic": "odom",
+   "fn": "field",
+   "args": {
+    "field": "twist.twist.linear.y"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Velocity.Angular.Z",
+   "topic": "odom",
+   "fn": "field",
+   "args": {
+    "field": "twist.twist.angular.z"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Velocity.Commanded.LinearX",
+   "topic": "cmd_vel/safe",
+   "fn": "field",
+   "args": {
+    "field": "twist.linear.x"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Velocity.Commanded.AngularZ",
+   "topic": "cmd_vel/safe",
+   "fn": "field",
+   "args": {
+    "field": "twist.angular.z"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Imu.AngularVelocity.X",
+   "topic": "imu/data",
+   "fn": "field",
+   "args": {
+    "field": "angular_velocity.x"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.LinearAcceleration.X",
+   "topic": "imu/data",
+   "fn": "field",
+   "args": {
+    "field": "linear_acceleration.x"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.AngularVelocity.Y",
+   "topic": "imu/data",
+   "fn": "field",
+   "args": {
+    "field": "angular_velocity.y"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.LinearAcceleration.Y",
+   "topic": "imu/data",
+   "fn": "field",
+   "args": {
+    "field": "linear_acceleration.y"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.AngularVelocity.Z",
+   "topic": "imu/data",
+   "fn": "field",
+   "args": {
+    "field": "angular_velocity.z"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Imu.LinearAcceleration.Z",
+   "topic": "imu/data",
+   "fn": "field",
+   "args": {
+    "field": "linear_acceleration.z"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.IsInContact",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "contact",
+    "index": 0,
+    "expect_name": "FL"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.ContactForce",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "normal_force_n",
+    "index": 0,
+    "expect_name": "FL"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Hip.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_hip_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Hip.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_hip_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Hip.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_hip_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Thigh.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_thigh_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Thigh.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_thigh_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Thigh.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_thigh_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Calf.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_calf_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Calf.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_calf_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontLeft.Joint.Calf.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FL_calf_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.IsInContact",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "contact",
+    "index": 1,
+    "expect_name": "FR"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.FrontRight.ContactForce",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "normal_force_n",
+    "index": 1,
+    "expect_name": "FR"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Hip.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_hip_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Hip.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_hip_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Hip.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_hip_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Thigh.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_thigh_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Thigh.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_thigh_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Thigh.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_thigh_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Calf.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_calf_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Calf.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_calf_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.FrontRight.Joint.Calf.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "FR_calf_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.IsInContact",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "contact",
+    "index": 2,
+    "expect_name": "RL"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.RearLeft.ContactForce",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "normal_force_n",
+    "index": 2,
+    "expect_name": "RL"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Hip.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_hip_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Hip.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_hip_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Hip.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_hip_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Thigh.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_thigh_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Thigh.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_thigh_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Thigh.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_thigh_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Calf.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_calf_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Calf.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_calf_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearLeft.Joint.Calf.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RL_calf_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.IsInContact",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "contact",
+    "index": 3,
+    "expect_name": "RR"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.RearRight.ContactForce",
+   "topic": "foot_contacts",
+   "fn": "array_index",
+   "args": {
+    "field": "normal_force_n",
+    "index": 3,
+    "expect_name": "RR"
+   },
+   "maxRateHz": 20
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Hip.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_hip_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Hip.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_hip_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Hip.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_hip_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Thigh.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_thigh_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Thigh.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_thigh_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Thigh.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_thigh_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Calf.Position",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_calf_joint",
+    "attr": "position"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Calf.Velocity",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_calf_joint",
+    "attr": "velocity"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Leg.RearRight.Joint.Calf.Effort",
+   "topic": "joint_states",
+   "fn": "joint",
+   "args": {
+    "name": "RR_calf_joint",
+    "attr": "effort"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.PowerSystem.Battery.StateOfCharge",
+   "topic": "battery_state",
+   "fn": "field",
+   "args": {
+    "field": "percentage",
+    "scale": 100.0
+   },
+   "maxRateHz": 1
+  },
+  {
+   "path": "Robot.PowerSystem.Battery.Voltage",
+   "topic": "battery_state",
+   "fn": "field",
+   "args": {
+    "field": "voltage"
+   },
+   "maxRateHz": 1
+  },
+  {
+   "path": "Robot.PowerSystem.Battery.IsPresent",
+   "topic": "battery_state",
+   "fn": "field",
+   "args": {
+    "field": "present"
+   },
+   "maxRateHz": 1
+  },
+  {
+   "path": "Robot.Safety.Mode",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "mode"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Safety.Reason",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "reason"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Safety.IsReady",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "ready"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Safety.IsArmed",
+   "topic": "brain/state",
+   "fn": "json_in",
+   "args": {
+    "field": "mode",
+    "values": [
+     "MANUAL",
+     "AUTO",
+     "MOTION"
+    ]
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Safety.IsStopLatched",
+   "topic": "brain/state",
+   "fn": "json_in",
+   "args": {
+    "field": "mode",
+    "values": [
+     "SAFE_STOP"
+    ]
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Safety.Controller",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "controller",
+    "default": "NONE"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Motion.State.Phase",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "motion.phase",
+    "default": "IDLE"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Motion.State.Name",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "motion.name",
+    "default": "",
+    "map": {
+     "crouch": "CROUCH",
+     "bow": "BOW",
+     "tilt": "TILT",
+     "lift_fl": "LIFT_FRONT_LEFT",
+     "jump": "JUMP",
+     "wave_fl": "WAVE_FRONT_LEFT",
+     "sit": "SIT",
+     "stand": "STAND"
+    }
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Motion.IsBodyBusy",
+   "topic": "brain/state",
+   "fn": "json_not_null",
+   "args": {
+    "field": "active_motion_id"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Navigation.Mission.State",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "mission"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Navigation.Route.Completed",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "route_completed"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Navigation.Route.Total",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "route_total"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Navigation.IsReady",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "nav_ready"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Simulation.SceneId",
+   "topic": "brain/state",
+   "fn": "json_field",
+   "args": {
+    "field": "scene_id"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Connection.IsOnline",
+   "topic": "brain/state",
+   "fn": "fresh",
+   "args": {
+    "within_ms": 1000
+   },
+   "maxRateHz": 5
+  },
+  {
+   "path": "Robot.Connection.StateAgeMs",
+   "topic": "brain/state",
+   "fn": "age_ms",
+   "args": {},
+   "maxRateHz": 5
+  },
+  {
+   "path": "Robot.Perception.Marker.IsDetected",
+   "topic": "perception/detections",
+   "fn": "count_class",
+   "args": {
+    "class_id": "red_sim_marker",
+    "as_bool": true
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Perception.Marker.Count",
+   "topic": "perception/detections",
+   "fn": "count_class",
+   "args": {
+    "class_id": "red_sim_marker"
+   },
+   "maxRateHz": 10
+  },
+  {
+   "path": "Robot.Obstacle.MinRange",
+   "topic": "scan",
+   "fn": "min_finite",
+   "args": {
+    "field": "ranges"
+   },
+   "maxRateHz": 10
+  }
+ ],
+ "commands": {
+  "Robot.Safety.Arm": {
+   "request": {
+    "action": "arm"
+   },
+   "result": {
+    "kind": "mode",
+    "success": [
+     "MANUAL"
+    ]
+   }
+  },
+  "Robot.Safety.Disarm": {
+   "request": {
+    "action": "disarm"
+   },
+   "result": {
+    "kind": "mode",
+    "success": [
+     "DISARMED"
+    ]
+   }
+  },
+  "Robot.Safety.ResetStop": {
+   "request": {
+    "action": "reset_stop"
+   },
+   "result": {
+    "kind": "mode",
+    "success": [
+     "DISARMED"
+    ]
+   }
+  },
+  "Robot.Motion.Perform": {
+   "request": {
+    "action": "motion",
+    "motion_name": "$Name"
+   },
+   "argMap": {
+    "Name": {
+     "CROUCH": "crouch",
+     "BOW": "bow",
+     "TILT": "tilt",
+     "LIFT_FRONT_LEFT": "lift_fl",
+     "JUMP": "jump",
+     "WAVE_FRONT_LEFT": "wave_fl",
+     "SIT": "sit",
+     "STAND": "stand"
+    }
+   },
+   "result": {
+    "kind": "motion"
+   }
+  },
+  "Robot.Motion.Cancel": {
+   "request": {
+    "action": "motion_cancel"
+   },
+   "result": {
+    "kind": "ack"
+   }
+  },
+  "Robot.Navigation.GoTo": {
+   "request": {
+    "action": "goal",
+    "goal": [
+     "$X",
+     "$Y"
+    ],
+    "goal_frame": "map"
+   },
+   "result": {
+    "kind": "mission"
+   }
+  },
+  "Robot.Navigation.FollowRoute": {
+   "request": {
+    "action": "route",
+    "waypoints": "$Waypoints[X,Y]",
+    "goal_frame": "map"
+   },
+   "result": {
+    "kind": "mission"
+   }
+  },
+  "Robot.Navigation.Cancel": {
+   "request": {
+    "action": "cancel"
+   },
+   "result": {
+    "kind": "ack"
+   }
+  }
+ },
+ "setpoints": {
+  "Robot.Motion.Velocity": {
+   "request": {
+    "action": "manual",
+    "linear": "$LinearX",
+    "angular": "$AngularZ"
+   }
+  }
+ },
+ "stop": {
+  "request": {
+   "action": "stop"
+  },
+  "confirm": {
+   "field": "mode",
+   "equals": "SAFE_STOP",
+   "withinMs": 800
+  }
+ }
+}
