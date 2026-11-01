@@ -279,3 +279,7 @@ and [current live evidence](docs/reports/M24-progress.md).
 
 
 RobotFlow runtime developer preview: [installed wheel and CLI checks](robotics/rfrt/README.md). Native generated Python now verifies artifacts and the actual runtime pin before loading. Hold and Cancel prerequisites passed actual ROS/physics checks; installed runtime local tests pass. Full generated workflow deployment UI and continuous video remain under M25–M27 implementation, not released functionality.
+
+## Robot Studio và Dog simulation
+
+Giao diện workflow robotics độc lập: [hướng dẫn WSL](docs/user-guide/robotics/README.md), [module robotics](robotics/README.md), [video MP4 toàn luồng](robotics/docs/media/robotics-full-flow-final.mp4). Video37 bước chạy trên image đã qua CI, mở Robot Zoo, Start runtime ROS2/MuJoCo, xác nhận chuyển động và Stop.

@@ -1,0 +1,32 @@
+{
+  "sourceCommit": "323bbb286bdb9b81de458d6e6092d0d61b31bc18",
+  "qualifiedCiRun": 41237828598,
+  "continuousRecording": true,
+  "video": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1600,
+        "height": 1000,
+        "r_frame_rate": "25/1"
+      }
+    ],
+    "format": {
+      "duration": "107.080000",
+      "size": "9029316"
+    }
+  },
+  "files": [
+    {
+      "file": "robotics-full-flow-final.mp4",
+      "bytes": 9029316,
+      "sha256": "06f1aaa9665620dc3366fe06d2048735191b4b857cc04c603550ea5b917673fd"
+    },
+    {
+      "file": "robotics-full-flow-preview.gif",
+      "bytes": 550876,
+      "sha256": "0d470789987c2879f4286f5637cfa401b381c2ddc8be40da8ebaced68c7217cb"
+    }
+  ]
+}
