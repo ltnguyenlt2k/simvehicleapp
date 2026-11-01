@@ -1,7 +1,7 @@
 # Workflow robot (miền Robot) — điều khiển dog mô phỏng
 
 Workflow robot được soạn ngay trong studio hiện có. Một workflow là **miền Robot** khi canvas có block robot (`rf_*`). Khi đó:
-- toolbar chỉ hiện block robot (cùng ghi chú, loop, parallel);
+- toolbar chỉ hiện block robot (cùng ghi chú). Ở workflow rỗng hoặc workflow xe, block robot nằm cuối danh sách;
 - thanh trên canvas đổi thành thanh **Robot**;
 - dock dưới thành panel **Kiểm tra / Chạy**.
 

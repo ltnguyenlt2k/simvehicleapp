@@ -111,3 +111,6 @@ flowchart LR
 - **2026-11-01 — Miền `robot` suy ra từ block, không thêm cột/bảng DB (lệch S-R3).** Workflow là miền `robot` khi canvas có block `rf_*` (`isRobotWorkflow`). Lý do: không cần migration trên schema của Sim, giữ fork gần upstream, và workflow cũ không bị ảnh hưởng. Đánh đổi: không lọc được danh sách workflow theo miền ở phía server. Toolbar lọc block theo miền của canvas.
 - **2026-11-01 — Cho phép chu trình chỉ giữa hai block robot** (`svAllowsCycle`). Vòng lặp robot cần cạnh quay lui về `rf.repeat`; block xe và block Sim vẫn bị chặn chu trình như trước. Compiler chặn vòng lặp bận (RF4003).
 - **2026-11-01 — Chưa làm trợ lý AI cho robot (M26-T10).** Trợ lý hiện tại chưa có tool cho block `rf_*`. Việc này còn mở trong ROADMAP.
+- **2026-11-01 — Palette: chỉ lọc khi workflow đã là miền robot.** Workflow rỗng hoặc workflow xe giữ đủ palette, với block robot xếp cuối mỗi danh sách.
+  - **Lý do:** E2E `m15-collab` (ba session cùng thả block) bị fail khi palette ẩn block robot ngay lúc block xe đầu tiên xuất hiện. Danh sách dịch đi giữa lúc kéo, nên block bị thả nhầm.
+  - **Không mất an toàn:** việc trộn miền vẫn bị adapter robot từ chối.

@@ -137,6 +137,15 @@ const ToolbarItem = memo(function ToolbarItem({
 /**
  * Cached triggers data - lazy initialized on first access (client-side only)
  */
+/**
+ * SV: robot blocks only in a robot workflow (plus notes); elsewhere every block, robot blocks after the rest.
+ */
+function svRobotPalette(items: BlockItem[], robot: boolean): BlockItem[] {
+  const isRobot = (item: BlockItem) => item.type.startsWith('rf_')
+  if (robot) return items.filter((item) => isRobot(item) || item.type === 'note')
+  return [...items.filter((item) => !isRobot(item)), ...items.filter(isRobot)]
+}
+
 let cachedTriggers: BlockItem[] | null = null
 
 /**
@@ -417,28 +426,16 @@ export const Toolbar = memo(
     const { handleDragStart, handleItemClick } = useToolbarItemInteractions()
 
     /**
-     * SV: the palette follows the workflow's domain (ADR-0068 §1): robot blocks (`rf_*`) and vehicle blocks never mix.
-     * An empty workflow offers both; the first block chosen decides.
+     * SV: robot palette (ADR-0068 §1). A robot workflow (one `rf_*` block) shows only robot blocks; any other workflow
+     * keeps the full palette with robot blocks last, so a domain change during a drag (collaborators dropping at once)
+     * never moves the item under the pointer. Mixing domains is refused by the robot graph adapter.
      */
-    const svDomain = useWorkflowStore((state) => {
-      const types = Object.values(state.blocks).map((block) => block.type)
-      if (types.some((type) => type.startsWith('rf_'))) return 'robot'
-      if (types.some((type) => type.startsWith('sv_') || type === 'loop' || type === 'parallel'))
-        return 'vehicle'
-      return null
-    })
-    const inDomain = useCallback(
-      (block: { type: string }) =>
-        svDomain === 'robot'
-          ? block.type.startsWith('rf_') || block.type === 'note'
-          : svDomain === 'vehicle'
-            ? !block.type.startsWith('rf_')
-            : true,
-      [svDomain]
+    const svRobot = useWorkflowStore((state) =>
+      Object.values(state.blocks).some((block) => block.type.startsWith('rf_'))
     )
-    const allTriggers = useMemo(() => getTriggers().filter(inDomain), [inDomain])
-    const allBlocks = useMemo(() => getBlocks().filter(inDomain), [inDomain])
-    const allTools = useMemo(() => getTools().filter(inDomain), [inDomain])
+    const allTriggers = useMemo(() => svRobotPalette(getTriggers(), svRobot), [svRobot])
+    const allBlocks = useMemo(() => svRobotPalette(getBlocks(), svRobot), [svRobot])
+    const allTools = useMemo(() => svRobotPalette(getTools(), svRobot), [svRobot])
 
     const visibleTriggers = useMemo(() => {
       if (sandboxAllowedBlocks !== null) return []
