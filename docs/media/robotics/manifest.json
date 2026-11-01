@@ -14,7 +14,9 @@
  "repos": {
   "simvehicleapp": {
    "head": "5743eae7cafd82fbf703ee14cd89731e2379ddc8",
-   "dirty": true
+   "dirty": true,
+   "note": "recorded from the uncommitted working tree on 5743eae7; those changes are committed in 6ae35ac0 (afterwards only Biome formatting and toolbar memoisation changed, UI unchanged)",
+   "committedIn": "6ae35ac0817f2dd44fbd9190e767f95740372430"
   },
   "dog-ros2-simulation": {
    "head": "7bdbcbc1961c3a6a148a953abc02e67b6506ae1c",
