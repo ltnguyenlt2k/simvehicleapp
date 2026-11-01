@@ -1,0 +1,20 @@
+# Robotics stack (compose project "sr"), independent from the vehicle compose (ADR-0064).
+# Services are added per milestone; every service has memory/CPU/pids limits (ADR-0070).
+name: sr
+x-limits: &limits
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 64
+services:
+  dev:
+    <<: *limits
+    profiles: [tools]
+    image: robotics/python-dev:local
+    build: { context: ., dockerfile: tools/python.Dockerfile, target: dev }
+    network_mode: none
+    mem_limit: 512m
+    cpus: 2
+    volumes: [".:/w"]
+    command: [python, -m, pytest, -q, -p, no:cacheprovider]

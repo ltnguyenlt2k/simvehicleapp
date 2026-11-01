@@ -1,0 +1,36 @@
+rss: "0.1"
+kind: core
+nodes:
+  Robot.Imu:
+    kind: branch
+    description: Inertial measurement unit.
+  Robot.Imu.AngularVelocity: { kind: branch, description: Gyroscope. }
+  Robot.Imu.AngularVelocity.X: { kind: sensor, type: float64, unit: rad/s, maxAgeMs: 100, description: Gyro X. }
+  Robot.Imu.AngularVelocity.Y: { kind: sensor, type: float64, unit: rad/s, maxAgeMs: 100, description: Gyro Y. }
+  Robot.Imu.AngularVelocity.Z: { kind: sensor, type: float64, unit: rad/s, maxAgeMs: 100, description: Gyro Z. }
+  Robot.Imu.LinearAcceleration: { kind: branch, description: Accelerometer. }
+  Robot.Imu.LinearAcceleration.X: { kind: sensor, type: float64, unit: m/s^2, maxAgeMs: 100, description: Accel X. }
+  Robot.Imu.LinearAcceleration.Y: { kind: sensor, type: float64, unit: m/s^2, maxAgeMs: 100, description: Accel Y. }
+  Robot.Imu.LinearAcceleration.Z: { kind: sensor, type: float64, unit: m/s^2, maxAgeMs: 100, description: Accel Z. }
+  Robot.Imu.Orientation: { kind: branch, description: IMU orientation (from quaternion). }
+  Robot.Imu.Orientation.Roll: { kind: sensor, type: float64, unit: rad, maxAgeMs: 100, description: Roll. }
+  Robot.Imu.Orientation.Pitch: { kind: sensor, type: float64, unit: rad, maxAgeMs: 100, description: Pitch. }
+  Robot.Imu.Orientation.Yaw: { kind: sensor, type: float64, unit: rad, maxAgeMs: 100, description: Yaw. }
+  Robot.Leg:
+    kind: branch
+    instances: [FrontLeft, FrontRight, RearLeft, RearRight]
+    description: Legs of a quadruped.
+  Robot.Leg.IsInContact: { kind: sensor, type: bool, maxAgeMs: 100, description: Foot touches the ground. }
+  Robot.Leg.ContactForce: { kind: sensor, type: float64, unit: N, min: 0, maxAgeMs: 100, description: Summed contact-normal force. }
+  Robot.Leg.Joint:
+    kind: branch
+    instances: [Hip, Thigh, Calf]
+    description: Joints of a leg (observation only; no joint commands in RSS v0.1).
+  Robot.Leg.Joint.Position: { kind: sensor, type: float64, unit: rad, maxAgeMs: 100, description: Joint angle. }
+  Robot.Leg.Joint.Velocity: { kind: sensor, type: float64, unit: rad/s, maxAgeMs: 100, description: Joint speed. }
+  Robot.Leg.Joint.Effort: { kind: sensor, type: float64, unit: N.m, maxAgeMs: 100, description: Joint torque. }
+  Robot.PowerSystem: { kind: branch, description: Power supply. }
+  Robot.PowerSystem.Battery: { kind: branch, description: Main battery. }
+  Robot.PowerSystem.Battery.StateOfCharge: { kind: sensor, type: float64, unit: "%", min: 0, max: 100, maxAgeMs: 3000, description: Remaining charge. }
+  Robot.PowerSystem.Battery.Voltage: { kind: sensor, type: float64, unit: V, min: 0, maxAgeMs: 3000, description: Pack voltage. }
+  Robot.PowerSystem.Battery.IsPresent: { kind: sensor, type: bool, maxAgeMs: 3000, description: Battery reported present. }

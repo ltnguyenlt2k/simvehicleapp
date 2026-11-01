@@ -1,0 +1,209 @@
+// Protobus wire protocol v1 (ADR-0066). Add-only: never renumber or rename fields.
+// Two listeners: Broker + Provider on the main port; SafetyLane on its own port, thread and event loop,
+// so a stop never queues behind telemetry or commands.
+syntax = "proto3";
+
+package protobus.v1;
+
+import "google/protobuf/struct.proto";
+
+enum Quality {
+  QUALITY_UNSPECIFIED = 0;
+  OK = 1;
+  STALE = 2;        // older than the node's maxAgeMs
+  UNAVAILABLE = 3;  // no provider or no sample yet
+}
+
+enum CommandPhase {
+  PHASE_UNSPECIFIED = 0;
+  ACCEPTED = 1;   // robot acknowledged; NOT success
+  RUNNING = 2;
+  SUCCEEDED = 3;  // proven from measured robot state
+  FAILED = 4;
+  REJECTED = 5;
+  CANCELLED = 6;
+  TIMED_OUT = 7;
+}
+
+message Sample {
+  string path = 1;
+  google.protobuf.Value value = 2;
+  int64 capture_time_ns = 3;  // source clock (robot); 0 when unknown
+  int64 receive_time_ns = 4;  // broker monotonic-epoch clock
+  Quality quality = 5;
+}
+
+// ------------------------------------------------------------------ Broker (apps, control API, studio)
+
+message GetCatalogRequest {}
+message CatalogResponse {
+  string catalog_hash = 1;
+  string catalog_json = 2;  // rss-catalog.v1
+}
+
+message GetRequest { repeated string paths = 1; }
+message GetResponse { repeated Sample samples = 1; }
+
+message SubscribeRequest {
+  repeated string paths = 1;   // exact leaf paths or "Branch.*"
+  double max_rate_hz = 2;      // per path; broker clamps to its budget
+  bool include_initial = 3;
+}
+message SubscribeResponse {
+  repeated Sample samples = 1;
+  bool lagged = 2;  // the subscriber was too slow; intermediate values were dropped (latest-wins)
+}
+
+message AcquireRequest { string client_id = 1; }
+message Lease {
+  string lease_id = 1;
+  int64 ttl_ms = 2;
+}
+message ReleaseResponse { bool released = 1; }
+
+message SetpointRequest {
+  string lease_id = 1;
+  string path = 2;
+  map<string, double> fields = 3;
+}
+message SetpointAck {
+  bool accepted = 1;
+  string code = 2;     // PB* diagnostic code when not accepted
+  string message = 3;
+  int64 expires_in_ms = 4;
+}
+
+message CommandRequest {
+  string lease_id = 1;  // empty allowed only for safety-lane commands
+  string path = 2;
+  google.protobuf.Struct args = 3;
+  string request_id = 4;  // UUID chosen by the caller; correlates the whole chain to the robot ack
+}
+message CommandUpdate {
+  string request_id = 1;
+  string path = 2;
+  CommandPhase phase = 3;
+  string code = 4;
+  string message = 5;
+  int64 time_ns = 6;
+}
+message CancelRequest {
+  string lease_id = 1;
+  string request_id = 2;
+}
+
+message EventsRequest { repeated string paths = 1; }
+message EventMessage {
+  string path = 1;
+  google.protobuf.Struct fields = 2;
+  int64 time_ns = 3;
+}
+
+message HealthRequest {}
+message HealthResponse {
+  bool ready = 1;
+  string catalog_hash = 2;
+  repeated string providers = 3;
+  string lease_holder = 4;
+}
+
+service Broker {
+  rpc Health(HealthRequest) returns (HealthResponse);
+  rpc GetCatalog(GetCatalogRequest) returns (CatalogResponse);
+  rpc Get(GetRequest) returns (GetResponse);
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+  rpc AcquireControl(AcquireRequest) returns (Lease);
+  rpc RenewControl(Lease) returns (Lease);
+  rpc ReleaseControl(Lease) returns (ReleaseResponse);
+  rpc SetSetpoint(SetpointRequest) returns (SetpointAck);
+  rpc Execute(CommandRequest) returns (stream CommandUpdate);
+  rpc Cancel(CancelRequest) returns (CommandUpdate);
+  rpc Events(EventsRequest) returns (stream EventMessage);
+}
+
+// ------------------------------------------------------------------ Provider (mock, ros2 bridge)
+
+message ProviderHello {
+  string provider_id = 1;
+  string catalog_hash = 2;       // must equal the broker's catalog
+  repeated string owned_paths = 3;  // exact leaf paths this provider serves
+}
+message ProviderSamples { repeated Sample samples = 1; }
+
+message ProviderMessage {
+  oneof body {
+    ProviderHello hello = 1;
+    ProviderSamples samples = 2;
+    CommandUpdate command_update = 3;
+    EventMessage event = 4;
+  }
+}
+
+message Welcome {
+  bool accepted = 1;
+  string reason = 2;
+}
+message CommandDispatch {
+  string request_id = 1;
+  string path = 2;
+  google.protobuf.Struct args = 3;
+  int64 timeout_ms = 4;
+}
+message CancelDispatch { string request_id = 1; }
+message SetpointDispatch {
+  string path = 1;
+  map<string, double> fields = 2;
+  bool safe = 3;           // true: TTL expired or lease lost; fields are the catalog safeValue
+  int64 expires_in_ms = 4;
+}
+message ControlState {
+  bool active = 1;  // a workflow lease is held
+  string lease_id = 2;
+}
+
+message BrokerMessage {
+  oneof body {
+    Welcome welcome = 1;
+    CommandDispatch command = 2;
+    CancelDispatch cancel = 3;
+    SetpointDispatch setpoint = 4;
+    ControlState control = 5;
+  }
+}
+
+service Provider {
+  rpc Attach(stream ProviderMessage) returns (stream BrokerMessage);
+}
+
+// ------------------------------------------------------------------ Safety lane (separate listener)
+
+message StopRequest {
+  string request_id = 1;
+  string source = 2;  // WORKFLOW | CONTROL | OPERATOR
+  string reason = 3;
+}
+message StopResult {
+  string request_id = 1;
+  bool confirmed = 2;  // the robot reported a latched stop
+  string code = 3;
+  string message = 4;
+  int64 time_ns = 5;
+}
+message StopStateRequest {}
+
+message SafetyAttach {
+  string provider_id = 1;
+}
+message SafetyProviderMessage {
+  oneof body {
+    SafetyAttach attach = 1;
+    StopResult result = 2;
+  }
+}
+
+service SafetyLane {
+  rpc Stop(StopRequest) returns (StopResult);
+  rpc StopState(StopStateRequest) returns (stream StopResult);
+  // Providers keep this stream open; the broker pushes stops here, never through Provider.Attach.
+  rpc AttachProvider(stream SafetyProviderMessage) returns (stream StopRequest);
+}

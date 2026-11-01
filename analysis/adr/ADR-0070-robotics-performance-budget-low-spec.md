@@ -1,6 +1,6 @@
 # ADR-0070: Ngân sách hiệu năng robotics đo được cho máy cấu hình thấp (profile `robot-lite`, downsample tại bridge, live ≤ 10 Hz)
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -80,3 +80,5 @@ flowchart LR
   - kết quả FAIL được giữ.
 
 ## Notes / Deviations
+
+- 2026-11-01 (M22): S-R2 PASS (số ở ADR-0066 Notes). S-R4 PASS: recorder 0,463 core, camera Robot Zoo giảm 0,4 %. **S-R3 chuyển sang M26-T01** vì cần stack studio + block `rf_*`; không ảnh hưởng quyết định M23–M25.

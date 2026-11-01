@@ -66,13 +66,13 @@
 | [M19](#m19--luồng-thực-thi-flow-và-thử-tín-hiệu-chỉn-chu) | Luồng thực thi (Flow) + thử tín hiệu chỉn chu | 0062 (Accepted 2026-10-25) | ✔ | 8/8 ✔, gate PASS; PO chấp thuận 2026-10-25 ([báo cáo](reports/M19.md)) |
 | [M20](#m20--target-webassembly-cho-c-và-rust--host-runtime) | Target WebAssembly cho C++/Rust + host runtime | 0061 (Accepted 2026-10-25) | ✔ | 9/9 ✔ — conformance 52/52 ×2, parity 7/7 ×2, `@live` WASM 2/2, nightly xanh ([báo cáo](reports/M20.md)) |
 | [M21](#m21--hoàn-tất-roadmap) | Hoàn tất roadmap (PO chấp thuận toàn bộ) | 36 ADR ⇒ Accepted, + ADR-0063 | 🔄 | 2026-10-25: 14/16 ✔ (D2–D5, D7–D16); còn D1 (3 nightly theo lịch) và D6 (release: rc.2 sẵn sàng, chờ người dùng cho phép phát hành) |
-| [M22](#m22--robotics-nền--rss-v01--spike) | Robotics: nền `robotics/` + RSS v0.1 + spike S-R1…S-R4 | 0064, 0065, 0070 (Proposed) | ☐ | 0/10 — plan 2026-11-01, chờ PO cho phép code |
-| [M23](#m23--protobus-core) | Protobus core: broker, SafetyLane, mock | 0066, 0069 (Proposed) | ☐ | 0/9 |
-| [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Proposed) | ☐ | 0/9 |
-| [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Proposed) | ☐ | 0/10 |
-| [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Proposed) | ☐ | 0/12 |
-| [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Proposed) | ☐ | 0/6 |
-| [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Proposed) | ☐ | 0/7 |
+| [M22](#m22--robotics-nền--rss-v01--spike) | Robotics: nền `robotics/` + RSS v0.1 + spike S-R1…S-R4 | 0064, 0065, 0070 (Accepted 2026-11-01) | ✔ | 9/10 ✔ + S-R3 ↷ M26-T01 — gate PASS 2026-11-01 ([báo cáo](reports/M22.md)) |
+| [M23](#m23--protobus-core) | Protobus core: broker, SafetyLane, mock | 0066, 0069 (Accepted 2026-11-01) | ☐ | 0/9 |
+| [M24](#m24--protobus-ros-2-bridge--dog) | Protobus ROS 2 bridge + profile dog-go2-sim (cần dog R4 W1/W4) | 0066, 0069 (Accepted 2026-11-01) | ☐ | 0/9 |
+| [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Accepted 2026-11-01) | ☐ | 0/10 |
+| [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | ☐ | 0/12 |
+| [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Accepted 2026-11-01) | ☐ | 0/6 |
+| [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Accepted 2026-11-01) | ☐ | 0/7 |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.
@@ -479,17 +479,17 @@ PO 2026-10-25: chấp thuận toàn bộ, agent tự phân tích và quyết đ�
 
 ## Robotics (M22–M28) — kế hoạch 2026-11-01
 
-Yêu cầu và truy vết R1–R7: [design §0](design/robotics/README.md#0-yêu-cầu-po-nguyên-văn-2026-10-27-nhắc-lại-2026-11-01). Chưa có task nào bắt đầu; code chỉ bắt đầu khi PO cho phép. Thứ tự gate: M22 → M23 → (M24 ∥ M25) → M26 → M27 → M28. Phụ thuộc repo dog: W1 (kênh `workflow/request`) trước M24; W2 (động tác chào/ngồi/đứng), W3 (pin mô phỏng) trước M28; W5 đo cùng M27.
+Yêu cầu và truy vết R1–R7: [design §0](design/robotics/README.md#0-yêu-cầu-po-nguyên-văn-2026-10-27-nhắc-lại-2026-11-01). PO cho phép thực hiện 2026-11-01; làm tuần tự theo gate. Thứ tự gate: M22 → M23 → (M24 ∥ M25) → M26 → M27 → M28. Phụ thuộc repo dog: W1 (kênh `workflow/request`) trước M24; W2 (động tác chào/ngồi/đứng), W3 (pin mô phỏng) trước M28; W5 đo cùng M27.
 
 ## M22 — Robotics nền + RSS v0.1 + spike
 [phase](../analysis/phases/M22-robotics-foundation-rss.md) · ADR-0064, 0065, 0070
 
 | Feature | Task | Trạng thái |
 |---|---|---|
-| Khung `robotics/`, compose `sr`, CI, guard import chéo | T01 | ☐ |
-| Schema + spec RSS `core` + profile `dog-go2-sim` + `rssc` + docs tham chiếu | T02–T04 | ☐ |
-| Đối chiếu profile với contract ROS 2 của dog | T05 | ☐ |
-| Spike S-R1 (DDS), S-R2 (broker), S-R3 (canvas), S-R4 (quay video) | T06–T09 | ☐ |
+| Khung `robotics/`, compose `sr`, CI, guard import chéo | T01 | ✔ |
+| Schema + spec RSS `core` + profile `dog-go2-sim` + `rssc` + docs tham chiếu | T02–T04 | ✔ 101 lá, build tất định, 40 test |
+| Đối chiếu profile với contract ROS 2 của dog | T05 | ✔ dog `35c45ee` |
+| Spike S-R1 (DDS), S-R2 (broker), S-R3 (canvas), S-R4 (quay video) | T06–T09 | ✔ S-R1/S-R2/S-R4; S-R3 ↷ M26-T01 |
 
 ## M23 — Protobus core
 [phase](../analysis/phases/M23-protobus-core.md) · ADR-0066, 0069

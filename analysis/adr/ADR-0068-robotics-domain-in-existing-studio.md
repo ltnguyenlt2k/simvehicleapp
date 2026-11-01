@@ -1,6 +1,6 @@
 # ADR-0068: Miền `robot` trong studio hiện có — palette `rf_*`, adapter thuần sang `robotflow.v1`, BFF `/api/sv/robotics/*`, Test/Run/Live và trợ lý theo miền
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)

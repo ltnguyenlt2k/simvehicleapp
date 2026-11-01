@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Robotics CLI (WSL/Linux). Everything runs in Docker; nothing is installed on the host.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DEV_IMAGE="robotics/python-dev:local"
+dev() { docker run --rm --network none -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$ROOT":/w -w /w "$DEV_IMAGE" "$@"; }
+case "${1:-}" in
+  build-dev) docker build -q --target dev -t "$DEV_IMAGE" -f "$ROOT/tools/python.Dockerfile" "$ROOT" ;;
+  test) shift; dev python -m pytest -q -p no:cacheprovider "${@:-.}" ;;
+  py) shift; dev python "$@" ;;
+  rssc) shift; dev python -m rss.rssc "$@" ;;
+  precheck) python3 "$ROOT/scripts/precheck.py" ;;
+  compose) shift; docker compose -f "$ROOT/compose.yaml" "$@" ;;
+  *) sed -n '2,3p' "$0"; echo "usage: sr build-dev|test [paths]|py|rssc|precheck|compose ..."; exit 2 ;;
+esac

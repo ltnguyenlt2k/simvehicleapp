@@ -26,6 +26,9 @@
 | T09 | Spike S-R4: Xvfb + 2 cửa sổ (studio + Robot Zoo) + `ffmpeg x11grab` 1600×900@25 | robotics/scripts/spikes | — | CPU recorder < 1,5 core; Robot Zoo camera giảm < 10 % |
 | T10 | Báo cáo M22 + cập nhật ADR Notes, ROADMAP | docs | T01–T09 | `docs/reports/M22.md` |
 
+## Trạng thái (2026-11-01)
+T01–T07, T09, T10 ✔; T08 (S-R3) ↷ M26-T01. Gate PASS — [báo cáo](../../docs/reports/M22.md).
+
 ## Acceptance Gate
 - T01–T05 PASS trên CI.
 - Bốn spike có số đo thật (kể cả FAIL) trong báo cáo.

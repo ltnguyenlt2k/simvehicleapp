@@ -1,0 +1,42 @@
+# Robotics stack CI (ADR-0064): independent from the vehicle CI, triggered only by robotics/** changes.
+name: robotics
+on:
+  push:
+    branches: [main]
+    paths: ["robotics/**", ".github/workflows/robotics.yml"]
+  pull_request:
+    paths: ["robotics/**", ".github/workflows/robotics.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: robotics-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unit:
+    name: boundary guard, contracts, unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Repository boundary guard
+        run: python3 robotics/scripts/precheck.py
+      - name: Build pinned dev image
+        run: robotics/scripts/sr build-dev
+      - name: Generated protobus stubs are current
+        run: |
+          robotics/scripts/sr py -m grpc_tools.protoc -I contracts/proto --python_out=. --grpc_python_out=. contracts/proto/protobus/v1/protobus.proto
+          git diff --exit-code -- robotics/protobus/v1
+      - name: RSS catalog builds deterministically
+        run: |
+          robotics/scripts/sr rssc validate
+          robotics/scripts/sr rssc build --profile dog-go2-sim --out runtime/ci/a.json
+          robotics/scripts/sr rssc build --profile dog-go2-sim --out runtime/ci/b.json
+          cmp robotics/runtime/ci/a.json robotics/runtime/ci/b.json
+      - name: Generated RSS reference is current
+        run: |
+          robotics/scripts/sr rssc docs --profile dog-go2-sim --out runtime/ci/docs
+          diff -r robotics/runtime/ci/docs docs/reference/rss
+      - name: Unit and contract tests
+        run: robotics/scripts/sr test
+      - name: Compose files are valid
+        run: docker compose -f robotics/compose.yaml config -q

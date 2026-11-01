@@ -1,0 +1,17 @@
+# Closed unit set for RSS v0.1 (SI, REP-103 conventions). Adding a unit is a minor RSS change.
+units:
+  m: { quantity: length }
+  m/s: { quantity: velocity }
+  m/s^2: { quantity: acceleration }
+  rad: { quantity: angle }
+  rad/s: { quantity: angular-velocity }
+  deg: { quantity: angle }
+  N: { quantity: force }
+  N.m: { quantity: torque }
+  V: { quantity: voltage }
+  A: { quantity: current }
+  "%": { quantity: ratio }
+  s: { quantity: time }
+  ms: { quantity: time }
+  Hz: { quantity: frequency }
+  degC: { quantity: temperature }

@@ -1,6 +1,6 @@
 # ADR-0067: RobotFlow — compiler riêng viết bằng Python, sinh app Python chạy trên runtime `rfrt`; không dùng compiler/IR xe
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)

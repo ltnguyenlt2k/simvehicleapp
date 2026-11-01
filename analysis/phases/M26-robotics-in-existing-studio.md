@@ -8,7 +8,7 @@
 
 | ID | Task | Module | Phụ thuộc | DoD |
 |---|---|---|---|---|
-| T01 | I01: khảo sát chi tiết điểm gắn (đối chiếu bảng [gui-integration §2](../../docs/design/robotics/gui-integration.md)), kế hoạch migration, danh sách test xe bị ảnh hưởng | studio, docs | — | Ghi Notes ADR-0068 |
+| T01 | Spike S-R3 (chuyển từ M22: canvas 150 block, lint p95) + I01: khảo sát chi tiết điểm gắn (đối chiếu bảng [gui-integration §2](../../docs/design/robotics/gui-integration.md)), kế hoạch migration, danh sách test xe bị ảnh hưởng | studio, docs | — | Ghi Notes ADR-0068 |
 | T02 | Bảng `sv_robot_workflow_settings` + migration `0254` + route settings + sidecar export/import | studio (db, api, lib/sv) | T01 | Test route/migration; xe không đổi |
 | T03 | Snapshot `rf-block-specs.json` + factory `blocks/robot/` + parity CI + palette lọc theo miền | studio | T01, M25-T02 | Parity PASS; toolbar xe giữ nguyên |
 | T04 | `robot-graph-adapter.ts` thuần + golden + từ chối trộn miền | studio | T03 | Golden round-trip |

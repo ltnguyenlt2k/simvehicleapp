@@ -1,6 +1,6 @@
 # ADR-0071: Nghiệm thu robotics bằng E2E trên stack thật và một video full luồng liên tục, có manifest đối chiếu được, không bịa
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -87,3 +87,5 @@ flowchart LR
 - Báo cáo M28 chứa kết quả E2E, đường dẫn video, manifest, kết quả kiểm decode/đối chiếu và danh sách chặng đã xem.
 
 ## Notes / Deviations
+
+- 2026-11-01 (M22 S-R4): WebGL phần mềm trong Xvfb quá chậm (SwiftShader 2,8 FPS, llvmpipe 7,3 FPS). Recorder dùng GPU WSL: `--device /dev/dxg`, mount `/usr/lib/wsl`, `GALLIUM_DRIVER=d3d12`, Chromium `--use-gl=angle --use-angle=gl --ignore-gpu-blocklist` ⇒ 58 FPS, camera 10 FPS. Image `robotics/tools/recorder.Dockerfile` (Playwright 1.64.1 ghim digest + ffmpeg 6.1.1).

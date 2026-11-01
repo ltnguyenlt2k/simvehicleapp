@@ -1,0 +1,196 @@
+{
+ "schema": "rss-sources.v1",
+ "profile": "dog-go2-sim",
+ "rosNamespace": "/dog1",
+ "sourceCommit": "35c45ee0270f0c40b98a84b3600154ed83e1ff14",
+ "sources": {
+  "Robot.Identity.*": {
+   "origin": "profile attribute"
+  },
+  "Robot.Connection.*": {
+   "origin": "derived: freshness of brain/state",
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String"
+  },
+  "Robot.Safety.Mode": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "mode"
+  },
+  "Robot.Safety.Reason": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "reason"
+  },
+  "Robot.Safety.IsReady": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "ready"
+  },
+  "Robot.Safety.IsArmed": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "mode"
+  },
+  "Robot.Safety.IsStopLatched": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "mode"
+  },
+  "Robot.Safety.Controller": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "controller"
+  },
+  "Robot.Safety.StopEvent": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "mode"
+  },
+  "Robot.Safety.Arm": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=arm"
+  },
+  "Robot.Safety.Disarm": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=disarm"
+  },
+  "Robot.Safety.Stop": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=stop"
+  },
+  "Robot.Safety.ResetStop": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=reset_stop"
+  },
+  "Robot.Pose.*": {
+   "topic": "odom",
+   "type": "nav_msgs/msg/Odometry",
+   "field": "pose.pose"
+  },
+  "Robot.Velocity.Linear.*": {
+   "topic": "odom",
+   "type": "nav_msgs/msg/Odometry",
+   "field": "twist.twist.linear"
+  },
+  "Robot.Velocity.Angular.*": {
+   "topic": "odom",
+   "type": "nav_msgs/msg/Odometry",
+   "field": "twist.twist.angular"
+  },
+  "Robot.Velocity.Commanded.*": {
+   "topic": "cmd_vel/safe",
+   "type": "geometry_msgs/msg/TwistStamped",
+   "field": "twist"
+  },
+  "Robot.Imu.*": {
+   "topic": "imu/data",
+   "type": "sensor_msgs/msg/Imu",
+   "field": "*"
+  },
+  "Robot.Leg.*.IsInContact": {
+   "topic": "foot_contacts",
+   "type": "dog_interfaces/msg/FootContacts",
+   "field": "contact"
+  },
+  "Robot.Leg.*.ContactForce": {
+   "topic": "foot_contacts",
+   "type": "dog_interfaces/msg/FootContacts",
+   "field": "normal_force_n"
+  },
+  "Robot.Leg.*.Joint.*": {
+   "topic": "joint_states",
+   "type": "sensor_msgs/msg/JointState",
+   "field": "name/position/velocity/effort"
+  },
+  "Robot.PowerSystem.*": {
+   "topic": "battery_state",
+   "type": "sensor_msgs/msg/BatteryState",
+   "field": "percentage/voltage/present"
+  },
+  "Robot.Motion.Velocity": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=manual"
+  },
+  "Robot.Motion.Perform": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=motion"
+  },
+  "Robot.Motion.Cancel": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=motion_cancel"
+  },
+  "Robot.Motion.State.*": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "motion"
+  },
+  "Robot.Motion.IsBodyBusy": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "active_motion_id"
+  },
+  "Robot.Navigation.GoTo": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=goal"
+  },
+  "Robot.Navigation.FollowRoute": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=route"
+  },
+  "Robot.Navigation.Cancel": {
+   "topic": "workflow/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=cancel"
+  },
+  "Robot.Navigation.Mission.State": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "mission"
+  },
+  "Robot.Navigation.Route.Completed": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "route_completed"
+  },
+  "Robot.Navigation.Route.Total": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "route_total"
+  },
+  "Robot.Navigation.IsReady": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "nav_ready"
+  },
+  "Robot.Perception.Marker.*": {
+   "topic": "perception/detections",
+   "type": "vision_msgs/msg/Detection2DArray",
+   "field": "detections"
+  },
+  "Robot.Obstacle.MinRange": {
+   "topic": "scan",
+   "type": "sensor_msgs/msg/LaserScan",
+   "field": "ranges"
+  },
+  "Robot.Simulation.SceneId": {
+   "topic": "brain/state",
+   "type": "std_msgs/msg/String",
+   "field": "scene_id"
+  },
+  "Robot.Simulation.Battery.SetLevel": {
+   "topic": "sim/request",
+   "type": "std_msgs/msg/String",
+   "field": "action=battery"
+  }
+ }
+}

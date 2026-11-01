@@ -1,0 +1,4 @@
+# Python 3.10 (ROS 2 Humble system interpreter). Same pins as tools/requirements.txt where shared.
+grpcio==1.84.1
+protobuf==7.36.2
+PyYAML==6.0.3

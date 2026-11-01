@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:robotics:rss-catalog.v1",
+  "title": "Compiled RSS catalog for one robot profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "rss",
+    "profile",
+    "robot",
+    "catalogHash",
+    "nodes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "rss-catalog.v1"
+    },
+    "rss": {
+      "const": "0.1"
+    },
+    "profile": {
+      "type": "string"
+    },
+    "robot": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "catalogHash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "nodes": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^Robot(\\.[A-Z][A-Za-z0-9]*)*$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/node"
+      }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": [
+        "kind",
+        "description"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "branch",
+            "attribute",
+            "sensor",
+            "setpoint",
+            "command",
+            "event"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        },
+        "instances": {
+          "type": "array"
+        },
+        "type": {
+          "enum": [
+            "bool",
+            "int32",
+            "int64",
+            "uint32",
+            "float32",
+            "float64",
+            "string",
+            "enum"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$|^[a-z][a-z0-9_]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "maxAgeMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "ttlMs": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 10000
+        },
+        "refreshHz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "safeValue": {
+          "type": "object"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        },
+        "results": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "SUCCEEDED",
+              "FAILED",
+              "REJECTED",
+              "CANCELLED",
+              "TIMED_OUT"
+            ]
+          }
+        },
+        "safetyLane": {
+          "type": "boolean"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "pending": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "bool",
+            "int32",
+            "int64",
+            "uint32",
+            "float32",
+            "float64",
+            "string",
+            "enum",
+            "array"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$|^[a-z][a-z0-9_]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "maxItems": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

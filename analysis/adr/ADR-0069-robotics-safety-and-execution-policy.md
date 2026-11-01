@@ -1,6 +1,6 @@
 # ADR-0069: Chính sách an toàn và thực thi robotics — deploy không Arm, Start tường minh, Stop ưu tiên tuyệt đối, chỉ lệnh cấp cao, chỉ mô phỏng
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)

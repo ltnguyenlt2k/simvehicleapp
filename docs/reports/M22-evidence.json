@@ -1,0 +1,60 @@
+{
+ "sr1": {
+  "spike": "S-R1",
+  "date": "2026-11-01",
+  "dogCommit": "ea43679 (runtime image rebuilt 2026-11-01T03:20Z, sha256:87dc2f5a365d)",
+  "bridgeImage": "robotics/protobus-ros2-base:local sha256:a95cc71e6b37",
+  "setup": "bridge container outside dog compose, network dog-ros2_robot, own CycloneDDS file listing dog peers, ROS_DOMAIN_ID=42; dog peers unchanged",
+  "result": {
+   "seconds": 60.0,
+   "odomMessages": 3002,
+   "odomRateHzAfterWarmup": 50.04,
+   "odomGapP99Ms": 22.0,
+   "brainStateMessages": 1201,
+   "brainMode": "DISARMED",
+   "discoveredDogNodes": 25
+  },
+  "reverseCheck": "a fresh `ros2 node list` participant inside the brain container did not list the probe (fixed peers, new participant); reliable odom delivery proves the running dog_sim participant matched the probe reader",
+  "verdict": "PASS (>=45 Hz). Dog peer list change not required for running nodes; W1 still adds the workflow channel. Re-verify writer->Brain matching in M24 with the real channel."
+ },
+ "sr2-broker": {
+  "role": "broker",
+  "cpuCores": 0.198,
+  "maxRssMiB": 41.8
+ },
+ "sr2-prov": {
+  "role": "provider",
+  "sent": 72000
+ },
+ "sr2-subs": {
+  "role": "subscribers",
+  "count": 20,
+  "received": 1398400,
+  "lagged": 0,
+  "latencyMs": {
+   "p50": 1.55,
+   "p95": 2.43,
+   "p99": 3.2,
+   "max": 7.72,
+   "mean": 1.6
+  }
+ },
+ "sr4": {
+  "spike": "S-R4",
+  "screen": "1600x900@25",
+  "zoo": "http://127.0.0.1:8090",
+  "baseline": {
+   "seconds": 30,
+   "cameraFps": 9.97,
+   "webglFps": 58.26
+  },
+  "recording": {
+   "seconds": 30,
+   "cameraFps": 9.93,
+   "webglFps": 57.73
+  },
+  "recorderCores": 0.463,
+  "cameraDropPct": 0.4
+ },
+ "t05_dog_crosscheck": "python3 robotics/rss/check_dog_profile.py --catalog <built catalog> --dog ../04.dog-ros2-simulation → passed: true, problems: [] (dog commit 35c45ee)"
+}

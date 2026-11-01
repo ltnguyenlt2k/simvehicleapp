@@ -1,0 +1,372 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:robotics:rss-spec.v1",
+  "title": "RSS source file (core part or robot profile)",
+  "type": "object",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "required": [
+        "rss",
+        "kind",
+        "nodes"
+      ],
+      "properties": {
+        "rss": {
+          "const": "0.1"
+        },
+        "kind": {
+          "const": "core"
+        },
+        "nodes": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^Robot(\\.[A-Z][A-Za-z0-9]*)*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/node"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": false,
+      "required": [
+        "rss",
+        "kind",
+        "id",
+        "extends",
+        "include"
+      ],
+      "properties": {
+        "rss": {
+          "const": "0.1"
+        },
+        "kind": {
+          "const": "profile"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,63}$"
+        },
+        "extends": {
+          "const": "core"
+        },
+        "robot": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "attributes": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^Robot(\\.[A-Z][A-Za-z0-9]*)*$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        },
+        "include": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^Robot(\\.[A-Z][A-Za-z0-9]*)*(\\.\\*)?$"
+          }
+        },
+        "narrow": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^Robot(\\.[A-Z][A-Za-z0-9]*)*$"
+          },
+          "additionalProperties": {
+            "type": "object"
+          }
+        },
+        "pending": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^Robot(\\.[A-Z][A-Za-z0-9]*)*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": [
+        "kind",
+        "description"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "branch",
+            "attribute",
+            "sensor",
+            "setpoint",
+            "command",
+            "event"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        },
+        "instances": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Za-z0-9]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "type": {
+          "enum": [
+            "bool",
+            "int32",
+            "int64",
+            "uint32",
+            "float32",
+            "float64",
+            "string",
+            "enum"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$|^[a-z][a-z0-9_]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "maxAgeMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "fields": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "ttlMs": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 10000
+        },
+        "refreshHz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100
+        },
+        "safeValue": {
+          "type": "object"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        },
+        "results": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "SUCCEEDED",
+              "FAILED",
+              "REJECTED",
+              "CANCELLED",
+              "TIMED_OUT"
+            ]
+          }
+        },
+        "safetyLane": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "sensor"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "type",
+              "maxAgeMs"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "attribute"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "type"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "setpoint"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "fields",
+              "ttlMs",
+              "refreshHz",
+              "safeValue"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "command"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "args",
+              "timeoutMs",
+              "results"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "event"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "fields"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "enum"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "values"
+            ]
+          }
+        }
+      ]
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "bool",
+            "int32",
+            "int64",
+            "uint32",
+            "float32",
+            "float64",
+            "string",
+            "enum",
+            "array"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$|^[a-z][a-z0-9_]*$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "maxItems": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

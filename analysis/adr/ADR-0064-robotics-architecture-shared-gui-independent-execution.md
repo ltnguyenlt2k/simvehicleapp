@@ -1,6 +1,6 @@
 # ADR-0064: Robotics dùng GUI SimVehicleApp hiện có; các lớp thực thi (RSS, Protobus, RobotFlow, runtime) độc lập trong `robotics/`
 
-- **Status:** Proposed — chờ PO xác nhận (baseline thiết kế 2026-11-01, chưa có code)
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L0 System
 - **Deciders:** PO; Claude Code (đề xuất)

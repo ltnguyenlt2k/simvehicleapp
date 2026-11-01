@@ -1,0 +1,71 @@
+rss: "0.1"
+kind: core
+nodes:
+  Robot.Pose:
+    kind: branch
+    description: Body pose in the odometry frame (REP-103).
+  Robot.Pose.Position:
+    kind: branch
+    description: Body position.
+  Robot.Pose.Position.X: { kind: sensor, type: float64, unit: m, maxAgeMs: 200, description: Position X in odom. }
+  Robot.Pose.Position.Y: { kind: sensor, type: float64, unit: m, maxAgeMs: 200, description: Position Y in odom. }
+  Robot.Pose.Position.Z: { kind: sensor, type: float64, unit: m, maxAgeMs: 200, description: Position Z in odom. }
+  Robot.Pose.Orientation:
+    kind: branch
+    description: Body orientation (from quaternion).
+  Robot.Pose.Orientation.Roll: { kind: sensor, type: float64, unit: rad, min: -3.141593, max: 3.141593, maxAgeMs: 200, description: Roll. }
+  Robot.Pose.Orientation.Pitch: { kind: sensor, type: float64, unit: rad, min: -3.141593, max: 3.141593, maxAgeMs: 200, description: Pitch. }
+  Robot.Pose.Orientation.Yaw: { kind: sensor, type: float64, unit: rad, min: -3.141593, max: 3.141593, maxAgeMs: 200, description: Yaw. }
+  Robot.Velocity:
+    kind: branch
+    description: Measured body velocity.
+  Robot.Velocity.Linear:
+    kind: branch
+    description: Linear velocity in base frame.
+  Robot.Velocity.Linear.X: { kind: sensor, type: float64, unit: m/s, maxAgeMs: 200, description: Forward speed. }
+  Robot.Velocity.Linear.Y: { kind: sensor, type: float64, unit: m/s, maxAgeMs: 200, description: Lateral speed. }
+  Robot.Velocity.Angular:
+    kind: branch
+    description: Angular velocity.
+  Robot.Velocity.Angular.Z: { kind: sensor, type: float64, unit: rad/s, maxAgeMs: 200, description: Yaw rate. }
+  Robot.Velocity.Commanded:
+    kind: branch
+    description: Velocity command after the robot's safety arbitration.
+  Robot.Velocity.Commanded.LinearX: { kind: sensor, type: float64, unit: m/s, maxAgeMs: 300, description: Arbitrated forward command. }
+  Robot.Velocity.Commanded.AngularZ: { kind: sensor, type: float64, unit: rad/s, maxAgeMs: 300, description: Arbitrated yaw-rate command. }
+  Robot.Motion:
+    kind: branch
+    description: Body motion requests and named motions.
+  Robot.Motion.Velocity:
+    kind: setpoint
+    description: Desired body velocity; must be refreshed or it falls back to safeValue.
+    fields:
+      LinearX: { type: float64, unit: m/s, min: -1.5, max: 1.5 }
+      AngularZ: { type: float64, unit: rad/s, min: -2.0, max: 2.0 }
+    ttlMs: 300
+    refreshHz: 20
+    safeValue: { LinearX: 0, AngularZ: 0 }
+  Robot.Motion.Perform:
+    kind: command
+    description: Perform one qualified named motion; success only from measured physical outcome.
+    args:
+      Name: { type: enum, values: [CROUCH, BOW, TILT, LIFT_FRONT_LEFT, JUMP, WAVE_FRONT_LEFT, SIT, STAND] }
+    timeoutMs: 15000
+    results: [SUCCEEDED, FAILED, REJECTED, CANCELLED, TIMED_OUT]
+  Robot.Motion.Cancel:
+    kind: command
+    description: Cancel the active named motion.
+    args: {}
+    timeoutMs: 5000
+    results: [SUCCEEDED, REJECTED, FAILED, TIMED_OUT]
+  Robot.Motion.State:
+    kind: branch
+    description: Measured state of the named-motion controller.
+  Robot.Motion.State.Phase:
+    kind: sensor
+    type: enum
+    values: [IDLE, DISPATCHED, RUNNING, RECOVERING, SUCCEEDED, CANCELLED, FAILED, REJECTED]
+    maxAgeMs: 300
+    description: Phase of the current or last motion.
+  Robot.Motion.State.Name: { kind: sensor, type: string, maxAgeMs: 300, description: Name of the current or last motion. }
+  Robot.Motion.IsBodyBusy: { kind: sensor, type: bool, maxAgeMs: 300, description: A named motion owns the body. }

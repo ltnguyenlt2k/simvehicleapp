@@ -1,0 +1,37 @@
+rss: "0.1"
+kind: core
+nodes:
+  Robot:
+    kind: branch
+    description: Root of the Robotic Signal Specification.
+  Robot.Identity:
+    kind: branch
+    description: Static identity of the robot.
+  Robot.Identity.Id:
+    kind: attribute
+    type: string
+    description: Robot identifier (ROS namespace without slash for ROS robots).
+  Robot.Identity.Model:
+    kind: attribute
+    type: string
+    description: Robot model identifier.
+  Robot.Identity.Backend:
+    kind: attribute
+    type: enum
+    values: [SIM, REAL]
+    description: Whether the robot is simulated or physical.
+  Robot.Connection:
+    kind: branch
+    description: Health of the link between Protobus and the robot.
+  Robot.Connection.IsOnline:
+    kind: sensor
+    type: bool
+    maxAgeMs: 1000
+    description: True while robot state arrives fresher than 1 s.
+  Robot.Connection.StateAgeMs:
+    kind: sensor
+    type: float64
+    unit: ms
+    min: 0
+    maxAgeMs: 1000
+    description: Age of the newest robot state sample.

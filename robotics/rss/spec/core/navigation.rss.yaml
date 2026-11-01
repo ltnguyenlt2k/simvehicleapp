@@ -1,0 +1,59 @@
+rss: "0.1"
+kind: core
+nodes:
+  Robot.Navigation:
+    kind: branch
+    description: Goal-based navigation executed by the robot's own planner (map frame).
+  Robot.Navigation.GoTo:
+    kind: command
+    description: Navigate to a map-frame point.
+    args:
+      X: { type: float64, unit: m }
+      Y: { type: float64, unit: m }
+    timeoutMs: 120000
+    results: [SUCCEEDED, FAILED, REJECTED, CANCELLED, TIMED_OUT]
+  Robot.Navigation.FollowRoute:
+    kind: command
+    description: Navigate through map-frame waypoints in order.
+    args:
+      Waypoints:
+        type: array
+        maxItems: 20
+        items:
+          X: { type: float64, unit: m }
+          Y: { type: float64, unit: m }
+    timeoutMs: 600000
+    results: [SUCCEEDED, FAILED, REJECTED, CANCELLED, TIMED_OUT]
+  Robot.Navigation.Cancel:
+    kind: command
+    description: Cancel navigation and motion.
+    args: {}
+    timeoutMs: 5000
+    results: [SUCCEEDED, FAILED, TIMED_OUT]
+  Robot.Navigation.Mission: { kind: branch, description: Navigation mission state. }
+  Robot.Navigation.Mission.State:
+    kind: sensor
+    type: enum
+    values: [IDLE, RUNNING, SUCCEEDED, FAILED, REJECTED, CANCELLED]
+    maxAgeMs: 300
+    description: State of the current or last mission.
+  Robot.Navigation.Route: { kind: branch, description: Route progress. }
+  Robot.Navigation.Route.Completed: { kind: sensor, type: uint32, maxAgeMs: 300, description: Waypoints reached. }
+  Robot.Navigation.Route.Total: { kind: sensor, type: uint32, maxAgeMs: 300, description: Waypoints in the route. }
+  Robot.Navigation.IsReady: { kind: sensor, type: bool, maxAgeMs: 1000, description: Planner and map are ready. }
+  Robot.Perception: { kind: branch, description: Derived perception results (no images). }
+  Robot.Perception.Marker: { kind: branch, description: Simulation marker detection. }
+  Robot.Perception.Marker.IsDetected: { kind: sensor, type: bool, maxAgeMs: 500, description: At least one marker detected. }
+  Robot.Perception.Marker.Count: { kind: sensor, type: uint32, maxAgeMs: 500, description: Number of markers detected. }
+  Robot.Obstacle: { kind: branch, description: Derived obstacle information. }
+  Robot.Obstacle.MinRange: { kind: sensor, type: float64, unit: m, min: 0, maxAgeMs: 300, description: Nearest finite range of the planar scan. }
+  Robot.Simulation: { kind: branch, description: Simulation-only signals; absent on real robots. }
+  Robot.Simulation.SceneId: { kind: sensor, type: string, maxAgeMs: 2000, description: Active simulation scene. }
+  Robot.Simulation.Battery: { kind: branch, description: Simulated battery stimulus. }
+  Robot.Simulation.Battery.SetLevel:
+    kind: command
+    description: Set the simulated state of charge (simulation only).
+    args:
+      Level: { type: float64, unit: "%", min: 0, max: 100 }
+    timeoutMs: 3000
+    results: [SUCCEEDED, REJECTED, FAILED, TIMED_OUT]

@@ -1,6 +1,6 @@
 # ADR-0065: RSS — đặc tả tín hiệu robot dạng cây `Robot.*`, có kind setpoint/command, độ tươi bắt buộc và profile theo robot
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -105,3 +105,4 @@ flowchart LR
 ## Notes / Deviations
 
 - Tín hiệu đánh dấu W1/W2/W3 phụ thuộc kế hoạch R4 của repo dog; compiler báo `RF1010` nếu workflow dùng tín hiệu profile đánh dấu "chưa sẵn có" trên mode `ros-sim`.
+- 2026-11-01 (M22): catalog `dog-go2-sim` 101 lá, `catalogHash sha256:57ca55e9…5de3`. Thêm `spec/profiles/dog-go2-sim.sources.json` (nguồn ROS từng tín hiệu) + `rss/check_dog_profile.py` đối chiếu repo dog bằng `git show` tại commit ghim. Mã lỗi `RS1001…RS1015` trong `contracts/diagnostics.v1.json`. Số command thực tế là 10 (gồm `Robot.Simulation.Battery.SetLevel`, `Robot.Navigation.Cancel`).

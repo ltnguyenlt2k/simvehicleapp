@@ -1,0 +1,69 @@
+rss: "0.1"
+kind: core
+nodes:
+  Robot.Safety:
+    kind: branch
+    description: Safety state owned by the robot's arbiter; workflows observe and request, never override.
+  Robot.Safety.Mode:
+    kind: sensor
+    type: enum
+    values: [DISARMED, MANUAL, AUTO, MOTION, SAFE_STOP]
+    maxAgeMs: 300
+    description: Arbiter mode.
+  Robot.Safety.Reason:
+    kind: sensor
+    type: string
+    maxAgeMs: 300
+    description: Human-readable reason of the last mode change or refusal.
+  Robot.Safety.IsReady:
+    kind: sensor
+    type: bool
+    maxAgeMs: 300
+    description: Sensors and stack are healthy enough to arm.
+  Robot.Safety.IsArmed:
+    kind: sensor
+    type: bool
+    maxAgeMs: 300
+    description: Mode is MANUAL, AUTO or MOTION.
+  Robot.Safety.IsStopLatched:
+    kind: sensor
+    type: bool
+    maxAgeMs: 300
+    description: Mode is SAFE_STOP; a reset is required.
+  Robot.Safety.Controller:
+    kind: sensor
+    type: enum
+    values: [NONE, OPERATOR, WORKFLOW]
+    maxAgeMs: 300
+    description: Who currently holds control authority.
+  Robot.Safety.Arm:
+    kind: command
+    description: Request arming (manual-ready). Never implicit.
+    args: {}
+    timeoutMs: 3000
+    results: [SUCCEEDED, REJECTED, FAILED, TIMED_OUT]
+  Robot.Safety.Disarm:
+    kind: command
+    description: Request disarming.
+    args: {}
+    timeoutMs: 3000
+    results: [SUCCEEDED, REJECTED, FAILED, TIMED_OUT]
+  Robot.Safety.Stop:
+    kind: command
+    description: Latched stop through the independent safety lane; always accepted.
+    args: {}
+    timeoutMs: 1000
+    results: [SUCCEEDED, FAILED, TIMED_OUT]
+    safetyLane: true
+  Robot.Safety.ResetStop:
+    kind: command
+    description: Clear a latched stop (robot returns to DISARMED).
+    args: {}
+    timeoutMs: 3000
+    results: [SUCCEEDED, REJECTED, FAILED, TIMED_OUT]
+  Robot.Safety.StopEvent:
+    kind: event
+    description: Emitted when the robot enters SAFE_STOP.
+    fields:
+      Source: { type: enum, values: [OPERATOR, WORKFLOW, WATCHDOG, SENSOR, UNKNOWN] }
+      Reason: { type: string }

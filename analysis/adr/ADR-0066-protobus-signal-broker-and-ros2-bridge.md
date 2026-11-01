@@ -1,6 +1,6 @@
 # ADR-0066: Protobus — broker tín hiệu RSS độc lập (gRPC `protobus.v1`) với provider ROS 2 bridge theo mapping khai báo
 
-- **Status:** Proposed — chờ PO xác nhận
+- **Status:** Accepted — PO cho phép thực hiện theo tài liệu này ngày 2026-11-01
 - **Date:** 2026-11-01
 - **Level:** L1 Subsystem
 - **Deciders:** PO; Claude Code (đề xuất)
@@ -121,3 +121,6 @@ sequenceDiagram
   - soak 30 phút.
 
 ## Notes / Deviations
+
+- 2026-11-01 (M22 S-R1): bridge ngoài compose dog nhận odom 50,04 Hz qua CycloneDDS unicast với peer list riêng; không cần sửa peer phía dog cho node đang chạy (kiểm lại chiều writer→Brain ở M24).
+- 2026-11-01 (M22 S-R2): broker Python asyncio + grpcio 1.84.1, 1 CPU: p95 2,43 ms, 0,198 core, 41,8 MiB ⇒ giữ Python. Làn Stop: service `SafetyLane` riêng; provider giữ stream `AttachProvider` riêng để lệnh dừng không đi qua `Provider.Attach`.

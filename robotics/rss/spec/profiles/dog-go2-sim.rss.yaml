@@ -1,0 +1,52 @@
+# Profile for the simulated Unitree Go2 of github.com/ltnguyenlt2k/dog-ros2-simulation.
+# Checked against that repository at commit 35c45ee0270f0c40b98a84b3600154ed83e1ff14 (2026-11-01):
+#   contracts/ros2/topics.json, dog_autonomy/brain.py (manual clamp 0.5 m/s / 0.65 rad/s, <= 20 waypoints),
+#   dog_core/capabilities.py (named motions), dog_simulation/sim.py (constant battery).
+# A profile may only select core nodes, narrow ranges/enums and set attribute values; it never widens core limits.
+rss: "0.1"
+kind: profile
+id: dog-go2-sim
+extends: core
+robot:
+  rosNamespace: /dog1
+  sourceCommit: 35c45ee0270f0c40b98a84b3600154ed83e1ff14
+attributes:
+  Robot.Identity.Id: dog1
+  Robot.Identity.Model: unitree-go2-sim
+  Robot.Identity.Backend: SIM
+include:
+  - Robot.Identity.*
+  - Robot.Connection.*
+  - Robot.Safety.*
+  - Robot.Pose.*
+  - Robot.Velocity.*
+  - Robot.Motion.*
+  - Robot.Imu.*
+  - Robot.Leg.*
+  - Robot.PowerSystem.*
+  - Robot.Navigation.*
+  - Robot.Perception.*
+  - Robot.Obstacle.*
+  - Robot.Simulation.*
+narrow:
+  Robot.Motion.Velocity:
+    fields:
+      LinearX: { min: -0.5, max: 0.5 }
+      AngularZ: { min: -0.65, max: 0.65 }
+  Robot.Navigation.FollowRoute:
+    args:
+      Waypoints: { maxItems: 20 }
+# Interfaces that need dog-ros2-simulation R4 work before they exist on ROS (mock provides them already).
+pending:
+  Robot.Safety.Controller: dog R4 W1 (brain/state.controller)
+  Robot.Safety.Arm: dog R4 W1 (workflow/request)
+  Robot.Safety.Disarm: dog R4 W1 (workflow/request)
+  Robot.Safety.Stop: dog R4 W1 (workflow/request)
+  Robot.Safety.ResetStop: dog R4 W1 (workflow/request)
+  Robot.Motion.Velocity: dog R4 W1 (workflow/request)
+  Robot.Motion.Perform: dog R4 W1 (workflow/request); WAVE_FRONT_LEFT/SIT/STAND need W2
+  Robot.Motion.Cancel: dog R4 W1 (workflow/request)
+  Robot.Navigation.GoTo: dog R4 W1 (workflow/request)
+  Robot.Navigation.FollowRoute: dog R4 W1 (workflow/request)
+  Robot.Navigation.Cancel: dog R4 W1 (workflow/request)
+  Robot.Simulation.Battery.SetLevel: dog R4 W3 (sim/request battery)
