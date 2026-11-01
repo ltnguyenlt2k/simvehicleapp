@@ -1082,3 +1082,13 @@ apps/realtime/package.json
 bunfig.toml
 packages/db/package.json
 packages/realtime-protocol/package.json
+
+# M26 — Robot domain in the existing studio (ADR-0068): rf_* blocks, robotics BFF contract/hooks,
+# cycles allowed only between robot blocks, optional compose overlay to the robotics stack
+apps/sim/blocks/robot/*
+apps/sim/hooks/queries/sv-robotics.ts
+apps/sim/lib/api/contracts/sv-robotics.ts
+apps/sim/stores/workflows/workflow/store.ts
+apps/sim/stores/workflows/workflow/utils.ts
+apps/sim/stores/workflows/workflow/sv-cycle.test.ts
+overlays/*
