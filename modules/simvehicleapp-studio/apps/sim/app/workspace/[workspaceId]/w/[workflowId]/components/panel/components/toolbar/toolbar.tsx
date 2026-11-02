@@ -23,6 +23,7 @@ import { ToolbarItemContextMenu } from '@/app/workspace/[workspaceId]/w/[workflo
 import { useToolbarItemInteractions } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/panel/components/toolbar/hooks'
 import { LoopTool } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/loop/loop-config'
 import { ParallelTool } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/subflows/parallel/parallel-config'
+import { useSvWorkflowDomain } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/robot'
 // SV: Vehicle panel (M02-T10)
 import { SvVehiclePanel } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss'
 import { getCanonicalBlocksByCategory } from '@/blocks/registry'
@@ -31,7 +32,6 @@ import { usePermissionConfig } from '@/hooks/use-permission-config'
 import { useSandboxBlockConstraints } from '@/hooks/use-sandbox-block-constraints'
 import { useToolbarStore } from '@/stores/panel'
 import type { ToolbarSectionKey } from '@/stores/panel/toolbar/store'
-import { useWorkflowStore } from '@/stores/workflows/workflow/store'
 
 interface BlockItem {
   name: string
@@ -104,6 +104,7 @@ const ToolbarItem = memo(function ToolbarItem({
       ref={itemRef}
       role='button'
       aria-label={`Add ${item.name}`}
+      data-sv-block-type={item.type}
       tabIndex={-1}
       draggable
       onDragStart={handleDragStart}
@@ -137,13 +138,11 @@ const ToolbarItem = memo(function ToolbarItem({
 /**
  * Cached triggers data - lazy initialized on first access (client-side only)
  */
-/**
- * SV: robot blocks only in a robot workflow (plus notes); elsewhere every block, robot blocks after the rest.
- */
-function svRobotPalette(items: BlockItem[], robot: boolean): BlockItem[] {
-  const isRobot = (item: BlockItem) => item.type.startsWith('rf_')
-  if (robot) return items.filter((item) => isRobot(item) || item.type === 'note')
-  return [...items.filter((item) => !isRobot(item)), ...items.filter(isRobot)]
+/** SV: robot blocks (plus notes) for an RSS workflow; every other block, without robot ones, for a VSS workflow. */
+function svDomainPalette(items: BlockItem[], robot: boolean): BlockItem[] {
+  return items.filter((item) =>
+    robot ? item.type.startsWith('rf_') || item.type === 'note' : !item.type.startsWith('rf_')
+  )
 }
 
 let cachedTriggers: BlockItem[] | null = null
@@ -426,16 +425,13 @@ export const Toolbar = memo(
     const { handleDragStart, handleItemClick } = useToolbarItemInteractions()
 
     /**
-     * SV: robot palette (ADR-0068 §1). A robot workflow (one `rf_*` block) shows only robot blocks; any other workflow
-     * keeps the full palette with robot blocks last, so a domain change during a drag (collaborators dropping at once)
-     * never moves the item under the pointer. Mixing domains is refused by the robot graph adapter.
+     * SV: the palette of the workflow's signal catalog (ADR-0068 Notes 2026-11-01): RSS shows the robot blocks, a VSS
+     * release the vehicle blocks. The domain is a workflow setting, so it never changes under a drag.
      */
-    const svRobot = useWorkflowStore((state) =>
-      Object.values(state.blocks).some((block) => block.type.startsWith('rf_'))
-    )
-    const allTriggers = useMemo(() => svRobotPalette(getTriggers(), svRobot), [svRobot])
-    const allBlocks = useMemo(() => svRobotPalette(getBlocks(), svRobot), [svRobot])
-    const allTools = useMemo(() => svRobotPalette(getTools(), svRobot), [svRobot])
+    const svRobot = useSvWorkflowDomain() === 'robot'
+    const allTriggers = useMemo(() => svDomainPalette(getTriggers(), svRobot), [svRobot])
+    const allBlocks = useMemo(() => svDomainPalette(getBlocks(), svRobot), [svRobot])
+    const allTools = useMemo(() => svDomainPalette(getTools(), svRobot), [svRobot])
 
     const visibleTriggers = useMemo(() => {
       if (sandboxAllowedBlocks !== null) return []

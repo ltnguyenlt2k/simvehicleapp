@@ -70,10 +70,13 @@ describe('/api/sv/workflows/[id]/settings (M02-T11)', () => {
   it('GET returns null (catalog default) when nothing is pinned, then the pinned release', async () => {
     let res = await GET(createMockRequest('GET', undefined, {}, url), ctx())
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ vssRelease: null })
-    dbState.rows = [{ vssRelease: 'v4.2' }]
+    expect(await res.json()).toEqual({ vssRelease: null, domain: 'vehicle' })
+    dbState.rows = [{ vssRelease: 'v4.2', domain: 'vehicle' }]
     res = await GET(createMockRequest('GET', undefined, {}, url), ctx())
-    expect(await res.json()).toEqual({ vssRelease: 'v4.2' })
+    expect(await res.json()).toEqual({ vssRelease: 'v4.2', domain: 'vehicle' })
+    dbState.rows = [{ vssRelease: '', domain: 'robot' }]
+    res = await GET(createMockRequest('GET', undefined, {}, url), ctx())
+    expect(await res.json()).toEqual({ vssRelease: null, domain: 'robot' })
     expect(mockAuthorize).toHaveBeenCalledWith({
       workflowId: 'wf-1',
       userId: 'user-1',
@@ -97,7 +100,7 @@ describe('/api/sv/workflows/[id]/settings (M02-T11)', () => {
   it('PUT upserts a release the catalog serves', async () => {
     const res = await PUT(createMockRequest('PUT', { vssRelease: 'v4.2' }, {}, url), ctx())
     expect(res.status).toBe(200)
-    expect(await res.json()).toEqual({ vssRelease: 'v4.2' })
+    expect(await res.json()).toEqual({ vssRelease: 'v4.2', domain: 'vehicle' })
     expect(dbState.upserts).toHaveLength(1)
     expect(mockAuthorize).toHaveBeenCalledWith({
       workflowId: 'wf-1',
@@ -118,6 +121,18 @@ describe('/api/sv/workflows/[id]/settings (M02-T11)', () => {
       (await PUT(createMockRequest('PUT', { vssRelease: 'v4.2' }, {}, url), ctx())).status
     ).toBe(423)
     expect(dbState.upserts).toEqual([])
+  })
+
+  it('PUT makes a robot workflow without asking the VSS catalog (ADR-0068 Notes 2026-11-01)', async () => {
+    mockReleases.mockResolvedValue(null)
+    const res = await PUT(createMockRequest('PUT', { domain: 'robot' }, {}, url), ctx())
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ vssRelease: null, domain: 'robot' })
+    expect(dbState.upserts).toHaveLength(1)
+    expect(mockReleases).not.toHaveBeenCalled()
+    expect(
+      (await PUT(createMockRequest('PUT', { domain: 'vehicle' }, {}, url), ctx())).status
+    ).toBe(400)
   })
 
   it('PUT answers 502 when the catalog is unreachable', async () => {

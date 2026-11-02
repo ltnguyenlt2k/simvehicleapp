@@ -15,7 +15,7 @@ import {
  * in `path` and the block is named after it (ADR-0011 §2, Notes 2026-10-04).
  */
 function addSignalBlock(choice: SvSignalBlockChoice, detail: SvSignalDropDetail): void {
-  const presetSubBlockValues = { path: detail.signal.path }
+  const presetSubBlockValues = choice.preset
   if (detail.atViewportCenter) {
     window.dispatchEvent(
       new CustomEvent('add-block-from-toolbar', {
@@ -37,7 +37,10 @@ function addSignalBlock(choice: SvSignalBlockChoice, detail: SvSignalDropDetail)
   )
 }
 
-/** Menu shown where a VSS signal was dropped: "Read / When changes / Set" by signal kind (M02-T10). */
+/**
+ * Menu shown where a signal was dropped: "Read / When changes / Set" by VSS kind (M02-T10), or "When condition / If /
+ * Wait until" for an RSS signal of a robot workflow.
+ */
 export function SvSignalDropMenu() {
   const [drop, setDrop] = useState<SvSignalDropDetail | null>(null)
 

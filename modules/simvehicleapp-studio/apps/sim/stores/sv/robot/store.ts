@@ -10,11 +10,14 @@ interface SvRobotState {
   runId: string | null
   /** Block the running app is executing (from its trace), highlighted on the canvas. */
   activeNodeId: string | null
+  /** Bumped to bring a dock tab forward (Start → Live, Check → Problems), like the vehicle dock. */
+  focus: { tab: 'problems' | 'live'; n: number }
   setMode: (mode: SvRobotMode) => void
   setBuild: (buildId: string | null) => void
   setDeployment: (deploymentId: string | null) => void
   setRun: (runId: string | null) => void
   setActiveNode: (nodeId: string | null) => void
+  showTab: (tab: 'problems' | 'live') => void
   reset: () => void
 }
 
@@ -24,6 +27,7 @@ const initialState = {
   deploymentId: null,
   runId: null,
   activeNodeId: null,
+  focus: { tab: 'problems' as const, n: 0 },
 }
 
 /** Robot workflow actions of the open workflow (build → deploy → run). */
@@ -36,6 +40,7 @@ export const useSvRobotStore = create<SvRobotState>()(
       setDeployment: (deploymentId) => set({ deploymentId }),
       setRun: (runId) => set({ runId }),
       setActiveNode: (activeNodeId) => set({ activeNodeId }),
+      showTab: (tab) => set((s) => ({ focus: { tab, n: s.focus.n + 1 } })),
       reset: () => set(initialState),
     }),
     { name: 'sv-robot-store' }

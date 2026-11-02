@@ -5,6 +5,21 @@
 
 ## [Unreleased]
 
+### M29 — giao diện VI/EN, miền Robot dùng khung xe (2026-11-02)
+- **Ngôn ngữ:**
+  - Studio: Settings › General › Language và nút EN | VI ở trang đăng nhập.
+  - Robot Zoo: nút VI | EN; studio mở Robot Zoo cùng ngôn ngữ.
+  - Mỗi chế độ một ngôn ngữ; tên block mặc định tiếng Anh.
+- **Ô Tín hiệu trong Toolbar:**
+  - chọn VSS release hoặc RSS (robot dog);
+  - chỉ workflow RSS mới có block robot và cây tín hiệu robot;
+  - kéo tín hiệu RSS vào canvas để tạo điều kiện.
+- **Workflow robot dùng khung xe:** thanh hành động, dock Vấn đề / Trực tiếp, dòng tóm tắt block.
+- **Video:**
+  - hướng dẫn tiếng Việt `docs/media/robotics/robot-tutorial-vi.mp4`;
+  - hồi quy robot `robot-flow-en.mp4`;
+  - hồi quy xe `docs/media/full-flow.mp4` (quay lại).
+
 ### Robotics — M22–M28 (2026-11-01)
 - **`robotics/` (độc lập với `modules/`):**
   - RSS v0.1 + catalog `rss-catalog.v1`;

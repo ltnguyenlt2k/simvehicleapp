@@ -627,9 +627,12 @@ export const WorkflowBlock = memo(function WorkflowBlock({
   /** SV: the block a running robot workflow is executing (ADR-0068 §5). */
   const rfActive = useSvRobotStore((s) => s.activeNodeId === id)
 
-  /** SV: values of a vehicle block's props, for its summary line and value-dependent handles (ADR-0055). */
+  /**
+   * SV: values of a vehicle or robot block's props, for its summary line and value-dependent handles (ADR-0055,
+   * ADR-0068 Notes 2026-11-01: robot blocks read the same way).
+   */
   const svValues = useMemo(() => {
-    if (!type.startsWith('sv_')) return undefined
+    if (!type.startsWith('sv_') && !type.startsWith('rf_')) return undefined
     const values: Record<string, unknown> = {}
     for (const [key, sub] of Object.entries(subBlockState ?? {})) {
       values[key] = (sub as { value?: unknown } | undefined)?.value

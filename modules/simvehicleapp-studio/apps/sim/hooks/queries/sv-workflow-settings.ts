@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { requestJson } from '@/lib/api/client/request'
 import {
+  type SvUpdateWorkflowSettingsBody,
   type SvWorkflowSettings,
   svGetWorkflowSettingsContract,
   svUpdateWorkflowSettingsContract,
@@ -29,20 +30,14 @@ export function useSvWorkflowSettings(workflowId?: string) {
   })
 }
 
-interface UpdateSvWorkflowSettingsVariables {
-  workflowId: string
-  vssRelease: string
-}
+type UpdateSvWorkflowSettingsVariables = SvUpdateWorkflowSettingsBody & { workflowId: string }
 
-/** Pins a workflow to a VSS release; the catalog tree/search re-key on the new release. */
+/** Pins a workflow to a VSS release or the robot domain; the signal tree and the palette follow. */
 export function useUpdateSvWorkflowSettings() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ workflowId, vssRelease }: UpdateSvWorkflowSettingsVariables) =>
-      requestJson(svUpdateWorkflowSettingsContract, {
-        params: { id: workflowId },
-        body: { vssRelease },
-      }),
+    mutationFn: ({ workflowId, ...body }: UpdateSvWorkflowSettingsVariables) =>
+      requestJson(svUpdateWorkflowSettingsContract, { params: { id: workflowId }, body }),
     onSuccess: (data, { workflowId }) => {
       queryClient.setQueryData(svWorkflowSettingsKeys.detail(workflowId), data)
     },

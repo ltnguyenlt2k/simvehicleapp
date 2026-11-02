@@ -1,0 +1,464 @@
+{
+ "schema": "sr-video-manifest.v1",
+ "video": {
+  "file": "robot-flow-en.mp4",
+  "sha256": "0afd42e873049af910ed448de982c15039c66eb1fc8a3863aaea0f5f48816f50",
+  "durationS": 161.9,
+  "codec": "h264",
+  "size": "1600x900",
+  "frames": 4048,
+  "capture": "ffmpeg x11grab, one continuous take of the Xvfb screen (headed Chromium), no edits"
+ },
+ "language": "en",
+ "mode": "regression",
+ "repos": {
+  "simvehicleapp": {
+   "head": "4c1ca4cb4b4317a0d9bdae27fb3d6569c0b45b45",
+   "dirty": true
+  },
+  "dog-ros2-simulation": {
+   "head": "2428991cc51ecfd8d799ffa9bb4a745190f30dbc",
+   "dirty": true
+  }
+ },
+ "images": {
+  "simvehicleapp-studio-1": {
+   "image": "simvehicleapp/studio:dev",
+   "id": "sha256:6302c32c6fc3017a4e3efc82e757501d3f4d880667ae06170c60a6cb42a1f68b"
+  },
+  "sr-robotics-control-1": {
+   "image": "robotics/control:local",
+   "id": "sha256:5622b0845c67342a309007df7a54e700ac67225e59d35c488373e2f60d84b881"
+  },
+  "sr-protobus-broker-ros-1": {
+   "image": "robotics/protobus:local",
+   "id": "sha256:6181a126c5df615532d5c82d886de3a19376d9ccd88a7d1015f05013a899e11d"
+  },
+  "sr-protobus-ros2-1": {
+   "image": "robotics/protobus-ros2:local",
+   "id": "sha256:9851c431db38549ecf1408f297a14ffbb01580a5d32a01f2650bcfdd33bd629a"
+  },
+  "dog-ros2-gateway-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:5bd986f952db5b2227f9bd9f29e709aa69f2418c439a10f62d0979a222a18aee"
+  },
+  "dog-ros2-slam-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:fdd3b8ed44728f287e89049275e51003fc8d60cfe41ff9ce353547c1d57c4d26"
+  },
+  "dog-ros2-perception-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:fdd3b8ed44728f287e89049275e51003fc8d60cfe41ff9ce353547c1d57c4d26"
+  },
+  "dog-ros2-nav2-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:fdd3b8ed44728f287e89049275e51003fc8d60cfe41ff9ce353547c1d57c4d26"
+  },
+  "dog-ros2-brain-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:fdd3b8ed44728f287e89049275e51003fc8d60cfe41ff9ce353547c1d57c4d26"
+  },
+  "dog-ros2-render-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:fdd3b8ed44728f287e89049275e51003fc8d60cfe41ff9ce353547c1d57c4d26"
+  },
+  "dog-ros2-sim-1": {
+   "image": "dog-ros2/runtime:0.2.0",
+   "id": "sha256:fdd3b8ed44728f287e89049275e51003fc8d60cfe41ff9ce353547c1d57c4d26"
+  },
+  "recorder": {
+   "image": "robotics/recorder:local",
+   "id": "sha256:b222b7e67d7007e0328db5388687d6fbd3745e8a58259086dd74ba089120ffa4"
+  }
+ },
+ "chapters": [
+  {
+   "t": 1.4,
+   "text": "SimVehicleApp: control a robot dog with a drag-and-drop workflow"
+  },
+  {
+   "t": 2.8,
+   "text": "1. Open SimVehicleApp and create an account"
+  },
+  {
+   "t": 12.4,
+   "text": "2. Create a workflow and name it"
+  },
+  {
+   "t": 15.9,
+   "text": "3. Toolbar → Signals: choose RSS (robot dog) — the palette now shows the robot blocks only"
+  },
+  {
+   "t": 18.4,
+   "text": "4. The robot's signals (RSS): e.g. Perception → Marker → IsDetected"
+  },
+  {
+   "t": 21.4,
+   "text": "5. Drag robot blocks from the Toolbar onto the canvas"
+  },
+  {
+   "t": 29,
+   "text": "6. Drag a robot signal onto the canvas → Wait until (the condition is filled in)"
+  },
+  {
+   "t": 30.8,
+   "text": "5. Drag robot blocks from the Toolbar onto the canvas"
+  },
+  {
+   "t": 48.9,
+   "text": "7. Set each block: conditions on RSS signals, motions, coordinates, log messages"
+  },
+  {
+   "t": 74.2,
+   "text": "8. Connect the named outputs: done / failed, then / else, loop / after loop"
+  },
+  {
+   "t": 89.5,
+   "text": "9. Problems: the RobotFlow compiler checks the workflow as you edit — no errors"
+  },
+  {
+   "t": 91.1,
+   "text": "10. Build: the compiler turns the workflow into a Python robot app (same input, same bytes)"
+  },
+  {
+   "t": 92.9,
+   "text": "11. Deploy to Dog ROS sim — binds the build to the robot; nothing runs yet"
+  },
+  {
+   "t": 94.6,
+   "text": "12. Robot Zoo opens in a new tab (the dog simulation, its own repository)"
+  },
+  {
+   "t": 96.2,
+   "text": "Robot Zoo: simulated Go2 dog (ROS 2 + MuJoCo), DISARMED"
+  },
+  {
+   "t": 98.1,
+   "text": "13. Start (with confirmation): the workflow drives the robot through RSS → Protobus → ROS 2"
+  },
+  {
+   "t": 106.1,
+   "text": "The robot follows the workflow: Arm → sees the marker → Bow → Lift paw → Jump → patrol twice"
+  },
+  {
+   "t": 121.2,
+   "text": "Studio, Live tab: the running block is outlined; each robot command with its result and request id"
+  },
+  {
+   "t": 126.2,
+   "text": "The robot follows the workflow: Arm → sees the marker → Bow → Lift paw → Jump → patrol twice"
+  },
+  {
+   "t": 141.3,
+   "text": "Studio, Live tab: the running block is outlined; each robot command with its result and request id"
+  },
+  {
+   "t": 146.3,
+   "text": "Robot Zoo, Logs & diagnostics: the robot's own ROS log of the same commands"
+  },
+  {
+   "t": 156.9,
+   "text": "The robot follows the workflow: Arm → sees the marker → Bow → Lift paw → Jump → patrol twice"
+  },
+  {
+   "t": 156.9,
+   "text": "14. Result: every command SUCCEEDED, the run finished by itself, the robot is DISARMED again"
+  },
+  {
+   "t": 160,
+   "text": "Done — Stop is always available in the studio and in Robot Zoo"
+  }
+ ],
+ "checks": [
+  "sign-up accepted",
+  "auto-connect off (every link is drawn by hand)",
+  "RSS chosen: the palette shows robot blocks and no vehicle block",
+  "canvas zoomed out to fit the workflow",
+  "RSS signal dropped → Wait until block with the condition preset",
+  "16 robot blocks on the canvas",
+  "the dropped signal preset the condition Robot.Perception.Marker.IsDetected == true",
+  "23 links drawn",
+  "robot check OK (no errors)",
+  "build ok sha256:2ce9422cfc695874e22ab9edf6c3e9dc9676f367d3554467add3a189f0637e31",
+  "deployed to ros-sim with the ROS 2 bridge attached",
+  "Robot Zoo opened in the studio's language (en)",
+  "run started 6b1da551-0a7e-4a4c-8c10-18f3fad7b2c7",
+  "run finished by itself",
+  "execution order equals the workflow design: hello → arm → battery → see → bow → paw → jump → patrol → out → back → patrol → out → back → patrol → done → rest",
+  "all 9 robot commands SUCCEEDED (measured robot state)"
+ ],
+ "artifactHash": "sha256:2ce9422cfc695874e22ab9edf6c3e9dc9676f367d3554467add3a189f0637e31",
+ "deployment": {
+  "id": "72ecf246-b8f5-4469-9895-0c62e997d1a7",
+  "target": {
+   "mode": "ros-sim",
+   "catalogHash": "sha256:9ae3eaa7726c38060615a8484ca46e2752841e0e65eae0b69d077a50f02a6ef8",
+   "providers": [
+    "ros2-dog-go2-sim"
+   ],
+   "robotId": "dog1",
+   "robotMode": "DISARMED",
+   "scene": "courtyard",
+   "online": true
+  }
+ },
+ "run": {
+  "id": "6b1da551-0a7e-4a4c-8c10-18f3fad7b2c7",
+  "state": "finished",
+  "order": [
+   "hello",
+   "arm",
+   "battery",
+   "see",
+   "bow",
+   "paw",
+   "jump",
+   "patrol",
+   "out",
+   "back",
+   "patrol",
+   "out",
+   "back",
+   "patrol",
+   "done",
+   "rest"
+  ],
+  "commands": [
+   {
+    "node": "arm",
+    "path": "Robot.Safety.Arm",
+    "phase": "SUCCEEDED",
+    "requestId": "76514b7e-ad50-4073-b127-a636d0b124d5",
+    "message": "robot mode MANUAL"
+   },
+   {
+    "node": "bow",
+    "path": "Robot.Motion.Perform",
+    "phase": "SUCCEEDED",
+    "requestId": "7ed19bd2-208e-45ae-bf89-b5b29762bfab",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "paw",
+    "path": "Robot.Motion.Perform",
+    "phase": "SUCCEEDED",
+    "requestId": "22515271-2a26-4634-845d-becdab1e04f4",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "jump",
+    "path": "Robot.Motion.Perform",
+    "phase": "SUCCEEDED",
+    "requestId": "2a5665f3-ce7e-4a1c-a2c3-7b93af2f2ff8",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "out",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "requestId": "4195c7c9-4640-467b-8011-42932108dc5f",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "back",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "requestId": "7eeaa1d8-3227-48de-911e-768798061d04",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "out",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "requestId": "771d81cf-fd6a-4d18-9050-714498a39f68",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "back",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "requestId": "98040862-5dc9-44e3-a9ba-5e937c975b7c",
+    "message": "robot reported SUCCEEDED"
+   },
+   {
+    "node": "rest",
+    "path": "Robot.Safety.Disarm",
+    "phase": "SUCCEEDED",
+    "requestId": "89e49ef1-84be-4794-8b7d-21e50da9d455",
+    "message": "robot mode DISARMED"
+   }
+  ],
+  "logs": [
+   "Scenario starts, battery 92.00 %",
+   "Patrol done, x = 0.50 m"
+  ]
+ },
+ "robotSideEvidence": {
+  "source": "protobus-broker-ros audit.jsonl: dispatch to the ROS 2 bridge and the result the robot reported",
+  "entries": [
+   {
+    "args": {},
+    "kind": "command.dispatch",
+    "path": "Robot.Safety.Arm",
+    "request_id": "76514b7e-ad50-4073-b127-a636d0b124d5",
+    "t": 1793619957966664977
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot mode MANUAL",
+    "path": "Robot.Safety.Arm",
+    "phase": "SUCCEEDED",
+    "request_id": "76514b7e-ad50-4073-b127-a636d0b124d5",
+    "t": 1793619958019484300
+   },
+   {
+    "args": {
+     "Name": "BOW"
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Motion.Perform",
+    "request_id": "7ed19bd2-208e-45ae-bf89-b5b29762bfab",
+    "t": 1793619958021428603
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Motion.Perform",
+    "phase": "SUCCEEDED",
+    "request_id": "7ed19bd2-208e-45ae-bf89-b5b29762bfab",
+    "t": 1793619965102018007
+   },
+   {
+    "args": {
+     "Name": "LIFT_FRONT_LEFT"
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Motion.Perform",
+    "request_id": "22515271-2a26-4634-845d-becdab1e04f4",
+    "t": 1793619965103783914
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Motion.Perform",
+    "phase": "SUCCEEDED",
+    "request_id": "22515271-2a26-4634-845d-becdab1e04f4",
+    "t": 1793619972475818645
+   },
+   {
+    "args": {
+     "Name": "JUMP"
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Motion.Perform",
+    "request_id": "2a5665f3-ce7e-4a1c-a2c3-7b93af2f2ff8",
+    "t": 1793619972478316963
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Motion.Perform",
+    "phase": "SUCCEEDED",
+    "request_id": "2a5665f3-ce7e-4a1c-a2c3-7b93af2f2ff8",
+    "t": 1793619979656208330
+   },
+   {
+    "args": {
+     "X": 1.0,
+     "Y": 0.0
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Navigation.GoTo",
+    "request_id": "4195c7c9-4640-467b-8011-42932108dc5f",
+    "t": 1793619979659070946
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "request_id": "4195c7c9-4640-467b-8011-42932108dc5f",
+    "t": 1793619982312564858
+   },
+   {
+    "args": {
+     "X": 0.3,
+     "Y": 0.0
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Navigation.GoTo",
+    "request_id": "7eeaa1d8-3227-48de-911e-768798061d04",
+    "t": 1793619982314291336
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "request_id": "7eeaa1d8-3227-48de-911e-768798061d04",
+    "t": 1793619989050862331
+   },
+   {
+    "args": {
+     "X": 1.0,
+     "Y": 0.0
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Navigation.GoTo",
+    "request_id": "771d81cf-fd6a-4d18-9050-714498a39f68",
+    "t": 1793619989052918100
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "request_id": "771d81cf-fd6a-4d18-9050-714498a39f68",
+    "t": 1793619995134500507
+   },
+   {
+    "args": {
+     "X": 0.3,
+     "Y": 0.0
+    },
+    "kind": "command.dispatch",
+    "path": "Robot.Navigation.GoTo",
+    "request_id": "98040862-5dc9-44e3-a9ba-5e937c975b7c",
+    "t": 1793619995136156078
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot reported SUCCEEDED",
+    "path": "Robot.Navigation.GoTo",
+    "phase": "SUCCEEDED",
+    "request_id": "98040862-5dc9-44e3-a9ba-5e937c975b7c",
+    "t": 1793620001404934786
+   },
+   {
+    "args": {},
+    "kind": "command.dispatch",
+    "path": "Robot.Safety.Disarm",
+    "request_id": "89e49ef1-84be-4794-8b7d-21e50da9d455",
+    "t": 1793620001406696162
+   },
+   {
+    "code": "",
+    "kind": "command.result",
+    "message": "robot mode DISARMED",
+    "path": "Robot.Safety.Disarm",
+    "phase": "SUCCEEDED",
+    "request_id": "89e49ef1-84be-4794-8b7d-21e50da9d455",
+    "t": 1793620001455969616
+   }
+  ]
+ },
+ "reproduce": "LANG_UI=en MODE=regression robotics/scripts/video/run.sh <out-dir> 1"
+}

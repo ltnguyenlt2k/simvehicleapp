@@ -4,7 +4,14 @@ import { defineRouteContract } from '@/lib/api/contracts/types'
 
 /** Health of one SimVehicleApp service as seen by the studio BFF. */
 export const svServiceHealthSchema = z.object({
-  service: z.enum(['vss-catalog', 'compiler', 'orchestrator', 'signal-gateway', 'ai-assistant', 'robotics']),
+  service: z.enum([
+    'vss-catalog',
+    'compiler',
+    'orchestrator',
+    'signal-gateway',
+    'ai-assistant',
+    'robotics',
+  ]),
   status: z.enum(['ok', 'degraded', 'down', 'unconfigured']),
   latencyMs: z.number().int().min(0).optional(),
   error: z.string().optional(),
@@ -206,16 +213,35 @@ export const svWorkflowSettingsParamsSchema = z.object({
   id: workflowIdSchema,
 })
 
-/** Per-workflow SimVehicleApp settings; `vssRelease: null` = the catalog default release. */
+/** Signal catalog family of a workflow (ADR-0068 Notes 2026-11-01): VSS vehicle blocks or RSS robot blocks. */
+export const svWorkflowDomainSchema = z.enum(['vehicle', 'robot'])
+
+/**
+ * Per-workflow SimVehicleApp settings; `vssRelease: null` = the catalog default release. `domain` picks the blocks
+ * and the signal tree of the editor (`robot`: RSS robot blocks, no VSS release used).
+ */
 export const svWorkflowSettingsSchema = z.object({
   vssRelease: svVssReleaseSchema.nullable(),
+  domain: svWorkflowDomainSchema,
 })
 
-export const svUpdateWorkflowSettingsBodySchema = z.object({
-  vssRelease: svVssReleaseSchema,
-})
+/** A vehicle workflow is pinned to a VSS release; a robot workflow needs none. */
+export const svUpdateWorkflowSettingsBodySchema = z
+  .object({
+    vssRelease: svVssReleaseSchema.optional(),
+    domain: svWorkflowDomainSchema.default('vehicle'),
+  })
+  .superRefine((body, ctx) => {
+    if (body.domain === 'vehicle' && !body.vssRelease) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['vssRelease'],
+        message: 'vssRelease is required for a vehicle workflow',
+      })
+    }
+  })
 
-/** `GET /api/sv/workflows/[id]/settings` — VSS release of the workflow (M02-T11). */
+/** `GET /api/sv/workflows/[id]/settings` — VSS release and domain of the workflow (M02-T11). */
 export const svGetWorkflowSettingsContract = defineRouteContract({
   method: 'GET',
   path: '/api/sv/workflows/[id]/settings',
@@ -223,7 +249,7 @@ export const svGetWorkflowSettingsContract = defineRouteContract({
   response: { mode: 'json', schema: svWorkflowSettingsSchema },
 })
 
-/** `PUT /api/sv/workflows/[id]/settings` — pin the workflow to a VSS release served by vss-catalog. */
+/** `PUT /api/sv/workflows/[id]/settings` — pin a VSS release served by vss-catalog, or make the workflow a robot one. */
 export const svUpdateWorkflowSettingsContract = defineRouteContract({
   method: 'PUT',
   path: '/api/sv/workflows/[id]/settings',
@@ -234,6 +260,7 @@ export const svUpdateWorkflowSettingsContract = defineRouteContract({
 
 export type SvWorkflowSettings = z.output<typeof svWorkflowSettingsSchema>
 export type SvUpdateWorkflowSettingsBody = z.input<typeof svUpdateWorkflowSettingsBodySchema>
+export type SvWorkflowDomain = z.output<typeof svWorkflowDomainSchema>
 
 /** One compiler diagnostic (contracts `diagnostics.v1`, ADR-0016); `code` is public API. */
 export const svDiagnosticSchema = z.object({

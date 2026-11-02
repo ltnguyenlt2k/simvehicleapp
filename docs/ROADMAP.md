@@ -75,6 +75,7 @@
 | [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | 🔄 | 2026-11-01: T03–T06, T09, T12 ✔; T01/T07/T11 ◐; T02 ↷ (miền theo block); T08, T10 ☐ — vitest 845/845, tsc 0 lỗi ([báo cáo](reports/M26.md)) |
 | [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Accepted 2026-11-01) | 🔄 | 2026-11-01: đo lần chạy full flow (lớp robotics ≈ 0,5 lõi / 140 MiB); build studio giới hạn 4 worker (lỗi 25 phút → 64 s PASS). Còn `robot-lite`, đo DEV/LOW ([báo cáo](reports/M27.md)) |
 | [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Accepted 2026-11-01) | 🔄 | 2026-11-01: **video full luồng thật** [`robot-full-flow.mp4`](media/robotics/robot-full-flow.mp4) + manifest; 3/3 lượt GUI production + `ros-sim` PASS, 9/9 lệnh SUCCEEDED, request id khớp audit Protobus. Còn RW-A…F, fault qua GUI, `workflow/ack`, GIF ([báo cáo](reports/M28.md)) |
+| [M29](../analysis/phases/M29-ui-language-vi-en.md) | Miền Robot dùng chung khung xe + giao diện VI/EN (studio + Robot Zoo) + video hồi quy và hướng dẫn | 0068 Notes, 0072 (Accepted 2026-11-01) | ✔ | 10/10 — 2026-11-02: ô Tín hiệu VSS/RSS, khung xe cho robot, VI/EN hai GUI; xe `@live` PASS + video; robot EN/VI PASS 9/9; video hướng dẫn VI ([báo cáo](reports/M29.md)) |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:
 - M0–M10 gate PASS; M11 (hardening/release v1.0) 3/10 ✔.

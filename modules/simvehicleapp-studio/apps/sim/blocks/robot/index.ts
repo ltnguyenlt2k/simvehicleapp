@@ -19,6 +19,7 @@ import {
   Route,
   Timer,
 } from 'lucide-react'
+import { type SvLocale, type SvMessageKey, svClientLocale, svT } from '@/lib/sv/i18n'
 import snapshot from '@/blocks/robot/rf-registry.json'
 import type { BlockConfig, SubBlockConfig, SvHandle } from '@/blocks/types'
 
@@ -104,26 +105,29 @@ const ICONS: Record<string, typeof Bot> = {
   'rf.follow_route': Route,
 }
 
-const PORT_LABELS: Record<string, string> = {
-  next: 'tiếp',
-  then: 'đúng',
-  else: 'sai',
-  ok: 'xong',
-  failed: 'lỗi',
-  timeout: 'hết giờ',
-  body: 'lặp',
-  done: 'xong lặp',
+/** Port and motion names in the page's language (ADR-0072); the ids stay the RobotFlow ones. */
+const PORT_KEYS: Record<string, SvMessageKey> = {
+  next: 'rf.port.next',
+  then: 'rf.port.then',
+  else: 'rf.port.else',
+  ok: 'rf.port.ok',
+  failed: 'rf.port.failed',
+  timeout: 'rf.port.timeout',
+  body: 'rf.port.body',
+  done: 'rf.port.done',
 }
 
-const MOTION_LABELS: Record<string, string> = {
-  CROUCH: 'Hạ thân',
-  BOW: 'Cúi chào',
-  TILT: 'Nghiêng thân',
-  LIFT_FRONT_LEFT: 'Giơ chân trước trái',
-  JUMP: 'Nhảy',
-  WAVE_FRONT_LEFT: 'Vẫy chân trước trái',
-  SIT: 'Ngồi',
-  STAND: 'Đứng dậy',
+/** Display name of a named motion (`BOW` → "Bow" / "Cúi chào"). */
+export function rfMotionLabel(name: string): string {
+  const key = `rf.motion.${name}` as SvMessageKey
+  const text = svT(key)
+  return text === key ? name : text
+}
+
+/** Display name of an output port (`ok` → "done" / "xong"). */
+export function rfPortLabel(port: string): string {
+  const key = PORT_KEYS[port]
+  return key ? svT(key) : port
 }
 
 const icon = (Icon: typeof Bot) => (props: SVGProps<SVGSVGElement>) => createElement(Icon, props)
@@ -134,8 +138,8 @@ const SIGNAL_HINT = RF_SIGNALS.filter((s) => !s.path.includes('.Joint.'))
   .join(', ')
 
 /** RobotFlow property → studio subBlock; every value stays a plain string/boolean so the adapter can type it. */
-function subBlockFor(prop: RfProp): SubBlockConfig {
-  const base = { id: prop.name, title: prop.title.vi, required: prop.required }
+function subBlockFor(prop: RfProp, locale: SvLocale): SubBlockConfig {
+  const base = { id: prop.name, title: prop.title[locale], required: prop.required }
   const fallback = prop.default === undefined ? undefined : String(prop.default)
   switch (prop.type) {
     case 'condition':
@@ -143,7 +147,10 @@ function subBlockFor(prop: RfProp): SubBlockConfig {
         ...base,
         type: 'long-input',
         rows: 2,
-        placeholder: `Ví dụ: ${fallback ?? 'Robot.Safety.Mode == "MANUAL"'} — tín hiệu: ${SIGNAL_HINT}`,
+        placeholder: svT('rf.placeholder.condition', {
+          example: fallback ?? "Robot.Safety.Mode == 'MANUAL'",
+          signals: SIGNAL_HINT,
+        }),
         defaultValue: fallback,
       }
     case 'template':
@@ -152,7 +159,7 @@ function subBlockFor(prop: RfProp): SubBlockConfig {
       return {
         ...base,
         type: 'dropdown',
-        options: (prop.values ?? []).map((v) => ({ id: v, label: MOTION_LABELS[v] ?? v })),
+        options: (prop.values ?? []).map((v) => ({ id: v, label: rfMotionLabel(v) })),
         value: () => fallback ?? prop.values?.[0] ?? '',
       }
     case 'boolean':
@@ -161,7 +168,7 @@ function subBlockFor(prop: RfProp): SubBlockConfig {
       return {
         ...base,
         type: 'short-input',
-        placeholder: 'X,Y; X,Y (mét, khung map)',
+        placeholder: svT('rf.placeholder.points'),
         defaultValue: fallback,
       }
     default: {
@@ -179,18 +186,19 @@ function subBlockFor(prop: RfProp): SubBlockConfig {
   }
 }
 
-function blockFromSpec(spec: RfBlockSpec): BlockConfig {
-  const handles: SvHandle[] = spec.outputs.map((id) => ({ id, label: PORT_LABELS[id] ?? id }))
-  const pending = spec.pending ? ` (Robot ROS: ${spec.pending})` : ''
+function blockFromSpec(spec: RfBlockSpec, locale: SvLocale): BlockConfig {
+  const handles: SvHandle[] = spec.outputs.map((id) => ({ id, label: rfPortLabel(id) }))
+  const pending = spec.pending ? ` (${svT('rf.pending', { detail: spec.pending })})` : ''
   return {
     type: rfType(spec.id),
-    name: spec.title.vi,
-    description: spec.description.vi,
-    longDescription: `${spec.description.vi}${pending} — ${spec.description.en}`,
+    // Default block names stay English in both languages; users rename blocks freely (PO 2026-11-01).
+    name: spec.title.en,
+    description: spec.description[locale],
+    longDescription: `${spec.description[locale]}${pending}`,
     category: spec.category === 'trigger' ? 'triggers' : 'blocks',
     bgColor: CATEGORY_COLORS[spec.category],
     icon: icon(ICONS[spec.id] ?? Bot),
-    subBlocks: spec.props.map(subBlockFor),
+    subBlocks: spec.props.map((prop) => subBlockFor(prop, locale)),
     tools: { access: [] },
     inputs: {},
     outputs: {},
@@ -200,5 +208,5 @@ function blockFromSpec(spec: RfBlockSpec): BlockConfig {
 
 /** Robot-domain blocks (ADR-0068): built from the RobotFlow registry snapshot, registered under `// SV:`. */
 export const SV_ROBOT_BLOCKS: Record<string, BlockConfig> = Object.fromEntries(
-  RF_BLOCK_SPECS.map((spec) => [rfType(spec.id), blockFromSpec(spec)])
+  RF_BLOCK_SPECS.map((spec) => [rfType(spec.id), blockFromSpec(spec, svClientLocale())])
 )

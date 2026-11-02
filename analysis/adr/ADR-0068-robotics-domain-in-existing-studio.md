@@ -114,3 +114,11 @@ flowchart LR
 - **2026-11-01 — Palette: chỉ lọc khi workflow đã là miền robot.** Workflow rỗng hoặc workflow xe giữ đủ palette, với block robot xếp cuối mỗi danh sách.
   - **Lý do:** E2E `m15-collab` (ba session cùng thả block) bị fail khi palette ẩn block robot ngay lúc block xe đầu tiên xuất hiện. Danh sách dịch đi giữa lúc kéo, nên block bị thả nhầm.
   - **Không mất an toàn:** việc trộn miền vẫn bị adapter robot từ chối.
+- **2026-11-01 — PO phát hiện giao diện miền Robot không khớp giao diện xe (VSS).**
+  - **Nguyên nhân:** M26 làm thanh Robot và panel riêng, đơn giản hơn, thay vì dùng lại khung xe. Không phải do thiếu cấu hình.
+  - **Quyết định:** miền Robot PHẢI dùng chung khung xe (M29):
+    - thanh hành động `SvActionBar` cùng kiểu nút;
+    - dock `SvBottomDock` với tab Problems / Live;
+    - dòng tóm tắt block (`block-summary-line`) cho `rf_*`, nhãn field không bị viết hoa từng chữ;
+    - cây tín hiệu RSS kéo thả giống Vehicle panel.
+  - Khác biệt còn lại chỉ ở nội dung: Build/Deploy/Start/Stop/Robot Zoo thay cho SynCode/Run của xe.

@@ -197,6 +197,8 @@ export const svWorkflowSettings = pgTable('sv_workflow_settings', {
     .primaryKey()
     .references(() => workflow.id, { onDelete: 'cascade' }),
   vssRelease: text('vss_release').notNull(),
+  /** Signal catalog family of the workflow (ADR-0068 Notes 2026-11-01): `vehicle` (VSS) or `robot` (RSS). */
+  domain: text('domain').notNull().default('vehicle'),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 

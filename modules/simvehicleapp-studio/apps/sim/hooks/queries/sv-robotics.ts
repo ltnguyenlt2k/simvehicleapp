@@ -1,11 +1,13 @@
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { requestJson } from '@/lib/api/client/request'
 import {
+  type SvRobotCatalog,
   type SvRobotConfig,
   type SvRobotFlow,
   type SvRobotMode,
   type SvRobotRun,
   svRobotBuildContract,
+  svRobotCatalogContract,
   svRobotConfigContract,
   svRobotDeployContract,
   svRobotLintContract,
@@ -17,6 +19,7 @@ import {
 export const svRobotKeys = {
   all: ['sv-robotics'] as const,
   configs: () => [...svRobotKeys.all, 'config'] as const,
+  catalogs: () => [...svRobotKeys.all, 'catalog'] as const,
   lints: () => [...svRobotKeys.all, 'lint'] as const,
   lint: (workflowId?: string, mode?: SvRobotMode, flowJson?: string) =>
     [...svRobotKeys.lints(), workflowId ?? '', mode ?? 'mock', flowJson ?? ''] as const,
@@ -30,6 +33,20 @@ async function fetchConfig(signal?: AbortSignal): Promise<SvRobotConfig> {
 
 async function fetchRun(runId: string, signal?: AbortSignal): Promise<SvRobotRun> {
   return requestJson(svRobotRunContract, { params: { id: runId }, query: { after: 0 }, signal })
+}
+
+async function fetchCatalog(signal?: AbortSignal): Promise<SvRobotCatalog> {
+  return requestJson(svRobotCatalogContract, { signal })
+}
+
+/** RSS catalog of the robot profile: the signal tree of a robot workflow (changes only with the profile). */
+export function useSvRobotCatalog(enabled: boolean) {
+  return useQuery({
+    queryKey: svRobotKeys.catalogs(),
+    queryFn: ({ signal }) => fetchCatalog(signal),
+    enabled,
+    staleTime: 10 * 60 * 1000,
+  })
 }
 
 /** Robot Zoo link and the robot observed on each mode; refreshed while the editor is open. */

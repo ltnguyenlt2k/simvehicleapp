@@ -193,7 +193,35 @@ export const svRobotConfigContract = defineRouteContract({
   response: { mode: 'json', schema: svRobotConfigSchema },
 })
 
+/** One RSS node of the robot's catalog (branch or leaf), flattened by the BFF for the signal tree. */
+export const svRssNodeSchema = z.object({
+  path: z.string(),
+  name: z.string(),
+  kind: z.enum(['branch', 'sensor', 'attribute', 'setpoint', 'command', 'event']),
+  type: z.string().optional(),
+  unit: z.string().optional(),
+  values: z.array(z.string()).optional(),
+  description: z.string(),
+})
+
+export const svRobotCatalogSchema = z.object({
+  catalogHash: z.string(),
+  /** RSS version of the catalog (`0.1`). */
+  rss: z.string(),
+  profile: z.string(),
+  nodes: z.array(svRssNodeSchema),
+})
+
+/** `GET /api/sv/robotics/catalog` — the RSS catalog of the robot profile (signal tree of a robot workflow). */
+export const svRobotCatalogContract = defineRouteContract({
+  method: 'GET',
+  path: '/api/sv/robotics/catalog',
+  response: { mode: 'json', schema: svRobotCatalogSchema },
+})
+
 export type SvRobotMode = z.output<typeof svRobotModeSchema>
+export type SvRssNode = z.output<typeof svRssNodeSchema>
+export type SvRobotCatalog = z.output<typeof svRobotCatalogSchema>
 export type SvRobotFlow = z.input<typeof svRobotFlowSchema>
 export type SvRobotDiagnostic = z.output<typeof svRobotDiagnosticSchema>
 export type SvRobotBuildResponse = z.output<typeof svRobotBuildResponseSchema>

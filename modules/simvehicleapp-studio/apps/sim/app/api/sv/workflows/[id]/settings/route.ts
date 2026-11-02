@@ -58,15 +58,18 @@ export const GET = withRouteHandler(async (request: NextRequest, context: RouteC
   if (!parsed.success) return parsed.response
 
   const [row] = await db
-    .select({ vssRelease: svWorkflowSettings.vssRelease })
+    .select({ vssRelease: svWorkflowSettings.vssRelease, domain: svWorkflowSettings.domain })
     .from(svWorkflowSettings)
     .where(eq(svWorkflowSettings.workflowId, parsed.data.params.id))
     .limit(1)
-  const body: SvWorkflowSettings = { vssRelease: row?.vssRelease ?? null }
+  const body: SvWorkflowSettings = {
+    vssRelease: row?.vssRelease || null,
+    domain: row?.domain === 'robot' ? 'robot' : 'vehicle',
+  }
   return NextResponse.json(body)
 })
 
-/** Pins the workflow to a VSS release; only releases vss-catalog serves are accepted. */
+/** Pins the workflow to a VSS release (only releases vss-catalog serves), or makes it a robot workflow (RSS). */
 export const PUT = withRouteHandler(async (request: NextRequest, context: RouteContext) => {
   const workflowId = (await context.params).id
   const denied = await authorize(workflowId, 'write')
@@ -83,28 +86,49 @@ export const PUT = withRouteHandler(async (request: NextRequest, context: RouteC
 
   const parsed = await parseRequest(svUpdateWorkflowSettingsContract, request, context)
   if (!parsed.success) return parsed.response
-  const { vssRelease } = parsed.data.body
+  const { vssRelease, domain } = parsed.data.body
+  const id = parsed.data.params.id
 
+  if (domain === 'robot') {
+    // A robot workflow keeps the VSS release it had (if any) for when it turns back into a vehicle one.
+    await db
+      .insert(svWorkflowSettings)
+      .values({ workflowId: id, vssRelease: '', domain, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: svWorkflowSettings.workflowId,
+        set: { domain, updatedAt: new Date() },
+      })
+    const [row] = await db
+      .select({ vssRelease: svWorkflowSettings.vssRelease })
+      .from(svWorkflowSettings)
+      .where(eq(svWorkflowSettings.workflowId, id))
+      .limit(1)
+    logger.info('Workflow set to the robot domain', { workflowId })
+    const body: SvWorkflowSettings = { vssRelease: row?.vssRelease || null, domain }
+    return NextResponse.json(body)
+  }
+
+  const release = vssRelease as string
   const releases = await fetchCatalogReleases()
   if (releases === null) {
     return NextResponse.json({ error: 'VSS catalog is unavailable' }, { status: 502 })
   }
-  if (!releases.includes(vssRelease)) {
+  if (!releases.includes(release)) {
     return NextResponse.json(
-      { error: `VSS release ${vssRelease} is not available (available: ${releases.join(', ')})` },
+      { error: `VSS release ${release} is not available (available: ${releases.join(', ')})` },
       { status: 400 }
     )
   }
 
   await db
     .insert(svWorkflowSettings)
-    .values({ workflowId: parsed.data.params.id, vssRelease, updatedAt: new Date() })
+    .values({ workflowId: id, vssRelease: release, domain, updatedAt: new Date() })
     .onConflictDoUpdate({
       target: svWorkflowSettings.workflowId,
-      set: { vssRelease, updatedAt: new Date() },
+      set: { vssRelease: release, domain, updatedAt: new Date() },
     })
-  logger.info('VSS release pinned', { workflowId, vssRelease })
+  logger.info('VSS release pinned', { workflowId, vssRelease: release })
 
-  const body: SvWorkflowSettings = { vssRelease }
+  const body: SvWorkflowSettings = { vssRelease: release, domain }
   return NextResponse.json(body)
 })

@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from 'next'
+import { cookies } from 'next/headers'
 import Script from 'next/script'
 import { PublicEnvScript } from 'next-runtime-env'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { BrandedLayout } from '@/components/branded-layout'
+import { parseSvLocale, SV_LOCALE_COOKIE } from '@/lib/sv/i18n'
+import { SvLocaleProvider } from '@/lib/sv/i18n/locale-provider'
+import { SvDomTranslator } from '@/lib/sv/i18n/translate-dom'
 import { generateBrandedMetadata, generateThemeCSS } from '@/lib/sv/oss/brand'
 import { PostHogProvider } from '@/app/_shell/providers/posthog-provider'
 import '@/app/_styles/globals.css'
@@ -28,12 +32,17 @@ export const metadata: Metadata = generateBrandedMetadata()
 const GTM_ID = 'GTM-T7PHSRX5' as const
 const GA_ID = 'G-DR7YBE70VS' as const
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const themeCSS = generateThemeCSS()
+  // SV: UI language from the `sv-locale` cookie (ADR-0072), so the server renders the chosen language.
+  const locale = parseSvLocale((await cookies()).get(SV_LOCALE_COOKIE)?.value)
 
   return (
-    <html lang='en' suppressHydrationWarning>
+    // SV: the studio translates itself (ADR-0072); no browser translation on top of it
+    <html lang={locale} translate='no' suppressHydrationWarning>
       <head>
+        {/* SV: no browser translation prompt — the studio translates itself (ADR-0072) */}
+        <meta name='google' content='notranslate' />
         {isReactScanEnabled && (
           <Script
             src='https://unpkg.com/react-scan/dist/auto.global.js'
@@ -243,19 +252,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </noscript>
         )}
         <HydrationErrorHandler />
-        <NuqsAdapter>
-          <PostHogProvider>
-            <ThemeProvider>
-              <QueryProvider>
-                <SessionProvider>
-                  <TooltipProvider>
-                    <BrandedLayout>{children}</BrandedLayout>
-                  </TooltipProvider>
-                </SessionProvider>
-              </QueryProvider>
-            </ThemeProvider>
-          </PostHogProvider>
-        </NuqsAdapter>
+        <SvLocaleProvider locale={locale}>
+          {locale === 'vi' && <SvDomTranslator />}
+          <NuqsAdapter>
+            <PostHogProvider>
+              <ThemeProvider>
+                <QueryProvider>
+                  <SessionProvider>
+                    <TooltipProvider>
+                      <BrandedLayout>{children}</BrandedLayout>
+                    </TooltipProvider>
+                  </SessionProvider>
+                </QueryProvider>
+              </ThemeProvider>
+            </PostHogProvider>
+          </NuqsAdapter>
+        </SvLocaleProvider>
       </body>
     </html>
   )

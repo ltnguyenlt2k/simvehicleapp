@@ -29,6 +29,8 @@ import { isHosted } from '@/lib/core/config/env-flags'
 import { handleKeyboardActivation } from '@/lib/core/utils/keyboard'
 import { getBrowserTimezone, getTimezoneOptions } from '@/lib/core/utils/timezone'
 import { getBaseUrl } from '@/lib/core/utils/urls'
+import { parseSvLocale, SV_LOCALE_NAMES, SV_LOCALES } from '@/lib/sv/i18n'
+import { useSvLocale } from '@/lib/sv/i18n/locale-provider'
 import { useBrandConfig } from '@/lib/sv/oss/brand'
 import { SettingsSection } from '@/app/workspace/[workspaceId]/settings/components/settings-section/settings-section'
 import { useProfilePictureUpload } from '@/app/workspace/[workspaceId]/settings/hooks/use-profile-picture-upload'
@@ -67,6 +69,7 @@ function getInitials(name: string | undefined | null): string {
 }
 
 export function General() {
+  const { locale: svLocale, t: svText, setLocale: setSvLocale } = useSvLocale()
   const router = useRouter()
   const brandConfig = useBrandConfig()
   const { data: session } = useSession()
@@ -421,6 +424,21 @@ export function General() {
                       { label: 'Light', value: 'light' },
                       { label: 'Dark', value: 'dark' },
                     ]}
+                  />
+                </div>
+              </div>
+
+              {/* SV: UI language (ADR-0072); a change reloads the page */}
+              <div className='flex items-center justify-between'>
+                <Label htmlFor='sv-language-select'>{svText('language.label')}</Label>
+                <div className={DROPDOWN_TRIGGER_CLASS} data-sv='language-select'>
+                  <ChipSelect
+                    align='start'
+                    fullWidth
+                    dropdownWidth='trigger'
+                    value={svLocale}
+                    onChange={(value) => value !== svLocale && setSvLocale(parseSvLocale(value))}
+                    options={SV_LOCALES.map((l) => ({ label: SV_LOCALE_NAMES[l], value: l }))}
                   />
                 </div>
               </div>

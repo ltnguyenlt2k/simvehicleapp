@@ -261,15 +261,20 @@ Luồng chạy: workflow → compiler **RobotFlow** sinh app Python → tín hi�
 
 Hai repo chỉ nói chuyện qua giao thức: topic `/dog1/workflow/request` / `ack` và HTTP của Robot Zoo.
 
-[![Full luồng robotics](docs/media/robotics/studio-run.jpg)](docs/media/robotics/robot-full-flow.mp4)
+[![Hướng dẫn robot dog bằng tiếng Việt](docs/media/robotics/studio-robot-vi.jpg)](docs/media/robotics/robot-tutorial-vi.mp4)
 
-Video thật, một lần quay liền: [`robot-full-flow.mp4`](docs/media/robotics/robot-full-flow.mp4), kèm [manifest](docs/media/robotics/manifest.json). Nội dung:
-- soạn workflow 16 block trên studio;
-- Build → Deploy → Start;
-- Robot Zoo ở tab mới hiện dog làm Arm → cúi chào → giơ chân → nhảy → tuần tra 2 vòng;
-- 9/9 lệnh SUCCEEDED, request id khớp audit Protobus.
+Video thật, mỗi video quay liền một lần, kèm manifest (sha256, commit hai repo, request id đối chiếu audit Protobus):
+- **Hướng dẫn cho người mới (tiếng Việt):** [`robot-tutorial-vi.mp4`](docs/media/robotics/robot-tutorial-vi.mp4) · [manifest](docs/media/robotics/robot-tutorial-vi.manifest.json).
+  - Các bước: đăng ký → tạo workflow → **Tín hiệu: RSS** → kéo block và kéo tín hiệu robot → thiết lập → nối cổng → Kiểm tra → Biên dịch → Triển khai → Robot Zoo → Chạy → xem log ở studio và ở Robot Zoo.
+- **Hồi quy (English UI):** [`robot-flow-en.mp4`](docs/media/robotics/robot-flow-en.mp4) · [manifest](docs/media/robotics/robot-flow-en.manifest.json).
+- **Kết quả cả hai:** workflow 16 block, robot làm Arm → cúi chào → giơ chân → nhảy → tuần tra 2 vòng; 9/9 lệnh SUCCEEDED.
 
-Hướng dẫn: [robotics](docs/user-guide/robotics.md) · thiết kế: [design robotics](docs/design/robotics/README.md) · ADR-0064…0071 · tiến độ M22–M28 trong [ROADMAP](docs/ROADMAP.md).
+**Giao diện VI / EN:**
+- Studio: Settings › General › Language, hoặc nút EN | VI ở trang đăng nhập.
+- Robot Zoo: nút VI | EN.
+- Tên block mặc định là tiếng Anh, bạn đổi tự do.
+
+Hướng dẫn: [robotics](docs/user-guide/robotics.md) · thiết kế: [design robotics](docs/design/robotics/README.md) · ADR-0064…0072 · tiến độ M22–M29 trong [ROADMAP](docs/ROADMAP.md).
 
 **Còn mở:**
 - động tác vẫy, ngồi, đứng và mức pin (repo dog W2/W3);

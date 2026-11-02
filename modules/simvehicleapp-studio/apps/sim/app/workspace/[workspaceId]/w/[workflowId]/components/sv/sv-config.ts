@@ -28,7 +28,3 @@ export type SvDockTabId = (typeof SV_DOCK_TABS)[number]['id']
 
 export const SV_SAFETY_NOTICE =
   'High-level vehicle apps on KUKSA — not a replacement for safety-critical (ASIL) systems.'
-
-/** Safety notice of a robot workflow (ADR-0069): simulation only, the robot's arbiter decides, software STOP ≠ E-stop. */
-export const SV_ROBOT_SAFETY_NOTICE =
-  'Robot dog mô phỏng (ROS 2) — lệnh cấp cao qua Protobus, Brain của robot quyết định; STOP phần mềm không thay E-stop vật lý.'

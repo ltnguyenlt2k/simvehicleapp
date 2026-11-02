@@ -19,6 +19,8 @@ import {
  */
 export interface SvWorkflowSidecar {
   vssRelease?: string
+  /** Present for a robot workflow (RSS blocks); absent means vehicle. */
+  domain?: 'robot'
   scenario?: SvScenario
   testCases?: { name: string; scenario: SvScenario }[]
 }
@@ -36,6 +38,7 @@ export async function fetchSvSidecar(workflowId: string): Promise<SvWorkflowSide
   ])
   const sidecar: SvWorkflowSidecar = {}
   if (settings?.vssRelease) sidecar.vssRelease = settings.vssRelease
+  if (settings?.domain === 'robot') sidecar.domain = 'robot'
   if (scenario?.scenario) sidecar.scenario = scenario.scenario
   if (cases?.cases.length) {
     sidecar.testCases = cases.cases.map((c) => ({ name: c.name, scenario: c.scenario }))
@@ -51,14 +54,16 @@ export function readSvSidecar(parsed: unknown): SvWorkflowSidecar | undefined {
   if (!parsed || typeof parsed !== 'object') return undefined
   const raw = (parsed as { simvehicleapp?: unknown }).simvehicleapp
   if (!raw || typeof raw !== 'object') return undefined
-  const { vssRelease, scenario, testCases } = raw as {
+  const { vssRelease, domain, scenario, testCases } = raw as {
     vssRelease?: unknown
+    domain?: unknown
     scenario?: unknown
     testCases?: unknown
   }
   const sidecar: SvWorkflowSidecar = {}
   const release = svVssReleaseSchema.safeParse(vssRelease)
   if (release.success) sidecar.vssRelease = release.data
+  if (domain === 'robot') sidecar.domain = 'robot'
   const sc = svScenarioSchema.safeParse(scenario)
   if (sc.success) sidecar.scenario = sc.data
   if (Array.isArray(testCases)) {
@@ -80,7 +85,12 @@ export async function restoreSvSidecar(
   sidecar: SvWorkflowSidecar
 ): Promise<string[]> {
   const failed: string[] = []
-  if (sidecar.vssRelease) {
+  if (sidecar.domain === 'robot') {
+    await requestJson(svUpdateWorkflowSettingsContract, {
+      params: { id: workflowId },
+      body: { domain: 'robot' },
+    }).catch(() => failed.push('robot domain'))
+  } else if (sidecar.vssRelease) {
     await requestJson(svUpdateWorkflowSettingsContract, {
       params: { id: workflowId },
       body: { vssRelease: sidecar.vssRelease },

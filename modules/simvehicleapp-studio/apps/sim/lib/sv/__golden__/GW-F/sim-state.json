@@ -257,11 +257,7 @@
     "parallels": {
       "b2": {
         "id": "b2",
-        "nodes": [
-          "b3",
-          "b4",
-          "b5"
-        ],
+        "nodes": ["b3", "b4", "b5"],
         "count": 5,
         "distribution": "",
         "parallelType": "count",

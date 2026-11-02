@@ -69,8 +69,8 @@ describe('robot graph adapter (ADR-0068 §3)', () => {
     expect(isRobotWorkflow({ x: { type: 'sv_read_signal' } })).toBe(false)
     expect(Object.keys(SV_ROBOT_BLOCKS)).toHaveLength(17)
     expect(SV_ROBOT_BLOCKS.rf_if.svHandles).toEqual([
-      { id: 'then', label: 'đúng' },
-      { id: 'else', label: 'sai' },
+      { id: 'then', label: 'then' },
+      { id: 'else', label: 'else' },
     ])
     expect(SV_ROBOT_BLOCKS.rf_on_start.category).toBe('triggers')
   })

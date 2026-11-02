@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { useReactFlow } from 'reactflow'
 import { Badge, Button } from '@/components/emcn'
 import { cn } from '@/lib/core/utils/cn'
+import { svT } from '@/lib/sv/i18n'
 import { type LogicLine, logicView } from '@/lib/sv/logic-view'
 import { SV_ROLE_TAG } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/block-summary-line'
 import { useSvMergedBlocks } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/canvas/use-merged-blocks'
@@ -107,7 +108,7 @@ export function SvLogicPanel() {
                 >
                   {role && line.kind !== 'branch' && line.kind !== 'ref' && (
                     <Badge variant={role.variant} size='sm' className='shrink-0'>
-                      {role.tag}
+                      {svT(role.tag)}
                     </Badge>
                   )}
                   <span className='min-w-0 flex-1 break-words text-[var(--text-primary)]'>

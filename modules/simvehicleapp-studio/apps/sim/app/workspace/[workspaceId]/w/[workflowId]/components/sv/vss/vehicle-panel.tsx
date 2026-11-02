@@ -5,6 +5,9 @@ import { ChevronDown, Search } from 'lucide-react'
 import { ChipInput } from '@/components/emcn'
 import type { SvVssNode } from '@/lib/api/contracts/sv'
 import { cn } from '@/lib/core/utils/cn'
+import { useSvT } from '@/lib/sv/i18n/locale-provider'
+import { SvRssTree } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/robot/rss-tree'
+import { useSvWorkflowDomain } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/robot/use-robot-flow'
 import { SvReleasePicker } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/release-picker'
 import {
   dispatchSignalDrop,
@@ -95,12 +98,14 @@ function PanelTreeLevel({
   disabled,
   onToggle,
 }: PanelTreeLevelProps) {
+  const t = useSvT()
   const { data, isLoading, isError } = useSvCatalogTree(release, prefix)
-  if (isLoading) return <p className='px-2 py-1 text-[var(--text-muted)] text-caption'>Loading…</p>
+  if (isLoading)
+    return <p className='px-2 py-1 text-[var(--text-muted)] text-caption'>{t('common.loading')}</p>
   if (isError) {
     return (
       <p className='px-2 py-1 text-[var(--text-error)] text-caption' role='alert'>
-        VSS catalog unavailable
+        {t('vss.unavailable')}
       </p>
     )
   }
@@ -140,20 +145,21 @@ interface PanelSearchProps {
 }
 
 function PanelSearch({ release, query, disabled }: PanelSearchProps) {
+  const t = useSvT()
   const { data, isFetching, isError } = useSvCatalogSearch(release, query)
   const leaves = (data?.nodes ?? []).filter((n) => n.kind !== 'branch')
   if (isError) {
     return (
       <p className='px-2 py-1 text-[var(--text-error)] text-caption' role='alert'>
-        VSS catalog unavailable
+        {t('vss.unavailable')}
       </p>
     )
   }
   if (!data && isFetching) {
-    return <p className='px-2 py-1 text-[var(--text-muted)] text-caption'>Searching…</p>
+    return <p className='px-2 py-1 text-[var(--text-muted)] text-caption'>{t('vss.searching')}</p>
   }
   if (leaves.length === 0) {
-    return <p className='px-2 py-1 text-[var(--text-muted)] text-caption'>No matching signal</p>
+    return <p className='px-2 py-1 text-[var(--text-muted)] text-caption'>{t('vss.noMatch')}</p>
   }
   return (
     <>
@@ -175,9 +181,12 @@ interface SvVehiclePanelProps {
 /**
  * Toolbar "Vehicle" section (ADR-0011 §2, M02-T10): the VSS tree from vss-catalog, loaded one level
  * at a time, plus search. Dragging a signal onto the canvas (or clicking it) opens the
- * Read / When changes / Set menu; the new block gets the signal preset and its name.
+ * Read / When changes / Set menu; the new block gets the signal preset and its name. A robot workflow (RSS chosen in
+ * the catalog picker) shows the "Robot" section instead: the RSS tree of the robot profile.
  */
 export function SvVehiclePanel({ release: releaseProp, disabled = false }: SvVehiclePanelProps) {
+  const t = useSvT()
+  const robot = useSvWorkflowDomain() === 'robot'
   const workflowId = useSvWorkflowId()
   const workflowRelease = useSvWorkflowRelease()
   const release = releaseProp ?? workflowRelease
@@ -196,7 +205,11 @@ export function SvVehiclePanel({ release: releaseProp, disabled = false }: SvVeh
   }, [])
 
   return (
-    <section data-sv='vehicle-panel' aria-label='Vehicle signals'>
+    <section
+      data-sv='vehicle-panel'
+      data-sv-domain={robot ? 'robot' : 'vehicle'}
+      aria-label={t(robot ? 'panel.robotSignals' : 'panel.vehicleSignals')}
+    >
       <div className='sticky top-0 z-10 flex w-full items-center gap-2 bg-[var(--bg)] px-4 pt-3 pb-2'>
         <button
           type='button'
@@ -204,7 +217,9 @@ export function SvVehiclePanel({ release: releaseProp, disabled = false }: SvVeh
           aria-expanded={open}
           className='flex flex-1 items-center gap-2 text-left'
         >
-          <span className='text-[var(--text-muted)] text-small'>Vehicle</span>
+          <span className='text-[var(--text-muted)] text-small'>
+            {t(robot ? 'panel.robot' : 'panel.vehicle')}
+          </span>
           <ChevronDown
             className={cn(
               'size-[14px] text-[var(--text-icon)] transition-transform duration-150',
@@ -219,13 +234,19 @@ export function SvVehiclePanel({ release: releaseProp, disabled = false }: SvVeh
           <ChipInput
             icon={Search}
             className='w-full'
-            placeholder='Search vehicle signals'
+            placeholder={t(robot ? 'panel.searchRobot' : 'panel.searchVehicle')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label='Search vehicle signals'
+            aria-label={t(robot ? 'panel.searchRobot' : 'panel.searchVehicle')}
           />
-          <div role='tree' aria-label='Vehicle signal tree' className='flex flex-col'>
-            {debouncedQuery.trim() ? (
+          <div
+            role='tree'
+            aria-label={t(robot ? 'panel.robotTree' : 'panel.vehicleTree')}
+            className='flex flex-col'
+          >
+            {robot ? (
+              <SvRssTree query={debouncedQuery} disabled={disabled} />
+            ) : debouncedQuery.trim() ? (
               <PanelSearch release={release} query={debouncedQuery} disabled={disabled} />
             ) : (
               <PanelTreeLevel

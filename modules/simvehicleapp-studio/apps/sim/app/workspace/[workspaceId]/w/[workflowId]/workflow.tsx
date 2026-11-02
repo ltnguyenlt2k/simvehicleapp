@@ -49,7 +49,7 @@ import { SvLintRunner } from '@/app/workspace/[workspaceId]/w/[workflowId]/compo
 // SV: robot-domain editor chrome (ADR-0068)
 import {
   RobotActionBar,
-  RobotPanel,
+  RobotDock,
   useIsRobotWorkflow,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/robot'
 import {
@@ -4301,7 +4301,7 @@ const WorkflowContent = React.memo(
           </div>
 
           {/* SV: vehicle bottom dock replaces Sim's executor terminal (ADR-0006, M01-T10). */}
-          {!embedded && (isRobotWorkflow ? <RobotPanel /> : <SvBottomDock />)}
+          {!embedded && (isRobotWorkflow ? <RobotDock /> : <SvBottomDock />)}
         </div>
 
         {(!embedded || sandbox) && <Panel workspaceId={sandbox ? workspaceId : undefined} />}

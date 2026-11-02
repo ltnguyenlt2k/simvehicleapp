@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   parseSignalPayload,
+  rssCondition,
   signalBlockChoices,
 } from '@/app/workspace/[workspaceId]/w/[workflowId]/components/sv/vss/signal-blocks'
 
@@ -35,10 +36,41 @@ describe('signalBlockChoices (ADR-0010 §6, M02-T10)', () => {
   })
 
   it('attribute → Read attribute named after the attribute; branch → nothing', () => {
-    expect(signalBlockChoices({ kind: 'attribute', name: 'VIN', datatype: 'string' })).toEqual([
-      { type: 'sv_read_attribute', label: 'Read attribute', blockName: 'VIN' },
+    const path = 'Vehicle.VehicleIdentification.VIN'
+    expect(
+      signalBlockChoices({ kind: 'attribute', name: 'VIN', datatype: 'string', path })
+    ).toEqual([
+      { type: 'sv_read_attribute', label: 'Read attribute', blockName: 'VIN', preset: { path } },
     ])
     expect(signalBlockChoices({ kind: 'branch', name: 'Cabin' })).toEqual([])
+  })
+})
+
+describe('signalBlockChoices for RSS signals (robot workflows)', () => {
+  it('offers When / If / Wait until with the condition preset by type', () => {
+    const marker = signalBlockChoices({
+      catalog: 'rss',
+      kind: 'sensor',
+      name: 'IsDetected',
+      path: 'Robot.Perception.Marker.IsDetected',
+      datatype: 'bool' as never,
+    })
+    expect(marker.map((c) => c.type)).toEqual(['rf_on_condition', 'rf_if', 'rf_wait_until'])
+    expect(marker[0]?.preset).toEqual({ when: 'Robot.Perception.Marker.IsDetected == true' })
+    expect(
+      rssCondition({
+        path: 'Robot.Safety.Mode',
+        datatype: 'enum' as never,
+        values: ['DISARMED', 'MANUAL'],
+      })
+    ).toBe("Robot.Safety.Mode == 'DISARMED'")
+    expect(
+      rssCondition({
+        path: 'Robot.PowerSystem.Battery.StateOfCharge',
+        datatype: 'float64' as never,
+        unit: '%',
+      })
+    ).toBe('Robot.PowerSystem.Battery.StateOfCharge > 0 %')
   })
 })
 

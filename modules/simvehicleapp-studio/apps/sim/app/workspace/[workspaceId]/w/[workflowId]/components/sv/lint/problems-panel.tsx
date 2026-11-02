@@ -3,7 +3,18 @@
 import { CircleAlert, Info, TriangleAlert, Wrench } from 'lucide-react'
 import type { SvDiagnostic } from '@/lib/api/contracts/sv'
 import { cn } from '@/lib/core/utils/cn'
+import { svClientLocale } from '@/lib/sv/i18n'
+import { SV_DIAG_VI } from '@/lib/sv/i18n/phrases-vi'
 import type { SvLintStatus } from '@/stores/sv/lint/store'
+
+/**
+ * Problem text in the page's language: English shows the compiler's message (it names the field or the value);
+ * Vietnamese the sentence of the code, the English detail staying in the row's tooltip.
+ */
+function svDiagnosticText(d: SvDiagnostic): string {
+  if (svClientLocale() !== 'vi') return d.message
+  return SV_DIAG_VI[d.code] ?? d.message
+}
 
 const ICON = { error: CircleAlert, warning: TriangleAlert, info: Info } as const
 const TONE = {
@@ -79,6 +90,7 @@ export function ProblemsList({
                 data-sv-problem={d.code}
                 data-sv-block={d.blockId}
                 data-sv-field={d.field}
+                title={d.message}
                 disabled={!d.blockId || !onSelect}
                 onClick={() => d.blockId && onSelect?.(d.blockId, d.field)}
                 className='flex min-w-0 flex-1 items-start gap-2 rounded-sm px-2 py-1 text-left text-small hover-hover:bg-[var(--surface-5)] disabled:hover-hover:bg-transparent'
@@ -86,7 +98,7 @@ export function ProblemsList({
                 <Icon className={cn('mt-[3px] size-[14px] shrink-0', TONE[d.severity])} />
                 <span className='min-w-0 flex-1 text-[var(--text-primary)]'>
                   {name && <span className='font-medium'>{name}: </span>}
-                  {d.message}
+                  {svDiagnosticText(d)}
                 </span>
                 <code className='shrink-0 text-[var(--text-muted)] text-caption'>{d.code}</code>
               </button>

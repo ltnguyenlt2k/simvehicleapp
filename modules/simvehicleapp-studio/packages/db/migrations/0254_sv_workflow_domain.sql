@@ -1,0 +1,1 @@
+ALTER TABLE "sv_workflow_settings" ADD COLUMN "domain" text DEFAULT 'vehicle' NOT NULL;

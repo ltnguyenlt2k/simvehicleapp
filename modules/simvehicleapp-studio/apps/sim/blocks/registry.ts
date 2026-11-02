@@ -1,4 +1,5 @@
 import { stripVersionSuffix } from '@sim/utils/string'
+import { svLocalizeBlocks } from '@/lib/sv/i18n/blocks'
 import { ApiBlock } from '@/blocks/blocks/api'
 import { ApiTriggerBlock } from '@/blocks/blocks/api_trigger'
 import { ChatTriggerBlock } from '@/blocks/blocks/chat_trigger'
@@ -31,6 +32,8 @@ import { WaitBlock } from '@/blocks/blocks/wait'
 import { WebhookRequestBlock } from '@/blocks/blocks/webhook_request'
 import { WorkflowBlock } from '@/blocks/blocks/workflow'
 import { WorkflowInputBlock } from '@/blocks/blocks/workflow_input'
+// SV: SimVehicleApp robot-domain blocks (ADR-0068)
+import { SV_ROBOT_BLOCKS } from '@/blocks/robot'
 import type {
   BlockCategory,
   BlockConfig,
@@ -38,8 +41,6 @@ import type {
   BlockTemplate,
   SuggestedSkill,
 } from '@/blocks/types'
-// SV: SimVehicleApp robot-domain blocks (ADR-0068)
-import { SV_ROBOT_BLOCKS } from '@/blocks/robot'
 // SV: SimVehicleApp vehicle blocks (ADR-0011 §3)
 import { SV_VEHICLE_BLOCKS } from '@/blocks/vehicle'
 
@@ -86,6 +87,9 @@ const BLOCK_REGISTRY: Record<string, BlockConfig> = {
   // SV: SimVehicleApp robot-domain blocks (ADR-0068)
   ...SV_ROBOT_BLOCKS,
 }
+
+// SV: block texts in the page's language (ADR-0072); names stay English, browser + `vi` only.
+svLocalizeBlocks(BLOCK_REGISTRY)
 
 /**
  * Block presentation/catalog metas (`{ tags, templates }`) keyed by block

@@ -1,3 +1,5 @@
+import { type SvMessageKey, svT } from '@/lib/sv/i18n'
+
 /**
  * Branch handles of vehicle blocks (ADR-0055, M16-T08/T09): the tone of each outcome, shared by the block's handles
  * and the edges leaving them, so "then"/"stable"/"in time" read green, "broken"/"timeout" amber and "error" red
@@ -48,38 +50,39 @@ export const SV_HANDLE_BG: Record<SvHandleTone, string> = {
   neutral: '!bg-[var(--workflow-edge)]',
 }
 
-const EDGE_LABEL: Record<string, string> = {
-  then: 'then',
-  else: 'else',
-  stable: 'stable',
-  broken: 'broken',
-  ok: 'in time',
-  timeout: 'timeout',
-  changed: 'changed',
-  unchanged: 'unchanged',
-  default: 'default',
-  error: 'on error',
+const EDGE_LABEL: Record<string, SvMessageKey> = {
+  then: 'edge.then',
+  else: 'edge.else',
+  stable: 'edge.stable',
+  broken: 'edge.broken',
+  ok: 'edge.inTime',
+  timeout: 'edge.timeout',
+  changed: 'edge.changed',
+  unchanged: 'edge.unchanged',
+  default: 'edge.default',
+  error: 'edge.onError',
+}
+
+/** Labels of RobotFlow ports (robot workflows, ADR-0067); `next` stays unlabelled. */
+const ROBOT_EDGE_LABEL: Record<string, SvMessageKey> = {
+  ok: 'rf.port.ok',
+  failed: 'rf.port.failed',
+  then: 'rf.port.then',
+  else: 'rf.port.else',
+  timeout: 'rf.port.timeout',
+  body: 'rf.port.body',
+  done: 'rf.port.done',
 }
 
 /**
- * Label of an edge leaving a named branch (`then`, `in time`, `case 2`…), or `null` for a plain sequence edge, which
- * stays unlabelled so the canvas is not cluttered.
+ * Label of an edge leaving a named branch (`then`, `in time`, `case 2`…) in the page's language, or `null` for a
+ * plain sequence edge, which stays unlabelled so the canvas is not cluttered.
  */
-/** Labels of RobotFlow ports (robot workflows, ADR-0067); `next` stays unlabelled. */
-const ROBOT_EDGE_LABEL: Record<string, string> = {
-  ok: 'xong',
-  failed: 'lỗi',
-  then: 'đúng',
-  else: 'sai',
-  timeout: 'hết giờ',
-  body: 'lặp',
-  done: 'xong lặp',
-}
-
 export function svEdgeLabel(handleId: string | null | undefined, robot = false): string | null {
   if (!handleId) return null
-  if (robot) return ROBOT_EDGE_LABEL[handleId] ?? null
+  const key = robot ? ROBOT_EDGE_LABEL[handleId] : EDGE_LABEL[handleId]
+  if (key) return svT(key)
   const caseIndex = /^case-(\d+)$/.exec(handleId)
-  if (caseIndex) return `case ${Number(caseIndex[1]) + 1}`
-  return EDGE_LABEL[handleId] ?? null
+  if (!robot && caseIndex) return svT('edge.case', { n: Number(caseIndex[1]) + 1 })
+  return null
 }

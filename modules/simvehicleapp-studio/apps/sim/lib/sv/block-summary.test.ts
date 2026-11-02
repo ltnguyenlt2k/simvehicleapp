@@ -6,6 +6,7 @@ import {
   SV_SUMMARY_RULES,
   shortPath,
 } from '@/lib/sv/block-summary'
+import { RF_BLOCK_SPECS, rfType } from '@/blocks/robot'
 import specsSnapshot from '@/blocks/vehicle/block-specs.json'
 
 const SPECS = (specsSnapshot as { blocks: { type: string; category: string }[] }).blocks
@@ -13,8 +14,30 @@ const table = (column: string, ...values: string[]) =>
   values.map((value, i) => ({ id: `r${i}`, cells: { [column]: value } }))
 
 describe('block summary (ADR-0055)', () => {
-  it('has a rule for every BlockSpec, and none for blocks that do not exist', () => {
-    expect(Object.keys(SV_SUMMARY_RULES).sort()).toEqual(SPECS.map((s) => s.type).sort())
+  it('has a rule for every BlockSpec and robot block, and none for blocks that do not exist', () => {
+    expect(Object.keys(SV_SUMMARY_RULES).sort()).toEqual(
+      [...SPECS.map((s) => s.type), ...RF_BLOCK_SPECS.map((b) => rfType(b.id))].sort()
+    )
+  })
+
+  it('reads robot blocks as sentences (ADR-0068 Notes 2026-11-01)', () => {
+    expect(blockSummary('rf_perform', { name: 'BOW' })).toEqual({
+      role: 'do',
+      text: 'Perform: Bow',
+    })
+    expect(
+      blockSummary('rf_wait_until', {
+        when: 'Robot.Perception.Marker.IsDetected == true',
+        timeoutMs: 30000,
+      })
+    ).toEqual({
+      role: 'flow',
+      text: 'Wait until Marker.IsDetected == true (max 30 s)',
+    })
+    expect(blockSummary('rf_go_to', { x: 1, y: 0 })?.text).toBe('Go to (1, 0)')
+    expect(blockSummary('rf_follow_route', { waypoints: '1,0; 1,0.8; 0.2,0' })?.text).toBe(
+      'Follow route · 3 points'
+    )
   })
 
   it('every rule gives a sentence for an empty block (being filled in)', () => {

@@ -143,7 +143,8 @@ export function VssNodeRow({
           !isBranch && 'invisible'
         )}
       />
-      <span className='min-w-0 flex-1 truncate text-[var(--text-primary)]'>
+      {/* Signal names are identifiers: never translated (ADR-0072). */}
+      <span data-sv-no-translate className='min-w-0 flex-1 truncate text-[var(--text-primary)]'>
         {showPath ? node.path : node.name}
       </span>
       {!isBranch && <VssNodeBadges node={node} />}
