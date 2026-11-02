@@ -30,7 +30,8 @@
       "!**/venv",
       "!**/.venv",
       "!**/uploads",
-      "!**/apps/sim/lib/execution/sandbox/bundles/*.cjs"
+      "!**/apps/sim/lib/execution/sandbox/bundles/*.cjs",
+      "!**/apps/sim/lib/sv/__golden__"
     ]
   },
   "formatter": {

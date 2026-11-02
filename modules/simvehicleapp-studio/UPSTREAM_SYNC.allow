@@ -1092,3 +1092,8 @@ apps/sim/stores/workflows/workflow/store.ts
 apps/sim/stores/workflows/workflow/utils.ts
 apps/sim/stores/workflows/workflow/sv-cycle.test.ts
 overlays/*
+
+# M29 — UI language VI/EN (ADR-0072): language switch on the sign-in pages; workflow domain column (ADR-0068 Notes)
+apps/sim/app/(auth)/auth-layout-client.tsx
+packages/db/migrations/0254_sv_workflow_domain.sql
+packages/db/migrations/meta/0254_snapshot.json
