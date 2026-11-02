@@ -39,13 +39,19 @@ async function fetchCatalog(signal?: AbortSignal): Promise<SvRobotCatalog> {
   return requestJson(svRobotCatalogContract, { signal })
 }
 
-/** RSS catalog of the robot profile: the signal tree of a robot workflow (changes only with the profile). */
+/**
+ * RSS catalog of the robot profile: the signal tree of a robot workflow (changes only with the profile). Asked once:
+ * a studio without the robotics stack answers 503 and is not asked again on every mount (no retry storm).
+ */
 export function useSvRobotCatalog(enabled: boolean) {
   return useQuery({
     queryKey: svRobotKeys.catalogs(),
     queryFn: ({ signal }) => fetchCatalog(signal),
     enabled,
     staleTime: 10 * 60 * 1000,
+    retry: false,
+    retryOnMount: false,
+    refetchOnWindowFocus: false,
   })
 }
 
