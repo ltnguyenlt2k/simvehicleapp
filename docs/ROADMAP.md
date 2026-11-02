@@ -19,7 +19,7 @@
 >
 > Mỗi bước: test/gate bắt buộc → commit → push lên `origin` và `blinkthor` → CI xanh → `scripts/sv refresh`.
 
-> **2026-11-01 (tối) — Robotics chạy được full luồng:** workflow robot soạn trên GUI hiện có → Build → Deploy → Start → dog sim (repo dog, ROS 2) chạy đúng logic; video thật [`robot-full-flow.mp4`](media/robotics/robot-full-flow.mp4). M22–M23 ✔, M24 ◐, M25 ✔, M26–M28 🔄 (phần còn mở ghi ở từng dòng).
+> **2026-11-01 (tối) — Robotics chạy được full luồng:** workflow robot soạn trên GUI hiện có → Build → Deploy → Start → dog sim (repo dog, ROS 2) chạy đúng logic; video thật `robot-full-flow.mp4` (đã thay bằng video M29: [`robot-tutorial-vi.mp4`](media/robotics/robot-tutorial-vi.mp4), [`robot-flow-en.mp4`](media/robotics/robot-flow-en.mp4)). M22–M23 ✔, M24 ◐, M25 ✔, M26–M28 🔄 (phần còn mở ghi ở từng dòng).
 >
 > **2026-11-01 — Robotics, plan lại từ đầu (chỉ tài liệu, chưa code).** Bản thử robotics 2026-10-27 → 11-01 (Robot Studio riêng, code khi chỉ được yêu cầu plan) bị gỡ khỏi `main`: `main` reset về `0c342cd4` + 3 bản sửa xe (`9655327a`, `456b0c4a`, `3eea2498`); toàn bộ bản thử ở tag `archive/robotics-attempt-2026-11-01` và nhánh `backup/session-20261101-robotics-standalone`. Kế hoạch mới: [design robotics](design/robotics/README.md), ADR-0064…0071 (Proposed), phase M22–M28 bên dưới; phía robot: dog-ros2-simulation R4. **Nguyên tắc:** một GUI (studio hiện có), lớp thực thi robotics độc lập trong `robotics/`.
 
@@ -74,7 +74,7 @@
 | [M25](#m25--robotflow-compiler--runtime) | RobotFlow compiler + codegen Python + `rfrt` + scenario | 0067 (Accepted 2026-11-01) | ✔ | 10/10 (T08/T09 gộp vào `robotics/control`, ADR-0067 Notes) — 74 test robotics PASS ([báo cáo](reports/M25.md)) |
 | [M26](#m26--miền-robot-trong-gui-hiện-có) | Miền Robot trong GUI SimVehicleApp hiện có + control/runner + AI | 0064, 0068, 0069 (Accepted 2026-11-01) | 🔄 | 2026-11-01: T03–T06, T09, T12 ✔; T01/T07/T11 ◐; T02 ↷ (miền theo block); T08, T10 ☐ — vitest 845/845, tsc 0 lỗi ([báo cáo](reports/M26.md)) |
 | [M27](#m27--hiệu-năng-máy-cấu-hình-thấp) | Hiệu năng, hồ sơ máy cấu hình thấp | 0070 (Accepted 2026-11-01) | 🔄 | 2026-11-01: đo lần chạy full flow (lớp robotics ≈ 0,5 lõi / 140 MiB); build studio giới hạn 4 worker (lỗi 25 phút → 64 s PASS). Còn `robot-lite`, đo DEV/LOW ([báo cáo](reports/M27.md)) |
-| [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Accepted 2026-11-01) | 🔄 | 2026-11-01: **video full luồng thật** [`robot-full-flow.mp4`](media/robotics/robot-full-flow.mp4) + manifest; 3/3 lượt GUI production + `ros-sim` PASS, 9/9 lệnh SUCCEEDED, request id khớp audit Protobus. Còn RW-A…F, fault qua GUI, `workflow/ack`, GIF ([báo cáo](reports/M28.md)) |
+| [M28](#m28--e2e-live-video-trung-thực-tài-liệu) | E2E live, video full luồng trung thực, tài liệu | 0071 (Accepted 2026-11-01) | 🔄 | 2026-11-01: **video full luồng thật** `robot-full-flow.mp4` + manifest (giao diện cũ, đã gỡ; thay bằng video M29); 3/3 lượt GUI production + `ros-sim` PASS, 9/9 lệnh SUCCEEDED, request id khớp audit Protobus. Còn RW-A…F, fault qua GUI, `workflow/ack`, GIF ([báo cáo](reports/M28.md)) |
 | [M29](../analysis/phases/M29-ui-language-vi-en.md) | Miền Robot dùng chung khung xe + giao diện VI/EN (studio + Robot Zoo) + video hồi quy và hướng dẫn | 0068 Notes, 0072 (Accepted 2026-11-01) | ✔ | 10/10 — 2026-11-02: ô Tín hiệu VSS/RSS, khung xe cho robot, VI/EN hai GUI; xe `@live` PASS + video; robot EN/VI PASS 9/9; video hướng dẫn VI ([báo cáo](reports/M29.md)) |
 
 **MVP v1.0 = M0→M11.** Hiện trạng 2026-10-15:

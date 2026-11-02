@@ -7,26 +7,10 @@
 
 ## Demo
 
-![Mọi chức năng trên hai workflow: workflow hàm "Safety check" + workflow gọi nó → Auto layout, Logic → Test (Generate tests, Simulate all) → SynCode → Run trên KUKSA, Flow, Messages → image + Kanto → app WebAssembly → System status → Export → IDE → trợ lý AI](docs/media/showcase.gif)
-
-**Video tất cả chức năng** (720p, 9 phút 34 s, 23 chặng có chú thích, **nhịp thao tác của người dùng**: con trỏ chuột hiển thị di chuyển tới từng nút, chữ gõ từng phím, chỉ rút ngắn lúc chờ build/push/LLM; **trợ lý dùng LLM thật** qua endpoint OpenAI-compatible; quay 2026-10-27, baseline `baseline-2026-10-27`; GIF phía trên tua nhanh 8×): [docs/media/showcase.mp4](docs/media/showcase.mp4).
-- **Workflow:** hai workflow phức tạp.
-  - "Safety check" là workflow hàm: When called ⇒ Get variable ⇒ If ⇒ Set variable `result`.
-  - "Overspeed assistant" có hai trigger. Trigger tốc độ ⇒ Call workflow ⇒ If ⇒ Stable for 2 s ⇒ hazard + HMI, hoặc tắt đèn. Trigger thứ hai mỗi giây gửi telemetry MQTT.
-- **Các bước:**
-  - Auto layout, Logic view;
-  - Test tab (Generate tests, độ phủ, Simulate all);
-  - SynCode C++;
-  - Run trên KUKSA: inject, Flow, Messages;
-  - Deploy image vào registry + tải descriptor Eclipse Kanto;
-  - tạo app Rust WebAssembly;
-  - System status, Export, IDE;
-  - trợ lý (LLM thật) đề xuất thay đổi rồi Accept.
-- **Tái tạo:** `scripts/sv demo-video --showcase` (E2E `m21-showcase.spec.ts` chạy trên stack thật, tự dựng registry tạm).
-
 ![Full luồng: workflow rẽ nhánh kéo thả → câu tóm tắt + nhãn nhánh → Simulate → SynCode tự tạo app → Run trên KUKSA → Vehicle apps → Export → IDE → trợ lý AI → restart](docs/media/full-flow.gif)
 
-**Video full luồng** (720p, 6 phút 34 s, có chú thích từng bước, nhịp người dùng, trợ lý LLM thật; quay 2026-10-27): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
+**Video full luồng** (720p, 6 phút 57 s, có chú thích từng bước, nhịp người dùng, trợ lý LLM thật; quay lại 2026-11-01 sau M29): [docs/media/full-flow.mp4](docs/media/full-flow.mp4).
+- Video toàn bộ chức năng (`scripts/sv demo-video --showcase`) và video tutorial (`--tutorial`) quay trước M29 đã được gỡ vì giao diện cũ; quay lại bằng hai lệnh đó khi cần.
 - Video được quay tự động bởi E2E `modules/simvehicleapp-studio/e2e/tests/m15-full-flow.spec.ts` chạy trên stack thật.
 - Tái tạo bằng một lệnh: `scripts/sv demo-video`. Cần stack đang chạy; trợ lý dùng provider trong `.env` (`SV_AI_PROVIDER`; `fake` = offline). Chỉ các khoảng chờ dài (build, push, LLM) được cắt tự động.
 
@@ -45,7 +29,7 @@ Các chặng:
 17–18. Trợ lý AI (LLM thật qua endpoint OpenAI-compatible) đề xuất patch; duyệt rồi Accept.
 19. Restart stack: workflow, app và code sinh vẫn còn.
 
-Video ngắn hơn theo tutorial "Overspeed warning" (4 phút 11 s, nhịp người dùng, trợ lý LLM thật trả lời tiếng Việt; quay 2026-10-27): [docs/media/demo.mp4](docs/media/demo.mp4) (`scripts/sv demo-video --tutorial`). Làm theo:
+Tutorial "Overspeed warning" từng bước. Làm theo:
 [tutorial](docs/user-guide/tutorial.md) · Tài liệu: [docs/README.md](docs/README.md).
 
 ---

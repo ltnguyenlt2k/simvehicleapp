@@ -15,6 +15,7 @@
   - chỉ workflow RSS mới có block robot và cây tín hiệu robot;
   - kéo tín hiệu RSS vào canvas để tạo điều kiện.
 - **Workflow robot dùng khung xe:** thanh hành động, dock Vấn đề / Trực tiếp, dòng tóm tắt block.
+- **Gỡ video lỗi thời:** `showcase.*`, `demo.*` (giao diện trước M29), `robotics/robot-full-flow.mp4` và ảnh M28.
 - **Video:**
   - hướng dẫn tiếng Việt `docs/media/robotics/robot-tutorial-vi.mp4`;
   - hồi quy robot `robot-flow-en.mp4`;
@@ -31,7 +32,7 @@
   - BFF `/api/sv/robotics/*`, overlay `overlays/robotics.yaml`;
   - cho phép chu trình chỉ giữa block robot.
 - **Build studio trên máy yếu:** `SV_NEXT_BUILD_CPUS` (mặc định 4) và `staticPageGenerationTimeout` 180 s.
-- **Video full luồng thật** `docs/media/robotics/robot-full-flow.mp4` + manifest. Quay lại bằng `robotics/scripts/video/run.sh`.
+- **Video full luồng thật** `robot-full-flow.mp4` + manifest (giao diện M28; đã gỡ ở M29, thay bằng `robot-tutorial-vi.mp4` và `robot-flow-en.mp4`).
 - **Báo cáo:** M24 (PASS có điều kiện), M25 ✔; M26–M28 đang làm, phần còn mở ghi trong báo cáo.
 
 ### Robotics — kế hoạch (2026-11-01, chỉ tài liệu)
