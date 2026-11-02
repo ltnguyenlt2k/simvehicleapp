@@ -1097,3 +1097,5 @@ overlays/*
 apps/sim/app/(auth)/auth-layout-client.tsx
 packages/db/migrations/0254_sv_workflow_domain.sql
 packages/db/migrations/meta/0254_snapshot.json
+# Biome must not reformat the golden copies checked byte for byte by golden-sync (M29)
+biome.json
